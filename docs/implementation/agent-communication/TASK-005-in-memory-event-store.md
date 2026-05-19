@@ -320,16 +320,18 @@
 
 ### Planck the 2nd (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e40ec-23ce-7ff1-b20a-a4c14f076ead`.
 - Ownership:
   - `src/core/stores/event-store.ts` only.
+- Commit:
+  - `bf0b28d Planck the 2nd(implementation)(Add in-memory Event Store): normalize append input property traps`.
 - Assignment:
   - Normalize `append(input)` property-read failures for `namespace`, `type`, and `pageId` to `EVENT_IDENTITY_REQUIRED`.
   - Normalize `sourcePluginId` property-read failures to `EVENT_SOURCE_PLUGIN_REQUIRED`.
   - Normalize `payload` property-read failures to `EVENT_PAYLOAD_NOT_JSON_COMPATIBLE`.
   - Preserve existing append/list behavior, immutability, ID collisions, and payload validation.
-- Expected checks:
+- Checks run by Planck the 2nd and repeated by parent:
   - `bun run typecheck`.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 27 tests passing.
   - `bun run lint`.
@@ -348,4 +350,4 @@
 
 ## Next Action
 
-Wait for Planck the 2nd's implementation result.
+Run targeted re-review for append input property-read normalization, then final gate.
