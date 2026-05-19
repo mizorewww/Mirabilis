@@ -7,6 +7,7 @@ This strategy is the local release gate for Mirabilis. GitHub CI is intentionall
 - Tauri v2 desktop app.
 - React 19 frontend.
 - Vite 7 build pipeline.
+- Vite 7 requires Node.js 20.19+ or 22.12+ when Vite/Vitest tooling runs through Node-based environments; keep local Node on a matching version even though package scripts are launched with Bun. See [Vite 7 Node.js support](https://v7.vite.dev/guide/migration#node-js-support).
 - TypeScript 5.8.
 - Bun lockfile and Bun-based Tauri commands.
 - Rust 2021 crate under `src-tauri`.
