@@ -273,6 +273,21 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 22 tests with 20 passing and 2 failing because raw `pageId` and `namespace` option get-trap errors escape.
 
+### Hegel (`implementer`)
+
+- Status: active.
+- Agent id: `019e40df-194d-7eb0-8105-1ac0fbc4917d`.
+- Ownership:
+  - `src/core/stores/event-store.ts` only.
+- Assignment:
+  - Normalize thrown errors from reading `list(options).pageId` or `list(options).namespace` into typed `EventStoreError` failures with `EVENT_IDENTITY_REQUIRED`.
+  - Avoid hostile value coercion in error details.
+  - Preserve normal list filtering, append immutability, and payload validation behavior.
+- Expected checks:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` with 22 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -287,4 +302,4 @@
 
 ## Next Action
 
-Spawn implementation for hostile `list(options)` proxy-trap normalization.
+Wait for Hegel's implementation result, then repeat focused checks and commit.
