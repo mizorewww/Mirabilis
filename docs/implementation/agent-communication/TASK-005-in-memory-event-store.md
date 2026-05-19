@@ -318,6 +318,22 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 27 tests with 22 passing and 5 failing because raw append input getter errors escape.
 
+### Planck the 2nd (`implementer`)
+
+- Status: active.
+- Agent id: `019e40ec-23ce-7ff1-b20a-a4c14f076ead`.
+- Ownership:
+  - `src/core/stores/event-store.ts` only.
+- Assignment:
+  - Normalize `append(input)` property-read failures for `namespace`, `type`, and `pageId` to `EVENT_IDENTITY_REQUIRED`.
+  - Normalize `sourcePluginId` property-read failures to `EVENT_SOURCE_PLUGIN_REQUIRED`.
+  - Normalize `payload` property-read failures to `EVENT_PAYLOAD_NOT_JSON_COMPATIBLE`.
+  - Preserve existing append/list behavior, immutability, ID collisions, and payload validation.
+- Expected checks:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` with 27 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -332,4 +348,4 @@
 
 ## Next Action
 
-Spawn implementation for append input property-read normalization.
+Wait for Planck the 2nd's implementation result.
