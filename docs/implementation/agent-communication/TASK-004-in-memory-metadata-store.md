@@ -180,6 +180,24 @@
 - Commit note:
   - The post-commit auto-push hung in SSH after the local commit was created. Parent terminated the stuck push process, then manually ran `git push -u origin feat/task-004-in-memory-metadata-store` successfully.
 
+### Jason (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/metadata-store.ts`.
+  - `src/core/types/index.ts`.
+- Commit:
+  - `39a7739 Jason(implementation)(Add in-memory Metadata Store): fix review edge cases`.
+- Fixes implemented:
+  - Preserved exact non-empty identity and list-filter strings while still rejecting whitespace-only values.
+  - Kept `sourcePluginId` trimming behavior.
+  - Rejected arrays with own non-index string properties or own symbol properties as not JSON-compatible.
+  - Exported `MetadataJsonValue` from the `src/core/types` barrel.
+- Checks run by Jason and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts` with 20 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -192,4 +210,4 @@
 
 ## Next Action
 
-Wait for review-fix implementer, then run focused checks and final gate.
+Run targeted re-review of selected P2 fixes, then final gate.
