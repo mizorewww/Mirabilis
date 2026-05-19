@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 21:34 CST.
+Last updated: 2026-05-19 21:38 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-19 21:34 CST.
 - Branch: `feat/task-004-in-memory-metadata-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
 - Parent role: orchestration only.
-- Current phase: task start.
+- Current phase: pre-test guidance recorded; ready for test writer.
 
 ## Active Agents
 
@@ -16,6 +16,9 @@ Last updated: 2026-05-19 21:34 CST.
 
 ## Recent Agent Outcomes
 
+- Poincare (`planner`) completed TASK-004 pre-test planning.
+- Ramanujan (`docs_researcher`) completed TASK-004 current-docs research.
+- Euler (`deprecation_auditor`) completed TASK-004 risk/deprecation audit.
 - TASK-003 was merged to `master`; TASK-004 has started from latest `master`.
 - TASK-002 was merged to `master`; TASK-003 has started from latest `master`.
 - `codex --strict-config doctor --summary --ascii` passed with no failures. It reported one optional MCP warning.
@@ -38,12 +41,11 @@ Last updated: 2026-05-19 21:34 CST.
 
 ## Current Dirty Files
 
-- `docs/implementation/progress.md` marks TASK-004 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-004.
-- `docs/implementation/agent-communication/TASK-004-in-memory-metadata-store.md` will hold TASK-004 agent notes.
+- `docs/implementation/agent-communication/status.md` records TASK-004 orchestration state.
+- `docs/implementation/agent-communication/TASK-004-in-memory-metadata-store.md` records TASK-004 pre-test agent guidance.
 
 ## Next Actions
 
-1. Commit TASK-004 start/progress state.
-2. Spawn planner, docs researcher, and deprecation auditor for TASK-004.
-3. Spawn test writer after pre-test guidance is available.
+1. Commit TASK-004 pre-test agent guidance.
+2. Spawn test writer for failing Metadata Store acceptance tests.
+3. Run focused red checks and commit the tests.
