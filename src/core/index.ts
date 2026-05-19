@@ -14,15 +14,22 @@ export type {
 } from "./types";
 export type { MetadataJsonValue } from "./types/metadata";
 export {
+  EventStoreError,
   MetadataStoreError,
   PageStoreError,
+  createInMemoryEventStore,
   createInMemoryMetadataStore,
   createInMemoryPageStore,
 } from "./stores";
 export type {
+  AppendEventInput,
+  CreateInMemoryEventStoreOptions,
   CreateInMemoryMetadataStoreOptions,
   CreateInMemoryPageStoreOptions,
   CreatePageInput,
+  EventStore,
+  EventStoreErrorCode,
+  ListEventsOptions,
   ListMetadataOptions,
   ListPagesOptions,
   MetadataStore,

@@ -27,7 +27,7 @@ Status markers:
 - [x] TASK-002: Create TypeScript core domain types
 - [x] TASK-003: Add in-memory Page Store
 - [x] TASK-004: Add in-memory Metadata Store
-- [ ] TASK-005: Add in-memory Event Store
+- [x] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
 - [ ] TASK-007: Add Command Registry and Command Bus
 - [ ] TASK-008: Add View Registry and Slot Registry
@@ -78,6 +78,25 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 23:56 CST - TASK-005 completed
+
+- Branch: `feat/task-005-in-memory-event-store`.
+- Task: Add in-memory Event Store.
+- Commits: `30dc584` start orchestration, `25974af` acceptance tests, `e7dda1c` implementation, `74cc716` review-fix coverage, `147ca5a` review edge fixes, `43f0c2e` raw-error coverage, `b8728e0` raw-error normalization, `0800902` list option proxy-trap coverage, `83bc586` list option proxy-trap normalization, `98a3bde` append input property-trap coverage, `bf0b28d` append input property-trap normalization, plus orchestration commits recorded in `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md`.
+- Delivered: `createInMemoryEventStore`, `EventStoreError`, Event Store contracts, append/list behavior, page and namespace filters, required `sourcePluginId`, created-time and ID injection, default `event_` Web Crypto IDs, defensive clone boundaries, append-only immutable event facts, JSON-compatible payload validation, and typed collision/identity/source/payload/clone failures.
+- Validation: `bun run check:quick` passed, `bun run build` passed, and focused `bun run test:frontend -- src/test/core-event-store.test.ts` passed with 27 tests after review fixes.
+- Review: correctness, security, and test-quality agents reported no remaining P0/P1/P2 findings after targeted review-fix rounds. Selected P2 findings for hostile values, list option proxy traps, payload reflection traps, and append input property traps were fixed before final gate.
+- External docs verified by agents: no external documentation was required for the final TASK-005 review-fix rounds; the task was driven by local product, architecture, implementation, and testing docs.
+- Remaining risk: plugin-facing Event Service or IPC must add caller-bound authorization and size/depth budgets before exposing event append/list behavior to plugins. `bun run check:full` was not run because TASK-005 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
+
+### 2026-05-19 22:32 CST - TASK-005 started
+
+- Branch: `feat/task-005-in-memory-event-store`.
+- Task: Add in-memory Event Store.
+- Scope: implement in-memory event append/query behavior using TASK-002 Core domain types while preserving immutable event facts, plugin-agnostic storage, and page/namespace filtering.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and a desktop-terminal `TERM=dumb` failure, which does not block agent development.
 
 ### 2026-05-19 22:27 CST - TASK-004 completed
 

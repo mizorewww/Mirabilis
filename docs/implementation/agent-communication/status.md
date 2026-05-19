@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:27 CST.
+Last updated: 2026-05-19 23:56 CST.
 
 ## Current Task
 
-- Task: TASK-004 - Add in-memory Metadata Store.
-- Branch: `feat/task-004-in-memory-metadata-store`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
+- Task: TASK-005 - Add in-memory Event Store.
+- Branch: `feat/task-005-in-memory-event-store`.
+- Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; ready to merge.
+- Current phase: final gate passed; progress update active.
 
 ## Active Agents
 
@@ -16,6 +16,67 @@ Last updated: 2026-05-19 22:27 CST.
 
 ## Recent Agent Outcomes
 
+- Final TASK-005 gate passed: `bun run check:quick` and `bun run build`.
+- Append-read targeted re-review completed. Feynman the 2nd found no remaining security P0/P1/P2 and confirmed no native/IPC/package exposure broadened; Descartes the 2nd found no P0/P1/P2 test-quality blockers.
+- Append-read targeted re-review agents spawned for TASK-005.
+- Planck the 2nd (`implementer`) completed and was closed after normalizing append input property-read failures.
+- Planck the 2nd's implementation commit: `bf0b28d Planck the 2nd(implementation)(Add in-memory Event Store): normalize append input property traps`.
+- Parent repeated green checks after Planck the 2nd: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts` with 27 tests passing, and `bun run lint`.
+- Planck the 2nd (`implementer`) was spawned for append input property-read normalization.
+- Volta the 2nd (`test_writer`) completed and was closed after adding append-time hostile property-read tests.
+- Volta the 2nd's test commit: `98a3bde Volta the 2nd(test)(Add in-memory Event Store): cover append input property traps`.
+- Parent confirmed the expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-event-store.test.ts` runs 27 tests with 22 passing and 5 failing because raw append input getter errors escape.
+- Volta the 2nd (`test_writer`) was spawned for append-time hostile property-read tests.
+- Final targeted re-review round 2 completed. Aristotle the 2nd found no correctness P0/P1/P2/P3; Lagrange the 2nd found no P0/P1/P2 test-quality issues and one non-blocking P3 about deep payload limits; Gibbs the 2nd found one remaining P2 where append-time hostile input property reads can throw raw errors.
+- Final targeted re-review agents spawned for TASK-005.
+- Hegel (`implementer`) completed and was closed after normalizing hostile `list(options)` proxy-trap failures.
+- Hegel's implementation commit: `83bc586 Hegel(implementation)(Add in-memory Event Store): normalize list option proxy traps`.
+- Parent repeated green checks after Hegel: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts` with 22 tests passing, and `bun run lint`.
+- Hegel (`implementer`) was spawned for final hostile `list(options)` proxy-trap normalization.
+- Planck (`test_writer`) completed and was closed after adding final hostile `list(options)` proxy-trap tests.
+- Planck's test commit: `0800902 Planck(test)(Add in-memory Event Store): cover list option proxy traps`.
+- Parent confirmed the expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-event-store.test.ts` runs 22 tests with 20 passing and 2 failing because raw `pageId` and `namespace` option get-trap errors escape.
+- Planck (`test_writer`) was spawned for the final hostile `list(options)` proxy-trap tests.
+- Final targeted re-review completed. Ptolemy reported no remaining correctness P0/P1/P2; Dewey found one remaining P2 where hostile `list(options)` proxy traps can throw raw errors before filter normalization.
+- Final targeted re-review agents spawned for raw-error normalization cases.
+- Mendel (`implementer`) completed and was closed after normalizing final raw-error cases.
+- Mendel's implementation commit: `b8728e0 Mendel(implementation)(Add in-memory Event Store): normalize raw error cases`.
+- Parent repeated green checks after Mendel: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
+- Mendel (`implementer`) was spawned for final TASK-005 P2 production fixes.
+- Linnaeus (`test_writer`) completed and was closed after adding final P2 tests.
+- Linnaeus's test commit: `43f0c2e Linnaeus(test)(Add in-memory Event Store): cover final raw-error cases`.
+- Parent confirmed expected red checks for Linnaeus's tests before the production fix.
+- Linnaeus (`test_writer`) was spawned for final TASK-005 P2 tests.
+- Targeted re-review round 1 completed with no P0/P1 findings, but two P2 findings remain: non-string filter error-detail coercion can throw raw errors, and proxy/trap payload reflection can throw raw errors.
+- Targeted re-review agents spawned for selected P1/P2 fixes.
+- Lovelace (`implementer`) completed and was closed after implementing selected P1/P2 fixes.
+- Lovelace's implementation commit: `147ca5a Lovelace(implementation)(Add in-memory Event Store): fix review edge cases`.
+- Parent repeated green checks after Lovelace: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
+- Lovelace (`implementer`) was spawned for selected TASK-005 P1/P2 production fixes.
+- Mencius (`test_writer`) completed and was closed after adding review-fix tests.
+- Mencius's test commit: `74cc716 Mencius(test)(Add in-memory Event Store): add review-fix coverage`.
+- Parent confirmed expected red checks for Mencius's tests before the production fix.
+- Mencius (`test_writer`) was spawned for selected TASK-005 P1/P2 review-fix tests.
+- Review round 1 completed with no P0 findings.
+- P1/P2 fixes selected for this task: duplicate-identity append-only coverage, runtime string validation for identity/source/filter fields, nested invalid payload coverage, accessor/getter payload rejection, and typed handling for deep/trap-like payload validation.
+- P3 docs issue selected for cleanup: refresh TASK-005 notes `Next Action`.
+- Review agents spawned for TASK-005.
+- Goodall (`implementer`) completed and was closed after implementing the in-memory Event Store.
+- Goodall's implementation commit: `e7dda1c Goodall(implementation)(Add in-memory Event Store): implement event store`.
+- Parent repeated green checks: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
+- Goodall (`implementer`) was spawned for TASK-005 production implementation.
+- Sagan (`test_writer`) completed and was closed after adding Event Store acceptance tests.
+- Sagan's test commit: `25974af Sagan(test)(Add in-memory Event Store): add event store acceptance tests`.
+- Parent confirmed expected red checks: `bun run typecheck` fails on missing Event Store exports and focused Vitest fails because `createInMemoryEventStore` is not implemented.
+- Sagan (`test_writer`) was spawned for TASK-005 failing Event Store acceptance tests.
+- Carver (`planner`) completed TASK-005 pre-test planning.
+- Herschel (`docs_researcher`) completed TASK-005 current-docs research.
+- Harvey (`deprecation_auditor`) completed TASK-005 risk/deprecation audit.
+- Parent decisions: keep `AppEvent.payload` typed as `unknown` but enforce JSON-compatible payloads at append time; expose only `pageId`/`namespace` filters; reject blank provided `pageId`; preserve exact non-blank filter values; trim `sourcePluginId`.
+- Carver (`planner`), Herschel (`docs_researcher`), and Harvey (`deprecation_auditor`) were spawned for TASK-005 pre-test guidance.
+- TASK-004 was merged to `master`; TASK-005 has started from latest `master`.
+- `.codex/agents/*.toml` parsed successfully for TASK-005.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
 - Final TASK-004 gate passed: `bun run check:quick` and `bun run build`.
 - Leibniz (`implementer`) completed and was closed after fixing inherited sparse-array validation.
 - Leibniz's implementation commit: `89a1df4 Leibniz(implementation)(Add in-memory Metadata Store): reject inherited sparse arrays`.
@@ -73,10 +134,12 @@ Last updated: 2026-05-19 22:27 CST.
 
 ## Current Worktree State
 
-- Progress and agent communication docs are being updated for TASK-004 completion.
+- `docs/implementation/progress.md` marks TASK-005 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-005.
+- `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md` will hold TASK-005 agent notes.
 
 ## Next Actions
 
-1. Commit TASK-004 completion docs.
-2. Merge `feat/task-004-in-memory-metadata-store` into `master`.
-3. Push `master` and continue to TASK-005.
+1. Commit TASK-005 progress update.
+2. Merge TASK-005 to `master`.
+3. Continue to TASK-006.
