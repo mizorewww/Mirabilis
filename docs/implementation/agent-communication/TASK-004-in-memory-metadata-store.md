@@ -198,6 +198,26 @@
   - `bun run test:frontend -- src/test/core-metadata-store.test.ts` with 20 tests passing.
   - `bun run lint`.
 
+### Targeted Re-review Round
+
+- Status: completed with two remaining P2 items.
+- Agents:
+  - Rawls (`reviewer`) reported no remaining P0/P1/P2 in the selected review-fix production scope.
+  - Lorentz (`test_quality_reviewer`) reported a remaining P2 test gap: significant whitespace is covered for `key`, but not for `pageId` or `namespace` list filters.
+  - Kepler (`deprecation_auditor`) reported a remaining P2 validation gap: sparse arrays can pass if a missing index is provided by the array prototype because the implementation uses prototype-aware `index in value`.
+- Remaining selected fixes:
+  - Add whitespace preservation coverage for `pageId` and `namespace`.
+  - Add inherited-index sparse array coverage and change array density validation to use own properties only.
+- Checks reported by targeted reviewers:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts`.
+  - `bun run lint`.
+  - `git diff --check`.
+- External docs checked by Kepler:
+  - ECMA-262 `HasProperty` and own-property APIs.
+  - W3C Web Cryptography Level 2.
+  - Vitest `vi.stubGlobal` and `vi.unstubAllGlobals`.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -210,4 +230,4 @@
 
 ## Next Action
 
-Run targeted re-review of selected P2 fixes, then final gate.
+Spawn a final review-fix test writer for the remaining P2 coverage, then implement the inherited sparse-array fix and run final gate.
