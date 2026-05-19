@@ -604,6 +604,76 @@ describe("in-memory Event Store", () => {
     }
   });
 
+  it("normalizes hostile pageId list option property traps to typed errors", () => {
+    const store = createStore({
+      ids: ["event_existing"],
+      instants: [firstInstant],
+    });
+    const existing = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: null,
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const rawPageIdTrapError = new Error("raw pageId option get trap");
+    const options = new Proxy({} as ListEventsOptions, {
+      get(target, property, receiver) {
+        if (property === "pageId") {
+          throw rawPageIdTrapError;
+        }
+
+        return Reflect.get(target, property, receiver);
+      },
+    });
+
+    expectEventStoreError(
+      () => store.list(options),
+      "EVENT_IDENTITY_REQUIRED",
+      { rawError: rawPageIdTrapError },
+    );
+    expect(store.list()).toStrictEqual([existing]);
+    expect(store.list({ pageId: "page_alpha" })).toStrictEqual([existing]);
+    expect(store.list({ namespace: "profile" })).toStrictEqual([existing]);
+  });
+
+  it("normalizes hostile namespace list option property traps to typed errors", () => {
+    const store = createStore({
+      ids: ["event_existing"],
+      instants: [firstInstant],
+    });
+    const existing = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: null,
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const rawNamespaceTrapError = new Error("raw namespace option get trap");
+    const options = new Proxy({} as ListEventsOptions, {
+      get(target, property, receiver) {
+        if (property === "namespace") {
+          throw rawNamespaceTrapError;
+        }
+
+        return Reflect.get(target, property, receiver);
+      },
+    });
+
+    expectEventStoreError(
+      () => store.list(options),
+      "EVENT_IDENTITY_REQUIRED",
+      { rawError: rawNamespaceTrapError },
+    );
+    expect(store.list()).toStrictEqual([existing]);
+    expect(store.list({ pageId: "page_alpha" })).toStrictEqual([existing]);
+    expect(store.list({ namespace: "profile" })).toStrictEqual([existing]);
+  });
+
   it("accepts JSON-compatible runtime payloads while keeping payload typed unknown", () => {
     const acceptedPayloads: Array<{ label: string; payload: unknown }> = [
       { label: "string", payload: "compact" },
