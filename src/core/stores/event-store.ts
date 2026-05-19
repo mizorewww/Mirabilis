@@ -63,8 +63,14 @@ export function createInMemoryEventStore(
     append(input) {
       const identity = normalizeIdentity(input);
       const sourcePluginId = normalizeSourcePluginId(input, identity);
+      const payloadInput = readAppendInputValue(
+        input,
+        "payload",
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+        describeIdentity(identity),
+      );
 
-      assertJsonCompatible(input.payload, identity);
+      assertJsonCompatible(payloadInput, identity);
 
       const eventId = createId();
 
@@ -72,7 +78,7 @@ export function createInMemoryEventStore(
         throw new EventStoreError("EVENT_ID_COLLISION", eventId);
       }
 
-      const payload = cloneForEvent(identity, input.payload);
+      const payload = cloneForEvent(identity, payloadInput);
       const event = createEvent({
         eventId,
         identity,
@@ -98,10 +104,29 @@ export function createInMemoryEventStore(
 }
 
 function normalizeIdentity(input: AppendEventInput): EventIdentity {
+  const namespace = readAppendInputValue(
+    input,
+    "namespace",
+    "EVENT_IDENTITY_REQUIRED",
+    "event identity must be readable",
+  );
+  const type = readAppendInputValue(
+    input,
+    "type",
+    "EVENT_IDENTITY_REQUIRED",
+    "event identity must be readable",
+  );
+  const pageId = readAppendInputValue(
+    input,
+    "pageId",
+    "EVENT_IDENTITY_REQUIRED",
+    "event identity must be readable",
+  );
+
   if (
-    typeof input.namespace !== "string" ||
-    typeof input.type !== "string" ||
-    (input.pageId !== undefined && typeof input.pageId !== "string")
+    typeof namespace !== "string" ||
+    typeof type !== "string" ||
+    (pageId !== undefined && typeof pageId !== "string")
   ) {
     throw new EventStoreError(
       "EVENT_IDENTITY_REQUIRED",
@@ -110,12 +135,12 @@ function normalizeIdentity(input: AppendEventInput): EventIdentity {
   }
 
   const identity: EventIdentity = {
-    namespace: input.namespace,
-    type: input.type,
+    namespace,
+    type,
   };
 
-  if (input.pageId !== undefined) {
-    identity.pageId = input.pageId;
+  if (pageId !== undefined) {
+    identity.pageId = pageId;
   }
 
   if (
@@ -123,24 +148,34 @@ function normalizeIdentity(input: AppendEventInput): EventIdentity {
     identity.type.trim().length === 0 ||
     identity.pageId?.trim().length === 0
   ) {
-    throw new EventStoreError("EVENT_IDENTITY_REQUIRED", describeIdentity(input));
+    throw new EventStoreError(
+      "EVENT_IDENTITY_REQUIRED",
+      describeIdentity(identity),
+    );
   }
 
   return identity;
 }
 
 function normalizeSourcePluginId(
-  input: Pick<AppendEventInput, "sourcePluginId">,
+  input: AppendEventInput,
   identity: EventIdentity,
 ): string {
-  if (typeof input.sourcePluginId !== "string") {
+  const rawSourcePluginId = readAppendInputValue(
+    input,
+    "sourcePluginId",
+    "EVENT_SOURCE_PLUGIN_REQUIRED",
+    describeIdentity(identity),
+  );
+
+  if (typeof rawSourcePluginId !== "string") {
     throw new EventStoreError(
       "EVENT_SOURCE_PLUGIN_REQUIRED",
       describeIdentity(identity),
     );
   }
 
-  const sourcePluginId = input.sourcePluginId.trim();
+  const sourcePluginId = rawSourcePluginId.trim();
 
   if (sourcePluginId.length === 0) {
     throw new EventStoreError(
@@ -150,6 +185,19 @@ function normalizeSourcePluginId(
   }
 
   return sourcePluginId;
+}
+
+function readAppendInputValue(
+  input: AppendEventInput,
+  field: keyof AppendEventInput,
+  code: EventStoreErrorCode,
+  detail: string,
+): unknown {
+  try {
+    return input[field];
+  } catch {
+    throw new EventStoreError(code, detail);
+  }
 }
 
 function normalizeListOptions(options: ListEventsOptions): ListEventsOptions {
