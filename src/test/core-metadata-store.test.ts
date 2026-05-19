@@ -135,6 +135,92 @@ describe("in-memory Metadata Store", () => {
     ).toStrictEqual([spacedKey, plainKey]);
   });
 
+  it("preserves significant whitespace in page ids and namespaces for exact filters", () => {
+    const store = createStore({
+      ids: [
+        "metadata_spaced_page",
+        "metadata_plain_page",
+        "metadata_spaced_namespace",
+        "metadata_plain_namespace",
+      ],
+      instants: [firstInstant, secondInstant, thirdInstant, fourthInstant],
+    });
+
+    const spacedPageId = store.set(
+      metadataInput({
+        pageId: " page_alpha ",
+        namespace: "pageFilter",
+        key: "theme",
+        value: "spaced page",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const plainPageId = store.set(
+      metadataInput({
+        pageId: "page_alpha",
+        namespace: "pageFilter",
+        key: "theme",
+        value: "plain page",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const spacedNamespace = store.set(
+      metadataInput({
+        pageId: "page_namespace",
+        namespace: " profile ",
+        key: "theme",
+        value: "spaced namespace",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const plainNamespace = store.set(
+      metadataInput({
+        pageId: "page_namespace",
+        namespace: "profile",
+        key: "theme",
+        value: "plain namespace",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+
+    expect(spacedPageId.pageId).toBe(" page_alpha ");
+    expect(plainPageId.pageId).toBe("page_alpha");
+    expect(spacedNamespace.namespace).toBe(" profile ");
+    expect(plainNamespace.namespace).toBe("profile");
+    expect(store.get(" page_alpha ", "pageFilter", "theme")).toStrictEqual(
+      spacedPageId,
+    );
+    expect(store.get("page_alpha", "pageFilter", "theme")).toStrictEqual(
+      plainPageId,
+    );
+    expect(store.get("page_namespace", " profile ", "theme")).toStrictEqual(
+      spacedNamespace,
+    );
+    expect(store.get("page_namespace", "profile", "theme")).toStrictEqual(
+      plainNamespace,
+    );
+    expect(store.list({ pageId: " page_alpha " })).toStrictEqual([
+      spacedPageId,
+    ]);
+    expect(store.list({ pageId: "page_alpha" })).toStrictEqual([plainPageId]);
+    expect(store.list({ namespace: " profile " })).toStrictEqual([
+      spacedNamespace,
+    ]);
+    expect(store.list({ namespace: "profile" })).toStrictEqual([
+      plainNamespace,
+    ]);
+    expect(
+      store.list({ pageId: " page_alpha ", namespace: "pageFilter" }),
+    ).toStrictEqual([spacedPageId]);
+    expect(
+      store.list({ pageId: "page_namespace", namespace: " profile " }),
+    ).toStrictEqual([spacedNamespace]);
+  });
+
   it("creates usable records with default ids and timestamps", () => {
     const store = createInMemoryMetadataStore();
 
@@ -880,6 +966,57 @@ describe("in-memory Metadata Store", () => {
     }
 
     expect(store.list()).toStrictEqual([]);
+  });
+
+  it("rejects sparse arrays when missing indexes exist on the array prototype", () => {
+    const store = createStore({
+      ids: ["metadata_inherited_sparse_array"],
+      instants: [firstInstant],
+    });
+    const prototypeWithInheritedIndex = Object.create(Array.prototype, {
+      0: {
+        configurable: true,
+        enumerable: true,
+        value: "inherited-zero",
+      },
+    });
+    const inheritedSparseArray: unknown[] = [];
+    const originalPrototype = Object.getPrototypeOf(inheritedSparseArray);
+    inheritedSparseArray[1] = "own-one";
+    Object.setPrototypeOf(inheritedSparseArray, prototypeWithInheritedIndex);
+
+    try {
+      expect(0 in inheritedSparseArray).toBe(true);
+      expect(
+        Object.prototype.hasOwnProperty.call(inheritedSparseArray, 0),
+      ).toBe(false);
+      expect(
+        Object.prototype.hasOwnProperty.call(inheritedSparseArray, 1),
+      ).toBe(true);
+
+      const metadataIdentity = identity(
+        "page_alpha",
+        "profile",
+        "inheritedSparseArray",
+      );
+
+      expectMetadataStoreError(
+        () =>
+          store.set(
+            metadataInput({
+              ...metadataIdentity,
+              value: inheritedSparseArray as unknown as MetadataJsonValue,
+              valueType: "json",
+              sourcePluginId: "profile-plugin",
+            }),
+          ),
+        "METADATA_VALUE_NOT_JSON_COMPATIBLE",
+        metadataIdentity,
+      );
+      expect(store.list()).toStrictEqual([]);
+    } finally {
+      Object.setPrototypeOf(inheritedSparseArray, originalPrototype);
+    }
   });
 
   it("rejects empty identity parts", () => {
