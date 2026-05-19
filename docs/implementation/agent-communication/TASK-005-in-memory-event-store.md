@@ -116,6 +116,26 @@
   - `bun run typecheck` fails because `../core` does not export `EventStoreError`, `createInMemoryEventStore`, `AppendEventInput`, `CreateInMemoryEventStoreOptions`, `EventStore`, or `ListEventsOptions`.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 13 tests and all fail because `createInMemoryEventStore` is not implemented/exported yet.
 
+### Goodall (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/event-store.ts`.
+  - `src/core/stores/index.ts`.
+  - `src/core/index.ts`.
+- Commit:
+  - `e7dda1c Goodall(implementation)(Add in-memory Event Store): implement event store`.
+- Behavior implemented:
+  - In-memory append-only Event Store with `append` and `list`.
+  - Exact `pageId` and `namespace` filters with stable append order.
+  - Optional page-less events.
+  - Deterministic ID/time injection and default `event_` Web Crypto IDs.
+  - Required identity/source validation, JSON-compatible payload validation, defensive clone boundaries, typed errors, collision rollback, and clone-failure rollback.
+- Checks run by Goodall and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts`.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -130,4 +150,4 @@
 
 ## Next Action
 
-Spawn an `implementer` agent to add the minimal in-memory Event Store implementation and make the focused tests pass.
+Spawn review agents for TASK-005 and address any P0/P1 findings before final gate and merge.
