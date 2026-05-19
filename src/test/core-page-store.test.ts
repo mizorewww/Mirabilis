@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PageStoreError, createInMemoryPageStore } from "../core";
 import type {
@@ -56,6 +56,41 @@ describe("in-memory Page Store", () => {
     expect(created).not.toHaveProperty("archivedAt");
     expect(store.get(created.id)).toStrictEqual(created);
     expect(store.list()).toStrictEqual([created]);
+  });
+
+  it("creates default ids from getRandomValues when randomUUID is unavailable", () => {
+    const deterministicBytes = [
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+      0x0c, 0x0d, 0x0e, 0x0f,
+    ];
+
+    vi.stubGlobal("crypto", {
+      getRandomValues(bytes: Uint8Array) {
+        bytes.set(deterministicBytes);
+        return bytes;
+      },
+    });
+
+    try {
+      const store = createInMemoryPageStore({
+        now: sequence("instant", [firstInstant]),
+      });
+
+      const created = store.create(
+        createPageInput({
+          title: "Fallback memo",
+          body: documentWithText("block_fallback", "Fallback text"),
+        }),
+      );
+
+      expect(created.id).toBe("page_000102030405060708090a0b0c0d0e0f");
+      expect(created.createdAt).toBe(firstInstant);
+      expect(created.updatedAt).toBe(firstInstant);
+      expect(store.get(created.id)).toStrictEqual(created);
+      expect(store.list()).toStrictEqual([created]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("keeps generated ids unique, stable, and listed in creation order", () => {
@@ -374,6 +409,28 @@ describe("in-memory Page Store", () => {
       "page_alpha",
     );
     expect(store.list({ includeArchived: true })).toStrictEqual([]);
+  });
+
+  it("converts non-cloneable update bodies to typed store errors without changing the page", () => {
+    const store = createStore({
+      ids: ["page_alpha"],
+      instants: [firstInstant],
+    });
+    const existing = store.create(
+      createPageInput({
+        title: "Existing memo",
+        body: documentWithText("block_alpha", "Existing text"),
+      }),
+    );
+    const preUpdatePage = store.get(existing.id);
+
+    expectPageStoreError(
+      () => store.update(existing.id, { body: nonCloneableDocument() }),
+      "PAGE_CLONE_FAILED",
+      existing.id,
+    );
+    expect(store.get(existing.id)).toStrictEqual(preUpdatePage);
+    expect(store.list()).toStrictEqual([preUpdatePage]);
   });
 });
 
