@@ -216,6 +216,20 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts`.
   - `git diff` checks for native/IPC/package surfaces.
 
+### Linnaeus (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-event-store.test.ts`.
+- Commit:
+  - `43f0c2e Linnaeus(test)(Add in-memory Event Store): cover final raw-error cases`.
+- Coverage added:
+  - Non-string list filters using `Symbol` or hostile `toString`/`valueOf` must fail with typed `EventStoreError` and `EVENT_IDENTITY_REQUIRED`.
+  - Proxy payload reflection traps for `getPrototypeOf`, `ownKeys`, and `getOwnPropertyDescriptor` must fail with typed `EventStoreError` and `EVENT_PAYLOAD_NOT_JSON_COMPATIBLE`.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 20 tests with 18 passing and 2 failing: filter values still throw raw `TypeError`, and proxy payload traps still throw raw errors.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -230,4 +244,4 @@
 
 ## Next Action
 
-Spawn final review-fix test and implementation agents for the remaining P2 findings, then re-run targeted review and final gate.
+Spawn an `implementer` agent to normalize the remaining raw-error cases and make the focused tests pass.

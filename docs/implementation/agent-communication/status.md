@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:16 CST.
+Last updated: 2026-05-19 23:20 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-19 23:16 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final P2 test writer active.
+- Current phase: final P2 tests committed; ready for implementer.
 
 ## Active Agents
 
-- Linnaeus (`test_writer`, `019e40cf-3fec-7973-8552-b655827853ef`): adding final P2 tests for filter coercion and proxy/trap payload typed failures.
+- None.
 
 ## Recent Agent Outcomes
 
+- Linnaeus (`test_writer`) completed and was closed after adding final P2 tests.
+- Linnaeus's test commit: `43f0c2e Linnaeus(test)(Add in-memory Event Store): cover final raw-error cases`.
+- Parent confirmed expected red checks for Linnaeus's tests before the production fix.
 - Linnaeus (`test_writer`) was spawned for final TASK-005 P2 tests.
 - Targeted re-review round 1 completed with no P0/P1 findings, but two P2 findings remain: non-string filter error-detail coercion can throw raw errors, and proxy/trap payload reflection can throw raw errors.
 - Targeted re-review agents spawned for selected P1/P2 fixes.
@@ -110,6 +113,6 @@ Last updated: 2026-05-19 23:16 CST.
 
 ## Next Actions
 
-1. Wait for Linnaeus to report final P2 test results.
-2. Commit final P2 tests after focused validation.
-3. Spawn implementer after red/updated tests are committed.
+1. Commit Linnaeus outcome in the agent communication docs.
+2. Spawn implementer for final P2 raw-error normalization fixes.
+3. Run focused green checks after implementation.
