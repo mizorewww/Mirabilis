@@ -1,10 +1,18 @@
-import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
+import { defineConfig, mergeConfig } from "vitest/config";
+import viteConfig from "./vite.config";
 
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: "jsdom",
-    setupFiles: "./src/test/setup.ts",
-  },
+export default defineConfig(async (configEnv) => {
+  const appConfig = await (typeof viteConfig === "function"
+    ? viteConfig(configEnv)
+    : viteConfig);
+
+  return mergeConfig(
+    appConfig,
+    defineConfig({
+      test: {
+        environment: "jsdom",
+        setupFiles: "./src/test/setup.ts",
+      },
+    }),
+  );
 });

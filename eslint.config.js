@@ -12,6 +12,9 @@ const testFiles = [
   "**/*.{test,spec}.{js,jsx,ts,tsx}",
 ];
 
+const appSourceFiles = ["src/**/*.{ts,tsx}"];
+const nodeConfigFiles = ["eslint.config.js", "vite.config.ts", "vitest.config.ts"];
+
 export default defineConfig([
   {
     ignores: ["dist", "node_modules", "src-tauri/target"],
@@ -19,32 +22,33 @@ export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs}"],
     ...js.configs.recommended,
-    languageOptions: {
-      ...js.configs.recommended.languageOptions,
-      globals: {
-        ...globals.node,
-      },
-    },
   },
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
     files: ["**/*.{ts,tsx}"],
   })),
   {
-    files: ["**/*.{ts,tsx}"],
+    files: appSourceFiles,
     languageOptions: {
       globals: {
         ...globals.browser,
+      },
+    },
+  },
+  {
+    files: nodeConfigFiles,
+    languageOptions: {
+      globals: {
         ...globals.node,
       },
     },
   },
   {
-    files: ["**/*.{ts,tsx}"],
+    files: appSourceFiles,
     ...reactHooks.configs.flat.recommended,
   },
   {
-    files: ["**/*.{jsx,tsx}"],
+    files: ["src/**/*.{jsx,tsx}"],
     ...reactRefresh.configs.vite(),
   },
   {
