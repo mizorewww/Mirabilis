@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 21:38 CST.
+Last updated: 2026-05-19 21:40 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 21:38 CST.
 - Branch: `feat/task-004-in-memory-metadata-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance recorded; ready for test writer.
+- Current phase: test writer active.
 
 ## Active Agents
 
-- None.
+- Galileo (`test_writer`, `019e4076-ded9-7d51-a55a-c70b0e0dd27f`): writing failing Metadata Store acceptance tests in `src/test/core-metadata-store.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Galileo (`test_writer`) was spawned for TASK-004 failing Metadata Store acceptance tests.
 - Poincare (`planner`) completed TASK-004 pre-test planning.
 - Ramanujan (`docs_researcher`) completed TASK-004 current-docs research.
 - Euler (`deprecation_auditor`) completed TASK-004 risk/deprecation audit.
@@ -41,11 +42,12 @@ Last updated: 2026-05-19 21:38 CST.
 
 ## Current Dirty Files
 
+- `src/test/core-metadata-store.test.ts` is owned by Galileo while the test writer is active.
 - `docs/implementation/agent-communication/status.md` records TASK-004 orchestration state.
 - `docs/implementation/agent-communication/TASK-004-in-memory-metadata-store.md` records TASK-004 pre-test agent guidance.
 
 ## Next Actions
 
-1. Commit TASK-004 pre-test agent guidance.
-2. Spawn test writer for failing Metadata Store acceptance tests.
-3. Run focused red checks and commit the tests.
+1. Wait for Galileo to report test-writing results.
+2. Run focused red checks if needed and commit the tests.
+3. Spawn implementer after the expected failing-test signal is confirmed.
