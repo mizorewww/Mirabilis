@@ -245,6 +245,19 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 20 tests passing.
   - `bun run lint`.
 
+### Final Targeted Re-review Round
+
+- Status: completed with one remaining P2 item.
+- Agents:
+  - Ptolemy (`reviewer`) reported no remaining correctness P0/P1/P2 for non-string filters and proxy payload reflection traps.
+  - Dewey (`security_reviewer`) reported no P0/P1 findings, but found one remaining P2: hostile `list(options)` proxy traps can throw raw errors while reading `pageId` or `namespace` before filter normalization.
+- Result:
+  - Non-string filter values and proxy payload traps are fixed.
+  - Remaining P2: normalize proxy/trap errors from reading list option properties into typed `EventStoreError` failures.
+- Checks reported:
+  - `bun run test:frontend -- src/test/core-event-store.test.ts`.
+  - Tauri/IPC/filesystem diff checks showed no broadened native exposure.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -259,4 +272,4 @@
 
 ## Next Action
 
-Run final targeted re-review, then final gate.
+Spawn final test and implementation agents for hostile `list(options)` proxy traps, then re-run targeted review and final gate.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:26 CST.
+Last updated: 2026-05-19 23:28 CST.
 
 ## Current Task
 
@@ -8,15 +8,15 @@ Last updated: 2026-05-19 23:26 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final targeted re-review active.
+- Current phase: final targeted re-review complete; one P2 fix pending.
 
 ## Active Agents
 
-- Ptolemy (`reviewer`, `019e40d8-14b3-70b1-8a91-ece69aae6434`): final targeted correctness re-review for raw-error cases.
-- Dewey (`security_reviewer`, `019e40d8-1a7f-7671-9619-c21e22e650e9`): final targeted security re-review for raw-error cases.
+- None.
 
 ## Recent Agent Outcomes
 
+- Final targeted re-review completed. Ptolemy reported no remaining correctness P0/P1/P2; Dewey found one remaining P2 where hostile `list(options)` proxy traps can throw raw errors before filter normalization.
 - Final targeted re-review agents spawned for raw-error normalization cases.
 - Mendel (`implementer`) completed and was closed after normalizing final raw-error cases.
 - Mendel's implementation commit: `b8728e0 Mendel(implementation)(Add in-memory Event Store): normalize raw error cases`.
@@ -119,6 +119,6 @@ Last updated: 2026-05-19 23:26 CST.
 
 ## Next Actions
 
-1. Wait for final targeted re-review agents.
-2. Run final gate if no P0/P1/P2 remain.
-3. Update progress and merge TASK-005.
+1. Commit final targeted re-review findings.
+2. Spawn test writer for hostile `list(options)` proxy traps.
+3. Spawn implementer after red/updated tests are committed.
