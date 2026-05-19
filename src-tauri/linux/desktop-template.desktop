@@ -1,0 +1,9 @@
+[Desktop Entry]
+Categories={{categories}}
+Comment={{comment}}
+Exec={{exec}}
+StartupWMClass=mirabilis
+Icon=/usr/share/icons/hicolor/scalable/apps/mirabilis.svg
+Name={{name}}
+Terminal=false
+Type=Application
