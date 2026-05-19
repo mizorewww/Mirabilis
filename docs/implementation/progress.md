@@ -14,13 +14,13 @@ Status markers:
 - Mode: autonomous task-by-task development.
 - Canonical branch: `master`.
 - Task source: `docs/implementation/task-index.md`.
-- Workflow source: `.agents/skills/mirabilis-dev-runner/SKILL.md`.
+- Workflow source: `.codex/skills/mirabilis-dev-runner/SKILL.md`.
 - Selection rule: choose the first `[ ]` task whose dependencies are `[x]` or only "preferred".
 - Completion rule: all acceptance criteria met, focused tests pass, local gate appropriate to the change passes, P0/P1 findings fixed, task branch merged to `master`, and task line changed to `[x]`.
 
 ## Milestone M0: Agent and test substrate
 
-- [ ] TASK-001: Establish local check scripts and test dependencies
+- [x] TASK-001: Establish local check scripts and test dependencies
 
 ## Milestone M1: Core data kernel
 
@@ -78,3 +78,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 19:51 CST - TASK-001 completed
+
+- Branch: `feat/task-001-local-check-scripts-v2`.
+- Commits: `3a6f273` test, `dfe3494` implementation, `6057581` local-check docs, `ebee421` review fixes, `3f6e85f` Node prerequisite docs, `be08473` gate wording docs.
+- Delivered: Bun package scripts for `typecheck`, `lint`, `test:frontend`, `fmt:rust`, `clippy`, `test:rust`, `check:quick`, and `check:full`; Vitest/jsdom/React Testing Library setup; ESLint flat config for TypeScript, React Hooks, React Refresh, Testing Library, and jest-dom; focused frontend test proving the stack.
+- Validation: `bun run check:quick` passed, `bun run build` passed, review agents reported no P0/P1 findings, security review found no security-sensitive changes.
+- External docs verified by agents: Vite 7 Node.js support, Vitest config/`mergeConfig`, Testing Library React and user-event guidance, jest-dom Vitest setup, ESLint flat config, and Tauri/Cargo local check commands.
+- Remaining risk: `bun run check:full` was not run because TASK-001 does not touch packaging, IPC, permissions, filesystem, persistence, or release behavior.
+
+### 2026-05-19 19:02 CST - TASK-001 started
+
+- Branch: `feat/task-001-local-check-scripts-v2`.
+- Scope: establish Bun scripts for typecheck, lint, frontend tests, Rust checks, quick/full gates, and document the exact commands.
+- Agent orchestration: started fresh from `master` after validating project agent TOML and specialized `test_writer`/`implementer` health checks.
