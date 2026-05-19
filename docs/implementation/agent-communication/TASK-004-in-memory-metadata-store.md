@@ -160,6 +160,26 @@
   - `bun run check:quick` passed in Averroes' security review.
   - `git diff --check master...HEAD`.
 
+### Euclid (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-metadata-store.test.ts`.
+- Commit:
+  - `97ac84a Euclid(test)(Add in-memory Metadata Store): add review-fix coverage`.
+- Coverage added:
+  - Significant whitespace must be preserved for exact identities and list filters.
+  - Delimiter-style exact identities must remain distinct.
+  - Rejected replacements must leave existing records unchanged.
+  - Arrays with own non-index string or symbol properties must be rejected.
+  - Default metadata IDs must fall back to `getRandomValues` when `randomUUID` is absent.
+  - `MetadataJsonValue` must export from the `src/core/types` barrel.
+- Parent confirmed expected red signal before implementation fix:
+  - `bun run typecheck` fails because `../core/types` does not export `MetadataJsonValue`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts` runs 20 tests with 18 passing and 2 failing: significant whitespace is trimmed, and array own properties are accepted.
+- Commit note:
+  - The post-commit auto-push hung in SSH after the local commit was created. Parent terminated the stuck push process, then manually ran `git push -u origin feat/task-004-in-memory-metadata-store` successfully.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -172,4 +192,4 @@
 
 ## Next Action
 
-Spawn review-fix test and implementation agents for the P2 findings, then re-run focused checks and final gate.
+Wait for review-fix implementer, then run focused checks and final gate.
