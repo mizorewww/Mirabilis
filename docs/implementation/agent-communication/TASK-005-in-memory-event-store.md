@@ -348,6 +348,13 @@
   - Read-only runtime probe for hostile append field reads, list option traps, and payload reflection traps.
   - Native/IPC/package diff and scan.
 
+### Final Gate
+
+- Status: passed.
+- Checks:
+  - `bun run check:quick`.
+  - `bun run build`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -362,4 +369,4 @@
 
 ## Next Action
 
-Run final gate, update progress, and merge TASK-005.
+Commit progress update and merge TASK-005.
