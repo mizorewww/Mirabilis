@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:32 CST.
+Last updated: 2026-05-19 22:33 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-19 22:32 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: task start.
+- Current phase: pre-test guidance agents active.
 
 ## Active Agents
 
-- None.
+- Carver (`planner`, `019e40a8-0fb4-7750-bee3-c787dac68d71`): planning TASK-005 Event Store API, contract, and tests.
+- Herschel (`docs_researcher`, `019e40a8-12a8-7700-aee8-3790bbbf8664`): researching current docs and TASK-005 implementation guidance.
+- Harvey (`deprecation_auditor`, `019e40a8-165c-7751-b3b4-a0e03a1a8098`): auditing API/deprecation and edge-case risks.
 
 ## Recent Agent Outcomes
 
+- Carver (`planner`), Herschel (`docs_researcher`), and Harvey (`deprecation_auditor`) were spawned for TASK-005 pre-test guidance.
 - TASK-004 was merged to `master`; TASK-005 has started from latest `master`.
 - `.codex/agents/*.toml` parsed successfully for TASK-005.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
@@ -82,6 +85,6 @@ Last updated: 2026-05-19 22:32 CST.
 
 ## Next Actions
 
-1. Commit TASK-005 start/progress state.
-2. Spawn planner, docs researcher, and deprecation auditor for TASK-005.
-3. Spawn test writer after pre-test guidance is available.
+1. Wait for TASK-005 pre-test guidance agents.
+2. Record their recommendations in TASK-005 agent notes.
+3. Spawn test writer after guidance is available.
