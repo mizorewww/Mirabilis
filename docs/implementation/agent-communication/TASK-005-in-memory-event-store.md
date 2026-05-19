@@ -165,6 +165,23 @@
   - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts`.
   - `git diff --check master...HEAD`.
 
+### Mencius (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-event-store.test.ts`.
+- Commit:
+  - `74cc716 Mencius(test)(Add in-memory Event Store): add review-fix coverage`.
+- Coverage added:
+  - Duplicate event identities remain append-only and ordered.
+  - Runtime non-string identity, source, and filter values are rejected before trimming.
+  - Nested non-JSON-compatible payload values are rejected.
+  - Accessor/getter payload descriptors are rejected without executing plugin-controlled getter logic.
+  - Deep payload validation failures surface as typed `EventStoreError` failures instead of raw stack errors.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 18 tests with 15 passing and 3 failing: non-string runtime values are accepted, accessor payloads throw raw getter errors, and deep payloads throw raw `RangeError`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -179,4 +196,4 @@
 
 ## Next Action
 
-Spawn review-fix test and implementation agents for the P1/P2 findings, then re-run focused checks and final gate.
+Spawn an `implementer` agent to fix the P1/P2 review findings and make the focused tests pass.
