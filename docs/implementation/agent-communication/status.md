@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 21:51 CST.
+Last updated: 2026-05-19 21:52 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 21:51 CST.
 - Branch: `feat/task-004-in-memory-metadata-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
 - Parent role: orchestration only.
-- Current phase: failing tests committed; ready for implementer.
+- Current phase: implementer active.
 
 ## Active Agents
 
-- None.
+- Darwin (`implementer`, `019e4082-7270-77d3-bd1f-ec32ac19cb4d`): implementing the minimal in-memory Metadata Store production code.
 
 ## Recent Agent Outcomes
 
+- Darwin (`implementer`) was spawned for TASK-004 production implementation.
 - Galileo (`test_writer`) completed and was closed after adding Metadata Store acceptance tests.
 - Galileo's test commit: `d8f7dd0 Galileo(test)(Add in-memory Metadata Store): add metadata store acceptance tests`.
 - Parent installed worktree dependencies with `bun install --frozen-lockfile`.
@@ -48,9 +49,10 @@ Last updated: 2026-05-19 21:51 CST.
 
 - `docs/implementation/agent-communication/status.md` records TASK-004 orchestration state.
 - `docs/implementation/agent-communication/TASK-004-in-memory-metadata-store.md` records TASK-004 pre-test agent guidance.
+- Darwin owns the TASK-004 production implementation scope while active.
 
 ## Next Actions
 
-1. Commit Galileo outcome in the agent communication docs.
-2. Spawn implementer for the minimal Metadata Store production code.
-3. Run focused green checks after implementation.
+1. Wait for Darwin to report implementation results.
+2. Run focused green checks after implementation.
+3. Commit implementation if checks pass.
