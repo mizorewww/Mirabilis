@@ -3,7 +3,11 @@ export type {
   MarkdownPage,
   StructuredMarkdownDocument,
 } from "./page";
-export type { MetadataRecord, MetadataValueType } from "./metadata";
+export type {
+  MetadataJsonValue,
+  MetadataRecord,
+  MetadataValueType,
+} from "./metadata";
 export type { AppEvent } from "./event";
 export type {
   FilterCondition,

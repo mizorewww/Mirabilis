@@ -171,15 +171,15 @@ export function createInMemoryMetadataStore(
 
 function normalizeIdentity(input: MetadataIdentity): MetadataIdentity {
   const identity = {
-    pageId: input.pageId.trim(),
-    namespace: input.namespace.trim(),
-    key: input.key.trim(),
+    pageId: input.pageId,
+    namespace: input.namespace,
+    key: input.key,
   };
 
   if (
-    identity.pageId.length === 0 ||
-    identity.namespace.length === 0 ||
-    identity.key.length === 0
+    identity.pageId.trim().length === 0 ||
+    identity.namespace.trim().length === 0 ||
+    identity.key.trim().length === 0
   ) {
     throw new MetadataStoreError("METADATA_IDENTITY_REQUIRED", input);
   }
@@ -231,9 +231,7 @@ function normalizeFilter(
     });
   }
 
-  const trimmedValue = value.trim();
-
-  if (trimmedValue.length === 0) {
+  if (value.trim().length === 0) {
     throw new MetadataStoreError("METADATA_IDENTITY_REQUIRED", {
       pageId: options.pageId ?? "",
       namespace: options.namespace ?? "",
@@ -241,7 +239,7 @@ function normalizeFilter(
     });
   }
 
-  return trimmedValue;
+  return value;
 }
 
 function matchesFilters(
@@ -351,6 +349,26 @@ function assertJsonArrayCompatible(
   identity: MetadataIdentity,
   seen: WeakSet<object>,
 ): void {
+  if (Object.getOwnPropertySymbols(value).length > 0) {
+    throw new MetadataStoreError(
+      "METADATA_VALUE_NOT_JSON_COMPATIBLE",
+      identity,
+    );
+  }
+
+  for (const propertyName of Object.getOwnPropertyNames(value)) {
+    if (propertyName === "length") {
+      continue;
+    }
+
+    if (!isValidPresentArrayIndexProperty(value, propertyName)) {
+      throw new MetadataStoreError(
+        "METADATA_VALUE_NOT_JSON_COMPATIBLE",
+        identity,
+      );
+    }
+  }
+
   for (let index = 0; index < value.length; index += 1) {
     if (!(index in value)) {
       throw new MetadataStoreError(
@@ -361,6 +379,21 @@ function assertJsonArrayCompatible(
 
     assertJsonCompatible(value[index], identity, seen);
   }
+}
+
+function isValidPresentArrayIndexProperty(
+  value: unknown[],
+  propertyName: string,
+): boolean {
+  const index = Number(propertyName);
+
+  return (
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index < value.length &&
+    String(index) === propertyName &&
+    Object.prototype.hasOwnProperty.call(value, propertyName)
+  );
 }
 
 function assertJsonObjectCompatible(
