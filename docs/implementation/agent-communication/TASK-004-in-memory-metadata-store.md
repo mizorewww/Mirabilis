@@ -112,6 +112,25 @@
   - `bun run typecheck` failed because `../core` does not export `MetadataStoreError`, `createInMemoryMetadataStore`, `ListMetadataOptions`, `MetadataJsonValue`, `MetadataStore`, or `SetMetadataInput`.
   - `bun run test:frontend -- src/test/core-metadata-store.test.ts` failed 15 tests because `createInMemoryMetadataStore` is not implemented/exported yet.
 
+### Darwin (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/metadata-store.ts`.
+  - `src/core/stores/index.ts`.
+  - `src/core/index.ts`.
+  - `src/core/types/metadata.ts`.
+- Commit:
+  - `1c7e95b Darwin(implementation)(Add in-memory Metadata Store): implement metadata store`.
+- Behavior implemented:
+  - In-memory Metadata Store with `set`, `get`, `list`, and `delete`.
+  - Exact `(pageId, namespace, key)` identity with `sourcePluginId` required but outside identity.
+  - Stable creation order, replacement without duplicate rows, exact filters, delete-then-set freshness, typed errors, deterministic ID/time injection, default `metadata_` IDs, runtime JSON compatibility checks, and defensive clone boundaries.
+- Checks run by Darwin and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts`.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -124,4 +143,4 @@
 
 ## Next Action
 
-Spawn an `implementer` agent to add the minimal in-memory Metadata Store implementation and make the focused tests pass.
+Spawn review agents for TASK-004 and address any P0/P1 findings before final gate and merge.
