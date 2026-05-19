@@ -275,15 +275,17 @@
 
 ### Hegel (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e40df-194d-7eb0-8105-1ac0fbc4917d`.
 - Ownership:
   - `src/core/stores/event-store.ts` only.
+- Commit:
+  - `83bc586 Hegel(implementation)(Add in-memory Event Store): normalize list option proxy traps`.
 - Assignment:
   - Normalize thrown errors from reading `list(options).pageId` or `list(options).namespace` into typed `EventStoreError` failures with `EVENT_IDENTITY_REQUIRED`.
   - Avoid hostile value coercion in error details.
   - Preserve normal list filtering, append immutability, and payload validation behavior.
-- Expected checks:
+- Checks run by Hegel and repeated by parent:
   - `bun run typecheck`.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 22 tests passing.
   - `bun run lint`.
@@ -302,4 +304,4 @@
 
 ## Next Action
 
-Wait for Hegel's implementation result, then repeat focused checks and commit.
+Run final targeted re-review, then final gate.
