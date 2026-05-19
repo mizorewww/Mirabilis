@@ -26,7 +26,7 @@ Status markers:
 
 - [x] TASK-002: Create TypeScript core domain types
 - [x] TASK-003: Add in-memory Page Store
-- [ ] TASK-004: Add in-memory Metadata Store
+- [~] TASK-004: Add in-memory Metadata Store
 - [ ] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
 - [ ] TASK-007: Add Command Registry and Command Bus
@@ -78,6 +78,13 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 21:34 CST - TASK-004 started
+
+- Branch: `feat/task-004-in-memory-metadata-store`.
+- Task: Add in-memory Metadata Store.
+- Scope: implement in-memory metadata set/get/list/delete behavior using TASK-002 Core domain types while preserving JSON-compatible values, required `sourcePluginId`, and plugin-agnostic storage semantics.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-004-in-memory-metadata-store.md`.
 
 ### 2026-05-19 21:31 CST - TASK-003 completed
 
