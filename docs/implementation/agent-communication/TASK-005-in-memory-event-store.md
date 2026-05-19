@@ -290,6 +290,14 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 22 tests passing.
   - `bun run lint`.
 
+### Final Targeted Re-review Round 2
+
+- Status: active.
+- Agents:
+  - Aristotle the 2nd (`reviewer`, `019e40e4-abc8-7ce0-a23c-8a33810dc6ac`): correctness review for TASK-005 acceptance and final raw-error normalization.
+  - Gibbs the 2nd (`security_reviewer`, `019e40e4-bad4-70f2-867f-d8adfd90522f`): security review for hostile plugin-shaped inputs and native/IPC surface checks.
+  - Lagrange the 2nd (`test_quality_reviewer`, `019e40e4-c79f-7da2-9600-ead0fbabb077`): test-quality review for TASK-005 acceptance coverage.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -304,4 +312,4 @@
 
 ## Next Action
 
-Run final targeted re-review, then final gate.
+Wait for final targeted re-review agents, then run final gate if no P0/P1/P2 remain.
