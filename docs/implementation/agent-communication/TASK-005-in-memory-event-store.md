@@ -182,6 +182,22 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 18 tests with 15 passing and 3 failing: non-string runtime values are accepted, accessor payloads throw raw getter errors, and deep payloads throw raw `RangeError`.
 
+### Lovelace (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/event-store.ts`.
+- Commit:
+  - `147ca5a Lovelace(implementation)(Add in-memory Event Store): fix review edge cases`.
+- Fixes implemented:
+  - Runtime string validation before trimming identity, source plugin, and list filter values.
+  - Payload validation rejects own accessor descriptors without executing getters.
+  - Payload validation uses a conservative depth/node budget so pathological nesting returns `EVENT_PAYLOAD_NOT_JSON_COMPATIBLE` instead of raw `RangeError`.
+- Checks run by Lovelace and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` with 18 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -196,4 +212,4 @@
 
 ## Next Action
 
-Spawn an `implementer` agent to fix the P1/P2 review findings and make the focused tests pass.
+Run targeted re-review of selected P1/P2 fixes, then final gate.
