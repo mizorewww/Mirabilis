@@ -156,31 +156,28 @@ function normalizeListOptions(options: ListEventsOptions): ListEventsOptions {
   const filters: ListEventsOptions = {};
 
   if (options.pageId !== undefined) {
-    filters.pageId = normalizeFilter(options.pageId, options);
+    filters.pageId = normalizeFilter(options.pageId);
   }
 
   if (options.namespace !== undefined) {
-    filters.namespace = normalizeFilter(options.namespace, options);
+    filters.namespace = normalizeFilter(options.namespace);
   }
 
   return filters;
 }
 
-function normalizeFilter(
-  value: unknown,
-  options: ListEventsOptions,
-): string {
+function normalizeFilter(value: unknown): string {
   if (typeof value !== "string") {
     throw new EventStoreError(
       "EVENT_IDENTITY_REQUIRED",
-      `pageId=${options.pageId ?? ""}/namespace=${options.namespace ?? ""}`,
+      "event list filters must use string values",
     );
   }
 
   if (value.trim().length === 0) {
     throw new EventStoreError(
       "EVENT_IDENTITY_REQUIRED",
-      `pageId=${options.pageId ?? ""}/namespace=${options.namespace ?? ""}`,
+      "event list filters must not be blank",
     );
   }
 
@@ -202,6 +199,26 @@ function assertJsonCompatible(
     visitedNodeCount: 0,
   },
   depth = 0,
+): void {
+  try {
+    assertJsonCompatibleValue(value, identity, state, depth);
+  } catch (error) {
+    if (error instanceof EventStoreError) {
+      throw error;
+    }
+
+    throw new EventStoreError(
+      "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+      describeIdentity(identity),
+    );
+  }
+}
+
+function assertJsonCompatibleValue(
+  value: unknown,
+  identity: EventIdentity,
+  state: JsonCompatibilityValidationState,
+  depth: number,
 ): void {
   assertPayloadBudgetAvailable(identity, state, depth);
 
