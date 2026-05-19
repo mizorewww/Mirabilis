@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:07 CST.
+Last updated: 2026-05-19 22:08 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 22:07 CST.
 - Branch: `feat/task-004-in-memory-metadata-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
 - Parent role: orchestration only.
-- Current phase: review complete; P2 fixes pending.
+- Current phase: review-fix test writer active.
 
 ## Active Agents
 
-- None.
+- Euclid (`test_writer`, `019e4090-9714-78e3-8dca-c388e5e2d935`): adding selected P2 review-fix tests in `src/test/core-metadata-store.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Euclid (`test_writer`) was spawned for selected TASK-004 P2 review-fix tests.
 - Review round 1 completed with no P0/P1 findings.
 - P2 fixes selected for this task: exact identity whitespace handling, delimiter-style identity coverage, rejected-replacement atomicity, array own-property rejection, metadata ID fallback coverage, and `MetadataJsonValue` types barrel export.
 - P2/P3 risk recorded for later layers: plugin-facing Metadata Service or IPC must add caller-bound authorization and size/depth limits before exposing metadata writes or enumeration.
@@ -59,6 +60,6 @@ Last updated: 2026-05-19 22:07 CST.
 
 ## Next Actions
 
-1. Commit review summary in agent communication docs.
-2. Spawn test writer for selected P2 review-fix tests.
+1. Wait for Euclid to report review-fix test results.
+2. Commit review-fix tests after focused validation.
 3. Spawn implementer after red/updated tests are committed.
