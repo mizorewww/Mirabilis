@@ -80,6 +80,18 @@
 - Rejected `save` or `update` must not mutate existing stored filters.
 - Use Event Store's hardened validation style rather than the older Metadata Store validation pattern.
 
+### Pauli the 2nd (`test_writer`)
+
+- Status: active.
+- Agent id: `019e40fe-1b68-78d2-92de-17083eb62579`.
+- Ownership:
+  - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Write failing TASK-006 acceptance tests for public exports, CRUD, update semantics, list filters, Query AST validation, typed errors, and defensive clone boundaries.
+  - Do not edit production code.
+- Expected signal:
+  - `bun run typecheck` and/or `bun run test:frontend -- src/test/core-filter-store.test.ts` should fail because Filter Store production exports are not implemented yet.
+
 ## Next Action
 
-Spawn test writer for failing Filter Store acceptance tests.
+Wait for Pauli the 2nd's red tests, then commit them.
