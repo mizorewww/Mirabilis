@@ -101,9 +101,21 @@ The main Codex thread is the parent orchestration agent. Its job is to route wor
 - Delegate planning, docs research, TDD tests, implementation, review, security, docs, and release checks to the corresponding project agents.
 - Give each agent a concrete prompt with worktree path, task ID, write scope, read-only/write permission, expected checks, and exact output format.
 - After spawning an agent that owns a blocking step, wait for that agent or use `send_input` to clarify. Do not implement the same step in the parent thread while the delegated agent owns it.
+- Do not assume a quiet agent has stopped. For a long-running blocking step, wait first; if the wait exceeds the expected window, send one short status request such as "report blocked or keep working, and return when finished", then wait again.
 - When steps depend on each other, make the dependency explicit: for example, `implementer` starts only after `test_writer` reports the failing test files and expected failure.
-- If an agent becomes unavailable, hangs without output, or writes in the wrong worktree, stop the agent, clean the unintended changes, record the failure, and debug agent configuration before falling back to parent-thread work.
+- Stop an agent only when it reports a blocker, remains silent after a status request with no useful file changes/output, writes in the wrong worktree, or must be cancelled to protect the task. Record the stop reason in the run log or commit/progress context when it affects the task.
 - Keep the parent thread responsible for integration: review changed files, run checks, stage focused commits, update progress, merge, and report.
+
+## Agent Communication State
+
+Agent outputs must not live only in chat. Persist the parts needed for orchestration in `docs/implementation/agent-communication/`.
+
+- `docs/implementation/agent-communication/status.md` is the single live status document for current orchestration state.
+- Each active task gets one task-specific note file, for example `docs/implementation/agent-communication/TASK-002-core-domain-types.md`.
+- Record agent nickname, role, status, write scope, files changed, checks run, recommendations, parent decision, and next action.
+- When an agent is quiet, record whether the parent is waiting, has sent a status ping, or has stopped/replaced it. Do not mark silence as failure until the wait-and-ping sequence has happened.
+- Keep full transcripts out of these files. Write concise summaries and decisions.
+- `docs/implementation/progress.md` tracks durable roadmap completion; agent communication files track in-flight coordination and why decisions were made.
 
 ## Branch Flow
 
@@ -228,7 +240,7 @@ Commit after the expected red test:
 
 ```bash
 git add .
-git commit -m "test: add <feature> acceptance tests"
+git commit -m "<test-agent-name>(test)(<task name>): add <feature> acceptance tests"
 ```
 
 ## Implementation Prompt
@@ -251,7 +263,7 @@ Commit after green focused tests:
 
 ```bash
 git add .
-git commit -m "feat: implement <feature>"
+git commit -m "<implementer-agent-name>(implementation)(<task name>): implement <feature>"
 ```
 
 ## Review Prompt
@@ -309,18 +321,30 @@ bun run check:full
 
 ## Commit Shape
 
+Commit messages must identify the producing agent, work category, human-readable task name, and concrete change:
+
+```text
+<agent-name>(<category>)(<task name>): <specific change>
+```
+
+Use the spawned agent nickname when an agent produced the patch. If no nickname is available, use the role name such as `test_writer`, `implementer`, or `doc_writer`. Use `Codex(<category>)(<task name or topic>)` only for parent-thread orchestration, progress, merge, or docs/config-only commits made directly by the parent.
+
+Use the task name from `docs/implementation/task-index.md`, for example `Create TypeScript core domain types`, instead of relying on `TASK-002` alone.
+
 Good history:
 
 ```text
-test: add failing tests for project creation
-feat: implement project creation command and UI flow
-refactor: simplify project creation validation
-docs: document project creation IPC contract
-fix: address review findings for project creation
+Plato(test)(Create project command): add project creation acceptance tests
+Newton(implementation)(Create project command): implement command and UI flow
+Curie(refactor)(Create project command): simplify validation
+Hooke(docs)(Create project command): document IPC contract
+Turing(review-fix)(Create project command): address review findings
+Codex(progress)(Create project command): mark task complete
 ```
 
 Bad history:
 
 ```text
 feat: implement everything
+fix: address review findings
 ```

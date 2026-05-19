@@ -36,10 +36,10 @@ For each selected task:
 4. Spawn `docs_researcher` and `deprecation_auditor` for current official docs when the task touches Tauri, React, Rust crates, Vite, Vitest, Testing Library, IPC, filesystem, permissions, or dependencies.
 5. Spawn `test_writer` to write failing tests first. It must not write production code. Wait for its result before proceeding.
 6. Run the focused failing-test command and confirm it fails for the expected reason.
-7. Commit tests with `test: add <task-id> <feature> acceptance tests`.
+7. Commit tests with `<agent-name>(test)(<task name>): add <feature> acceptance tests`.
 8. Spawn `implementer` to write minimum production code. Wait for its result before taking over implementation work.
 9. Run focused tests until green.
-10. Commit implementation with `feat: implement <task-id> <feature>` or the appropriate conventional prefix.
+10. Commit implementation with `<agent-name>(implementation)(<task name>): implement <feature>` or the appropriate category.
 11. Refactor only if needed, without behavior changes, and commit separately.
 12. Spawn review agents in parallel: `pr_explorer`, `reviewer`, `deprecation_auditor`, `security_reviewer`, `docs_researcher`, `test_quality_reviewer`, and `doc_writer`.
 13. Fix P0/P1 findings. Commit fixes and docs separately.
@@ -52,6 +52,15 @@ For each selected task:
 
 The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed or was explicitly cancelled, and that fallback reason is recorded.
 
+Do not treat agent silence as failure by itself. For a long-running blocking step, wait first, send one concise status request if needed, and wait again. Stop or replace the agent only if it reports a blocker, remains silent after the status request with no useful output or file changes, writes in the wrong worktree, or must be cancelled to protect the worktree.
+
+Persist agent coordination under `docs/implementation/agent-communication/`:
+
+- Keep `docs/implementation/agent-communication/status.md` as the single live orchestration status document.
+- Keep one task-specific communication file per active task, named from the task ID and slug.
+- Summarize each agent's role, nickname, status, files changed, checks run, recommendations, parent decision, and next action.
+- Keep `docs/implementation/progress.md` for durable roadmap status; use agent communication files for in-flight coordination and decisions.
+
 ## Light Path For Config Or Docs Only
 
 Use this path for Codex config, AGENTS.md, agent TOML, hooks, workflow docs, or task-index/progress updates:
@@ -60,7 +69,7 @@ Use this path for Codex config, AGENTS.md, agent TOML, hooks, workflow docs, or 
 2. Patch only docs/config/hook files.
 3. Validate TOML, shell syntax, specialized agent spawn health, and `codex --strict-config doctor --summary --ascii` when relevant.
 4. Run `bun run build` only if repo behavior may have been touched.
-5. Commit with `docs:` or `chore:`.
+5. Commit with `<agent-name>(docs)(<topic>): <specific change>` or `<agent-name>(chore)(<topic>): <specific change>`.
 6. Update progress only if the change completes a tracked task.
 
 ## Task Selection Rules
@@ -75,6 +84,9 @@ Use this path for Codex config, AGENTS.md, agent TOML, hooks, workflow docs, or 
 
 - One task may have many commits.
 - One commit equals one explainable behavior change.
+- Commit messages must use `<agent-name>(<category>)(<task name>): <specific change>`.
+- Use the human-readable task name from `docs/implementation/task-index.md`, not only the task ID.
+- Use the spawned agent nickname when an agent produced the patch; use `Codex(<category>)(<task name or topic>)` only for parent-thread commits.
 - Do not squash away useful TDD history.
 - Do not merge into `master` until the task is `[x]`-ready.
 - If a task cannot complete in the current run, leave it `[~]` with a Run Log entry that says exactly how to resume.

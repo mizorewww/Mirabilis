@@ -58,6 +58,7 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 - Review-oriented agents may have full access, but they should stay read-only unless the parent task explicitly asks them to edit files.
 - The main Codex thread is the orchestration agent. It selects tasks, creates branches/worktrees, delegates to focused agents, waits for their outputs, integrates results, validates, commits, and merges.
 - The main thread must not take over test writing, implementation, or review work that has been delegated unless the delegated agent fails, is unavailable, or is explicitly cancelled; in that case, stop and record the reason before continuing.
+- Do not treat agent silence as failure by itself. For a blocking agent step, wait first; if it runs unusually long, send one concise status request and give it another wait window before stopping it. Stop only when the agent reports a blocker, writes in the wrong place, produces no edits/output after the status request, or must be cancelled to protect the worktree.
 - If a specialized agent type is unavailable, stop all running agents and debug `.codex/agents/*.toml` validity, project trust/config loading, and `features.multi_agent` before doing more development work.
 
 ## Development Order
@@ -80,15 +81,33 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 
 One commit should represent one explainable behavior change.
 
+Commit messages must identify who produced the change, the work category, the plain-English task name, and the concrete change:
+
+```text
+<agent-name>(<category>)(<task name>): <specific change>
+```
+
+Use the actual agent nickname when a spawned agent produced the patch, for example `Plato(test)(Create TypeScript core domain types): add core domain type tests`, `Newton(implementation)(Create TypeScript core domain types): add core type exports`, or `Turing(test-fix)(Create TypeScript core domain types): strengthen core type coverage`. Use `Codex(orchestration)(<task name>)` or `Codex(docs)(<topic>)` for parent-thread-only commits. If an agent nickname is unavailable, use the agent role name such as `test_writer(test)(<task name>)`.
+
+Use the task's human-readable name from `docs/implementation/task-index.md`, not just `TASK-xxx`. The task ID may appear in the specific change text when useful, but it is not a substitute for the task name.
+
 Recommended sequence:
 
-- `test: add failing tests for <feature>`
-- `feat: implement <feature>`
-- `refactor: simplify <feature>`
-- `docs: document <feature>`
-- `fix: address review findings for <feature>`
+- `<test-agent>(test)(<task name>): add failing tests for <feature>`
+- `<implementer-agent>(implementation)(<task name>): implement <feature>`
+- `<agent-or-codex>(refactor)(<task name>): simplify <feature>`
+- `<doc-agent>(docs)(<task name>): document <feature>`
+- `<fix-agent>(review-fix)(<task name>): address review findings for <feature>`
 
 Do not mix tests, implementation, refactors, docs, and review fixes into one catch-all commit.
+
+## Agent Communication State
+
+- Store durable agent summaries, recommendations, blocker notes, and parent decisions under `docs/implementation/agent-communication/`.
+- Keep `docs/implementation/agent-communication/status.md` as the single current orchestration status document. Update it when starting a task, receiving major agent findings, stopping or replacing an agent, completing review fixes, and before merging.
+- Use one task-specific communication file per active task, named from the task ID and slug, for example `docs/implementation/agent-communication/TASK-002-core-domain-types.md`.
+- Do not rely on chat history alone for agent recommendations. Summarize what each agent advised, whether the parent accepted or rejected it, the reason, and the next action.
+- `docs/implementation/progress.md` remains the durable roadmap ledger; `agent-communication/status.md` is the live orchestration state, and task-specific communication files hold detailed agent notes.
 
 ## Architecture Rules
 
