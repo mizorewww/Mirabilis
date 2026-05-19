@@ -550,6 +550,60 @@ describe("in-memory Event Store", () => {
     }
   });
 
+  it("rejects hostile non-string list filters with typed errors", () => {
+    const store = createStore({
+      ids: ["event_existing"],
+      instants: [firstInstant],
+    });
+    const existing = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: null,
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const rawToStringError = new Error("raw filter toString executed");
+    const rawValueOfError = { reason: "raw filter valueOf executed" };
+    const filterCases: Array<{
+      options: ListEventsOptions;
+      rawError?: unknown;
+      rejectTypeError?: boolean;
+    }> = [
+      {
+        options: { pageId: Symbol("page_alpha") as unknown as string },
+        rejectTypeError: true,
+      },
+      {
+        options: { namespace: Symbol("profile") as unknown as string },
+        rejectTypeError: true,
+      },
+      {
+        options: { pageId: nonStringWithThrowingToString(rawToStringError) },
+        rawError: rawToStringError,
+      },
+      {
+        options: {
+          namespace: nonStringWithThrowingValueOf(rawValueOfError),
+        },
+        rawError: rawValueOfError,
+      },
+    ];
+
+    for (const filterCase of filterCases) {
+      expectEventStoreError(
+        () => store.list(filterCase.options),
+        "EVENT_IDENTITY_REQUIRED",
+        {
+          rawError: filterCase.rawError,
+          rejectTypeError: filterCase.rejectTypeError,
+        },
+      );
+      expect(store.list()).toStrictEqual([existing]);
+    }
+  });
+
   it("accepts JSON-compatible runtime payloads while keeping payload typed unknown", () => {
     const acceptedPayloads: Array<{ label: string; payload: unknown }> = [
       { label: "string", payload: "compact" },
@@ -723,6 +777,82 @@ describe("in-memory Event Store", () => {
         "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
       );
       expect(accessorPayload.getterCalls()).toBe(0);
+      expect(store.list()).toStrictEqual([]);
+    });
+  });
+
+  it("normalizes proxy payload reflection failures to typed errors", () => {
+    const rawGetPrototypeOfError = new Error("raw getPrototypeOf trap");
+    const rawOwnKeysError = new Error("raw ownKeys trap");
+    const rawGetOwnPropertyDescriptorError = new Error(
+      "raw getOwnPropertyDescriptor trap",
+    );
+    const proxyPayloads: Array<{
+      label: string;
+      payload: unknown;
+      rawError: unknown;
+    }> = [
+      {
+        label: "getPrototypeOf",
+        payload: new Proxy(
+          {},
+          {
+            getPrototypeOf() {
+              throw rawGetPrototypeOfError;
+            },
+          },
+        ),
+        rawError: rawGetPrototypeOfError,
+      },
+      {
+        label: "ownKeys",
+        payload: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw rawOwnKeysError;
+            },
+          },
+        ),
+        rawError: rawOwnKeysError,
+      },
+      {
+        label: "getOwnPropertyDescriptor",
+        payload: new Proxy(
+          { value: "compact" },
+          {
+            ownKeys() {
+              return ["value"];
+            },
+            getOwnPropertyDescriptor() {
+              throw rawGetOwnPropertyDescriptorError;
+            },
+          },
+        ),
+        rawError: rawGetOwnPropertyDescriptorError,
+      },
+    ];
+
+    proxyPayloads.forEach((proxyPayload, index) => {
+      const store = createStore({
+        ids: [`event_proxy_payload_${index + 1}`],
+        instants: [firstInstant],
+      });
+
+      expectEventStoreError(
+        () =>
+          store.append(
+            eventInput({
+              pageId: "page_alpha",
+              namespace: "profile",
+              type: `preference.proxy.${proxyPayload.label}`,
+              payload: proxyPayload.payload,
+              sourcePluginId: "profile-plugin",
+            }),
+          ),
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+        { rawError: proxyPayload.rawError },
+      );
       expect(store.list()).toStrictEqual([]);
     });
   });
@@ -975,6 +1105,28 @@ function nonStringWithOwnTrim(value: string): string {
   } as unknown as string;
 }
 
+function nonStringWithThrowingToString(rawError: unknown): string {
+  return {
+    toString() {
+      throw rawError;
+    },
+    valueOf() {
+      throw rawError;
+    },
+  } as unknown as string;
+}
+
+function nonStringWithThrowingValueOf(rawError: unknown): string {
+  return {
+    toString() {
+      return {};
+    },
+    valueOf() {
+      throw rawError;
+    },
+  } as unknown as string;
+}
+
 function createObjectGetterPayload(): {
   payload: unknown;
   getterCalls: () => number;
@@ -1059,10 +1211,27 @@ function mutateFirstAccent(event: AppEvent, value: string): void {
   preferences.accents[0] = value;
 }
 
-function expectEventStoreError(action: () => unknown, code: string): void {
+type EventStoreErrorExpectationOptions = {
+  rawError?: unknown;
+  rejectTypeError?: boolean;
+};
+
+function expectEventStoreError(
+  action: () => unknown,
+  code: EventStoreError["code"],
+  options: EventStoreErrorExpectationOptions = {},
+): void {
   try {
     action();
   } catch (error) {
+    if (options.rawError !== undefined) {
+      expect(error).not.toBe(options.rawError);
+    }
+
+    if (options.rejectTypeError === true) {
+      expect(error).not.toBeInstanceOf(TypeError);
+    }
+
     expect(error).toBeInstanceOf(EventStoreError);
 
     if (error instanceof EventStoreError) {
