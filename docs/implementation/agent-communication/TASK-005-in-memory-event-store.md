@@ -98,6 +98,24 @@
   - Vitest global stubbing and type testing.
   - Vite 7 migration / Node support.
 
+### Sagan (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-event-store.test.ts`.
+- Commit:
+  - `25974af Sagan(test)(Add in-memory Event Store): add event store acceptance tests`.
+- Acceptance coverage:
+  - Public Event Store API/types from `../core`.
+  - Append-only behavior, append ordering, injected IDs/timestamps, default `event_` IDs, ISO timestamps, and `getRandomValues` fallback.
+  - Exact `pageId`, `namespace`, and combined filters, including page-less/global events.
+  - Required and trimmed `sourcePluginId`; blank identity/filter rejection; significant whitespace preservation.
+  - JSON-compatible payload acceptance/rejection matrix while `AppEvent.payload` remains `unknown`.
+  - Defensive clone boundaries, rejected append rollback, ID collision rollback, and `EVENT_CLONE_FAILED`.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` fails because `../core` does not export `EventStoreError`, `createInMemoryEventStore`, `AppendEventInput`, `CreateInMemoryEventStoreOptions`, `EventStore`, or `ListEventsOptions`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 13 tests and all fail because `createInMemoryEventStore` is not implemented/exported yet.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -112,4 +130,4 @@
 
 ## Next Action
 
-Spawn a `test_writer` agent to add failing Event Store acceptance tests in `src/test/core-event-store.test.ts`.
+Spawn an `implementer` agent to add the minimal in-memory Event Store implementation and make the focused tests pass.
