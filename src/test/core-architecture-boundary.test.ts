@@ -29,6 +29,8 @@ describe("Core architecture boundary", () => {
     const productionFiles = await listProductionSourceFiles(coreDirectory);
     const violations = new Map<string, Set<string>>();
 
+    expect(productionFiles).not.toHaveLength(0);
+
     for (const filePath of productionFiles) {
       const contents = await readFile(filePath, "utf8");
       const foundTerms = findForbiddenTerms(contents);
@@ -43,17 +45,7 @@ describe("Core architecture boundary", () => {
 });
 
 async function listProductionSourceFiles(directory: string): Promise<string[]> {
-  let entries;
-
-  try {
-    entries = await readdir(directory, { withFileTypes: true });
-  } catch (error) {
-    if (isMissingDirectoryError(error)) {
-      return [];
-    }
-
-    throw error;
-  }
+  const entries = await readdir(directory, { withFileTypes: true });
 
   const files = await Promise.all(
     entries.map(async (entry) => {
@@ -105,13 +97,5 @@ function splitIdentifier(identifier: string): string[] {
 function formatViolations(violations: Map<string, Set<string>>): string[] {
   return [...violations.entries()].map(
     ([filePath, terms]) => `${filePath}: ${[...terms].sort().join(", ")}`,
-  );
-}
-
-function isMissingDirectoryError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    "code" in error &&
-    (error as NodeJS.ErrnoException).code === "ENOENT"
   );
 }
