@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:25 CST.
+Last updated: 2026-05-19 23:26 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-19 23:25 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final P2 implementation committed; targeted re-review pending.
+- Current phase: final targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Ptolemy (`reviewer`, `019e40d8-14b3-70b1-8a91-ece69aae6434`): final targeted correctness re-review for raw-error cases.
+- Dewey (`security_reviewer`, `019e40d8-1a7f-7671-9619-c21e22e650e9`): final targeted security re-review for raw-error cases.
 
 ## Recent Agent Outcomes
 
+- Final targeted re-review agents spawned for raw-error normalization cases.
 - Mendel (`implementer`) completed and was closed after normalizing final raw-error cases.
 - Mendel's implementation commit: `b8728e0 Mendel(implementation)(Add in-memory Event Store): normalize raw error cases`.
 - Parent repeated green checks after Mendel: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
@@ -117,6 +119,6 @@ Last updated: 2026-05-19 23:25 CST.
 
 ## Next Actions
 
-1. Commit Mendel outcome in the agent communication docs.
-2. Run final targeted re-review of raw-error cases.
-3. Run final gate if no P0/P1/P2 remain.
+1. Wait for final targeted re-review agents.
+2. Run final gate if no P0/P1/P2 remain.
+3. Update progress and merge TASK-005.
