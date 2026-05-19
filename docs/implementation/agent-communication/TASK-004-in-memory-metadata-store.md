@@ -93,6 +93,25 @@
   - `crypto.randomUUID` and `crypto.getRandomValues`.
   - Vitest globals.
 
+### Galileo (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-metadata-store.test.ts`.
+- Commit:
+  - `d8f7dd0 Galileo(test)(Add in-memory Metadata Store): add metadata store acceptance tests`.
+- Acceptance coverage:
+  - Public exports from `../core`.
+  - Set, get, list, and delete by exact `pageId`, `namespace`, and `key`.
+  - Create versus replace semantics, stable list order, collision handling, filters, distinct identities, and delete-then-set freshness.
+  - Required `sourcePluginId` without making it part of identity.
+  - Defensive cloning at input, set return, get return, list return, delete return, and replacement boundaries.
+  - Allowed value types, value-type mismatch errors, JSON compatibility rejection, missing identity, not-found, clone failure, default IDs, and ISO timestamps.
+- Galileo's local check environment initially had no `node_modules`, so its first check run failed before reaching TypeScript or Vitest.
+- Parent installed dependencies with `bun install --frozen-lockfile` in this worktree, then confirmed the intended red signal:
+  - `bun run typecheck` failed because `../core` does not export `MetadataStoreError`, `createInMemoryMetadataStore`, `ListMetadataOptions`, `MetadataJsonValue`, `MetadataStore`, or `SetMetadataInput`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts` failed 15 tests because `createInMemoryMetadataStore` is not implemented/exported yet.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -105,4 +124,4 @@
 
 ## Next Action
 
-Spawn a `test_writer` agent to add failing acceptance tests in `src/test/core-metadata-store.test.ts` using these decisions.
+Spawn an `implementer` agent to add the minimal in-memory Metadata Store implementation and make the focused tests pass.
