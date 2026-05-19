@@ -154,16 +154,32 @@ function normalizeSourcePluginId(
 
 function normalizeListOptions(options: ListEventsOptions): ListEventsOptions {
   const filters: ListEventsOptions = {};
+  const pageId = readListOption(options, "pageId");
+  const namespace = readListOption(options, "namespace");
 
-  if (options.pageId !== undefined) {
-    filters.pageId = normalizeFilter(options.pageId);
+  if (pageId !== undefined) {
+    filters.pageId = normalizeFilter(pageId);
   }
 
-  if (options.namespace !== undefined) {
-    filters.namespace = normalizeFilter(options.namespace);
+  if (namespace !== undefined) {
+    filters.namespace = normalizeFilter(namespace);
   }
 
   return filters;
+}
+
+function readListOption(
+  options: ListEventsOptions,
+  field: keyof ListEventsOptions,
+): unknown {
+  try {
+    return options[field];
+  } catch {
+    throw new EventStoreError(
+      "EVENT_IDENTITY_REQUIRED",
+      "event list options must be readable",
+    );
+  }
 }
 
 function normalizeFilter(value: unknown): string {
