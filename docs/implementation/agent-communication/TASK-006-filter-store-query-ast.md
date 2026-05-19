@@ -38,9 +38,26 @@
 
 ## Current Status
 
-- Status: started.
-- Active agents: none.
+- Status: pre-test guidance active.
+- Active agents:
+  - Lovelace the 2nd (`planner`, `019e40f8-7c4b-7520-a448-d2a1ba8f7ffa`): planning scope, API, validation rules, test plan, and review risks.
+  - Cicero the 2nd (`docs_researcher`, `019e40f8-80e0-7560-9ecd-842a3eaf98ee`): researching current TypeScript/Vitest/structured clone guidance.
+  - James the 2nd (`deprecation_auditor`, `019e40f8-852d-7333-9c3f-2c92697660a6`): auditing deprecated/fragile API patterns and recursive validation risks.
+
+## Agent Handoffs
+
+### Pre-test Guidance Round
+
+- Status: active.
+- Agents:
+  - Lovelace the 2nd (`planner`).
+  - Cicero the 2nd (`docs_researcher`).
+  - James the 2nd (`deprecation_auditor`).
+- Purpose:
+  - Set TASK-006 boundaries before tests.
+  - Identify current docs and deprecation guidance.
+  - Produce a concrete test-writer handoff for Filter Store CRUD and Query AST validation.
 
 ## Next Action
 
-Spawn planner, docs researcher, and deprecation auditor for pre-test guidance.
+Wait for pre-test guidance agents and record parent decisions.

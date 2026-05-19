@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:59 CST.
+Last updated: 2026-05-20 00:01 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-19 23:59 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-006`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test guidance pending.
+- Current phase: pre-test guidance active.
 
 ## Active Agents
 
-- None.
+- Lovelace the 2nd (`planner`, `019e40f8-7c4b-7520-a448-d2a1ba8f7ffa`): planning TASK-006 scope, store API, validation rules, and test plan.
+- Cicero the 2nd (`docs_researcher`, `019e40f8-80e0-7560-9ecd-842a3eaf98ee`): researching current TypeScript/Vitest/structured clone guidance for TASK-006.
+- James the 2nd (`deprecation_auditor`, `019e40f8-852d-7333-9c3f-2c92697660a6`): auditing TASK-006 deprecation and implementation risks.
 
 ## Recent Agent Outcomes
 
+- Pre-test guidance agents spawned for TASK-006.
 - TASK-006 started from latest `master` after TASK-005 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-006.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
@@ -143,6 +146,6 @@ Last updated: 2026-05-19 23:59 CST.
 
 ## Next Actions
 
-1. Commit TASK-006 start state.
-2. Spawn planner/docs/deprecation agents for TASK-006.
-3. Use their guidance to assign failing tests.
+1. Wait for TASK-006 pre-test guidance agents.
+2. Record parent decisions from their outputs.
+3. Spawn test writer for failing Filter Store acceptance tests.
