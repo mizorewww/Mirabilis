@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:54 CST.
+Last updated: 2026-05-19 22:55 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-19 22:54 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: implementation committed; ready for review agents.
+- Current phase: review agents active.
 
 ## Active Agents
 
-- None.
+- Arendt (`pr_explorer`, `019e40bc-1b18-79b1-b7f9-7f0c76aeb9a3`): mapping changed files and review focus areas.
+- Dalton (`reviewer`, `019e40bc-2083-7d43-9a50-45d0d00b858c`): correctness and behavior review.
+- Descartes (`deprecation_auditor`, `019e40bc-273a-7483-8fce-6aa16c796a5c`): API/deprecation/version-risk audit.
+- Raman (`security_reviewer`, `019e40bc-2e22-7b82-9865-0750bd3e085a`): security and Core/plugin-boundary review.
+- Franklin (`test_quality_reviewer`, `019e40bc-35d4-7202-9f5b-b7716e2928ab`): test quality review.
+- Volta (`docs_researcher`, `019e40bc-3dd2-7cb0-b830-e14268073a03`): local docs alignment review.
 
 ## Recent Agent Outcomes
 
+- Review agents spawned for TASK-005.
 - Goodall (`implementer`) completed and was closed after implementing the in-memory Event Store.
 - Goodall's implementation commit: `e7dda1c Goodall(implementation)(Add in-memory Event Store): implement event store`.
 - Parent repeated green checks: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
@@ -95,6 +101,6 @@ Last updated: 2026-05-19 22:54 CST.
 
 ## Next Actions
 
-1. Commit Goodall outcome in the agent communication docs.
-2. Spawn review agents for TASK-005.
+1. Wait for active review agents.
+2. Record review findings in TASK-005 agent notes.
 3. Fix P0/P1 findings before final gate.
