@@ -550,6 +550,56 @@ describe("in-memory Event Store", () => {
     }
   });
 
+  it("normalizes hostile namespace append input property reads to typed errors", () => {
+    const rawError = new Error("raw namespace append input getter");
+
+    expectAppendReadFailurePreservesExistingEvent(
+      appendInputWithThrowingPropertyRead("namespace", rawError),
+      "EVENT_IDENTITY_REQUIRED",
+      rawError,
+    );
+  });
+
+  it("normalizes hostile type append input property reads to typed errors", () => {
+    const rawError = new Error("raw type append input getter");
+
+    expectAppendReadFailurePreservesExistingEvent(
+      appendInputWithThrowingPropertyRead("type", rawError),
+      "EVENT_IDENTITY_REQUIRED",
+      rawError,
+    );
+  });
+
+  it("normalizes hostile pageId append input property reads to typed errors", () => {
+    const rawError = new Error("raw pageId append input getter");
+
+    expectAppendReadFailurePreservesExistingEvent(
+      appendInputWithThrowingPropertyRead("pageId", rawError),
+      "EVENT_IDENTITY_REQUIRED",
+      rawError,
+    );
+  });
+
+  it("normalizes hostile sourcePluginId append input property reads to typed errors", () => {
+    const rawError = new Error("raw sourcePluginId append input getter");
+
+    expectAppendReadFailurePreservesExistingEvent(
+      appendInputWithThrowingPropertyRead("sourcePluginId", rawError),
+      "EVENT_SOURCE_PLUGIN_REQUIRED",
+      rawError,
+    );
+  });
+
+  it("normalizes hostile payload append input property reads to typed errors", () => {
+    const rawError = new Error("raw payload append input getter");
+
+    expectAppendReadFailurePreservesExistingEvent(
+      appendInputWithThrowingPropertyRead("payload", rawError),
+      "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+      rawError,
+    );
+  });
+
   it("rejects hostile non-string list filters with typed errors", () => {
     const store = createStore({
       ids: ["event_existing"],
@@ -1127,6 +1177,29 @@ function eventInput(input: AppendEventInput): AppendEventInput {
   return input;
 }
 
+function appendInputWithThrowingPropertyRead(
+  field: keyof AppendEventInput,
+  rawError: unknown,
+): AppendEventInput {
+  const input = eventInput({
+    pageId: "page_beta",
+    namespace: "profile",
+    type: "preference.invalid",
+    payload: { field: "theme", value: "contrast" },
+    sourcePluginId: "profile-plugin",
+  });
+
+  Object.defineProperty(input, field, {
+    configurable: true,
+    enumerable: true,
+    get() {
+      throw rawError;
+    },
+  });
+
+  return input;
+}
+
 function sequence(label: string, values: string[]): () => string {
   let index = 0;
 
@@ -1312,4 +1385,32 @@ function expectEventStoreError(
   }
 
   throw new Error("Expected EventStoreError");
+}
+
+function expectAppendReadFailurePreservesExistingEvent(
+  input: AppendEventInput,
+  code: EventStoreError["code"],
+  rawError: unknown,
+): void {
+  const store = createStore({
+    ids: ["event_existing", "event_unused"],
+    instants: [firstInstant, secondInstant],
+  });
+  const existing = store.append(
+    eventInput({
+      pageId: "page_alpha",
+      namespace: "profile",
+      type: "preference.changed",
+      payload: { field: "theme", value: "light" },
+      sourcePluginId: "profile-plugin",
+    }),
+  );
+
+  try {
+    expectEventStoreError(() => store.append(input), code, { rawError });
+  } finally {
+    expect(store.list()).toStrictEqual([existing]);
+    expect(store.list({ pageId: "page_alpha" })).toStrictEqual([existing]);
+    expect(store.list({ namespace: "profile" })).toStrictEqual([existing]);
+  }
 }
