@@ -336,6 +336,13 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 27 tests passing.
   - `bun run lint`.
 
+### Append-read Targeted Re-review
+
+- Status: active.
+- Agents:
+  - Feynman the 2nd (`security_reviewer`, `019e40ef-493a-7032-9521-2a016c50f3a0`): confirm append-time property-read P2 is fixed and no native/IPC exposure broadened.
+  - Descartes the 2nd (`test_quality_reviewer`, `019e40ef-4fc8-7b33-8957-e7d7f62e49a9`): confirm append-time property-read tests cover the P2 meaningfully.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -350,4 +357,4 @@
 
 ## Next Action
 
-Run targeted re-review for append input property-read normalization, then final gate.
+Wait for append-read targeted re-review agents, then run final gate if no P0/P1/P2 remain.
