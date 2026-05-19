@@ -8,6 +8,9 @@ import type {
   MetadataStore,
   SetMetadataInput,
 } from "../core";
+import type {
+  MetadataJsonValue as MetadataJsonValueFromTypesBarrel,
+} from "../core/types";
 
 const firstInstant = "2026-05-19T10:00:00.000Z";
 const secondInstant = "2026-05-19T10:05:00.000Z";
@@ -34,6 +37,9 @@ describe("in-memory Metadata Store", () => {
       namespace?: string;
       key?: string;
     }>();
+    expectTypeOf<MetadataJsonValueFromTypesBarrel>().toEqualTypeOf<
+      MetadataJsonValue
+    >();
 
     const jsonObject = {
       review: { state: "ready", revision: 2 },
@@ -87,6 +93,48 @@ describe("in-memory Metadata Store", () => {
     );
   });
 
+  it("preserves significant whitespace in exact identities and list filters", () => {
+    const store = createStore({
+      ids: ["metadata_spaced_key", "metadata_plain_key"],
+      instants: [firstInstant, secondInstant],
+    });
+
+    const spacedKey = store.set(
+      metadataInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        key: " displayName ",
+        value: "Ada with spaces",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const plainKey = store.set(
+      metadataInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        key: "displayName",
+        value: "Ada plain",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+
+    expect(spacedKey.key).toBe(" displayName ");
+    expect(plainKey.key).toBe("displayName");
+    expect(store.get("page_alpha", "profile", " displayName ")).toStrictEqual(
+      spacedKey,
+    );
+    expect(store.get("page_alpha", "profile", "displayName")).toStrictEqual(
+      plainKey,
+    );
+    expect(store.list({ key: " displayName " })).toStrictEqual([spacedKey]);
+    expect(store.list({ key: "displayName" })).toStrictEqual([plainKey]);
+    expect(
+      store.list({ pageId: "page_alpha", namespace: "profile" }),
+    ).toStrictEqual([spacedKey, plainKey]);
+  });
+
   it("creates usable records with default ids and timestamps", () => {
     const store = createInMemoryMetadataStore();
 
@@ -107,6 +155,48 @@ describe("in-memory Metadata Store", () => {
     expect(store.get("page_alpha", "profile", "nickname")).toStrictEqual(
       created,
     );
+  });
+
+  it("creates default ids from getRandomValues when randomUUID is unavailable", () => {
+    const deterministicBytes = [
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+      0x0c, 0x0d, 0x0e, 0x0f,
+    ];
+
+    vi.stubGlobal("crypto", {
+      getRandomValues(bytes: Uint8Array) {
+        bytes.set(deterministicBytes);
+        return bytes;
+      },
+    });
+
+    try {
+      const store = createInMemoryMetadataStore({
+        now: sequence("instant", [firstInstant]),
+      });
+
+      const created = store.set(
+        metadataInput({
+          pageId: "page_alpha",
+          namespace: "profile",
+          key: "nickname",
+          value: "Fallback",
+          valueType: "string",
+          sourcePluginId: "profile-plugin",
+        }),
+      );
+
+      expect(created.id).toBe("metadata_000102030405060708090a0b0c0d0e0f");
+      expect(created.createdAt).toBe(firstInstant);
+      expect(created.updatedAt).toBe(firstInstant);
+      expectValidIsoInstant(created.createdAt);
+      expect(store.get("page_alpha", "profile", "nickname")).toStrictEqual(
+        created,
+      );
+      expect(store.list()).toStrictEqual([created]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("replaces an existing identity without changing id, createdAt, or list order", () => {
@@ -167,6 +257,70 @@ describe("in-memory Metadata Store", () => {
     expect(replacedAlpha.updatedAt).toBe(thirdInstant);
     expect(store.list()).toStrictEqual([replacedAlpha, beta]);
     expect(store.list()).toHaveLength(2);
+  });
+
+  it("leaves an existing record unchanged when replacements are rejected", () => {
+    const store = createStore({
+      ids: ["metadata_existing"],
+      instants: [firstInstant],
+    });
+    const metadataIdentity = identity(
+      "page_alpha",
+      "profile",
+      "refreshInterval",
+    );
+    const existing = store.set(
+      metadataInput({
+        ...metadataIdentity,
+        value: 15,
+        valueType: "number",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+
+    expectMetadataStoreError(
+      () =>
+        store.set(
+          metadataInput({
+            ...metadataIdentity,
+            value: "15",
+            valueType: "number",
+            sourcePluginId: "settings-plugin",
+          }),
+        ),
+      "METADATA_VALUE_TYPE_MISMATCH",
+      metadataIdentity,
+    );
+    expect(
+      store.get(
+        metadataIdentity.pageId,
+        metadataIdentity.namespace,
+        metadataIdentity.key,
+      ),
+    ).toStrictEqual(existing);
+    expect(store.list()).toStrictEqual([existing]);
+
+    expectMetadataStoreError(
+      () =>
+        store.set(
+          metadataInput({
+            ...metadataIdentity,
+            value: undefined as unknown as MetadataJsonValue,
+            valueType: "json",
+            sourcePluginId: "settings-plugin",
+          }),
+        ),
+      "METADATA_VALUE_NOT_JSON_COMPATIBLE",
+      metadataIdentity,
+    );
+    expect(
+      store.get(
+        metadataIdentity.pageId,
+        metadataIdentity.namespace,
+        metadataIdentity.key,
+      ),
+    ).toStrictEqual(existing);
+    expect(store.list()).toStrictEqual([existing]);
   });
 
   it("keeps the same key distinct across page ids and namespaces", () => {
@@ -258,6 +412,44 @@ describe("in-memory Metadata Store", () => {
       }),
     ).toStrictEqual([alphaProfileTheme]);
     expect(store.list({ pageId: "page_missing" })).toStrictEqual([]);
+  });
+
+  it("keeps delimiter-style exact identities distinct", () => {
+    const store = createStore({
+      ids: ["metadata_page_delimiter", "metadata_namespace_delimiter"],
+      instants: [firstInstant, secondInstant],
+    });
+    const pageDelimiter = store.set(
+      metadataInput({
+        pageId: "page:a",
+        namespace: "b",
+        key: "c",
+        value: "page-delimited",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const namespaceDelimiter = store.set(
+      metadataInput({
+        pageId: "page",
+        namespace: "a:b",
+        key: "c",
+        value: "namespace-delimited",
+        valueType: "string",
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+
+    expect(store.get("page:a", "b", "c")).toStrictEqual(pageDelimiter);
+    expect(store.get("page", "a:b", "c")).toStrictEqual(namespaceDelimiter);
+    expect(store.list({ pageId: "page:a" })).toStrictEqual([pageDelimiter]);
+    expect(store.list({ namespace: "a:b" })).toStrictEqual([
+      namespaceDelimiter,
+    ]);
+    expect(store.list({ key: "c" })).toStrictEqual([
+      pageDelimiter,
+      namespaceDelimiter,
+    ]);
   });
 
   it("deletes exact identities and creates a fresh record after delete", () => {
@@ -632,6 +824,53 @@ describe("in-memory Metadata Store", () => {
               ...metadataIdentity,
               value: invalidValue.value as unknown as MetadataJsonValue,
               valueType: invalidValue.valueType,
+              sourcePluginId: "profile-plugin",
+            }),
+          ),
+        "METADATA_VALUE_NOT_JSON_COMPATIBLE",
+        metadataIdentity,
+      );
+    }
+
+    expect(store.list()).toStrictEqual([]);
+  });
+
+  it("rejects arrays with own non-index and symbol properties", () => {
+    const store = createStore({
+      ids: numberedValues("metadata_array_extra", 2),
+      instants: numberedInstants(2),
+    });
+    const arrayWithStringProperty = ["compact"] as unknown[] & {
+      metadataState?: string;
+    };
+    arrayWithStringProperty.metadataState = "hidden";
+    const metadataSymbol = Symbol("metadata");
+    const arrayWithSymbolProperty = ["compact"] as unknown[];
+    (arrayWithSymbolProperty as unknown as Record<symbol, unknown>)[
+      metadataSymbol
+    ] = "hidden";
+    const invalidValues: Array<{
+      key: string;
+      value: unknown[];
+    }> = [
+      { key: "arrayWithStringProperty", value: arrayWithStringProperty },
+      { key: "arrayWithSymbolProperty", value: arrayWithSymbolProperty },
+    ];
+
+    for (const invalidValue of invalidValues) {
+      const metadataIdentity = identity(
+        "page_alpha",
+        "profile",
+        invalidValue.key,
+      );
+
+      expectMetadataStoreError(
+        () =>
+          store.set(
+            metadataInput({
+              ...metadataIdentity,
+              value: invalidValue.value as unknown as MetadataJsonValue,
+              valueType: "json",
               sourcePluginId: "profile-plugin",
             }),
           ),
