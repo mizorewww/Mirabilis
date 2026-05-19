@@ -6,6 +6,14 @@ export type MetadataValueType =
   | "date"
   | "null";
 
+export type MetadataJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | MetadataJsonValue[]
+  | { [key: string]: MetadataJsonValue };
+
 export type MetadataRecord = {
   id: string;
   pageId: string;
