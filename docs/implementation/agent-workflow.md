@@ -12,6 +12,7 @@ This workflow is optimized for the current Mirabilis agent-development phase: al
 - Global subagent limits live under `[agents]` in `.codex/config.toml`.
 - Hooks and deterministic scripts are used for local automation where they reduce repeated work.
 - The default model/service profile for this repo is `gpt-5.5`, `model_reasoning_effort = "xhigh"`, and `service_tier = "fast"` with `[features].fast_mode = true`.
+- Before relying on project agents, validate that `.codex/agents/*.toml` files parse as TOML. Duplicate keys such as two `sandbox_mode` entries can make specialized agent types unavailable even when `default` agents still spawn.
 
 Reference docs:
 
@@ -41,7 +42,7 @@ Reference docs:
 The durable trigger for this workflow is the repo skill:
 
 ```text
-.agents/skills/mirabilis-dev-runner/SKILL.md
+.codex/skills/mirabilis-dev-runner/SKILL.md
 ```
 
 `AGENTS.md` requires Codex to use that skill whenever the user asks to develop, continue, run the roadmap, implement `TASK-xxx`, or work unattended. This means the user can type short commands such as:
@@ -92,6 +93,17 @@ sandbox_mode = "danger-full-access"
 approval_policy = "never"
 web_search = "live"
 ```
+
+## Parent Orchestration Contract
+
+The main Codex thread is the parent orchestration agent. Its job is to route work, not to perform every role itself.
+
+- Delegate planning, docs research, TDD tests, implementation, review, security, docs, and release checks to the corresponding project agents.
+- Give each agent a concrete prompt with worktree path, task ID, write scope, read-only/write permission, expected checks, and exact output format.
+- After spawning an agent that owns a blocking step, wait for that agent or use `send_input` to clarify. Do not implement the same step in the parent thread while the delegated agent owns it.
+- When steps depend on each other, make the dependency explicit: for example, `implementer` starts only after `test_writer` reports the failing test files and expected failure.
+- If an agent becomes unavailable, hangs without output, or writes in the wrong worktree, stop the agent, clean the unintended changes, record the failure, and debug agent configuration before falling back to parent-thread work.
+- Keep the parent thread responsible for integration: review changed files, run checks, stage focused commits, update progress, merge, and report.
 
 ## Branch Flow
 

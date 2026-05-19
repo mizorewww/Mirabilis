@@ -16,7 +16,7 @@ Read these docs before implementation work:
 - `docs/testing/strategy.md`
 - `docs/implementation/agent-workflow.md`
 - `docs/implementation/autonomous-development.md`
-- `.agents/skills/mirabilis-dev-runner/SKILL.md`
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`
 
 If implementation details are unclear, search the local docs first. If local docs do not answer the question, look up current official documentation before coding.
 
@@ -56,6 +56,9 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 - Project agents must not wait for human approval during normal agent-development work.
 - Human review is skipped for this phase; local tests and agent review are the release gate.
 - Review-oriented agents may have full access, but they should stay read-only unless the parent task explicitly asks them to edit files.
+- The main Codex thread is the orchestration agent. It selects tasks, creates branches/worktrees, delegates to focused agents, waits for their outputs, integrates results, validates, commits, and merges.
+- The main thread must not take over test writing, implementation, or review work that has been delegated unless the delegated agent fails, is unavailable, or is explicitly cancelled; in that case, stop and record the reason before continuing.
+- If a specialized agent type is unavailable, stop all running agents and debug `.codex/agents/*.toml` validity, project trust/config loading, and `features.multi_agent` before doing more development work.
 
 ## Development Order
 

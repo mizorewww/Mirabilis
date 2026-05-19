@@ -30,24 +30,27 @@ Read these first:
 
 For each selected task:
 
-1. Mark the task `[~]` in `docs/implementation/progress.md` and add a Run Log entry.
-2. Ensure work starts from `master`, pull latest, then create a focused branch named `feat/<task-id>-<slug>`, `fix/<task-id>-<slug>`, `test/<task-id>-<slug>`, or `docs/<task-id>-<slug>`.
-3. Spawn `docs_researcher` and `deprecation_auditor` for current official docs when the task touches Tauri, React, Rust crates, Vite, Vitest, Testing Library, IPC, filesystem, permissions, or dependencies.
-4. Spawn `test_writer` to write failing tests first. It must not write production code.
-5. Run the focused failing-test command and confirm it fails for the expected reason.
-6. Commit tests with `test: add <task-id> <feature> acceptance tests`.
-7. Spawn `implementer` to write minimum production code.
-8. Run focused tests until green.
-9. Commit implementation with `feat: implement <task-id> <feature>` or the appropriate conventional prefix.
-10. Refactor only if needed, without behavior changes, and commit separately.
-11. Spawn review agents in parallel: `pr_explorer`, `reviewer`, `deprecation_auditor`, `security_reviewer`, `docs_researcher`, `test_quality_reviewer`, and `doc_writer`.
-12. Fix P0/P1 findings. Commit fixes and docs separately.
-13. Run the local gate from `docs/testing/strategy.md`; use `check:quick` once available and `check:full` for IPC, permissions, filesystem, persistence, packaging, or release changes.
-14. Update `docs/implementation/progress.md`: change `[~]` to `[x]`, add branch, commits, checks, and risks to Run Log.
-15. Commit progress update.
-16. Push happens through `.githooks/post-commit`; verify the push did not fail.
-17. Merge the task branch into `master` after local checks pass, then push `master`.
-18. If the user asked for autonomous roadmap progress, continue to the next unblocked `[ ]` task.
+1. Validate `.codex/agents/*.toml` parses as TOML and that specialized agents can spawn. If agent types are unavailable, stop and debug configuration before coding.
+2. Mark the task `[~]` in `docs/implementation/progress.md` and add a Run Log entry.
+3. Ensure work starts from `master`, pull latest, then create a focused branch named `feat/<task-id>-<slug>`, `fix/<task-id>-<slug>`, `test/<task-id>-<slug>`, or `docs/<task-id>-<slug>`.
+4. Spawn `docs_researcher` and `deprecation_auditor` for current official docs when the task touches Tauri, React, Rust crates, Vite, Vitest, Testing Library, IPC, filesystem, permissions, or dependencies.
+5. Spawn `test_writer` to write failing tests first. It must not write production code. Wait for its result before proceeding.
+6. Run the focused failing-test command and confirm it fails for the expected reason.
+7. Commit tests with `test: add <task-id> <feature> acceptance tests`.
+8. Spawn `implementer` to write minimum production code. Wait for its result before taking over implementation work.
+9. Run focused tests until green.
+10. Commit implementation with `feat: implement <task-id> <feature>` or the appropriate conventional prefix.
+11. Refactor only if needed, without behavior changes, and commit separately.
+12. Spawn review agents in parallel: `pr_explorer`, `reviewer`, `deprecation_auditor`, `security_reviewer`, `docs_researcher`, `test_quality_reviewer`, and `doc_writer`.
+13. Fix P0/P1 findings. Commit fixes and docs separately.
+14. Run the local gate from `docs/testing/strategy.md`; use `check:quick` once available and `check:full` for IPC, permissions, filesystem, persistence, packaging, or release changes.
+15. Update `docs/implementation/progress.md`: change `[~]` to `[x]`, add branch, commits, checks, and risks to Run Log.
+16. Commit progress update.
+17. Push happens through `.githooks/post-commit`; verify the push did not fail.
+18. Merge the task branch into `master` after local checks pass, then push `master`.
+19. If the user asked for autonomous roadmap progress, continue to the next unblocked `[ ]` task.
+
+The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed or was explicitly cancelled, and that fallback reason is recorded.
 
 ## Light Path For Config Or Docs Only
 
@@ -55,7 +58,7 @@ Use this path for Codex config, AGENTS.md, agent TOML, hooks, workflow docs, or 
 
 1. Read official Codex docs when config behavior is involved.
 2. Patch only docs/config/hook files.
-3. Validate TOML, shell syntax, and `codex --strict-config doctor --summary --ascii` when relevant.
+3. Validate TOML, shell syntax, specialized agent spawn health, and `codex --strict-config doctor --summary --ascii` when relevant.
 4. Run `bun run build` only if repo behavior may have been touched.
 5. Commit with `docs:` or `chore:`.
 6. Update progress only if the change completes a tracked task.
