@@ -67,3 +67,10 @@
   - `bun run typecheck` failed because `../core` does not export Page Store API/types yet.
   - `bun run test:frontend -- src/test/core-page-store.test.ts` failed with 8 failing tests because `createInMemoryPageStore` is not implemented.
 - Parent decision: accepted and committed.
+
+### Kuhn - implementer
+
+- Implemented `createInMemoryPageStore`, `PageStoreError`, Page Store types, and public exports.
+- Added `src/core/stores/page-store.ts` and `src/core/stores/index.ts`; updated `src/core/index.ts`.
+- Focused parent checks passed: `bun run typecheck`, `bun run test:frontend -- src/test/core-page-store.test.ts`, `bun run test:frontend -- src/test/core-architecture-boundary.test.ts`, `bun run lint`, and forbidden-term grep with no output.
+- Parent decision: accepted and committed; review agents will check default ID strategy, clone behavior, archive/update semantics, and test coverage.
