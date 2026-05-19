@@ -198,6 +198,24 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts` with 18 tests passing.
   - `bun run lint`.
 
+### Targeted Re-review Round 1
+
+- Status: completed with two remaining P2 items.
+- Agents:
+  - Boyle (`reviewer`) completed targeted correctness re-review.
+  - Dirac (`security_reviewer`) completed targeted security re-review.
+  - Bacon (`test_quality_reviewer`) completed targeted test-quality re-review.
+- Result:
+  - No P0/P1 findings.
+  - Bacon reported no remaining test-quality P0/P1/P2 findings.
+  - Boyle reported P2: non-string list filter rejection can still throw raw errors while building error details because the invalid filter value is interpolated.
+  - Dirac reported P2: proxy/trap payloads can still throw raw errors from reflection APIs such as `Object.getPrototypeOf`, `Object.getOwnPropertyNames`, `Object.getOwnPropertySymbols`, and `Object.getOwnPropertyDescriptor`.
+- Checks reported:
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts`.
+  - `git diff` checks for native/IPC/package surfaces.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -212,4 +230,4 @@
 
 ## Next Action
 
-Run targeted re-review of selected P1/P2 fixes, then final gate.
+Spawn final review-fix test and implementation agents for the remaining P2 findings, then re-run targeted review and final gate.

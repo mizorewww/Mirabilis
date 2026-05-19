@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:12 CST.
+Last updated: 2026-05-19 23:15 CST.
 
 ## Current Task
 
@@ -8,16 +8,15 @@ Last updated: 2026-05-19 23:12 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: targeted re-review active.
+- Current phase: targeted re-review complete; final P2 fixes pending.
 
 ## Active Agents
 
-- Boyle (`reviewer`, `019e40cb-e2d2-7162-a6b1-1ec80864e67f`): targeted correctness re-review for selected P1/P2 fixes.
-- Dirac (`security_reviewer`, `019e40cb-e818-7361-84b5-094291ec13bd`): targeted security re-review for selected P1/P2 fixes.
-- Bacon (`test_quality_reviewer`, `019e40cb-f158-7c81-90fb-1d92a76892de`): targeted test-quality re-review for selected P1/P2 fixes.
+- None.
 
 ## Recent Agent Outcomes
 
+- Targeted re-review round 1 completed with no P0/P1 findings, but two P2 findings remain: non-string filter error-detail coercion can throw raw errors, and proxy/trap payload reflection can throw raw errors.
 - Targeted re-review agents spawned for selected P1/P2 fixes.
 - Lovelace (`implementer`) completed and was closed after implementing selected P1/P2 fixes.
 - Lovelace's implementation commit: `147ca5a Lovelace(implementation)(Add in-memory Event Store): fix review edge cases`.
@@ -110,6 +109,6 @@ Last updated: 2026-05-19 23:12 CST.
 
 ## Next Actions
 
-1. Wait for targeted re-review agents.
-2. Run final gate if no P0/P1/P2 remain.
-3. Update progress and merge TASK-005.
+1. Commit targeted re-review findings.
+2. Spawn test writer for remaining P2 cases.
+3. Spawn implementer after red/updated tests are committed.
