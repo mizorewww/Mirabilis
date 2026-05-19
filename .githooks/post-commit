@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -u
+
+if [[ "${MIRABILIS_AUTO_PUSH:-1}" == "0" ]]; then
+  echo "[mirabilis] auto-push disabled by MIRABILIS_AUTO_PUSH=0"
+  exit 0
+fi
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+if [[ -z "${branch}" ]]; then
+  echo "[mirabilis] auto-push skipped: detached HEAD"
+  exit 0
+fi
+
+remote="${MIRABILIS_AUTO_PUSH_REMOTE:-origin}"
+if ! git remote get-url "${remote}" >/dev/null 2>&1; then
+  echo "[mirabilis] auto-push skipped: remote '${remote}' not found"
+  exit 0
+fi
+
+echo "[mirabilis] auto-pushing ${branch} to ${remote}"
+if ! git push -u "${remote}" "${branch}"; then
+  echo "[mirabilis] auto-push failed for ${remote}/${branch}" >&2
+  exit 1
+fi

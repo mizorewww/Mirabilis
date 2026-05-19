@@ -1,0 +1,259 @@
+# Core Kernel 设计
+
+从代码层定义 Core Kernel 的 Store、Registry、Command 和 View 约束。
+
+## 4. Core Kernel 设计
+
+Core Kernel 只做下面这些。
+
+```text
+Markdown Page
+Metadata
+Event
+Filter
+View Registry
+Command Registry
+Plugin Host
+```
+
+### 4.1 Markdown Page Store
+
+```ts
+export interface MarkdownPage {
+  id: string;
+  title: string;
+  parentPageId?: string;
+  body: StructuredMarkdownDocument;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string;
+}
+```
+
+`body` 推荐存 Tiptap / ProseMirror JSON。
+导入导出时再转 Markdown。
+
+页面中的内容可以长这样：
+
+```markdown
+文本123
+
+- [ ] 任务1
+
+文本456
+
+- [ ] 任务2
+```
+
+系统内部应存为结构化 block：
+
+```ts
+type StructuredMarkdownDocument = {
+  type: "doc";
+  content: BlockNode[];
+};
+```
+
+每个 block 必须有稳定 `blockId`。
+
+---
+
+### 4.2 Metadata Store
+
+Metadata 是所有结构化字段的统一存储。
+
+```ts
+export interface MetadataRecord {
+  id: string;
+  pageId: string;
+  namespace: string;
+  key: string;
+  value: unknown;
+  valueType: MetadataValueType;
+  sourcePluginId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+示例：
+
+```ts
+{
+  pageId: "page_123",
+  namespace: "task",
+  key: "status",
+  value: "todo",
+  sourcePluginId: "task"
+}
+```
+
+```ts
+{
+  pageId: "page_123",
+  namespace: "timer",
+  key: "totalTrackedTime",
+  value: 7200,
+  sourcePluginId: "timer"
+}
+```
+
+关系类信息也放在 Metadata 里，例如：
+
+```ts
+{
+  pageId: "task_page_123",
+  namespace: "task",
+  key: "sourceBlockId",
+  value: "block_abc"
+}
+```
+
+这样 Core 不需要单独的 Relation 模型。
+
+---
+
+### 4.3 Event Store
+
+Event 是事实记录。
+
+```ts
+export interface AppEvent {
+  id: string;
+  pageId?: string;
+  namespace: string;
+  type: string;
+  payload: unknown;
+  sourcePluginId: string;
+  createdAt: string;
+}
+```
+
+示例：
+
+```ts
+{
+  namespace: "timer",
+  type: "time_segment_created",
+  pageId: "task_page_123",
+  payload: {
+    startAt: "2026-05-19T10:00:00+08:00",
+    endAt: "2026-05-19T10:47:00+08:00",
+    durationSeconds: 2820,
+    notePageId: "page_note_456"
+  },
+  sourcePluginId: "timer"
+}
+```
+
+所有插件都通过 Event Store 记录事实。
+
+---
+
+### 4.4 Filter Store
+
+Filter 是保存的查询。
+
+```ts
+export interface FilterDefinition {
+  id: string;
+  name: string;
+  query: FilterQuery;
+  sort?: FilterSort[];
+  group?: FilterGroup;
+  viewType: string;
+  sourcePluginId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+示例：
+
+```ts
+{
+  name: "All Tasks",
+  query: {
+    where: [
+      { field: "metadata.task.enabled", op: "eq", value: true }
+    ]
+  },
+  viewType: "task.list"
+}
+```
+
+Core 保存 Filter。
+Filter 的具体 UI 和高级查询能力由 Filter Plugin 扩展。
+
+---
+
+### 4.5 View Registry
+
+插件注册 View。
+
+```ts
+export interface ViewDefinition {
+  id: string;
+  pluginId: string;
+  type: string;
+  title: string;
+  component: React.ComponentType<ViewProps>;
+  accepts: ViewDataShape;
+}
+```
+
+示例：
+
+```ts
+viewRegistry.register({
+  id: "habit.heatmap",
+  pluginId: "habit",
+  type: "heatmap",
+  title: "Habit heatmap",
+  component: HabitHeatmapView,
+  accepts: {
+    kind: "event-series",
+    namespace: "habit"
+  }
+});
+```
+
+---
+
+### 4.6 Command Registry
+
+所有用户动作都通过 Command 注册。
+
+```ts
+export interface CommandDefinition<Input = unknown, Output = unknown> {
+  id: string;
+  pluginId: string;
+  title: string;
+  description?: string;
+  defaultShortcut?: string;
+  context?: CommandContextMatcher;
+  handler: CommandHandler<Input, Output>;
+}
+```
+
+示例：
+
+```ts
+commandRegistry.register({
+  id: "task.insert-task-syntax",
+  pluginId: "task",
+  title: "Insert task",
+  handler: async ({ editor }) => {
+    editor.insertText("- [ ] ");
+  }
+});
+```
+
+UI 不直接调用业务函数。
+UI 调用 command。
+
+```ts
+runtime.commands.execute("timer.start", { pageId });
+```
+
+---
