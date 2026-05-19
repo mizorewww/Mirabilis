@@ -34,9 +34,9 @@ This strategy is the local release gate for Mirabilis. GitHub CI is intentionall
 | E2E smoke | real app path for Markdown page -> task page -> timer -> note | Tauri WebDriver later |
 | Security review | Tauri capabilities, filesystem, IPC, local data, plugin boundaries | `security_reviewer` + targeted tests |
 
-## Current Baseline Commands
+## Reference Direct Commands
 
-These commands should work before the test stack lands:
+These commands were the pre-TASK-001 baseline and remain useful when debugging individual frontend build or Rust check failures. The active local gates are the Bun scripts below.
 
 ```bash
 bun run build
@@ -47,7 +47,7 @@ cargo test --manifest-path src-tauri/Cargo.toml --all-features
 
 ## Local Package Scripts
 
-Use these Bun scripts for local validation:
+TASK-001 establishes these Bun scripts for local validation:
 
 ```json
 {
@@ -82,7 +82,7 @@ For each task in `docs/implementation/task-index.md`:
 Before merging to `master`:
 
 1. Run focused tests for the changed behavior.
-2. Run the current baseline commands or `bun run check:quick` once available.
+2. Run `bun run check:quick` for the branch local gate.
 3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 4. Fix P0/P1 review findings.
 5. Record remaining P2/P3 findings as follow-up tasks when not fixed in the branch.
