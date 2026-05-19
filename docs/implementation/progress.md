@@ -25,7 +25,7 @@ Status markers:
 ## Milestone M1: Core data kernel
 
 - [x] TASK-002: Create TypeScript core domain types
-- [~] TASK-003: Add in-memory Page Store
+- [x] TASK-003: Add in-memory Page Store
 - [ ] TASK-004: Add in-memory Metadata Store
 - [ ] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 21:31 CST - TASK-003 completed
+
+- Branch: `feat/task-003-in-memory-page-store`.
+- Task: Add in-memory Page Store.
+- Commits: `22d393e` start orchestration, `8e87100` pre-test guidance, `b8cc6e5` tests, `c967cd0` failing-test handoff, `3886432` implementation, `19885eb` implementation handoff, `972cf58` review-fix tests, `7769cd7` review-fix implementation, `6bc7314` final P2 tests, `1e71a0e` final review notes.
+- Delivered: `createInMemoryPageStore`, `PageStoreError`, Page Store contracts, create/get/update/archive/list behavior, deterministic ID/time injection, defensive clone boundaries, typed missing/collision/clone-failure errors, Web Crypto default ID fallback, and focused Page Store tests.
+- Validation: `bun run check:quick` passed, `bun run build` passed, targeted re-review cleared P0/P1 findings and final P2 tests were added before merge.
+- External docs verified by agents: TypeScript strict/type-only module guidance, Vitest writing/type/assertion guidance, Vite browser compatibility and build targets, Tauri v2 WebView version docs, MDN `structuredClone`, MDN Web Crypto `randomUUID`/`getRandomValues`, and MDN `Math.random`.
+- Remaining risk: `bun run check:full` was not run because TASK-003 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-19 20:51 CST - TASK-003 started
 
