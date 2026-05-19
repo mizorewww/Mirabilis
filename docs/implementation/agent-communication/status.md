@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:21 CST.
+Last updated: 2026-05-19 23:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-19 23:21 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final P2 implementer active.
+- Current phase: final P2 implementation committed; targeted re-review pending.
 
 ## Active Agents
 
-- Mendel (`implementer`, `019e40d3-d10f-7920-b239-294f679b5f4d`): normalizing final raw-error cases in `src/core/stores/event-store.ts`.
+- None.
 
 ## Recent Agent Outcomes
 
+- Mendel (`implementer`) completed and was closed after normalizing final raw-error cases.
+- Mendel's implementation commit: `b8728e0 Mendel(implementation)(Add in-memory Event Store): normalize raw error cases`.
+- Parent repeated green checks after Mendel: `bun run typecheck`, `bun run test:frontend -- src/test/core-event-store.test.ts`, and `bun run lint`.
 - Mendel (`implementer`) was spawned for final TASK-005 P2 production fixes.
 - Linnaeus (`test_writer`) completed and was closed after adding final P2 tests.
 - Linnaeus's test commit: `43f0c2e Linnaeus(test)(Add in-memory Event Store): cover final raw-error cases`.
@@ -114,6 +117,6 @@ Last updated: 2026-05-19 23:21 CST.
 
 ## Next Actions
 
-1. Wait for Mendel to report final P2 implementation results.
-2. Run focused green checks and commit production fix.
-3. Run targeted re-review/final gate.
+1. Commit Mendel outcome in the agent communication docs.
+2. Run final targeted re-review of raw-error cases.
+3. Run final gate if no P0/P1/P2 remain.

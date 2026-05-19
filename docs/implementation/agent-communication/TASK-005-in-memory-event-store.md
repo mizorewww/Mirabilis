@@ -230,6 +230,21 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 20 tests with 18 passing and 2 failing: filter values still throw raw `TypeError`, and proxy payload traps still throw raw errors.
 
+### Mendel (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/event-store.ts`.
+- Commit:
+  - `b8728e0 Mendel(implementation)(Add in-memory Event Store): normalize raw error cases`.
+- Fixes implemented:
+  - Non-string list filters now throw `EVENT_IDENTITY_REQUIRED` with safe static error details instead of coercing hostile values.
+  - Payload validation normalizes reflection/proxy trap failures to `EVENT_PAYLOAD_NOT_JSON_COMPATIBLE`.
+- Checks run by Mendel and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` with 20 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -244,4 +259,4 @@
 
 ## Next Action
 
-Spawn an `implementer` agent to normalize the remaining raw-error cases and make the focused tests pass.
+Run final targeted re-review, then final gate.
