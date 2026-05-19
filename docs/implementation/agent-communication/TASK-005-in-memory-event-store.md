@@ -136,6 +136,35 @@
   - `bun run test:frontend -- src/test/core-event-store.test.ts`.
   - `bun run lint`.
 
+### Review Round 1
+
+- Status: completed with P1/P2 findings.
+- Agents:
+  - Arendt (`pr_explorer`) mapped the branch diff and public API.
+  - Dalton (`reviewer`) completed correctness review.
+  - Descartes (`deprecation_auditor`) completed API/version-risk audit.
+  - Raman (`security_reviewer`) completed security and Core/plugin-boundary review.
+  - Franklin (`test_quality_reviewer`) completed test quality review.
+  - Volta (`docs_researcher`) completed local docs alignment review.
+- Result:
+  - No P0 findings.
+  - P1 test quality: tests must prove append-only facts allow two successful events with the same `pageId` + `namespace` + `type` and preserve both in order.
+  - P1 security: runtime callers can pass non-string values with inherited `trim()` into identity/source/filter fields; validate `typeof === "string"` before trimming or storing.
+  - P2 test quality: invalid JSON payload matrix needs nested invalid values, such as nested `undefined`, functions, bigint, symbols, and array `undefined`.
+  - P2 security/correctness: reject accessor/getter payload descriptors and normalize traversal exceptions to typed `EventStoreError`.
+  - P2 correctness: deeply nested payloads can throw raw `RangeError`; add an explicit validation budget or iterative traversal so failures are typed.
+  - P3 docs: the TASK-005 notes `Next Action` was stale after review agents were already active.
+  - P3 risk: `structuredClone` dependency is consistent with existing stores but tied to runtime WebView support.
+  - Accepted later-boundary risk: no payload size/depth budget at plugin/IPC boundary yet; in this store, a small validation budget is acceptable only to prevent raw stack overflows and preserve typed errors.
+- Checks reported by reviewers:
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts`.
+  - `bun run test:frontend`.
+  - `bun run build`.
+  - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts`.
+  - `git diff --check master...HEAD`.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -150,4 +179,4 @@
 
 ## Next Action
 
-Spawn review agents for TASK-005 and address any P0/P1 findings before final gate and merge.
+Spawn review-fix test and implementation agents for the P1/P2 findings, then re-run focused checks and final gate.
