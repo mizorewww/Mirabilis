@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:16 CST.
+Last updated: 2026-05-19 22:17 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-19 22:16 CST.
 - Branch: `feat/task-004-in-memory-metadata-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation committed; targeted re-review pending.
+- Current phase: targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Rawls (`reviewer`, `019e4099-3b79-7101-b4d9-b683932788aa`): targeted correctness re-review for selected P2 fixes.
+- Lorentz (`test_quality_reviewer`, `019e4099-3df3-7f62-859f-0a145cf6f9df`): targeted test-quality re-review for selected P2 fixes.
+- Kepler (`deprecation_auditor`, `019e4099-41b7-7181-8f30-9f64d49f3524`): targeted API/deprecation re-review for JSON array and Web Crypto changes.
 
 ## Recent Agent Outcomes
 
+- Targeted re-review agents spawned for selected P2 fixes.
 - Jason (`implementer`) completed and was closed after implementing selected P2 fixes.
 - Jason's implementation commit: `39a7739 Jason(implementation)(Add in-memory Metadata Store): fix review edge cases`.
 - Parent repeated green checks after Jason: `bun run typecheck`, `bun run test:frontend -- src/test/core-metadata-store.test.ts`, and `bun run lint`.
@@ -67,6 +70,6 @@ Last updated: 2026-05-19 22:16 CST.
 
 ## Next Actions
 
-1. Commit Jason outcome in the agent communication docs.
-2. Run targeted re-review of selected P2 fixes.
-3. Run final gate and update progress.
+1. Wait for targeted re-review agents.
+2. Run final gate if no P0/P1/P2 remain.
+3. Update progress and merge TASK-004.
