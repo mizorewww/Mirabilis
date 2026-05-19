@@ -6,6 +6,10 @@ export {
   MetadataStoreError,
   createInMemoryMetadataStore,
 } from "./metadata-store";
+export {
+  EventStoreError,
+  createInMemoryEventStore,
+} from "./event-store";
 export type {
   CreateInMemoryPageStoreOptions,
   CreatePageInput,
@@ -21,3 +25,10 @@ export type {
   MetadataStoreErrorCode,
   SetMetadataInput,
 } from "./metadata-store";
+export type {
+  AppendEventInput,
+  CreateInMemoryEventStoreOptions,
+  EventStore,
+  EventStoreErrorCode,
+  ListEventsOptions,
+} from "./event-store";
