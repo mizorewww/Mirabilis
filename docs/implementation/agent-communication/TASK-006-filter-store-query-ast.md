@@ -38,26 +38,48 @@
 
 ## Current Status
 
-- Status: pre-test guidance active.
-- Active agents:
-  - Lovelace the 2nd (`planner`, `019e40f8-7c4b-7520-a448-d2a1ba8f7ffa`): planning scope, API, validation rules, test plan, and review risks.
-  - Cicero the 2nd (`docs_researcher`, `019e40f8-80e0-7560-9ecd-842a3eaf98ee`): researching current TypeScript/Vitest/structured clone guidance.
-  - James the 2nd (`deprecation_auditor`, `019e40f8-852d-7333-9c3f-2c92697660a6`): auditing deprecated/fragile API patterns and recursive validation risks.
+- Status: pre-test guidance complete.
+- Active agents: none.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: active.
+- Status: completed.
 - Agents:
-  - Lovelace the 2nd (`planner`).
-  - Cicero the 2nd (`docs_researcher`).
-  - James the 2nd (`deprecation_auditor`).
-- Purpose:
-  - Set TASK-006 boundaries before tests.
-  - Identify current docs and deprecation guidance.
-  - Produce a concrete test-writer handoff for Filter Store CRUD and Query AST validation.
+  - Lovelace the 2nd (`planner`) proposed a focused in-memory Filter Store API, error codes, validation plan, and test outline.
+  - Cicero the 2nd (`docs_researcher`) checked local docs plus current TypeScript, Vitest, structured clone, and JSON serialization guidance.
+  - James the 2nd (`deprecation_auditor`) audited recursive validation, clone, runtime input, and public `FilterOperator` risks.
+- External docs cited:
+  - TypeScript recursive aliases and TS config options.
+  - Vitest `expectTypeOf` and typecheck guidance.
+  - WHATWG structured clone and TC39 `JSON.stringify`.
+  - Vitest globals/migration, Vite migration, TypeScript 5.8 notes, and MDN `structuredClone`.
+
+## Parent Decisions
+
+- TASK-006 implements storage and validation only: no query execution engine, JS filters, plugin-specific task/habit/timer semantics, UI, NativeBridge, SQLite, Tauri IPC, or permissions.
+- Add `createInMemoryFilterStore` in `src/core/stores/filter-store.ts`, export it from `src/core/stores/index.ts` and `src/core/index.ts`, and cover it with `src/test/core-filter-store.test.ts`.
+- Public API:
+  - `save(input: SaveFilterInput): FilterDefinition`.
+  - `get(filterId: string): FilterDefinition`.
+  - `update(filterId: string, input: UpdateFilterInput): FilterDefinition`.
+  - `list(options?: ListFiltersOptions): FilterDefinition[]`.
+  - `delete(filterId: string): FilterDefinition`.
+- `SaveFilterInput` includes `name`, `query`, optional `sort`, optional `group`, required `viewType`, and optional `sourcePluginId`.
+- `UpdateFilterInput` uses optional fields; `sort`, `group`, and `sourcePluginId` may be set to `null` to clear them.
+- `ListFiltersOptions` supports exact `viewType` and `sourcePluginId` filters only.
+- Error codes should include typed not-found, ID collision, identity/source/query/operator/sort/group/clone failures.
+- Preserve the existing public `FilterOperator` union. Runtime validation should accept all currently documented/exported operators: `eq`, `neq`, `gt`, `lt`, `includes`, `exists`, and `within`; TASK-006 tests must at least prove the required baseline operators `eq`, `exists`, and `within`. Unknown runtime operators such as `regex` must fail with a typed unsupported-operator error.
+- `and` and `or` are recursive `FilterQuery` keys, not `FilterOperator` values.
+- `exists` must not include an own `value` property, including `value: undefined`.
+- All non-`exists` operators must include an own JSON-compatible `value` property.
+- `within` only validates that a value is present and JSON-compatible in TASK-006; do not lock a duration schema until product docs define one.
+- `{ where: [] }` is valid as a stored query shape for now. Validation is shape-focused; execution semantics such as match-all are out of scope.
+- Query, sort, group, and condition values must be JSON-compatible plain data before cloning. Reject raw `undefined`, functions, symbols, bigint, non-finite numbers, cycles, `Date`, `Map`, `Set`, class instances, sparse arrays, symbol keys, accessors/getters, hostile proxy reflection traps, and excessive depth/node counts with typed errors.
+- Rejected `save` or `update` must not mutate existing stored filters.
+- Use Event Store's hardened validation style rather than the older Metadata Store validation pattern.
 
 ## Next Action
 
-Wait for pre-test guidance agents and record parent decisions.
+Spawn test writer for failing Filter Store acceptance tests.
