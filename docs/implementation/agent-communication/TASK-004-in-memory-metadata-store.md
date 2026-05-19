@@ -131,6 +131,35 @@
   - `bun run test:frontend -- src/test/core-metadata-store.test.ts`.
   - `bun run lint`.
 
+### Review Round 1
+
+- Status: completed.
+- Agents:
+  - Bohr (`pr_explorer`) mapped the branch diff and public API.
+  - Ampere (`reviewer`) completed correctness review.
+  - Gauss (`deprecation_auditor`) completed current API/version-risk audit.
+  - Averroes (`security_reviewer`) completed Core/plugin-boundary review.
+  - Mill (`test_quality_reviewer`) completed test quality review.
+  - Tesla (`docs_researcher`) completed local docs alignment review.
+  - Socrates (`doc_writer`) completed docs consistency review after a review slot freed up.
+- Result:
+  - No P0/P1 findings.
+  - P2 correctness: identity and list filter values are silently trimmed before storage/lookup; exact identity should be preserved or non-canonical whitespace rejected.
+  - P2 test quality: add a delimiter/collision-style exact-identity test to protect against unsafe composite keys.
+  - P2 test quality: add rejected-replacement atomicity coverage.
+  - P2 deprecation/API risk: reject arrays with own non-index or symbol properties because they are not faithfully JSON-persistable.
+  - P2 deprecation/API risk: add a `getRandomValues` fallback test for default metadata IDs when `randomUUID` is absent.
+  - P2 API polish: export `MetadataJsonValue` from the `src/core/types` barrel as well as from the Core entrypoint.
+  - P2 security note: later plugin-facing Metadata Service or IPC must not expose the raw store directly; ownership and caller-bound authorization belong at that boundary.
+  - P3 accepted risk: recursive JSON validation has no size/depth budget in this in-memory Core task; plugin/IPC boundary should enforce limits later.
+  - P3 docs clarity: some source docs examples omit `valueType`/`sourcePluginId`; not a merge blocker for TASK-004.
+- Checks reported by reviewers:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts`.
+  - `bun run lint`.
+  - `bun run check:quick` passed in Averroes' security review.
+  - `git diff --check master...HEAD`.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -143,4 +172,4 @@
 
 ## Next Action
 
-Spawn review agents for TASK-004 and address any P0/P1 findings before final gate and merge.
+Spawn review-fix test and implementation agents for the P2 findings, then re-run focused checks and final gate.
