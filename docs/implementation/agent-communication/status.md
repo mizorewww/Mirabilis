@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:43 CST.
+Last updated: 2026-05-19 23:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 23:43 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final targeted re-review complete; one append-time P2 fix pending.
+- Current phase: append-read review-fix tests active.
 
 ## Active Agents
 
-- None.
+- Volta the 2nd (`test_writer`, `019e40e8-c763-7aa3-b4fc-2350ca1cb5b2`): adding append-time hostile property-read tests for the remaining P2 finding.
 
 ## Recent Agent Outcomes
 
+- Volta the 2nd (`test_writer`) was spawned for append-time hostile property-read tests.
 - Final targeted re-review round 2 completed. Aristotle the 2nd found no correctness P0/P1/P2/P3; Lagrange the 2nd found no P0/P1/P2 test-quality issues and one non-blocking P3 about deep payload limits; Gibbs the 2nd found one remaining P2 where append-time hostile input property reads can throw raw errors.
 - Final targeted re-review agents spawned for TASK-005.
 - Hegel (`implementer`) completed and was closed after normalizing hostile `list(options)` proxy-trap failures.
@@ -129,6 +130,6 @@ Last updated: 2026-05-19 23:43 CST.
 
 ## Next Actions
 
-1. Commit final targeted re-review findings.
-2. Spawn test writer for append-time hostile property-read normalization.
-3. Spawn implementer after red/updated tests are committed.
+1. Wait for Volta the 2nd's test-writing result.
+2. Confirm the focused red signal and commit the tests.
+3. Spawn implementer for append-time property-read normalization.

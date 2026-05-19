@@ -302,6 +302,20 @@
 - Native/IPC/package scope:
   - Gibbs the 2nd reported no Tauri capability, filesystem/IPC, network, dependency, package, Cargo, or permission broadening in the TASK-005 diff.
 
+### Volta the 2nd (`test_writer`)
+
+- Status: active.
+- Agent id: `019e40e8-c763-7aa3-b4fc-2350ca1cb5b2`.
+- Ownership:
+  - `src/test/core-event-store.test.ts` only.
+- Assignment:
+  - Add focused tests for `append(input)` property-read failures on `namespace`, `type`, `sourcePluginId`, and `payload`.
+  - Expected behavior: typed `EventStoreError` failures, not raw getter/proxy trap errors.
+  - Assert existing events remain unchanged/queryable after failed appends.
+- Expected signal:
+  - `bun run typecheck` should pass.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` should fail before production changes because raw append input property-read errors currently escape.
+
 ## Parent Decisions
 
 - Keep `AppEvent.payload` typed as `unknown`, but enforce JSON-compatible runtime payloads at append time.
@@ -316,4 +330,4 @@
 
 ## Next Action
 
-Spawn tests for append-time hostile property-read normalization, then implement the remaining P2 fix.
+Wait for Volta the 2nd's red/updated tests, commit them, then spawn implementation for append input property-read normalization.
