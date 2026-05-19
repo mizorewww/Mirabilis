@@ -292,11 +292,15 @@
 
 ### Final Targeted Re-review Round 2
 
-- Status: active.
+- Status: completed with one remaining P2 item.
 - Agents:
-  - Aristotle the 2nd (`reviewer`, `019e40e4-abc8-7ce0-a23c-8a33810dc6ac`): correctness review for TASK-005 acceptance and final raw-error normalization.
-  - Gibbs the 2nd (`security_reviewer`, `019e40e4-bad4-70f2-867f-d8adfd90522f`): security review for hostile plugin-shaped inputs and native/IPC surface checks.
-  - Lagrange the 2nd (`test_quality_reviewer`, `019e40e4-c79f-7da2-9600-ead0fbabb077`): test-quality review for TASK-005 acceptance coverage.
+  - Aristotle the 2nd (`reviewer`) found no remaining correctness P0/P1/P2/P3 issues. Checks: `bun run test:frontend -- src/test/core-event-store.test.ts`, `bun run typecheck`.
+  - Gibbs the 2nd (`security_reviewer`) found one P2: append-time hostile input property reads can still throw raw errors before validation normalizes them. Probed fields: `namespace`, `type`, `sourcePluginId`, and `payload`.
+  - Lagrange the 2nd (`test_quality_reviewer`) found no P0/P1/P2 test-quality issues and one non-blocking P3: the deep payload rejection test is stricter than TASK-005 criteria but useful as stack-safety coverage. Check: `bun run test:frontend -- src/test/core-event-store.test.ts`.
+- Result:
+  - Remaining P2: normalize append input property-read failures into typed `EventStoreError` failures before merge.
+- Native/IPC/package scope:
+  - Gibbs the 2nd reported no Tauri capability, filesystem/IPC, network, dependency, package, Cargo, or permission broadening in the TASK-005 diff.
 
 ## Parent Decisions
 
@@ -312,4 +316,4 @@
 
 ## Next Action
 
-Wait for final targeted re-review agents, then run final gate if no P0/P1/P2 remain.
+Spawn tests for append-time hostile property-read normalization, then implement the remaining P2 fix.
