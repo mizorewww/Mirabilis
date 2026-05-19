@@ -58,3 +58,12 @@
 - Recommended avoiding fake timers unless needed; injected `now` is simpler.
 - Verified Vitest global/fake timer guidance, Vite browser compatibility, TypeScript strict class fields, `structuredClone`, and `crypto.randomUUID`.
 - Parent decision: accepted; tests must cover mutation leaks and deterministic ID/time behavior.
+
+### Peirce - test_writer
+
+- Added focused failing tests in `src/test/core-page-store.test.ts`.
+- Covered create/get/list, stable generated IDs, timestamps, update, parent clearing, archive/list behavior, typed missing/collision errors, defensive copies, and nested block preservation.
+- Expected red signals confirmed by parent:
+  - `bun run typecheck` failed because `../core` does not export Page Store API/types yet.
+  - `bun run test:frontend -- src/test/core-page-store.test.ts` failed with 8 failing tests because `createInMemoryPageStore` is not implemented.
+- Parent decision: accepted and committed.
