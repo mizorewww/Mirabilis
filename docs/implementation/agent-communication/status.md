@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:33 CST.
+Last updated: 2026-05-19 22:41 CST.
 
 ## Current Task
 
@@ -8,16 +8,18 @@ Last updated: 2026-05-19 22:33 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance agents active.
+- Current phase: pre-test guidance recorded; ready for test writer.
 
 ## Active Agents
 
-- Carver (`planner`, `019e40a8-0fb4-7750-bee3-c787dac68d71`): planning TASK-005 Event Store API, contract, and tests.
-- Herschel (`docs_researcher`, `019e40a8-12a8-7700-aee8-3790bbbf8664`): researching current docs and TASK-005 implementation guidance.
-- Harvey (`deprecation_auditor`, `019e40a8-165c-7751-b3b4-a0e03a1a8098`): auditing API/deprecation and edge-case risks.
+- None.
 
 ## Recent Agent Outcomes
 
+- Carver (`planner`) completed TASK-005 pre-test planning.
+- Herschel (`docs_researcher`) completed TASK-005 current-docs research.
+- Harvey (`deprecation_auditor`) completed TASK-005 risk/deprecation audit.
+- Parent decisions: keep `AppEvent.payload` typed as `unknown` but enforce JSON-compatible payloads at append time; expose only `pageId`/`namespace` filters; reject blank provided `pageId`; preserve exact non-blank filter values; trim `sourcePluginId`.
 - Carver (`planner`), Herschel (`docs_researcher`), and Harvey (`deprecation_auditor`) were spawned for TASK-005 pre-test guidance.
 - TASK-004 was merged to `master`; TASK-005 has started from latest `master`.
 - `.codex/agents/*.toml` parsed successfully for TASK-005.
@@ -85,6 +87,6 @@ Last updated: 2026-05-19 22:33 CST.
 
 ## Next Actions
 
-1. Wait for TASK-005 pre-test guidance agents.
-2. Record their recommendations in TASK-005 agent notes.
-3. Spawn test writer after guidance is available.
+1. Commit TASK-005 pre-test guidance.
+2. Spawn test writer for failing Event Store acceptance tests.
+3. Run focused red checks and commit the tests.
