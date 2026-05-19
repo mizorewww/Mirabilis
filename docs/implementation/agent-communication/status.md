@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:01 CST.
+Last updated: 2026-05-19 23:02 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 23:01 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: review complete; P1/P2 fixes pending.
+- Current phase: review-fix test writer active.
 
 ## Active Agents
 
-- None.
+- Mencius (`test_writer`, `019e40c2-9741-7400-aff3-c9793c6c5363`): adding selected P1/P2 review-fix tests in `src/test/core-event-store.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Mencius (`test_writer`) was spawned for selected TASK-005 P1/P2 review-fix tests.
 - Review round 1 completed with no P0 findings.
 - P1/P2 fixes selected for this task: duplicate-identity append-only coverage, runtime string validation for identity/source/filter fields, nested invalid payload coverage, accessor/getter payload rejection, and typed handling for deep/trap-like payload validation.
 - P3 docs issue selected for cleanup: refresh TASK-005 notes `Next Action`.
@@ -99,6 +100,6 @@ Last updated: 2026-05-19 23:01 CST.
 
 ## Next Actions
 
-1. Commit review summary in agent communication docs.
-2. Spawn test writer for selected P1/P2 review-fix tests.
+1. Wait for Mencius to report review-fix test results.
+2. Commit review-fix tests after focused validation.
 3. Spawn implementer after red/updated tests are committed.
