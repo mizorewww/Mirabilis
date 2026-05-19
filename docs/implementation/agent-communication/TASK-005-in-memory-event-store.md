@@ -338,10 +338,15 @@
 
 ### Append-read Targeted Re-review
 
-- Status: active.
+- Status: completed; no P0/P1/P2 remain.
 - Agents:
-  - Feynman the 2nd (`security_reviewer`, `019e40ef-493a-7032-9521-2a016c50f3a0`): confirm append-time property-read P2 is fixed and no native/IPC exposure broadened.
-  - Descartes the 2nd (`test_quality_reviewer`, `019e40ef-4fc8-7b33-8957-e7d7f62e49a9`): confirm append-time property-read tests cover the P2 meaningfully.
+  - Feynman the 2nd (`security_reviewer`) found no remaining P0/P1/P2. It confirmed append-time field reads, list option traps, and payload reflection traps return typed `EventStoreError` failures, and no native/IPC/package exposure broadened.
+  - Descartes the 2nd (`test_quality_reviewer`) found no P0/P1/P2 blockers. It confirmed the append-time property-read tests cover the security P2 through observable API and state assertions.
+- Checks reported:
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` with 27 tests passing.
+  - `rg` scan for skipped/focused tests.
+  - Read-only runtime probe for hostile append field reads, list option traps, and payload reflection traps.
+  - Native/IPC/package diff and scan.
 
 ## Parent Decisions
 
@@ -357,4 +362,4 @@
 
 ## Next Action
 
-Wait for append-read targeted re-review agents, then run final gate if no P0/P1/P2 remain.
+Run final gate, update progress, and merge TASK-005.
