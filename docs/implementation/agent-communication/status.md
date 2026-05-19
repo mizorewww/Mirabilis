@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:20 CST.
+Last updated: 2026-05-19 23:21 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 23:20 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final P2 tests committed; ready for implementer.
+- Current phase: final P2 implementer active.
 
 ## Active Agents
 
-- None.
+- Mendel (`implementer`, `019e40d3-d10f-7920-b239-294f679b5f4d`): normalizing final raw-error cases in `src/core/stores/event-store.ts`.
 
 ## Recent Agent Outcomes
 
+- Mendel (`implementer`) was spawned for final TASK-005 P2 production fixes.
 - Linnaeus (`test_writer`) completed and was closed after adding final P2 tests.
 - Linnaeus's test commit: `43f0c2e Linnaeus(test)(Add in-memory Event Store): cover final raw-error cases`.
 - Parent confirmed expected red checks for Linnaeus's tests before the production fix.
@@ -113,6 +114,6 @@ Last updated: 2026-05-19 23:20 CST.
 
 ## Next Actions
 
-1. Commit Linnaeus outcome in the agent communication docs.
-2. Spawn implementer for final P2 raw-error normalization fixes.
-3. Run focused green checks after implementation.
+1. Wait for Mendel to report final P2 implementation results.
+2. Run focused green checks and commit production fix.
+3. Run targeted re-review/final gate.
