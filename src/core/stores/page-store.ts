@@ -1,6 +1,9 @@
 import type { MarkdownPage, StructuredMarkdownDocument } from "../types";
 
-export type PageStoreErrorCode = "PAGE_NOT_FOUND" | "PAGE_ID_COLLISION";
+export type PageStoreErrorCode =
+  | "PAGE_NOT_FOUND"
+  | "PAGE_ID_COLLISION"
+  | "PAGE_CLONE_FAILED";
 
 export class PageStoreError extends Error {
   readonly code: PageStoreErrorCode;
@@ -68,11 +71,12 @@ export function createInMemoryPageStore(
         throw new PageStoreError("PAGE_ID_COLLISION", pageId);
       }
 
+      const body = cloneForPage(pageId, input.body);
       const instant = now();
       const page: MarkdownPage = {
         id: pageId,
         title: input.title,
-        body: cloneValue(input.body),
+        body,
         createdAt: instant,
         updatedAt: instant,
       };
@@ -81,17 +85,21 @@ export function createInMemoryPageStore(
         page.parentPageId = input.parentPageId;
       }
 
+      const output = clonePage(page);
+
       pages.set(pageId, page);
 
-      return cloneValue(page);
+      return output;
     },
 
     get(pageId) {
-      return cloneValue(requirePage(pageId));
+      return clonePage(requirePage(pageId));
     },
 
     update(pageId, input) {
       const current = requirePage(pageId);
+      const body =
+        input.body === undefined ? undefined : cloneForPage(pageId, input.body);
       const next: MarkdownPage = {
         ...current,
         updatedAt: now(),
@@ -101,8 +109,8 @@ export function createInMemoryPageStore(
         next.title = input.title;
       }
 
-      if (input.body !== undefined) {
-        next.body = cloneValue(input.body);
+      if (body !== undefined) {
+        next.body = body;
       }
 
       if (input.parentPageId === null) {
@@ -111,16 +119,18 @@ export function createInMemoryPageStore(
         next.parentPageId = input.parentPageId;
       }
 
+      const output = clonePage(next);
+
       pages.set(pageId, next);
 
-      return cloneValue(next);
+      return output;
     },
 
     archive(pageId) {
       const current = requirePage(pageId);
 
       if (current.archivedAt !== undefined) {
-        return cloneValue(current);
+        return clonePage(current);
       }
 
       const instant = now();
@@ -130,9 +140,11 @@ export function createInMemoryPageStore(
         updatedAt: instant,
       };
 
+      const output = clonePage(next);
+
       pages.set(pageId, next);
 
-      return cloneValue(next);
+      return output;
     },
 
     list(options = {}) {
@@ -141,27 +153,47 @@ export function createInMemoryPageStore(
           (page) =>
             options.includeArchived === true || page.archivedAt === undefined,
         )
-        .map((page) => cloneValue(page));
+        .map((page) => clonePage(page));
     },
   };
 }
 
-function cloneValue<T>(value: T): T {
-  return structuredClone(value);
+function clonePage(page: MarkdownPage): MarkdownPage {
+  return cloneForPage(page.id, page);
+}
+
+function cloneForPage<T>(pageId: string, value: T): T {
+  try {
+    return structuredClone(value);
+  } catch {
+    throw new PageStoreError("PAGE_CLONE_FAILED", pageId);
+  }
 }
 
 function createDefaultId(): string {
-  const randomUuid = globalThis.crypto?.randomUUID?.();
+  const cryptoSource = globalThis.crypto;
+  const randomUuid = cryptoSource?.randomUUID?.();
 
   if (randomUuid !== undefined) {
     return `page_${randomUuid}`;
   }
 
-  return `page_${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  if (cryptoSource?.getRandomValues === undefined) {
+    throw new Error("Unable to create a default page id: Web Crypto is absent");
+  }
+
+  const bytes = new Uint8Array(16);
+  cryptoSource.getRandomValues(bytes);
+
+  return `page_${bytesToHex(bytes)}`;
 }
 
 function createCurrentInstant(): string {
   return new Date().toISOString();
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return [...bytes]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
