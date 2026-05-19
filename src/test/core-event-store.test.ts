@@ -104,6 +104,55 @@ describe("in-memory Event Store", () => {
     ]);
   });
 
+  it("keeps duplicate event identities append-only in append order", () => {
+    const store = createStore({
+      ids: ["event_profile_first", "event_profile_second"],
+      instants: [firstInstant, secondInstant],
+    });
+
+    const firstEvent = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: { field: "density", value: "compact" },
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const secondEvent = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: { field: "theme", value: "contrast" },
+        sourcePluginId: "settings-plugin",
+      }),
+    );
+
+    expect(firstEvent).toStrictEqual({
+      id: "event_profile_first",
+      pageId: "page_alpha",
+      namespace: "profile",
+      type: "preference.changed",
+      payload: { field: "density", value: "compact" },
+      sourcePluginId: "profile-plugin",
+      createdAt: firstInstant,
+    });
+    expect(secondEvent).toStrictEqual({
+      id: "event_profile_second",
+      pageId: "page_alpha",
+      namespace: "profile",
+      type: "preference.changed",
+      payload: { field: "theme", value: "contrast" },
+      sourcePluginId: "settings-plugin",
+      createdAt: secondInstant,
+    });
+    expect(store.list()).toStrictEqual([firstEvent, secondEvent]);
+    expect(
+      store.list({ pageId: "page_alpha", namespace: "profile" }),
+    ).toStrictEqual([firstEvent, secondEvent]);
+  });
+
   it("creates usable events with default ids and timestamps", () => {
     const store = createInMemoryEventStore();
 
@@ -394,6 +443,113 @@ describe("in-memory Event Store", () => {
     expect(store.list()).toStrictEqual([created]);
   });
 
+  it("rejects runtime non-string identities, sources, and filters before trimming", () => {
+    const appendCases: Array<{
+      invalidFields: Partial<AppendEventInput>;
+      expectedCode: EventStoreError["code"];
+    }> = [
+      {
+        invalidFields: {
+          namespace: nonStringWithInheritedTrim("profile"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          namespace: nonStringWithOwnTrim("profile"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          type: nonStringWithInheritedTrim("preference.changed"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          type: nonStringWithOwnTrim("preference.changed"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          pageId: nonStringWithInheritedTrim("page_alpha"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          pageId: nonStringWithOwnTrim("page_alpha"),
+        },
+        expectedCode: "EVENT_IDENTITY_REQUIRED",
+      },
+      {
+        invalidFields: {
+          sourcePluginId: nonStringWithInheritedTrim("profile-plugin"),
+        },
+        expectedCode: "EVENT_SOURCE_PLUGIN_REQUIRED",
+      },
+      {
+        invalidFields: {
+          sourcePluginId: nonStringWithOwnTrim("profile-plugin"),
+        },
+        expectedCode: "EVENT_SOURCE_PLUGIN_REQUIRED",
+      },
+    ];
+
+    appendCases.forEach((appendCase, index) => {
+      const store = createStore({
+        ids: [`event_runtime_string_${index + 1}`],
+        instants: [firstInstant],
+      });
+
+      expectEventStoreError(
+        () =>
+          store.append(
+            eventInput({
+              pageId: "page_alpha",
+              namespace: "profile",
+              type: "preference.changed",
+              payload: null,
+              sourcePluginId: "profile-plugin",
+              ...appendCase.invalidFields,
+            } as AppendEventInput),
+          ),
+        appendCase.expectedCode,
+      );
+      expect(store.list()).toStrictEqual([]);
+    });
+
+    const store = createStore({
+      ids: ["event_existing"],
+      instants: [firstInstant],
+    });
+    const existing = store.append(
+      eventInput({
+        pageId: "page_alpha",
+        namespace: "profile",
+        type: "preference.changed",
+        payload: null,
+        sourcePluginId: "profile-plugin",
+      }),
+    );
+    const filterCases: ListEventsOptions[] = [
+      { pageId: nonStringWithInheritedTrim("page_alpha") },
+      { pageId: nonStringWithOwnTrim("page_alpha") },
+      { namespace: nonStringWithInheritedTrim("profile") },
+      { namespace: nonStringWithOwnTrim("profile") },
+    ];
+
+    for (const filterCase of filterCases) {
+      expectEventStoreError(
+        () => store.list(filterCase),
+        "EVENT_IDENTITY_REQUIRED",
+      );
+      expect(store.list()).toStrictEqual([existing]);
+    }
+  });
+
   it("accepts JSON-compatible runtime payloads while keeping payload typed unknown", () => {
     const acceptedPayloads: Array<{ label: string; payload: unknown }> = [
       { label: "string", payload: "compact" },
@@ -493,6 +649,103 @@ describe("in-memory Event Store", () => {
       );
     }
 
+    expect(store.list()).toStrictEqual([]);
+  });
+
+  it("rejects nested non-JSON-compatible payload values with typed errors", () => {
+    const invalidPayloads: Array<{ label: string; payload: unknown }> = [
+      { label: "nestedUndefined", payload: { value: undefined } },
+      {
+        label: "nestedFunction",
+        payload: { nested: { value: () => null } },
+      },
+      { label: "arrayUndefined", payload: [undefined] },
+      { label: "arrayNestedBigint", payload: [{ value: 1n }] },
+      {
+        label: "nestedSymbol",
+        payload: { nested: [{ value: Symbol("event") }] },
+      },
+      {
+        label: "nestedInfinity",
+        payload: { nested: { values: [Number.POSITIVE_INFINITY] } },
+      },
+    ];
+    const store = createStore({
+      ids: numberedValues(
+        "event_nested_invalid_payload",
+        invalidPayloads.length,
+      ),
+      instants: numberedInstants(invalidPayloads.length),
+    });
+
+    for (const invalidPayload of invalidPayloads) {
+      expectEventStoreError(
+        () =>
+          store.append(
+            eventInput({
+              pageId: "page_alpha",
+              namespace: "profile",
+              type: `preference.${invalidPayload.label}`,
+              payload: invalidPayload.payload,
+              sourcePluginId: "profile-plugin",
+            }),
+          ),
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+      );
+    }
+
+    expect(store.list()).toStrictEqual([]);
+  });
+
+  it("rejects accessor payload descriptors without executing getters", () => {
+    const accessorPayloads = [
+      createObjectGetterPayload(),
+      createArrayGetterPayload(),
+    ];
+
+    accessorPayloads.forEach((accessorPayload, index) => {
+      const store = createStore({
+        ids: [`event_accessor_payload_${index + 1}`],
+        instants: [firstInstant],
+      });
+
+      expectEventStoreError(
+        () =>
+          store.append(
+            eventInput({
+              pageId: "page_alpha",
+              namespace: "profile",
+              type: `preference.accessor.${index + 1}`,
+              payload: accessorPayload.payload,
+              sourcePluginId: "profile-plugin",
+            }),
+          ),
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+      );
+      expect(accessorPayload.getterCalls()).toBe(0);
+      expect(store.list()).toStrictEqual([]);
+    });
+  });
+
+  it("surfaces deeply nested payload validation failures as typed errors", () => {
+    const store = createStore({
+      ids: ["event_deep_payload"],
+      instants: [firstInstant],
+    });
+
+    expectEventStoreError(
+      () =>
+        store.append(
+          eventInput({
+            pageId: "page_alpha",
+            namespace: "profile",
+            type: "preference.deep",
+            payload: createDeepPayload(50_000),
+            sourcePluginId: "profile-plugin",
+          }),
+        ),
+      "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+    );
     expect(store.list()).toStrictEqual([]);
   });
 
@@ -700,6 +953,78 @@ function numberedInstants(count: number): string[] {
   return Array.from({ length: count }, (_unused, index) => {
     return `2026-05-19T11:${String(index).padStart(2, "0")}:00.000Z`;
   });
+}
+
+function nonStringWithInheritedTrim(value: string): string {
+  const runtimeValue = Object.create({
+    trim() {
+      return value;
+    },
+  }) as Record<string, unknown>;
+  runtimeValue.value = value;
+
+  return runtimeValue as unknown as string;
+}
+
+function nonStringWithOwnTrim(value: string): string {
+  return {
+    trim() {
+      return value;
+    },
+    value,
+  } as unknown as string;
+}
+
+function createObjectGetterPayload(): {
+  payload: unknown;
+  getterCalls: () => number;
+} {
+  let getterCalls = 0;
+  const payload: Record<string, unknown> = {};
+
+  Object.defineProperty(payload, "value", {
+    enumerable: true,
+    get() {
+      getterCalls += 1;
+      throw new Error("object payload getter executed");
+    },
+  });
+
+  return {
+    payload,
+    getterCalls: () => getterCalls,
+  };
+}
+
+function createArrayGetterPayload(): {
+  payload: unknown;
+  getterCalls: () => number;
+} {
+  let getterCalls = 0;
+  const payload: unknown[] = [];
+
+  Object.defineProperty(payload, "0", {
+    enumerable: true,
+    get() {
+      getterCalls += 1;
+      throw new Error("array payload getter executed");
+    },
+  });
+
+  return {
+    payload,
+    getterCalls: () => getterCalls,
+  };
+}
+
+function createDeepPayload(depth: number): unknown {
+  let payload: unknown = { value: "leaf" };
+
+  for (let index = 0; index < depth; index += 1) {
+    payload = { nested: payload };
+  }
+
+  return payload;
 }
 
 function expectValidIsoInstant(value: string): void {
