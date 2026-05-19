@@ -44,6 +44,14 @@ type EventIdentity = Pick<AppEvent, "namespace" | "type"> & {
   pageId?: string;
 };
 
+type JsonCompatibilityValidationState = {
+  seen: WeakSet<object>;
+  visitedNodeCount: number;
+};
+
+const maxJsonPayloadDepth = 1_000;
+const maxJsonPayloadNodes = 100_000;
+
 export function createInMemoryEventStore(
   options: CreateInMemoryEventStoreOptions = {},
 ): EventStore {
@@ -90,6 +98,17 @@ export function createInMemoryEventStore(
 }
 
 function normalizeIdentity(input: AppendEventInput): EventIdentity {
+  if (
+    typeof input.namespace !== "string" ||
+    typeof input.type !== "string" ||
+    (input.pageId !== undefined && typeof input.pageId !== "string")
+  ) {
+    throw new EventStoreError(
+      "EVENT_IDENTITY_REQUIRED",
+      "event identity must use string values",
+    );
+  }
+
   const identity: EventIdentity = {
     namespace: input.namespace,
     type: input.type,
@@ -114,6 +133,13 @@ function normalizeSourcePluginId(
   input: Pick<AppendEventInput, "sourcePluginId">,
   identity: EventIdentity,
 ): string {
+  if (typeof input.sourcePluginId !== "string") {
+    throw new EventStoreError(
+      "EVENT_SOURCE_PLUGIN_REQUIRED",
+      describeIdentity(identity),
+    );
+  }
+
   const sourcePluginId = input.sourcePluginId.trim();
 
   if (sourcePluginId.length === 0) {
@@ -141,9 +167,16 @@ function normalizeListOptions(options: ListEventsOptions): ListEventsOptions {
 }
 
 function normalizeFilter(
-  value: string,
+  value: unknown,
   options: ListEventsOptions,
 ): string {
+  if (typeof value !== "string") {
+    throw new EventStoreError(
+      "EVENT_IDENTITY_REQUIRED",
+      `pageId=${options.pageId ?? ""}/namespace=${options.namespace ?? ""}`,
+    );
+  }
+
   if (value.trim().length === 0) {
     throw new EventStoreError(
       "EVENT_IDENTITY_REQUIRED",
@@ -164,8 +197,14 @@ function matchesFilters(event: AppEvent, filters: ListEventsOptions): boolean {
 function assertJsonCompatible(
   value: unknown,
   identity: EventIdentity,
-  seen: WeakSet<object> = new WeakSet(),
+  state: JsonCompatibilityValidationState = {
+    seen: new WeakSet(),
+    visitedNodeCount: 0,
+  },
+  depth = 0,
 ): void {
+  assertPayloadBudgetAvailable(identity, state, depth);
+
   if (value === null) {
     return;
   }
@@ -180,24 +219,24 @@ function assertJsonCompatible(
       }
       break;
     case "object":
-      if (seen.has(value)) {
+      if (state.seen.has(value)) {
         break;
       }
 
-      seen.add(value);
+      state.seen.add(value);
 
       try {
         if (Array.isArray(value)) {
-          assertJsonArrayCompatible(value, identity, seen);
+          assertJsonArrayCompatible(value, identity, state, depth);
           return;
         }
 
         if (isPlainObject(value)) {
-          assertJsonObjectCompatible(value, identity, seen);
+          assertJsonObjectCompatible(value, identity, state, depth);
           return;
         }
       } finally {
-        seen.delete(value);
+        state.seen.delete(value);
       }
 
       break;
@@ -214,7 +253,8 @@ function assertJsonCompatible(
 function assertJsonArrayCompatible(
   value: unknown[],
   identity: EventIdentity,
-  seen: WeakSet<object>,
+  state: JsonCompatibilityValidationState,
+  depth: number,
 ): void {
   if (Object.getOwnPropertySymbols(value).length > 0) {
     throw new EventStoreError(
@@ -226,6 +266,15 @@ function assertJsonArrayCompatible(
   for (const propertyName of Object.getOwnPropertyNames(value)) {
     if (propertyName === "length") {
       continue;
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(value, propertyName);
+
+    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+      throw new EventStoreError(
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+        describeIdentity(identity),
+      );
     }
 
     if (!isValidPresentArrayIndexProperty(value, propertyName)) {
@@ -244,7 +293,16 @@ function assertJsonArrayCompatible(
       );
     }
 
-    assertJsonCompatible(value[index], identity, seen);
+    const descriptor = Object.getOwnPropertyDescriptor(value, index);
+
+    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+      throw new EventStoreError(
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+        describeIdentity(identity),
+      );
+    }
+
+    assertJsonCompatible(descriptor.value, identity, state, depth + 1);
   }
 }
 
@@ -266,7 +324,8 @@ function isValidPresentArrayIndexProperty(
 function assertJsonObjectCompatible(
   value: object,
   identity: EventIdentity,
-  seen: WeakSet<object>,
+  state: JsonCompatibilityValidationState,
+  depth: number,
 ): void {
   if (Object.getOwnPropertySymbols(value).length > 0) {
     throw new EventStoreError(
@@ -275,9 +334,40 @@ function assertJsonObjectCompatible(
     );
   }
 
-  for (const objectValue of Object.values(value)) {
-    assertJsonCompatible(objectValue, identity, seen);
+  for (const propertyName of Object.getOwnPropertyNames(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, propertyName);
+
+    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+      throw new EventStoreError(
+        "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+        describeIdentity(identity),
+      );
+    }
+
+    assertJsonCompatible(descriptor.value, identity, state, depth + 1);
   }
+}
+
+function assertPayloadBudgetAvailable(
+  identity: EventIdentity,
+  state: JsonCompatibilityValidationState,
+  depth: number,
+): void {
+  state.visitedNodeCount += 1;
+
+  if (
+    depth > maxJsonPayloadDepth ||
+    state.visitedNodeCount > maxJsonPayloadNodes
+  ) {
+    throw new EventStoreError(
+      "EVENT_PAYLOAD_NOT_JSON_COMPATIBLE",
+      describeIdentity(identity),
+    );
+  }
+}
+
+function isAccessorDescriptor(descriptor: PropertyDescriptor): boolean {
+  return "get" in descriptor || "set" in descriptor;
 }
 
 function isPlainObject(value: object): boolean {
