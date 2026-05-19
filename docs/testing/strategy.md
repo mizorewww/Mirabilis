@@ -27,6 +27,7 @@ This strategy is the local release gate for Mirabilis. GitHub CI is intentionall
 | --- | --- | --- |
 | React component | Forms, command UI, editor affordances, visible errors, user interaction | Vitest + React Testing Library |
 | Frontend API wrapper | Tauri invoke wrapper behavior and typed errors | Vitest with boundary mocks |
+| Core type contracts | exported domain type shapes, type-only invariants, module entrypoints | Vitest `expectTypeOf` tests |
 | Core kernel | stores, registries, command bus, event bus, filter engine | Vitest unit tests |
 | Plugin runtime | manifest parsing, lifecycle ordering, registration, dependency handling | Vitest integration tests |
 | Rust domain/service | SQLite repositories, DTO validation, filesystem-safe helpers | `cargo test` |
@@ -72,6 +73,8 @@ For each task in `docs/implementation/task-index.md`:
 
 - `test_writer` writes the smallest failing tests for the task acceptance criteria.
 - `implementer` makes those focused tests pass with minimum production code.
+- For Core-owned TypeScript contracts, prefer Vitest type assertions such as `expectTypeOf` plus small runtime samples that prove exports are usable from the public module entrypoint.
+- For Core boundary rules, keep grep-style architecture tests scoped to production Core files so business-plugin terms are blocked without coupling tests to implementation details.
 - `test_quality_reviewer` checks whether tests cover behavior instead of implementation details.
 - `reviewer` checks for missing edge cases.
 - `security_reviewer` runs for IPC, permission, filesystem, SQLite, or plugin-boundary changes.
