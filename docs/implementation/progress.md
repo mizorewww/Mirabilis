@@ -25,7 +25,7 @@ Status markers:
 ## Milestone M1: Core data kernel
 
 - [x] TASK-002: Create TypeScript core domain types
-- [ ] TASK-003: Add in-memory Page Store
+- [~] TASK-003: Add in-memory Page Store
 - [ ] TASK-004: Add in-memory Metadata Store
 - [ ] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
@@ -78,6 +78,13 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 20:51 CST - TASK-003 started
+
+- Branch: `feat/task-003-in-memory-page-store`.
+- Task: Add in-memory Page Store.
+- Scope: implement in-memory Markdown Page CRUD/list/archive behavior using TASK-002 Core domain types while preserving stable page IDs, timestamps, and structured document block IDs.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-003-in-memory-page-store.md`.
 
 ### 2026-05-19 20:46 CST - TASK-002 completed
 
