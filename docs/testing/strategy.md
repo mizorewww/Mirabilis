@@ -44,16 +44,16 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 cargo test --manifest-path src-tauri/Cargo.toml --all-features
 ```
 
-## Target Package Scripts
+## Local Package Scripts
 
-After the testing/lint task is implemented, expose these Bun scripts:
+Use these Bun scripts for local validation:
 
 ```json
 {
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint . --max-warnings=0",
-    "test:frontend": "vitest run",
+    "test:frontend": "NODE_ENV=test vitest run",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --all-features",
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
     "clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings",
@@ -62,6 +62,8 @@ After the testing/lint task is implemented, expose these Bun scripts:
   }
 }
 ```
+
+Frontend tests use Vitest with the project-level `jsdom` environment and `src/test/setup.ts` for `@testing-library/jest-dom/vitest` matchers. React Testing Library 16+ requires the `@testing-library/dom` peer dependency to be installed explicitly. ESLint uses flat config presets for React Hooks, Vite React Refresh, Testing Library, and jest-dom, with Testing Library and jest-dom rules scoped to test files. Run tests with `bun run test:frontend`; do not use `bun test` for this app.
 
 ## Focused Test Guidance
 
