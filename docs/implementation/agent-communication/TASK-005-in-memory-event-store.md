@@ -260,16 +260,18 @@
 
 ### Planck (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e40db-f6ae-7301-a325-bdea75aa9381`.
 - Ownership:
   - `src/test/core-event-store.test.ts` only.
+- Commit:
+  - `0800902 Planck(test)(Add in-memory Event Store): cover list option proxy traps`.
 - Assignment:
   - Add focused tests proving hostile `list(options)` proxy traps for `pageId` and `namespace` are normalized to typed `EventStoreError` failures with `EVENT_IDENTITY_REQUIRED`.
   - Assert existing appended events remain unchanged/queryable after the failed `list` call.
-- Expected signal:
-  - `bun run typecheck` should pass.
-  - `bun run test:frontend -- src/test/core-event-store.test.ts` should fail before production changes because raw proxy-trap errors currently escape.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 22 tests with 20 passing and 2 failing because raw `pageId` and `namespace` option get-trap errors escape.
 
 ## Parent Decisions
 
@@ -285,4 +287,4 @@
 
 ## Next Action
 
-Wait for Planck's red/updated tests, commit them, then spawn implementation for hostile `list(options)` proxy-trap normalization.
+Spawn implementation for hostile `list(options)` proxy-trap normalization.
