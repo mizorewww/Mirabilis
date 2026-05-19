@@ -27,7 +27,7 @@ Status markers:
 - [x] TASK-002: Create TypeScript core domain types
 - [x] TASK-003: Add in-memory Page Store
 - [x] TASK-004: Add in-memory Metadata Store
-- [ ] TASK-005: Add in-memory Event Store
+- [~] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
 - [ ] TASK-007: Add Command Registry and Command Bus
 - [ ] TASK-008: Add View Registry and Slot Registry
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 22:32 CST - TASK-005 started
+
+- Branch: `feat/task-005-in-memory-event-store`.
+- Task: Add in-memory Event Store.
+- Scope: implement in-memory event append/query behavior using TASK-002 Core domain types while preserving immutable event facts, plugin-agnostic storage, and page/namespace filtering.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and a desktop-terminal `TERM=dumb` failure, which does not block agent development.
 
 ### 2026-05-19 22:27 CST - TASK-004 completed
 

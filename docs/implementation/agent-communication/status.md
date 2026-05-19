@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:27 CST.
+Last updated: 2026-05-19 22:32 CST.
 
 ## Current Task
 
-- Task: TASK-004 - Add in-memory Metadata Store.
-- Branch: `feat/task-004-in-memory-metadata-store`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-004`.
+- Task: TASK-005 - Add in-memory Event Store.
+- Branch: `feat/task-005-in-memory-event-store`.
+- Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; ready to merge.
+- Current phase: task start.
 
 ## Active Agents
 
@@ -16,6 +16,9 @@ Last updated: 2026-05-19 22:27 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-004 was merged to `master`; TASK-005 has started from latest `master`.
+- `.codex/agents/*.toml` parsed successfully for TASK-005.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
 - Final TASK-004 gate passed: `bun run check:quick` and `bun run build`.
 - Leibniz (`implementer`) completed and was closed after fixing inherited sparse-array validation.
 - Leibniz's implementation commit: `89a1df4 Leibniz(implementation)(Add in-memory Metadata Store): reject inherited sparse arrays`.
@@ -73,10 +76,12 @@ Last updated: 2026-05-19 22:27 CST.
 
 ## Current Worktree State
 
-- Progress and agent communication docs are being updated for TASK-004 completion.
+- `docs/implementation/progress.md` marks TASK-005 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-005.
+- `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md` will hold TASK-005 agent notes.
 
 ## Next Actions
 
-1. Commit TASK-004 completion docs.
-2. Merge `feat/task-004-in-memory-metadata-store` into `master`.
-3. Push `master` and continue to TASK-005.
+1. Commit TASK-005 start/progress state.
+2. Spawn planner, docs researcher, and deprecation auditor for TASK-005.
+3. Spawn test writer after pre-test guidance is available.
