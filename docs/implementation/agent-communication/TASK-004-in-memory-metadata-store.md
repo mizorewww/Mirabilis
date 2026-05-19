@@ -232,6 +232,20 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-metadata-store.test.ts` runs 22 tests with 21 passing and 1 failing: inherited-index sparse arrays are still accepted.
 
+### Leibniz (`implementer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/core/stores/metadata-store.ts`.
+- Commit:
+  - `89a1df4 Leibniz(implementation)(Add in-memory Metadata Store): reject inherited sparse arrays`.
+- Fix implemented:
+  - Array density validation now requires each numeric index to be an own property, so inherited prototype indexes no longer hide sparse array holes.
+- Checks run by Leibniz and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts` with 22 tests passing.
+  - `bun run lint`.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -244,4 +258,4 @@
 
 ## Next Action
 
-Wait for final review-fix implementer, then run focused checks, final gate, progress update, and merge.
+Run final gate, update progress, and merge TASK-004.
