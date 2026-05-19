@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:15 CST.
+Last updated: 2026-05-19 23:16 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 23:15 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: targeted re-review complete; final P2 fixes pending.
+- Current phase: final P2 test writer active.
 
 ## Active Agents
 
-- None.
+- Linnaeus (`test_writer`, `019e40cf-3fec-7973-8552-b655827853ef`): adding final P2 tests for filter coercion and proxy/trap payload typed failures.
 
 ## Recent Agent Outcomes
 
+- Linnaeus (`test_writer`) was spawned for final TASK-005 P2 tests.
 - Targeted re-review round 1 completed with no P0/P1 findings, but two P2 findings remain: non-string filter error-detail coercion can throw raw errors, and proxy/trap payload reflection can throw raw errors.
 - Targeted re-review agents spawned for selected P1/P2 fixes.
 - Lovelace (`implementer`) completed and was closed after implementing selected P1/P2 fixes.
@@ -109,6 +110,6 @@ Last updated: 2026-05-19 23:15 CST.
 
 ## Next Actions
 
-1. Commit targeted re-review findings.
-2. Spawn test writer for remaining P2 cases.
+1. Wait for Linnaeus to report final P2 test results.
+2. Commit final P2 tests after focused validation.
 3. Spawn implementer after red/updated tests are committed.
