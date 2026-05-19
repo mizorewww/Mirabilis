@@ -218,6 +218,20 @@
   - W3C Web Cryptography Level 2.
   - Vitest `vi.stubGlobal` and `vi.unstubAllGlobals`.
 
+### Carson (`test_writer`)
+
+- Status: completed and closed.
+- Files changed:
+  - `src/test/core-metadata-store.test.ts`.
+- Commit:
+  - `8eca0ab Carson(test)(Add in-memory Metadata Store): add final edge coverage`.
+- Coverage added:
+  - Significant whitespace in `pageId` and `namespace` is preserved for records, exact `get`, and `list` filters.
+  - Sparse arrays are rejected even when a missing index exists on a custom array prototype.
+- Parent confirmed expected red signal before implementation fix:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-metadata-store.test.ts` runs 22 tests with 21 passing and 1 failing: inherited-index sparse arrays are still accepted.
+
 ## Parent Decisions
 
 - The parent thread remains orchestration-only and will delegate test-writing, implementation, and review.
@@ -230,4 +244,4 @@
 
 ## Next Action
 
-Spawn a final review-fix test writer for the remaining P2 coverage, then implement the inherited sparse-array fix and run final gate.
+Wait for final review-fix implementer, then run focused checks, final gate, progress update, and merge.
