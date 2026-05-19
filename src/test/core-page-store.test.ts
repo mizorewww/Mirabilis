@@ -28,7 +28,7 @@ describe("in-memory Page Store", () => {
 
     const created = store.create(input);
 
-    expect(created).toEqual({
+    expect(created).toStrictEqual({
       id: "page_alpha",
       title: "Alpha memo",
       body: documentWithText("block_alpha", "Opening text"),
@@ -36,8 +36,26 @@ describe("in-memory Page Store", () => {
       updatedAt: firstInstant,
     });
     expect(created.archivedAt).toBeUndefined();
-    expect(store.get("page_alpha")).toEqual(created);
-    expect(store.list()).toEqual([created]);
+    expect(store.get("page_alpha")).toStrictEqual(created);
+    expect(store.list()).toStrictEqual([created]);
+  });
+
+  it("creates usable pages with default ids and timestamps", () => {
+    const store = createInMemoryPageStore();
+
+    const created = store.create(
+      createPageInput({
+        title: "Default memo",
+        body: documentWithText("block_default", "Default text"),
+      }),
+    );
+
+    expect(created.id).toMatch(/^page_/);
+    expect(created.createdAt).toBe(created.updatedAt);
+    expectValidIsoInstant(created.createdAt);
+    expect(created).not.toHaveProperty("archivedAt");
+    expect(store.get(created.id)).toStrictEqual(created);
+    expect(store.list()).toStrictEqual([created]);
   });
 
   it("keeps generated ids unique, stable, and listed in creation order", () => {
@@ -65,13 +83,13 @@ describe("in-memory Page Store", () => {
       }),
     );
 
-    expect([alpha.id, beta.id, gamma.id]).toEqual([
+    expect([alpha.id, beta.id, gamma.id]).toStrictEqual([
       "page_alpha",
       "page_beta",
       "page_gamma",
     ]);
     expect(new Set([alpha.id, beta.id, gamma.id]).size).toBe(3);
-    expect(store.list().map((page) => page.id)).toEqual([
+    expect(store.list().map((page) => page.id)).toStrictEqual([
       "page_alpha",
       "page_beta",
       "page_gamma",
@@ -118,23 +136,30 @@ describe("in-memory Page Store", () => {
     };
 
     const updated = store.update(created.id, update);
+    const expectedUpdated: MarkdownPage = {
+      id: created.id,
+      title: "Refined memo",
+      body: nestedDocument("Refined text"),
+      createdAt: created.createdAt,
+      updatedAt: secondInstant,
+    };
 
-    expect(updated.id).toBe(created.id);
-    expect(updated.createdAt).toBe(created.createdAt);
-    expect(updated.updatedAt).toBe(secondInstant);
+    expect(updated).toStrictEqual(expectedUpdated);
     expect(updated.parentPageId).toBeUndefined();
-    expect(updated.body).toEqual(nestedDocument("Refined text"));
+    expect(updated.body).toStrictEqual(nestedDocument("Refined text"));
     expect(updated.body.content[0]?.blockId).toBe("block_section");
     expect(updated.body.content[0]?.content?.[0]?.blockId).toBe(
       "block_paragraph",
     );
     expect(updated.body.content[0]?.content?.[0]?.text).toBe("Refined text");
+    expect(store.get(created.id)).toStrictEqual(expectedUpdated);
+    expect(store.list()).toStrictEqual([expectedUpdated]);
   });
 
   it("archives pages without deleting them and keeps repeated archives idempotent", () => {
     const store = createStore({
       ids: ["page_alpha"],
-      instants: [firstInstant, secondInstant, thirdInstant],
+      instants: [firstInstant, secondInstant],
     });
     const created = store.create(
       createPageInput({
@@ -148,22 +173,28 @@ describe("in-memory Page Store", () => {
 
     expect(archived.archivedAt).toBe(secondInstant);
     expect(archived.updatedAt).toBe(secondInstant);
-    expect(store.list()).toEqual([]);
-    expect(store.list(includeArchived)).toEqual([archived]);
-    expect(store.get(created.id)).toEqual(archived);
+    expect(store.list()).toStrictEqual([]);
+    expect(store.list(includeArchived)).toStrictEqual([archived]);
+    expect(store.get(created.id)).toStrictEqual(archived);
 
     const archivedAgain = store.archive(created.id);
 
     expect(archivedAgain.archivedAt).toBe(secondInstant);
     expect(archivedAgain.updatedAt).toBe(secondInstant);
-    expect(store.list(includeArchived)).toEqual([archived]);
+    expect(store.list(includeArchived)).toStrictEqual([archived]);
   });
 
-  it("throws typed errors for missing pages", () => {
+  it("throws typed errors for missing pages without changing existing pages", () => {
     const store = createStore({
       ids: ["page_alpha"],
       instants: [firstInstant],
     });
+    const existingPage = store.create(
+      createPageInput({
+        title: "Existing memo",
+        body: documentWithText("block_alpha", "Existing text"),
+      }),
+    );
     const missingPageId = "page_missing";
 
     expectPageStoreError(
@@ -171,6 +202,7 @@ describe("in-memory Page Store", () => {
       "PAGE_NOT_FOUND",
       missingPageId,
     );
+    expect(store.get(existingPage.id)).toStrictEqual(existingPage);
     expectPageStoreError(
       () =>
         store.update(missingPageId, {
@@ -179,11 +211,14 @@ describe("in-memory Page Store", () => {
       "PAGE_NOT_FOUND",
       missingPageId,
     );
+    expect(store.get(existingPage.id)).toStrictEqual(existingPage);
     expectPageStoreError(
       () => store.archive(missingPageId),
       "PAGE_NOT_FOUND",
       missingPageId,
     );
+    expect(store.get(existingPage.id)).toStrictEqual(existingPage);
+    expect(store.list()).toStrictEqual([existingPage]);
   });
 
   it("uses defensive copies at input, create, get, and list boundaries", () => {
@@ -229,9 +264,58 @@ describe("in-memory Page Store", () => {
     expect(nestedText(store.get(created.id))).toBe("Stored text");
   });
 
+  it("uses defensive copies at update and archive boundaries", () => {
+    const store = createStore({
+      ids: ["page_alpha"],
+      instants: [firstInstant, secondInstant, thirdInstant],
+    });
+    const created = store.create(
+      createPageInput({
+        title: "Copy source memo",
+        body: nestedDocument("Stored text"),
+      }),
+    );
+    const update: UpdatePageInput = {
+      title: "Copy update memo",
+      body: nestedDocument("Updated text"),
+    };
+
+    const updated = store.update(created.id, update);
+    const expectedUpdated: MarkdownPage = {
+      id: created.id,
+      title: "Copy update memo",
+      body: nestedDocument("Updated text"),
+      createdAt: firstInstant,
+      updatedAt: secondInstant,
+    };
+
+    update.body!.content[0]!.content![0]!.text = "Changed update input";
+    expect(store.get(created.id)).toStrictEqual(expectedUpdated);
+    expect(store.list()).toStrictEqual([expectedUpdated]);
+
+    updated.title = "Changed updated";
+    updated.body.content[0]!.content![0]!.text = "Changed updated";
+    expect(store.get(created.id)).toStrictEqual(expectedUpdated);
+    expect(store.list()).toStrictEqual([expectedUpdated]);
+
+    const archived = store.archive(created.id);
+    const expectedArchived: MarkdownPage = {
+      ...expectedUpdated,
+      archivedAt: thirdInstant,
+      updatedAt: thirdInstant,
+    };
+
+    archived.title = "Changed archived";
+    archived.body.content[0]!.content![0]!.text = "Changed archived";
+    expect(store.get(created.id)).toStrictEqual(expectedArchived);
+    expect(store.list({ includeArchived: true })).toStrictEqual([
+      expectedArchived,
+    ]);
+  });
+
   it("throws a typed collision error without overwriting the existing page", () => {
     const store = createStore({
-      ids: ["page_alpha", "page_alpha"],
+      ids: ["page_alpha", "page_alpha", "page_beta"],
       instants: [firstInstant, secondInstant],
     });
     const firstPage = store.create(
@@ -252,8 +336,44 @@ describe("in-memory Page Store", () => {
       "PAGE_ID_COLLISION",
       "page_alpha",
     );
-    expect(store.get("page_alpha")).toEqual(firstPage);
-    expect(store.list()).toEqual([firstPage]);
+    expect(store.get("page_alpha")).toStrictEqual(firstPage);
+    expect(store.list()).toStrictEqual([firstPage]);
+
+    const nextPage = store.create(
+      createPageInput({
+        title: "Next memo",
+        body: documentWithText("block_beta", "Next text"),
+      }),
+    );
+
+    expect(nextPage).toStrictEqual({
+      id: "page_beta",
+      title: "Next memo",
+      body: documentWithText("block_beta", "Next text"),
+      createdAt: secondInstant,
+      updatedAt: secondInstant,
+    });
+    expect(store.list()).toStrictEqual([firstPage, nextPage]);
+  });
+
+  it("converts non-cloneable bodies to typed store errors", () => {
+    const store = createStore({
+      ids: ["page_alpha"],
+      instants: [firstInstant],
+    });
+
+    expectPageStoreError(
+      () =>
+        store.create(
+          createPageInput({
+            title: "Clone memo",
+            body: nonCloneableDocument(),
+          }),
+        ),
+      "PAGE_CLONE_FAILED",
+      "page_alpha",
+    );
+    expect(store.list({ includeArchived: true })).toStrictEqual([]);
   });
 });
 
@@ -327,8 +447,29 @@ function nestedDocument(text: string): StructuredMarkdownDocument {
   };
 }
 
+function nonCloneableDocument(): StructuredMarkdownDocument {
+  return {
+    type: "doc",
+    content: [
+      {
+        blockId: "block_non_cloneable",
+        type: "paragraph",
+        attrs: { onRead: () => "value" },
+        text: "Clone boundary text",
+      },
+    ],
+  };
+}
+
 function nestedText(page: MarkdownPage): string | undefined {
   return page.body.content[0]?.content?.[0]?.text;
+}
+
+function expectValidIsoInstant(value: string): void {
+  const parsedInstant = Date.parse(value);
+
+  expect(Number.isNaN(parsedInstant)).toBe(false);
+  expect(new Date(parsedInstant).toISOString()).toBe(value);
 }
 
 function expectPageStoreError(
