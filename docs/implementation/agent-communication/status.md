@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:56 CST.
+Last updated: 2026-05-19 23:59 CST.
 
 ## Current Task
 
-- Task: TASK-005 - Add in-memory Event Store.
-- Branch: `feat/task-005-in-memory-event-store`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
+- Task: TASK-006 - Add Filter Store and Query AST baseline.
+- Branch: `feat/task-006-filter-store-query-ast`.
+- Worktree: `/home/aac6fef/Developer/mirabilis-task-006`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; progress update active.
+- Current phase: task started; pre-test guidance pending.
 
 ## Active Agents
 
@@ -16,6 +16,9 @@ Last updated: 2026-05-19 23:56 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-006 started from latest `master` after TASK-005 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-006.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
 - Final TASK-005 gate passed: `bun run check:quick` and `bun run build`.
 - Append-read targeted re-review completed. Feynman the 2nd found no remaining security P0/P1/P2 and confirmed no native/IPC/package exposure broadened; Descartes the 2nd found no P0/P1/P2 test-quality blockers.
 - Append-read targeted re-review agents spawned for TASK-005.
@@ -140,6 +143,6 @@ Last updated: 2026-05-19 23:56 CST.
 
 ## Next Actions
 
-1. Commit TASK-005 progress update.
-2. Merge TASK-005 to `master`.
-3. Continue to TASK-006.
+1. Commit TASK-006 start state.
+2. Spawn planner/docs/deprecation agents for TASK-006.
+3. Use their guidance to assign failing tests.

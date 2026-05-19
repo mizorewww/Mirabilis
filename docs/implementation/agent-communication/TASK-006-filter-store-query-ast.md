@@ -1,0 +1,46 @@
+# TASK-006 Agent Communication - Filter Store and Query AST Baseline
+
+## Task
+
+- Task ID: TASK-006.
+- Task name: Add Filter Store and Query AST baseline.
+- Branch: `feat/task-006-filter-store-query-ast`.
+- Worktree: `/home/aac6fef/Developer/mirabilis-task-006`.
+- Parent role: orchestration only.
+
+## Source Docs
+
+- `docs/product/02-core-data-model.md#44-filter`.
+- `docs/architecture/06-filter-native-database.md#141-query-ast`.
+- `docs/implementation/task-index.md#task-006-add-filter-store-and-query-ast-baseline`.
+- `docs/testing/strategy.md`.
+
+## Acceptance Criteria
+
+- Save, update, list, and delete filter definitions.
+- Query AST supports basic `eq`, `exists`, `within`, `and`, and `or` shapes required by documented filters.
+- Unsupported query operators return typed errors.
+- Filter definitions include `viewType`.
+
+## Initial Parent Interpretation
+
+- This task adds storage and validation, not a full query execution engine.
+- Use the existing Core store style from Page, Metadata, and Event stores.
+- Preserve exact non-blank filter identity fields and defensive clone boundaries.
+- Keep validation focused on the documented operator baseline: `eq`, `exists`, `within`, `and`, and `or`.
+- Treat `FilterDefinition.viewType` as required and non-blank.
+- Record plugin/service/IPC authorization and query-cost limits as later-layer risks if needed; TASK-006 should not add native exposure.
+
+## Agent/Config Checks
+
+- `.codex/agents/*.toml` parsed successfully.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and a desktop-terminal `TERM=dumb` failure, treated as non-blocking for repository agent work.
+
+## Current Status
+
+- Status: started.
+- Active agents: none.
+
+## Next Action
+
+Spawn planner, docs researcher, and deprecation auditor for pre-test guidance.
