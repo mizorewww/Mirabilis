@@ -8,14 +8,15 @@ Last updated: 2026-05-19 23:07 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: review-fix tests committed; ready for implementer.
+- Current phase: review-fix implementer active.
 
 ## Active Agents
 
-- None.
+- Lovelace (`implementer`, `019e40c7-5d9a-7670-8cab-08040f8c6e72`): implementing selected TASK-005 P1/P2 review fixes in `src/core/stores/event-store.ts`.
 
 ## Recent Agent Outcomes
 
+- Lovelace (`implementer`) was spawned for selected TASK-005 P1/P2 production fixes.
 - Mencius (`test_writer`) completed and was closed after adding review-fix tests.
 - Mencius's test commit: `74cc716 Mencius(test)(Add in-memory Event Store): add review-fix coverage`.
 - Parent confirmed expected red checks for Mencius's tests before the production fix.
@@ -103,6 +104,6 @@ Last updated: 2026-05-19 23:07 CST.
 
 ## Next Actions
 
-1. Commit Mencius outcome in the agent communication docs.
-2. Spawn implementer for P1/P2 review fixes.
-3. Run focused green checks after implementation.
+1. Wait for Lovelace to report review-fix implementation results.
+2. Run focused green checks and commit production fix.
+3. Run targeted re-review.
