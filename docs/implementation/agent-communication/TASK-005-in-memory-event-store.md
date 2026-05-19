@@ -304,17 +304,19 @@
 
 ### Volta the 2nd (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e40e8-c763-7aa3-b4fc-2350ca1cb5b2`.
 - Ownership:
   - `src/test/core-event-store.test.ts` only.
+- Commit:
+  - `98a3bde Volta the 2nd(test)(Add in-memory Event Store): cover append input property traps`.
 - Assignment:
   - Add focused tests for `append(input)` property-read failures on `namespace`, `type`, `sourcePluginId`, and `payload`.
   - Expected behavior: typed `EventStoreError` failures, not raw getter/proxy trap errors.
   - Assert existing events remain unchanged/queryable after failed appends.
-- Expected signal:
-  - `bun run typecheck` should pass.
-  - `bun run test:frontend -- src/test/core-event-store.test.ts` should fail before production changes because raw append input property-read errors currently escape.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-event-store.test.ts` runs 27 tests with 22 passing and 5 failing because raw append input getter errors escape.
 
 ## Parent Decisions
 
@@ -330,4 +332,4 @@
 
 ## Next Action
 
-Wait for Volta the 2nd's red/updated tests, commit them, then spawn implementation for append input property-read normalization.
+Spawn implementation for append input property-read normalization.
