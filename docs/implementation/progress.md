@@ -26,7 +26,7 @@ Status markers:
 
 - [x] TASK-002: Create TypeScript core domain types
 - [x] TASK-003: Add in-memory Page Store
-- [~] TASK-004: Add in-memory Metadata Store
+- [x] TASK-004: Add in-memory Metadata Store
 - [ ] TASK-005: Add in-memory Event Store
 - [ ] TASK-006: Add Filter Store and Query AST baseline
 - [ ] TASK-007: Add Command Registry and Command Bus
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 22:27 CST - TASK-004 completed
+
+- Branch: `feat/task-004-in-memory-metadata-store`.
+- Task: Add in-memory Metadata Store.
+- Commits: `dcf6ecc` start orchestration, `66f88d6` pre-test guidance, `9c17ada` test writer handoff, `d8f7dd0` acceptance tests, `739b9e2` red signal, `b9b47ec` implementer handoff, `1c7e95b` implementation, `76e0c2c` green signal, `b804130` review handoff, `e663ffc` review findings, `d17a2d1` review-fix test handoff, `97ac84a` review-fix coverage, `1292f90` review-fix implementation handoff, `39a7739` review edge fixes, `ca2bf45` review-fix green signal, `5583d8c` targeted re-review handoff, `e5b75c7` targeted findings, `5ba2585` final test handoff, `8eca0ab` final edge coverage, `9c74bcf` final implementation handoff, `89a1df4` inherited sparse-array fix, `3bea58f` final green signal.
+- Delivered: `createInMemoryMetadataStore`, `MetadataStoreError`, Metadata Store contracts, set/get/list/delete by exact `pageId`, `namespace`, and `key`, deterministic ID/time injection, default `metadata_` Web Crypto IDs, defensive clone boundaries, typed identity/source/value/collision/not-found/clone errors, JSON-compatible value validation, exact filter semantics, and public Core/stores/types exports.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused `bun run test:frontend -- src/test/core-metadata-store.test.ts` passed with 22 tests after review fixes.
+- Review: review and targeted re-review agents reported no remaining P0/P1 findings; selected P2 findings were fixed before final gate.
+- External docs verified by agents: TypeScript type/export guidance, MDN JSON serialization and structured clone limitations, MDN/Web Crypto `randomUUID` and `getRandomValues`, ECMA-262 own-property/`HasProperty` behavior, Vitest `vi.stubGlobal`/`vi.unstubAllGlobals`, Vite 7 environment guidance, and Tauri v2 environment constraints.
+- Remaining risk: plugin-facing Metadata Service or IPC must add caller-bound authorization and size/depth budgets before exposing raw metadata writes, enumeration, or deletion. `bun run check:full` was not run because TASK-004 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-19 21:34 CST - TASK-004 started
 

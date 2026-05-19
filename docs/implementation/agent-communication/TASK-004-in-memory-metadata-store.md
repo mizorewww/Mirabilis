@@ -258,4 +258,4 @@
 
 ## Next Action
 
-Run final gate, update progress, and merge TASK-004.
+Merge TASK-004 into `master`, push `master`, then continue to TASK-005.
