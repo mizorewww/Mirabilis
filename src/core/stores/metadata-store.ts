@@ -370,7 +370,7 @@ function assertJsonArrayCompatible(
   }
 
   for (let index = 0; index < value.length; index += 1) {
-    if (!(index in value)) {
+    if (!Object.prototype.hasOwnProperty.call(value, index)) {
       throw new MetadataStoreError(
         "METADATA_VALUE_NOT_JSON_COMPATIBLE",
         identity,
