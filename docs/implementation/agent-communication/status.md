@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 22:41 CST.
+Last updated: 2026-05-19 22:43 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-19 22:41 CST.
 - Branch: `feat/task-005-in-memory-event-store`.
 - Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance recorded; ready for test writer.
+- Current phase: test writer active.
 
 ## Active Agents
 
-- None.
+- Sagan (`test_writer`, `019e40b0-8ddc-7382-b83c-aba62534848e`): writing failing Event Store acceptance tests in `src/test/core-event-store.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Sagan (`test_writer`) was spawned for TASK-005 failing Event Store acceptance tests.
 - Carver (`planner`) completed TASK-005 pre-test planning.
 - Herschel (`docs_researcher`) completed TASK-005 current-docs research.
 - Harvey (`deprecation_auditor`) completed TASK-005 risk/deprecation audit.
@@ -87,6 +88,6 @@ Last updated: 2026-05-19 22:41 CST.
 
 ## Next Actions
 
-1. Commit TASK-005 pre-test guidance.
-2. Spawn test writer for failing Event Store acceptance tests.
-3. Run focused red checks and commit the tests.
+1. Wait for Sagan to report test-writing results.
+2. Run focused red checks if needed and commit the tests.
+3. Spawn implementer after the expected failing-test signal is confirmed.
