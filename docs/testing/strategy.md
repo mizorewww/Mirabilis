@@ -8,6 +8,8 @@ This strategy is the local release gate for Mirabilis. GitHub CI is intentionall
 - React 19 frontend.
 - Vite 7 build pipeline.
 - TypeScript 5.8.
+- Vitest 4 with React Testing Library and jsdom for frontend tests.
+- ESLint 9 flat config for frontend linting.
 - Bun lockfile and Bun-based Tauri commands.
 - Rust 2021 crate under `src-tauri`.
 
@@ -33,9 +35,18 @@ This strategy is the local release gate for Mirabilis. GitHub CI is intentionall
 | E2E smoke | real app path for Markdown page -> task page -> timer -> note | Tauri WebDriver later |
 | Security review | Tauri capabilities, filesystem, IPC, local data, plugin boundaries | `security_reviewer` + targeted tests |
 
-## Current Baseline Commands
+## Current Local Commands
 
-These commands should work before the test stack lands:
+Use the Bun scripts for routine validation:
+
+```bash
+bun run typecheck
+bun run lint
+bun run test:frontend
+bun run check:quick
+```
+
+The lower-level baseline commands remain available. The Rust commands are wrapped by `check:quick`; `bun run build` verifies the frontend production build path:
 
 ```bash
 bun run build
@@ -44,16 +55,20 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 cargo test --manifest-path src-tauri/Cargo.toml --all-features
 ```
 
-## Target Package Scripts
+## Package Scripts
 
-After the testing/lint task is implemented, expose these Bun scripts:
+Mirabilis exposes these Bun scripts. `check:quick` is the normal local gate, and `check:full` adds a Tauri production build for packaging-sensitive changes.
 
 ```json
 {
   "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
-    "test:frontend": "vitest run",
+    "test:frontend": "NODE_ENV=test vitest run",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --all-features",
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
     "clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings",
