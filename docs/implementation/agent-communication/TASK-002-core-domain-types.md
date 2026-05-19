@@ -72,4 +72,24 @@
 - Removed deprecated `toMatchTypeOf` usage.
 - Required at least one production Core source file in the architecture boundary test.
 - Reported `bun run typecheck`, `bun run test:frontend`, and `bun run lint` passing.
-- Parent decision: pending parent review and commit.
+- Parent decision: accepted and committed.
+
+### Boole - test_quality_reviewer
+
+- Performed targeted re-review after Turing's test fix.
+- Reported no remaining findings.
+- Ran focused Vitest, typecheck, and lint commands.
+- Parent decision: accepted.
+
+### Banach - deprecation_auditor
+
+- Re-audited the Turing test fix against current Vitest and TypeScript guidance.
+- Reported no P0/P1/P2 findings.
+- Confirmed `toMatchTypeOf` was removed and TypeScript AST parsing uses public APIs.
+- Parent decision: accepted.
+
+## Final Gate
+
+- `bun run check:quick` passed.
+- `bun run build` passed.
+- `bun run check:full` was not run because this task does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.

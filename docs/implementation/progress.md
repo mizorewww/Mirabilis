@@ -24,7 +24,7 @@ Status markers:
 
 ## Milestone M1: Core data kernel
 
-- [ ] TASK-002: Create TypeScript core domain types
+- [x] TASK-002: Create TypeScript core domain types
 - [ ] TASK-003: Add in-memory Page Store
 - [ ] TASK-004: Add in-memory Metadata Store
 - [ ] TASK-005: Add in-memory Event Store
@@ -78,6 +78,22 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-19 20:46 CST - TASK-002 completed
+
+- Branch: `feat/task-002-core-domain-types`.
+- Task: Create TypeScript core domain types.
+- Commits: `dd4979e` tests, `5bb7ae3` implementation, `0f7b07e` orchestration docs, `7e77fe6` test review fixes, `768e93e` testing strategy docs.
+- Delivered: `src/core` type-only entrypoint and type modules for `MarkdownPage`, `StructuredMarkdownDocument`, `MetadataRecord`, `AppEvent`, `FilterDefinition`, and supporting block/metadata/filter types; focused type-contract tests; production Core boundary test; agent communication status docs.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused targeted re-review agents reported no remaining P0/P1/P2 findings.
+- External docs verified by agents: TypeScript module/type-only/isolated module guidance, Vitest `expectTypeOf` and type testing guidance, Vite TypeScript transpile behavior, Vite 7 Node requirements, and TypeScript compiler API modifier guidance.
+- Remaining risk: `bun run check:full` was not run because TASK-002 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
+
+### 2026-05-19 19:54 CST - TASK-002 started
+
+- Branch: `feat/task-002-core-domain-types`.
+- Scope: define TypeScript Core domain types for Markdown pages, structured Markdown documents, metadata records, app events, and filter definitions without business-plugin behavior.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents.
 
 ### 2026-05-19 19:51 CST - TASK-001 completed
 
