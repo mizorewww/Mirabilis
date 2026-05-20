@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: node-count test coverage added; targeted test-quality re-review pending.
-- Active agents: none.
+- Status: targeted test-quality re-review active.
+- Active agents:
+  - Kuhn (`test_quality_reviewer`, `019e4341-666f-7d80-83a3-49306728a518`): verify Euclid's node-count P2 is closed.
 
 ## Agent Handoffs
 
@@ -223,6 +224,15 @@
 - Parent note:
   - Godel initially committed with the role name in the message; parent amended the HEAD commit message to use the actual agent nickname, then force-with-lease pushed the task branch.
 
+### Targeted Node-count Re-review
+
+- Status: active.
+- Agent:
+  - Kuhn (`test_quality_reviewer`, `019e4341-666f-7d80-83a3-49306728a518`): verify Godel's node-count coverage closes Euclid's P2.
+- Parent repeated focused green checks after Godel:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing.
+
 ## Next Action
 
-Spawn a targeted `test_quality_reviewer` to confirm Euclid's node-count P2 is closed.
+Wait for Kuhn's targeted test-quality re-review.
