@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: implementation in progress.
+- Status: implementation green; review handoff next.
 - Active agents:
-  - Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`).
-- Next parent step: wait for Ramanujan, run focused green checks, and commit the implementation patch if it stays within scope.
+  - None.
+- Next parent step: spawn read-only review agents for TASK-012.
 
 ## Agent Handoffs
 
@@ -151,7 +151,7 @@
 
 ### Implementation
 
-- Status: running.
+- Status: completed and committed.
 - Agent:
   - Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`).
 - Ownership:
@@ -164,3 +164,21 @@
   - Implement the minimum production NativeBridge boundary to satisfy Boyle's tests.
   - Keep direct `@tauri-apps/api/core` import isolated to `src/core/native/tauri-native-bridge.ts`.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri files, capabilities, `tauri.conf.json`, Plugin API/Plugin Host, or unrelated files.
+- Scope note:
+  - Ramanujan adjusted `src/test/native-bridge.test.ts` after implementation revealed a Vitest `Mock<NativeInvoke>` generic erasure issue. Parent split that test-helper-only change into a separate `test-fix` commit and verified assertions were not weakened.
+- Outcome:
+  - Added `src/core/native/native-bridge.ts`, `src/core/native/tauri-native-bridge.ts`, and `src/core/native/index.ts`.
+  - Exported NativeBridge types, command constants, `NativeBridgeError`, `createNativeBridge`, and `createTauriNativeBridge` from the Core barrel.
+  - Added grouped `db`, `shortcuts`, `notifications`, and `files` bridge surfaces over an injected invoker.
+  - Isolated the only production `@tauri-apps/api/core` import to the Tauri adapter.
+  - Normalized invoke rejections into `NativeBridgeError`.
+  - Validated `files.importMarkdown` returns a string and rejects malformed values as `NATIVE_RESPONSE_INVALID`.
+  - Removed the scaffold UI `invoke("greet")` form/state/import from `src/App.tsx` without adding `greet` to the NativeBridge API.
+- Commits:
+  - `98ac5b2 Ramanujan(test-fix)(Add NativeBridge TypeScript boundary): align native bridge test helper`.
+  - `391c5d0 Ramanujan(implementation)(Add NativeBridge TypeScript boundary): implement typed invoke wrapper`.
+- Green checks:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 15 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.

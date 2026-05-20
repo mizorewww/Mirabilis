@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:54 CST.
+Last updated: 2026-05-21 03:06 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-21 02:54 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation in progress.
+- Current phase: implementation green; review handoff next.
 
 ## Active Agents
 
-- Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`) - minimum TASK-012 production NativeBridge implementation.
+- None.
 
 ## Recent Agent Outcomes
 
+- Ramanujan (`implementer`) completed and was closed after implementing the TASK-012 NativeBridge boundary.
+- Ramanujan's test-fix commit: `98ac5b2 Ramanujan(test-fix)(Add NativeBridge TypeScript boundary): align native bridge test helper`. Parent split this out because Ramanujan had to adjust a test helper type after implementation exposed a Vitest `Mock<NativeInvoke>` generic erasure issue. The behavior assertions were not weakened.
+- Ramanujan's implementation commit: `391c5d0 Ramanujan(implementation)(Add NativeBridge TypeScript boundary): implement typed invoke wrapper`.
+- Delivered: `src/core/native` pure NativeBridge types/factory, Tauri adapter isolated to `@tauri-apps/api/core` import, Core barrel exports, typed command constants/DTOs/errors, normalized invoke failures, `files.importMarkdown` response validation, and removal of the scaffold raw `invoke(\"greet\")` UI path without adding a `greet` NativeBridge API.
+- Parent repeated green checks after Ramanujan: `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 15 tests; `bun run typecheck` passed; `bun run lint` passed; `git diff --check` passed.
+- Parent next step: spawn read-only review agents for correctness, API/deprecation, security/boundary, docs/current-guidance, test quality, and diff mapping.
 - Ramanujan (`implementer`) was spawned for the minimum TASK-012 production implementation. Ownership is limited to `src/core/native/native-bridge.ts`, `src/core/native/tauri-native-bridge.ts`, `src/core/native/index.ts`, `src/core/index.ts`, and `src/App.tsx` only if needed to remove/reroute the existing template raw `invoke` without adding a `greet` NativeBridge API.
 - Boyle (`test_writer`) completed and was closed after adding TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
 - Boyle's test commit: `9b9b204 Boyle(test)(Add NativeBridge TypeScript boundary): add native bridge boundary tests`.
