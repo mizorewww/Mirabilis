@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:03 CST.
+Last updated: 2026-05-21 00:09 CST.
 
 ## Current Task
 
@@ -8,15 +8,15 @@ Last updated: 2026-05-21 00:03 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 narrow re-review completed; second review-fix TDD handoff next.
+- Current phase: TASK-011 second review-fix TDD in progress.
 
 ## Active Agents
 
-- No active agents. Narrow re-review agents have completed and were closed.
-- Next handoff: `test_writer` for the remaining P1/P2 review-fix tests.
+- Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`) is adding remaining P1/P2 red tests in `src/test/plugin-host-lifecycle.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Lovelace (`test_writer`) was spawned for the second TASK-011 review-fix TDD pass. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
 - TASK-011 narrow re-review completed. Popper (`pr_explorer`) found no scope creep and highlighted install-failure state, stale context liveness, and stale status-text hotspots.
 - Kepler (`reviewer`) found one P1 correctness issue: failed install hooks leave `installed` records, and later `register(plugin)` can skip the failed install and move that plugin to registered/active.
 - Harvey (`security_reviewer`) found one P1 boundary issue: captured plugin contexts still retain page/store/transaction write capability after deactivate or uninstall. Harvey also found the failed-install residual-record issue as P2 security/boundary risk.

@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: narrow re-review completed; second review-fix TDD handoff next.
-- Active agents: none.
-- Next parent step: delegate remaining P1/P2 red tests to `test_writer`, then delegate implementation after the expected red signal.
+- Status: second review-fix TDD in progress.
+- Active agents: Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`).
+- Next parent step: wait for Lovelace, validate expected red signal, commit tests, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -255,6 +255,17 @@
   - Fix the remaining P1/P2 findings through a second TDD loop.
   - Red tests should cover stale captured contexts mutating pages/metadata/events/filters/transactions after deactivate/uninstall; failed install rollback/retry safety for both explicit `install(plugin)` / `register(plugin)` and `loadBuiltInPlugins`; strict typed errors for late command/view/slot registration; and typed dependency rejection for deactivate/uninstall with registered dependents.
 
+### Second Review-Fix TDD
+
+- Status: in progress.
+- Agent:
+  - Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add red tests for stale captured contexts mutating pages/metadata/events/filters/transactions after lifecycle exit, failed-install rollback/retry safety, typed late register errors, and typed dependency rejection for deactivate/uninstall with registered dependents.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -264,4 +275,4 @@
 
 ## Next Action
 
-Delegate second review-fix tests for the remaining P1/P2 findings.
+Wait for Lovelace, then validate and commit the second review-fix red tests.
