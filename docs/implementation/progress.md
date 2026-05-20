@@ -37,7 +37,7 @@ Status markers:
 
 - [x] TASK-010: Define Plugin API contracts
 - [x] TASK-011: Implement Plugin Host lifecycle
-- [ ] TASK-012: Add NativeBridge TypeScript boundary
+- [x] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
@@ -78,6 +78,25 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 03:35 CST - TASK-012 completed
+
+- Branch: `feat/task-012-nativebridge-typescript-boundary`.
+- Task: Add NativeBridge TypeScript boundary.
+- Commits: `2b50afb` start orchestration, `4019fcc` pre-test guidance handoff, `3256108` pre-test guidance, `d25caa1` red test handoff, `1929a29` red test cleanup request, `9b9b204` NativeBridge boundary tests, `187b6ad` red signal record, `9c77ef1` implementation handoff, `98ac5b2` test helper fix, `391c5d0` typed invoke wrapper implementation, `496c12f` implementation green signal, `c56dbf5` review handoff, `aac0e64` review findings, `5da4e2d` review-fix test handoff, `96d7b18` review-fix test cleanup request, `6d5b98b` review boundary tests, `9a0cc0d` review-fix red signal, `b424430` review-fix implementation handoff, `0351f17` hardened NativeBridge contracts, `86a1431` review-fix green signal, `bc43b31` docs sync handoff, `23ecef6` NativeBridge IPC contract docs, `f04fae1` docs sync record, `78682bb` post-fix re-review handoff, and `2312a30` post-fix re-review record.
+- Delivered: TypeScript NativeBridge boundary under `src/core/native`, public Core exports, isolated Tauri adapter using `@tauri-apps/api/core`, grouped `db`, `shortcuts`, `notifications`, and `files` bridge surfaces, typed command constants and command literal union, operation/payload `DbQuery`, JSON-compatible `DbValue`, typed `NotificationInput`, stable `NativeBridgeError` codes, redacted command-failure messages, `files.importMarkdown` response validation, mocked adapter delegation tests, raw Tauri import/call boundary scanning, PluginContext native-handle exclusion coverage, removal of the scaffold UI `invoke("greet")` path, and architecture docs for TASK-014 command/DTO/error alignment.
+- Validation: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed. Focused final checks passed: `bun run test:frontend -- src/test/native-bridge.test.ts` with 17 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Review: correctness, security/boundary, deprecation/API, docs/current-guidance, and test-quality agents cleared all remaining P0/P1/P2 findings after a targeted TDD review-fix loop. Fixed selected findings for widened command literal types, raw native error message leakage, SQL-shaped `DbQuery`, missing Tauri adapter delegation coverage, root `@tauri-apps/api` scan coverage, and missing architecture handoff docs for TASK-014.
+- External docs verified by agents: Tauri v2 calling Rust and `@tauri-apps/api/core` `invoke` reference docs, Tauri v2 mocks API, Tauri v1-to-v2 migration docs for `core` naming, Tauri capability docs, Vitest `vi.mock` and module mocking docs, TypeScript literal/const assertion guidance, TypeScript `isolatedModules` / `verbatimModuleSyntax`, and Vite 7 migration notes.
+- Remaining risk: TASK-012 is a TypeScript boundary only. It does not implement Rust commands, SQLite schema/repositories/migrations, persistence behavior, runtime provider/bootstrap wiring, Tauri capabilities/permissions, filesystem import/export behavior, global shortcuts, notifications, package/release behavior, or plugin access to NativeBridge. TASK-014 must implement Rust-side operation allowlisting, repository/SQL translation, file path canonicalization/authorization, and IPC error DTO production. `bun run check:full` was not run because TASK-012 did not change Tauri config, Rust commands, capabilities, filesystem/persistence implementation, packaging, or release behavior.
+
+### 2026-05-21 02:37 CST - TASK-012 started
+
+- Branch: `feat/task-012-nativebridge-typescript-boundary`.
+- Task: Add NativeBridge TypeScript boundary.
+- Scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Do not implement Rust commands, SQLite repositories/schema, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, or new Tauri permissions/capabilities in this task.
+- Agent orchestration: parent thread remains orchestration-only; planning, current-doc verification, deprecation/API guidance, security-boundary guidance, TDD tests, implementation, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-012-nativebridge-typescript-boundary.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 02:33 CST - TASK-011 completed
 

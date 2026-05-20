@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:33 CST.
+Last updated: 2026-05-21 03:35 CST.
 
 ## Current Task
 
-- Task: TASK-011 - Implement Plugin Host lifecycle.
-- Branch: `feat/task-011-plugin-host-lifecycle`.
+- Task: TASK-012 - Add NativeBridge TypeScript boundary.
+- Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 local gate passed; progress update in progress before merge.
+- Current phase: local gate passed; progress update in progress before merge.
 
 ## Active Agents
 
@@ -16,6 +16,66 @@ Last updated: 2026-05-21 02:33 CST.
 
 ## Recent Agent Outcomes
 
+- Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
+- Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
+- TASK-012 post-fix narrow re-review completed and all agents were closed.
+- Aristotle the 2nd (`reviewer`) found no P0/P1/P2 correctness findings and confirmed the previous command literal, operation/payload `DbQuery`, JSON `DbValue`, safe message, adapter delegation, and raw UI/Tauri issues are cleared.
+- Hilbert the 2nd (`security_reviewer`) found no P0/P1/P2 security/boundary findings and confirmed raw native errors are redacted, `DbQuery` is no longer SQL-shaped, raw Tauri import is confined to the adapter, PluginContext has no native/raw handles, and no Rust/Tauri config/capability/dependency files changed.
+- Linnaeus the 2nd (`test_quality_reviewer`) found no P0/P1/P2/P3 test-quality findings and confirmed the review-fix tests were not weakened after implementation.
+- Hypatia the 2nd (`docs_researcher`) found no P0/P1/P2 docs/current-guidance findings and verified the architecture docs match code/tests and current Tauri v2 `invoke` guidance.
+- Parent next step: run `bun run check:quick`; `check:full` remains unnecessary unless a later change touches Tauri config, Rust, capabilities, filesystem, persistence, packaging, or release behavior.
+- Narrow TASK-012 post-fix re-review agents spawned. All are read-only and focused on the prior review findings and docs sync.
+- Gibbs the 2nd (`doc_writer`) completed and was closed after syncing the NativeBridge IPC contract into `docs/architecture/06-filter-native-database.md`.
+- Gibbs the 2nd's docs commit: `23ecef6 Gibbs the 2nd(docs)(Add NativeBridge TypeScript boundary): document native bridge IPC contract`.
+- Delivered docs: command names, camelCase payload envelopes, operation/payload `DbQuery`, JSON-compatible `DbValue`, `NativeBridgeError` codes, stable redacted command-failure message, and UI/plugin no-direct-Tauri rule for TASK-014 handoff.
+- Parent next step: spawn narrow read-only re-review agents for the review-fix code/tests/docs.
+- Gibbs the 2nd (`doc_writer`) was spawned for the remaining P2 docs contract sync. Ownership is docs-only, preferably `docs/architecture/06-filter-native-database.md`.
+- Darwin the 2nd (`implementer`) completed and was closed after hardening the NativeBridge contracts.
+- Darwin the 2nd's review-fix commit: `0351f17 Darwin the 2nd(review-fix)(Add NativeBridge TypeScript boundary): harden native bridge contracts`.
+- Delivered review fixes: exact command literal union, non-SQL operation/payload `DbQuery`, JSON-compatible `DbValue`, stable safe public `NativeBridgeError.message` for command failures, and preserved adapter delegation behavior.
+- Parent repeated focused green checks after Darwin the 2nd: `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 17 tests; `bun run typecheck` passed; `bun run lint` passed; `git diff --check` passed. Raw Tauri scan showed the only production `@tauri-apps/api/core` import remains `src/core/native/tauri-native-bridge.ts`.
+- Parent next step: delegate docs contract sync for the remaining P2 architecture handoff gap.
+- Darwin the 2nd (`implementer`) was spawned for review-fix production changes. Ownership is limited to `src/core/native/native-bridge.ts` and, only if required for exports, `src/core/native/index.ts` / `src/core/index.ts`.
+- Halley the 2nd (`test_writer`) completed and was closed after adding review-fix red tests in `src/test/native-bridge.test.ts`.
+- Halley the 2nd's test commit: `6d5b98b Halley the 2nd(test)(Add NativeBridge TypeScript boundary): cover review boundary gaps`.
+- Parent confirmed the expected red signal: `bun run test:frontend -- src/test/native-bridge.test.ts` failed with four raw-error-message failures; `bun run typecheck` failed only on command literal widening, SQL-shaped `DbQuery`, and `DbValue` JSON object payload support; `bun run lint` and `git diff --check` passed.
+- Parent next step: delegate review-fix production implementation.
+- Parent reviewed Halley the 2nd's initial review-fix red test patch. `bun run test:frontend -- src/test/native-bridge.test.ts` failed for the expected raw-error-message reasons. `bun run typecheck` failed for expected command literal and SQL-shaped `DbQuery` reasons, but also produced noisy test-design failures around `ExpectedDbValue` and object payload examples. Parent resumed Halley the 2nd to clean up only the test file before commit.
+- Halley the 2nd (`test_writer`) was spawned for review-fix red tests covering command literal typing, non-SQL `DbQuery`, safe error messages, non-db error normalization, Tauri adapter delegation, and root `@tauri-apps/api` scan coverage. Ownership is limited to `src/test/native-bridge.test.ts`.
+- TASK-012 review round 1 completed and all agents were closed.
+- Poincare (`reviewer`) found two P1 correctness/boundary issues: `NativeBridgeCommand` widens to `string`, and public `NativeBridgeError.message` forwards raw native messages that may contain SQL, paths, or secrets.
+- Pascal (`deprecation_auditor`) independently found the same P1 command widening issue and otherwise cleared Tauri v2 import/deprecation usage.
+- Confucius (`security_reviewer`) found P1 issues for unredacted native error messages and raw SQL-shaped `DbQuery`, plus P2 concerns about widened command names and broad Core barrel NativeBridge exports.
+- Gauss the 2nd (`test_quality_reviewer`) found one P1 test gap: no test verifies `createTauriNativeBridge()` delegates to Tauri `invoke`. Gauss also found P2 gaps for literal command type assertions, broader error normalization coverage, and raw-native scan fragility.
+- Kant (`pr_explorer`) mapped the diff and flagged the same command-type, raw-error, and root `@tauri-apps/api` scan gaps.
+- Kepler the 2nd (`docs_researcher`) found no P1 docs/current-guidance issues and one P2 docs handoff gap: concrete command constants, DTO envelopes, and `NativeBridgeError` codes should be promoted into architecture or task-index docs before TASK-014.
+- Parent decisions: fix P1/P2 command literal typing, safe error messages, raw SQL-shaped `DbQuery`, Tauri adapter behavior coverage, and root `@tauri-apps/api` scan coverage through another delegated TDD loop. Defer broad Core barrel exposure as an accepted P2 tradeoff for now because Core already uses a public barrel and Plugin API/PluginContext stay native-handle-free; revisit if security re-review escalates it. Add docs contract cleanup after code behavior stabilizes.
+- TASK-012 review agents spawned after Ramanujan's green implementation. All are read-only and must not edit files.
+- Ramanujan (`implementer`) completed and was closed after implementing the TASK-012 NativeBridge boundary.
+- Ramanujan's test-fix commit: `98ac5b2 Ramanujan(test-fix)(Add NativeBridge TypeScript boundary): align native bridge test helper`. Parent split this out because Ramanujan had to adjust a test helper type after implementation exposed a Vitest `Mock<NativeInvoke>` generic erasure issue. The behavior assertions were not weakened.
+- Ramanujan's implementation commit: `391c5d0 Ramanujan(implementation)(Add NativeBridge TypeScript boundary): implement typed invoke wrapper`.
+- Delivered: `src/core/native` pure NativeBridge types/factory, Tauri adapter isolated to `@tauri-apps/api/core` import, Core barrel exports, typed command constants/DTOs/errors, normalized invoke failures, `files.importMarkdown` response validation, and removal of the scaffold raw `invoke(\"greet\")` UI path without adding a `greet` NativeBridge API.
+- Parent repeated green checks after Ramanujan: `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 15 tests; `bun run typecheck` passed; `bun run lint` passed; `git diff --check` passed.
+- Parent next step: spawn read-only review agents for correctness, API/deprecation, security/boundary, docs/current-guidance, test quality, and diff mapping.
+- Ramanujan (`implementer`) was spawned for the minimum TASK-012 production implementation. Ownership is limited to `src/core/native/native-bridge.ts`, `src/core/native/tauri-native-bridge.ts`, `src/core/native/index.ts`, `src/core/index.ts`, and `src/App.tsx` only if needed to remove/reroute the existing template raw `invoke` without adding a `greet` NativeBridge API.
+- Boyle (`test_writer`) completed and was closed after adding TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
+- Boyle's test commit: `9b9b204 Boyle(test)(Add NativeBridge TypeScript boundary): add native bridge boundary tests`.
+- Parent confirmed the expected red signal: `bun run test:frontend -- src/test/native-bridge.test.ts` failed because Vite cannot resolve `../core/native`; `bun run typecheck` failed only on missing `../core/native` and missing Core NativeBridge exports; `bun run lint` and `git diff --check` passed.
+- Parent next step: delegate minimum production implementation to `implementer`.
+- Parent reviewed Boyle's initial red test patch. Focused `bun run test:frontend -- src/test/native-bridge.test.ts` failed for the expected missing `../core/native` module. `bun run typecheck` also found test-internal type errors in the command-key type assertion and raw-invoke violation list typing. Parent resumed Boyle to fix only `src/test/native-bridge.test.ts` so the red signal is clean.
+- Boyle (`test_writer`) was spawned for TASK-012 red tests. Ownership is limited to `src/test/native-bridge.test.ts`; production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, and existing tests are out of scope. Tests should cover public exports, grouped bridge methods, command constants and camelCase DTO payloads, generic DB response typing, void methods, normalized errors, malformed concrete responses, production raw Tauri import/call boundary scanning, and no plugin API exposure of NativeBridge/raw native handles.
+- TASK-012 pre-test guidance completed and all agents were closed.
+- Socrates (`planner`) recommended a TS-only NativeBridge surface under `src/core/native/`, with `native-bridge.ts`, `tauri-native-bridge.ts`, `index.ts`, Core barrel exports, focused `src/test/native-bridge.test.ts`, typed command constants, DTOs, `NativeBridgeError`, `createNativeBridge({ invoke })`, and `createTauriNativeBridge()`.
+- Parfit (`docs_researcher`) verified current official Tauri v2 guidance: command invocation imports `invoke` from `@tauri-apps/api/core`; `invoke<T>(cmd, args, options?)` returns `Promise<T>`; command args are camelCase by default; Rust command errors reject the JS promise with serialized values; Vitest module mocks are hoisted; and Tauri's `mockIPC` / `clearMocks()` are available for IPC tests.
+- Turing (`deprecation_auditor`) found P1 guidance: do not use v1 `@tauri-apps/api/tauri`, root `@tauri-apps/api` `invoke`, or `window.__TAURI__`; normalize caught errors as `unknown`; use camelCase DTO payload keys; and remove or route the current `src/App.tsx` template raw `invoke` before merge.
+- Euclid (`security_reviewer`) recommended acceptance tests for NativeBridge as the only production raw Tauri import/call site, centralized command names, explicit DTOs, response validation before returning typed values, normalized redacted errors, no raw native handles through Plugin API/PluginContext, and no Tauri/Rust/capability/config/dependency expansion.
+- Parent decisions for TDD: add red tests for `src/core/native` public exports, grouped bridge methods, exact command constants and DTO payloads, generic DB response typing, void methods, response validation for malformed native payloads where practical, error normalization for typed object/string/Error/null/unknown rejections, and a production scan that allows `@tauri-apps/api/core` / raw `invoke` only in `src/core/native/tauri-native-bridge.ts`. Do not add `greet` to the NativeBridge API; implementation may remove the template UI direct `invoke`.
+- External docs verified by agents: Tauri v2 calling Rust / `@tauri-apps/api/core` reference / mocks / migration docs; Vitest v4 module mocking and `vi.mock` guidance; TypeScript `isolatedModules` and `verbatimModuleSyntax`; Vite 7 migration compatibility notes.
+- TASK-012 pre-test guidance agents spawned. All are read-only and must not edit files. Parent will summarize their recommendations in `docs/implementation/agent-communication/TASK-012-nativebridge-typescript-boundary.md` before delegating red tests.
+- TASK-012 branch `feat/task-012-nativebridge-typescript-boundary` was created from latest `master`.
+- TASK-012 scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Rust commands, SQLite schema/repositories, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, and new Tauri permissions/capabilities are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-012 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: commit TASK-012 start state, then spawn read-only planner, docs/current-guidance, deprecation/API, and security-boundary agents before TDD tests.
 - Gauss (`doc_writer`) completed final docs/status cleanup. The cleanup addressed only Lagrange's P2 architecture/status findings around record-identity batch rollback, same-id duplicate/concurrent handling, pending-register dependents, and single-flight register semantics.
 - Parent final local gate passed after Gauss: `bun run check:quick` and `bun run build`.
 - Gauss (`doc_writer`) was spawned for final docs/status cleanup after final focused re-review. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`, `docs/implementation/agent-communication/status.md`, and `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.

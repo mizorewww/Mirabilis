@@ -111,10 +111,44 @@ export interface NativeBridge {
 }
 ```
 
-前端插件不直接调用 Tauri API。
-插件通过 Core Services。
-Core Services 通过 NativeBridge。
-NativeBridge 通过 Tauri commands。
+TASK-014 的 Rust IPC 命令必须匹配当前 `NATIVE_BRIDGE_COMMANDS` 合约：
+
+| NativeBridge method | Tauri command | Payload envelope |
+| --- | --- | --- |
+| `db.execute(query)` | `db_execute` | `{ query }` |
+| `db.transaction(queries)` | `db_transaction` | `{ queries }` |
+| `shortcuts.register(shortcut, commandId)` | `shortcuts_register` | `{ shortcut, commandId }` |
+| `shortcuts.unregister(shortcut)` | `shortcuts_unregister` | `{ shortcut }` |
+| `notifications.notify(input)` | `notifications_notify` | `{ input }` |
+| `files.importMarkdown(path)` | `files_import_markdown` | `{ path }` |
+| `files.exportMarkdown(pageId, path)` | `files_export_markdown` | `{ pageId, path }` |
+
+Payload envelope keys stay camelCase on the TypeScript side.
+
+```ts
+type DbValue =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly DbValue[]
+  | { readonly [key: string]: DbValue };
+
+type DbQuery = {
+  operation: string;
+  payload?: DbValue;
+};
+
+type NativeBridgeErrorCode =
+  | "NATIVE_COMMAND_FAILED"
+  | "NATIVE_RESPONSE_INVALID";
+```
+
+`DbQuery` is an operation DTO, not a raw SQL DTO. `operation` is the Rust allowlist key and `payload` is JSON-compatible data. TASK-014 must translate allowed operations to repositories / SQL on the Rust side; frontend SQL strings are not part of the contract.
+
+Native command failures throw `NativeBridgeError` with `code: "NATIVE_COMMAND_FAILED"` and the command name. The public failure message is the stable redacted string `Native command failed`. `NATIVE_RESPONSE_INVALID` is reserved for bridge response validation failures before returning typed frontend values.
+
+UI components and plugins do not call Tauri APIs directly. Plugins use Core Services; Core Services use NativeBridge; NativeBridge uses Tauri commands.
 
 ---
 
