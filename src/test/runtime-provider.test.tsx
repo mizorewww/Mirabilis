@@ -213,14 +213,14 @@ describe("runtime provider", () => {
       );
     }
 
-    const failedRender = render(
+    const { unmount } = render(
       <RuntimeProvider initializeRuntime={initializeRuntime}>
         <TrustedConsumer />
       </RuntimeProvider>,
     );
 
     expect(await screen.findByRole("alert")).toBeVisible();
-    failedRender.unmount();
+    unmount();
 
     render(
       <RuntimeProvider initializeRuntime={initializeRuntime}>

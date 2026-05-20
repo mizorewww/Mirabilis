@@ -1,12 +1,16 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { createAppRuntime, type AppRuntime } from "../bootstrap";
-import { RuntimeContext } from "./runtime-context";
+import {
+  RuntimeContext,
+  type PublicRuntime,
+  type RuntimeSource,
+} from "./runtime-context";
 
-export type RuntimeInitializer<Runtime extends object = AppRuntime> =
+export type RuntimeInitializer<Runtime extends RuntimeSource = AppRuntime> =
   () => Promise<Runtime>;
 
-export type RuntimeProviderProps<Runtime extends object = AppRuntime> = {
+export type RuntimeProviderProps<Runtime extends RuntimeSource = AppRuntime> = {
   runtime?: Runtime;
   initializeRuntime?: RuntimeInitializer<Runtime>;
   children: ReactNode;
@@ -14,17 +18,17 @@ export type RuntimeProviderProps<Runtime extends object = AppRuntime> = {
   failureFallback?: ReactNode;
 };
 
-type RuntimeState<Runtime extends object> =
+type RuntimeState<Runtime extends RuntimeSource> =
   | { status: "loading" }
   | { status: "ready"; runtime: Runtime }
   | { status: "failed" };
 
 const initializationPromises = new WeakMap<
-  RuntimeInitializer<object>,
-  Promise<object>
+  RuntimeInitializer<RuntimeSource>,
+  Promise<RuntimeSource>
 >();
 
-export function RuntimeProvider<Runtime extends object = AppRuntime>({
+export function RuntimeProvider<Runtime extends RuntimeSource = AppRuntime>({
   runtime,
   initializeRuntime,
   children,
@@ -33,7 +37,7 @@ export function RuntimeProvider<Runtime extends object = AppRuntime>({
 }: RuntimeProviderProps<Runtime>) {
   if (runtime !== undefined) {
     return (
-      <RuntimeContext.Provider value={runtime}>
+      <RuntimeContext.Provider value={createPublicRuntime(runtime)}>
         {children}
       </RuntimeContext.Provider>
     );
@@ -52,7 +56,7 @@ export function RuntimeProvider<Runtime extends object = AppRuntime>({
   );
 }
 
-function RuntimeInitializationBoundary<Runtime extends object = AppRuntime>({
+function RuntimeInitializationBoundary<Runtime extends RuntimeSource = AppRuntime>({
   initializeRuntime,
   children,
   loadingFallback,
@@ -63,6 +67,7 @@ function RuntimeInitializationBoundary<Runtime extends object = AppRuntime>({
   loadingFallback?: ReactNode;
   failureFallback?: ReactNode;
 }) {
+  const initializeRuntimeRef = useRef(initializeRuntime);
   const [state, setState] = useState<RuntimeState<Runtime>>(() =>
     ({ status: "loading" }),
   );
@@ -70,7 +75,7 @@ function RuntimeInitializationBoundary<Runtime extends object = AppRuntime>({
   useEffect(() => {
     let active = true;
 
-    getInitializationPromise(initializeRuntime)
+    getInitializationPromise(initializeRuntimeRef.current)
       .then((initializedRuntime) => {
         if (active) {
           setState({ status: "ready", runtime: initializedRuntime });
@@ -85,7 +90,7 @@ function RuntimeInitializationBoundary<Runtime extends object = AppRuntime>({
     return () => {
       active = false;
     };
-  }, [initializeRuntime]);
+  }, []);
 
   if (state.status === "failed") {
     return (
@@ -114,25 +119,47 @@ function RuntimeInitializationBoundary<Runtime extends object = AppRuntime>({
   }
 
   return (
-    <RuntimeContext.Provider value={state.runtime}>
+    <RuntimeContext.Provider value={createPublicRuntime(state.runtime)}>
       {children}
     </RuntimeContext.Provider>
   );
 }
 
-function getInitializationPromise<Runtime extends object>(
+function getInitializationPromise<Runtime extends RuntimeSource>(
   initializeRuntime: RuntimeInitializer<Runtime>,
 ): Promise<Runtime> {
-  const initializer = initializeRuntime as RuntimeInitializer<object>;
+  const initializer = initializeRuntime as RuntimeInitializer<RuntimeSource>;
   const existingPromise = initializationPromises.get(initializer);
 
   if (existingPromise !== undefined) {
     return existingPromise as Promise<Runtime>;
   }
 
-  const promise = Promise.resolve().then(initializeRuntime);
+  const promise = Promise.resolve()
+    .then(initializeRuntime)
+    .catch((error: unknown) => {
+      if (initializationPromises.get(initializer) === promise) {
+        initializationPromises.delete(initializer);
+      }
 
-  initializationPromises.set(initializer, promise as Promise<object>);
+      throw error;
+    });
+
+  initializationPromises.set(initializer, promise as Promise<RuntimeSource>);
 
   return promise;
+}
+
+function createPublicRuntime(runtime: RuntimeSource): PublicRuntime {
+  const app =
+    runtime.app.pluginApiVersion === undefined
+      ? { version: runtime.app.version }
+      : {
+          version: runtime.app.version,
+          pluginApiVersion: runtime.app.pluginApiVersion,
+        };
+
+  return Object.freeze({
+    app: Object.freeze(app),
+  });
 }

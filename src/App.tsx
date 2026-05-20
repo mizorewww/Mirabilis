@@ -1,9 +1,14 @@
-import { createAppRuntime, type AppRuntime } from "./bootstrap";
-import { RuntimeProvider, useRuntime } from "./providers";
+import { createAppRuntime } from "./bootstrap";
+import {
+  RuntimeProvider,
+  useRuntime,
+  type RuntimeInitializer,
+  type RuntimeSource,
+} from "./providers";
 import "./App.css";
 
 type AppProps = {
-  initializeRuntime?: () => Promise<object>;
+  initializeRuntime?: RuntimeInitializer<RuntimeSource>;
 };
 
 function App({ initializeRuntime = createAppRuntime }: AppProps) {
@@ -15,7 +20,7 @@ function App({ initializeRuntime = createAppRuntime }: AppProps) {
 }
 
 function MirabilisShell() {
-  const runtime = useRuntime<Pick<AppRuntime, "app">>();
+  const runtime = useRuntime();
 
   return (
     <main className="app-shell" aria-labelledby="app-title">
