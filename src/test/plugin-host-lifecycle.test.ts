@@ -50,6 +50,21 @@ type CapturedContributionDescriptors = ReturnType<
   typeof registerRuntimeContributions
 >;
 
+type StaleContextFilterIds = {
+  direct: string;
+  transaction: string;
+};
+
+type StaleWriteAttempt = {
+  name: string;
+  run: () => unknown | Promise<unknown>;
+};
+
+type StaleWriteError = {
+  name: string;
+  error: unknown;
+};
+
 type PluginOptions = {
   id: string;
   name?: string;
@@ -822,7 +837,13 @@ describe("Plugin Host lifecycle", () => {
     await host.deactivate("late");
 
     const contextAfterDeactivate = expectDefined(capturedContext);
-    tryLateRuntimeRegistrations(contextAfterDeactivate, "late-after-deactivate");
+    expectLateRuntimeRegistrationErrors(
+      tryLateRuntimeRegistrations(
+        contextAfterDeactivate,
+        "late-after-deactivate",
+      ),
+      "late",
+    );
 
     expect(registryIds(runtime)).toStrictEqual({
       commands: [],
@@ -832,12 +853,50 @@ describe("Plugin Host lifecycle", () => {
 
     await host.uninstall("late");
 
-    tryLateRuntimeRegistrations(contextAfterDeactivate, "late-after-uninstall");
+    expectLateRuntimeRegistrationErrors(
+      tryLateRuntimeRegistrations(contextAfterDeactivate, "late-after-uninstall"),
+      "late",
+    );
 
     expect(registryIds(runtime)).toStrictEqual({
       commands: [],
       views: [],
       slots: [],
+    });
+  });
+
+  it("revokes captured register contexts from mutating plugin data after deactivate", async () => {
+    const { context, filterIds, host, pageId, pluginId, runtime } =
+      await createCapturedWritableContext("stale-deactivate");
+
+    const dataBeforeDeactivate = runtimeDataSnapshot(runtime);
+
+    await host.deactivate(pluginId);
+
+    const errors = await collectStaleWriteErrors(
+      staleContextWriteAttempts(context, "after-deactivate", pageId, filterIds),
+    );
+
+    expectStaleWriteErrors(errors, pluginId, "register");
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeDeactivate);
+  });
+
+  it("revokes captured register contexts from mutating plugin data after uninstall", async () => {
+    const { context, filterIds, host, pageId, pluginId, runtime } =
+      await createCapturedWritableContext("stale-uninstall");
+
+    const dataBeforeUninstall = runtimeDataSnapshot(runtime);
+
+    await host.uninstall(pluginId);
+
+    const errors = await collectStaleWriteErrors(
+      staleContextWriteAttempts(context, "after-uninstall", pageId, filterIds),
+    );
+
+    expectStaleWriteErrors(errors, pluginId, "register");
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeUninstall);
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
     });
   });
 
@@ -1141,7 +1200,7 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
-  it("rejects or cascades deactivation before a dependency loses capabilities required by active dependents", async () => {
+  it("rejects deactivation with a typed dependency error before a dependency loses capabilities required by active dependents", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
     const events: string[] = [];
@@ -1178,38 +1237,27 @@ describe("Plugin Host lifecycle", () => {
     await host.activateAll();
 
     const registryBeforeDeactivate = registryIds(runtime);
-    const deactivateError = await captureOptionalAsyncError(() =>
-      host.deactivate("dependency"),
-    );
 
-    if (deactivateError !== undefined) {
-      expect(host.getPlugin("dependency")).toMatchObject({
-        enabled: true,
-        status: "active",
-      });
-      expect(host.getPlugin("dependent")).toMatchObject({
-        enabled: true,
-        status: "active",
-      });
-      expect(registryIds(runtime)).toStrictEqual(registryBeforeDeactivate);
-    } else {
-      expect(host.getPlugin("dependency")).toMatchObject({
-        enabled: false,
-        status: "installed",
-      });
-      expect(host.getPlugin("dependent")).toMatchObject({
-        enabled: false,
-        status: "installed",
-      });
-      expect(registryIds(runtime)).toStrictEqual({
-        commands: [],
-        views: [],
-        slots: [],
-      });
-    }
+    await expectPluginHostErrorAsync(
+      () => host.deactivate("dependency"),
+      "PLUGIN_DEPENDENCY_MISSING",
+      {
+        pluginId: "dependent",
+        dependencyId: "dependency",
+      },
+    );
+    expect(host.getPlugin("dependency")).toMatchObject({
+      enabled: true,
+      status: "active",
+    });
+    expect(host.getPlugin("dependent")).toMatchObject({
+      enabled: true,
+      status: "active",
+    });
+    expect(registryIds(runtime)).toStrictEqual(registryBeforeDeactivate);
   });
 
-  it("rejects or cascades uninstall before a dependency record disappears from registered dependents", async () => {
+  it("rejects uninstall with a typed dependency error before a dependency record disappears from registered dependents", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
     const events: string[] = [];
@@ -1242,44 +1290,24 @@ describe("Plugin Host lifecycle", () => {
     ]);
 
     const registryBeforeUninstall = registryIds(runtime);
-    const uninstallError = await captureOptionalAsyncError(() =>
-      host.uninstall("dependency"),
+
+    await expectPluginHostErrorAsync(
+      () => host.uninstall("dependency"),
+      "PLUGIN_DEPENDENCY_MISSING",
+      {
+        pluginId: "dependent",
+        dependencyId: "dependency",
+      },
     );
-
-    if (uninstallError !== undefined) {
-      expect(host.getPlugin("dependency")).toMatchObject({
-        enabled: false,
-        status: "registered",
-      });
-      expect(host.getPlugin("dependent")).toMatchObject({
-        enabled: false,
-        status: "registered",
-      });
-      expect(registryIds(runtime)).toStrictEqual(registryBeforeUninstall);
-    } else {
-      expectPluginHostError(
-        () => host.getPlugin("dependency"),
-        "PLUGIN_NOT_FOUND",
-        { pluginId: "dependency" },
-      );
-
-      const dependentLookupError = captureOptionalSyncError(() =>
-        host.getPlugin("dependent"),
-      );
-
-      if (dependentLookupError === undefined) {
-        expect(host.getPlugin("dependent")).toMatchObject({
-          enabled: false,
-          status: "installed",
-        });
-      } else {
-        expectPluginHostError(
-          dependentLookupError,
-          "PLUGIN_NOT_FOUND",
-          { pluginId: "dependent" },
-        );
-      }
-    }
+    expect(host.getPlugin("dependency")).toMatchObject({
+      enabled: false,
+      status: "registered",
+    });
+    expect(host.getPlugin("dependent")).toMatchObject({
+      enabled: false,
+      status: "registered",
+    });
+    expect(registryIds(runtime)).toStrictEqual(registryBeforeUninstall);
   });
 
   it("does not treat installed-only dependency records as satisfying later required dependencies", async () => {
@@ -1391,6 +1419,91 @@ describe("Plugin Host lifecycle", () => {
       },
     );
     expect(dependentInstall).not.toHaveBeenCalled();
+  });
+
+  it("removes failed explicit install records so staged register retries install before registration", async () => {
+    const host = createHost();
+    const installCause = new Error("install failed once");
+    const events: string[] = [];
+    let installAttempts = 0;
+    const plugin = createPlugin({
+      id: "retry-install",
+      install() {
+        installAttempts += 1;
+        events.push(`install.${installAttempts}`);
+
+        if (installAttempts === 1) {
+          throw installCause;
+        }
+      },
+      register() {
+        events.push("register");
+      },
+    });
+
+    await expectPluginHostErrorAsync(
+      () => host.install(plugin),
+      "PLUGIN_LIFECYCLE_FAILED",
+      {
+        pluginId: "retry-install",
+        phase: "install",
+        cause: installCause,
+      },
+    );
+    expectPluginHostError(
+      () => host.getPlugin("retry-install"),
+      "PLUGIN_NOT_FOUND",
+      {
+        pluginId: "retry-install",
+      },
+    );
+
+    await host.register(plugin);
+
+    expect(events).toStrictEqual(["install.1", "install.2", "register"]);
+    expect(host.getPlugin("retry-install")).toMatchObject({
+      enabled: false,
+      status: "registered",
+    });
+  });
+
+  it("does not leave installed records for built-in plugins whose install hooks did not complete or run", async () => {
+    const host = createHost();
+    const installCause = new Error("first install failed");
+    const skippedInstall = vi.fn();
+    const skippedRegister = vi.fn();
+
+    await expectPluginHostErrorAsync(
+      () =>
+        host.loadBuiltInPlugins([
+          createPlugin({
+            id: "first",
+            install() {
+              throw installCause;
+            },
+          }),
+          createPlugin({
+            id: "skipped",
+            install: skippedInstall,
+            register: skippedRegister,
+          }),
+        ]),
+      "PLUGIN_LIFECYCLE_FAILED",
+      {
+        pluginId: "first",
+        phase: "install",
+        cause: installCause,
+      },
+    );
+
+    expect(skippedInstall).not.toHaveBeenCalled();
+    expect(skippedRegister).not.toHaveBeenCalled();
+    expectPluginHostError(() => host.getPlugin("first"), "PLUGIN_NOT_FOUND", {
+      pluginId: "first",
+    });
+    expectPluginHostError(() => host.getPlugin("skipped"), "PLUGIN_NOT_FOUND", {
+      pluginId: "skipped",
+    });
   });
 
   it("keeps a dependency required when it is also listed as optional", async () => {
@@ -1727,6 +1840,231 @@ function tryLateRuntimeRegistrations(ctx: PluginContext, prefix: string) {
   return errors;
 }
 
+function expectLateRuntimeRegistrationErrors(
+  errors: readonly unknown[],
+  pluginId: string,
+) {
+  expect(errors).toHaveLength(3);
+
+  for (const error of errors) {
+    expectPluginHostError(error, "PLUGIN_LIFECYCLE_FAILED", {
+      pluginId,
+      phase: "register",
+    });
+  }
+}
+
+async function createCapturedWritableContext(pluginId: string) {
+  const runtime = createInMemoryAppRuntime();
+  const host = createHost(runtime);
+  let capturedContext: PluginContext | undefined;
+  let pageId = "";
+  const filterIds: StaleContextFilterIds = {
+    direct: "",
+    transaction: "",
+  };
+
+  await host.loadBuiltInPlugins([
+    createPlugin({
+      id: pluginId,
+      register(ctx) {
+        capturedContext = ctx;
+        const page = ctx.pages.create({
+          title: `${pluginId} owned page`,
+          body: emptyDocument(),
+        });
+
+        pageId = page.id;
+        ctx.metadata.set({
+          pageId,
+          namespace: pluginId,
+          key: "state",
+          value: "registered",
+          valueType: "string",
+        });
+        ctx.events.append({
+          pageId,
+          namespace: pluginId,
+          type: "registered",
+          payload: { pluginId },
+        });
+        filterIds.direct = ctx.filters.save({
+          name: `${pluginId} direct filter`,
+          query: { where: [{ field: `${pluginId}.state`, op: "exists" }] },
+          viewType: `${pluginId}.view`,
+        }).id;
+        filterIds.transaction = ctx.filters.save({
+          name: `${pluginId} transaction filter`,
+          query: { where: [] },
+          viewType: `${pluginId}.view`,
+        }).id;
+      },
+    }),
+  ]);
+
+  expect(pageId).not.toBe("");
+  expect(filterIds.direct).not.toBe("");
+  expect(filterIds.transaction).not.toBe("");
+
+  return {
+    context: expectDefined(capturedContext),
+    filterIds,
+    host,
+    pageId,
+    pluginId,
+    runtime,
+  };
+}
+
+function staleContextWriteAttempts(
+  ctx: PluginContext,
+  suffix: string,
+  pageId: string,
+  filterIds: StaleContextFilterIds,
+): StaleWriteAttempt[] {
+  return [
+    {
+      name: "pages.create",
+      run: () =>
+        ctx.pages.create({
+          title: `${suffix} created page`,
+          body: emptyDocument(),
+        }),
+    },
+    {
+      name: "pages.update",
+      run: () => ctx.pages.update(pageId, { title: `${suffix} updated page` }),
+    },
+    {
+      name: "pages.archive",
+      run: () => ctx.pages.archive(pageId),
+    },
+    {
+      name: "metadata.set",
+      run: () =>
+        ctx.metadata.set({
+          pageId,
+          namespace: ctx.pluginId,
+          key: "state",
+          value: suffix,
+          valueType: "string",
+        }),
+    },
+    {
+      name: "metadata.delete",
+      run: () => ctx.metadata.delete(pageId, ctx.pluginId, "state"),
+    },
+    {
+      name: "events.append",
+      run: () =>
+        ctx.events.append({
+          pageId,
+          namespace: ctx.pluginId,
+          type: suffix,
+          payload: { suffix },
+        }),
+    },
+    {
+      name: "filters.save",
+      run: () =>
+        ctx.filters.save({
+          name: `${suffix} saved filter`,
+          query: { where: [] },
+          viewType: `${ctx.pluginId}.view`,
+        }),
+    },
+    {
+      name: "filters.update",
+      run: () =>
+        ctx.filters.update(filterIds.direct, {
+          name: `${suffix} updated filter`,
+        }),
+    },
+    {
+      name: "filters.delete",
+      run: () => ctx.filters.delete(filterIds.direct),
+    },
+    {
+      name: "transaction.run",
+      run: () =>
+        ctx.transaction.run((tx) => {
+          tx.pages.create({
+            title: `${suffix} tx page`,
+            body: emptyDocument(),
+          });
+          tx.pages.update(pageId, { title: `${suffix} tx update` });
+          tx.metadata.set({
+            pageId,
+            namespace: ctx.pluginId,
+            key: "tx-state",
+            value: suffix,
+            valueType: "string",
+          });
+          tx.events.append({
+            pageId,
+            namespace: ctx.pluginId,
+            type: `${suffix}.tx`,
+            payload: { suffix },
+          });
+          tx.filters.save({
+            name: `${suffix} tx saved filter`,
+            query: { where: [] },
+            viewType: `${ctx.pluginId}.view`,
+          });
+          tx.filters.update(filterIds.transaction, {
+            name: `${suffix} tx updated filter`,
+          });
+
+          return "committed";
+        }),
+    },
+  ];
+}
+
+async function collectStaleWriteErrors(
+  attempts: readonly StaleWriteAttempt[],
+): Promise<StaleWriteError[]> {
+  const errors: StaleWriteError[] = [];
+
+  for (const attempt of attempts) {
+    const error = await captureOptionalAsyncError(async () => {
+      await attempt.run();
+    });
+
+    errors.push({
+      name: attempt.name,
+      error,
+    });
+  }
+
+  return errors;
+}
+
+function expectStaleWriteErrors(
+  errors: readonly StaleWriteError[],
+  pluginId: string,
+  phase: string,
+) {
+  expect(
+    errors.map(({ error, name }) => ({
+      name,
+      typed: error instanceof PluginHostError,
+    })),
+  ).toStrictEqual(
+    errors.map(({ name }) => ({
+      name,
+      typed: true,
+    })),
+  );
+
+  for (const { error } of errors) {
+    expectPluginHostError(error, "PLUGIN_LIFECYCLE_FAILED", {
+      pluginId,
+      phase,
+    });
+  }
+}
+
 async function expectRegistrationRollback({
   pluginId,
   register,
@@ -1797,6 +2135,15 @@ function registryIds(runtime: CoreRuntime) {
     commands: runtime.registries.commands.list().map((command) => command.id),
     views: runtime.registries.views.list().map((view) => view.id),
     slots: runtime.registries.slots.list().map((slot) => slot.id),
+  };
+}
+
+function runtimeDataSnapshot(runtime: CoreRuntime) {
+  return {
+    pages: runtime.pages.list({ includeArchived: true }),
+    metadata: runtime.metadata.list(),
+    events: runtime.events.list(),
+    filters: runtime.filters.list(),
   };
 }
 
