@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:45 CST.
+Last updated: 2026-05-20 13:48 CST.
 
 ## Current Task
 
-- Task: TASK-008 - Add View Registry and Slot Registry.
-- Branch: `feat/task-008-view-slot-registry`.
+- Task: TASK-009 - Add Transaction Manager and Core Runtime composition.
+- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-008 complete; merge to `master` pending.
+- Current phase: TASK-009 started; pre-test guidance pending.
 
 ## Active Agents
 
@@ -16,6 +16,11 @@ Last updated: 2026-05-20 13:45 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-008 merged to `master` and pushed. Merge commit: `ea864e4 Codex(merge)(Add View Registry and Slot Registry): merge task branch`.
+- TASK-009 branch created from latest `master`.
+- TASK-009 started in progress ledger and task communication file.
+- `.codex/agents/*.toml` parsed successfully for TASK-009.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 - Final narrow explicit-unknown re-review completed and all agents were closed.
 - Gibbs (`reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit `RegistryComponent<unknown>` / `ViewDefinition<unknown>` reject arbitrary objects, explicit `SlotCondition<unknown>` remains a function, and unparameterized registry return/storage shapes remain type-correct.
 - Huygens (`test_quality_reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit-unknown tests cover Rawls's P2 without weakening earlier wrong-prop, narrow-condition, or unparameterized-return coverage.
@@ -291,6 +296,6 @@ Last updated: 2026-05-20 13:45 CST.
 
 ## Next Actions
 
-1. Commit progress completion update.
-2. Merge TASK-008 to `master`.
-3. Continue to TASK-009 from latest `master`.
+1. Commit TASK-009 start/status updates.
+2. Spawn TASK-009 pre-test guidance agents.
+3. Commit guidance summary, then hand off failing tests to `test_writer`.

@@ -31,7 +31,7 @@ Status markers:
 - [x] TASK-006: Add Filter Store and Query AST baseline
 - [x] TASK-007: Add Command Registry and Command Bus
 - [x] TASK-008: Add View Registry and Slot Registry
-- [ ] TASK-009: Add Transaction Manager and Core Runtime composition
+- [~] TASK-009: Add Transaction Manager and Core Runtime composition
 
 ## Milestone M2: Native persistence boundary
 
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 13:48 CST - TASK-009 started
+
+- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
+- Task: Add Transaction Manager and Core Runtime composition.
+- Scope: compose existing Core in-memory stores and registries into an app runtime object, and add an in-memory Transaction Manager that can group page, metadata, event, and filter changes with rollback on handler failure.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-20 13:44 CST - TASK-008 completed
 
