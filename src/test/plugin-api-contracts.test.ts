@@ -296,6 +296,66 @@ type CallerSuppliedSourcePluginIdAssignableLeak =
   | CallerSourcePluginIdFilterSaveLeak
   | CallerSourcePluginIdFilterUpdateLeak
   | CallerSourcePluginIdFilterListLeak;
+type CallerSourcePluginIdMetadataSetUndefinedVariable = {
+  pageId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdEventAppendUndefinedVariable = {
+  pageId: string;
+  namespace: string;
+  type: string;
+  payload: MetadataJsonValue;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdFilterSaveUndefinedVariable = {
+  name: string;
+  query: PluginFilterQuery;
+  viewType: string;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdFilterUpdateUndefinedVariable = {
+  viewType: string;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdFilterListUndefinedVariable = {
+  viewType: string;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdMetadataSetUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdMetadataSetUndefinedVariable,
+  PluginMetadataSetInput,
+  "metadata.set.sourcePluginId.undefined-variable"
+>;
+type CallerSourcePluginIdEventAppendUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdEventAppendUndefinedVariable,
+  PluginEventAppendInput,
+  "events.append.sourcePluginId.undefined-variable"
+>;
+type CallerSourcePluginIdFilterSaveUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdFilterSaveUndefinedVariable,
+  PluginFilterSaveInput,
+  "filters.save.sourcePluginId.undefined-variable"
+>;
+type CallerSourcePluginIdFilterUpdateUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdFilterUpdateUndefinedVariable,
+  PluginFilterUpdateInput,
+  "filters.update.sourcePluginId.undefined-variable"
+>;
+type CallerSourcePluginIdFilterListUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdFilterListUndefinedVariable,
+  PluginFilterListOptions,
+  "filters.list.sourcePluginId.undefined-variable"
+>;
+type CallerSuppliedSourcePluginIdUndefinedAssignableLeak =
+  | CallerSourcePluginIdMetadataSetUndefinedLeak
+  | CallerSourcePluginIdEventAppendUndefinedLeak
+  | CallerSourcePluginIdFilterSaveUndefinedLeak
+  | CallerSourcePluginIdFilterUpdateUndefinedLeak
+  | CallerSourcePluginIdFilterListUndefinedLeak;
 type PluginCommandRegisterInput = Parameters<
   PluginCommandRegistry["register"]
 >[0];
@@ -440,6 +500,74 @@ type CallerSuppliedRegistryPluginIdAssignableLeak =
   | CallerPluginIdCommandListLeak
   | CallerPluginIdViewListLeak
   | CallerPluginIdSlotListLeak;
+type CallerPluginIdCommandDefinitionUndefinedVariable = {
+  id: string;
+  pluginId: undefined;
+  title: string;
+  handler(input: unknown): unknown;
+};
+type CallerPluginIdViewDefinitionUndefinedVariable = {
+  id: string;
+  pluginId: undefined;
+  type: string;
+  title: string;
+  accepts: MetadataJsonValue;
+  component(): null;
+};
+type CallerPluginIdSlotDefinitionUndefinedVariable = {
+  id: string;
+  pluginId: undefined;
+  slot: string;
+  component(): null;
+};
+type CallerPluginIdCommandListUndefinedVariable = {
+  pluginId: undefined;
+};
+type CallerPluginIdViewListUndefinedVariable = {
+  type: string;
+  pluginId: undefined;
+};
+type CallerPluginIdSlotListUndefinedVariable = {
+  slot: string;
+  pluginId: undefined;
+};
+type CallerPluginIdCommandDefinitionUndefinedLeak = AssignableLeak<
+  CallerPluginIdCommandDefinitionUndefinedVariable,
+  PluginCommandRegisterInput,
+  "commands.register.pluginId.undefined-variable"
+>;
+type CallerPluginIdViewDefinitionUndefinedLeak = AssignableLeak<
+  CallerPluginIdViewDefinitionUndefinedVariable,
+  PluginViewRegisterInput,
+  "views.register.pluginId.undefined-variable"
+>;
+type CallerPluginIdSlotDefinitionUndefinedLeak = AssignableLeak<
+  CallerPluginIdSlotDefinitionUndefinedVariable,
+  PluginSlotRegisterInput,
+  "slots.register.pluginId.undefined-variable"
+>;
+type CallerPluginIdCommandListUndefinedLeak = AssignableLeak<
+  CallerPluginIdCommandListUndefinedVariable,
+  PluginCommandRegistryListOptions,
+  "commands.list.pluginId.undefined-variable"
+>;
+type CallerPluginIdViewListUndefinedLeak = AssignableLeak<
+  CallerPluginIdViewListUndefinedVariable,
+  PluginViewRegistryListOptions,
+  "views.list.pluginId.undefined-variable"
+>;
+type CallerPluginIdSlotListUndefinedLeak = AssignableLeak<
+  CallerPluginIdSlotListUndefinedVariable,
+  PluginSlotRegistryListOptions,
+  "slots.list.pluginId.undefined-variable"
+>;
+type CallerSuppliedRegistryPluginIdUndefinedAssignableLeak =
+  | CallerPluginIdCommandDefinitionUndefinedLeak
+  | CallerPluginIdViewDefinitionUndefinedLeak
+  | CallerPluginIdSlotDefinitionUndefinedLeak
+  | CallerPluginIdCommandListUndefinedLeak
+  | CallerPluginIdViewListUndefinedLeak
+  | CallerPluginIdSlotListUndefinedLeak;
 type PluginViewRegisterResult = ReturnType<PluginViewRegistry["register"]>;
 type PluginViewGetResult = ReturnType<PluginViewRegistry["get"]>;
 type PluginViewListResult = ArrayElement<ReturnType<PluginViewRegistry["list"]>>;
@@ -1072,6 +1200,82 @@ describe("Plugin API contracts", () => {
     expectNoTypeLeak<CallerPluginIdSlotListLeak>();
   });
 
+  it("rejects explicit undefined plugin ids from plugin registry inputs", () => {
+    const component = () => null;
+    const commandDefinitionWithUndefinedPluginId = {
+      id: "example.command.undefined-owner-variable",
+      pluginId: undefined,
+      title: "Undefined Owner",
+      handler() {},
+    };
+    const viewDefinitionWithUndefinedPluginId = {
+      id: "example.view.undefined-owner-variable",
+      pluginId: undefined,
+      type: "example.view",
+      title: "Undefined Owner",
+      accepts: null,
+      component,
+    };
+    const slotDefinitionWithUndefinedPluginId = {
+      id: "example.slot.undefined-owner-variable",
+      pluginId: undefined,
+      slot: "example.workspace.panel",
+      component,
+    };
+    const commandListOptionsWithUndefinedPluginId = {
+      pluginId: undefined,
+    };
+    const viewListOptionsWithUndefinedPluginId = {
+      type: "example.view",
+      pluginId: undefined,
+    };
+    const slotListOptionsWithUndefinedPluginId = {
+      slot: "example.workspace.panel",
+      pluginId: undefined,
+    };
+
+    expectNoTypeLeak<CallerSuppliedRegistryPluginIdUndefinedAssignableLeak>();
+
+    // @ts-expect-error the Plugin Host supplies command plugin ownership
+    void ({ id: "example.command.undefined-owner", pluginId: undefined, title: "Undefined Owner", handler() {} } satisfies PluginCommandDefinition);
+    // @ts-expect-error the Plugin Host supplies view plugin ownership
+    void ({ id: "example.view.undefined-owner", pluginId: undefined, type: "example.view", title: "Undefined Owner", accepts: null, component } satisfies PluginViewDefinition);
+    // @ts-expect-error the Plugin Host supplies slot plugin ownership
+    void ({ id: "example.slot.undefined-owner", pluginId: undefined, slot: "example.workspace.panel", component } satisfies PluginSlotDefinition);
+    // @ts-expect-error the Plugin Host scopes command list ownership
+    void ({ pluginId: undefined } satisfies PluginCommandListOptions);
+    // @ts-expect-error the Plugin Host scopes view list ownership
+    void ({ type: "example.view", pluginId: undefined } satisfies PluginViewListOptions);
+    // @ts-expect-error the Plugin Host scopes slot list ownership
+    void ({ slot: "example.workspace.panel", pluginId: undefined } satisfies PluginSlotListOptions);
+
+    // @ts-expect-error the Plugin Host supplies command plugin ownership
+    const rejectedCommandDefinition: PluginCommandDefinition =
+      commandDefinitionWithUndefinedPluginId;
+    // @ts-expect-error the Plugin Host supplies view plugin ownership
+    const rejectedViewDefinition: PluginViewDefinition =
+      viewDefinitionWithUndefinedPluginId;
+    // @ts-expect-error the Plugin Host supplies slot plugin ownership
+    const rejectedSlotDefinition: PluginSlotDefinition =
+      slotDefinitionWithUndefinedPluginId;
+    // @ts-expect-error the Plugin Host scopes command list ownership
+    const rejectedCommandListOptions: PluginCommandListOptions =
+      commandListOptionsWithUndefinedPluginId;
+    // @ts-expect-error the Plugin Host scopes view list ownership
+    const rejectedViewListOptions: PluginViewListOptions =
+      viewListOptionsWithUndefinedPluginId;
+    // @ts-expect-error the Plugin Host scopes slot list ownership
+    const rejectedSlotListOptions: PluginSlotListOptions =
+      slotListOptionsWithUndefinedPluginId;
+
+    void rejectedCommandDefinition;
+    void rejectedViewDefinition;
+    void rejectedSlotDefinition;
+    void rejectedCommandListOptions;
+    void rejectedViewListOptions;
+    void rejectedSlotListOptions;
+  });
+
   it("rejects caller-supplied source plugin ids from plugin store variables", () => {
     expectNoTypeLeak<CallerSuppliedSourcePluginIdTemplateKeyLeak>();
     expectNoTypeLeak<CallerSourcePluginIdMetadataSetLeak>();
@@ -1079,6 +1283,73 @@ describe("Plugin API contracts", () => {
     expectNoTypeLeak<CallerSourcePluginIdFilterSaveLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterUpdateLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterListLeak>();
+  });
+
+  it("rejects explicit undefined source plugin ids from plugin store inputs", () => {
+    const metadataSetWithUndefinedSourcePluginId = {
+      pageId: "page-1",
+      namespace: "example",
+      key: "status",
+      value: null,
+      valueType: "null" as const,
+      sourcePluginId: undefined,
+    };
+    const eventAppendWithUndefinedSourcePluginId = {
+      pageId: "page-1",
+      namespace: "example",
+      type: "opened",
+      payload: null,
+      sourcePluginId: undefined,
+    };
+    const filterSaveWithUndefinedSourcePluginId = {
+      name: "Examples",
+      query: { where: [] },
+      viewType: "example.view",
+      sourcePluginId: undefined,
+    };
+    const filterUpdateWithUndefinedSourcePluginId = {
+      viewType: "example.view",
+      sourcePluginId: undefined,
+    };
+    const filterListWithUndefinedSourcePluginId = {
+      viewType: "example.view",
+      sourcePluginId: undefined,
+    };
+
+    expectNoTypeLeak<CallerSuppliedSourcePluginIdUndefinedAssignableLeak>();
+
+    // @ts-expect-error the Plugin Host supplies metadata source ownership
+    void ({ pageId: "page-1", namespace: "example", key: "status", value: null, valueType: "null", sourcePluginId: undefined } satisfies PluginMetadataSetInput);
+    // @ts-expect-error the Plugin Host supplies event source ownership
+    void ({ pageId: "page-1", namespace: "example", type: "opened", payload: null, sourcePluginId: undefined } satisfies PluginEventAppendInput);
+    // @ts-expect-error the Plugin Host supplies filter source ownership
+    void ({ name: "Examples", query: { where: [] }, viewType: "example.view", sourcePluginId: undefined } satisfies PluginFilterSaveInput);
+    // @ts-expect-error the Plugin Host supplies filter source ownership
+    void ({ viewType: "example.view", sourcePluginId: undefined } satisfies PluginFilterUpdateInput);
+    // @ts-expect-error the Plugin Host scopes filter list source ownership
+    void ({ viewType: "example.view", sourcePluginId: undefined } satisfies PluginFilterListOptions);
+
+    // @ts-expect-error the Plugin Host supplies metadata source ownership
+    const rejectedMetadataSetInput: PluginMetadataSetInput =
+      metadataSetWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host supplies event source ownership
+    const rejectedEventAppendInput: PluginEventAppendInput =
+      eventAppendWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host supplies filter source ownership
+    const rejectedFilterSaveInput: PluginFilterSaveInput =
+      filterSaveWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host supplies filter source ownership
+    const rejectedFilterUpdateInput: PluginFilterUpdateInput =
+      filterUpdateWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host scopes filter list source ownership
+    const rejectedFilterListOptions: PluginFilterListOptions =
+      filterListWithUndefinedSourcePluginId;
+
+    void rejectedMetadataSetInput;
+    void rejectedEventAppendInput;
+    void rejectedFilterSaveInput;
+    void rejectedFilterUpdateInput;
+    void rejectedFilterListOptions;
   });
 
   it("keeps PluginContext scoped to plugin-facing facades and away from raw runtime handles", () => {
