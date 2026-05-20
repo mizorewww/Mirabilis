@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix pending second replacement.
-- Active agents: none.
+- Status: P1/P2 production type fix active.
+- Active agents:
+  - Banach (`implementer`, `019e43c5-e97f-71d2-8a3d-c73884dc6010`): third implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -288,4 +289,19 @@
 
 ## Next Action
 
-Commit this replacement note, spawn another replacement `implementer` with a narrower suggested type design, and repeat focused checks until green.
+Wait for Banach's public type soundness implementation output, repeat focused checks, and commit Banach's production type patch if green.
+
+### Banach (`implementer`)
+
+- Status: active.
+- Agent id: `019e43c5-e97f-71d2-8a3d-c73884dc6010`.
+- Ownership:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+- Assignment:
+  - Preserve public React component/exotic compatibility while keeping explicit `Props` sound.
+  - Avoid broad fallback callable/object types for explicit props.
+  - Avoid top-level conditional `ViewDefinition` / `SlotContribution` types that break generic registry construction.
+  - Use exact-`unknown` property-level fallback types if needed for unparameterized registry returns.
+  - Avoid public/test dependence on React lazy private `_payload`/`_init` internals.
+  - Do not edit tests, docs, registries, config, or lockfiles, and do not commit.
