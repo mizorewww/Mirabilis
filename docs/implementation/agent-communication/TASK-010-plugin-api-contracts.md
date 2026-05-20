@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: review-fix tests committed; production review-fix next.
+- Status: review fixes green; targeted re-review next.
 - Active agents: none.
-- Next agent step: spawn an `implementer` for production type-contract fixes.
+- Next agent step: spawn targeted re-review agents.
 
 ## Agent Handoffs
 
@@ -205,6 +205,55 @@
   - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 9 tests.
   - `git diff --check` passed.
 
+### Review-Fix Implementation
+
+- Status: completed and committed.
+- Agent:
+  - Popper the 2nd (`implementer`, `019e4699-91ca-73f3-877d-42c411aad74d`).
+- Ownership:
+  - `src/core/plugin-api/contributions.ts`.
+  - `src/core/plugin-api/context.ts`.
+  - `src/core/plugin-api/index.ts`.
+  - `src/core/index.ts`.
+- Assignment:
+  - Make review-fix type tests green without editing tests or docs.
+  - Replace `Omit`-derived registration contracts with standalone plugin-facing types.
+  - Return inert descriptors from plugin view/slot registries instead of raw executable runtime definitions.
+  - Use JSON-compatible manifest schema/filter values and `MetadataValueType` metadata field values.
+  - Export any new helper aliases from the Plugin API barrels.
+- Outcome:
+  - Popper the 2nd left a focused production patch but no final response after a status request and second wait window, so the parent stopped the agent.
+  - Parent validated and adopted the patch.
+  - Added standalone plugin command/view/slot definitions, inert descriptors, caller-scoped list options, `PluginFilterCondition`, and `PluginFilterQuery`.
+  - Updated manifest contribution fields to use `MetadataJsonValue` and `MetadataValueType`.
+- Commit:
+  - `4a7d33b Popper the 2nd(review-fix)(Define Plugin API contracts): harden plugin API boundaries`.
+
+### Docs Review-Fix
+
+- Status: completed and committed.
+- Agent:
+  - Dewey the 2nd (`doc_writer`, `019e4699-91ca-73f3-877d-4345918d073d`).
+- Ownership:
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/implementation/task-index.md`.
+- Assignment:
+  - Patch required TASK-010 documentation drift after production fixes are green.
+  - Use canonical `slots`, current contribution buckets, current lifecycle, current `src/core/plugin-api` transitional location, and narrowed plugin-facing `PluginContext` wording.
+- Outcome:
+  - Product manifest sample now uses `slots`, `mobileToolbarItems`, and `settingsPanels`.
+  - Product lifecycle/contribution text now separates current TASK-010 API contract from future Plugin Platform work.
+  - Architecture docs now identify `src/core/plugin-api` as the current contract source and `packages/plugin-api` as a future split.
+  - Task index test plan now says typecheck plus focused type/export tests, with runtime manifest validation deferred until runtime validation exists.
+- Commit:
+  - `cf38684 Dewey the 2nd(docs)(Define Plugin API contracts): sync plugin API contract docs`.
+- Green checks after review fixes:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts src/test/plugin-api-contracts.test.ts` passed with 10 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -214,4 +263,4 @@
 
 ## Next Action
 
-Spawn an `implementer` to make the review-fix type tests green, then patch the required product and architecture docs drift.
+Spawn targeted re-review agents, then run the final local gate and mark TASK-010 complete if no P0/P1 findings remain.
