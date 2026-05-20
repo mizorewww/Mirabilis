@@ -6,28 +6,26 @@ import type {
 
 import type { MetadataJsonValue } from "./metadata";
 
-type IsExactlyUnknown<Props> = [unknown] extends [Props]
-  ? [Props] extends [unknown]
-    ? true
-    : false
-  : false;
+declare const defaultViewDefinitionProps: unique symbol;
+
+type DefaultViewDefinitionProps = {
+  readonly [defaultViewDefinitionProps]: typeof defaultViewDefinitionProps;
+};
 
 type RegistryReactComponent<Props = unknown> =
   | ComponentType<Props>
   | ExoticComponent<Props>
   | LazyExoticComponent<ComponentType<Props>>;
 
-export type RegistryComponent<Props = unknown> =
-  | RegistryReactComponent<Props>
-  | (IsExactlyUnknown<Props> extends true ? object : never);
+export type RegistryComponent<Props = unknown> = RegistryReactComponent<Props>;
 
 export type ViewDataShape = MetadataJsonValue;
 
-type ViewDefinitionComponent<Props> = [Props] extends [never]
-  ? RegistryComponent<unknown>
-  : RegistryComponent<Props>;
+type ViewDefinitionComponent<Props> =
+  | RegistryComponent<Props>
+  | ([Props] extends [DefaultViewDefinitionProps] ? unknown : never);
 
-export type ViewDefinition<Props = never> = {
+export type ViewDefinition<Props = DefaultViewDefinitionProps> = {
   id: string;
   pluginId: string;
   type: string;

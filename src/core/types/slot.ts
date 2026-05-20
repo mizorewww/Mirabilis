@@ -1,23 +1,22 @@
 import type { RegistryComponent } from "./view";
 
-type IsExactlyUnknown<Props> = [unknown] extends [Props]
-  ? [Props] extends [unknown]
-    ? true
-    : false
-  : false;
+declare const defaultSlotContributionProps: unique symbol;
 
-export type SlotCondition<Props = unknown> =
-  IsExactlyUnknown<Props> extends true ? unknown : (props: Props) => boolean;
+type DefaultSlotContributionProps = {
+  readonly [defaultSlotContributionProps]: typeof defaultSlotContributionProps;
+};
 
-type SlotContributionComponent<Props> = [Props] extends [never]
-  ? RegistryComponent<unknown>
-  : RegistryComponent<Props>;
+export type SlotCondition<Props = unknown> = (props: Props) => boolean;
 
-type SlotContributionCondition<Props> = [Props] extends [never]
-  ? SlotCondition<unknown>
-  : (props: Props) => boolean;
+type SlotContributionComponent<Props> =
+  | RegistryComponent<Props>
+  | ([Props] extends [DefaultSlotContributionProps] ? unknown : never);
 
-export type SlotContribution<Props = never> = {
+type SlotContributionCondition<Props> =
+  | ((props: Props) => boolean)
+  | ([Props] extends [DefaultSlotContributionProps] ? unknown : never);
+
+export type SlotContribution<Props = DefaultSlotContributionProps> = {
   id: string;
   pluginId: string;
   slot: string;
