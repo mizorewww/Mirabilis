@@ -40,10 +40,12 @@
 
 ## Current Status
 
-- Status: second frontend boundary-test follow-up delegated.
+- Status: second frontend boundary-test follow-up committed; narrow re-review running.
 - Active agents:
-  - Dirac the 2nd (`test_writer`, id `019e4725-f8fc-73c1-9ee0-c20d78f70978`).
-- Next parent step: wait for Dirac the 2nd, then run focused checks.
+  - Chandrasekhar the 2nd (`reviewer`, id `019e4729-1ea3-7d20-8d67-d9aafdd7f558`).
+  - Peirce the 2nd (`test_quality_reviewer`, id `019e4729-23a1-7641-816f-9f0d3ac6e294`).
+  - Descartes the 2nd (`security_reviewer`, id `019e4729-28e5-7b83-be08-9cd5136427a3`).
+- Next parent step: wait for narrow re-review, then run local gate if clear.
 
 ## Agent Handoffs
 
@@ -265,13 +267,30 @@
 
 ### Frontend Boundary-Test Second Follow-Up
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Dirac the 2nd (`test_writer`, id `019e4725-f8fc-73c1-9ee0-c20d78f70978`).
 - Assignment:
   - Keep TASK-014 operation narrowing legal.
   - Strengthen no-raw-SQL key detection for future union-shaped `DbQuery`.
   - Guard exact top-level keys and optional `payload?: DbValue` without requiring `operation` to remain a broad `string`.
+- Outcome:
+  - Changed file: `src/test/native-bridge.test.ts`.
+  - Commit: `3fc4902 Dirac the 2nd(test-fix)(Add SQLite schema and Rust repositories): harden native bridge query type guards`.
+  - Delivered a distributive raw-SQL key guard for future union-shaped `DbQuery`, exact top-level key guards for `operation` and `payload`, optional-payload guarding, JSON-compatible payload guarding, and continued operation-subtype allowance for TASK-014.
+  - Parent repeated green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check`.
+
+### Second Frontend Boundary-Test Narrow Re-Review
+
+- Status: running.
+- Agents:
+  - Chandrasekhar the 2nd (`reviewer`) for correctness.
+  - Peirce the 2nd (`test_quality_reviewer`) for test quality.
+  - Descartes the 2nd (`security_reviewer`) for security/boundary.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review Dirac the 2nd's test-fix commit `3fc4902`.
+  - Confirm the previous P2s are fixed without blocking TASK-014 operation narrowing or weakening no-raw-SQL coverage.
 
 ### Review Round 1
 
