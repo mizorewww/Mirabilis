@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:48 CST.
+Last updated: 2026-05-20 13:49 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 13:48 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 started; pre-test guidance pending.
+- Current phase: TASK-009 pre-test guidance active.
 
 ## Active Agents
 
-- None.
+- Copernicus (`planner`, `019e43ee-856d-7081-b768-58535541be8e`): plan Transaction Manager and Core Runtime composition API, acceptance tests, rollback semantics, files, and risks.
+- Sartre (`docs_researcher`, `019e43ee-8a02-74d3-956a-12a18d25e40f`): verify current TypeScript/Vitest/standard JS guidance relevant to TASK-009 tests and implementation.
+- Beauvoir (`deprecation_auditor`, `019e43ee-8fd5-7cc2-9d08-80ef815f5de1`): audit public types, async rollback semantics, cloning/snapshot APIs, and runtime exposure risks.
 
 ## Recent Agent Outcomes
 
+- TASK-009 pre-test guidance agents spawned.
 - TASK-008 merged to `master` and pushed. Merge commit: `ea864e4 Codex(merge)(Add View Registry and Slot Registry): merge task branch`.
 - TASK-009 branch created from latest `master`.
 - TASK-009 started in progress ledger and task communication file.
@@ -296,6 +299,6 @@ Last updated: 2026-05-20 13:48 CST.
 
 ## Next Actions
 
-1. Commit TASK-009 start/status updates.
-2. Spawn TASK-009 pre-test guidance agents.
-3. Commit guidance summary, then hand off failing tests to `test_writer`.
+1. Wait for TASK-009 pre-test guidance agents.
+2. Commit guidance summary.
+3. Hand off failing tests to `test_writer`.

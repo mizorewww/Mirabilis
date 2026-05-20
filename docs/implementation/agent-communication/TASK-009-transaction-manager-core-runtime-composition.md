@@ -42,12 +42,25 @@
 
 ## Current Status
 
-- Status: started; pre-test guidance pending.
-- Active agents: none.
+- Status: pre-test guidance active.
+- Active agents:
+  - Copernicus (`planner`, `019e43ee-856d-7081-b768-58535541be8e`): plan Transaction Manager and Core Runtime composition API, acceptance tests, rollback semantics, files, and risks.
+  - Sartre (`docs_researcher`, `019e43ee-8a02-74d3-956a-12a18d25e40f`): verify current TypeScript/Vitest/standard JS guidance relevant to TASK-009 tests and implementation.
+  - Beauvoir (`deprecation_auditor`, `019e43ee-8fd5-7cc2-9d08-80ef815f5de1`): audit public types, async rollback semantics, cloning/snapshot APIs, and runtime exposure risks.
 
 ## Agent Handoffs
 
-No TASK-009 agents have completed yet.
+### Pre-test Guidance Round
+
+- Status: active.
+- Agents:
+  - Copernicus (`planner`, `019e43ee-856d-7081-b768-58535541be8e`).
+  - Sartre (`docs_researcher`, `019e43ee-8a02-74d3-956a-12a18d25e40f`).
+  - Beauvoir (`deprecation_auditor`, `019e43ee-8fd5-7cc2-9d08-80ef815f5de1`).
+- Assignment:
+  - Copernicus: produce a focused TASK-009 API/test plan for in-memory Transaction Manager and Core Runtime composition.
+  - Sartre: verify current official TypeScript, Vitest, and standard JS guidance relevant to tests and implementation.
+  - Beauvoir: audit transaction/runtime type, rollback, cloning/snapshot, and exposure risks.
 
 ## Parent Decisions
 
@@ -57,4 +70,4 @@ No TASK-009 agents have completed yet.
 
 ## Next Action
 
-Spawn pre-test guidance agents for TASK-009, then commit the guidance summary before handing the task to `test_writer`.
+Wait for pre-test guidance agents, commit the guidance summary, then hand off failing tests to `test_writer`.
