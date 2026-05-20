@@ -14,18 +14,21 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 import {
+  DB_PERSISTENCE_OPERATIONS,
   NATIVE_BRIDGE_COMMANDS,
   NativeBridgeError,
   createNativeBridge,
   createTauriNativeBridge,
 } from "../core/native";
 import {
+  DB_PERSISTENCE_OPERATIONS as CORE_DB_PERSISTENCE_OPERATIONS,
   NATIVE_BRIDGE_COMMANDS as CORE_NATIVE_BRIDGE_COMMANDS,
   NativeBridgeError as CoreNativeBridgeError,
   createNativeBridge as createCoreNativeBridge,
   createTauriNativeBridge as createCoreTauriNativeBridge,
 } from "../core";
 import type {
+  DbPersistenceOperation,
   DbQuery,
   DbValue,
   NativeBridge,
@@ -35,6 +38,7 @@ import type {
   NotificationInput,
 } from "../core/native";
 import type {
+  DbPersistenceOperation as DbPersistenceOperationFromCore,
   DbQuery as DbQueryFromCore,
   DbValue as DbValueFromCore,
   NativeBridge as NativeBridgeFromCore,
@@ -77,17 +81,53 @@ const EXPECTED_NATIVE_BRIDGE_COMMANDS = {
   filesImportMarkdown: "files_import_markdown",
   filesExportMarkdown: "files_export_markdown",
 } as const;
+const EXPECTED_DB_PERSISTENCE_OPERATIONS = {
+  pagesCreate: "core.pages.create",
+  pagesGet: "core.pages.get",
+  pagesList: "core.pages.list",
+  pagesUpdate: "core.pages.update",
+  pagesArchive: "core.pages.archive",
+  metadataSet: "core.metadata.set",
+  metadataGet: "core.metadata.get",
+  metadataListForPage: "core.metadata.listForPage",
+  metadataDelete: "core.metadata.delete",
+  eventsAppend: "core.events.append",
+  eventsList: "core.events.list",
+  filtersSave: "core.filters.save",
+  filtersGet: "core.filters.get",
+  filtersList: "core.filters.list",
+  filtersDelete: "core.filters.delete",
+} as const;
 type ExpectedNativeBridgeCommands = Readonly<
   typeof EXPECTED_NATIVE_BRIDGE_COMMANDS
 >;
 type ExpectedNativeBridgeCommand =
   ExpectedNativeBridgeCommands[keyof ExpectedNativeBridgeCommands];
+type ExpectedDbPersistenceOperations = Readonly<
+  typeof EXPECTED_DB_PERSISTENCE_OPERATIONS
+>;
+type ExpectedDbPersistenceOperation =
+  ExpectedDbPersistenceOperations[keyof ExpectedDbPersistenceOperations];
 type WidenedNativeBridgeCommandLeak =
   string extends NativeBridgeCommand
     ? "native-command-widened-to-string"
     : never;
 type GreetNativeBridgeCommandLeak =
   "greet" extends NativeBridgeCommand ? "unexpected-greet-command" : never;
+type WidenedDbPersistenceOperationLeak =
+  string extends DbPersistenceOperation
+    ? "db-persistence-operation-widened-to-string"
+    : never;
+type UnknownDbPersistenceOperationLeak =
+  | ("core.pages.getById" extends DbPersistenceOperation
+      ? "unexpected-legacy-page-operation"
+      : never)
+  | ("core.tasks.create" extends DbPersistenceOperation
+      ? "unexpected-business-plugin-operation"
+      : never)
+  | ("select * from core_pages" extends DbPersistenceOperation
+      ? "unexpected-raw-sql-operation"
+      : never);
 type ExpectedDbPayloadValue =
   | string
   | number
@@ -117,9 +157,13 @@ type DbQueryMissingTopLevelKeyLeak<T> = T extends unknown
   ? Exclude<ExpectedDbQueryTopLevelKey, keyof T>
   : never;
 type DbQueryOperationShapeLeak<T> = T extends unknown
-  ? T extends { operation: string }
-    ? never
-    : "db-query-operation-is-not-a-string-operation-key"
+  ? T extends { operation: infer Operation }
+    ? [Operation] extends [DbPersistenceOperation]
+      ? string extends Operation
+        ? "db-query-operation-widened-to-string"
+        : never
+      : "db-query-operation-is-not-the-persistence-operation-allowlist"
+    : "db-query-operation-key-is-missing"
   : never;
 type DbQueryRequiredPayloadLeak<T> = T extends unknown
   ? T extends { payload: unknown }
@@ -139,10 +183,18 @@ type DbValueJsonPayloadLeak =
     : "db-value-does-not-accept-json-object-payloads";
 type DbValueFunctionPayloadLeak =
   (() => void) extends DbValue ? "db-value-accepts-function-payloads" : never;
+type ExpectedDbTransactionResult<Response> =
+  Response extends readonly unknown[]
+    ? number extends Response["length"]
+      ? Array<Response>
+      : Response
+    : Array<Response>;
 type ExpectedNativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
-    transaction<Response>(queries: DbQuery[]): Promise<Response>;
+    transaction<Response>(
+      queries: DbQuery[],
+    ): Promise<ExpectedDbTransactionResult<Response>>;
   };
   shortcuts: {
     register(shortcut: string, commandId: string): Promise<void>;
@@ -190,6 +242,7 @@ describe("NativeBridge TypeScript boundary", () => {
     expect(createTauriNativeBridge).toEqual(expect.any(Function));
     expect(createCoreTauriNativeBridge).toBe(createTauriNativeBridge);
     expect(CORE_NATIVE_BRIDGE_COMMANDS).toBe(NATIVE_BRIDGE_COMMANDS);
+    expect(CORE_DB_PERSISTENCE_OPERATIONS).toBe(DB_PERSISTENCE_OPERATIONS);
     expect(NATIVE_BRIDGE_COMMANDS).toStrictEqual(
       EXPECTED_NATIVE_BRIDGE_COMMANDS,
     );
@@ -198,6 +251,13 @@ describe("NativeBridge TypeScript boundary", () => {
     );
     expect(new Set(Object.values(NATIVE_BRIDGE_COMMANDS)).size).toBe(7);
     expect(Object.values(NATIVE_BRIDGE_COMMANDS)).not.toContain("greet");
+    expect(DB_PERSISTENCE_OPERATIONS).toStrictEqual(
+      EXPECTED_DB_PERSISTENCE_OPERATIONS,
+    );
+    expect(Object.keys(DB_PERSISTENCE_OPERATIONS).sort()).toStrictEqual(
+      Object.keys(EXPECTED_DB_PERSISTENCE_OPERATIONS).sort(),
+    );
+    expect(new Set(Object.values(DB_PERSISTENCE_OPERATIONS)).size).toBe(15);
 
     expectTypeOf<NativeBridgeFromCore>().toEqualTypeOf<NativeBridge>();
     expectTypeOf<NativeInvokeFromCore>().toEqualTypeOf<NativeInvoke>();
@@ -207,6 +267,9 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<NativeBridgeErrorCodeFromCore>().toEqualTypeOf<
       NativeBridgeErrorCode
     >();
+    expectTypeOf<DbPersistenceOperationFromCore>().toEqualTypeOf<
+      DbPersistenceOperation
+    >();
     expectTypeOf<DbQueryFromCore>().toEqualTypeOf<DbQuery>();
     expectTypeOf<DbValueFromCore>().toEqualTypeOf<DbValue>();
     expectTypeOf<NotificationInputFromCore>().toEqualTypeOf<
@@ -214,6 +277,9 @@ describe("NativeBridge TypeScript boundary", () => {
     >();
     expectTypeOf<typeof NATIVE_BRIDGE_COMMANDS>().toEqualTypeOf<
       ExpectedNativeBridgeCommands
+    >();
+    expectTypeOf<typeof DB_PERSISTENCE_OPERATIONS>().toEqualTypeOf<
+      ExpectedDbPersistenceOperations
     >();
     expectTypeOf<typeof NATIVE_BRIDGE_COMMANDS.dbExecute>().toEqualTypeOf<
       "db_execute"
@@ -242,6 +308,12 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<NativeBridgeCommand>().toEqualTypeOf<
       (typeof NATIVE_BRIDGE_COMMANDS)[keyof typeof NATIVE_BRIDGE_COMMANDS]
     >();
+    expectTypeOf<DbPersistenceOperation>().toEqualTypeOf<
+      ExpectedDbPersistenceOperation
+    >();
+    expectTypeOf<DbPersistenceOperation>().toEqualTypeOf<
+      (typeof DB_PERSISTENCE_OPERATIONS)[keyof typeof DB_PERSISTENCE_OPERATIONS]
+    >();
     expectTypeOf<NativeInvoke>().toEqualTypeOf<
       <Response>(
         command: NativeBridgeCommand,
@@ -261,7 +333,7 @@ describe("NativeBridge TypeScript boundary", () => {
       ExpectedDbPayloadValue
     >();
     expectTypeOf<DbQuery>().toMatchTypeOf<{
-      operation: string;
+      operation: DbPersistenceOperation;
       payload?: DbValue;
     }>();
     expectTypeOf<NotificationInput>().toEqualTypeOf<{
@@ -271,6 +343,8 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<NativeBridge>().toEqualTypeOf<ExpectedNativeBridge>();
     expectNoTypeLeak<WidenedNativeBridgeCommandLeak>();
     expectNoTypeLeak<GreetNativeBridgeCommandLeak>();
+    expectNoTypeLeak<WidenedDbPersistenceOperationLeak>();
+    expectNoTypeLeak<UnknownDbPersistenceOperationLeak>();
     expectNoTypeLeak<SqlShapedDbQueryLeak>();
     expectNoTypeLeak<DbQueryExtraTopLevelKeyLeak>();
     expectNoTypeLeak<DbQueryMissingTopLevelKeyLeak<DbQuery>>();
@@ -305,7 +379,9 @@ describe("NativeBridge TypeScript boundary", () => {
     const executeRows = [{ id: "page-1", title: "Roadmap" }];
     const executeInvoke = createResolvedInvoke(executeRows);
     const executeBridge = createNativeBridge({ invoke: executeInvoke });
-    const query = dbQuery("core.pages.getById", { pageId: "page-1" });
+    const query = dbQuery(DB_PERSISTENCE_OPERATIONS.pagesGet, {
+      id: "page-1",
+    });
 
     const executeResult = executeBridge.db.execute<
       Array<{ id: string; title: string }>
@@ -319,14 +395,14 @@ describe("NativeBridge TypeScript boundary", () => {
       query,
     });
 
-    const transactionResult = { changed: 2 };
-    const transactionInvoke = createResolvedInvoke(transactionResult);
+    const transactionResults = [{ changed: 1 }, { changed: 2 }];
+    const transactionInvoke = createResolvedInvoke(transactionResults);
     const transactionBridge = createNativeBridge({ invoke: transactionInvoke });
     const queries = [
-      dbQuery("core.pages.create", {
+      dbQuery(DB_PERSISTENCE_OPERATIONS.pagesCreate, {
         page: { id: "page-1", title: "Roadmap" },
       }),
-      dbQuery("core.pages.create", {
+      dbQuery(DB_PERSISTENCE_OPERATIONS.pagesCreate, {
         page: { id: "page-2", title: "Inbox" },
       }),
     ] satisfies DbQuery[];
@@ -335,11 +411,36 @@ describe("NativeBridge TypeScript boundary", () => {
       transactionBridge.db.transaction<{ changed: number }>(queries);
 
     expectTypeOf<typeof transactionPromise>().toEqualTypeOf<
-      Promise<{ changed: number }>
+      Promise<Array<{ changed: number }>>
     >();
-    await expect(transactionPromise).resolves.toStrictEqual(transactionResult);
+    await expect(transactionPromise).resolves.toStrictEqual(transactionResults);
     expectSingleInvoke(
       transactionInvoke,
+      NATIVE_BRIDGE_COMMANDS.dbTransaction,
+      { queries },
+    );
+
+    const mixedTransactionResults: [
+      null,
+      { id: string },
+      Array<{ id: string }>,
+    ] = [null, { id: "page-1" }, [{ id: "page-2" }]];
+    const mixedTransactionInvoke = createResolvedInvoke(mixedTransactionResults);
+    const mixedTransactionBridge = createNativeBridge({
+      invoke: mixedTransactionInvoke,
+    });
+    const mixedTransactionPromise = mixedTransactionBridge.db.transaction<
+      [null, { id: string }, Array<{ id: string }>]
+    >(queries);
+
+    expectTypeOf<typeof mixedTransactionPromise>().toEqualTypeOf<
+      Promise<[null, { id: string }, Array<{ id: string }>]>
+    >();
+    await expect(mixedTransactionPromise).resolves.toStrictEqual(
+      mixedTransactionResults,
+    );
+    expectSingleInvoke(
+      mixedTransactionInvoke,
       NATIVE_BRIDGE_COMMANDS.dbTransaction,
       { queries },
     );
@@ -474,7 +575,9 @@ describe("NativeBridge TypeScript boundary", () => {
     });
 
     await expectNativeBridgeError(
-      bridge.db.execute(dbQuery("core.pages.list", { limit: 1 })),
+      bridge.db.execute(
+        dbQuery(DB_PERSISTENCE_OPERATIONS.pagesList, { limit: 1 }),
+      ),
       caseItem.raw,
       {
         code: "NATIVE_COMMAND_FAILED",
@@ -567,7 +670,7 @@ describe("NativeBridge TypeScript boundary", () => {
 });
 
 function dbQuery(
-  operation: string,
+  operation: DbPersistenceOperation,
   payload?: ExpectedDbPayloadValue,
 ): DbQuery {
   return (payload === undefined

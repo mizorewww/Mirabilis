@@ -39,7 +39,7 @@ Status markers:
 - [x] TASK-011: Implement Plugin Host lifecycle
 - [x] TASK-012: Add NativeBridge TypeScript boundary
 - [x] TASK-013: Add SQLite schema and Rust repositories
-- [ ] TASK-014: Expose Tauri IPC commands for core persistence
+- [x] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
 
 ## Milestone M3: Editor and plugin runtime
@@ -78,6 +78,27 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 06:27 CST - TASK-014 completed
+
+- Branch: `feat/task-014-tauri-ipc-core-persistence`.
+- Task: Expose Tauri IPC commands for core persistence.
+- Commits: `3cdf0f1` start orchestration, `d297748` pre-test guidance handoff, `1ebb705` pre-test guidance, `9087523` red test handoff, `463f23b` IPC persistence acceptance tests, `3f9fce6` red signal, `c10364e` implementation handoff, `3452616` DB IPC allowlist implementation, `b570d5b` implementation green signal, `38664ef` review handoff, `2c722f2` review findings, `e3651db` review-fix test handoff, `6662a4c` review-fix acceptance tests, `2f2892c` review-fix test signal, `9ec1c46` review-fix implementation handoff, `d0efbd8` IPC validation semantics, `950f35a` review-fix implementation signal, `5926a04` focused re-review handoff, `7faa963` P2 cleanup test handoff, `d80bbf2` P2 IPC contract cleanup tests, `2162774` P2 test signal, `aa2950b` P2 implementation handoff, `92f3323` P2 IPC contract alignment, `7b635ce` P2 implementation signal, `a00c6a2` docs sync handoff, `e023498` DB IPC capability docs, `772262c` docs sync signal, and `8df6e4a` docs re-review signal.
+- Delivered: reviewed Tauri IPC commands `db_execute` and `db_transaction`; app-owned `DbCommandState` initialized from `app_data_dir()/mirabilis.sqlite3`; strict TypeScript/Rust operation allowlist for pages, metadata, events, and filters; NativeBridge `DB_PERSISTENCE_OPERATIONS` / `DbPersistenceOperation`; `DbQuery.operation` narrowing; ordered transaction result typing for homogeneous arrays and mixed tuples; metadata logical-key get/delete; Core metadata `valueType` parity; typed/redacted Rust IPC errors; semantic payload validation; missing-target mutation failures; transaction rollback on validation, repository, or missing-target failure; removal of scaffold `greet`; generated app-command permission TOMLs; default capability grants for `allow-db-execute` and `allow-db-transaction`; architecture/testing docs for the final DB IPC/capability contract.
+- Validation: focused TASK-014 checks passed after review fixes: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`. Final `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and full Rust tests. `bun run build` passed. `./node_modules/.bin/tauri build -b deb rpm` passed and produced local deb/rpm artifacts.
+- `check:full`: attempted because TASK-014 touches IPC, persistence, capabilities, and permissions. It passed `check:quick`, release compilation, and deb/rpm bundling, then failed only at AppImage bundling in the local Arch environment. Verbose runs showed linuxdeploy's bundled `strip` cannot process `.relr.dyn` sections in current system libraries; with `NO_STRIP=true`, linuxdeploy-plugin-gtk fails because `/usr/lib/gdk-pixbuf-2.0/2.10.0` is absent. Release checker assessed this as a P2 non-blocking packaging environment/tooling limitation for TASK-014 because release packaging is out of scope and this branch did not change package/bundle config. AppImage validation remains for TASK-033 or a packaging follow-up using a controlled Linux build image.
+- Review: planner, docs/current-guidance, deprecation/API, security, test-quality, correctness, diff mapping, docs-writing, and release-checker agents cleared remaining P0/P1 findings. Fixed selected P1/P2 findings for metadata logical-key IPC, capability permission parsing, missing-target errors and rollback, semantic validation, transaction result typing, command registration scope guard, metadata `valueType` parity, and TASK-014 docs/capability drift. Security re-review found no P0/P1/P2 security findings.
+- External docs verified by agents: Tauri v2 commands/errors/camelCase args, `@tauri-apps/api/core.invoke`, Tauri state management and `tauri::State`, Tauri capabilities and command ACLs, Tauri permission `commands.allow`, `tauri_build::AppManifest::commands`, Serde container attributes, `rusqlite` 0.39 transaction guidance, Tauri AppImage/distribution docs, Tauri prerequisites, Tauri linuxdeploy issue guidance, Arch `gdk-pixbuf2` package/manpage, and current community linuxdeploy `.relr.dyn` guidance.
+- Remaining risk: DB commands are granted to the main window, not per plugin; future plugin/runtime work must keep raw Tauri `invoke` and NativeBridge out of untrusted plugin reach. `src-tauri/tauri.conf.json` still has preexisting `csp: null`. SQLite hardening such as WAL, `busy_timeout`, and `trusted_schema = OFF` remains deferred. Payload size limits, timestamp normalization, and stronger ID normalization remain deferred. `Database::transaction` uses `rusqlite::Transaction::new_unchecked` as an accepted TASK-014 tradeoff because repositories currently operate through `&Database`; revisit if repositories gain a mutable connection or transaction facade. App bootstrap/runtime provider wiring and UI persistence flows remain TASK-015.
+
+### 2026-05-21 04:59 CST - TASK-014 started
+
+- Branch: `feat/task-014-tauri-ipc-core-persistence`.
+- Task: Expose Tauri IPC commands for core persistence.
+- Scope: add reviewed Tauri IPC commands for typed Core persistence operations and wire the frontend NativeBridge to those commands, using the private TASK-013 Rust repositories. This task must validate request DTOs, return typed/redacted errors, document and review Tauri capability changes, and preserve the no-raw-SQL frontend/plugin boundary.
+- Out of scope: app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, plugin-owned business index lifecycle, release packaging, and concrete business-plugin behavior unless local docs or agents identify a TASK-014-specific requirement.
+- Agent orchestration: parent thread remains orchestration-only; current Tauri v2 command/capability/testing guidance, deprecation review, security-boundary guidance, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-014-tauri-ipc-core-persistence.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 04:56 CST - TASK-013 completed
 

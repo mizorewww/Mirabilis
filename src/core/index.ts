@@ -32,6 +32,7 @@ export type {
   ViewRegistryErrorCode,
 } from "./types";
 export type {
+  DbPersistenceOperation,
   DbQuery,
   DbValue,
   NativeBridge,
@@ -108,6 +109,7 @@ export {
   createInMemoryCommandRegistry,
 } from "./commands";
 export {
+  DB_PERSISTENCE_OPERATIONS,
   NATIVE_BRIDGE_COMMANDS,
   NativeBridgeError,
   createNativeBridge,

@@ -91,8 +91,10 @@ Tauri 官方提供全局快捷键插件，前端和 Rust 都能使用；SQL、St
 ```ts
 export interface NativeBridge {
   db: {
-    execute<T>(query: DbQuery): Promise<T>;
-    transaction<T>(queries: DbQuery[]): Promise<T>;
+    execute<Response>(query: DbQuery): Promise<Response>;
+    transaction<Response>(
+      queries: DbQuery[]
+    ): Promise<DbTransactionResult<Response>>;
   };
 
   shortcuts: {
@@ -111,17 +113,24 @@ export interface NativeBridge {
 }
 ```
 
-TASK-014 的 Rust IPC 命令必须匹配当前 `NATIVE_BRIDGE_COMMANDS` 合约：
+`DbTransactionResult<Response>` keeps the ordered result-array shape visible at the TypeScript boundary:
+
+```ts
+type DbTransactionResult<Response> = Response extends readonly unknown[]
+  ? number extends Response["length"]
+    ? Array<Response>
+    : Response
+  : Array<Response>;
+```
+
+For homogeneous transaction results, callers can use a non-array response type such as `db.transaction<PageRecord>(queries)` and receive `Promise<PageRecord[]>`. For mixed ordered result arrays, tuple generics can express the exact order, for example `db.transaction<[null, PageRecord | null]>(queries)`.
+
+TASK-014 的 Rust IPC 只注册并授权 DB 子集；这些命令必须匹配当前 `NATIVE_BRIDGE_COMMANDS` envelope：
 
 | NativeBridge method | Tauri command | Payload envelope |
 | --- | --- | --- |
 | `db.execute(query)` | `db_execute` | `{ query }` |
 | `db.transaction(queries)` | `db_transaction` | `{ queries }` |
-| `shortcuts.register(shortcut, commandId)` | `shortcuts_register` | `{ shortcut, commandId }` |
-| `shortcuts.unregister(shortcut)` | `shortcuts_unregister` | `{ shortcut }` |
-| `notifications.notify(input)` | `notifications_notify` | `{ input }` |
-| `files.importMarkdown(path)` | `files_import_markdown` | `{ path }` |
-| `files.exportMarkdown(pageId, path)` | `files_export_markdown` | `{ pageId, path }` |
 
 Payload envelope keys stay camelCase on the TypeScript side.
 
@@ -134,8 +143,25 @@ type DbValue =
   | readonly DbValue[]
   | { readonly [key: string]: DbValue };
 
+type DbPersistenceOperation =
+  | "core.pages.create"
+  | "core.pages.get"
+  | "core.pages.list"
+  | "core.pages.update"
+  | "core.pages.archive"
+  | "core.metadata.set"
+  | "core.metadata.get"
+  | "core.metadata.listForPage"
+  | "core.metadata.delete"
+  | "core.events.append"
+  | "core.events.list"
+  | "core.filters.save"
+  | "core.filters.get"
+  | "core.filters.list"
+  | "core.filters.delete";
+
 type DbQuery = {
-  operation: string;
+  operation: DbPersistenceOperation;
   payload?: DbValue;
 };
 
@@ -144,9 +170,15 @@ type NativeBridgeErrorCode =
   | "NATIVE_RESPONSE_INVALID";
 ```
 
-`DbQuery` is an operation DTO, not a raw SQL DTO. `operation` is the Rust allowlist key and `payload` is JSON-compatible data. TASK-014 must translate allowed operations to repositories / SQL on the Rust side; frontend SQL strings are not part of the contract.
+`DbQuery` is an operation DTO, not a raw SQL DTO. `operation` is narrowed to the `DbPersistenceOperation` allowlist, and `payload` is JSON-compatible data. TASK-014 translates allowed operations to repositories / SQL on the Rust side; frontend SQL strings, SQL params, database paths, and generic SQL executors are not part of the contract.
 
-Native command failures throw `NativeBridgeError` with `code: "NATIVE_COMMAND_FAILED"` and the command name. The public failure message is the stable redacted string `Native command failed`. `NATIVE_RESPONSE_INVALID` is reserved for bridge response validation failures before returning typed frontend values.
+Native command failures throw `NativeBridgeError` with `code: "NATIVE_COMMAND_FAILED"` and the command name. The public failure message is the stable redacted string `Native command failed`. `NATIVE_RESPONSE_INVALID` is reserved for bridge response validation failures before returning typed frontend values. Rust command errors also serialize as redacted DTOs before they cross the IPC boundary:
+
+```ts
+type RustIpcError =
+  | { code: "INVALID_REQUEST"; message: "Native command failed" }
+  | { code: "PERSISTENCE_FAILED"; message: "Native command failed" };
+```
 
 UI components and plugins do not call Tauri APIs directly. Plugins use Core Services; Core Services use NativeBridge; NativeBridge uses Tauri commands.
 
@@ -178,7 +210,53 @@ ViewDescriptorRepository
 
 Repositories accept typed Rust DTOs, serialize JSON fields through `serde_json::Value`, use static SQL with bound parameters, and parse corrupt stored JSON into typed `DbError::InvalidJson` errors. Frontend code and plugins do not receive a database connection, raw SQL executor, or SQL-shaped DTO.
 
-TASK-013 intentionally does not add Rust IPC command handlers. `db_execute` and `db_transaction` remain NativeBridge command names for TASK-014 to implement through reviewed operation allowlists. TASK-013 also does not change Tauri capabilities, wire app bootstrap/providers, resolve the app data database path, add frontend NativeBridge operation allowlisting, or add WAL / `busy_timeout` / `trusted_schema` hardening. Those belong to TASK-014/bootstrap work.
+TASK-013 intentionally did not add Rust IPC command handlers. TASK-014 now exposes the reviewed `db_execute` and `db_transaction` commands described in this document. Runtime provider/bootstrap wiring, UI persistence flows, filesystem import/export behavior, global shortcut behavior, notification behavior, and WAL / `busy_timeout` / `trusted_schema` hardening remain outside TASK-014 unless a later task changes connection policy or app bootstrap.
+
+### 15.4 TASK-014 DB IPC allowlist and capability boundary
+
+TASK-014 exposes exactly these Core persistence operations through `DbQuery.operation` and the Rust `DbPersistenceOperation` enum:
+
+| Area | Operations |
+| --- | --- |
+| Pages | `core.pages.create`, `core.pages.get`, `core.pages.list`, `core.pages.update`, `core.pages.archive` |
+| Metadata | `core.metadata.set`, `core.metadata.get`, `core.metadata.listForPage`, `core.metadata.delete` |
+| Events | `core.events.append`, `core.events.list` |
+| Filters | `core.filters.save`, `core.filters.get`, `core.filters.list`, `core.filters.delete` |
+
+`core.metadata.get` and `core.metadata.delete` use the logical metadata key payload:
+
+```ts
+{
+  pageId: string;
+  namespace: string;
+  key: string;
+}
+```
+
+They do not use the metadata row `id`. `core.metadata.set` still carries a row `id` because it upserts the persisted record, but metadata identity for read/delete is the unique `(pageId, namespace, key)` index.
+
+TASK-014 IPC accepts these `MetadataValueType` labels:
+
+| `valueType` | Accepted JSON value shape |
+| --- | --- |
+| `string` | JSON string |
+| `number` | JSON number |
+| `boolean` | JSON boolean |
+| `json` | JSON object or array |
+| `date` | JSON string |
+| `null` | JSON null |
+
+Structured object and array metadata values use `valueType: "json"`. The IPC validator rejects `object` and `array` as metadata value-type labels.
+
+Rust IPC validation rejects unknown operations, missing required payloads, unknown DTO fields, blank identifiers, metadata value/valueType mismatches, and malformed filter query/sort/group shapes. Filter query payloads must be objects with `where` conditions and optional `and` / `or` branches; each condition must use the allowed `field`, `op`, and `value` shape. Sort payloads must be arrays of `{ field, direction }` with `direction` equal to `asc` or `desc`. Group payloads must be `{ field }`. Invalid requests return `INVALID_REQUEST`.
+
+Repository or mutation failures return `PERSISTENCE_FAILED`. Missing-target mutations fail instead of silently succeeding: page update/archive, metadata delete, and filter delete require the target to exist.
+
+`db_transaction` returns one ordered result entry per operation. If any request validation, repository constraint, or missing-target mutation fails, earlier writes in that transaction roll back and the command returns the redacted typed error. The current helper uses `rusqlite::Transaction::new_unchecked(..., TransactionBehavior::Immediate)` because repositories operate through `&Database`; this is accepted for the single app-owned database state guarded by Tauri command state. Revisit the helper if repository abstractions change to support a mutable connection or transaction facade directly.
+
+Tauri owns the database path and lifecycle for TASK-014. During Tauri setup, `src-tauri/src/lib.rs` creates `app.path().app_data_dir()`, opens `app_data_dir()/mirabilis.sqlite3` through `DbCommandState::open`, applies migrations, and stores the state with `app.manage`. No caller-supplied path, open/connect operation, raw SQL string, raw params DTO, or database handle crosses IPC.
+
+`src-tauri/build.rs` declares the app commands `db_execute` and `db_transaction`. Tauri generates permission TOMLs under `src-tauri/permissions/autogenerated/`; `allow-db-execute` maps `commands.allow = ["db_execute"]`, and `allow-db-transaction` maps `commands.allow = ["db_transaction"]`. `src-tauri/capabilities/default.json` keeps the existing default core/opener permissions and, for TASK-014 DB persistence, grants only `allow-db-execute` and `allow-db-transaction`. TASK-014 does not add `tauri-plugin-sql`, raw SQL permissions, filesystem/path/shell permissions, or unrelated Tauri commands.
 
 ---
 
