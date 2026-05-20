@@ -42,8 +42,9 @@
 
 ## Current Status
 
-- Status: review findings recorded; review-fix tests pending.
-- Active agents: none.
+- Status: review-fix implementation active.
+- Active agents:
+  - Goodall (`implementer`, `019e45cf-e6b7-7543-9185-26764c127ef6`): implement transaction participant hiding, live-write conflict detection, and injected transaction manager support.
 
 ## Agent Handoffs
 
@@ -207,6 +208,33 @@
   - Allow `createCoreServices` to accept an injected transaction manager for future non-in-memory store composition while keeping default in-memory transaction behavior for TASK-009.
   - Record ID/time generator side effects as a non-goal for TASK-009 because pre-test guidance explicitly said not to assert or promise generator rollback.
 
+### Review-Fix Tests
+
+- Status: completed.
+- Commit:
+  - `41db1dd Codex(test)(Add Transaction Manager and Core Runtime composition): add transaction review-fix coverage`.
+- Coverage added:
+  - Injected transaction manager composition through `createCoreServices`.
+  - Stronger successful grouped commit assertions after transaction commit.
+  - Nested and concurrent transaction rejection.
+  - Pending transaction conflict rejection when live store state changes before commit, preserving the live write.
+  - Transaction-path event and filter clone boundaries.
+  - Store participant non-discoverability through `Object.getOwnPropertySymbols`.
+- Red checks:
+  - `bun run typecheck` fails because `createCoreServices` does not accept an injected `transaction`.
+  - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` fails on injected transaction manager identity, live-write conflict rejection, and discoverable store participant symbols.
+
+### Goodall (`implementer`)
+
+- Status: active.
+- Agent id: `019e45cf-e6b7-7543-9185-26764c127ef6`.
+- Assignment:
+  - Implement minimum production review fixes for the red review-fix tests.
+  - Move transaction participants off exposed store objects.
+  - Detect live store changes before commit and reject without replacing live state.
+  - Support injected transaction managers in `createCoreServices`.
+  - Preserve existing successful transaction behavior and store regression behavior.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -220,4 +248,4 @@
 
 ## Next Action
 
-Add review-fix tests for the accepted findings, then implement participant hiding and transaction conflict fixes.
+Wait for Goodall's review-fix implementation, run focused checks, then commit if checks pass.

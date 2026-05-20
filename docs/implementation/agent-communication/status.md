@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:29 CST.
+Last updated: 2026-05-20 22:35 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 22:29 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 review findings recorded; review-fix tests pending.
+- Current phase: TASK-009 review-fix implementation active.
 
 ## Active Agents
 
-- None.
+- Goodall (`implementer`, `019e45cf-e6b7-7543-9185-26764c127ef6`): implement transaction participant hiding, live-write conflict detection, and injected transaction manager support.
 
 ## Recent Agent Outcomes
 
+- Review-fix test commit: `41db1dd Codex(test)(Add Transaction Manager and Core Runtime composition): add transaction review-fix coverage`.
+- Parent confirmed expected review-fix red signal: `bun run typecheck` fails because `createCoreServices` does not accept injected `transaction`; focused Vitest fails because injected transaction is ignored, pending live-write conflict resolves instead of rejects, and store participant symbols remain discoverable.
+- Goodall (`implementer`) spawned for TASK-009 review-fix production implementation.
 - TASK-009 review round 1 completed and all review agents were closed.
 - Ampere (`pr_explorer`) mapped TASK-009 to Core runtime/services, in-memory store participant changes, tests, and docs, and highlighted lost-update, participant visibility, custom-store transaction mismatch, and missing nested/concurrent coverage risks.
 - Lagrange (`reviewer`) found one P1 correctness issue: a pending transaction can drop live writes made after the transaction snapshot because commit replaces whole live store state. Lagrange also found one P2: rolled-back transactions still advance injected ID/time generators; parent keeps this as a documented non-goal unless later product docs require generator rollback.
@@ -323,6 +326,6 @@ Last updated: 2026-05-20 22:29 CST.
 
 ## Next Actions
 
-1. Add review-fix tests for P1/P2 findings.
-2. Implement participant hiding and transaction conflict fixes.
-3. Refresh stale status docs.
+1. Wait for Goodall's review-fix implementation.
+2. Run focused checks.
+3. Commit review-fix implementation if checks pass.
