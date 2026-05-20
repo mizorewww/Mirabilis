@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix pending replacement.
-- Active agents: none.
+- Status: P1/P2 production type fix active.
+- Active agents:
+  - Planck (`implementer`, `019e43b8-e8ae-73c2-b1bd-459a5187b6c7`): replacement implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -271,4 +272,18 @@
 
 ## Next Action
 
-Commit this replacement note, spawn a replacement `implementer` for TASK-008 public type soundness fixes, and repeat focused checks until green.
+Wait for Planck's public type soundness implementation output, repeat focused checks, and commit Planck's production type patch if green.
+
+### Planck (`implementer`)
+
+- Status: active.
+- Agent id: `019e43b8-e8ae-73c2-b1bd-459a5187b6c7`.
+- Ownership:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+- Assignment:
+  - Preserve public React component/exotic compatibility while keeping explicit `Props` sound.
+  - Avoid broad fallback callable/object types for explicit props.
+  - Avoid public/test dependence on React lazy private `_payload`/`_init` internals.
+  - Make explicit `SlotCondition<Props>` sound while keeping existing unparameterized registry returns type-correct without editing registries.
+  - Do not edit tests, docs, registries, config, or lockfiles, and do not commit.
