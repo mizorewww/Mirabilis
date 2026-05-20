@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:37 CST.
+Last updated: 2026-05-21 03:40 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 03:37 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test guidance handoff next.
+- Current phase: pre-test guidance agents running.
 
 ## Active Agents
 
-- None.
+- Dewey the 2nd (`planner`, id `019e46e5-ec64-7473-ba01-8aacba8f1423`) - read-only TASK-013 implementation plan and TDD scope guidance.
+- Poincare the 2nd (`docs_researcher`, id `019e46e5-f1c9-76f0-a37c-91ef5dae86ab`) - read-only current Rust SQLite / Tauri v2 storage documentation guidance.
+- Raman the 2nd (`deprecation_auditor`, id `019e46e6-0938-7a03-a25b-92cdca3808bf`) - read-only API/deprecation and dependency-risk guidance.
+- Epicurus the 2nd (`security_reviewer`, id `019e46e6-0e3f-7c22-8767-d33b76cd0ced`) - read-only persistence-boundary and data-safety guidance.
 
 ## Recent Agent Outcomes
 
@@ -20,7 +23,7 @@ Last updated: 2026-05-21 03:37 CST.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
 - `.codex/agents/*.toml` parsed successfully for TASK-013 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
-- Parent next step: commit TASK-013 start state, then spawn read-only planner, docs/current-guidance, deprecation/API, and security-boundary agents before TDD tests.
+- TASK-013 pre-test guidance agents were spawned and are running. Parent next step: wait for planner, current-doc, deprecation/API, and security guidance, record decisions, then delegate Rust red tests to `test_writer`.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.
