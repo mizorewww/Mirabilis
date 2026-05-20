@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: red tests committed; implementation next.
-- Active agents: none.
-- Next parent step: spawn `implementer` for Plugin Host production code.
+- Status: implementation in progress.
+- Active agent: Hegel (`implementer`).
+- Next parent step: wait for Hegel, validate focused checks, and commit implementation if green.
 
 ## Agent Handoffs
 
@@ -101,6 +101,19 @@
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` failed because Vite cannot resolve `../core/plugin-host`.
   - `git diff --check` passed.
 
+### Implementation
+
+- Status: in progress.
+- Agent:
+  - Hegel (`implementer`, `019e45ee-2e97-71d3-ada0-cb0263d8866d`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/core/plugin-host/index.ts`.
+  - `src/core/index.ts` for exports.
+- Assignment:
+  - Implement minimum production Plugin Host code needed to pass `src/test/plugin-host-lifecycle.test.ts`.
+  - Preserve TASK-011 boundaries: no filesystem discovery, dynamic imports, native/Tauri loading, persistence, migrations, UI, IPC, SQLite, concrete business plugins, or package extraction.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -110,4 +123,4 @@
 
 ## Next Action
 
-Spawn `implementer` for Plugin Host production code.
+Wait for Hegel, validate focused checks, and commit implementation if green.
