@@ -39,15 +39,15 @@
 
 ## Current Status
 
-- Status: pre-test guidance in progress.
-- Active agents: Darwin (`planner`), Hume (`docs_researcher`), Fermat (`deprecation_auditor`), and Ohm (`security_reviewer`).
-- Next parent step: wait for pre-test guidance agents, summarize decisions, then spawn `test_writer`.
+- Status: pre-test guidance completed; TDD tests next.
+- Active agents: none.
+- Next parent step: spawn `test_writer` for red lifecycle tests.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: in progress.
+- Status: completed and closed.
 - Agents:
   - Darwin (`planner`, `019e45d7-cde9-7f53-abee-8c535aed815f`).
   - Hume (`docs_researcher`, `019e45d7-d5c3-7701-9849-7fff0f1607ca`).
@@ -56,6 +56,29 @@
 - Assignment:
   - Produce focused behavior, test, docs, API, deprecation, and security-boundary guidance before TDD tests.
   - Stay read-only and do not edit files.
+- Outcomes:
+  - Darwin recommended adding `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, and Core barrel exports. It recommended not wiring Plugin Host into `createInMemoryAppRuntime` yet because TASK-015 owns app bootstrap/runtime provider integration.
+  - Hume verified current Obsidian, Tauri, Vitest, and TypeScript docs. Tauri native plugins and Obsidian plugin APIs are inspiration only; Mirabilis keeps local `install` / `activate` / `register` / `deactivate` / `uninstall` API.
+  - Fermat flagged P1 decisions to pin lifecycle semantics before tests, avoid raw registry objects through `PluginContext`, and explicitly rollback failed registration because raw registries mutate immediately.
+  - Ohm recommended runtime ownership injection, caller-scoped facades, duplicate/dependency validation before hooks, owner-scoped get/list, no raw native handles, and rollback of command/view/slot registrations on failure.
+- Parent decisions:
+  - Implement TASK-011 as a local TypeScript Plugin Host, not a Tauri/native plugin system.
+  - Public host exports should include `PluginHost`, `PluginHostError`, `PluginHostErrorCode`, and small host record/status types from `src/core/plugin-host` and `src/core`.
+  - Constructor shape should be `new PluginHost({ services, registries, app })`, using `createInMemoryAppRuntime()` in tests to provide services and registries.
+  - `loadBuiltInPlugins(AppPlugin[])` validates the explicit list, performs deterministic dependency sorting, installs plugins, and runs `register` in dependency order, but it does not activate plugins.
+  - `activateAll()` activates registered plugins in dependency order. `activate(pluginId)` activates a single registered plugin; it should not hide missing/failed registration.
+  - `deactivate(pluginId)` calls optional `deactivate`, unregisters tracked command/view/slot contributions, preserves Core data, and returns the plugin to installed/unregistered state.
+  - `uninstall(pluginId)` deactivates/unregisters if needed, calls optional `uninstall`, preserves data by default, and removes the host record.
+  - Dependency sorting normalizes string/object dependency refs, treats `optionalDependencies` and `dependencies` entries with `optional: true` as optional, ignores absent optional deps, orders present optional deps before dependents, rejects missing required deps and cycles before hooks run, and preserves input order for independent plugins.
+  - `PluginHostError` should follow existing Core error style with `name = "PluginHostError"`, `code`, optional `pluginId`, `dependencyId`, `phase`, and non-enumerable `cause`.
+  - Runtime plugin-facing facades must inject `pluginId` / `sourcePluginId`, strip raw registry fields from descriptors, scope command/view/slot `get/list` to the current plugin, and reject caller-supplied ownership keys at runtime.
+  - Failed `register` rolls back command/view/slot contributions registered during that attempt, in reverse order, while preserving pre-existing registry entries. Store writes during lifecycle hooks are not in rollback scope for TASK-011.
+  - Do not implement filesystem plugin discovery, dynamic imports, Tauri/native plugin loading, persisted plugin registry, migrations, settings/storage APIs, metadata/event/algorithm runtime registries, concrete business plugins, UI rendering, IPC, SQLite, or package extraction.
+- External docs verified:
+  - Obsidian Manifest, Build a plugin, Events cleanup, load-time guidance, and generated API source for `Component.onload` / `Component.onunload`.
+  - Tauri v2 plugin development, capabilities, capability reference, and core permissions.
+  - Vitest expect, testing types, v4 `expectTypeOf`, and current type assertion guidance.
+  - TypeScript type-only imports/exports, utility/module guidance, and React 19 testing/deprecation notes.
 
 ## Parent Decisions
 
@@ -66,4 +89,4 @@
 
 ## Next Action
 
-Wait for pre-test guidance agents, summarize decisions, then spawn `test_writer`.
+Spawn `test_writer` for red lifecycle tests.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:50 CST.
+Last updated: 2026-05-20 23:02 CST.
 
 ## Current Task
 
@@ -8,17 +8,20 @@ Last updated: 2026-05-20 22:50 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 pre-test guidance in progress.
+- Current phase: TASK-011 pre-test guidance completed; TDD tests next.
 
 ## Active Agents
 
-- Darwin (`planner`, `019e45d7-cde9-7f53-abee-8c535aed815f`) is planning TASK-011 behavior and tests.
-- Hume (`docs_researcher`, `019e45d7-d5c3-7701-9849-7fff0f1607ca`) is checking current lifecycle docs for inspiration.
-- Fermat (`deprecation_auditor`, `019e45d7-e769-7532-a276-daa9377f14c5`) is reviewing API/deprecation risks.
-- Ohm (`security_reviewer`, `019e45d7-eefb-73d0-b1c5-aec43f6fb750`) is reviewing Plugin Host security/boundary risks.
+- None. Next step is spawning `test_writer` for TASK-011 red lifecycle tests.
 
 ## Recent Agent Outcomes
 
+- TASK-011 pre-test guidance completed and all agents were closed.
+- Darwin (`planner`) recommended `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, Core barrel exports, no runtime composition wiring yet, explicit built-in list loading, deterministic dependency sorting, `PluginHostError`, registry rollback, and runtime-flow-compatible `activateAll`.
+- Hume (`docs_researcher`) verified current Obsidian, Tauri, Vitest, and TypeScript docs; confirmed Tauri native plugins and Obsidian plugin APIs are inspiration only, and recommended async Vitest rejection assertions.
+- Fermat (`deprecation_auditor`) flagged P1 decisions to pin lifecycle semantics, avoid raw registry objects in `PluginContext`, and rollback failed registration. It recommended `loadBuiltInPlugins(AppPlugin[])` as install/register, followed by `activateAll()` / `activate(id)` for activation.
+- Ohm (`security_reviewer`) recommended runtime ownership injection, caller-scoped facades, no raw native handles, owner-scoped get/list, duplicate/dependency validation before hooks, and rollback of command/view/slot registrations on failure.
+- Parent decisions for TDD: implement a local TypeScript Plugin Host under `src/core/plugin-host`; expose `PluginHost`, `PluginHostError`, and `PluginHostErrorCode` from Core; constructor should accept `{ services, registries, app }`; `loadBuiltInPlugins` validates/sorts/install/registers but does not activate; `activateAll` activates in dependency order; `deactivate` / `uninstall` run dependents before dependencies; registration rollback covers commands/views/slots, not arbitrary store writes; runtime facades inject `pluginId` / `sourcePluginId`; no Tauri/native/fs/dynamic loading/persistence/UI.
 - TASK-011 pre-test guidance agents spawned: Darwin, Hume, Fermat, and Ohm. All are read-only.
 - TASK-010 was merged to `master` and pushed. Merge commit: `ec361c5 Codex(merge)(Define Plugin API contracts): merge task branch`.
 - TASK-011 branch `feat/task-011-plugin-host-lifecycle` was created from latest `master`.
