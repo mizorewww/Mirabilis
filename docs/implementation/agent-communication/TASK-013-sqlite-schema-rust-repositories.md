@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: final P2 cleanup test agent running.
+- Status: final P2 cleanup implementation agent running.
 - Active agents:
-  - Lovelace the 2nd (`test_writer`, id `019e4713-3b05-7f52-a3f2-765b08d583ab`).
-- Next parent step: wait for Lovelace the 2nd, review the test patch, run focused checks, then commit if the red signal is clean.
+  - Lorentz the 2nd (`implementer`, id `019e4717-a85b-7360-8654-7b2289f5a159`).
+- Next parent step: wait for Lorentz the 2nd, review the patch, run focused checks, and commit if green.
 
 ## Agent Handoffs
 
@@ -172,7 +172,7 @@
 
 ### Final P2 Cleanup Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Lovelace the 2nd (`test_writer`, id `019e4713-3b05-7f52-a3f2-765b08d583ab`).
 - Ownership:
@@ -182,6 +182,24 @@
   - Strengthen FK cascade behavior coverage for `core_plugin_indexes`.
   - Relax boundary scans so TASK-014 can narrow `DbQuery.operation` and add reviewed non-SQL object permissions.
   - Add red checks for old v1 checksum/schema drift, future ledger rows, and specific migration error variants.
+- Outcome:
+  - Changed files: `src-tauri/tests/sqlite_repositories.rs` and `src-tauri/tests/sqlite_boundary.rs`.
+  - Commit: `f8759c2 Lovelace the 2nd(test)(Add SQLite schema and Rust repositories): cover final migration cleanup`.
+  - Expected red check: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails only in `sqlite_migrations_reject_old_branch_local_v1_checksum_after_schema_changes` and `sqlite_migrations_reject_future_ledger_version_with_stale_user_version`.
+  - Green checks: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` and `git diff --check`.
+
+### Final P2 Cleanup Implementation Round
+
+- Status: running.
+- Agent:
+  - Lorentz the 2nd (`implementer`, id `019e4717-a85b-7360-8654-7b2289f5a159`).
+- Ownership:
+  - `src-tauri/src/db/migrations.rs`.
+  - `src-tauri/src/db/error.rs` only if needed.
+- Assignment:
+  - Introduce immutable `MIGRATION_001_VERSION`.
+  - Update migration 001 checksum away from the old branch-local checksum.
+  - Reject future ledger rows independently of `PRAGMA user_version`.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1
