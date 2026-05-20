@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: documentation sync handoff.
-- Active agents: none.
-- Next parent step: spawn `doc_writer` for final TASK-014 architecture/capability docs sync.
+- Status: documentation sync agent running.
+- Active agents:
+  - Godel the 2nd (`doc_writer`, id `019e4771-5434-7413-93e2-1ace20106cc1`).
+- Next parent step: wait for Godel the 2nd, inspect docs, run checks, and commit docs if valid.
 
 ## Agent Handoffs
 
@@ -292,3 +293,14 @@
   - `Database::transaction` still uses `Transaction::new_unchecked`; Kierkegaard judged the preferred `transaction_with_behavior(&mut self)` path out of scope because repositories currently operate through `&Database` and a clean change would require repository abstraction work.
   - Parent repeated focused green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
   - Commit: `92f3323 Kierkegaard the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): align p2 ipc contracts`.
+
+### Documentation Sync Round
+
+- Status: running.
+- Agent:
+  - Godel the 2nd (`doc_writer`, id `019e4771-5434-7413-93e2-1ace20106cc1`).
+- Assignment:
+  - Fix the remaining P1 docs drift for TASK-014 after code/test behavior stabilized.
+  - Patch `docs/architecture/06-filter-native-database.md`; inspect `docs/testing/strategy.md` and `docs/development/01-data-roadmap-and-mvp.md` for stale TASK-014 boundary wording.
+  - Do not edit code, tests, or `docs/implementation/progress.md`.
+  - Document the final NativeBridge DB contract, 15-operation allowlist, metadata logical-key/valueType contract, typed/redacted IPC errors, validation semantics, transaction result/rollback semantics, app-owned DB path, generated app-command ACLs, default capability grants, no raw SQL/path/native permission expansion, and `Transaction::new_unchecked` rationale.
