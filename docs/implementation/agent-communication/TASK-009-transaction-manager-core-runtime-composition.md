@@ -42,7 +42,7 @@
 
 ## Current Status
 
-- Status: parent fallback writing failing tests.
+- Status: failing tests committed; implementation handoff pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -129,7 +129,7 @@
 
 ### Parent Fallback Test Work
 
-- Status: active.
+- Status: completed.
 - Fallback reason:
   - Kant and Jason, both `test_writer` agents, produced no output and no worktree changes after status requests and second wait windows.
 - Scope:
@@ -137,6 +137,11 @@
   - `src/test/core-transaction-manager.test.ts`.
 - Parent decision:
   - Continue with TDD by writing the failing TASK-009 tests directly, then run focused red checks and commit the tests if the failure is expected.
+- Commit:
+  - `de31382 Codex(test)(Add Transaction Manager and Core Runtime composition): add runtime transaction acceptance tests`.
+- Red checks:
+  - `bun run typecheck` failed as expected because `../core` does not yet export `createCoreStores`, `createCoreRegistries`, `createCoreServices`, `createInMemoryAppRuntime`, `CoreRuntime`, `CoreStores`, `CoreRegistries`, `CoreServices`, `CoreTransaction`, or `TransactionHandler`, and because `../core/runtime` and `../core/services` do not exist yet.
+  - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` failed as expected because `../core/runtime` could not be resolved and `createCoreStores` is not yet implemented/exported.
 
 ## Parent Decisions
 
@@ -151,4 +156,4 @@
 
 ## Next Action
 
-Parent writes TASK-009 failing tests in the fallback scope, runs focused red checks, then commits the tests if the red signal is expected.
+Record implementation handoff, spawn `implementer` for minimum production code, then run focused checks after it returns.
