@@ -114,6 +114,22 @@
   - `bun run typecheck` fails on missing Filter Store exports.
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 22 tests with 22 failing because `createInMemoryFilterStore` is not implemented/exported.
 
+### Hume (`implementer`)
+
+- Status: active.
+- Agent id: `019e431e-09bf-7ea1-a7cd-92cdff15a301`.
+- Ownership:
+  - `src/core/stores/filter-store.ts`.
+  - `src/core/stores/index.ts`.
+  - `src/core/index.ts`.
+- Assignment:
+  - Implement minimum in-memory Filter Store production code to pass Fermat's tests.
+  - Keep TASK-006 to storage and validation only.
+- Expected checks:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts`.
+  - `bun run lint`.
+
 ## Next Action
 
-Spawn implementation for minimum Filter Store production code.
+Wait for Hume's implementation result.
