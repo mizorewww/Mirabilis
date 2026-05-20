@@ -49,6 +49,17 @@ type SlotProps = {
   region: string;
 };
 
+type MemoLikeComponentRef<Props> = {
+  readonly $$typeof: symbol;
+  readonly type: ComponentType<Props>;
+};
+
+type LazyLikeComponentRef<Props> = {
+  readonly $$typeof: symbol;
+  readonly _payload: unknown;
+  readonly _init: () => ComponentType<Props>;
+};
+
 const WorkspaceListPanel: ComponentType<ViewProps> = () => null;
 const WorkspaceDetailPanel: ComponentType<ViewProps> = () => null;
 const WorkspaceHeaderSlot: ComponentType<SlotProps> = () => null;
@@ -98,10 +109,13 @@ describe("in-memory View Registry and Slot Registry", () => {
       ListSlotContributionsOptionsFromRegistries
     >().toEqualTypeOf<ListSlotContributionsOptions>();
 
-    expectTypeOf<RegistryComponent<ViewProps>>().toEqualTypeOf<
-      ComponentType<ViewProps>
+    expectTypeOf<ComponentType<ViewProps>>().toMatchTypeOf<
+      RegistryComponent<ViewProps>
     >();
-    expectTypeOf<ComponentType<ViewProps>>().toEqualTypeOf<
+    expectTypeOf<MemoLikeComponentRef<ViewProps>>().toMatchTypeOf<
+      RegistryComponent<ViewProps>
+    >();
+    expectTypeOf<LazyLikeComponentRef<ViewProps>>().toMatchTypeOf<
       RegistryComponent<ViewProps>
     >();
     expectTypeOf<ViewDataShape>().toEqualTypeOf<MetadataJsonValue>();
@@ -113,6 +127,9 @@ describe("in-memory View Registry and Slot Registry", () => {
       component: RegistryComponent<ViewProps>;
       accepts: ViewDataShape;
     }>();
+    expectTypeOf<ViewDefinition["component"]>().toEqualTypeOf<
+      RegistryComponent<unknown>
+    >();
     expectTypeOf<ListViewsOptions>().toEqualTypeOf<{
       pluginId?: string;
       type?: string;
@@ -151,6 +168,12 @@ describe("in-memory View Registry and Slot Registry", () => {
       when?: SlotCondition<SlotProps>;
       component: RegistryComponent<SlotProps>;
     }>();
+    expectTypeOf<SlotContribution["component"]>().toEqualTypeOf<
+      RegistryComponent<unknown>
+    >();
+    expectTypeOf<SlotContribution["when"]>().toEqualTypeOf<
+      SlotCondition<unknown> | undefined
+    >();
     expectTypeOf<ListSlotContributionsOptions>().toEqualTypeOf<{
       pluginId?: string;
       slot?: string;
@@ -260,6 +283,119 @@ describe("in-memory View Registry and Slot Registry", () => {
 
     expect(replacement.title).toBe("Replacement workspace list");
     expect(views.get("workspace.list.secondary")).toStrictEqual(replacement);
+  });
+
+  it("filters views by exact nonblank plugin ids and types without trimming significant whitespace", () => {
+    const views = createInMemoryViewRegistry();
+    const padded = views.register(
+      viewDefinition({
+        id: "workspace.padded",
+        pluginId: " workspace ",
+        type: " workspace.list ",
+        title: "Padded workspace list",
+      }),
+    );
+    const exact = views.register(
+      viewDefinition({
+        id: "workspace.exact",
+        pluginId: "workspace",
+        type: "workspace.list",
+        title: "Exact workspace list",
+      }),
+    );
+
+    expect(views.get("workspace.padded")).toStrictEqual(padded);
+    expect(views.list({ pluginId: " workspace " })).toStrictEqual([padded]);
+    expect(views.list({ pluginId: "workspace" })).toStrictEqual([exact]);
+    expect(views.list({ type: " workspace.list " })).toStrictEqual([padded]);
+    expect(views.list({ type: "workspace.list" })).toStrictEqual([exact]);
+    expect(
+      views.list({
+        pluginId: " workspace ",
+        type: "workspace.list",
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it("accepts and preserves React-compatible object view component references", () => {
+    const views = createInMemoryViewRegistry();
+    const memoLikeComponentRef = {
+      $$typeof: Symbol.for("react.memo"),
+      type: WorkspaceListPanel,
+    } satisfies MemoLikeComponentRef<ViewProps>;
+    const memoLikeComponent =
+      memoLikeComponentRef as unknown as RegistryComponent<ViewProps>;
+
+    const registered = views.register(
+      viewDefinition({
+        id: "workspace.memo-like",
+        pluginId: "workspace",
+        type: "workspace.list",
+        title: "Memo-like workspace list",
+        component: memoLikeComponent,
+      }),
+    );
+
+    expect(registered.component).toBe(memoLikeComponent);
+    expect(views.get("workspace.memo-like").component).toBe(memoLikeComponent);
+    expect(views.list()[0]!.component).toBe(memoLikeComponent);
+    expect(views.unregister("workspace.memo-like").component).toBe(
+      memoLikeComponent,
+    );
+  });
+
+  it("keeps view component references inert through register, get, list, and unregister", () => {
+    const views = createInMemoryViewRegistry();
+    const throwingComponent = vi.fn<ComponentType<ViewProps>>(() => {
+      throw new Error("view component executed");
+    });
+
+    const registered = views.register(
+      viewDefinition({
+        id: "workspace.inert-component",
+        pluginId: "workspace",
+        type: "workspace.list",
+        title: "Inert component workspace list",
+        component: throwingComponent,
+      }),
+    );
+
+    expect(registered.component).toBe(throwingComponent);
+    expect(views.get("workspace.inert-component").component).toBe(
+      throwingComponent,
+    );
+    expect(views.list()[0]!.component).toBe(throwingComponent);
+    expect(views.unregister("workspace.inert-component").component).toBe(
+      throwingComponent,
+    );
+    expect(throwingComponent).not.toHaveBeenCalled();
+  });
+
+  it("registers view definitions from own data descriptors without invoking proxy get traps", () => {
+    const views = createInMemoryViewRegistry();
+    const proxiedDefinition = viewProxyWithThrowingGetForAllProperties(
+      viewDefinition({
+        id: "workspace.proxy-descriptor",
+        pluginId: "workspace",
+        type: "workspace.list",
+        title: "Proxy descriptor workspace list",
+        component: WorkspaceListPanel,
+        accepts: { shape: "collection" },
+      }),
+      new Error("view proxy get trap escaped"),
+    );
+
+    const registered = views.register(proxiedDefinition);
+
+    expect(registered).toStrictEqual({
+      id: "workspace.proxy-descriptor",
+      pluginId: "workspace",
+      type: "workspace.list",
+      title: "Proxy descriptor workspace list",
+      component: WorkspaceListPanel,
+      accepts: { shape: "collection" },
+    });
+    expect(views.get("workspace.proxy-descriptor")).toStrictEqual(registered);
   });
 
   it("rejects duplicate view ids with typed errors and preserves the original view", () => {
@@ -589,6 +725,126 @@ describe("in-memory View Registry and Slot Registry", () => {
 
     expect(replacement.component).toBe(WorkspaceHeaderSlot);
     expect(slots.get("workspace.header.secondary")).toStrictEqual(replacement);
+  });
+
+  it("filters slot contributions by exact nonblank plugin ids and slot names without trimming significant whitespace", () => {
+    const slots = createInMemorySlotRegistry();
+    const padded = slots.register(
+      slotContribution({
+        id: "workspace.header.padded",
+        pluginId: " workspace ",
+        slot: " workspace.header ",
+        component: WorkspaceHeaderSlot,
+      }),
+    );
+    const exact = slots.register(
+      slotContribution({
+        id: "workspace.header.exact",
+        pluginId: "workspace",
+        slot: "workspace.header",
+        component: WorkspaceStatusSlot,
+      }),
+    );
+
+    expect(slots.get("workspace.header.padded")).toStrictEqual(padded);
+    expect(slots.list({ pluginId: " workspace " })).toStrictEqual([padded]);
+    expect(slots.list({ pluginId: "workspace" })).toStrictEqual([exact]);
+    expect(slots.list({ slot: " workspace.header " })).toStrictEqual([
+      padded,
+    ]);
+    expect(slots.list({ slot: "workspace.header" })).toStrictEqual([exact]);
+    expect(
+      slots.list({
+        pluginId: " workspace ",
+        slot: "workspace.header",
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it("accepts and preserves React-compatible object slot component references", () => {
+    const slots = createInMemorySlotRegistry();
+    const lazyLikeComponentRef = {
+      $$typeof: Symbol.for("react.lazy"),
+      _payload: { component: WorkspaceHeaderSlot },
+      _init: () => WorkspaceHeaderSlot,
+    } satisfies LazyLikeComponentRef<SlotProps>;
+    const lazyLikeComponent =
+      lazyLikeComponentRef as unknown as RegistryComponent<SlotProps>;
+
+    const registered = slots.register(
+      slotContribution({
+        id: "workspace.header.lazy-like",
+        pluginId: "workspace",
+        slot: "workspace.header",
+        component: lazyLikeComponent,
+      }),
+    );
+
+    expect(registered.component).toBe(lazyLikeComponent);
+    expect(slots.get("workspace.header.lazy-like").component).toBe(
+      lazyLikeComponent,
+    );
+    expect(slots.list()[0]!.component).toBe(lazyLikeComponent);
+    expect(slots.unregister("workspace.header.lazy-like").component).toBe(
+      lazyLikeComponent,
+    );
+  });
+
+  it("keeps slot component references inert through register, get, list, and unregister", () => {
+    const slots = createInMemorySlotRegistry();
+    const throwingComponent = vi.fn<ComponentType<SlotProps>>(() => {
+      throw new Error("slot component executed");
+    });
+
+    const registered = slots.register(
+      slotContribution({
+        id: "workspace.header.inert-component",
+        pluginId: "workspace",
+        slot: "workspace.header",
+        component: throwingComponent,
+      }),
+    );
+
+    expect(registered.component).toBe(throwingComponent);
+    expect(slots.get("workspace.header.inert-component").component).toBe(
+      throwingComponent,
+    );
+    expect(slots.list()[0]!.component).toBe(throwingComponent);
+    expect(slots.unregister("workspace.header.inert-component").component).toBe(
+      throwingComponent,
+    );
+    expect(throwingComponent).not.toHaveBeenCalled();
+  });
+
+  it("registers slot contributions from own data descriptors without invoking proxy get traps", () => {
+    const slots = createInMemorySlotRegistry();
+    const when = vi.fn<SlotCondition<SlotProps>>(() => true);
+    const proxiedContribution = slotProxyWithThrowingGetForAllProperties(
+      slotContribution({
+        id: "workspace.header.proxy-descriptor",
+        pluginId: "workspace",
+        slot: "workspace.header",
+        order: 2,
+        when,
+        component: WorkspaceHeaderSlot,
+      }),
+      new Error("slot proxy get trap escaped"),
+    );
+
+    const registered = slots.register(proxiedContribution);
+
+    expect(registered).toStrictEqual({
+      id: "workspace.header.proxy-descriptor",
+      pluginId: "workspace",
+      slot: "workspace.header",
+      order: 2,
+      when,
+      component: WorkspaceHeaderSlot,
+    });
+    expect(slots.get("workspace.header.proxy-descriptor")).toStrictEqual(
+      registered,
+    );
+    expect(when).not.toHaveBeenCalled();
   });
 
   it("rejects duplicate slot ids with typed errors and preserves the original contribution", () => {
@@ -1272,6 +1528,17 @@ function viewProxyWithThrowingGet(
   }) as ViewDefinition;
 }
 
+function viewProxyWithThrowingGetForAllProperties<Props>(
+  definition: ViewDefinition<Props>,
+  rawError: Error,
+): ViewDefinition<Props> {
+  return new Proxy(definition, {
+    get() {
+      throw rawError;
+    },
+  });
+}
+
 function slotWithThrowingGetter<Props>(
   contribution: SlotContribution<Props>,
   key: keyof SlotContribution,
@@ -1302,6 +1569,17 @@ function slotProxyWithThrowingGet(
       return Reflect.get(target, property, receiver);
     },
   }) as SlotContribution;
+}
+
+function slotProxyWithThrowingGetForAllProperties<Props>(
+  contribution: SlotContribution<Props>,
+  rawError: Error,
+): SlotContribution<Props> {
+  return new Proxy(contribution, {
+    get() {
+      throw rawError;
+    },
+  });
 }
 
 class WorkspaceAccepts {
