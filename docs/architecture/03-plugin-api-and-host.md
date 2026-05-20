@@ -134,29 +134,46 @@ Plugin-facing stores 和 registries 的输入不接受调用方传入的 `plugin
 
 ## 6. Plugin Host
 
-Plugin Host 负责加载和运行插件。
+Plugin Host 负责按生命周期加载和运行已提供的插件对象。
+TASK-011 只处理显式传入的内置插件列表；不做文件系统发现、动态 import、native/Tauri 插件加载或插件状态持久化。
 
 ```ts
-export class PluginHost {
-  constructor(
-    private readonly registries: CoreRegistries,
-    private readonly services: CoreServices
-  ) {}
+export type PluginHostStatus = "installed" | "registered" | "active";
 
-  async loadBuiltInPlugins(plugins: AppPlugin[]) {}
+export type PluginHostRecord = {
+  id: string;
+  name: string;
+  version: string;
+  enabled: boolean;
+  status: PluginHostStatus;
+  manifest: PluginHostRecordManifest;
+};
 
-  async install(plugin: AppPlugin) {}
+const pluginHost = new PluginHost({
+  services,
+  registries,
+  app,
+});
 
-  async activate(pluginId: string) {}
+type PluginHostInstance = {
+  loadBuiltInPlugins(
+    plugins: readonly AppPlugin[],
+  ): Promise<readonly PluginHostRecord[]>;
 
-  async deactivate(pluginId: string) {}
+  install(plugin: AppPlugin): Promise<PluginHostRecord>;
 
-  async uninstall(pluginId: string) {}
+  register(plugin: AppPlugin): Promise<PluginHostRecord>;
 
-  async register(plugin: AppPlugin) {}
+  activateAll(): Promise<readonly PluginHostRecord[]>;
 
-  getPlugin(pluginId: string) {}
-}
+  activate(pluginId: string): Promise<PluginHostRecord>;
+
+  deactivate(pluginId: string): Promise<PluginHostRecord>;
+
+  uninstall(pluginId: string): Promise<PluginHostRecord>;
+
+  getPlugin(pluginId: string): PluginHostRecord;
+};
 ```
 
 启动流程：
@@ -166,13 +183,31 @@ export class PluginHost {
 2. 初始化 Core Stores
 3. 初始化 Core Registries
 4. 初始化 PluginHost
-5. 加载内置插件 manifests
+5. 传入显式内置插件列表
 6. 处理插件依赖顺序
 7. 执行 install（migration 后续加入）
 8. 执行 register
-9. 执行 activate
+9. 执行 activateAll
 10. 收集编辑器扩展、命令、View、Slot
 11. 渲染 App Shell
 ```
+
+生命周期语义：
+
+- `loadBuiltInPlugins(plugins)` 按确定性依赖顺序安装并注册传入列表，但不激活插件；无依赖关系的插件保留输入顺序。批量安装每个插件前会重新检查同 ID live record；如果其他 lifecycle 调用已经安装或注册了同 ID 插件，当前批次会抛出 `PLUGIN_DUPLICATE_ID`，不会覆盖并发产生的记录或贡献追踪。
+- `loadBuiltInPlugins(plugins)` 的批量 rollback 是 record-identity aware 的：只删除当前批次仍拥有的记录，回滚它们的 pending lifecycle scopes 和 tentative command/view/slot contributions；如果同 ID 的更新记录已经替换了旧记录，rollback 会保留更新记录及其已追踪贡献，避免留下 orphaned runtime contributions。批量 install 失败允许用同一显式列表重试。
+- `install(plugin)` 只进入 `installed` 状态；显式 install 失败会移除 host 记录，后续 `register(plugin)` 会重新尝试 install；`register(plugin)` 会在必要时先 install，并进入 `registered` 状态；`activate(pluginId)` 只允许注册后的插件进入 `active` 状态。
+- `register(plugin)` 对同 ID 并发调用是 single-flight/idempotent 的：一个 in-flight register hook 运行，其他并发调用共享同一个结果；成功后只追踪一组 runtime contributions，后续 `uninstall(pluginId)` 会清理这组贡献。
+- required dependency 只有在 dependency 插件处于 `registered` 或 `active` 且未进入 `deactivate` / `uninstall` removal phase 时才被满足；`installed`、注册失败、安装失败、或正在移除的记录不满足后续 required dependency。
+- `deactivate(pluginId)` 和 `uninstall(pluginId)` 不会让已注册、已激活或 pending-register dependent 失去 required dependency 后继续保持 incoherent 状态；当前实现会在 dependent 仍依赖目标插件时抛出 typed dependency error，并在调用被阻止插件的 lifecycle hook 前拒绝该操作。
+- 生命周期 hook 失败会抛出带 `code`、`pluginId`、`phase`、`dependencyId` 或 `cause` 的 typed `PluginHostError`，并保留 safe state：activate/deactivate/uninstall 失败不会清掉仍有效的状态和贡献，register 失败会回滚该次 command/view/slot 注册。
+
+运行时上下文语义：
+
+- Plugin Host 为每次 lifecycle hook 创建 plugin-scoped `PluginContext`，只暴露 plugin-facing facades，不暴露 Core stores、registries、services、native/Tauri、SQLite、filesystem 或 raw runtime handles。
+- `ctx.metadata`、`ctx.events`、`ctx.filters` 自动注入 `sourcePluginId`，并将读写限制在当前插件拥有的数据上。
+- `ctx.commands`、`ctx.views`、`ctx.slots` 自动注入 `pluginId`，并将 `get` / `list` 限制在当前插件拥有的 runtime contribution 上。
+- plugin-facing 输入拒绝调用方传入 `pluginId` 或 `sourcePluginId`；绕过 TypeScript 类型的 runtime spoofing 会抛出 `PLUGIN_FACADE_OWNERSHIP_FORBIDDEN` 且不应改变 registry 或 store。
+- 捕获到的 context 在 lifecycle 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
 
 ---

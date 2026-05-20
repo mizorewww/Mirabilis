@@ -6,6 +6,7 @@
 
 ```ts
 async function createAppRuntime() {
+  // Native/storage setup is illustrative.
   const nativeBridge = createTauriNativeBridge();
 
   const storage = new TauriStorageDriver(nativeBridge);
@@ -20,30 +21,31 @@ async function createAppRuntime() {
     storage
   });
 
-  const pluginHost = new PluginHost(registries, services);
+  const app = {
+    version: appVersion,
+    pluginApiVersion
+  };
+
+  const pluginHost = new PluginHost({
+    services,
+    registries,
+    app
+  });
 
   const runtime = new AppRuntime({
     stores,
     registries,
     services,
-    pluginHost
+    pluginHost,
+    app
   });
 
   await pluginHost.loadBuiltInPlugins([
-    MarkdownEditorPlugin,
-    TaskPlugin,
-    TagPlugin,
-    TimerPlugin,
-    CalendarPlugin,
-    HabitPlugin,
-    HeatmapPlugin,
-    StatsPlugin,
-    ChartPlugin,
-    MLPlugin,
-    AIPlugin,
-    QuickCapturePlugin,
-    SearchPlugin,
-    SyncPlugin
+    markdownEditorBuiltInPlugin,
+    quickCaptureBuiltInPlugin,
+    searchBuiltInPlugin,
+    taskFeatureBuiltInPlugin,
+    timerFeatureBuiltInPlugin
   ]);
 
   await pluginHost.activateAll();
@@ -51,6 +53,8 @@ async function createAppRuntime() {
   return runtime;
 }
 ```
+
+`loadBuiltInPlugins([...])` 接收的是 App 启动时显式传入的内置插件对象，不表示文件系统发现、动态 import 或 native 插件加载。任务、计时、日历等业务能力由插件贡献，Core 不内置这些业务实现。
 
 ---
 

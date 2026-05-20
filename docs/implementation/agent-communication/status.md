@@ -1,21 +1,187 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:40 CST.
+Last updated: 2026-05-21 02:33 CST.
 
 ## Current Task
 
-- Task: TASK-010 - Define Plugin API contracts.
-- Branch: `feat/task-010-plugin-api-contracts`.
+- Task: TASK-011 - Implement Plugin Host lifecycle.
+- Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 final gate passed; merge to `master` next.
+- Current phase: TASK-011 local gate passed; progress update in progress before merge.
 
 ## Active Agents
 
-- None. Next step is committing progress and merging `feat/task-010-plugin-api-contracts` to `master`.
+- None.
 
 ## Recent Agent Outcomes
 
+- Gauss (`doc_writer`) completed final docs/status cleanup. The cleanup addressed only Lagrange's P2 architecture/status findings around record-identity batch rollback, same-id duplicate/concurrent handling, pending-register dependents, and single-flight register semantics.
+- Parent final local gate passed after Gauss: `bun run check:quick` and `bun run build`.
+- Gauss (`doc_writer`) was spawned for final docs/status cleanup after final focused re-review. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`, `docs/implementation/agent-communication/status.md`, and `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.
+- Final fresh-record batch focused re-review completed. Aquinas (`reviewer`) found no P0/P1/P2 correctness findings and confirmed the fresh-record batch P1s appear fixed.
+- Boole (`security_reviewer`) found no P0/P1/P2 findings and confirmed no new Tauri/capability/filesystem/IPC/SQLite/dynamic import/native-loading/package-extraction surface.
+- Russell (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings for Kuhn's tests.
+- Lagrange (`docs_researcher`) found no P0/P1 docs drift and identified P2 architecture docs/status cleanup for final batch rollback identity, same-id duplicate/concurrent handling, pending-register dependents, and single-flight register semantics.
+- Parent decision: delegate docs/status P2 cleanup, then run local gate if clear.
+- Final fresh-record batch focused read-only re-review agents spawned after Raman's green fix.
+- Raman (`implementer`) completed and was closed after fixing fresh-record batch rollback and concurrent same-id batch load races.
+- Raman's review-fix commit: `ad169f3 Raman(review-fix)(Implement Plugin Host lifecycle): preserve fresh batch records`.
+- Parent repeated green checks after Raman: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 45 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 59 tests passing; `bun run lint`; and `git diff --check`.
+- Raman (`implementer`) was spawned for the fresh-record batch rollback and concurrent same-id batch load production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Kuhn (`test_writer`) completed and was closed after adding red tests for fresh-record batch rollback and concurrent same-id batch load races.
+- Kuhn's test commit: `f909a4b Kuhn(test)(Implement Plugin Host lifecycle): cover fresh batch races`.
+- Parent confirmed Kuhn's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 45 tests with 43 passing and 2 failing in the new fresh-record batch race cases; `git diff --check` passed.
+- Kuhn (`test_writer`) was spawned for red tests covering the latest Beauvoir/Pauli batch concurrency P1 findings. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Final batch rollback focused re-review completed. Pauli (`security_reviewer`) found one P1: stale batch rollback can delete a fresh same-id record and leave fresh runtime contributions orphaned.
+- Beauvoir (`reviewer`) found the same stale rollback/fresh record P1 and another P1: batch loading validates duplicates only once before async install work, then can blindly overwrite a concurrently registered same-id record and lose contribution tracking.
+- Nietzsche (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings for Avicenna/Franklin tests.
+- Leibniz (`docs_researcher`) found no P0/P1 docs drift, plus P2 status-footer drift and P2 architecture wording drift around latest lifecycle semantics.
+- Parent decision: run another delegated TDD loop for the two P1 batch concurrency findings before final gate; defer docs P2 cleanup until code behavior stabilizes.
+- Final batch rollback focused read-only re-review agents spawned after Franklin/Halley's green commits.
+- Halley (`implementer`) completed the revised production fix and was closed after removing source-inspection from the implementation.
+- Halley's review-fix commit: `b52772a Halley(review-fix)(Implement Plugin Host lifecycle): guard batch rollback races`.
+- Franklin (`test_writer`) completed and was closed after aligning the stale concurrent register test with accepted single-flight semantics.
+- Franklin's test-fix commit: `b17ed99 Franklin(test-fix)(Implement Plugin Host lifecycle): align concurrent register contract`.
+- Parent repeated green checks after Franklin/Halley: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 43 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 57 tests passing; `bun run lint`; and `git diff --check`.
+- Franklin (`test_writer`) was spawned to update the stale concurrent register failure test to the accepted single-flight/idempotent register semantics. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Halley's revised implementation removed the function-source inspection and uses explicit `registerPromise` single-flight state, but one old test still expected a second concurrent register hook to execute and reject. Parent accepted the single-flight semantics and delegated the test contract update.
+- Parent validated Halley's first implementation with focused checks green, but rejected the use of `Function.prototype.toString().includes("throw")` to choose concurrent register behavior. Halley was resumed and asked to replace it with explicit lifecycle state/concurrency control before commit.
+- Halley (`implementer`) was spawned for the batch rollback stale-scope, dependency-removal/register race, and concurrent-register idempotency production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Avicenna (`test_writer`) completed and was closed after adding red tests for batch rollback stale scopes, dependency-removal/register races, and concurrent register idempotency.
+- Avicenna's test commit: `4de95c2 Avicenna(test)(Implement Plugin Host lifecycle): cover batch rollback races`.
+- Parent confirmed Avicenna's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 43 tests with 39 passing and 4 failing in the new batch rollback, dependency-removal/register, and concurrent-register cases; `git diff --check` passed.
+- Avicenna (`test_writer`) was spawned for red tests covering Hubble/Wegener's latest focused re-review findings. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Focused post-pending-install re-review completed. Wegener (`security_reviewer`) found one P1: `loadBuiltInPlugins()` batch rollback can delete an earlier record while leaving its pending register context active and its tentative contributions/stale context capabilities live.
+- Hubble (`reviewer`) found one P1: dependency `deactivate()` / `uninstall()` can start first and pause in an async hook while a required dependent registers before the dependency is downgraded or deleted. Hubble also found one P2: concurrent successful `register(plugin)` calls can both execute the register hook.
+- Ampere (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings for Newton's tests.
+- Archimedes (`docs_researcher`) found no P0/P1 docs drift, plus P2 status-footer drift and a P2 architecture wording gap around pending-register dependents blocking dependency removal.
+- Parent decision: run another delegated TDD loop for the two P1s and the adjacent concurrent-register P2 before final gate.
+- Focused post-pending-install read-only re-review agents spawned after Noether's green fix.
+- Noether (`implementer`) completed and was closed after fixing concurrent install/register failure cleanup and pending dependent registration dependency removal.
+- Noether's review-fix commit: `c46cfa4 Noether(review-fix)(Implement Plugin Host lifecycle): guard pending install races`.
+- Parent repeated green checks after Noether: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 39 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 53 tests passing; `bun run lint`; and `git diff --check`.
+- Noether (`implementer`) was spawned for the pending install/register and pending dependent dependency-removal production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Newton (`test_writer`) completed and was closed after adding red tests for Goodall's two P1 lifecycle races.
+- Newton's test commit: `5cef44e Newton(test)(Implement Plugin Host lifecycle): cover pending install races`.
+- Parent confirmed Newton's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 39 tests with 36 passing and 3 failing in the new pending install/register and pending dependent dependency-removal cases; `git diff --check` passed.
+- Newton (`test_writer`) was spawned for red tests covering Goodall's two P1 lifecycle races. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Final post-stale-register read-only re-review completed. Goodall (`security_reviewer`) found two P1 boundary issues: concurrent `register(plugin)` can run while `install(plugin)` is pending and leave orphaned contributions if install later fails; dependency removal can ignore dependents with pending registration because they are still `installed`.
+- Rawls (`reviewer`) found no P0/P1 correctness findings, but independently reproduced the concurrent install/register orphaned-contribution race as P2.
+- Schrodinger (`pr_explorer`) found no implementation scope creep and only the stale live-status footer P2.
+- Feynman (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings.
+- Kierkegaard (`docs_researcher`) found no P0/P1 docs drift and only the stale live-status footer P2.
+- Euler (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings and verified Vitest v4 `expectTypeOf` and TypeScript type-only module docs.
+- Parent decision: fix Goodall's P1 findings through another delegated TDD loop before any final gate or merge.
+- Final post-stale-register read-only re-review agents spawned after Galileo's green fix.
+- Galileo (`implementer`) completed and was closed after fixing stale register cleanup and concurrent register contribution tracking.
+- Galileo's review-fix commit: `c2c27b1 Galileo(review-fix)(Implement Plugin Host lifecycle): isolate stale register cleanup`.
+- Parent repeated green checks after Galileo: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 36 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 50 tests passing; `bun run lint`; and `git diff --check`.
+- Galileo (`implementer`) was spawned for the stale register cleanup production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Carson's test commit: `3ac6fd1 Carson(test)(Implement Plugin Host lifecycle): cover stale register cleanup`.
+- Parent confirmed Carson's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 36 tests with 33 passing and 3 failing in the new stale-register/concurrent-register cases; `git diff --check` passed.
+- Carson (`test_writer`) completed and was closed after adding focused red tests for stale pending `register` cleanup after uninstall/deactivate retry and concurrent `register()` contribution tracking.
+- Carson (`test_writer`) was spawned for red tests covering stale register cleanup after retry and concurrent register contribution tracking.
+- Final concurrent lifecycle micro re-review completed. Hypatia (`reviewer`) found one P1 correctness issue: a revoked pending `register` can later unregister same-ID contributions created by a fresh retry after concurrent uninstall/deactivate, and in the deactivate retry case can regress the shared record back to `installed`.
+- Dirac (`security_reviewer`) found one P2 boundary issue: concurrent `register()` calls can orphan runtime contributions because a failing second register clears `record.contributions` while the first registration's command/view/slot remain live.
+- Gibbs (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed the concurrent lifecycle test is deterministic and `.only` / `.skip` free.
+- Parent decision: add focused red tests for stale register cleanup after retry and concurrent register contribution tracking, then delegate a minimal production fix.
+- Final concurrent lifecycle micro re-review agents spawned after Copernicus's green fix.
+- Copernicus (`implementer`) completed and was closed after fixing concurrent register/uninstall lifecycle safety in `src/core/plugin-host/plugin-host.ts`.
+- Copernicus's review-fix commit: `ef4f25d Copernicus(review-fix)(Implement Plugin Host lifecycle): guard concurrent lifecycle scopes`.
+- Parent repeated green checks after Copernicus: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 33 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 47 tests passing; `bun run lint`; and `git diff --check`.
+- Copernicus (`implementer`) was spawned for the concurrent lifecycle production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Dewey's test commit: `34cec0d Dewey(test)(Implement Plugin Host lifecycle): cover concurrent lifecycle revocation`.
+- Parent confirmed the expected red signal after Dewey: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 33 tests with 32 passing and one failing because staged transaction data can commit after concurrent uninstall; `git diff --check` passed.
+- Dewey (`test_writer`) was spawned for the concurrent lifecycle red test in `src/test/plugin-host-lifecycle.test.ts`.
+- Final micro re-review completed. Bohr (`reviewer`) found one P2 correctness issue: concurrent `uninstall(pluginId)` can delete a plugin record while `register(ctx)` is still pending, leaving the register scope active long enough for an unawaited transaction to commit after uninstall.
+- Linnaeus (`security_reviewer`) found no P0/P1/P2 findings for the pending transaction fix and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+- Parent decision: add a focused red test for concurrent uninstall during a pending register transaction, then delegate the minimal lifecycle concurrency fix.
+- Final micro re-review agents spawned for the pending transaction fix.
+- Cicero (`implementer`) completed and was closed after implementing pending transaction liveness re-check before Core transaction commit.
+- Cicero's review-fix commit: `0bd3af3 Cicero(review-fix)(Implement Plugin Host lifecycle): reject stale transaction commits`.
+- Parent repeated green checks after Cicero: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 32 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 46 tests passing; `bun run lint`; and `git diff --check`.
+- Cicero (`implementer`) was spawned for the pending transaction revocation production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Bacon's test commit: `f78822e Bacon(test)(Implement Plugin Host lifecycle): cover pending transaction revocation`.
+- Parent confirmed the expected red signal after Bacon: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 32 tests with 31 passing and one failing because pending transaction writes still commit after uninstall; `git diff --check` passed.
+- Bacon (`test_writer`) was spawned for a focused pending/unawaited plugin transaction revocation red test in `src/test/plugin-host-lifecycle.test.ts`.
+- Final TASK-011 re-review completed. James (`reviewer`) found one P1 correctness issue: unawaited plugin transactions that start while a lifecycle context is active can still commit after that context is revoked or the plugin is uninstalled because `ctx.transaction.run` only checks liveness before delegating to the Core transaction manager.
+- Mencius (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+- Einstein (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 31 lifecycle tests, 45 lifecycle/API tests, typecheck, lint, and diff-check passed.
+- Bernoulli (`docs_researcher`) found one P2 live-status drift in the bottom Next Actions block; parent will update status after the pending transaction TDD fix.
+- Parent decision: add a focused red test for pending/unawaited `ctx.transaction.run` committing after context revocation/uninstall, then delegate the minimal production fix.
+- Final TASK-011 re-review agents spawned after Volta's docs/status cleanup commit.
+- Volta's docs commit: `b68a2af Volta(docs)(Implement Plugin Host lifecycle): document final lifecycle semantics`.
+- Volta (`doc_writer`) completed final TASK-011 docs/status cleanup: Plugin Host docs now cover failed install cleanup/retry, batch install rollback, stale context write revocation, and dependency rejection before blocked hooks; live status no longer points to earlier test/implementation handoffs.
+- Volta (`doc_writer`) was spawned for final TASK-011 docs/status cleanup after Sartre's green fix.
+- Sartre (`implementer`) completed and was closed after fixing `loadBuiltInPlugins()` batch rollback in `src/core/plugin-host/plugin-host.ts`.
+- Sartre's review-fix commit: `b955cb3 Sartre(review-fix)(Implement Plugin Host lifecycle): rollback failed built-in batches`.
+- Parent repeated green checks after Sartre: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 31 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 45 tests passing; `bun run lint`; and `git diff --check`.
+- Sartre (`implementer`) was spawned for the ultra-narrow batch install rollback production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Lorentz's test commit: `d1482b3 Lorentz(test)(Implement Plugin Host lifecycle): cover batch install rollback`.
+- Parent confirmed the expected red signal after Lorentz: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 31 tests with 30 passing and one failing in the new batch rollback case; `git diff --check` passed.
+- Lorentz (`test_writer`) was spawned for the final ultra-narrow TASK-011 red tests: batch install rollback/retry and dependency hook non-call assertions.
+- Final TASK-011 narrow re-review completed. Aristotle (`reviewer`) found one remaining P1 correctness issue: `loadBuiltInPlugins()` removes only the currently failing install record, leaving earlier installed records from the failed batch and causing retry to fail with `PLUGIN_DUPLICATE_ID`.
+- Anscombe (`security_reviewer`) found no P0/P1/P2 plugin-boundary findings and confirmed stale context revocation, owner spoof rejection, install-failure record removal for explicit/current failing paths, and no native/Tauri/fs/dynamic import/IPC/SQLite scope creep.
+- Huygens (`test_quality_reviewer`) found one P2 test-strength issue: dependency rejection tests should assert blocked deactivate/uninstall hooks were not called.
+- Hooke (`docs_researcher`) found P2 docs/status drift after the final fixes: live Next Actions needed updating, TASK-011 top-level status needed updating, and architecture docs should mention failed-install record cleanup/retry and stale context page/store/transaction revocation.
+- Parent decision: run an ultra-narrow TDD pass for batch install rollback and dependency-hook non-call assertions, then delegate the production fix and docs/status cleanup.
+- Final TASK-011 narrow re-review agents spawned after Maxwell's green implementation.
+- Maxwell (`implementer`) completed and was closed after implementing final TASK-011 review fixes in `src/core/plugin-host/plugin-host.ts`.
+- Maxwell's review-fix commit: `85a3f71 Maxwell(review-fix)(Implement Plugin Host lifecycle): revoke stale plugin contexts`.
+- Parent repeated green checks after Maxwell: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 30 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 44 tests passing; `bun run lint`; and `git diff --check`.
+- Maxwell (`implementer`) was spawned for the final TASK-011 production review-fix pass. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Lovelace's second review-fix test commit: `fa3a44c Lovelace(test)(Implement Plugin Host lifecycle): cover final lifecycle gaps`.
+- Parent confirmed the expected red signal after Lovelace: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 30 tests with 26 passing and 4 failing around stale context page/store/transaction writes and failed-install record cleanup; `git diff --check` passed.
+- Lovelace (`test_writer`) was spawned for the second TASK-011 review-fix TDD pass. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- TASK-011 narrow re-review completed. Popper (`pr_explorer`) found no scope creep and highlighted install-failure state, stale context liveness, and stale status-text hotspots.
+- Kepler (`reviewer`) found one P1 correctness issue: failed install hooks leave `installed` records, and later `register(plugin)` can skip the failed install and move that plugin to registered/active.
+- Harvey (`security_reviewer`) found one P1 boundary issue: captured plugin contexts still retain page/store/transaction write capability after deactivate or uninstall. Harvey also found the failed-install residual-record issue as P2 security/boundary risk.
+- Mill (`test_quality_reviewer`) found two P2 test-strength issues: dependency deactivate/uninstall tests should assert typed dependency rejection, and stale captured-context tests should assert late register calls throw typed errors rather than merely not surviving in registries.
+- Arendt (`docs_researcher`) found no remaining architecture docs drift, but found a P2 stale `Current Worktree State` / `Next Actions` block that still described TASK-010. Parent updated this block in the current orchestration status.
+- Ptolemy (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings. It verified current Vitest `expectTypeOf`, type-testing guidance, MDN `Error.cause`, and TypeScript `es2022.error` declarations.
+- Parent decision: run a second TDD review-fix loop for stale context data-write revocation, failed-install rollback/retry safety, stricter late-register assertions, and exact typed dependency removal assertions. Then delegate production fixes and re-review again.
+- TASK-011 narrow re-review agents spawned after Curie's review-fix implementation and Plato/Dalton docs commits.
+- Dalton (`doc_writer`) completed and was closed after updating `docs/architecture/07-runtime-flows.md` to use `new PluginHost({ services, registries, app })` and explicit built-in plugin objects.
+- Dalton's docs commit: `25c1859 Dalton(docs)(Implement Plugin Host lifecycle): align runtime flow sketch`.
+- Dalton (`doc_writer`) was spawned for the remaining runtime-flow docs drift in `docs/architecture/07-runtime-flows.md`, specifically the stale `new PluginHost(registries, services)` startup sketch.
+- Plato (`doc_writer`) completed and was closed after updating `docs/architecture/03-plugin-api-and-host.md` to reflect the TASK-011 Plugin Host API and lifecycle semantics.
+- Plato's docs commit: `3311da9 Plato(docs)(Implement Plugin Host lifecycle): align plugin host architecture`.
+- Plato (`doc_writer`) was spawned for the remaining TASK-011 P2 architecture docs drift. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`.
+- Curie (`implementer`) completed and was closed after fixing the TASK-011 P1/P2 review findings in `src/core/plugin-host/plugin-host.ts`.
+- Curie's review-fix commit: `6845f4c Curie(review-fix)(Implement Plugin Host lifecycle): harden lifecycle boundaries`.
+- Parent repeated green checks after Curie: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 26 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 40 tests passing; `bun run lint`; and `git diff --check`.
+- Curie (`implementer`) was spawned for the TASK-011 review-fix production changes. Ownership is limited to `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, and `src/core/index.ts` unless a required type export forces a reported scope expansion.
+- Carver's review-fix test commit: `a24bd27 Carver(test)(Implement Plugin Host lifecycle): cover lifecycle review gaps`.
+- Parent confirmed the expected red signal after Carver: `bun run typecheck` failed on missing `install` / `register` and concrete return type assertions; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 26 tests with 15 passing and 11 failing in the new P1/P2 review areas; `git diff --check` passed.
+- Carver (`test_writer`) was spawned for TASK-011 P1/P2 review-fix red tests. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`; production code, docs, config, lockfiles, Rust/Tauri, and other tests are out of scope.
+- TASK-011 review round 1 completed. Jason (`pr_explorer`) mapped the changed surfaces to `src/core/plugin-host/`, Core exports, lifecycle tests, and agent docs; Jason highlighted batch-load rollback, untracked non-register lifecycle contributions, deactivate/re-activate semantics, dependency cascades, and missing coverage risks.
+- Herschel (`reviewer`) found one P1 correctness issue: captured plugin contexts can register commands/views/slots after deactivate or uninstall because only the initial register tracker is copied into `record.contributions`. Herschel also found P2 issues for dependency deactivate/uninstall cascades, dependency satisfaction by installed-but-unregistered records, and duplicate dependency declarations downgrading required dependencies to optional.
+- Singer (`security_reviewer`) found two P1 boundary issues: captured plugin contexts stay live after lifecycle exit and can register untracked capabilities, and metadata/event/filter store facades are not owner-scoped, allowing cross-plugin read/delete/update and filter ownership hijacking.
+- Godel (`deprecation_auditor`) found one P2 public API issue: `PluginHostInstance` lifecycle methods expose `Promise<unknown>` instead of public `PluginHostRecord` shapes.
+- Pasteur (`test_quality_reviewer`) found P2 test gaps for explicit `install(plugin)` / `register(plugin)` methods, transaction-scoped plugin facades, and typed failure behavior for activate/deactivate/uninstall hooks.
+- Peirce (`docs_researcher`) found one P2 docs drift in `docs/architecture/03-plugin-api-and-host.md`, where the Plugin Host sketch still shows the older constructor and method shape, plus one P3 live-status sentence saying deactivate/uninstall run dependents before dependencies even though current implementation does not.
+- Parent decision: block final gate until the P1/P2 findings are fixed through TDD. Delegate tests first for stale captured contexts, owner-scoped store facades including transaction facades, dependency lifecycle/dependency-validation gaps, duplicate dependency normalization, explicit install/register API, lifecycle hook failure behavior, and typed host return surfaces. Then delegate implementation and docs cleanup separately.
+- TASK-011 review round agents spawned after Hegel's green implementation.
+- Hegel (`implementer`) completed and was closed after implementing Plugin Host production code in `src/core/plugin-host/` and Core exports.
+- Hegel's implementation commit: `766ba86 Hegel(implementation)(Implement Plugin Host lifecycle): add plugin host runtime`.
+- Parent repeated green checks after Hegel: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 13 tests passing; `git diff --check`; `bun run lint`; and `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 27 tests passing.
+- Hegel (`implementer`) was spawned for Plugin Host production code, with ownership of `src/core/plugin-host/` and Core barrel exports.
+- Averroes (`test_writer`) completed and was closed after adding `src/test/plugin-host-lifecycle.test.ts`.
+- Averroes's test commit: `12f04de Averroes(test)(Implement Plugin Host lifecycle): add lifecycle acceptance tests`.
+- Parent confirmed the expected red signal: `bun run typecheck` failed because `PluginHost`, `PluginHostError`, `PluginHostErrorCode`, `PluginHostRecord`, `PluginHostStatus`, and `../core/plugin-host` do not exist; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` failed because Vite cannot resolve `../core/plugin-host`; `git diff --check` passed.
+- Averroes (`test_writer`) was spawned for TASK-011 red tests covering public exports, explicit built-in list loading, lifecycle order, dependency errors, plugin-facing facades, ownership injection, scoped reads, spoof rejection, register rollback, and raw-handle absence.
+- TASK-011 pre-test guidance completed and all agents were closed.
+- Darwin (`planner`) recommended `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, Core barrel exports, no runtime composition wiring yet, explicit built-in list loading, deterministic dependency sorting, `PluginHostError`, registry rollback, and runtime-flow-compatible `activateAll`.
+- Hume (`docs_researcher`) verified current Obsidian, Tauri, Vitest, and TypeScript docs; confirmed Tauri native plugins and Obsidian plugin APIs are inspiration only, and recommended async Vitest rejection assertions.
+- Fermat (`deprecation_auditor`) flagged P1 decisions to pin lifecycle semantics, avoid raw registry objects in `PluginContext`, and rollback failed registration. It recommended `loadBuiltInPlugins(AppPlugin[])` as install/register, followed by `activateAll()` / `activate(id)` for activation.
+- Ohm (`security_reviewer`) recommended runtime ownership injection, caller-scoped facades, no raw native handles, owner-scoped get/list, duplicate/dependency validation before hooks, and rollback of command/view/slot registrations on failure.
+- Parent decisions for TDD: implement a local TypeScript Plugin Host under `src/core/plugin-host`; expose `PluginHost`, `PluginHostError`, and `PluginHostErrorCode` from Core; constructor should accept `{ services, registries, app }`; `loadBuiltInPlugins` validates/sorts/install/registers but does not activate; `activateAll` activates in dependency order; initial dependency-removal handling was later refined by review fixes to reject deactivation/uninstall when registered dependents still require the target plugin; registration rollback covers commands/views/slots, not arbitrary store writes; runtime facades inject `pluginId` / `sourcePluginId`; no Tauri/native/fs/dynamic loading/persistence/UI.
+- TASK-011 pre-test guidance agents spawned: Darwin, Hume, Fermat, and Ohm. All are read-only.
+- TASK-010 was merged to `master` and pushed. Merge commit: `ec361c5 Codex(merge)(Define Plugin API contracts): merge task branch`.
+- TASK-011 branch `feat/task-011-plugin-host-lifecycle` was created from latest `master`.
+- TASK-011 scope: implement TypeScript Plugin Host lifecycle orchestration for explicit built-in plugin lists, deterministic dependency ordering, install/activate/register/deactivate/uninstall/get behavior, duplicate/dependency handling, and typed failure behavior without corrupting Core registries. Native/Tauri plugin loading, persistence, IPC, SQLite, UI rendering, filesystem plugin discovery, and concrete business plugins are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-011. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/reachability OK, a WebSocket timeout with HTTPS fallback still available, and the known desktop-terminal `TERM=dumb` failure. Parent treats these as non-blocking for repository agent work.
 - Final TASK-010 gate passed: `bun run check:quick` passed with 12 frontend test files and 185 tests plus Rust fmt, clippy, and tests; `bun run build` passed.
 - McClintock (`docs_researcher`) completed and was closed after verifying Locke fixed Nash's remaining P2 docs finding around `tx.events.findTimerStart`. No P0/P1/P2 docs findings remain.
 - Locke (`doc_writer`) completed and was closed after rewriting the timer stop sketch to use current `PluginEventStore.list({ namespace: "timer" })` plus plugin-local payload narrowing, and tightening status wording around `sourcePluginId` references.
@@ -456,13 +622,13 @@ Last updated: 2026-05-20 22:40 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-010 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-010.
-- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, targeted re-review fixes, and the Obsidian link fix.
+- `docs/implementation/progress.md` marks TASK-011 complete on the task branch; merge to `master` is next.
+- `docs/implementation/agent-communication/status.md` points to TASK-011.
+- `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, stale register cleanup, pending install/register fixes, batch rollback/dependency-removal fixes, fresh-record batch race fixes, and final docs cleanup. Final focused re-review found no P0/P1/P2 correctness, security, or test-quality findings; final local gate passed.
 
 ## Next Actions
 
-1. Spawn final targeted re-review agents for the ownership-key and docs-link fixes.
-2. Fix any remaining P0/P1 findings.
-3. Run final local gate and mark TASK-010 complete.
+1. Commit the TASK-011 progress update.
+2. Merge `feat/task-011-plugin-host-lifecycle` into `master` and push.
+3. Start the next unblocked task.
