@@ -39,7 +39,7 @@ Status markers:
 - [x] TASK-011: Implement Plugin Host lifecycle
 - [x] TASK-012: Add NativeBridge TypeScript boundary
 - [x] TASK-013: Add SQLite schema and Rust repositories
-- [ ] TASK-014: Expose Tauri IPC commands for core persistence
+- [~] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
 
 ## Milestone M3: Editor and plugin runtime
@@ -78,6 +78,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 04:59 CST - TASK-014 started
+
+- Branch: `feat/task-014-tauri-ipc-core-persistence`.
+- Task: Expose Tauri IPC commands for core persistence.
+- Scope: add reviewed Tauri IPC commands for typed Core persistence operations and wire the frontend NativeBridge to those commands, using the private TASK-013 Rust repositories. This task must validate request DTOs, return typed/redacted errors, document and review Tauri capability changes, and preserve the no-raw-SQL frontend/plugin boundary.
+- Out of scope: app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, plugin-owned business index lifecycle, release packaging, and concrete business-plugin behavior unless local docs or agents identify a TASK-014-specific requirement.
+- Agent orchestration: parent thread remains orchestration-only; current Tauri v2 command/capability/testing guidance, deprecation review, security-boundary guidance, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-014-tauri-ipc-core-persistence.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 04:56 CST - TASK-013 completed
 

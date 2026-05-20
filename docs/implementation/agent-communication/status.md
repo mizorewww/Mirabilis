@@ -1,21 +1,27 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:56 CST.
+Last updated: 2026-05-21 04:59 CST.
 
 ## Current Task
 
-- Task: TASK-013 - Add SQLite schema and Rust repositories.
-- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
+- Task: TASK-014 - Expose Tauri IPC commands for core persistence.
+- Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: local gate passed; marking TASK-013 complete for merge.
+- Current phase: task started; pre-test guidance agents pending.
 
 ## Active Agents
 
-- None. Second narrow re-review agents were closed after reporting.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
+- TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
+- TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
+- TASK-014 out of scope unless agents find a local-doc requirement: app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export, global shortcuts, notifications, plugin-owned business index lifecycle, release packaging, and concrete business-plugin behavior.
+- `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: spawn pre-test guidance agents for current Tauri v2 command/capability/testing docs, deprecation/API risks, security boundary guidance, and TASK-014 implementation/test planning.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
