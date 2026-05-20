@@ -27,3 +27,18 @@ export type {
   CommandService,
   ListCommandsOptions,
 } from "./command";
+export type {
+  ListViewsOptions,
+  RegistryComponent,
+  ViewDataShape,
+  ViewDefinition,
+  ViewRegistry,
+  ViewRegistryErrorCode,
+} from "./view";
+export type {
+  ListSlotContributionsOptions,
+  SlotCondition,
+  SlotContribution,
+  SlotRegistry,
+  SlotRegistryErrorCode,
+} from "./slot";

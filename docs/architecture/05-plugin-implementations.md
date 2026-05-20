@@ -217,6 +217,7 @@ ctx.views.register({
   id: "heatmap.calendar",
   pluginId: "heatmap",
   type: "heatmap",
+  title: "Heatmap calendar",
   component: HeatmapView,
   accepts: {
     kind: "date-series"
@@ -286,6 +287,7 @@ ctx.views.register({
   id: "chart.bar",
   pluginId: "chart",
   type: "chart.bar",
+  title: "Bar chart",
   component: BarChartView,
   accepts: { kind: "series" }
 });
@@ -348,6 +350,7 @@ ML Panel 通过 Slot 渲染在页面侧边：
 
 ```ts
 ctx.slots.register({
+  id: "ml.page-sidebar.prediction-panel",
   slot: "page.sidebar.panel",
   pluginId: "ml",
   component: PredictionPanel,

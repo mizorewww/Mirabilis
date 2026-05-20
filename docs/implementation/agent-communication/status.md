@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:26 CST.
+Last updated: 2026-05-20 13:45 CST.
 
 ## Current Task
 
-- Task: TASK-007 - Add Command Registry and Command Bus.
-- Branch: `feat/task-007-command-registry-command-bus`.
+- Task: TASK-008 - Add View Registry and Slot Registry.
+- Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; progress update active.
+- Current phase: TASK-008 complete; merge to `master` pending.
 
 ## Active Agents
 
@@ -16,6 +16,89 @@ Last updated: 2026-05-20 11:26 CST.
 
 ## Recent Agent Outcomes
 
+- Final narrow explicit-unknown re-review completed and all agents were closed.
+- Gibbs (`reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit `RegistryComponent<unknown>` / `ViewDefinition<unknown>` reject arbitrary objects, explicit `SlotCondition<unknown>` remains a function, and unparameterized registry return/storage shapes remain type-correct.
+- Huygens (`test_quality_reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit-unknown tests cover Rawls's P2 without weakening earlier wrong-prop, narrow-condition, or unparameterized-return coverage.
+- Nash (`docs_researcher`) found one P3 stale task-communication/status issue; parent accepted it and updated status plus task communication.
+- Final TASK-008 gate passed: `bun run check:quick` and `bun run build`.
+- Progress ledger updated to mark TASK-008 complete and record final validation, review, external docs, and remaining risks.
+- Explicit-unknown test commit: `5fc28d8 Codex(test)(Add View Registry and Slot Registry): cover explicit unknown type aliases`.
+- Explicit-unknown test-fix commit: `a1622a5 Codex(test-fix)(Add View Registry and Slot Registry): distinguish explicit unknown types`.
+- Explicit-unknown production fix commit: `cdbea56 Codex(review-fix)(Add View Registry and Slot Registry): tighten explicit unknown aliases`.
+- Parent repeated green checks after the explicit-unknown fix: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
+- Final targeted TASK-008 re-review completed and all agents were closed.
+- Rawls (`reviewer`) found two P2 public type issues: `RegistryComponent<unknown>` / `ViewDefinition<unknown>` are too broad because `object` leaks into the explicit unknown path, and `SlotCondition<unknown>` resolves to `unknown`, allowing non-functions.
+- Lorentz (`deprecation_auditor`) found no remaining API/deprecation issues and confirmed `.toExtend()`, type-only public React types, and no `_payload` / `_init` usage.
+- Wegener (`test_quality_reviewer`) found no remaining test-quality issues.
+- Helmholtz (`docs_researcher`) found one P2 stale status sentence and two P3 status hygiene issues; parent will update status after this review round and after push state is current.
+- Selected follow-up: add tests for explicit `unknown` public aliases rejecting arbitrary objects/non-functions, then adjust public types without regressing unparameterized registry returns.
+- Final targeted TASK-008 re-review agents spawned after type-fix and docs cleanup.
+- Parent repeated focused green checks after docs cleanup: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, and `bun run lint`.
+- Docs cleanup commit: `051370d Codex(docs)(Add View Registry and Slot Registry): align registry examples`.
+- Parent fixed Kierkegaard's remaining source-doc P3 by adding required `title` fields to view registration examples and required `id` fields to slot contribution examples in `docs/architecture/04-slots-editor-task.md` and `docs/architecture/05-plugin-implementations.md`.
+- Parent fallback production commit: `a7eade7 Codex(review-fix)(Add View Registry and Slot Registry): fix public type soundness`.
+- Parent repeated green checks after the public type soundness fix: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
+- Auto-push and the first manual push for `a7eade7` failed with an SSH connection close. Branch is locally ahead by 1 and parent will retry push before merge.
+- Banach (`implementer`) was stopped after a status request and two wait windows because it produced no final output. Its uncommitted patch fixed the view-side type soundness direction but still failed `bun run typecheck` on default `SlotContribution` / `SlotCondition<unknown>` assignability.
+- Parent is taking over the remaining narrow type fix after three implementer attempts failed or remained unavailable. Fallback scope is limited to `src/core/types/view.ts` and `src/core/types/slot.ts`; tests, docs, registries, config, and lockfiles remain unchanged for the production fix.
+- Banach (`implementer`) was spawned as the third implementer for TASK-008 P1/P2 production type fixes, with a narrower suggested design using exact-`unknown` property-level fallbacks instead of top-level conditional contribution/definition types.
+- Planck (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
+- Parent rejected and reverted Planck's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
+- Planck (`implementer`) was spawned as the replacement for TASK-008 P1/P2 production type fixes.
+- Carver (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
+- Parent rejected and reverted Carver's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
+- Carver (`implementer`) was spawned for TASK-008 P1/P2 production type fixes covering `RegistryComponent<Props>` prop safety and normal `SlotCondition<Props>` variance.
+- Euler (`test_writer`) completed and was closed after adding TASK-008 P1/P2 follow-up type tests.
+- Euler's test commit: `9a3c1c2 Euler(test)(Add View Registry and Slot Registry): cover public type soundness`.
+- Parent confirmed expected red signal after Euler: `bun run typecheck` fails with six `TS2554` diagnostics from negative `.not.toExtend()` assertions for wrong-prop components and narrower slot conditions, while `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` still passes with 20 tests and `git diff --check` passes.
+- Euler (`test_writer`) was spawned for TASK-008 P1/P2 follow-up tests covering wrong-prop component assignability, slot-condition assignability, `.toExtend()` matcher replacement, and removal of test dependence on React lazy private `_payload`/`_init` shapes.
+- TASK-008 targeted re-review completed and all re-review agents were closed.
+- Singer (`reviewer`) found one P2 correctness issue: `RegistryComponent<Props>` currently includes an unparameterized callable fallback and `SlotCondition` uses a bivariant method extraction, weakening explicit public prop generic safety.
+- Aquinas (`deprecation_auditor`) found one P1 API compatibility issue: `RegistryCallableComponent` lets any function or constructor satisfy any `RegistryComponent<Props>`, allowing wrong-prop components in `ViewDefinition<Props>` and `SlotContribution<Props>`. Aquinas also found one P2 deprecated Vitest type matcher issue: `.toMatchTypeOf()` should be replaced with current `.toExtend()` assertions, and one P3 issue where `_payload`/`_init` React lazy internals leak into public/test types.
+- Archimedes (`security_reviewer`) found no remaining P0/P1/P2/P3 security issues and confirmed no Tauri, IPC, native permission, filesystem, persistence, or React runtime execution surface was added.
+- Meitner (`test_quality_reviewer`) found no remaining test-quality issues; focused test and typecheck passed.
+- Kierkegaard (`docs_researcher`) found no P0/P1/P2 docs issues and three P3 issues: stale TASK-008 communication next-action text, stale live-status text saying review-fix TDD is still pending, and architecture examples that omit required TASK-008 `title` or slot `id` fields.
+- Selected TASK-008 follow-up fixes: first add test-only coverage for wrong-prop component and slot-condition assignability plus deprecated matcher replacement; then delegate production type fixes. Docs P3 cleanup follows after P1/P2 is green.
+- Targeted TASK-008 re-review agents spawned after Locke's green review-fix commit.
+- Locke (`implementer`) completed and was closed after implementing TASK-008 review fixes.
+- Locke's review-fix commit: `ffe8561 Locke(review-fix)(Add View Registry and Slot Registry): accept object component refs`.
+- Parent repeated green checks after Locke: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
+- Parent also confirmed `rg -n "hasSelectivelyThrowingGetTrap|Reflect\\.get" src/core/registries/view-registry.ts src/core/registries/slot-registry.ts` returns no matches.
+- Avicenna (`test_writer`) completed and was closed after strengthening TASK-008 proxy descriptor-read tests.
+- Avicenna's test commit: `c4dbc4a Avicenna(test)(Add View Registry and Slot Registry): forbid proxy get trap reads`.
+- Parent confirmed expected red signal after Avicenna against Locke's current production patch: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 18 passing and 2 failing because view and slot registration still invoke Proxy `get` traps.
+- Parent repeated Locke's checks and confirmed `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint` pass with Locke's uncommitted production patch, but found the implementation still probes Proxy `get` traps via `hasSelectivelyThrowingGetTrap`.
+- Avicenna (`test_writer`) was spawned for a test-only follow-up to align old proxy-invalid coverage with the accepted descriptor-value hardening decision and assert `get` traps are not invoked.
+- Locke (`implementer`) was spawned for TASK-008 review-fix production changes covering default public generic types, React object component refs, and descriptor-value property reads.
+- Socrates (`test_writer`) completed and was closed after adding TASK-008 review-fix tests.
+- Socrates's test commit: `319471b Socrates(test)(Add View Registry and Slot Registry): add review-fix coverage`.
+- Parent confirmed expected red signal after Socrates: `bun run typecheck` fails with `TS2344` for object component compatibility and default `component`/`when` types resolving as `unknown`; `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 16 passing and 4 failing on rejected object component refs and proxy descriptor reads triggering typed required-field errors.
+- Socrates (`test_writer`) was spawned for TASK-008 review-fix tests covering default generic types, React object component references, component inertness, exact whitespace filters, and descriptor/proxy property-read hardening.
+- TASK-008 review round 1 completed and all review agents were closed.
+- Gauss (`pr_explorer`) mapped the diff to Core registry/type/test/doc files only and flagged review focus on React component-reference shape, slot ordering, `accepts` validation, and default prop typing.
+- Erdos (`reviewer`) found one P2 correctness issue: unparameterized `ViewDefinition` and `SlotContribution` currently erase `component` and `when` to `unknown`; parent accepts fixing them to default `Props = unknown`.
+- Averroes (`security_reviewer`) found one P2 deferred boundary risk and one P3 hardening issue: raw registries must not become plugin-facing without caller-scoped facades, and descriptor reads should use `descriptor.value` instead of `Reflect.get` to avoid hostile Proxy `get` traps. Parent records caller scoping as a later Plugin Host/UI exposure risk and accepts the descriptor-read hardening for TASK-008.
+- Volta (`deprecation_auditor`) found one P2 React API compatibility issue: registry runtime validation rejects React object/exotic component references such as memo/lazy-style references even though the public type advertises React `ComponentType` compatibility. Parent accepts broadening component refs to function or non-null object references without importing React runtime.
+- Carson (`test_quality_reviewer`) found one P2 and one P3 test gap: tests should prove components are inert and not executed by registry operations, and filters should cover exact significant whitespace preservation. Parent accepts both coverage additions.
+- Ramanujan (`docs_researcher`) found P3 traceability drift between status and task communication files. Parent accepts updating both docs now.
+- Selected TASK-008 review-fix plan: add review-fix tests for default generic component/condition types, React object component refs, component inertness, exact whitespace filters, and descriptor/proxy `get`-trap avoidance; then delegate production fixes if the tests fail as expected.
+- TASK-008 review agents spawned.
+- Linnaeus (`implementer`) completed and was closed after implementing TASK-008 production code.
+- Linnaeus's implementation commit: `1e03f31 Linnaeus(implementation)(Add View Registry and Slot Registry): implement view and slot registries`.
+- Parent corrected Linnaeus's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
+- Parent repeated green checks after Linnaeus: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 12 tests passing, and `bun run lint`.
+- Linnaeus (`implementer`) was spawned for TASK-008 production implementation.
+- Pasteur (`test_writer`) completed and was closed after adding TASK-008 acceptance tests.
+- Pasteur's test commit: `5dc84cc Pasteur(test)(Add View Registry and Slot Registry): add view and slot registry acceptance tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails on missing View/Slot Registry exports and `../core/registries`; `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` fails during import resolution for `../core/registries` with no tests executed.
+- Pasteur (`test_writer`) was spawned for TASK-008 failing acceptance tests in `src/test/core-view-slot-registry.test.ts`.
+- TASK-008 pre-test guidance completed. Hooke planned the View/Slot Registry API and acceptance tests, Halley verified current TypeScript/React/Vitest guidance, and Tesla audited component-reference cloning, inert `when` handling, duplicate atomicity, slot ordering, React runtime coupling, and business-term leakage risks.
+- Parent decisions: add `src/core/types/view.ts`, `src/core/types/slot.ts`, `src/core/registries/view-registry.ts`, `src/core/registries/slot-registry.ts`, and `src/core/registries/index.ts`; expose them from Core barrels; use type-only React `ComponentType` compatibility; preserve `component` and `when` references by identity; clone only inert JSON metadata such as required `accepts`; slot `when` is sync-only inert metadata and is never executed by the registry; slot order defaults to `0`, must be finite, sorts ascending with stable registration-order ties; duplicate IDs are global per registry; no production constants for documented business view or slot names.
+- Pre-test guidance agents spawned for TASK-008.
+- TASK-008 started from latest `master` after TASK-007 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-008.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
+- TASK-007 was merged to `master` and pushed. Merge commit: `9f3a4e5 Codex(merge)(Add Command Registry and Command Bus): merge task branch`.
 - Final TASK-007 gate passed: `bun run check:quick` and `bun run build`.
 - Targeted re-review completed. Hilbert found no remaining P0/P1/P2/P3 security issues, confirmed handler failures no longer expose raw causes, confirmed context invalid/proxy coverage, and accepted caller identity/capability as a deferred Plugin Host/UI exposure risk. Mill found no remaining P0/P1/P2/P3 deprecation/API issues and confirmed standard `Error.cause` semantics. Arendt found no remaining P0/P1/P2/P3 test-quality issues.
 - Targeted re-review agents spawned for TASK-007 review-fix changes.
@@ -201,12 +284,13 @@ Last updated: 2026-05-20 11:26 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-007 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-007.
-- `docs/implementation/agent-communication/TASK-007-command-registry-command-bus.md` holds TASK-007 agent notes and parent decisions.
+- `docs/implementation/progress.md` marks TASK-008 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-008.
+- `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
+- Final targeted re-review P2 public explicit-`unknown` type issues are fixed. TASK-008 remains in progress pending final verification and full gate.
 
 ## Next Actions
 
-1. Commit TASK-007 progress completion.
-2. Merge `feat/task-007-command-registry-command-bus` back to `master`.
-3. Continue to TASK-008 from latest `master`.
+1. Commit progress completion update.
+2. Merge TASK-008 to `master`.
+3. Continue to TASK-009 from latest `master`.

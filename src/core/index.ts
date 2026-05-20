@@ -14,11 +14,22 @@ export type {
   CommandRegistry,
   CommandRegistryErrorCode,
   CommandService,
+  ListSlotContributionsOptions,
   ListCommandsOptions,
+  ListViewsOptions,
   MarkdownPage,
   MetadataRecord,
   MetadataValueType,
+  RegistryComponent,
+  SlotCondition,
+  SlotContribution,
+  SlotRegistry,
+  SlotRegistryErrorCode,
   StructuredMarkdownDocument,
+  ViewDataShape,
+  ViewDefinition,
+  ViewRegistry,
+  ViewRegistryErrorCode,
 } from "./types";
 export type { MetadataJsonValue } from "./types/metadata";
 export {
@@ -35,6 +46,12 @@ export {
   CommandRegistryError,
   createInMemoryCommandRegistry,
 } from "./commands";
+export {
+  SlotRegistryError,
+  ViewRegistryError,
+  createInMemorySlotRegistry,
+  createInMemoryViewRegistry,
+} from "./registries";
 export type {
   AppendEventInput,
   CreateInMemoryEventStoreOptions,
