@@ -37,20 +37,21 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; red-test handoff pending.
+- Status: red tests completed and committed; implementation handoff pending.
 - Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
   - Leibniz the 2nd (`deprecation_auditor`): API/deprecation audit completed.
   - Confucius the 2nd (`security_reviewer`): security boundary review completed.
-- Next parent step: delegate red tests to `test_writer`.
+  - Ohm the 2nd (`test_writer`): red tests completed, verified red, committed, and closed.
+- Next parent step: spawn `implementer` for the minimum production patch to satisfy the committed TASK-016 tests.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Kuhn the 2nd (`planner`): read-only plan for scope, design slices, tests, dependencies, and risks.
   - Averroes the 2nd (`docs_researcher`): read-only current docs guidance for editor integration and testing.
@@ -143,3 +144,28 @@
   - Extension collection gap: either a minimal markdown extension collector from plugin manifest descriptors or a red test exposing the absence of `runtime.markdown.collectEditorExtensions()`.
   - Security boundaries: no raw HTML rendering/dangerous inner HTML, no unsafe markdown links/protocols in rendered output, no full runtime/native/db handles in editor/toolbar props, and no stale register-time `PluginContext` capture for later mutations.
 - Red-test write scope should stay in frontend tests and test helpers only. Production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, and dependency changes are out of scope for `test_writer`.
+
+### Ohm the 2nd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: failing frontend tests and test helpers only.
+- Files changed:
+  - `src/test/markdown-editor-plugin-shell.test.tsx`.
+  - `src/test/markdown-runtime-extensions.test.ts`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+- Coverage added:
+  - Markdown Editor Plugin view/command/slot registration through PluginHost/runtime.
+  - Textual controlled editor behavior for heading, paragraph, list, task syntax, tag text, and page-link text.
+  - Toolbar insertion of literal Markdown snippets through command/host action path where practical.
+  - Save/reopen through a narrow page facade or persistence adapter, with DB DTO boundary coverage only if NativeBridge-backed path is claimed.
+  - Manifest-based markdown extension collection gap/API.
+  - XSS/native/runtime exposure boundaries.
+  - No-native-surface guard for TASK-016.
+- Parent verification:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` failed red for the expected gaps: no built-in `markdown` plugin, no `markdown.page-editor`, no `markdown.insert-text`, no markdown UI source files, and no `runtime.markdown.collectEditorExtensions()`.
+  - The native-surface guard passed.
+  - `bun run typecheck` passed in the agent handoff.
+  - `bun run lint` passed in the agent handoff.
+  - `git diff --cached --check` passed before commit.
+- Commit: `a3e515f Ohm the 2nd(test)(Implement Markdown Editor Plugin shell): add editor shell acceptance tests`.
+- Parent decision: proceed to an `implementer` handoff. The implementation must stay inside the textarea plugin shell scope, avoid Tiptap/ProseMirror and new native permissions, keep save/reopen narrow, and keep privileged runtime/native handles out of editor-rendered surfaces.

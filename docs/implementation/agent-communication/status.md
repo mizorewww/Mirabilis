@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:44 CST.
+Last updated: 2026-05-21 07:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 07:44 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance handoff.
+- Current phase: implementation handoff.
 
 ## Active Agents
 
-- None.
+- None. Next agent handoff is TASK-016 implementation.
 
 ## Recent Agent Outcomes
 
@@ -89,7 +89,12 @@ Last updated: 2026-05-21 07:44 CST.
 - Kuhn the 2nd (`planner`) completed read-only planning. Recommendation: use a smaller controlled textarea shell under `src/plugins/markdown-editor/**`, register it as a built-in plugin, add view/command/slot registration, preserve textual Markdown syntax, add minimal extension collection from manifest descriptors, and keep save/reopen persistence narrow instead of rewiring all Core stores to SQLite.
 - Leibniz the 2nd (`deprecation_auditor`) completed API/deprecation audit. P1 findings: no markdown extension registry exists yet; plugin command handlers cannot safely close over register-time `PluginContext`; save/reopen through Core/NativeBridge is not wired through runtime. It also recommends avoiding Tiptap/ProseMirror for this slice.
 - Parent decisions for TASK-016 red tests: test first for a plain textarea editor plugin shell, owned view/command/slot registration, textual baseline Markdown preservation, toolbar insertion, narrow save/reopen facade or NativeBridge DTO coverage if claimed, markdown extension collection gap, and editor security boundaries. Tiptap/ProseMirror, Task Plugin semantics, stable block IDs, new Tauri permissions, and broad persistence rewiring are out of scope.
-- Parent next step: commit pre-test guidance summary, close completed read-only agents, then delegate red tests to `test_writer`.
+- Pre-test guidance summary was committed as `ba74654 Codex(progress)(Implement Markdown Editor Plugin shell): summarize pre-test guidance`; completed read-only agents were closed.
+- Ohm the 2nd (`test_writer`) was spawned for TASK-016 red tests. Ownership is limited to frontend tests and test helpers; production implementation, docs, Tauri config/capabilities, Rust code, package/Cargo dependencies, and commits are out of scope.
+- Ohm the 2nd completed and was closed after adding red tests in `src/test/markdown-editor-plugin-shell.test.tsx`, `src/test/markdown-runtime-extensions.test.ts`, and `src/test/markdown-page-persistence.test.tsx`.
+- Parent confirmed the expected TASK-016 red signal: `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` failed because the Markdown built-in plugin, `markdown.page-editor`, `markdown.insert-text`, markdown UI source files, and `runtime.markdown.collectEditorExtensions()` are not implemented yet. The native-surface guard passed.
+- Ohm the 2nd's test commit: `a3e515f Ohm the 2nd(test)(Implement Markdown Editor Plugin shell): add editor shell acceptance tests`.
+- Parent next step: spawn an `implementer` for the minimum TASK-016 production patch, with scope limited to the textarea editor plugin shell, built-in plugin registration, runtime markdown extension collection, and narrow page save/reopen boundary.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
