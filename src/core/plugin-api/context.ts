@@ -25,6 +25,14 @@ export type AppRuntimeInfo = {
   pluginApiVersion?: string;
 };
 
+type PluginOwnershipKeyReserved = {
+  readonly [key: `plugin${string}`]: never;
+};
+
+type SourcePluginOwnershipKeyReserved = {
+  readonly [key: `sourcePlugin${string}`]: never;
+};
+
 export type PluginPageStore = {
   create(input: CreatePageInput): MarkdownPage;
   get(pageId: string): MarkdownPage;
@@ -36,7 +44,8 @@ export type PluginPageStore = {
 export type PluginSetMetadataInput = Omit<
   SetMetadataInput,
   "sourcePluginId"
->;
+> &
+  SourcePluginOwnershipKeyReserved;
 
 export type PluginMetadataStore = {
   set(input: PluginSetMetadataInput): MetadataRecord;
@@ -48,7 +57,8 @@ export type PluginMetadataStore = {
 export type PluginAppendEventInput = Omit<
   AppendEventInput,
   "sourcePluginId"
->;
+> &
+  SourcePluginOwnershipKeyReserved;
 
 export type PluginEventStore = {
   append(input: PluginAppendEventInput): AppEvent;
@@ -58,17 +68,20 @@ export type PluginEventStore = {
 export type PluginSaveFilterInput = Omit<
   SaveFilterInput,
   "sourcePluginId"
->;
+> &
+  SourcePluginOwnershipKeyReserved;
 
 export type PluginUpdateFilterInput = Omit<
   UpdateFilterInput,
   "sourcePluginId"
->;
+> &
+  SourcePluginOwnershipKeyReserved;
 
 export type PluginListFiltersOptions = Omit<
   ListFiltersOptions,
   "sourcePluginId"
->;
+> &
+  SourcePluginOwnershipKeyReserved;
 
 export type PluginFilterStore = {
   save(input: PluginSaveFilterInput): FilterDefinition;
@@ -85,7 +98,7 @@ export type PluginCommandDefinition<Input = unknown, Output = unknown> = {
   defaultShortcut?: string;
   context?: MetadataJsonValue;
   handler: CommandHandler<Input, Output>;
-};
+} & PluginOwnershipKeyReserved;
 
 export type PluginCommandDescriptor = {
   id: string;
@@ -95,7 +108,8 @@ export type PluginCommandDescriptor = {
   context?: MetadataJsonValue;
 };
 
-export type PluginCommandListOptions = Record<string, never>;
+export type PluginCommandListOptions = Record<string, never> &
+  PluginOwnershipKeyReserved;
 
 export type PluginCommandRegistry = {
   register<Input = unknown, Output = unknown>(
@@ -112,7 +126,7 @@ export type PluginViewDefinition<Props = unknown> = {
   component: RegistryComponent<Props>;
   accepts: ViewDataShape;
   description?: string;
-};
+} & PluginOwnershipKeyReserved;
 
 export type PluginViewDescriptor = {
   id: string;
@@ -123,10 +137,10 @@ export type PluginViewDescriptor = {
 };
 
 export type PluginViewListOptions =
-  | Record<string, never>
-  | {
+  | (Record<string, never> & PluginOwnershipKeyReserved)
+  | ({
       type: string;
-    };
+    } & PluginOwnershipKeyReserved);
 
 export type PluginViewRegistry = {
   register<Props = unknown>(
@@ -142,7 +156,7 @@ export type PluginSlotDefinition<Props = unknown> = {
   order?: number;
   component: RegistryComponent<Props>;
   when?: SlotCondition<Props>;
-};
+} & PluginOwnershipKeyReserved;
 
 export type PluginSlotDescriptor = {
   id: string;
@@ -151,10 +165,10 @@ export type PluginSlotDescriptor = {
 };
 
 export type PluginSlotListOptions =
-  | Record<string, never>
-  | {
+  | (Record<string, never> & PluginOwnershipKeyReserved)
+  | ({
       slot: string;
-    };
+    } & PluginOwnershipKeyReserved);
 
 export type PluginSlotRegistry = {
   register<Props = unknown>(
