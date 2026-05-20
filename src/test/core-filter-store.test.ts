@@ -942,6 +942,54 @@ describe("in-memory Filter Store", () => {
     },
   );
 
+  it("rejects wide query payloads that exhaust the JSON node budget without changing stored filters", () => {
+    const store = createStore({
+      ids: ["filter_existing", "filter_rejected"],
+      instants: [firstInstant],
+    });
+    const existing = store.save(
+      filterInput({
+        name: "Existing",
+        query: existsQuery(),
+        viewType: "task.list",
+        sourcePluginId: "task-plugin",
+      }),
+    );
+
+    expectFilterStoreError(
+      () =>
+        store.save(
+          filterInput({
+            name: "Oversized",
+            query: eqQuery(
+              "metadata.task.payload",
+              wideJsonNodeBudgetExhaustingValue(),
+            ),
+            viewType: "task.list",
+          }),
+        ),
+      "FILTER_QUERY_INVALID",
+      { rejectTypeError: true },
+    );
+    expect(store.get(existing.id)).toStrictEqual(existing);
+    expect(store.list()).toStrictEqual([existing]);
+
+    expectFilterStoreError(
+      () =>
+        store.update(existing.id, {
+          name: "Should not apply",
+          query: eqQuery(
+            "metadata.task.payload",
+            wideJsonNodeBudgetExhaustingValue(),
+          ),
+        }),
+      "FILTER_QUERY_INVALID",
+      { rejectTypeError: true },
+    );
+    expect(store.get(existing.id)).toStrictEqual(existing);
+    expect(store.list()).toStrictEqual([existing]);
+  });
+
   it("rejects malformed sort and group fields without changing existing filters", () => {
     const store = createStore({
       ids: ["filter_alpha"],
@@ -1370,6 +1418,10 @@ function deeplyNestedValue(depth: number): unknown {
   }
 
   return value;
+}
+
+function wideJsonNodeBudgetExhaustingValue(): unknown {
+  return Array.from({ length: 100_000 }, (_, index) => index);
 }
 
 function proxyArrayWithThrowingIterator<T>(items: T[], rawError: Error): T[] {
