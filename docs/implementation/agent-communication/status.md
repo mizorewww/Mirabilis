@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 05:34 CST.
+Last updated: 2026-05-21 05:39 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 05:34 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round running.
+- Current phase: review round complete; review-fix TDD needed.
 
 ## Active Agents
 
-- Helmholtz the 2nd (`pr_explorer`, id `019e474f-7db5-76b3-badd-b54940257148`) - changed surface and hotspot mapping.
-- Popper the 2nd (`reviewer`, id `019e474f-81f6-7d33-a5e4-19e78f57dffb`) - correctness review.
-- Euclid the 2nd (`deprecation_auditor`, id `019e474f-860b-7400-bc0b-7bb87879fd1d`) - Tauri/Rust API/deprecation review.
-- Mencius the 2nd (`security_reviewer`, id `019e474f-8abc-7f51-b269-50504c28c1c5`) - IPC/capability/security review.
-- Rawls the 2nd (`docs_researcher`, id `019e474f-9017-7f21-bdeb-3ac4a73d5c64`) - docs/current-guidance review.
-- Pauli the 2nd (`test_quality_reviewer`, id `019e474f-94f7-7793-be46-287a3e630378`) - test-quality review.
+- None. Review round agents were closed after reporting.
 
 ## Recent Agent Outcomes
 
@@ -39,7 +34,9 @@ Last updated: 2026-05-21 05:34 CST.
 - Laplace the 2nd's implementation commit: `3452616 Laplace the 2nd(implementation)(Expose Tauri IPC commands for core persistence): implement db ipc allowlist`.
 - Parent repeated focused green checks after Laplace the 2nd: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_boundary`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - TASK-014 review agents were spawned. `doc_writer` was deferred because the agent thread limit was reached; parent will spawn it after a review slot is available.
-- Parent next step: wait for review agents, then spawn deferred `doc_writer` if docs gaps remain or still need dedicated read-only docs review.
+- TASK-014 review round 1 completed. Helmholtz the 2nd (`pr_explorer`) found no scope creep. Mencius the 2nd (`security_reviewer`) found no P0/P1/P2 security findings. Popper the 2nd (`reviewer`) found one P1: metadata IPC get/delete use row `id` rather than the Core logical key `(pageId, namespace, key)`. Pauli the 2nd (`test_quality_reviewer`) found one P1: the capability test can false-pass by matching command names in descriptions instead of verifying permission IDs and generated TOML `commands.allow`. Additional P2s cover missing-target mutations silently succeeding, weak per-operation payload validation coverage/semantics, raw `BEGIN IMMEDIATE` transaction helper on `&self`, public Rust `commands` module surface, frontend `db.transaction` return typing, brittle long-lived command-registration scans, and docs drift for operation allowlist, errors, transaction semantics, DB path, and app-command permissions.
+- Parent decisions: run a delegated review-fix TDD loop. `test_writer` should first add failing tests for the P1s and selected P2s; then `implementer` will update production code. Docs sync is deferred until review-fix behavior stabilizes.
+- Parent next step: spawn `test_writer` for review-fix tests.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
