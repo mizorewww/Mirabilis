@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:30 CST.
+Last updated: 2026-05-21 01:36 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-21 01:30 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final post-stale-register read-only re-review in progress.
+- Current phase: TASK-011 install/register and pending-dependent TDD in progress.
 
 ## Active Agents
 
-- Schrodinger (`pr_explorer`, `019e4670-54fc-73f1-9e45-450dcc343143`) is mapping final diff scope and hotspots.
-- Rawls (`reviewer`, `019e4670-6187-7ae3-9a92-f611d438ce2f`) is reviewing correctness.
-- Goodall (`security_reviewer`, `019e4670-6ac1-7762-bfbd-35afad7ee07a`) is reviewing plugin boundary/security behavior.
-- Feynman (`test_quality_reviewer`, `019e4670-6ecc-7161-9362-5eb620fa01fa`) is reviewing test quality.
-- Kierkegaard (`docs_researcher`, `019e4670-753a-76d3-995d-1a18f129d11b`) is reviewing docs/status drift.
-- Euler (`deprecation_auditor`, `019e4670-7c7b-7433-807b-a0f911aca64d`) is reviewing API/deprecation risk.
+- Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`) is adding red tests for concurrent install/register failure cleanup and pending dependent registration dependency removal.
 
 ## Recent Agent Outcomes
 
+- Newton (`test_writer`) was spawned for red tests covering Goodall's two P1 lifecycle races. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Final post-stale-register read-only re-review completed. Goodall (`security_reviewer`) found two P1 boundary issues: concurrent `register(plugin)` can run while `install(plugin)` is pending and leave orphaned contributions if install later fails; dependency removal can ignore dependents with pending registration because they are still `installed`.
+- Rawls (`reviewer`) found no P0/P1 correctness findings, but independently reproduced the concurrent install/register orphaned-contribution race as P2.
+- Schrodinger (`pr_explorer`) found no implementation scope creep and only the stale live-status footer P2.
+- Feynman (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings.
+- Kierkegaard (`docs_researcher`) found no P0/P1 docs drift and only the stale live-status footer P2.
+- Euler (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings and verified Vitest v4 `expectTypeOf` and TypeScript type-only module docs.
+- Parent decision: fix Goodall's P1 findings through another delegated TDD loop before any final gate or merge.
 - Final post-stale-register read-only re-review agents spawned after Galileo's green fix.
 - Galileo (`implementer`) completed and was closed after fixing stale register cleanup and concurrent register contribution tracking.
 - Galileo's review-fix commit: `c2c27b1 Galileo(review-fix)(Implement Plugin Host lifecycle): isolate stale register cleanup`.
@@ -573,10 +576,10 @@ Last updated: 2026-05-21 01:30 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, the pending transaction fix, and the concurrent uninstall fix. Final micro re-review found stale register cleanup and concurrent register tracking gaps now entering TDD.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, and the stale register cleanup fix. Final post-stale-register review found two P1 lifecycle races now entering TDD.
 
 ## Next Actions
 
-1. Spawn `test_writer` for stale register cleanup after retry and concurrent register contribution tracking.
+1. Wait for Newton's red tests for concurrent install/register failure cleanup and pending dependent registration dependency removal.
 2. Commit the expected red tests, then spawn `implementer` for the minimal production fix.
-3. Re-run focused checks, micro re-review, and final local gate if clear.
+3. Re-run focused checks, re-review, and final local gate if clear.

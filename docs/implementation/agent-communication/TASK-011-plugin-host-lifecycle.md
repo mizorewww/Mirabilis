@@ -39,15 +39,10 @@
 
 ## Current Status
 
-- Status: final post-stale-register read-only re-review in progress.
+- Status: install/register and pending-dependent TDD in progress.
 - Active agents:
-  - Schrodinger (`pr_explorer`, `019e4670-54fc-73f1-9e45-450dcc343143`).
-  - Rawls (`reviewer`, `019e4670-6187-7ae3-9a92-f611d438ce2f`).
-  - Goodall (`security_reviewer`, `019e4670-6ac1-7762-bfbd-35afad7ee07a`).
-  - Feynman (`test_quality_reviewer`, `019e4670-6ecc-7161-9362-5eb620fa01fa`).
-  - Kierkegaard (`docs_researcher`, `019e4670-753a-76d3-995d-1a18f129d11b`).
-  - Euler (`deprecation_auditor`, `019e4670-7c7b-7433-807b-a0f911aca64d`).
-- Next parent step: wait for final re-review, fix any P0/P1 findings through delegated work, then run the local gate.
+  - Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`).
+- Next parent step: wait for Newton, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -572,7 +567,7 @@
 
 ### Final Post-Stale-Register Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Schrodinger (`pr_explorer`, `019e4670-54fc-73f1-9e45-450dcc343143`).
   - Rawls (`reviewer`, `019e4670-6187-7ae3-9a92-f611d438ce2f`).
@@ -583,6 +578,27 @@
 - Assignment:
   - Read-only final review of TASK-011 after Galileo's stale register cleanup fix.
   - Check scope, correctness, security boundaries, test quality, docs/status drift, and API/deprecation risk before the local gate.
+- Outcomes:
+  - Goodall found two P1 lifecycle boundary issues: concurrent `register(plugin)` can run while `install(plugin)` is pending and leave orphaned contributions if install later fails; dependency removal can ignore dependents with pending registration because they are still `installed`.
+  - Rawls found no P0/P1 correctness findings, but independently reproduced the concurrent install/register orphaned-contribution race as P2.
+  - Schrodinger found no implementation scope creep and only the stale live-status footer P2.
+  - Feynman found no P0/P1/P2 test-quality findings.
+  - Kierkegaard found no P0/P1 docs drift and only the stale live-status footer P2.
+  - Euler found no P0/P1/P2 API/deprecation findings and verified current Vitest v4 `expectTypeOf` and TypeScript type-only module docs.
+- Parent decision:
+  - Treat Goodall's lifecycle races as P1 and run another delegated TDD loop before final gate or merge.
+
+### Install/Register And Pending-Dependent TDD
+
+- Status: in progress.
+- Agent:
+  - Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add deterministic red tests for concurrent `install(plugin)` / `register(plugin)` where install later fails and must not leave orphaned runtime contributions.
+  - Add deterministic red tests for dependency removal while a dependent's async registration is pending, requiring deactivate/uninstall to account for pending dependents before hooks run.
+  - Use public host APIs and runtime registry observations only; no production or docs edits.
 
 ## Parent Decisions
 
@@ -593,4 +609,4 @@
 
 ## Next Action
 
-Wait for final read-only re-review, then handle findings or run the local gate.
+Wait for Newton's red tests, then validate and commit them.
