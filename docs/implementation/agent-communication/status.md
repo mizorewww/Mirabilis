@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:44 CST.
+Last updated: 2026-05-21 03:46 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 03:44 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance complete; red test handoff next.
+- Current phase: red test agent running.
 
 ## Active Agents
 
-- None.
+- Einstein the 2nd (`test_writer`, id `019e46ec-db58-7e33-a0c3-a778b295a5ab`) - TASK-013 Rust SQLite/repository acceptance red tests.
 
 ## Recent Agent Outcomes
 
@@ -26,7 +26,8 @@ Last updated: 2026-05-21 03:44 CST.
 - Raman the 2nd (`deprecation_auditor`) confirmed `tauri-plugin-sql` is a poor TASK-013 fit, recommended backend-only `rusqlite`, warned that SQLite foreign keys are off by default per connection, and required explicit JSON/NULL semantics and deterministic `ORDER BY` behavior in repository tests.
 - Epicurus the 2nd (`security_reviewer`) required parameterized repository access, no raw SQL or IPC exposure, no Tauri capability/config/frontend NativeBridge changes, corrupt JSON typed errors, SQL injection regression coverage, and no dynamic plugin-owned DDL from plugin input.
 - Parent decisions for red tests: target a private Rust SQLite/repository layer under `src-tauri/src/db`; use `rusqlite` and file-backed temp DB coverage; test `core_commands` and `core_views`; interpret plugin-owned index baseline as a neutral `core_plugin_indexes` registry/support table rather than business-plugin tables; keep app data path resolution, IPC commands, capability changes, frontend wiring, and NativeBridge operation allowlisting out of scope.
-- Parent next step: commit pre-test guidance, then delegate Rust acceptance tests to `test_writer`.
+- Einstein the 2nd (`test_writer`) was spawned for TASK-013 Rust red tests. Ownership is limited to Rust acceptance tests under `src-tauri/tests/`, plus `src-tauri/Cargo.toml` / `Cargo.lock` only for test-only dependencies if needed. Production Rust implementation, frontend files, NativeBridge files, Plugin API files, docs, Tauri capabilities, `tauri.conf.json`, IPC commands, and app bootstrap wiring are out of scope.
+- Parent next step: wait for Einstein the 2nd, review the red-test patch, run focused red checks, then commit the tests if the failure is clean.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

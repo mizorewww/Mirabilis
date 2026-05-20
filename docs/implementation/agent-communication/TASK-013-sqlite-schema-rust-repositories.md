@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; red test handoff next.
+- Status: red test agent running.
 - Active agents:
-  - None.
-- Next parent step: commit pre-test guidance, then delegate Rust red tests to `test_writer`.
+  - Einstein the 2nd (`test_writer`, id `019e46ec-db58-7e33-a0c3-a778b295a5ab`).
+- Next parent step: wait for Einstein the 2nd, review the red-test patch, run focused red checks, then commit the tests if the failure is clean.
 
 ## Agent Handoffs
 
@@ -84,3 +84,25 @@
 - SQLite in-memory database, `PRAGMA user_version`, PRAGMA, and foreign key documentation.
 - `tempfile` docs.
 - `serde_json::Value` docs.
+
+### Red Test Round
+
+- Status: running.
+- Agent:
+  - Einstein the 2nd (`test_writer`, id `019e46ec-db58-7e33-a0c3-a778b295a5ab`).
+- Ownership:
+  - Rust acceptance tests, preferably under `src-tauri/tests/`.
+  - `src-tauri/Cargo.toml` only for test-only dev-dependencies if required.
+  - `src-tauri/Cargo.lock` only as a consequence of test-only dependency resolution.
+- Explicitly out of scope:
+  - Production Rust implementation under `src-tauri/src/`.
+  - Tauri IPC commands, `invoke_handler` changes, capabilities, `tauri.conf.json`, frontend NativeBridge files, Plugin API files, app bootstrap wiring, `tauri-plugin-sql`, `sqlx`, and business plugin index tables.
+- Required red-test coverage:
+  - Migration idempotency/version tracking on a temp/file-backed database.
+  - Schema tables/columns/indexes for pages, metadata, events, filters, plugins, commands, views, and neutral plugin-owned index baseline support.
+  - Typed table-specific repositories, not a generic SQL executor.
+  - JSON round trips through `serde_json::Value`, including SQL `NULL` versus JSON `null` where applicable.
+  - Corrupt JSON typed errors.
+  - SQL injection regression strings persisted literally with tables still intact.
+  - Deterministic list ordering.
+  - Boundary scans proving no frontend raw SQL package, no TASK-013 IPC command exposure, no capability additions, and no SQL-shaped TypeScript `DbQuery`.
