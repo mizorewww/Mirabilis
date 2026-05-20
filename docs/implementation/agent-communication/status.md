@@ -1,11 +1,11 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:42 CST.
+Last updated: 2026-05-20 11:26 CST.
 
 ## Current Task
 
-- Task: TASK-006 - Add Filter Store and Query AST baseline.
-- Branch: `feat/task-006-filter-store-query-ast`.
+- Task: TASK-007 - Add Command Registry and Command Bus.
+- Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
 - Current phase: final gate passed; progress update active.
@@ -16,6 +16,36 @@ Last updated: 2026-05-20 10:42 CST.
 
 ## Recent Agent Outcomes
 
+- Final TASK-007 gate passed: `bun run check:quick` and `bun run build`.
+- Targeted re-review completed. Hilbert found no remaining P0/P1/P2/P3 security issues, confirmed handler failures no longer expose raw causes, confirmed context invalid/proxy coverage, and accepted caller identity/capability as a deferred Plugin Host/UI exposure risk. Mill found no remaining P0/P1/P2/P3 deprecation/API issues and confirmed standard `Error.cause` semantics. Arendt found no remaining P0/P1/P2/P3 test-quality issues.
+- Targeted re-review agents spawned for TASK-007 review-fix changes.
+- Newton (`implementer`) completed and was closed after implementing TASK-007 review fixes.
+- Newton's review-fix commit: `6b4c3ac Newton(review-fix)(Add Command Registry and Command Bus): hide raw handler causes`.
+- Parent repeated green checks after Newton: `bun run typecheck`, `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing, and `bun run lint`.
+- Newton (`implementer`) was spawned for TASK-007 review-fix implementation.
+- Popper (`test_writer`) completed and was closed after adding review-fix coverage.
+- Popper's test commit: `1c6c6f3 Popper(test)(Add Command Registry and Command Bus): add review-fix coverage`.
+- Parent confirmed expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-command-registry.test.ts` runs 11 tests with 5 passing and 6 failing because production `CommandRegistryError` instances still expose public own `cause`.
+- Popper (`test_writer`) was spawned for TASK-007 review-fix tests.
+- Review round 1 completed. Einstein reported no correctness P0/P1/P2/P3. Cicero found two P2 security issues and one P3: raw handler causes are publicly exposed, caller identity/capability facades are needed before Plugin Host/UI exposure, and proxy-specific context tests would be useful. Turing found one P2: `CommandRegistryError.cause` does not match standard `Error.cause` optional/non-enumerable semantics. Epicurus found one P2 test gap around context JSON-compatible invalid values and two P3 test gaps around `get()` handler privacy and `../core/commands` type-barrel coverage. Mencius found one P3 stale live-status section. Lovelace confirmed no native/package/config changes.
+- Selected TASK-007 review fixes: add tests for sanitized/no public raw handler cause, standard `Error.cause` semantics, broader invalid context coverage, `get()` handler privacy, and full `../core/commands` type-barrel exports; then update implementation as needed. Caller identity/capability scoped facades are recorded as a later Plugin Host/UI exposure risk because TASK-007 only creates the Core registry and does not yet pass it to plugins.
+- TASK-007 review agents spawned.
+- Curie (`implementer`) completed and was closed after implementing TASK-007 production code.
+- Curie's implementation commit: `883c1aa Curie(implementation)(Add Command Registry and Command Bus): implement command registry`.
+- Parent corrected Curie's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
+- Parent repeated green checks after Curie: `bun run typecheck`, `bun run test:frontend -- src/test/core-command-registry.test.ts` with 10 tests passing, and `bun run lint`.
+- Curie (`implementer`) was spawned for TASK-007 production implementation.
+- Ohm (`test_writer`) completed and was closed after adding TASK-007 acceptance tests.
+- Ohm's test commit: `65e8727 Ohm(test)(Add Command Registry and Command Bus): add command registry acceptance tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails on missing Command Registry exports and `../core/commands`; `bun run test:frontend -- src/test/core-command-registry.test.ts` fails during import resolution for `../core/commands` with no tests executed.
+- Ohm (`test_writer`) was spawned for TASK-007 failing acceptance tests in `src/test/core-command-registry.test.ts`.
+- TASK-007 pre-test guidance completed. Schrodinger planned the Command Registry/Bus API and acceptance tests, Bacon verified current TypeScript/Vitest guidance, and Poincare audited handler exposure, async error wrapping, generic unsoundness, validation, and descriptor clone risks.
+- Parent decisions: expose descriptor metadata without handlers from `get`/`list`/`register`/`unregister`; keep handlers private and executable only through the bus; use `defaultShortcut` as metadata only; treat `context` as inert cloneable descriptor data; use `execute(commandId, input?: unknown): Promise<unknown>` at Core level; wrap sync throws and async rejections as `COMMAND_HANDLER_FAILED` without exposing the original thrown value as public `cause`.
+- Pre-test guidance agents spawned for TASK-007.
+- TASK-007 started from latest `master` after TASK-006 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-007.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
+- TASK-006 was merged to `master` and pushed. Merge commit: `df37c25 Codex(merge)(Add Filter Store and Query AST baseline): merge task branch`.
 - Final TASK-006 gate passed: `bun run check:quick` and `bun run build`.
 - Kuhn (`test_quality_reviewer`) completed and was closed. Findings: no remaining P0/P1/P2/P3 test-quality issues; Euclid's node-count P2 blocker is closed. Checks: `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing, and `bun run typecheck`.
 - Laplace's P3 docs cleanup is complete: TASK-006 communication status is current and exact external documentation URLs are recorded.
@@ -171,12 +201,12 @@ Last updated: 2026-05-20 10:42 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-006 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-006.
-- `docs/implementation/agent-communication/TASK-006-filter-store-query-ast.md` holds TASK-006 agent notes and parent decisions.
+- `docs/implementation/progress.md` marks TASK-007 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-007.
+- `docs/implementation/agent-communication/TASK-007-command-registry-command-bus.md` holds TASK-007 agent notes and parent decisions.
 
 ## Next Actions
 
-1. Commit TASK-006 progress completion.
-2. Merge `feat/task-006-filter-store-query-ast` back to `master`.
-3. Continue to TASK-007 from latest `master`.
+1. Commit TASK-007 progress completion.
+2. Merge `feat/task-007-command-registry-command-bus` back to `master`.
+3. Continue to TASK-008 from latest `master`.

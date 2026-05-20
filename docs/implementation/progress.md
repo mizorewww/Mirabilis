@@ -29,7 +29,7 @@ Status markers:
 - [x] TASK-004: Add in-memory Metadata Store
 - [x] TASK-005: Add in-memory Event Store
 - [x] TASK-006: Add Filter Store and Query AST baseline
-- [ ] TASK-007: Add Command Registry and Command Bus
+- [x] TASK-007: Add Command Registry and Command Bus
 - [ ] TASK-008: Add View Registry and Slot Registry
 - [ ] TASK-009: Add Transaction Manager and Core Runtime composition
 
@@ -78,6 +78,25 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 11:26 CST - TASK-007 completed
+
+- Branch: `feat/task-007-command-registry-command-bus`.
+- Task: Add Command Registry and Command Bus.
+- Commits: `d1d0454` start orchestration, `1bb3538` pre-test guidance handoff, `8e416de` pre-test guidance, `336162a` test writer handoff, `65e8727` acceptance tests, `fde4bf1` red signal, `6062aef` implementation handoff, `883c1aa` implementation, `dfd8c02` green signal, `9867fd9` review handoff, `9422ffd` review findings, `c860fef` review-fix test handoff, `1c6c6f3` review-fix coverage, `f7132f5` review-fix red signal, `ea3bf82` review-fix implementation handoff, `6b4c3ac` raw handler cause fix, `97c6856` review-fix green signal, `aa9ee3d` targeted re-review handoff, and `79a7273` targeted re-review outcome.
+- Delivered: `createInMemoryCommandRegistry`, `CommandRegistryError`, Core command types, handler-free command descriptors, register/get/list/unregister behavior, exact plugin filtering, duplicate ID rejection, command bus execution through private handlers, sync/async handler support, in-flight handler snapshots, defensive descriptor/context copies, JSON-compatible inert context validation, default shortcut metadata validation, and sanitized handler failure errors.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused `bun run test:frontend -- src/test/core-command-registry.test.ts` passed with 11 tests, and `bun run typecheck`/`bun run lint` passed after review fixes.
+- Review: correctness review reported no P0/P1/P2/P3 findings. Security, deprecation/API, and test-quality P2/P3 findings around raw handler causes, standard `Error.cause` semantics, context validation coverage, handler privacy assertions, and command type-barrel coverage were fixed and cleared by targeted re-review. No native/package/Tauri surfaces changed.
+- External docs verified by agents: TypeScript generics, generic function guidance, `unknown`, type-only imports/exports, `satisfies`, Vitest async assertions, `expect`, `expectTypeOf`, Vitest type testing, and TC39 `InstallErrorCause`/non-enumerable error cause semantics.
+- Remaining risk: before Plugin Host or UI/plugin contexts receive command services, caller-aware authorization or scoped facades must prevent plugins from unregistering or executing unrelated commands. `bun run check:full` was not run because TASK-007 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
+
+### 2026-05-20 10:44 CST - TASK-007 started
+
+- Branch: `feat/task-007-command-registry-command-bus`.
+- Task: Add Command Registry and Command Bus.
+- Scope: implement Core-level command registration, discovery, unregistration, and command bus execution without adding business-plugin behavior or UI.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-007-command-registry-command-bus.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and a desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-20 10:42 CST - TASK-006 completed
 

@@ -7,6 +7,14 @@ export type {
   FilterOperator,
   FilterQuery,
   FilterSort,
+  CommandBus,
+  CommandDefinition,
+  CommandDescriptor,
+  CommandHandler,
+  CommandRegistry,
+  CommandRegistryErrorCode,
+  CommandService,
+  ListCommandsOptions,
   MarkdownPage,
   MetadataRecord,
   MetadataValueType,
@@ -23,6 +31,10 @@ export {
   createInMemoryMetadataStore,
   createInMemoryPageStore,
 } from "./stores";
+export {
+  CommandRegistryError,
+  createInMemoryCommandRegistry,
+} from "./commands";
 export type {
   AppendEventInput,
   CreateInMemoryEventStoreOptions,
