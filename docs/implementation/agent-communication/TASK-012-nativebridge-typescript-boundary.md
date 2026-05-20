@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review-fix implementation in progress.
+- Status: review-fix implementation green; docs handoff next.
 - Active agents:
-  - Darwin the 2nd (`implementer`, `019e46d8-7847-76e3-9b77-fc9d392a47e7`).
-- Next parent step: wait for Darwin the 2nd, run focused green checks, and commit the review-fix implementation if it stays within scope.
+  - None.
+- Next parent step: spawn a `doc_writer` to sync the concrete NativeBridge command/DTO/error contract into architecture docs before re-review.
 
 ## Agent Handoffs
 
@@ -250,7 +250,7 @@
 
 ### Review-Fix Implementation
 
-- Status: running.
+- Status: completed and committed.
 - Agent:
   - Darwin the 2nd (`implementer`, `019e46d8-7847-76e3-9b77-fc9d392a47e7`).
 - Ownership:
@@ -262,3 +262,16 @@
   - Make public command-failure messages stable and safe without leaking raw SQL, filesystem paths, tokens, or backend messages.
   - Preserve command/code on `NativeBridgeError` and keep adapter delegation behavior intact.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, Plugin API/Plugin Host, or unrelated files.
+- Outcome:
+  - Preserved `NATIVE_BRIDGE_COMMANDS` as exact literal values using `as const satisfies`.
+  - Replaced SQL-shaped `DbQuery` with an operation/payload DTO.
+  - Expanded `DbValue` to JSON-compatible primitive, array, and object payloads.
+  - Changed command-failure public messages to stable `Native command failed` while retaining `code` and `command`.
+- Commit:
+  - `0351f17 Darwin the 2nd(review-fix)(Add NativeBridge TypeScript boundary): harden native bridge contracts`.
+- Green checks:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 17 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Raw Tauri scan confirmed the only production `@tauri-apps/api/core` import is `src/core/native/tauri-native-bridge.ts`.
