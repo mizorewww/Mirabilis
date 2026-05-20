@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: post-fix re-review cleared; local gate next.
+- Status: complete on task branch; merge pending.
 - Active agents:
   - None.
-- Next parent step: run `bun run check:quick` and then complete TASK-012 if the gate passes.
+- Next parent step: commit progress update, merge to `master`, and continue to the next unblocked task.
 
 ## Agent Handoffs
 
@@ -316,3 +316,14 @@
   - `git diff --check master...HEAD` passed.
 - Remaining risks:
   - Rust-side `DbQuery.operation` allowlist enforcement and file path canonicalization/authorization remain deferred to TASK-014, as documented.
+
+### Local Gate
+
+- Status: passed.
+- Checks:
+  - `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests.
+  - `bun run build` passed.
+  - Focused final `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 17 tests.
+  - Focused final `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Notes:
+  - `bun run check:full` was not run because TASK-012 did not change Tauri config, Rust commands, capabilities, filesystem/persistence implementation, packaging, or release behavior.
