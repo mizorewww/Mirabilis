@@ -216,11 +216,15 @@ class PluginHostImpl implements PluginHostInstance {
 
     for (const plugin of orderedPlugins) {
       const record = this.addInstalledRecord(plugin);
-      installedRecords.push(record);
-    }
 
-    for (const record of installedRecords) {
-      await this.runLifecycleHook(record, "install", record.plugin.install);
+      try {
+        await this.runLifecycleHook(record, "install", record.plugin.install);
+      } catch (error) {
+        this.records.delete(record.manifest.id);
+        throw error;
+      }
+
+      installedRecords.push(record);
     }
 
     for (const record of installedRecords) {
@@ -245,7 +249,12 @@ class PluginHostImpl implements PluginHostInstance {
 
     const record = this.addInstalledRecord(plugin);
 
-    await this.runLifecycleHook(record, "install", record.plugin.install);
+    try {
+      await this.runLifecycleHook(record, "install", record.plugin.install);
+    } catch (error) {
+      this.records.delete(record.manifest.id);
+      throw error;
+    }
 
     return this.toPublicRecord(record);
   }
@@ -501,30 +510,33 @@ class PluginHostImpl implements PluginHostInstance {
     return {
       pluginId: scope.pluginId,
       app: cloneAppRuntimeInfo(this.app),
-      pages: createPluginPageStore(this.services.pages),
+      pages: createPluginPageStore(scope, this.services.pages),
       metadata: createPluginMetadataStore(
-        scope.pluginId,
+        scope,
         this.services.metadata,
       ),
-      events: createPluginEventStore(scope.pluginId, this.services.events),
-      filters: createPluginFilterStore(scope.pluginId, this.services.filters),
+      events: createPluginEventStore(scope, this.services.events),
+      filters: createPluginFilterStore(scope, this.services.filters),
       commands: this.createPluginCommandRegistry(scope),
       views: this.createPluginViewRegistry(scope),
       slots: this.createPluginSlotRegistry(scope),
-      transaction: this.createPluginTransactionManager(scope.pluginId),
+      transaction: this.createPluginTransactionManager(scope),
     };
   }
 
   private createPluginTransactionManager(
-    pluginId: string,
+    scope: PluginContextScope,
   ): PluginTransactionManager {
     return {
       run: <Result>(
         handler: PluginTransactionHandler<Result>,
-      ): Promise<Awaited<Result>> =>
-        this.services.transaction.run((transaction) =>
-          handler(createPluginTransaction(pluginId, transaction)),
-        ),
+      ): Promise<Awaited<Result>> => {
+        assertCanMutatePluginData(scope);
+
+        return this.services.transaction.run((transaction) =>
+          handler(createPluginTransaction(scope, transaction)),
+        );
+      },
     };
   }
 
@@ -810,22 +822,59 @@ function assertCanRegisterRuntimeContribution(
   );
 }
 
-function createPluginPageStore(pages: PageStore): PluginPageStore {
+function assertCanMutatePluginData(scope: PluginContextScope): void {
+  if (scope.active) {
+    return;
+  }
+
+  throw new PluginHostError(
+    "PLUGIN_LIFECYCLE_FAILED",
+    `Plugin ${scope.pluginId} cannot mutate plugin data now`,
+    {
+      pluginId: scope.pluginId,
+      phase: scope.phase,
+    },
+  );
+}
+
+function createPluginPageStore(
+  scope: PluginContextScope,
+  pages: PageStore,
+): PluginPageStore {
   return {
-    create: (input) => pages.create(input),
+    create(input) {
+      assertCanMutatePluginData(scope);
+
+      return pages.create(input);
+    },
+
     get: (pageId) => pages.get(pageId),
-    update: (pageId, input) => pages.update(pageId, input),
-    archive: (pageId) => pages.archive(pageId),
+
+    update(pageId, input) {
+      assertCanMutatePluginData(scope);
+
+      return pages.update(pageId, input);
+    },
+
+    archive(pageId) {
+      assertCanMutatePluginData(scope);
+
+      return pages.archive(pageId);
+    },
+
     list: (options) => pages.list(options),
   };
 }
 
 function createPluginMetadataStore(
-  pluginId: string,
+  scope: PluginContextScope,
   metadata: MetadataStore,
 ): PluginMetadataStore {
+  const pluginId = scope.pluginId;
+
   return {
     set(input: PluginSetMetadataInput) {
+      assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
       assertMetadataWriteAllowed(pluginId, metadata, input);
 
@@ -853,6 +902,7 @@ function createPluginMetadataStore(
     },
 
     delete(pageId, namespace, key) {
+      assertCanMutatePluginData(scope);
       requireOwnedMetadataRecord(pluginId, metadata, pageId, namespace, key);
 
       return metadata.delete(pageId, namespace, key);
@@ -914,11 +964,14 @@ function findMetadataRecord(
 }
 
 function createPluginEventStore(
-  pluginId: string,
+  scope: PluginContextScope,
   events: EventStore,
 ): PluginEventStore {
+  const pluginId = scope.pluginId;
+
   return {
     append(input: PluginAppendEventInput) {
+      assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
 
       return events.append({
@@ -938,11 +991,14 @@ function createPluginEventStore(
 }
 
 function createPluginFilterStore(
-  pluginId: string,
+  scope: PluginContextScope,
   filters: FilterStore,
 ): PluginFilterStore {
+  const pluginId = scope.pluginId;
+
   return {
     save(input: PluginSaveFilterInput) {
+      assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
 
       return filters.save({
@@ -954,6 +1010,7 @@ function createPluginFilterStore(
     get: (filterId) => requireOwnedFilter(pluginId, filters, filterId),
 
     update(filterId: string, input: PluginUpdateFilterInput) {
+      assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
       requireOwnedFilter(pluginId, filters, filterId);
 
@@ -972,6 +1029,7 @@ function createPluginFilterStore(
     },
 
     delete(filterId) {
+      assertCanMutatePluginData(scope);
       requireOwnedFilter(pluginId, filters, filterId);
 
       return filters.delete(filterId);
@@ -1010,7 +1068,7 @@ function requireOwnedFilter(
 }
 
 function createPluginTransaction(
-  pluginId: string,
+  scope: PluginContextScope,
   transaction: {
     pages: PageStore;
     metadata: MetadataStore;
@@ -1018,12 +1076,14 @@ function createPluginTransaction(
     filters: FilterStore;
   },
 ): PluginTransaction {
+  const pluginId = scope.pluginId;
+
   return {
     pluginId,
-    pages: createPluginPageStore(transaction.pages),
-    metadata: createPluginMetadataStore(pluginId, transaction.metadata),
-    events: createPluginEventStore(pluginId, transaction.events),
-    filters: createPluginFilterStore(pluginId, transaction.filters),
+    pages: createPluginPageStore(scope, transaction.pages),
+    metadata: createPluginMetadataStore(scope, transaction.metadata),
+    events: createPluginEventStore(scope, transaction.events),
+    filters: createPluginFilterStore(scope, transaction.filters),
   };
 }
 
