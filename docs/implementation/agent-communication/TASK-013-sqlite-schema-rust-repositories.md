@@ -40,12 +40,9 @@
 
 ## Current Status
 
-- Status: final re-review agents running.
-- Active agents:
-  - Maxwell the 2nd (`reviewer`, id `019e471a-f151-76c3-96b0-dc4f11361960`).
-  - Russell the 2nd (`security_reviewer`, id `019e471a-f5ac-7240-a756-3db6f87a8efc`).
-  - Boyle the 2nd (`test_quality_reviewer`, id `019e471a-fa0c-70b1-9879-1a68e2ffdcc1`).
-- Next parent step: wait for final re-review, then run local gate if no P0/P1/P2 findings remain.
+- Status: final re-review complete; one frontend boundary-test P2 follow-up pending.
+- Active agents: none.
+- Next parent step: spawn `test_writer` for a test-only NativeBridge boundary follow-up, then run focused checks.
 
 ## Agent Handoffs
 
@@ -210,7 +207,7 @@
 
 ### Final Re-Review Round
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Maxwell the 2nd (`reviewer`) for correctness.
   - Russell the 2nd (`security_reviewer`) for security/boundary.
@@ -219,6 +216,25 @@
   - Stay read-only and do not edit files.
   - Review final cleanup commits `f8759c2` and `f2c8017` only.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
+- Outcomes:
+  - Maxwell the 2nd (`reviewer`) found no P0/P1/P2 findings. It confirmed immutable migration 001 versioning, updated checksum, future ledger rejection, v1 drift validation, `core_plugin_indexes` cascade behavior, and final migration/FK coverage.
+  - Boyle the 2nd (`test_quality_reviewer`) found no P0/P1/P2 findings for the final Rust cleanup. It confirmed the Rust boundary tests no longer freeze broad `operation: string` shape or temporary no-IPC state.
+  - Russell the 2nd (`security_reviewer`) found no P0/P1 findings for the final cleanup and confirmed no IPC, capability, command exposure, frontend invoke scope creep, or SQL plugin markers. P2: pre-existing `src/test/native-bridge.test.ts` still exact-matches `DbQuery` as `{ operation: string; payload?: DbValue }`, which can freeze TASK-014-safe `DbQuery` narrowing.
+  - Agent checks included focused SQLite tests, Rust fmt/clippy, full Rust tests from Maxwell, and focused SQLite tests from Russell/Boyle.
+- Parent decision:
+  - Treat Russell's frontend boundary-test P2 as in-scope follow-up before local gate because it affects the TASK-014 handoff invariant.
+  - Delegate the fix to `test_writer`; parent will not edit the test directly.
+  - The expected change is test-only in `src/test/native-bridge.test.ts`: keep rejecting raw `sql` / `params` DTO fields and preserving bridge usability, but stop requiring exact equality with the broad `operation: string` shape.
+
+### Frontend Boundary-Test Follow-Up
+
+- Status: pending agent handoff.
+- Planned agent:
+  - `test_writer` for a narrow test-only update in `src/test/native-bridge.test.ts`.
+- Assignment:
+  - Relax the NativeBridge `DbQuery` type assertion so future TASK-014 operation narrowing is legal.
+  - Preserve the stable assertions that `DbQuery` has no raw `sql` / `params` keys, accepts JSON-compatible payload values, rejects function payloads, and remains the `NativeBridge.db.execute` / `transaction` query type.
+  - Do not change production code, Rust DB code, docs, capabilities, Tauri config, or package files unless a blocker is reported first.
 
 ### Review Round 1
 
