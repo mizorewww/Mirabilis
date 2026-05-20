@@ -245,6 +245,195 @@ describe("in-memory Transaction Manager", () => {
     expect(runtime.pages.list()).toStrictEqual([livePage]);
   });
 
+  it("rejects commit when a live page body changes nested non-plain values while timestamps stay stable", async () => {
+    const stableInstant = "2026-05-20T02:45:00.000Z";
+    const runtime = createRuntime({
+      ids: ["page_non_plain"],
+      instants: [stableInstant, stableInstant, stableInstant],
+    });
+    const staged = createDeferred<void>();
+    const commit = createDeferred<void>();
+    const initialPage = runtime.pages.create({
+      title: "Non-plain body",
+      body: documentWithNonPlainValues("initial"),
+    });
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.pages.update(initialPage.id, {
+        body: documentWithNonPlainValues("tx"),
+      });
+      staged.resolve();
+
+      await commit.promise;
+
+      return "should not commit";
+    });
+
+    await staged.promise;
+
+    const livePage = runtime.pages.update(initialPage.id, {
+      body: documentWithNonPlainValues("live"),
+    });
+
+    expect(livePage.updatedAt).toBe(initialPage.updatedAt);
+
+    commit.resolve();
+
+    await expect(running).rejects.toThrow(
+      "Core transaction conflict: live page store changed before commit",
+    );
+    expect(runtime.pages.get(initialPage.id)).toStrictEqual(livePage);
+    expect(nonPlainValues(runtime.pages.get(initialPage.id))).toStrictEqual({
+      dueAt: new Date("2026-05-20T02:00:02.000Z"),
+      labels: new Set(["live"]),
+      matcher: /live/u,
+    });
+  });
+
+  it("rejects commit when metadata changes during a pending transaction and preserves the live write", async () => {
+    const runtime = createRuntime({
+      ids: ["metadata_conflict"],
+      instants: [
+        "2026-05-20T02:50:00.000Z",
+        "2026-05-20T02:51:00.000Z",
+        "2026-05-20T02:52:00.000Z",
+      ],
+    });
+    const staged = createDeferred<void>();
+    const commit = createDeferred<void>();
+
+    runtime.metadata.set({
+      pageId: "page_metadata_conflict",
+      namespace: "task",
+      key: "status",
+      value: "todo",
+      valueType: "string",
+      sourcePluginId: "task",
+    });
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.metadata.set({
+        pageId: "page_metadata_conflict",
+        namespace: "task",
+        key: "status",
+        value: "tx",
+        valueType: "string",
+        sourcePluginId: "task",
+      });
+      staged.resolve();
+
+      await commit.promise;
+
+      return "should not commit";
+    });
+
+    await staged.promise;
+
+    const liveRecord = runtime.metadata.set({
+      pageId: "page_metadata_conflict",
+      namespace: "task",
+      key: "status",
+      value: "live",
+      valueType: "string",
+      sourcePluginId: "task",
+    });
+
+    commit.resolve();
+
+    await expect(running).rejects.toThrow(
+      "Core transaction conflict: live metadata store changed before commit",
+    );
+    expect(
+      runtime.metadata.get("page_metadata_conflict", "task", "status"),
+    ).toStrictEqual(liveRecord);
+  });
+
+  it("rejects commit when events are appended during a pending transaction and preserves the live write", async () => {
+    const runtime = createRuntime({
+      ids: ["event_tx", "event_live"],
+      instants: [
+        "2026-05-20T02:55:00.000Z",
+        "2026-05-20T02:56:00.000Z",
+      ],
+    });
+    const staged = createDeferred<void>();
+    const commit = createDeferred<void>();
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.events.append({
+        pageId: "page_event_conflict",
+        namespace: "task",
+        type: "tx",
+        payload: { source: "tx" },
+        sourcePluginId: "task",
+      });
+      staged.resolve();
+
+      await commit.promise;
+
+      return "should not commit";
+    });
+
+    await staged.promise;
+
+    const liveEvent = runtime.events.append({
+      pageId: "page_event_conflict",
+      namespace: "task",
+      type: "live",
+      payload: { source: "live" },
+      sourcePluginId: "task",
+    });
+
+    commit.resolve();
+
+    await expect(running).rejects.toThrow(
+      "Core transaction conflict: live event store changed before commit",
+    );
+    expect(runtime.events.list()).toStrictEqual([liveEvent]);
+  });
+
+  it("rejects commit when filters change during a pending transaction and preserves the live write", async () => {
+    const runtime = createRuntime({
+      ids: ["filter_tx", "filter_live"],
+      instants: [
+        "2026-05-20T02:57:00.000Z",
+        "2026-05-20T02:58:00.000Z",
+      ],
+    });
+    const staged = createDeferred<void>();
+    const commit = createDeferred<void>();
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.filters.save({
+        name: "Tx filter",
+        query: eqQuery("metadata.task.status", "tx"),
+        viewType: "task.list",
+        sourcePluginId: "task",
+      });
+      staged.resolve();
+
+      await commit.promise;
+
+      return "should not commit";
+    });
+
+    await staged.promise;
+
+    const liveFilter = runtime.filters.save({
+      name: "Live filter",
+      query: eqQuery("metadata.task.status", "live"),
+      viewType: "task.list",
+      sourcePluginId: "task",
+    });
+
+    commit.resolve();
+
+    await expect(running).rejects.toThrow(
+      "Core transaction conflict: live filter store changed before commit",
+    );
+    expect(runtime.filters.list()).toStrictEqual([liveFilter]);
+  });
+
   it("rolls back staged writes when a synchronous handler throws", async () => {
     const runtime = createSeededRuntime();
     const baseline = snapshot(runtime);
@@ -475,10 +664,18 @@ describe("in-memory Transaction Manager", () => {
       instants: [],
     });
 
-    expect(Object.getOwnPropertySymbols(runtime.pages)).toStrictEqual([]);
-    expect(Object.getOwnPropertySymbols(runtime.metadata)).toStrictEqual([]);
-    expect(Object.getOwnPropertySymbols(runtime.events)).toStrictEqual([]);
-    expect(Object.getOwnPropertySymbols(runtime.filters)).toStrictEqual([]);
+    expectNoStoreSymbols(runtime);
+  });
+
+  it("does not expose transaction participants on transaction-scoped stores", async () => {
+    const runtime = createRuntime({
+      ids: [],
+      instants: [],
+    });
+
+    await runtime.transaction.run((tx: CoreTransaction) => {
+      expectNoStoreSymbols(tx);
+    });
   });
 
   it("keeps transaction handler types aligned with the public transaction context", () => {
@@ -617,6 +814,47 @@ function documentWithText(text: string): StructuredMarkdownDocument {
       },
     ],
   };
+}
+
+function documentWithNonPlainValues(label: string): StructuredMarkdownDocument {
+  const dueAtSecond = label === "initial" ? "00" : label === "tx" ? "01" : "02";
+
+  return {
+    type: "doc",
+    content: [
+      {
+        blockId: "block_non_plain_values",
+        type: "paragraph",
+        text: "stable visible text",
+        attrs: {
+          dueAt: new Date(`2026-05-20T02:00:${dueAtSecond}.000Z`),
+          labels: new Set([label]),
+          matcher: new RegExp(label, "u"),
+        },
+      },
+    ],
+  };
+}
+
+function nonPlainValues(page: MarkdownPage): {
+  dueAt: Date;
+  labels: Set<string>;
+  matcher: RegExp;
+} {
+  return page.body.content[0]!.attrs as {
+    dueAt: Date;
+    labels: Set<string>;
+    matcher: RegExp;
+  };
+}
+
+function expectNoStoreSymbols(
+  stores: Pick<CoreTransaction, "pages" | "metadata" | "events" | "filters">,
+): void {
+  expect(Object.getOwnPropertySymbols(stores.pages)).toStrictEqual([]);
+  expect(Object.getOwnPropertySymbols(stores.metadata)).toStrictEqual([]);
+  expect(Object.getOwnPropertySymbols(stores.events)).toStrictEqual([]);
+  expect(Object.getOwnPropertySymbols(stores.filters)).toStrictEqual([]);
 }
 
 function existsQuery(field: string): FilterQuery {
