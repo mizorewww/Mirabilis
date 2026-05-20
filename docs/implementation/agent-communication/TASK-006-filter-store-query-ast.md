@@ -116,20 +116,22 @@
 
 ### Hume (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e431e-09bf-7ea1-a7cd-92cdff15a301`.
 - Ownership:
   - `src/core/stores/filter-store.ts`.
   - `src/core/stores/index.ts`.
   - `src/core/index.ts`.
+- Commit:
+  - `611125c Hume(implementation)(Add Filter Store and Query AST baseline): implement filter store`.
 - Assignment:
   - Implement minimum in-memory Filter Store production code to pass Fermat's tests.
   - Keep TASK-006 to storage and validation only.
-- Expected checks:
+- Checks run by Hume and repeated by parent:
   - `bun run typecheck`.
-  - `bun run test:frontend -- src/test/core-filter-store.test.ts`.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 22 tests passing.
   - `bun run lint`.
 
 ## Next Action
 
-Wait for Hume's implementation result.
+Spawn review agents for TASK-006.
