@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:44 CST.
+Last updated: 2026-05-21 04:47 CST.
 
 ## Current Task
 
@@ -8,13 +8,11 @@ Last updated: 2026-05-21 04:44 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: frontend NativeBridge boundary-test follow-up committed; narrow re-review running.
+- Current phase: frontend NativeBridge boundary-test narrow re-review complete; second test-only follow-up needed.
 
 ## Active Agents
 
-- Lagrange the 2nd (`security_reviewer`, id `019e4722-0487-7033-a0fe-fa48c1c1ec82`) - read-only security/boundary re-review of `52f99f6`.
-- Hume the 2nd (`test_quality_reviewer`, id `019e4722-09bf-73b1-ab51-259431cfdeb3`) - read-only test-quality re-review of `52f99f6`.
-- Ptolemy the 2nd (`reviewer`, id `019e4722-0e1c-7712-8656-142e96e4b5db`) - read-only correctness re-review of `52f99f6`.
+- None. Narrow re-review agents were closed after reporting.
 
 ## Recent Agent Outcomes
 
@@ -79,7 +77,9 @@ Last updated: 2026-05-21 04:44 CST.
 - Singer the 2nd's test-fix commit: `52f99f6 Singer the 2nd(test-fix)(Add SQLite schema and Rust repositories): relax native bridge db query boundary test`.
 - Parent repeated focused green checks after Singer the 2nd: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check`.
 - Narrow read-only re-review agents were spawned for Singer the 2nd's test-fix commit.
-- Parent next step: wait for narrow re-review, then run the local gate if no P0/P1/P2 findings remain.
+- NativeBridge boundary-test narrow re-review completed. Lagrange the 2nd (`security_reviewer`) found no P0/P1/P2 and confirmed `52f99f6` clears the original over-broad exact-equality issue. Hume the 2nd (`test_quality_reviewer`) found a P2: the no-raw-SQL type guard still uses non-distributive `Extract<keyof DbQuery, "sql" | "params">`, which can miss forbidden keys if TASK-014 makes `DbQuery` a discriminated union. Ptolemy the 2nd (`reviewer`) found a P2: `toMatchTypeOf` no longer guards optional `payload?: DbValue` or exact top-level key shape, so a future required payload or extra non-SQL key could pass.
+- Parent decision: delegate a second test-only follow-up in `src/test/native-bridge.test.ts` to add a distributive forbidden-key guard and explicit optional-payload / exact-key assertions while still avoiding exact equality on `operation`.
+- Parent next step: spawn `test_writer` for the second NativeBridge boundary-test follow-up.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

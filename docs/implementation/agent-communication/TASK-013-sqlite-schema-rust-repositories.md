@@ -40,12 +40,9 @@
 
 ## Current Status
 
-- Status: frontend boundary-test follow-up committed; narrow re-review running.
-- Active agents:
-  - Lagrange the 2nd (`security_reviewer`, id `019e4722-0487-7033-a0fe-fa48c1c1ec82`).
-  - Hume the 2nd (`test_quality_reviewer`, id `019e4722-09bf-73b1-ab51-259431cfdeb3`).
-  - Ptolemy the 2nd (`reviewer`, id `019e4722-0e1c-7712-8656-142e96e4b5db`).
-- Next parent step: wait for narrow re-review, then run local gate if clear.
+- Status: frontend boundary-test narrow re-review complete; second test-only follow-up needed.
+- Active agents: none.
+- Next parent step: spawn `test_writer` for the second NativeBridge boundary-test follow-up.
 
 ## Agent Handoffs
 
@@ -247,7 +244,7 @@
 
 ### Frontend Boundary-Test Narrow Re-Review
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Lagrange the 2nd (`security_reviewer`) for security/boundary.
   - Hume the 2nd (`test_quality_reviewer`) for test quality.
@@ -256,6 +253,24 @@
   - Stay read-only and do not edit files.
   - Review Singer the 2nd's test-fix commit `52f99f6`.
   - Confirm the test no longer blocks TASK-014 `DbQuery.operation` narrowing while preserving stable no-raw-SQL and bridge typing assertions.
+- Outcomes:
+  - Lagrange the 2nd (`security_reviewer`) found no P0/P1/P2. It confirmed the original over-broad exact-equality issue is cleared and scope stayed test-only.
+  - Hume the 2nd (`test_quality_reviewer`) found one P2: `Extract<keyof DbQuery, "sql" | "params">` is not distributive over possible future union members, so it can miss forbidden raw SQL keys if TASK-014 narrows `DbQuery` as a discriminated union.
+  - Ptolemy the 2nd (`reviewer`) found one P2: the relaxed `toMatchTypeOf` allows future `payload` to become required and allows extra top-level keys other than `sql` / `params`; tests should explicitly guard optional `payload?: DbValue` and exact top-level keys while still allowing a narrower `operation`.
+  - Focused checks run by agents passed: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check 52f99f6^ 52f99f6`.
+- Parent decision:
+  - Delegate a second test-only follow-up in `src/test/native-bridge.test.ts`.
+  - Required fix: add a distributive forbidden-key guard for raw `sql` / `params`; add explicit optional-payload and exact-top-level-key assertions; continue avoiding exact equality on the `operation` value type.
+
+### Frontend Boundary-Test Second Follow-Up
+
+- Status: pending agent handoff.
+- Planned agent:
+  - `test_writer` for a narrow test-only update in `src/test/native-bridge.test.ts`.
+- Assignment:
+  - Keep TASK-014 operation narrowing legal.
+  - Strengthen no-raw-SQL key detection for future union-shaped `DbQuery`.
+  - Guard exact top-level keys and optional `payload?: DbValue` without requiring `operation` to remain a broad `string`.
 
 ### Review Round 1
 
