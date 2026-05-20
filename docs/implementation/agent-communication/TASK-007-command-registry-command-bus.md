@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: review round 1 completed; review-fix tests pending.
-- Active agents: none.
+- Status: review-fix test writing active.
+- Active agents:
+  - Popper (`test_writer`, `019e435e-8d92-7063-b01e-ea0dd6b3e6cc`): add TASK-007 review-fix coverage.
 
 ## Agent Handoffs
 
@@ -164,4 +165,16 @@ Wait for Curie's implementation output.
 
 ## Next Action
 
-Delegate review-fix tests to a `test_writer`.
+Wait for Popper's review-fix coverage.
+
+### Popper (`test_writer`)
+
+- Status: active.
+- Agent id: `019e435e-8d92-7063-b01e-ea0dd6b3e6cc`.
+- Ownership:
+  - `src/test/core-command-registry.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Add review-fix tests for sanitized/no public raw handler cause and standard `Error.cause` semantics.
+  - Broaden invalid context coverage for JSON-compatible plain-data validation.
+  - Strengthen `get()` handler privacy assertions and `../core/commands` type-barrel assertions.
+  - Do not edit production code or docs.
