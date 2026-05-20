@@ -100,17 +100,20 @@
 
 ### Fermat (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4315-bb48-7ff3-a790-8b947bf4301d`.
 - Ownership:
   - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
+- Commit:
+  - `62ccd62 Fermat(test)(Add Filter Store and Query AST baseline): add filter store acceptance tests`.
 - Assignment:
   - Write failing TASK-006 acceptance tests for public exports, CRUD, update semantics, list filters, Query AST validation, typed errors, and defensive clone boundaries.
   - Use `/home/aac6fef/Developer/Mirabilis`; do not create sibling worktree directories.
   - Do not edit production code.
-- Expected signal:
-  - `bun run typecheck` and/or `bun run test:frontend -- src/test/core-filter-store.test.ts` should fail because Filter Store production exports are not implemented yet.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` fails on missing Filter Store exports.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 22 tests with 22 failing because `createInMemoryFilterStore` is not implemented/exported.
 
 ## Next Action
 
-Wait for Fermat's red tests, then commit them.
+Spawn implementation for minimum Filter Store production code.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 09:52 CST.
+Last updated: 2026-05-20 10:00 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 09:52 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing tests active.
+- Current phase: failing tests committed; implementation pending.
 
 ## Active Agents
 
-- Fermat (`test_writer`, `019e4315-bb48-7ff3-a790-8b947bf4301d`): writing TASK-006 Filter Store acceptance tests in the main repository checkout.
+- None.
 
 ## Recent Agent Outcomes
 
+- Fermat (`test_writer`) completed and was closed after adding TASK-006 acceptance tests.
+- Fermat's test commit: `62ccd62 Fermat(test)(Add Filter Store and Query AST baseline): add filter store acceptance tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails on missing Filter Store exports, and `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 22 tests with 22 failing because `createInMemoryFilterStore` is not implemented/exported.
 - Fermat (`test_writer`) was spawned as replacement TASK-006 test writer in `/home/aac6fef/Developer/Mirabilis`.
 - Workflow correction: stale sibling task worktree records were pruned, the main repository checkout was switched to `feat/task-006-filter-store-query-ast`, and docs now require branch-only task work by default unless the user explicitly asks for worktree isolation.
 - Pauli the 2nd (`test_writer`) was assigned to the stale `/home/aac6fef/Developer/mirabilis-task-006` path and could not be reached for interruption after the worktree was gone; parent will replace it and record the replacement reason.
@@ -149,6 +152,6 @@ Last updated: 2026-05-20 09:52 CST.
 
 ## Next Actions
 
-1. Wait for Fermat's test-writing result.
-2. Confirm expected red signal.
-3. Commit tests with Fermat as authoring agent in the commit message.
+1. Spawn implementer for minimum Filter Store production code.
+2. Repeat focused checks after implementation.
+3. Commit implementation if green.
