@@ -1615,6 +1615,165 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
+  it("keeps a fresh same-id record and tracked contributions when stale batch rollback settles later", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const secondInstallStarted = createDeferred<void>();
+    const releaseSecondInstallFailure = createDeferred<void>();
+    const installCause = new Error(
+      "second install fails after same-id retry",
+    );
+    const pluginId = "batch-stale-fresh-record";
+    const failingPluginId = "batch-stale-later-failure";
+    const plugin = createPlugin({
+      id: pluginId,
+      register(ctx) {
+        registerRuntimeContributions(ctx, pluginId);
+      },
+    });
+    const failingPlugin = createPlugin({
+      id: failingPluginId,
+      async install() {
+        secondInstallStarted.resolve();
+        await releaseSecondInstallFailure.promise;
+        throw installCause;
+      },
+    });
+    const loadOutcome = capturePromiseOutcome(
+      host.loadBuiltInPlugins([plugin, failingPlugin]),
+    );
+
+    await secondInstallStarted.promise;
+
+    await host.register(plugin);
+    expect(host.getPlugin(pluginId)).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    await host.uninstall(pluginId);
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+
+    const freshRecord = await host.register(plugin);
+
+    expect(freshRecord).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    releaseSecondInstallFailure.resolve();
+
+    const loadResult = await loadOutcome;
+
+    expect(loadResult.status).toBe("rejected");
+
+    if (loadResult.status === "rejected") {
+      expectPluginHostError(loadResult.error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId: failingPluginId,
+        phase: "install",
+        cause: installCause,
+      });
+    }
+
+    expect(host.getPlugin(pluginId)).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    await host.uninstall(pluginId);
+
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+  });
+
+  it("preserves a concurrently registered same-id plugin when a pending built-in batch reaches that id", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstInstallStarted = createDeferred<void>();
+    const releaseFirstInstall = createDeferred<void>();
+    const pluginId = "batch-concurrent-same-id";
+    const firstPlugin = createPlugin({
+      id: "batch-before-concurrent-same-id",
+      async install() {
+        firstInstallStarted.resolve();
+        await releaseFirstInstall.promise;
+      },
+    });
+    const concurrentlyRegistered = createPlugin({
+      id: pluginId,
+      register(ctx) {
+        registerRuntimeContributions(ctx, pluginId);
+      },
+    });
+    const loadOutcome = capturePromiseOutcome(
+      host.loadBuiltInPlugins([firstPlugin, concurrentlyRegistered]),
+    );
+
+    await firstInstallStarted.promise;
+
+    const concurrentRecord = await host.register(concurrentlyRegistered);
+
+    expect(concurrentRecord).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    releaseFirstInstall.resolve();
+
+    const loadResult = await loadOutcome;
+
+    expect(host.getPlugin(pluginId)).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    if (loadResult.status === "rejected") {
+      expectPluginHostError(loadResult.error, "PLUGIN_DUPLICATE_ID", {
+        pluginId,
+      });
+    } else {
+      expect(
+        loadResult.value.some(
+          (record) => record.id === pluginId && record.status === "registered",
+        ),
+      ).toBe(true);
+    }
+
+    await host.uninstall(pluginId);
+
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+  });
+
   it("scopes plugin-facing metadata, event, and filter facades to the owning plugin", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
