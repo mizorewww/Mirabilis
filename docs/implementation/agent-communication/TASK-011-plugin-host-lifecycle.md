@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: implementation in progress.
-- Active agent: Hegel (`implementer`).
-- Next parent step: wait for Hegel, validate focused checks, and commit implementation if green.
+- Status: implementation green; review round next.
+- Active agents: none.
+- Next parent step: spawn review agents.
 
 ## Agent Handoffs
 
@@ -103,7 +103,7 @@
 
 ### Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Hegel (`implementer`, `019e45ee-2e97-71d3-ada0-cb0263d8866d`).
 - Ownership:
@@ -113,6 +113,17 @@
 - Assignment:
   - Implement minimum production Plugin Host code needed to pass `src/test/plugin-host-lifecycle.test.ts`.
   - Preserve TASK-011 boundaries: no filesystem discovery, dynamic imports, native/Tauri loading, persistence, migrations, UI, IPC, SQLite, concrete business plugins, or package extraction.
+- Outcome:
+  - Added `PluginHost`, `PluginHostError`, `PluginHostErrorCode`, `PluginHostRecord`, `PluginHostStatus`, `PluginHostOptions`, and Core exports.
+  - Implemented explicit built-in plugin loading, deterministic dependency sorting, install/register/activate/deactivate/uninstall/get lifecycle behavior, plugin-facing scoped facades, ownership injection and spoof rejection, raw handle hiding, and command/view/slot register rollback.
+- Commit:
+  - `766ba86 Hegel(implementation)(Implement Plugin Host lifecycle): add plugin host runtime`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 13 tests.
+  - `git diff --check` passed.
+  - `bun run lint` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 27 tests.
 
 ## Parent Decisions
 
@@ -123,4 +134,4 @@
 
 ## Next Action
 
-Wait for Hegel, validate focused checks, and commit implementation if green.
+Spawn review agents.
