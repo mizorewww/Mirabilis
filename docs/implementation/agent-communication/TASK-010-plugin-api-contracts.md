@@ -42,13 +42,27 @@
 
 ## Current Status
 
-- Status: pre-test guidance pending.
-- Active agents: none.
-- Next agent step: spawn planner, docs researcher, and deprecation auditor for TASK-010 contract/API guidance.
+- Status: pre-test guidance active.
+- Active agents:
+  - Kepler (`planner`, `019e4699-91c6-73f3-877d-3badf515c89f`): TASK-010 API/test implementation plan.
+  - Sagan (`docs_researcher`, `019e4699-91c6-73f3-877d-3bc379b980a9`): current official docs and local-doc ambiguity research.
+  - Franklin (`deprecation_auditor`, `019e4699-91c6-73f3-877d-3c00fd953abf`): TypeScript/API/deprecation risk audit.
+  - Feynman (`security_reviewer`, `019e4699-91c6-73f3-877d-3c5c1e780654`): plugin permission/context boundary guidance.
+- Next agent step: wait for pre-test guidance agents.
 
 ## Agent Handoffs
 
-No agents have been spawned yet for TASK-010.
+### Pre-test Guidance Round
+
+- Status: active.
+- Agents:
+  - Kepler (`planner`, `019e4699-91c6-73f3-877d-3badf515c89f`).
+  - Sagan (`docs_researcher`, `019e4699-91c6-73f3-877d-3bc379b980a9`).
+  - Franklin (`deprecation_auditor`, `019e4699-91c6-73f3-877d-3c00fd953abf`).
+  - Feynman (`security_reviewer`, `019e4699-91c6-73f3-877d-3c5c1e780654`).
+- Assignment:
+  - Produce focused Plugin API contract, test, docs, deprecation/API, and security-boundary guidance before TDD tests.
+  - Stay read-only and do not edit files.
 
 ## Parent Decisions
 
@@ -59,4 +73,4 @@ No agents have been spawned yet for TASK-010.
 
 ## Next Action
 
-Spawn pre-test guidance agents.
+Wait for pre-test guidance agents, record outcomes, then spawn a `test_writer`.

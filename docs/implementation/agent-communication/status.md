@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:11 CST.
+Last updated: 2026-05-20 19:17 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 19:11 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 pre-test guidance pending.
+- Current phase: TASK-010 pre-test guidance active.
 
 ## Active Agents
 
-- None.
+- Kepler (`planner`, `019e4699-91c6-73f3-877d-3badf515c89f`): TASK-010 API/test implementation plan.
+- Sagan (`docs_researcher`, `019e4699-91c6-73f3-877d-3bc379b980a9`): current official docs and local-doc ambiguity research.
+- Franklin (`deprecation_auditor`, `019e4699-91c6-73f3-877d-3c00fd953abf`): TypeScript/API/deprecation risk audit.
+- Feynman (`security_reviewer`, `019e4699-91c6-73f3-877d-3c5c1e780654`): plugin permission/context boundary guidance.
 
 ## Recent Agent Outcomes
 
+- TASK-010 pre-test guidance agents spawned: Kepler, Sagan, Franklin, and Feynman.
 - TASK-009 merged to `master` and pushed. Merge commit: `a353767 Codex(merge)(Add Transaction Manager and Core Runtime composition): merge task branch`.
 - TASK-010 branch created from latest `master`.
 - TASK-010 started in progress ledger and task communication file.
@@ -371,10 +375,10 @@ Last updated: 2026-05-20 19:11 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has started pre-test guidance.
+- TASK-009 is complete and merged. TASK-010 pre-test guidance is active.
 
 ## Next Actions
 
-1. Spawn TASK-010 pre-test guidance agents.
+1. Wait for TASK-010 pre-test guidance agents.
 2. Record guidance and parent decisions.
 3. Spawn `test_writer` for failing Plugin API contract tests.
