@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 20:35 CST.
+Last updated: 2026-05-20 20:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 20:35 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 review fixes green; targeted re-review next.
+- Current phase: TASK-010 targeted re-review P1/P2 fixes active.
 
 ## Active Agents
 
-- None. Next step is targeted TASK-010 re-review.
+- Euler the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-45d77364b703`): add targeted type tests for structural ownership-key leaks and helper exports.
 
 ## Recent Agent Outcomes
 
+- Targeted TASK-010 re-review round 1 completed. Confucius the 2nd (`security_reviewer`) found no P0/P1/P2 and confirmed prior security P1s are fixed.
+- Newton the 2nd (`reviewer`) found two P2 correctness/API issues: `pluginId` and `sourcePluginId` are still accepted through normal variable assignment because the plugin-facing types omit ownership keys but do not reserve them as `never`.
+- Poincare the 2nd (`deprecation_auditor`) found one P1 API issue for `PluginViewListOptions` and `PluginSlotListOptions`: variables containing `pluginId` remain structurally assignable. Poincare also found one P2 helper-export test gap for new descriptor/list/filter aliases.
+- Kierkegaard the 2nd (`test_quality_reviewer`) found the same P2 helper-export coverage gap and confirmed the other review-fix gaps are covered.
+- Turing the 2nd (`docs_researcher`) found no P0/P1/P2 docs issues and one P3 stale Obsidian link in `docs/architecture/03-plugin-api-and-host.md`.
+- Parent selected targeted fix plan: add failing tests for variable structural assignment of `pluginId`/`sourcePluginId`, add direct helper export coverage, then update plugin-facing types to reserve ownership keys with `?: never` and fix the P3 Obsidian link.
 - Popper the 2nd (`implementer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused production patch in `src/core/plugin-api/` and `src/core/index.ts`.
 - Parent validated and adopted Popper the 2nd's production patch after checks turned green.
 - Popper the 2nd's review-fix commit: `4a7d33b Popper the 2nd(review-fix)(Define Plugin API contracts): harden plugin API boundaries`.
@@ -410,10 +416,11 @@ Last updated: 2026-05-20 20:35 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, and docs sync.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, and targeted re-review findings.
 
 ## Next Actions
 
-1. Spawn targeted re-review agents for TASK-010 review fixes.
-2. Fix any remaining P0/P1 findings.
-3. Run final local gate and mark TASK-010 complete.
+1. Wait for Euler the 2nd's targeted tests and confirm the expected red signal.
+2. Delegate production ownership-key type fixes to `implementer`.
+3. Fix the P3 Obsidian link.
+4. Run final local gate and mark TASK-010 complete.

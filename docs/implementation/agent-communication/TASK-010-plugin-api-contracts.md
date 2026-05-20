@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: review fixes green; targeted re-review next.
-- Active agents: none.
-- Next agent step: spawn targeted re-review agents.
+- Status: targeted re-review P1/P2 fixes active.
+- Active agents:
+  - Euler the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-45d77364b703`): add targeted type tests for structural ownership-key leaks and helper exports.
+- Next agent step: wait for Euler the 2nd, then confirm expected red signal.
 
 ## Agent Handoffs
 
@@ -254,6 +255,28 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Targeted Re-Review Round 1
+
+- Status: completed and closed.
+- Agents:
+  - Newton the 2nd (`reviewer`, `019e4699-91ca-73f3-877d-43b88d7ad728`).
+  - Confucius the 2nd (`security_reviewer`, `019e4699-91ca-73f3-877d-43d54efcece2`).
+  - Poincare the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-43f1428ef216`).
+  - Kierkegaard the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-44192ca70b19`).
+  - Turing the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-443c455bf839`).
+- Findings:
+  - Confucius the 2nd found no P0/P1/P2 security issues and confirmed prior boundary P1s are fixed.
+  - Newton the 2nd found P2 structural ownership-key leaks: variables containing `pluginId` or `sourcePluginId` remain assignable because the plugin-facing types omit ownership keys instead of reserving them as `never`.
+  - Poincare the 2nd found a P1 version of the same issue for `PluginViewListOptions` and `PluginSlotListOptions`, plus P2 helper-export coverage gaps for new descriptor/list/filter aliases.
+  - Kierkegaard the 2nd found the same P2 helper-export coverage gap and confirmed the other review-fix gaps are covered.
+  - Turing the 2nd found no P0/P1/P2 docs issues and one P3 stale Obsidian link in `docs/architecture/03-plugin-api-and-host.md`.
+- Parent decisions:
+  - Add failing type tests that cover structural variable assignment, not only fresh object literals.
+  - Cover registry inputs/options with `pluginId` and store inputs/options with `sourcePluginId`.
+  - Add direct re-export assertions for `PluginFilterCondition`, `PluginFilterQuery`, `PluginCommandDescriptor`, `PluginCommandListOptions`, `PluginViewDescriptor`, `PluginViewListOptions`, `PluginSlotDescriptor`, and `PluginSlotListOptions`.
+  - Then update plugin-facing types to reserve ownership keys with `?: never`.
+  - Fix the P3 Obsidian link before final gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -263,4 +286,4 @@
 
 ## Next Action
 
-Spawn targeted re-review agents, then run the final local gate and mark TASK-010 complete if no P0/P1 findings remain.
+Wait for Euler the 2nd's targeted tests, confirm the expected red signal, then delegate the production ownership-key fixes.
