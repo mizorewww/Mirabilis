@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix pending.
-- Active agents: none.
+- Status: P1/P2 production type fix active.
+- Active agents:
+  - Carver (`implementer`, `019e43aa-60f1-7be0-aa5b-119c99d19d64`): implement TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -254,4 +255,18 @@
 
 ## Next Action
 
-Commit the Euler red-signal summary, spawn an `implementer` for TASK-008 public type soundness fixes, and repeat focused checks until green.
+Wait for Carver's public type soundness implementation output, repeat focused checks, then commit the production type patch if green.
+
+### Carver (`implementer`)
+
+- Status: active.
+- Agent id: `019e43aa-60f1-7be0-aa5b-119c99d19d64`.
+- Ownership:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+- Assignment:
+  - Preserve public React component/exotic compatibility while removing the unbounded callable fallback that erases prop safety.
+  - Avoid public/test dependence on React lazy private `_payload`/`_init` internals.
+  - Make `SlotCondition<Props>` a normal `(props: Props) => boolean` function type.
+  - Keep `Props = unknown` defaults.
+  - Do not edit tests, docs, registries, config, or lockfiles, and do not commit.
