@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: implementation green; review round next.
-- Active agents: none.
-- Next parent step: spawn review agents.
+- Status: review round in progress.
+- Active agents: Jason (`pr_explorer`), Herschel (`reviewer`), Singer (`security_reviewer`), Godel (`deprecation_auditor`), Pasteur (`test_quality_reviewer`), and Peirce (`docs_researcher`).
+- Next parent step: wait for review round, then fix any P0/P1/P2 findings.
 
 ## Agent Handoffs
 
@@ -125,6 +125,19 @@
   - `bun run lint` passed.
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 27 tests.
 
+### Review Round 1
+
+- Status: in progress.
+- Agents:
+  - Jason (`pr_explorer`, `019e4601-240b-7aa3-a6d4-7e5d4d39500a`).
+  - Herschel (`reviewer`, `019e4601-5951-7b31-8fb9-e0dc85baef02`).
+  - Singer (`security_reviewer`, `019e4601-91cc-7b72-b634-0d22b8e76e7b`).
+  - Godel (`deprecation_auditor`, `019e4601-cceb-7171-93d3-ff348d5eb477`).
+  - Pasteur (`test_quality_reviewer`, `019e4602-07f7-7053-a45c-2f44e5761296`).
+  - Peirce (`docs_researcher`, `019e4602-209c-7bd2-8252-0a77c23b0f39`).
+- Assignment:
+  - Read-only review of TASK-011 diff against `master`, with focus on Plugin Host lifecycle correctness, security boundaries, API/deprecation risk, test quality, and docs drift.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -134,4 +147,4 @@
 
 ## Next Action
 
-Spawn review agents.
+Wait for review round, then fix any P0/P1/P2 findings.

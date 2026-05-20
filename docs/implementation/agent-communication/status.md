@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:27 CST.
+Last updated: 2026-05-20 23:29 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 23:27 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 implementation green; review round next.
+- Current phase: TASK-011 review round in progress.
 
 ## Active Agents
 
-- None. Next step is review round.
+- Jason (`pr_explorer`, `019e4601-240b-7aa3-a6d4-7e5d4d39500a`) is mapping changed surfaces.
+- Herschel (`reviewer`, `019e4601-5951-7b31-8fb9-e0dc85baef02`) is reviewing correctness/API behavior.
+- Singer (`security_reviewer`, `019e4601-91cc-7b72-b634-0d22b8e76e7b`) is reviewing security/boundary behavior.
+- Godel (`deprecation_auditor`, `019e4601-cceb-7171-93d3-ff348d5eb477`) is reviewing API/deprecation risks.
+- Pasteur (`test_quality_reviewer`, `019e4602-07f7-7053-a45c-2f44e5761296`) is reviewing test quality.
+- Peirce (`docs_researcher`, `019e4602-209c-7bd2-8252-0a77c23b0f39`) is reviewing docs/current-guidance drift.
 
 ## Recent Agent Outcomes
 
+- TASK-011 review round agents spawned after Hegel's green implementation.
 - Hegel (`implementer`) completed and was closed after implementing Plugin Host production code in `src/core/plugin-host/` and Core exports.
 - Hegel's implementation commit: `766ba86 Hegel(implementation)(Implement Plugin Host lifecycle): add plugin host runtime`.
 - Parent repeated green checks after Hegel: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 13 tests passing; `git diff --check`; `bun run lint`; and `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 27 tests passing.
