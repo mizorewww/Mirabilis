@@ -40,9 +40,10 @@
 
 ## Current Status
 
-- Status: frontend boundary-test narrow re-review complete; second test-only follow-up needed.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for the second NativeBridge boundary-test follow-up.
+- Status: second frontend boundary-test follow-up delegated.
+- Active agents:
+  - Dirac the 2nd (`test_writer`, id `019e4725-f8fc-73c1-9ee0-c20d78f70978`).
+- Next parent step: wait for Dirac the 2nd, then run focused checks.
 
 ## Agent Handoffs
 
@@ -264,9 +265,9 @@
 
 ### Frontend Boundary-Test Second Follow-Up
 
-- Status: pending agent handoff.
-- Planned agent:
-  - `test_writer` for a narrow test-only update in `src/test/native-bridge.test.ts`.
+- Status: running.
+- Agent:
+  - Dirac the 2nd (`test_writer`, id `019e4725-f8fc-73c1-9ee0-c20d78f70978`).
 - Assignment:
   - Keep TASK-014 operation narrowing legal.
   - Strengthen no-raw-SQL key detection for future union-shaped `DbQuery`.
