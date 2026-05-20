@@ -39,9 +39,13 @@
 
 ## Current Status
 
-- Status: final fresh-record batch re-review handoff.
-- Active agents: none.
-- Next parent step: spawn final focused read-only re-review, then run the local gate if no P0/P1 findings remain.
+- Status: final fresh-record batch focused re-review in progress.
+- Active agents:
+  - Aquinas (`reviewer`, `019e46a3-326b-7902-95b1-5f157925d6f8`).
+  - Boole (`security_reviewer`, `019e46a3-368a-7c70-a809-7d8b9f3c1e1d`).
+  - Russell (`test_quality_reviewer`, `019e46a3-3a56-7c52-94dd-f5a2a770e966`).
+  - Lagrange (`docs_researcher`, `019e46a3-3e54-7752-affc-1784af107a69`).
+- Next parent step: wait for final focused re-review, then handle findings or run the local gate.
 
 ## Agent Handoffs
 
@@ -792,6 +796,18 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Fresh-Record Batch Focused Re-Review
+
+- Status: in progress.
+- Agents:
+  - Aquinas (`reviewer`, `019e46a3-326b-7902-95b1-5f157925d6f8`).
+  - Boole (`security_reviewer`, `019e46a3-368a-7c70-a809-7d8b9f3c1e1d`).
+  - Russell (`test_quality_reviewer`, `019e46a3-3a56-7c52-94dd-f5a2a770e966`).
+  - Lagrange (`docs_researcher`, `019e46a3-3e54-7752-affc-1784af107a69`).
+- Assignment:
+  - Read-only focused re-review after Raman's green fix.
+  - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -801,4 +817,4 @@
 
 ## Next Action
 
-Spawn final focused read-only re-review after Raman's green fix.
+Wait for final focused re-review, then handle findings or run the local gate.
