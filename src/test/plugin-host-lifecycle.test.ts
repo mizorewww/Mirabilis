@@ -900,6 +900,81 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
+  it("rejects pending unawaited register transactions after uninstall without committing staged plugin data", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const transactionStaged = createDeferred<void>();
+    const releaseTransaction = createDeferred<void>();
+    let pendingTransaction: Promise<unknown> | undefined;
+    const pluginId = "pending-transaction";
+    const plugin = createPlugin({
+      id: pluginId,
+      register(ctx) {
+        pendingTransaction = ctx.transaction.run(async (tx) => {
+          const page = tx.pages.create({
+            title: "Pending transaction page",
+            body: emptyDocument(),
+          });
+
+          tx.metadata.set({
+            pageId: page.id,
+            namespace: pluginId,
+            key: "state",
+            value: "staged",
+            valueType: "string",
+          });
+          tx.events.append({
+            pageId: page.id,
+            namespace: pluginId,
+            type: "staged",
+            payload: { pageId: page.id },
+          });
+          tx.filters.save({
+            name: "Pending transaction filter",
+            query: {
+              where: [{ field: `${pluginId}.state`, op: "eq", value: "staged" }],
+            },
+            viewType: `${pluginId}.view`,
+          });
+          transactionStaged.resolve();
+
+          await releaseTransaction.promise;
+
+          return "should not commit";
+        });
+      },
+    });
+    const dataBeforeRegister = runtimeDataSnapshot(runtime);
+
+    await host.loadBuiltInPlugins([plugin]);
+    await transactionStaged.promise;
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeRegister);
+
+    const transactionOutcome = expectDefined(pendingTransaction).then(
+      (value) => ({ status: "resolved" as const, value }),
+      (error) => ({ status: "rejected" as const, error }),
+    );
+
+    await host.uninstall(pluginId);
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+
+    releaseTransaction.resolve();
+
+    const outcome = await transactionOutcome;
+
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeRegister);
+    expect(outcome.status).toBe("rejected");
+
+    if (outcome.status === "rejected") {
+      expectPluginHostError(outcome.error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId,
+        phase: "register",
+      });
+    }
+  });
+
   it("scopes plugin-facing metadata, event, and filter facades to the owning plugin", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
@@ -2238,6 +2313,21 @@ function runtimeDataSnapshot(runtime: CoreRuntime) {
     events: runtime.events.list(),
     filters: runtime.filters.list(),
   };
+}
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: unknown) => void;
+} {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, resolve, reject };
 }
 
 function emptyDocument(): StructuredMarkdownDocument {
