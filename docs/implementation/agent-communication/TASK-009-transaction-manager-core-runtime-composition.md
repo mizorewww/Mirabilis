@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: P1 review-fix implementation pending.
-- Active agents: none.
-- Next agent step: spawn an `implementer` for the non-plain snapshot comparison production fix.
+- Status: P1 review-fix implementation active.
+- Active agents:
+  - Peirce (`implementer`, `019e4699-91b8-73f3-877d-37d83b0e2125`): fix non-plain snapshot comparison in transaction conflict detection.
+- Next agent step: wait for Peirce's production patch and focused checks.
 
 ## Agent Handoffs
 
@@ -293,6 +294,18 @@
 - Parent decision:
   - Red signal is accepted. Production code must fix snapshot comparison so the non-plain page body live-write conflict rejects and preserves the live update.
 
+### Peirce (`implementer`)
+
+- Status: active.
+- Agent id: `019e4699-91b8-73f3-877d-37d83b0e2125`.
+- Ownership:
+  - `src/core/services/transaction-manager.ts`.
+  - Other `src/core/services` files only if directly necessary.
+- Assignment:
+  - Fix Boole's P1 by strengthening `snapshotsEqual` for structured-clone non-plain values, at least `Date`, `Set`, and `RegExp`.
+  - Preserve existing Map, Array, and plain-object snapshot comparison behavior.
+  - Do not edit tests, docs, config, package files, lockfiles, or unrelated store modules.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -306,4 +319,4 @@
 
 ## Next Action
 
-Spawn an `implementer` for the targeted P1 production fix, then rerun focused transaction/runtime checks.
+Wait for Peirce's production patch, then rerun focused transaction/runtime checks.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:40 CST.
+Last updated: 2026-05-20 18:43 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 18:40 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 P1 review-fix implementation pending.
+- Current phase: TASK-009 P1 review-fix implementation active.
 
 ## Active Agents
 
-- None.
+- Peirce (`implementer`, `019e4699-91b8-73f3-877d-37d83b0e2125`): fix non-plain snapshot comparison in transaction conflict detection.
 
 ## Recent Agent Outcomes
 
+- Peirce (`implementer`) spawned for Boole's P1 production fix, with ownership of `src/core/services/transaction-manager.ts`.
 - Chandrasekhar (`test_writer`) completed and was closed after adding targeted TASK-009 review-fix tests.
 - Chandrasekhar's test commit: `01bf83f Chandrasekhar(test)(Add Transaction Manager and Core Runtime composition): cover non-plain transaction conflicts`.
 - Parent confirmed expected red signal: `bun run typecheck` passes; `bun run test:frontend -- src/test/core-transaction-manager.test.ts` runs 15 tests with 14 passing and one failing because the non-plain page body conflict currently resolves instead of rejecting; `git diff --check` passes.
@@ -337,10 +338,10 @@ Last updated: 2026-05-20 18:40 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has red-signal P1 review-fix tests and needs the production fix.
+- TASK-008 is complete and merged. TASK-009 has red-signal P1 review-fix tests and Peirce is implementing the production fix.
 
 ## Next Actions
 
-1. Spawn an `implementer` for Boole's P1 non-plain snapshot comparison fix.
+1. Wait for Peirce's P1 production patch.
 2. Run focused transaction/runtime checks after the patch.
 3. Re-review or run final gate once no P0/P1 findings remain.
