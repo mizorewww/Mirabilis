@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: batch rollback and dependency-removal race TDD in progress.
-- Active agents:
-  - Avicenna (`test_writer`, `019e4683-7093-7703-836b-a00a88f93c36`).
-- Next parent step: wait for Avicenna, validate expected red signal, then delegate implementation.
+- Status: batch rollback and dependency-removal race production fix handoff.
+- Active agents: none.
+- Next parent step: delegate implementation, then validate green checks.
 
 ## Agent Handoffs
 
@@ -657,7 +656,7 @@
 
 ### Batch Rollback And Dependency-Removal Race TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Avicenna (`test_writer`, `019e4683-7093-7703-836b-a00a88f93c36`).
 - Ownership:
@@ -666,6 +665,17 @@
   - Add deterministic red tests for `loadBuiltInPlugins()` batch rollback revoking pending register scopes and stale contexts from earlier batch records.
   - Add deterministic red tests for dependency removal already in progress blocking required dependent registration before the dependency is downgraded or deleted.
   - Add compact red coverage for concurrent successful `register(plugin)` idempotency and uninstall cleanup.
+- Outcome:
+  - Avicenna changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added red coverage for batch rollback revoking a pending deleted plugin register scope, removing tentative command/view/slot contributions, and blocking stale context writes.
+  - Added red coverage for dependency `deactivate()` / `uninstall()` in progress blocking new required dependent registration.
+  - Added red coverage for concurrent successful `register(plugin)` idempotency and uninstall-cleanable contributions.
+- Commit:
+  - `4de95c2 Avicenna(test)(Implement Plugin Host lifecycle): cover batch rollback races`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 43 tests with 39 passing and 4 failing in the expected new cases.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -676,4 +686,4 @@
 
 ## Next Action
 
-Wait for Avicenna's red tests, then validate and commit them.
+Delegate the production fix for Avicenna's red tests.
