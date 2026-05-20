@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: P2 review-fix implementation next.
-- Active agents: none.
-- Next parent step: spawn `implementer` for Planck's red Plugin API store facade tests.
+- Status: P2 review-fix implementation in progress.
+- Active agent: Epicurus (`implementer`).
+- Next parent step: wait for Epicurus, validate focused checks, and commit implementation if green.
 
 ## Agent Handoffs
 
@@ -410,13 +410,15 @@
 
 ### P2 Review-Fix Handoffs
 
-- Status: test/docs work completed and committed; implementation pending.
+- Status: test/docs work completed and committed; implementation in progress.
 - Agents:
   - Planck (`test_writer`, `019e45b5-00fd-7dc2-9071-3243fe73513b`).
   - Heisenberg (`doc_writer`, `019e45b5-0507-7e12-b7e1-a26f1cd569a5`).
+  - Epicurus (`implementer`, `019e45bc-f64f-7063-abcd-73d279f8bf26`).
 - Assignments:
   - Planck owns only `src/test/plugin-api-contracts.test.ts` and is adding red coverage for metadata/event list ownership, public store helper exports, store input public shape locking, and feasible `keyof` surface coverage.
   - Heisenberg owns only product/architecture/development/task-index docs and is removing current-contract drift around unavailable facades and caller-supplied ownership keys.
+  - Epicurus owns production Plugin API type fixes in `src/core/plugin-api/context.ts`, `src/core/plugin-api/index.ts`, and `src/core/index.ts`.
 - Outcomes:
   - Planck added tests for `PluginMetadataStore.list` / `PluginEventStore.list` source ownership, direct store helper alias exports from both public barrels, and public store input shape locks. Planck did not encode a stricter raw `keyof` assertion because rejecting explicit `undefined` under the current TypeScript config requires the synthetic reservation pattern.
   - Heisenberg clarified current manifest-descriptor vs runtime-facade docs, removed stale caller-supplied `pluginId` / `sourcePluginId` examples, replaced unavailable `PluginContext` facade examples, added `uninstall` to the Plugin Host sketch, and marked future-only sketches as outside TASK-010.
@@ -438,4 +440,4 @@
 
 ## Next Action
 
-Spawn `implementer` for Planck's red Plugin API store facade tests.
+Wait for Epicurus, validate focused checks, and commit implementation if green.

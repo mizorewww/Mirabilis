@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:17 CST.
+Last updated: 2026-05-20 22:19 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 22:17 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 P2 review-fix implementation next.
+- Current phase: TASK-010 P2 review-fix implementation in progress.
 
 ## Active Agents
 
-- None. Next step is spawning `implementer` for Planck's red Plugin API store facade tests.
+- Epicurus (`implementer`, `019e45bc-f64f-7063-abcd-73d279f8bf26`) owns the production fix for Planck's red Plugin API store facade tests.
 
 ## Recent Agent Outcomes
 
+- Epicurus (`implementer`) was spawned for Planck's P2 red tests, with ownership of `src/core/plugin-api/context.ts`, `src/core/plugin-api/index.ts`, and `src/core/index.ts`.
 - Planck (`test_writer`) completed and was closed after adding P2 review-fix tests for metadata/event list source ownership, public store helper exports, public store input shapes, and the documented `keyof` tradeoff.
 - Planck's test commit: `689f7cc Planck(test)(Define Plugin API contracts): cover plugin store facade gaps`.
 - Parent confirmed the expected red signal: `bun run typecheck` failed on missing store helper exports, metadata/event list ownership gaps, and public shape contract checks; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests; `git diff --check` passed.
