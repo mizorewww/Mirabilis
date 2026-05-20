@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:20 CST.
+Last updated: 2026-05-21 01:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-21 01:20 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 stale register cleanup TDD in progress.
+- Current phase: TASK-011 stale register cleanup production fix in progress.
 
 ## Active Agents
 
-- Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`) is adding stale register cleanup and concurrent register contribution tracking red tests.
+- Galileo (`implementer`, `019e466b-ab51-79d2-86cc-a58bc11e2f44`) is fixing stale register cleanup and concurrent register contribution tracking in `src/core/plugin-host/plugin-host.ts`.
 
 ## Recent Agent Outcomes
 
+- Galileo (`implementer`) was spawned for the stale register cleanup production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Carson's test commit: `3ac6fd1 Carson(test)(Implement Plugin Host lifecycle): cover stale register cleanup`.
+- Parent confirmed Carson's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 36 tests with 33 passing and 3 failing in the new stale-register/concurrent-register cases; `git diff --check` passed.
+- Carson (`test_writer`) completed and was closed after adding focused red tests for stale pending `register` cleanup after uninstall/deactivate retry and concurrent `register()` contribution tracking.
 - Carson (`test_writer`) was spawned for red tests covering stale register cleanup after retry and concurrent register contribution tracking.
 - Final concurrent lifecycle micro re-review completed. Hypatia (`reviewer`) found one P1 correctness issue: a revoked pending `register` can later unregister same-ID contributions created by a fresh retry after concurrent uninstall/deactivate, and in the deactivate retry case can regress the shared record back to `installed`.
 - Dirac (`security_reviewer`) found one P2 boundary issue: concurrent `register()` calls can orphan runtime contributions because a failing second register clears `record.contributions` while the first registration's command/view/slot remain live.

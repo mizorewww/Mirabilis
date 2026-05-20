@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: stale register cleanup TDD in progress.
-- Active agents: Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`).
-- Next parent step: wait for Carson, validate expected red signal, then delegate implementation.
+- Status: stale register cleanup production fix in progress.
+- Active agents: Galileo (`implementer`, `019e466b-ab51-79d2-86cc-a58bc11e2f44`).
+- Next parent step: wait for Galileo, validate green checks, then commit the production fix.
 
 ## Agent Handoffs
 
@@ -522,13 +522,35 @@
 
 ### Stale Register Cleanup TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`).
 - Ownership:
   - `src/test/plugin-host-lifecycle.test.ts`.
 - Assignment:
   - Add deterministic red tests for stale pending register cleanup after a fresh retry and concurrent register contribution tracking, without editing production code or docs.
+- Outcome:
+  - Carson changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added red tests proving stale pending `register` cleanup after concurrent uninstall/deactivate must not remove fresh retry command/view/slot contributions or regress status.
+  - Added a red test proving a failed concurrent `register(plugin)` must not clear successful contribution tracking and leave uninstall with orphaned runtime contributions.
+- Commit:
+  - `3ac6fd1 Carson(test)(Implement Plugin Host lifecycle): cover stale register cleanup`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 36 tests with 33 passing and 3 failing in the expected stale-register/concurrent-register cases.
+  - `git diff --check` passed.
+
+### Stale Register Cleanup Implementation
+
+- Status: in progress.
+- Agent:
+  - Galileo (`implementer`, `019e466b-ab51-79d2-86cc-a58bc11e2f44`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Fix stale pending `register` cleanup so it cannot corrupt fresh retry contributions/status after concurrent uninstall or deactivate.
+  - Fix concurrent `register(plugin)` tracking so a failed concurrent attempt cannot clear successful contribution tracking and leave uninstall with orphaned command/view/slot contributions.
+  - Preserve existing lifecycle boundaries and TASK-011 scope.
 
 ## Parent Decisions
 
@@ -539,4 +561,4 @@
 
 ## Next Action
 
-Wait for Carson, then validate and commit the stale register cleanup red tests.
+Wait for Galileo, then validate and commit the stale register cleanup production fix.
