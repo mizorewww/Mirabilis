@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: red-test agent running.
-- Active agents:
-  - Bacon the 2nd (`test_writer`, id `019e473d-a698-7fc3-8975-ee6c95e82e8d`).
-- Next parent step: wait for Bacon the 2nd, then run focused red checks.
+- Status: red tests complete; committing test patch.
+- Active agents: none.
+- Next parent step: commit Bacon the 2nd's test patch, then spawn `implementer`.
 
 ## Agent Handoffs
 
@@ -96,10 +95,19 @@
 
 ### Red Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Bacon the 2nd (`test_writer`, id `019e473d-a698-7fc3-8975-ee6c95e82e8d`).
 - Assignment:
   - Write failing tests only.
   - Avoid production implementation changes.
   - Cover shared operation allowlist, NativeBridge envelopes, Rust IPC command contract, temp DB state behavior, strict validation/redacted errors, transaction rollback, capability/config scans, `greet` removal, no raw SQL, and no native/plugin boundary leaks.
+- Outcome:
+  - Changed files: `src/test/native-bridge.test.ts`, `src-tauri/tests/ipc_boundary.rs`, and `src-tauri/tests/ipc_persistence.rs`.
+  - No production code or dependency files changed.
+  - Expected red checks:
+    - `bun run test:frontend -- src/test/native-bridge.test.ts` fails because `DB_PERSISTENCE_OPERATIONS` is missing and 7 tests fail around operation constants.
+    - `bun run typecheck` fails on missing `DB_PERSISTENCE_OPERATIONS` / `DbPersistenceOperation` exports and type leaks showing `DbQuery.operation` is still broad `string`.
+    - `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_boundary` fails because `greet` is still registered, `db_execute` / `db_transaction` are missing, and command exposure is not reviewed in capabilities/docs.
+    - `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` fails with `E0433 cannot find commands in mirabilis_lib`.
+  - Green checks: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` and `git diff --check`.
