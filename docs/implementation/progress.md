@@ -40,7 +40,7 @@ Status markers:
 - [x] TASK-012: Add NativeBridge TypeScript boundary
 - [x] TASK-013: Add SQLite schema and Rust repositories
 - [x] TASK-014: Expose Tauri IPC commands for core persistence
-- [ ] TASK-015: Build app bootstrap and runtime provider
+- [~] TASK-015: Build app bootstrap and runtime provider
 
 ## Milestone M3: Editor and plugin runtime
 
@@ -78,6 +78,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 06:30 CST - TASK-015 started
+
+- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
+- Task: Build app bootstrap and runtime provider.
+- Scope: initialize NativeBridge/storage/Core services/registries/Plugin Host/built-in plugins/React providers in the documented order, expose runtime to UI through a provider/hook, and show a user-visible startup failure state. No plugin business logic should live in App Shell.
+- Out of scope: Markdown editor behavior, task/tag/timer/calendar business plugins, filesystem import/export behavior, release packaging, new Tauri command/capability expansion unless local docs or agents identify a TASK-015-specific bootstrap requirement.
+- Agent orchestration: parent thread remains orchestration-only; current React/Tauri/runtime guidance, security-boundary guidance, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-015-app-bootstrap-runtime-provider.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 06:27 CST - TASK-014 completed
 

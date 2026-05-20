@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:27 CST.
+Last updated: 2026-05-21 06:30 CST.
 
 ## Current Task
 
-- Task: TASK-014 - Expose Tauri IPC commands for core persistence.
-- Branch: `feat/task-014-tauri-ipc-core-persistence`.
+- Task: TASK-015 - Build app bootstrap and runtime provider.
+- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: progress update before merge.
+- Current phase: pre-test guidance handoff.
 
 ## Active Agents
 
@@ -16,6 +16,12 @@ Last updated: 2026-05-21 06:27 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-014 was merged to `master` and pushed. Merge commit: `5c41030 Codex(merge)(Expose Tauri IPC commands for core persistence): merge task branch`.
+- TASK-015 branch `feat/task-015-app-bootstrap-runtime-provider` was created from latest `master`.
+- TASK-015 scope: initialize NativeBridge/storage/Core services/registries/Plugin Host/built-in plugins/React providers in documented order, expose runtime to UI through a provider/hook, and show a user-visible startup failure state. App Shell must not contain plugin business logic.
+- TASK-015 out of scope unless agents find a local-doc requirement: Markdown editor behavior, task/tag/timer/calendar business plugins, filesystem import/export behavior, release packaging, and new Tauri command/capability expansion.
+- `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: spawn read-only pre-test guidance agents for TASK-015 scope, current docs, API/deprecation, and security boundaries.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
