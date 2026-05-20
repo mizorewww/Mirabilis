@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
@@ -31,17 +31,42 @@ fn sqlite_boundary_keeps_frontend_sql_access_private() -> TestResult {
         .nth(1)
         .and_then(|tail| tail.split("};").next())
         .expect("NativeBridge should export DbQuery");
+    assert_db_query_has_no_raw_sql_fields(db_query);
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_boundary_capability_scan_tolerates_non_sql_object_permissions() -> TestResult {
+    let reviewed_non_sql_capability = json!({
+        "permissions": [
+            "core:default",
+            {
+                "identifier": "fs:allow-app-config",
+                "scope": {"allow": ["$APPDATA/mirabilis/**"]}
+            },
+            {
+                "id": "notification:allow-send",
+                "name": "Reviewed non-SQL object permission",
+                "permission": {"nested": "objects are ignored unless reviewed SQL marker fields are strings"}
+            },
+            42,
+            null
+        ]
+    });
+
+    assert_no_tauri_sql_permission_markers(&reviewed_non_sql_capability, "inline capability")?;
+
+    let sql_capability = json!({
+        "permissions": [
+            {"identifier": "sql:allow-execute"},
+            {"name": "tauri-plugin-sql"}
+        ]
+    });
+
     assert!(
-        db_query.contains("operation: string"),
-        "DbQuery should expose operation names, not SQL statements",
-    );
-    assert!(
-        db_query.contains("payload?: DbValue"),
-        "DbQuery should carry JSON-compatible operation payloads",
-    );
-    assert!(
-        !db_query.contains("sql") && !db_query.contains("params"),
-        "DbQuery must not add raw sql/params fields to the TypeScript contract",
+        assert_no_tauri_sql_permission_markers(&sql_capability, "inline capability").is_err(),
+        "SQL plugin markers in object permission id/name/identifier/permission fields must be rejected"
     );
 
     Ok(())
@@ -82,6 +107,10 @@ fn assert_no_tauri_sql_plugin_dependency(paths: &[PathBuf]) -> TestResult {
 fn assert_no_tauri_sql_capability_permissions(capability_path: &Path) -> TestResult {
     let capability_text = read_to_string(capability_path)?;
     let capability_json: Value = serde_json::from_str(&capability_text)?;
+    assert_no_tauri_sql_permission_markers(&capability_json, &capability_path.display().to_string())
+}
+
+fn assert_no_tauri_sql_permission_markers(capability_json: &Value, source: &str) -> TestResult {
     let permissions = capability_json.get("permissions").and_then(Value::as_array);
 
     let Some(permissions) = permissions else {
@@ -89,20 +118,59 @@ fn assert_no_tauri_sql_capability_permissions(capability_path: &Path) -> TestRes
     };
 
     for permission in permissions {
-        let permission = permission
-            .as_str()
-            .expect("capability permission should be a string");
-        let normalized = permission.to_ascii_lowercase();
-        assert!(
-            !normalized.starts_with("sql:")
-                && !normalized.contains("tauri-plugin-sql")
-                && !normalized.contains("plugin-sql"),
-            "Mirabilis must not enable Tauri SQL plugin capability permissions in {}: {permission}",
-            capability_path.display(),
-        );
+        if let Some(marker) = sql_permission_marker(permission) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!(
+                    "Mirabilis must not enable Tauri SQL plugin capability permissions in {source}: {marker}"
+                ),
+            )
+            .into());
+        }
     }
 
     Ok(())
+}
+
+fn sql_permission_marker(permission: &Value) -> Option<String> {
+    match permission {
+        Value::String(permission) => {
+            contains_sql_permission_marker(permission).then(|| permission.to_string())
+        }
+        Value::Object(permission) => ["id", "name", "identifier", "permission"]
+            .into_iter()
+            .filter_map(|field| permission.get(field).and_then(Value::as_str))
+            .find(|value| contains_sql_permission_marker(value))
+            .map(ToString::to_string),
+        _ => None,
+    }
+}
+
+fn contains_sql_permission_marker(permission: &str) -> bool {
+    let normalized = permission.to_ascii_lowercase();
+    normalized.starts_with("sql:")
+        || normalized.contains("tauri-plugin-sql")
+        || normalized.contains("plugin-sql")
+}
+
+fn assert_db_query_has_no_raw_sql_fields(db_query: &str) {
+    for field in db_query.split(['\n', ';', ',']) {
+        let field = field
+            .trim()
+            .trim_start_matches('{')
+            .trim_start()
+            .trim_start_matches("readonly ");
+        let field_name = field
+            .split(':')
+            .next()
+            .unwrap_or(field)
+            .trim()
+            .trim_end_matches('?');
+        assert!(
+            field_name != "sql" && field_name != "params",
+            "DbQuery must not add raw sql/params fields to the TypeScript contract: {field}",
+        );
+    }
 }
 
 fn repo_root() -> PathBuf {

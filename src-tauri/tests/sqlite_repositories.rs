@@ -20,6 +20,7 @@ use tempfile::TempDir;
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 const SQL_INJECTION_TEXT: &str = "x'); DROP TABLE core_pages; --";
+const OLD_BRANCH_LOCAL_V1_CHECKSUM: &str = "mirabilis-core-schema-v1";
 
 #[test]
 fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> TestResult {
@@ -33,6 +34,7 @@ fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> Te
     }
 
     let raw = Connection::open(db_file.path())?;
+    raw.execute_batch("PRAGMA foreign_keys = ON;")?;
     raw.execute(
         "INSERT INTO core_pages (id, title, parent_page_id, body_json, created_at, updated_at, archived_at)
          VALUES (?1, ?2, NULL, ?3, ?4, ?5, NULL)",
@@ -63,6 +65,7 @@ fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> Te
     }
 
     let raw = Connection::open(db_file.path())?;
+    raw.execute_batch("PRAGMA foreign_keys = ON;")?;
     assert_eq!(
         raw.query_row(
             "SELECT title FROM core_pages WHERE id = ?1",
@@ -229,7 +232,9 @@ fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> Te
         "plugin_id",
         "core_plugins",
         "id",
+        "CASCADE",
     )?;
+    assert_core_plugin_indexes_cascade_on_plugin_delete(&raw)?;
 
     assert_eq!(
         raw.query_row(
@@ -259,12 +264,69 @@ fn sqlite_migrations_reject_ledger_drift() -> TestResult {
     }
 
     let database = Database::open(db_file.path())?;
-    let result = apply_migrations(&database);
-
-    assert!(
-        result.is_err(),
-        "migration version 1 with a changed name/checksum must not be accepted"
+    assert_migration_drift(
+        apply_migrations(&database)
+            .expect_err("migration version 1 with a changed name/checksum must not be accepted"),
+        "001_core_schema_renamed",
+        "wrong-checksum",
     );
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_migrations_reject_old_branch_local_v1_checksum_after_schema_changes() -> TestResult {
+    let db_file = TempDatabase::new()?;
+
+    {
+        let raw = Connection::open(db_file.path())?;
+        raw.execute_batch(
+            "
+            CREATE TABLE core_schema_migrations (
+              version INTEGER PRIMARY KEY,
+              name TEXT NOT NULL,
+              checksum TEXT NOT NULL,
+              applied_at TEXT NOT NULL
+            );
+            INSERT INTO core_schema_migrations (version, name, checksum, applied_at)
+            VALUES (1, '001_core_schema', 'mirabilis-core-schema-v1', '2026-05-21T00:00:00Z');
+            CREATE TABLE core_plugin_indexes (
+              id TEXT PRIMARY KEY,
+              plugin_id TEXT NOT NULL,
+              index_name TEXT NOT NULL,
+              table_name TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+            PRAGMA user_version = 1;
+            ",
+        )?;
+    }
+
+    let database = Database::open(db_file.path())?;
+    let error = apply_migrations(&database).expect_err(
+        "old branch-local v1 ledgers must drift after the plugin-index FK changes schema v1",
+    );
+
+    match error {
+        DbError::MigrationDrift {
+            version,
+            expected_name,
+            expected_checksum,
+            actual_name,
+            actual_checksum,
+        } => {
+            assert_eq!(version, LATEST_SCHEMA_VERSION);
+            assert_eq!(expected_name, "001_core_schema");
+            assert_ne!(
+                expected_checksum, OLD_BRANCH_LOCAL_V1_CHECKSUM,
+                "the compiled v1 checksum should change when schema v1 changes"
+            );
+            assert_eq!(actual_name, "001_core_schema");
+            assert_eq!(actual_checksum, OLD_BRANCH_LOCAL_V1_CHECKSUM);
+        }
+        other => panic!("expected MigrationDrift for old v1 checksum, got {other:?}"),
+    }
 
     Ok(())
 }
@@ -281,10 +343,12 @@ fn sqlite_migrations_reject_future_user_version_without_downgrading() -> TestRes
 
     {
         let database = Database::open(db_file.path())?;
-        let result = apply_migrations(&database);
-        assert!(
-            result.is_err(),
-            "a database from a newer schema version must not be migrated by an older binary"
+        assert_future_schema_version(
+            apply_migrations(&database).expect_err(
+                "a database from a newer schema version must not be migrated by an older binary",
+            ),
+            future_version,
+            LATEST_SCHEMA_VERSION,
         );
     }
 
@@ -293,6 +357,52 @@ fn sqlite_migrations_reject_future_user_version_without_downgrading() -> TestRes
         pragma_user_version(&raw)?,
         future_version,
         "failed future-version migrations must not downgrade PRAGMA user_version"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_migrations_reject_future_ledger_version_with_stale_user_version() -> TestResult {
+    let db_file = TempDatabase::new()?;
+    let future_version = LATEST_SCHEMA_VERSION + 1;
+
+    {
+        let raw = Connection::open(db_file.path())?;
+        raw.execute_batch(
+            "
+            CREATE TABLE core_schema_migrations (
+              version INTEGER PRIMARY KEY,
+              name TEXT NOT NULL,
+              checksum TEXT NOT NULL,
+              applied_at TEXT NOT NULL
+            );
+            ",
+        )?;
+        raw.execute(
+            "INSERT INTO core_schema_migrations (version, name, checksum, applied_at)
+             VALUES (?1, '999_future_schema', 'future-checksum', '2026-05-21T00:00:00Z')",
+            params![future_version],
+        )?;
+        raw.pragma_update(None, "user_version", 0_i64)?;
+    }
+
+    {
+        let database = Database::open(db_file.path())?;
+        assert_future_schema_version(
+            apply_migrations(&database).expect_err(
+                "future ledger rows must not be accepted when PRAGMA user_version is stale",
+            ),
+            future_version,
+            LATEST_SCHEMA_VERSION,
+        );
+    }
+
+    let raw = Connection::open(db_file.path())?;
+    assert_eq!(
+        pragma_user_version(&raw)?,
+        0,
+        "failed future-ledger migrations must not advance stale PRAGMA user_version"
     );
 
     Ok(())
@@ -1153,6 +1263,42 @@ fn assert_invalid_json(error: DbError, table: &str, column: &str, record_id: &st
     }
 }
 
+fn assert_migration_drift(error: DbError, actual_name: &str, actual_checksum: &str) {
+    match error {
+        DbError::MigrationDrift {
+            version,
+            expected_name,
+            expected_checksum,
+            actual_name: drift_name,
+            actual_checksum: drift_checksum,
+        } => {
+            assert_eq!(version, LATEST_SCHEMA_VERSION);
+            assert_eq!(expected_name, "001_core_schema");
+            assert!(!expected_checksum.is_empty());
+            assert_eq!(drift_name, actual_name);
+            assert_eq!(drift_checksum, actual_checksum);
+        }
+        other => panic!("expected MigrationDrift, got {other:?}"),
+    }
+}
+
+fn assert_future_schema_version(
+    error: DbError,
+    current_version: i64,
+    latest_supported_version: i64,
+) {
+    match error {
+        DbError::FutureSchemaVersion {
+            current_version: actual_current_version,
+            latest_supported_version: actual_latest_supported_version,
+        } => {
+            assert_eq!(actual_current_version, current_version);
+            assert_eq!(actual_latest_supported_version, latest_supported_version);
+        }
+        other => panic!("expected FutureSchemaVersion, got {other:?}"),
+    }
+}
+
 fn rich_json() -> Value {
     json!({
         "object": {
@@ -1304,6 +1450,7 @@ fn assert_foreign_key(
     from_column: &str,
     target_table: &str,
     target_column: &str,
+    expected_on_delete: &str,
 ) -> TestResult {
     let mut statement = connection.prepare(&format!("PRAGMA foreign_key_list({table})"))?;
     let rows = statement.query_map([], |row| {
@@ -1311,17 +1458,69 @@ fn assert_foreign_key(
             row.get::<_, String>(2)?,
             row.get::<_, String>(3)?,
             row.get::<_, String>(4)?,
+            row.get::<_, String>(6)?,
         ))
     })?;
     let foreign_keys = rows.collect::<rusqlite::Result<Vec<_>>>()?;
 
     assert!(
-        foreign_keys.iter().any(|(actual_table, actual_from, actual_to)| {
+        foreign_keys.iter().any(|(
+            actual_table,
+            actual_from,
+            actual_to,
+            actual_on_delete,
+        )| {
             actual_table == target_table
                 && actual_from == from_column
                 && actual_to == target_column
+                && actual_on_delete.eq_ignore_ascii_case(expected_on_delete)
         }),
-        "expected {table}.{from_column} to reference {target_table}({target_column}); actual foreign keys: {foreign_keys:?}"
+        "expected {table}.{from_column} to reference {target_table}({target_column}) ON DELETE {expected_on_delete}; actual foreign keys: {foreign_keys:?}"
+    );
+
+    Ok(())
+}
+
+fn assert_core_plugin_indexes_cascade_on_plugin_delete(connection: &Connection) -> TestResult {
+    assert_eq!(
+        connection.query_row("PRAGMA foreign_keys", [], |row| row.get::<_, i64>(0))?,
+        1,
+        "foreign key enforcement must be enabled before checking cascade behavior"
+    );
+    connection.execute(
+        "INSERT INTO core_plugins (id, name, version, enabled, manifest_json, settings_json, installed_at, updated_at)
+         VALUES (?1, ?2, ?3, 1, '{}', NULL, ?4, ?4)",
+        params![
+            "plugin-cascade",
+            "Cascade plugin",
+            "1.0.0",
+            "2026-05-21T00:00:00Z"
+        ],
+    )?;
+    connection.execute(
+        "INSERT INTO core_plugin_indexes (id, plugin_id, index_name, table_name, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+        params![
+            "index-cascade",
+            "plugin-cascade",
+            "timer_by_page",
+            "plugin_timer_index",
+            "2026-05-21T00:00:00Z"
+        ],
+    )?;
+    connection.execute(
+        "DELETE FROM core_plugins WHERE id = ?1",
+        params!["plugin-cascade"],
+    )?;
+
+    assert_eq!(
+        connection.query_row(
+            "SELECT COUNT(*) FROM core_plugin_indexes WHERE id = ?1",
+            params!["index-cascade"],
+            |row| row.get::<_, i64>(0),
+        )?,
+        0,
+        "deleting a plugin should cascade-delete registered plugin index rows"
     );
 
     Ok(())
