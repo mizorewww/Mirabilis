@@ -192,6 +192,14 @@
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing.
   - `bun run lint`.
 
+### Targeted Re-review Round
+
+- Status: active.
+- Agents:
+  - Heisenberg (`security_reviewer`, `019e4338-6a46-7f12-bb58-bed5a8a2c8ca`): verify prior P1/P2 security findings are fixed and no native exposure broadened.
+  - Euclid (`test_quality_reviewer`, `019e4338-6d6b-7810-b628-baa4d4582045`): verify prior P2 coverage gaps are addressed.
+  - Herschel (`deprecation_auditor`, `019e4338-70e0-7d10-89d9-6e756c0bb2b7`): verify non-enumerable property issue and operator drift guard.
+
 ## Next Action
 
-Run targeted re-review for TASK-006 P1/P2 fixes.
+Wait for targeted re-review agents.

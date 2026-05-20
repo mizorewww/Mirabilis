@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:29 CST.
+Last updated: 2026-05-20 10:30 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 10:29 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation committed; targeted re-review pending.
+- Current phase: targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Heisenberg (`security_reviewer`, `019e4338-6a46-7f12-bb58-bed5a8a2c8ca`): targeted security re-review for TASK-006 P1/P2 fixes.
+- Euclid (`test_quality_reviewer`, `019e4338-6d6b-7810-b628-baa4d4582045`): targeted test-quality re-review for review-fix coverage.
+- Herschel (`deprecation_auditor`, `019e4338-70e0-7d10-89d9-6e756c0bb2b7`): targeted deprecation/risk re-review for non-enumerable property and operator drift fixes.
 
 ## Recent Agent Outcomes
 
+- Targeted re-review agents spawned for TASK-006 review-fix changes.
 - Ptolemy (`implementer`) completed and was closed after fixing TASK-006 P1/P2 review findings.
 - Ptolemy's implementation commit: `ec5cc46 Ptolemy(implementation)(Add Filter Store and Query AST baseline): fix review edge cases`.
 - Parent repeated green checks after Ptolemy: `bun run typecheck`, `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing, and `bun run lint`.
@@ -166,6 +169,6 @@ Last updated: 2026-05-20 10:29 CST.
 
 ## Next Actions
 
-1. Commit this review-fix green-signal record.
-2. Run targeted re-review for TASK-006 P1/P2 fixes.
-3. If clear, clean up docs P3 and run final gate.
+1. Wait for targeted re-review agents.
+2. If clear, clean up docs P3 items.
+3. Run final gate.
