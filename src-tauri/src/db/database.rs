@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use rusqlite::Connection;
+use rusqlite::{Connection, Transaction, TransactionBehavior};
 
 use super::{DbError, DbResult};
 
@@ -26,24 +26,23 @@ impl Database {
         &self.connection
     }
 
-    pub(crate) fn transaction<T>(
+    pub(crate) fn transaction<T, E>(
         &self,
-        operation: impl FnOnce(&Self) -> DbResult<T>,
-    ) -> DbResult<T> {
-        self.connection.execute_batch("BEGIN IMMEDIATE")?;
+        operation: impl FnOnce(&Self) -> Result<T, E>,
+    ) -> Result<T, E>
+    where
+        E: From<DbError>,
+    {
+        let transaction =
+            Transaction::new_unchecked(&self.connection, TransactionBehavior::Immediate)
+                .map_err(DbError::from)?;
 
         match operation(self) {
             Ok(value) => {
-                if let Err(source) = self.connection.execute_batch("COMMIT") {
-                    let _ = self.connection.execute_batch("ROLLBACK");
-                    return Err(source.into());
-                }
+                transaction.commit().map_err(DbError::from)?;
                 Ok(value)
             }
-            Err(error) => {
-                let _ = self.connection.execute_batch("ROLLBACK");
-                Err(error)
-            }
+            Err(error) => Err(error),
         }
     }
 }

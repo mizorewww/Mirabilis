@@ -1043,7 +1043,7 @@ fn assert_redacted_invalid_request(
         "INVALID_REQUEST",
         &forbidden_fragments
             .iter()
-            .filter(|fragment| !fragment.is_empty())
+            .filter(|fragment| !fragment.trim().is_empty())
             .map(|fragment| (*fragment).to_string())
             .collect::<Vec<_>>(),
     )
@@ -1058,7 +1058,7 @@ fn assert_redacted_persistence_failed(
         "PERSISTENCE_FAILED",
         &forbidden_fragments
             .iter()
-            .filter(|fragment| !fragment.is_empty())
+            .filter(|fragment| !fragment.trim().is_empty())
             .map(|fragment| (*fragment).to_string())
             .collect::<Vec<_>>(),
     )

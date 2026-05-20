@@ -110,7 +110,7 @@ export type NativeInvoke = <Response>(
 export type NativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
-    transaction<Response>(queries: DbQuery[]): Promise<Response>;
+    transaction<Response>(queries: DbQuery[]): Promise<Response[]>;
   };
   shortcuts: {
     register(shortcut: string, commandId: string): Promise<void>;
@@ -138,7 +138,7 @@ export function createNativeBridge(options: {
         });
       },
       transaction<Response>(queries: DbQuery[]) {
-        return invokeCommand<Response>(
+        return invokeCommand<Response[]>(
           invoke,
           NATIVE_BRIDGE_COMMANDS.dbTransaction,
           { queries },
