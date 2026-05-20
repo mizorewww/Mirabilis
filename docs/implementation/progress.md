@@ -40,7 +40,7 @@ Status markers:
 - [x] TASK-012: Add NativeBridge TypeScript boundary
 - [x] TASK-013: Add SQLite schema and Rust repositories
 - [x] TASK-014: Expose Tauri IPC commands for core persistence
-- [ ] TASK-015: Build app bootstrap and runtime provider
+- [x] TASK-015: Build app bootstrap and runtime provider
 
 ## Milestone M3: Editor and plugin runtime
 
@@ -78,6 +78,26 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 07:32 CST - TASK-015 completed
+
+- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
+- Task: Build app bootstrap and runtime provider.
+- Commits: `e8bd284` start task orchestration, `2714e39` pre-test agents, `78c37e0` pre-test guidance, `75e3bc7` bootstrap/provider acceptance tests, `529fb48` red test result, `04f7edf` implementation handoff, `96d229e` runtime bootstrap provider implementation, `69a594e` implementation result, `3b0b8e4` review findings, `49f6554` review-fix tests, `3b11328` review-fix red tests, `06186bb` narrowed runtime provider surface, `1f469ca` review-fix implementation result, `05333f7` focused re-review summary, `e79659a` initialized runtime facade test follow-up, `4efa19e` test-strength follow-up record, `506b3e5` runtime provider docs sync, and `98895d3` docs sync record.
+- Delivered: injectable `createAppRuntime()` bootstrap in current flat `src/bootstrap/*`; explicit empty `BUILT_IN_PLUGINS`; honest `{ persistence: "in-memory-core" }` storage facade; NativeBridge/Core stores/registries/services/Plugin Host/runtime/built-in load/activation ordering; plugin load/activation failure rejection; React `RuntimeProvider`; public `useRuntime()` facade exposing only copied/frozen app info; rejected-initializer retry after failure; StrictMode single-flight for pending/successful initialization; neutral Mirabilis App Shell with loading and generic startup failure UI; App Shell/native-surface boundary tests; architecture/development/testing docs synced to the final TASK-015 behavior.
+- Validation: focused TASK-015 frontend tests passed with 3 files and 18 tests: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`. `bun run typecheck` passed. `bun run lint` passed. `bun run build` passed. `bun run check:quick` passed with 17 frontend test files / 265 tests, Rust fmt, Rust clippy, and full Rust tests. `git diff --check` passed.
+- Review: planner, docs/current-guidance, deprecation/API, security, correctness, test-quality, changed-surface, and docs-writing agents completed. Review-fix work addressed P1 findings for public runtime provider surface exposure, plugin load/activation failure coverage, native-surface guard strength, rejected initializer cache clearing, and initialized-runtime safe facade coverage. Focused re-review found no P0/P1/P2 security or correctness findings. Remaining P2/P3 items are non-blocking: mounted providers treat `initializeRuntime` as mount-only, React 19 prefers direct context provider syntax over `.Provider`, and the public runtime app type can become explicitly readonly later.
+- External docs verified by agents: React 19 `createContext`, `useEffect`, `StrictMode`, `createRoot`, and release notes; React Testing Library render and async-query guidance; Vitest 4 mock/migration docs; Vite 7 migration/support guidance; Tauri v2 commands, capabilities, permissions, and mock API docs.
+- Remaining risk: TASK-015 intentionally does not wire Core stores to SQLite persistence, does not call DB IPC from bootstrap, does not add Tauri commands/capabilities/permissions, and keeps production built-ins empty until later plugin tasks. Future plugin-rendered UI must continue to receive `PluginContext`, plugin-scoped facades, or controlled props rather than full runtime handles.
+
+### 2026-05-21 06:30 CST - TASK-015 started
+
+- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
+- Task: Build app bootstrap and runtime provider.
+- Scope: initialize NativeBridge/storage/Core services/registries/Plugin Host/built-in plugins/React providers in the documented order, expose runtime to UI through a provider/hook, and show a user-visible startup failure state. No plugin business logic should live in App Shell.
+- Out of scope: Markdown editor behavior, task/tag/timer/calendar business plugins, filesystem import/export behavior, release packaging, new Tauri command/capability expansion unless local docs or agents identify a TASK-015-specific bootstrap requirement.
+- Agent orchestration: parent thread remains orchestration-only; current React/Tauri/runtime guidance, security-boundary guidance, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-015-app-bootstrap-runtime-provider.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 06:27 CST - TASK-014 completed
 

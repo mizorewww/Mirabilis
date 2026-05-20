@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:27 CST.
+Last updated: 2026-05-21 07:33 CST.
 
 ## Current Task
 
-- Task: TASK-014 - Expose Tauri IPC commands for core persistence.
-- Branch: `feat/task-014-tauri-ipc-core-persistence`.
+- Task: TASK-015 - Build app bootstrap and runtime provider.
+- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: progress update before merge.
+- Current phase: ready to merge after progress commit.
 
 ## Active Agents
 
@@ -16,6 +16,68 @@ Last updated: 2026-05-21 06:27 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-014 was merged to `master` and pushed. Merge commit: `5c41030 Codex(merge)(Expose Tauri IPC commands for core persistence): merge task branch`.
+- TASK-015 branch `feat/task-015-app-bootstrap-runtime-provider` was created from latest `master`.
+- TASK-015 scope: initialize NativeBridge/storage/Core services/registries/Plugin Host/built-in plugins/React providers in documented order, expose runtime to UI through a provider/hook, and show a user-visible startup failure state. App Shell must not contain plugin business logic.
+- TASK-015 out of scope unless agents find a local-doc requirement: Markdown editor behavior, task/tag/timer/calendar business plugins, filesystem import/export behavior, release packaging, and new Tauri command/capability expansion.
+- `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- TASK-015 pre-test guidance agents were spawned. All are read-only and must not edit files.
+- Parfit the 2nd (`security_reviewer`) completed read-only pre-test review. Constraints: no new broad Tauri permissions, no raw NativeBridge/DB/storage/runtime exposure through plugin-reachable provider values, generic redacted startup failure UI only, preserve Command Registry and PluginContext boundaries.
+- Goodall the 2nd (`docs_researcher`) completed read-only current-docs guidance. Recommendations: unit-test bootstrap order with injected factories/spies, test provider/hook via React Testing Library render + consumer, test async startup failure with visible alert semantics, keep raw invoke isolated, and account for React StrictMode if bootstrap uses effects.
+- Huygens the 2nd (`planner`) completed read-only planning. Recommendation: keep TASK-015 as app-level composition, not a Core rewrite; add bootstrap/provider/built-in-plugin-list/App Shell boundary tests first, with likely files under `src/bootstrap`, `src/providers`, `src/plugins` or `src/shell`, `src/App.tsx`, and focused tests under `src/test`.
+- Feynman the 2nd (`deprecation_auditor`) completed read-only API/deprecation audit. P1 guidance: make bootstrap single-flight/idempotent under React StrictMode, do not expose `NativeBridge` or raw Tauri `invoke` through providers, and either implement storage honestly or keep the first bootstrap explicitly in-memory without claiming persistence.
+- Parent decisions for red tests: delegate bootstrap/provider/App Shell boundary tests to `test_writer`; cover initialization order, StrictMode duplicate-start protection, provider/hook availability, generic redacted startup failure UI, no raw bridge/storage/runtime exposure through plugin-reachable surfaces, and no new Tauri capability/config changes.
+- TASK-015 pre-test guidance summary was committed as `78c37e0 Codex(progress)(Build app bootstrap and runtime provider): summarize pre-test guidance`; completed read-only agents were closed.
+- Ramanujan the 2nd (`test_writer`) was spawned for red tests. Ownership is limited to failing frontend tests and test helpers; production implementation, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Ramanujan the 2nd completed and was closed after adding red tests in `src/test/app-bootstrap-runtime.test.ts`, `src/test/runtime-provider.test.tsx`, and `src/test/app-shell-boundary.test.ts`.
+- Parent confirmed the expected red signal: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts` fails 8 tests because `src/bootstrap` and `src/providers` are missing and the current App Shell lacks startup failure alert UI; 3 App Shell boundary tests pass. `git diff --cached --check` passed before commit.
+- Ramanujan the 2nd's test commit: `75e3bc7 Ramanujan the 2nd(test)(Build app bootstrap and runtime provider): add bootstrap provider acceptance tests`.
+- Red-test communication update was committed as `529fb48 Codex(progress)(Build app bootstrap and runtime provider): record red test result`.
+- Planck the 2nd (`implementer`) was spawned for minimum production code to pass the TASK-015 focused tests. Ownership is limited to bootstrap/provider/App Shell production files; tests, docs, Tauri config/capabilities, Rust code, package/Cargo dependencies, NativeBridge internals, DB IPC contracts, plugin-host internals, command registry internals, and broad Core rewrites are out of scope.
+- Planck the 2nd completed and was closed after implementing `src/bootstrap/**`, `src/providers/**`, `src/App.tsx`, and `src/App.css`. Delivered injectable runtime bootstrap, explicit empty built-in plugin list, runtime provider/hook with single-flight startup, neutral Mirabilis shell, and generic redacted startup failure UI.
+- Parent repeated green checks after Planck the 2nd: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`, `bun run typecheck`, `bun run lint`, `bun run build`, and `git diff --check`.
+- Planck the 2nd's implementation commit: `96d229e Planck the 2nd(implementation)(Build app bootstrap and runtime provider): implement runtime bootstrap provider`.
+- Implementation-result communication update was committed as `69a594e Codex(progress)(Build app bootstrap and runtime provider): record implementation result`.
+- TASK-015 review round 1 agents were spawned. `doc_writer` documentation gap review was deferred because the agent thread limit was reached; parent will retry after a review slot opens.
+- Jason the 2nd (`pr_explorer`) completed changed-surface mapping. It found no Tauri/Cargo/package scope changes and highlighted hotspots around full runtime exposure, in-memory storage placeholder, single-flight rejected-promise caching, loose `AppProps.initializeRuntime` typing, and regex/file-list boundary tests.
+- Mendel the 2nd (`security_reviewer`) completed security review with one P1: public runtime provider exposes the full Core runtime to any React descendant, which could let plugin-rendered UI bypass `PluginContext` boundaries. It confirmed no new Tauri config/capability/Rust command/generated permission changes and no new raw Tauri imports.
+- McClintock the 2nd (`test_quality_reviewer`) completed test-quality review. P1 findings: real plugin load/activation failure paths are not covered, and the no-native-expansion guard is too narrow. P2 finding: App Shell no-business-logic guard is regex-only.
+- Pasteur the 2nd (`docs_researcher`) completed docs/current-guidance review with no P0/P1 mismatches. It confirmed bootstrap order, in-memory storage honesty, empty built-ins, generic failure UI, and no native/package changes; it flagged the full runtime provider surface as a future plugin boundary risk that parent groups with Mendel's P1.
+- Carver the 2nd (`reviewer`) completed correctness review with no P0/P1 findings and one P2: rejected startup promises are cached for the module lifetime.
+- Nash the 2nd (`deprecation_auditor`) completed API/deprecation review with one P1: failed runtime initialization is cached permanently. P2 findings: single-flight depends on stable initializer identity and new React 19 code uses the older context provider form.
+- Parent decisions after review round 1: delegate a review-fix TDD loop for P1s covering narrowed provider/public runtime surface, real plugin load/activate failure rejection, stronger no-native-expansion guard, and rejected-initializer cache clearing. Include stable initializer identity and App Shell guard strengthening if small.
+- Completed review round 1 agents were closed. Hubble the 2nd (`doc_writer`) was spawned for the deferred read-only documentation gap review.
+- Hubble the 2nd (`doc_writer`) completed documentation gap review. It recommends deferring docs edits until after the P1 provider-surface review-fix, then updating runtime flow, current layout notes, plugin runtime-provider boundary, NativeBridge/bootstrap persistence note, App Shell responsibilities, and testing strategy.
+- Review summary was committed as `3b0b8e4 Codex(progress)(Build app bootstrap and runtime provider): summarize review findings`.
+- Socrates the 2nd (`test_writer`) was spawned for review-fix red tests covering narrowed public runtime surface, real plugin phase failures, stronger native-expansion guard, and rejected-initializer cache clearing. Production implementation, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Socrates the 2nd completed and was closed after adding review-fix red tests in `src/test/runtime-provider.test.tsx`, `src/test/app-bootstrap-runtime.test.ts`, and `src/test/app-shell-boundary.test.ts`.
+- Parent confirmed the expected review-fix red signal: focused frontend tests fail 2 tests because public `useRuntime()` exposes unsafe runtime paths and failed initialization remains poisoned by cached rejection; the other 15 tests pass. `git diff --cached --check` passed before commit.
+- Socrates the 2nd's review-fix test commit: `49f6554 Socrates the 2nd(test)(Build app bootstrap and runtime provider): cover review findings`.
+- Review-fix red-test communication update was committed as `3b11328 Codex(progress)(Build app bootstrap and runtime provider): record review fix red tests`.
+- Euler the 2nd (`implementer`) was spawned for the review-fix production patch. Ownership is limited to `src/providers/**`, `src/bootstrap/**` if needed, and `src/App.tsx` if needed. Tests, docs, Tauri config/capabilities, Rust code, package/Cargo files, NativeBridge internals, DB IPC contracts, plugin-host internals, command registry internals, and broad Core rewrites are out of scope.
+- Euler the 2nd completed and was closed after narrowing public `useRuntime()` to a copied/frozen app-info facade, keeping full runtime handles internal to provider state, clearing rejected initializer promises from cache, preserving StrictMode single-flight for pending/success, and updating App Shell to use the safe public hook.
+- Parent repeated green checks after Euler the 2nd: focused TASK-015 frontend tests, `bun run typecheck`, `bun run lint`, `bun run build`, and `git diff --check`.
+- Euler the 2nd's review-fix implementation commit: `06186bb Euler the 2nd(review-fix)(Build app bootstrap and runtime provider): narrow runtime provider surface`.
+- Review-fix implementation communication update was committed as `1f469ca Codex(progress)(Build app bootstrap and runtime provider): record review fix implementation`.
+- Focused TASK-015 re-review agents were spawned for security, correctness, test quality, API/deprecation, docs/current-guidance, and final docs patch planning.
+- Sartre the 2nd (`security_reviewer`) completed focused re-review with no P0/P1/P2 findings. It confirmed the provider boundary is closed, startup errors remain redacted, and no native/Tauri surface changed.
+- Banach the 2nd (`reviewer`) completed focused correctness re-review with no P0/P1/P2 findings. It verified cache behavior, public facade narrowing, App Shell use, and plugin load/activate failure propagation.
+- Curie the 2nd (`test_quality_reviewer`) completed focused test-quality re-review with one P1 coverage gap: public runtime surface narrowing is asserted only for the direct `runtime` prop path, not the production `initializeRuntime` ready branch. Native-expansion, rejected initializer retry, and skipped/only/todo checks are cleared.
+- Newton the 2nd (`docs_researcher`) completed focused docs/current-guidance re-review with no implementation/test mismatch after the provider fix, but blocking docs drift remains before merge.
+- Sagan the 2nd (`deprecation_auditor`) completed focused API/deprecation re-review with no P0/P1 findings. P2: initializer prop is mount-only due to ref/empty deps; P3: older context provider syntax and mutable `PublicRuntime.app` type.
+- Ampere the 2nd (`doc_writer`) completed final docs patch planning for runtime flow, current layout, runtime-provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy.
+- Focused re-review summary was committed as `05333f7 Codex(progress)(Build app bootstrap and runtime provider): summarize focused re-review`.
+- Harvey the 2nd (`test_writer`) was spawned for a narrow test-only follow-up: assert the `initializeRuntime` ready path also exposes only the safe public runtime facade. Production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Harvey the 2nd completed and was closed after adding initialized-runtime public facade coverage in `src/test/runtime-provider.test.tsx`. Parent repeated focused frontend tests and confirmed 18 tests passed; `git diff --cached --check` passed before commit.
+- Harvey the 2nd's test-fix commit: `e79659a Harvey the 2nd(test-fix)(Build app bootstrap and runtime provider): cover initialized runtime facade`.
+- Test-strength communication update was committed as `4efa19e Codex(progress)(Build app bootstrap and runtime provider): record test strength follow-up`.
+- Kant the 2nd (`doc_writer`) was spawned for final TASK-015 docs sync. Ownership is limited to architecture/development/testing docs; progress/status bookkeeping remains with the parent.
+- Kant the 2nd completed and was closed after syncing TASK-015 runtime/provider docs in architecture, development, and testing docs. `git diff --check` passed.
+- Kant the 2nd's docs commit: `506b3e5 Kant the 2nd(docs)(Build app bootstrap and runtime provider): sync runtime provider docs`.
+- Documentation communication update was committed as `98895d3 Codex(progress)(Build app bootstrap and runtime provider): record docs sync`. The post-commit auto-push failed once due to an SSH timeout, so parent must retry push before or during merge cleanup.
+- Final TASK-015 local gate passed: focused TASK-015 frontend tests, `bun run typecheck`, `bun run lint`, `bun run build`, `bun run check:quick`, and `git diff --check`.
+- Parent updated `docs/implementation/progress.md` to mark TASK-015 complete and recorded validation, review, docs, and remaining risks.
+- Parent next step: commit completion progress, retry pushing the task branch, merge to `master`, push `master`, then continue to TASK-016.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

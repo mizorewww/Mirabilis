@@ -79,6 +79,23 @@ Tauri 负责桌面壳和本地系统能力。Tauri v2 的架构本身就是 Rust
 
 建议一开始就用 monorepo。
 
+当前仓库在 TASK-015 仍是 flat layout，而不是下面的最终 monorepo 目录。当前已落地的 App bootstrap / provider 路径是：
+
+```text
+src/
+  App.tsx
+  bootstrap/
+    create-app-runtime.ts
+    built-in-plugins.ts
+  providers/
+    RuntimeProvider.tsx
+    runtime-context.ts
+    use-runtime.ts
+src-tauri/
+```
+
+下面的 `apps/desktop/...`、`packages/...` 和 `plugins/...` 仍是目标架构形态。实现或测试当前分支时，以现有 flat layout 的 `src/bootstrap/*`、`src/providers/*`、`src/App.tsx` 和 root-level `src-tauri/` 为准。
+
 ```text
 task-time-app/
   apps/

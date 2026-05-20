@@ -212,6 +212,10 @@ Repositories accept typed Rust DTOs, serialize JSON fields through `serde_json::
 
 TASK-013 intentionally did not add Rust IPC command handlers. TASK-014 now exposes the reviewed `db_execute` and `db_transaction` commands described in this document. Runtime provider/bootstrap wiring, UI persistence flows, filesystem import/export behavior, global shortcut behavior, notification behavior, and WAL / `busy_timeout` / `trusted_schema` hardening remain outside TASK-014 unless a later task changes connection policy or app bootstrap.
 
+TASK-015 initializes `NativeBridge` during app bootstrap so the runtime composition has the native boundary available. It does not call DB IPC, does not call `nativeBridge.db.execute` or `nativeBridge.db.transaction`, and does not wire Core stores to SQLite persistence. The TASK-015 storage facade is still `{ persistence: "in-memory-core" }`.
+
+TASK-015 also does not add Tauri commands, capabilities, permissions, filesystem import/export behavior, global shortcuts, notifications, `tauri-plugin-sql`, WAL policy, `busy_timeout`, or `PRAGMA trusted_schema` changes.
+
 ### 15.4 TASK-014 DB IPC allowlist and capability boundary
 
 TASK-014 exposes exactly these Core persistence operations through `DbQuery.operation` and the Rust `DbPersistenceOperation` enum:
