@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: targeted re-review completed; P2 review-fix TDD next.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for P2 Plugin API contract gaps and `doc_writer` for P2 docs drift cleanup.
+- Status: P2 review-fix TDD/docs cleanup in progress.
+- Active agents: Planck (`test_writer`) and Heisenberg (`doc_writer`).
+- Next parent step: wait for Planck and Heisenberg, then validate/commit their outputs and continue to implementation for any red tests.
 
 ## Agent Handoffs
 
@@ -408,6 +408,16 @@
   - Fix Meitner's list ownership gap, Helmholtz's public store helper/export and `Omit` coupling findings where feasible, and Banach's P2 docs drift before final gate.
   - If the `keyof` synthetic-key issue cannot be fixed while preserving explicit-undefined rejection under the current TypeScript config, delegate the attempt and record the tradeoff with agent evidence.
 
+### P2 Review-Fix Handoffs
+
+- Status: in progress.
+- Agents:
+  - Planck (`test_writer`, `019e45b5-00fd-7dc2-9071-3243fe73513b`).
+  - Heisenberg (`doc_writer`, `019e45b5-0507-7e12-b7e1-a26f1cd569a5`).
+- Assignments:
+  - Planck owns only `src/test/plugin-api-contracts.test.ts` and is adding red coverage for metadata/event list ownership, public store helper exports, store input public shape locking, and feasible `keyof` surface coverage.
+  - Heisenberg owns only product/architecture/development/task-index docs and is removing current-contract drift around unavailable facades and caller-supplied ownership keys.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -417,4 +427,4 @@
 
 ## Next Action
 
-Spawn `test_writer` for P2 Plugin API contract gaps and `doc_writer` for P2 docs drift cleanup, then continue through implementation and re-review.
+Wait for Planck and Heisenberg, then validate/commit their outputs and continue to implementation for any red tests.

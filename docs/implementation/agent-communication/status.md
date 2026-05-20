@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:10 CST.
+Last updated: 2026-05-20 22:13 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-20 22:10 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 targeted re-review completed; P2 review-fix TDD next.
+- Current phase: TASK-010 P2 review-fix TDD/docs cleanup in progress.
 
 ## Active Agents
 
-- None. Next step is P2 review-fix TDD for Plugin API list ownership and public helper/export/API surface, plus docs drift cleanup.
+- Planck (`test_writer`, `019e45b5-00fd-7dc2-9071-3243fe73513b`) owns P2 Plugin API review-fix tests in `src/test/plugin-api-contracts.test.ts`.
+- Heisenberg (`doc_writer`, `019e45b5-0507-7e12-b7e1-a26f1cd569a5`) owns P2 documentation drift cleanup in product/architecture docs.
 
 ## Recent Agent Outcomes
 
+- P2 review-fix agents spawned: Planck for metadata/event list ownership, store helper exports, store input shape tests, and feasible `keyof` surface coverage; Heisenberg for docs that still describe unavailable facades or caller-supplied ownership keys.
 - Targeted TASK-010 re-review round 2 completed and all agents were closed. No P0/P1 findings were reported.
 - Zeno (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/filesystem/SQLite/IPC boundary changes.
 - Erdos (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 13 focused Plugin API tests cover exports, manifest/contributions, lifecycle/context, inert descriptors, and ownership-key red/green cases.
