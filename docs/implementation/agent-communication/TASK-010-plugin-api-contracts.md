@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: targeted re-review in progress after undefined ownership-key fix.
-- Active agents: Laplace (`pr_explorer`), Meitner (`reviewer`), Zeno (`security_reviewer`), Helmholtz (`deprecation_auditor`), Erdos (`test_quality_reviewer`), and Tesla (`docs_researcher`).
-- Next parent step: wait for targeted re-review agents, then spawn `doc_writer` when a review slot frees.
+- Status: targeted re-review completed; P2 review-fix TDD next.
+- Active agents: none.
+- Next parent step: spawn `test_writer` for P2 Plugin API contract gaps and `doc_writer` for P2 docs drift cleanup.
 
 ## Agent Handoffs
 
@@ -385,7 +385,7 @@
 
 ### Targeted Re-Review Round 2
 
-- Status: in progress.
+- Status: completed and closed.
 - Agents:
   - Laplace (`pr_explorer`, `019e45ab-b5dc-7c01-a6be-f39dfd792333`).
   - Meitner (`reviewer`, `019e45ab-b910-7332-a86c-30a07c877ead`).
@@ -396,6 +396,17 @@
 - Assignment:
   - Read-only re-review of TASK-010 against `master`, with focus on Plugin API contracts, ownership-key reservation behavior, public exports, docs/status drift, security boundaries, deprecated/API risks, and test quality.
   - `doc_writer` will run after a review slot frees because project agent threads are capped.
+- Outcomes:
+  - Laplace mapped the diff and found no scope creep, while highlighting helper-export coverage, a future package-extraction barrel-cycle risk, and the need for future Plugin Host runtime identity enforcement.
+  - Meitner found one P2 correctness/API issue: `PluginMetadataStore.list` and `PluginEventStore.list` still expose raw `ListMetadataOptions` / `ListEventsOptions` without `sourcePluginId` reservation.
+  - Zeno found no P0/P1/P2 security findings.
+  - Helmholtz found three P2 API findings: `Omit` coupling remains in plugin-facing store input contracts, store helper aliases are not directly re-exported from public barrels, and template ownership-key reservations leak synthetic keys into `keyof` surfaces.
+  - Erdos found no P0/P1/P2 test-quality findings.
+  - Tesla found no P0/P1/P2 docs/current-guidance findings, and two P3s for broader product `register` wording and live status cleanup.
+  - Banach (`doc_writer`, `019e45ae-ad5e-7db2-bad0-9d9ebaa8f644`) was spawned after Zeno freed a slot and found two P2 documentation drift issues: docs still describe unavailable `PluginContext` facades as current registration APIs, and examples still pass `pluginId` / `sourcePluginId` through plugin-facing APIs that TASK-010 now rejects.
+- Parent decision:
+  - Fix Meitner's list ownership gap, Helmholtz's public store helper/export and `Omit` coupling findings where feasible, and Banach's P2 docs drift before final gate.
+  - If the `keyof` synthetic-key issue cannot be fixed while preserving explicit-undefined rejection under the current TypeScript config, delegate the attempt and record the tradeoff with agent evidence.
 
 ## Parent Decisions
 
@@ -406,4 +417,4 @@
 
 ## Next Action
 
-Wait for targeted re-review agents, spawn `doc_writer` when a review slot frees, fix any P0/P1 findings, then run the local gate.
+Spawn `test_writer` for P2 Plugin API contract gaps and `doc_writer` for P2 docs drift cleanup, then continue through implementation and re-review.

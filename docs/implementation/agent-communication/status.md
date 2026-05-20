@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 21:57 CST.
+Last updated: 2026-05-20 22:10 CST.
 
 ## Current Task
 
@@ -8,19 +8,23 @@ Last updated: 2026-05-20 21:57 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 targeted re-review in progress after undefined ownership-key fix.
+- Current phase: TASK-010 targeted re-review completed; P2 review-fix TDD next.
 
 ## Active Agents
 
-- Laplace (`pr_explorer`, `019e45ab-b5dc-7c01-a6be-f39dfd792333`) is mapping changed surfaces.
-- Meitner (`reviewer`, `019e45ab-b910-7332-a86c-30a07c877ead`) is running correctness/API re-review.
-- Zeno (`security_reviewer`, `019e45ab-bc9d-7af2-8058-4807b9c34f3e`) is running security/boundary re-review.
-- Helmholtz (`deprecation_auditor`, `019e45ab-c215-73d0-9604-6781ca121a52`) is running deprecation/API compatibility re-review.
-- Erdos (`test_quality_reviewer`, `019e45ab-c56b-7dd2-a8f1-1065126e3ccc`) is running test-quality re-review.
-- Tesla (`docs_researcher`, `019e45ab-c897-7130-8033-19bd1e15f4b3`) is running docs/current-guidance re-review.
+- None. Next step is P2 review-fix TDD for Plugin API list ownership and public helper/export/API surface, plus docs drift cleanup.
 
 ## Recent Agent Outcomes
 
+- Targeted TASK-010 re-review round 2 completed and all agents were closed. No P0/P1 findings were reported.
+- Zeno (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/filesystem/SQLite/IPC boundary changes.
+- Erdos (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 13 focused Plugin API tests cover exports, manifest/contributions, lifecycle/context, inert descriptors, and ownership-key red/green cases.
+- Tesla (`docs_researcher`) found no P0/P1/P2 docs/current-guidance issues and two P3s: product `register` wording is broader than current runtime facades, and live status must be updated after review closes.
+- Helmholtz (`deprecation_auditor`) found three P2 API issues: plugin-facing store input aliases still derive from Core inputs with `Omit`, store helper aliases are not directly re-exported from public barrels, and template ownership reservations leak synthetic keys into `keyof` surfaces.
+- Meitner (`reviewer`) found one P2 correctness/API issue: `PluginMetadataStore.list` and `PluginEventStore.list` still expose raw `ListMetadataOptions` / `ListEventsOptions` without `sourcePluginId` reservation, leaving an ownership-key gap.
+- Laplace (`pr_explorer`) mapped the diff, found no scope creep, and highlighted the helper export gap, type-only barrel cycle extraction risk, and future runtime identity-enforcement risk.
+- Banach (`doc_writer`) found two P2 documentation drifts: docs still describe unavailable `PluginContext` facades as current registration APIs, and examples still pass `pluginId` / `sourcePluginId` through plugin-facing APIs that TASK-010 now rejects. Banach also noted P3 cleanup for the Plugin Host sketch missing `uninstall`.
+- Parent decision: fix the P2 ownership/list/export/docs drift before final gate. If the `keyof` synthetic-key issue cannot be fixed while preserving explicit-undefined rejection under the current TypeScript config, delegate the attempt and record the tradeoff with agent evidence.
 - Targeted TASK-010 re-review agents spawned after Hilbert's green undefined ownership-key fix. `doc_writer` will be spawned after a review slot frees because project agent threads are capped.
 - Mendel (`test_writer`) completed and was closed after validating the existing test-only undefined ownership-key patch in `src/test/plugin-api-contracts.test.ts`.
 - Mendel's test commit: `3c91789 Mendel(test)(Define Plugin API contracts): cover undefined ownership keys`.
