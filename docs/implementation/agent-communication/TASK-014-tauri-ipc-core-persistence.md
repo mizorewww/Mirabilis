@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: focused P2 cleanup implementation handoff.
-- Active agents: none.
-- Next parent step: spawn an `implementer` for the focused P2 production cleanup.
+- Status: focused P2 cleanup implementation agent running.
+- Active agents:
+  - Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`).
+- Next parent step: wait for Kierkegaard the 2nd, inspect its patch, and rerun focused checks.
 
 ## Agent Handoffs
 
@@ -268,3 +269,19 @@
   - Expected red checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary` fails only on `metadata_value_type_must_match_core_value_types`; `bun run typecheck` fails on mixed transaction tuple typing.
   - Green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
   - Commit: `d80bbf2 Carson the 2nd(test)(Expose Tauri IPC commands for core persistence): cover p2 ipc contract cleanup`.
+
+### Focused P2 Cleanup Implementation Round
+
+- Status: running.
+- Agent:
+  - Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`).
+- Assignment:
+  - Make Carson the 2nd's focused P2 cleanup tests green with minimum production changes.
+  - Do not edit tests or docs.
+  - Align Rust metadata `valueType` validation with Core (`string`, `number`, `boolean`, `json`, `date`, `null`) and reject `object` / `array`.
+  - Support both homogeneous array and mixed ordered tuple transaction result typing in NativeBridge.
+  - Refine the DB transaction helper away from `Transaction::new_unchecked` if practical without broad refactoring; otherwise report why it should be documented.
+- Ownership:
+  - `src/core/native/native-bridge.ts`.
+  - `src-tauri/src/commands/db.rs`.
+  - `src-tauri/src/db/database.rs` only for narrow transaction helper refinement.

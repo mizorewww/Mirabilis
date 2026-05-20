@@ -8,11 +8,11 @@ Last updated: 2026-05-21 06:06 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused P2 cleanup implementation handoff.
+- Current phase: focused P2 cleanup implementation agent running.
 
 ## Active Agents
 
-- None.
+- Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`) - production cleanup for Core metadata valueType parity, mixed transaction result typing, and optional transaction helper refinement.
 
 ## Recent Agent Outcomes
 
@@ -52,6 +52,8 @@ Last updated: 2026-05-21 06:06 CST.
 - Parent confirmed expected red/green signals: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary` fails only because metadata `object` valueType is still accepted; `bun run typecheck` fails on transaction tuple typing; `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check` pass.
 - Carson the 2nd's focused P2 test commit: `d80bbf2 Carson the 2nd(test)(Expose Tauri IPC commands for core persistence): cover p2 ipc contract cleanup`.
 - Parent next step: spawn an `implementer` for the focused P2 production cleanup.
+- Kierkegaard the 2nd (`implementer`) was spawned for the focused P2 production cleanup. Ownership is limited to `src/core/native/native-bridge.ts`, `src-tauri/src/commands/db.rs`, and `src-tauri/src/db/database.rs` if a narrow transaction helper refinement is practical.
+- Parent next step: wait for Kierkegaard the 2nd, inspect its patch, and rerun the focused checks.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
