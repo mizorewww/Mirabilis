@@ -1255,6 +1255,12 @@ describe("Plugin Host lifecycle", () => {
       status: "active",
     });
     expect(registryIds(runtime)).toStrictEqual(registryBeforeDeactivate);
+    expect(events).toStrictEqual([
+      "dependency.register",
+      "dependent.register",
+      "dependency.activate",
+      "dependent.activate",
+    ]);
   });
 
   it("rejects uninstall with a typed dependency error before a dependency record disappears from registered dependents", async () => {
@@ -1308,6 +1314,7 @@ describe("Plugin Host lifecycle", () => {
       status: "registered",
     });
     expect(registryIds(runtime)).toStrictEqual(registryBeforeUninstall);
+    expect(events).toStrictEqual(["dependency.register", "dependent.register"]);
   });
 
   it("does not treat installed-only dependency records as satisfying later required dependencies", async () => {
@@ -1503,6 +1510,92 @@ describe("Plugin Host lifecycle", () => {
     });
     expectPluginHostError(() => host.getPlugin("skipped"), "PLUGIN_NOT_FOUND", {
       pluginId: "skipped",
+    });
+  });
+
+  it("rolls back records installed by a failed built-in install batch so the same list can retry", async () => {
+    const host = createHost();
+    const installCause = new Error("second install failed once");
+    const events: string[] = [];
+    let secondInstallAttempts = 0;
+    const plugins = [
+      createPlugin({
+        id: "first",
+        install() {
+          events.push("first.install");
+        },
+        register() {
+          events.push("first.register");
+        },
+      }),
+      createPlugin({
+        id: "second",
+        install() {
+          secondInstallAttempts += 1;
+          events.push(`second.install.${secondInstallAttempts}`);
+
+          if (secondInstallAttempts === 1) {
+            throw installCause;
+          }
+        },
+        register() {
+          events.push("second.register");
+        },
+      }),
+      createPlugin({
+        id: "third",
+        install() {
+          events.push("third.install");
+        },
+        register() {
+          events.push("third.register");
+        },
+      }),
+    ];
+
+    await expectPluginHostErrorAsync(
+      () => host.loadBuiltInPlugins(plugins),
+      "PLUGIN_LIFECYCLE_FAILED",
+      {
+        pluginId: "second",
+        phase: "install",
+        cause: installCause,
+      },
+    );
+    expect(events).toStrictEqual(["first.install", "second.install.1"]);
+    expectPluginHostError(() => host.getPlugin("first"), "PLUGIN_NOT_FOUND", {
+      pluginId: "first",
+    });
+    expectPluginHostError(() => host.getPlugin("second"), "PLUGIN_NOT_FOUND", {
+      pluginId: "second",
+    });
+    expectPluginHostError(() => host.getPlugin("third"), "PLUGIN_NOT_FOUND", {
+      pluginId: "third",
+    });
+
+    await host.loadBuiltInPlugins(plugins);
+
+    expect(events).toStrictEqual([
+      "first.install",
+      "second.install.1",
+      "first.install",
+      "second.install.2",
+      "third.install",
+      "first.register",
+      "second.register",
+      "third.register",
+    ]);
+    expect(host.getPlugin("first")).toMatchObject({
+      enabled: false,
+      status: "registered",
+    });
+    expect(host.getPlugin("second")).toMatchObject({
+      enabled: false,
+      status: "registered",
+    });
+    expect(host.getPlugin("third")).toMatchObject({
+      enabled: false,
+      status: "registered",
     });
   });
 
