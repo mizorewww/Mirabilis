@@ -18,6 +18,7 @@ import type {
   PluginContext,
   PluginContributions,
   PluginCommandDefinition,
+  PluginAppendEventInput,
   PluginDependency,
   PluginDependencyReference,
   PluginEventStore,
@@ -26,10 +27,15 @@ import type {
   PluginFilterStore,
   PluginInstallContext,
   PluginLifecycleResult,
+  PluginListEventsOptions,
+  PluginListFiltersOptions,
+  PluginListMetadataOptions,
   PluginManifest,
   PluginMetadataStore,
   PluginPageStore,
   PluginPermission,
+  PluginSaveFilterInput,
+  PluginSetMetadataInput,
   PluginSlotDescriptor,
   PluginSlotContribution,
   PluginSlotDefinition,
@@ -39,6 +45,7 @@ import type {
   PluginTransactionHandler,
   PluginTransactionManager,
   PluginUninstallContext,
+  PluginUpdateFilterInput,
   PluginViewDescriptor,
   PluginViewDefinition,
   PluginViewListOptions,
@@ -55,12 +62,15 @@ import type {
   EventStore,
   EventTypeContribution as EventTypeContributionFromCore,
   FilterContribution as FilterContributionFromCore,
+  FilterGroup,
   FilterStore,
+  FilterSort,
   IndexerContribution as IndexerContributionFromCore,
   MarkdownSyntaxContribution as MarkdownSyntaxContributionFromCore,
   MetadataFieldContribution as MetadataFieldContributionFromCore,
   MetadataStore,
   MobileToolbarContribution as MobileToolbarContributionFromCore,
+  PluginAppendEventInput as PluginAppendEventInputFromCore,
   PluginCommandDescriptor as PluginCommandDescriptorFromCore,
   PluginCommandRegistry as PluginCommandRegistryFromCore,
   PluginCommandListOptions as PluginCommandListOptionsFromCore,
@@ -69,6 +79,9 @@ import type {
   PluginContributions as PluginContributionsFromCore,
   PluginDependency as PluginDependencyFromCore,
   PluginDependencyReference as PluginDependencyReferenceFromCore,
+  PluginListEventsOptions as PluginListEventsOptionsFromCore,
+  PluginListFiltersOptions as PluginListFiltersOptionsFromCore,
+  PluginListMetadataOptions as PluginListMetadataOptionsFromCore,
   PluginInstallContext as PluginInstallContextFromCore,
   PluginLifecycleResult as PluginLifecycleResultFromCore,
   PluginManifest as PluginManifestFromCore,
@@ -77,6 +90,8 @@ import type {
   PluginPermission as PluginPermissionFromCore,
   PluginFilterCondition as PluginFilterConditionFromCore,
   PluginFilterQuery as PluginFilterQueryFromCore,
+  PluginSaveFilterInput as PluginSaveFilterInputFromCore,
+  PluginSetMetadataInput as PluginSetMetadataInputFromCore,
   PluginSlotDescriptor as PluginSlotDescriptorFromCore,
   PluginSlotContribution as PluginSlotContributionFromCore,
   PluginSlotDefinition as PluginSlotDefinitionFromCore,
@@ -86,6 +101,7 @@ import type {
   PluginTransactionHandler as PluginTransactionHandlerFromCore,
   PluginTransactionManager as PluginTransactionManagerFromCore,
   PluginUninstallContext as PluginUninstallContextFromCore,
+  PluginUpdateFilterInput as PluginUpdateFilterInputFromCore,
   PluginViewDescriptor as PluginViewDescriptorFromCore,
   PluginViewDefinition as PluginViewDefinitionFromCore,
   PluginViewListOptions as PluginViewListOptionsFromCore,
@@ -123,6 +139,32 @@ type OwnershipKeyValueLeak<
   : never;
 type AssignableLeak<Candidate, Surface, Label extends string> =
   Candidate extends Surface ? Label : never;
+type SourcePluginReservationPattern = `sourcePluginId${string}`;
+type PublicStoreShapeKeys<Surface> = Exclude<
+  keyof Surface,
+  SourcePluginReservationPattern
+>;
+type UnexpectedPublicStoreKeyLeak<
+  Surface,
+  Allowed extends PropertyKey,
+  Label extends string,
+> = Exclude<PublicStoreShapeKeys<Surface>, Allowed> extends never
+  ? never
+  : Label;
+type MissingPublicStoreKeyLeak<
+  Surface,
+  Required extends PropertyKey,
+  Label extends string,
+> = Exclude<Required, PublicStoreShapeKeys<Surface>> extends never
+  ? never
+  : Label;
+type PublicStoreShapeKeyLeak<
+  Surface,
+  Keys extends PropertyKey,
+  Label extends string,
+> =
+  | UnexpectedPublicStoreKeyLeak<Surface, Keys, `${Label}.extra-key`>
+  | MissingPublicStoreKeyLeak<Surface, Keys, `${Label}.missing-key`>;
 type FunctionAssignableLeak<Value, Label extends string> = (() => boolean) extends
   NonNullable<Value>
   ? Label
@@ -176,7 +218,13 @@ type SlotExecutableConditionLeak =
       : never
     : "when";
 type PluginMetadataSetInput = Parameters<PluginContext["metadata"]["set"]>[0];
+type PluginMetadataListOptions = NonNullable<
+  Parameters<PluginContext["metadata"]["list"]>[0]
+>;
 type PluginEventAppendInput = Parameters<PluginContext["events"]["append"]>[0];
+type PluginEventListOptions = NonNullable<
+  Parameters<PluginContext["events"]["list"]>[0]
+>;
 type PluginFilterSaveInput = Parameters<PluginContext["filters"]["save"]>[0];
 type PluginFilterUpdateInput = Parameters<
   PluginContext["filters"]["update"]
@@ -184,6 +232,81 @@ type PluginFilterUpdateInput = Parameters<
 type PluginFilterListOptions = NonNullable<
   Parameters<PluginContext["filters"]["list"]>[0]
 >;
+type ExpectedPluginSetMetadataInput = {
+  pageId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+};
+type ExpectedPluginListMetadataOptions = {
+  pageId?: string;
+  namespace?: string;
+  key?: string;
+};
+type ExpectedPluginAppendEventInput = {
+  pageId?: string;
+  namespace: string;
+  type: string;
+  payload: MetadataJsonValue;
+};
+type ExpectedPluginListEventsOptions = {
+  pageId?: string;
+  namespace?: string;
+};
+type ExpectedPluginSaveFilterInput = {
+  name: string;
+  query: PluginFilterQuery;
+  sort?: FilterSort[];
+  group?: FilterGroup;
+  viewType: string;
+};
+type ExpectedPluginUpdateFilterInput = {
+  name?: string;
+  query?: PluginFilterQuery;
+  sort?: FilterSort[] | null;
+  group?: FilterGroup | null;
+  viewType?: string;
+};
+type ExpectedPluginListFiltersOptions = {
+  viewType?: string;
+};
+type PluginPublicStoreShapeLeak =
+  | PublicStoreShapeKeyLeak<
+      PluginSetMetadataInput,
+      keyof ExpectedPluginSetMetadataInput,
+      "metadata.set"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginListMetadataOptions,
+      keyof ExpectedPluginListMetadataOptions,
+      "metadata.list"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginAppendEventInput,
+      keyof ExpectedPluginAppendEventInput,
+      "events.append"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginListEventsOptions,
+      keyof ExpectedPluginListEventsOptions,
+      "events.list"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginSaveFilterInput,
+      keyof ExpectedPluginSaveFilterInput,
+      "filters.save"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginUpdateFilterInput,
+      keyof ExpectedPluginUpdateFilterInput,
+      "filters.update"
+    >
+  | PublicStoreShapeKeyLeak<
+      PluginListFiltersOptions,
+      keyof ExpectedPluginListFiltersOptions,
+      "filters.list"
+    >;
 type CallerSuppliedSourcePluginIdKey =
   | OwnershipKeyValueLeak<
       PluginMetadataSetInput,
@@ -191,9 +314,19 @@ type CallerSuppliedSourcePluginIdKey =
       "metadata.set.sourcePluginId"
     >
   | OwnershipKeyValueLeak<
+      PluginMetadataListOptions,
+      "sourcePluginId",
+      "metadata.list.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
       PluginEventAppendInput,
       "sourcePluginId",
       "events.append.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginEventListOptions,
+      "sourcePluginId",
+      "events.list.sourcePluginId"
     >
   | OwnershipKeyValueLeak<
       PluginFilterSaveInput,
@@ -217,9 +350,19 @@ type CallerSuppliedSourcePluginIdTemplateKeyLeak =
       "metadata.set.sourcePlugin-template-key"
     >
   | BroadStringKeyLeak<
+      PluginMetadataListOptions,
+      `sourcePlugin${string}`,
+      "metadata.list.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
       PluginEventAppendInput,
       `sourcePlugin${string}`,
       "events.append.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginEventListOptions,
+      `sourcePlugin${string}`,
+      "events.list.sourcePlugin-template-key"
     >
   | BroadStringKeyLeak<
       PluginFilterSaveInput,
@@ -244,11 +387,19 @@ type CallerSourcePluginIdMetadataSetVariable = {
   valueType: MetadataValueType;
   sourcePluginId: string;
 };
+type CallerSourcePluginIdMetadataListVariable = {
+  pageId: string;
+  sourcePluginId: string;
+};
 type CallerSourcePluginIdEventAppendVariable = {
   pageId: string;
   namespace: string;
   type: string;
   payload: MetadataJsonValue;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdEventListVariable = {
+  namespace: string;
   sourcePluginId: string;
 };
 type CallerSourcePluginIdFilterSaveVariable = {
@@ -270,10 +421,20 @@ type CallerSourcePluginIdMetadataSetLeak = AssignableLeak<
   PluginMetadataSetInput,
   "metadata.set.sourcePluginId.variable"
 >;
+type CallerSourcePluginIdMetadataListLeak = AssignableLeak<
+  CallerSourcePluginIdMetadataListVariable,
+  PluginMetadataListOptions,
+  "metadata.list.sourcePluginId.variable"
+>;
 type CallerSourcePluginIdEventAppendLeak = AssignableLeak<
   CallerSourcePluginIdEventAppendVariable,
   PluginEventAppendInput,
   "events.append.sourcePluginId.variable"
+>;
+type CallerSourcePluginIdEventListLeak = AssignableLeak<
+  CallerSourcePluginIdEventListVariable,
+  PluginEventListOptions,
+  "events.list.sourcePluginId.variable"
 >;
 type CallerSourcePluginIdFilterSaveLeak = AssignableLeak<
   CallerSourcePluginIdFilterSaveVariable,
@@ -292,7 +453,9 @@ type CallerSourcePluginIdFilterListLeak = AssignableLeak<
 >;
 type CallerSuppliedSourcePluginIdAssignableLeak =
   | CallerSourcePluginIdMetadataSetLeak
+  | CallerSourcePluginIdMetadataListLeak
   | CallerSourcePluginIdEventAppendLeak
+  | CallerSourcePluginIdEventListLeak
   | CallerSourcePluginIdFilterSaveLeak
   | CallerSourcePluginIdFilterUpdateLeak
   | CallerSourcePluginIdFilterListLeak;
@@ -304,11 +467,19 @@ type CallerSourcePluginIdMetadataSetUndefinedVariable = {
   valueType: MetadataValueType;
   sourcePluginId: undefined;
 };
+type CallerSourcePluginIdMetadataListUndefinedVariable = {
+  pageId: string;
+  sourcePluginId: undefined;
+};
 type CallerSourcePluginIdEventAppendUndefinedVariable = {
   pageId: string;
   namespace: string;
   type: string;
   payload: MetadataJsonValue;
+  sourcePluginId: undefined;
+};
+type CallerSourcePluginIdEventListUndefinedVariable = {
+  namespace: string;
   sourcePluginId: undefined;
 };
 type CallerSourcePluginIdFilterSaveUndefinedVariable = {
@@ -330,10 +501,20 @@ type CallerSourcePluginIdMetadataSetUndefinedLeak = AssignableLeak<
   PluginMetadataSetInput,
   "metadata.set.sourcePluginId.undefined-variable"
 >;
+type CallerSourcePluginIdMetadataListUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdMetadataListUndefinedVariable,
+  PluginMetadataListOptions,
+  "metadata.list.sourcePluginId.undefined-variable"
+>;
 type CallerSourcePluginIdEventAppendUndefinedLeak = AssignableLeak<
   CallerSourcePluginIdEventAppendUndefinedVariable,
   PluginEventAppendInput,
   "events.append.sourcePluginId.undefined-variable"
+>;
+type CallerSourcePluginIdEventListUndefinedLeak = AssignableLeak<
+  CallerSourcePluginIdEventListUndefinedVariable,
+  PluginEventListOptions,
+  "events.list.sourcePluginId.undefined-variable"
 >;
 type CallerSourcePluginIdFilterSaveUndefinedLeak = AssignableLeak<
   CallerSourcePluginIdFilterSaveUndefinedVariable,
@@ -352,7 +533,9 @@ type CallerSourcePluginIdFilterListUndefinedLeak = AssignableLeak<
 >;
 type CallerSuppliedSourcePluginIdUndefinedAssignableLeak =
   | CallerSourcePluginIdMetadataSetUndefinedLeak
+  | CallerSourcePluginIdMetadataListUndefinedLeak
   | CallerSourcePluginIdEventAppendUndefinedLeak
+  | CallerSourcePluginIdEventListUndefinedLeak
   | CallerSourcePluginIdFilterSaveUndefinedLeak
   | CallerSourcePluginIdFilterUpdateUndefinedLeak
   | CallerSourcePluginIdFilterListUndefinedLeak;
@@ -630,6 +813,7 @@ type PluginApiBoundaryLeak =
   | CallerSuppliedSourcePluginIdAssignableLeak
   | CallerSuppliedRegistryPluginIdKey
   | CallerSuppliedRegistryPluginIdAssignableLeak
+  | PluginPublicStoreShapeLeak
   | PluginContributionJsonCompatibilityLeak
   | PluginRegistryExecutableReturnLeak;
 
@@ -696,6 +880,27 @@ describe("Plugin API contracts", () => {
       PluginUninstallContext
     >();
     expectTypeOf<AppRuntimeInfoFromCore>().toEqualTypeOf<AppRuntimeInfo>();
+    expectTypeOf<PluginSetMetadataInputFromCore>().toEqualTypeOf<
+      PluginSetMetadataInput
+    >();
+    expectTypeOf<PluginListMetadataOptionsFromCore>().toEqualTypeOf<
+      PluginListMetadataOptions
+    >();
+    expectTypeOf<PluginAppendEventInputFromCore>().toEqualTypeOf<
+      PluginAppendEventInput
+    >();
+    expectTypeOf<PluginListEventsOptionsFromCore>().toEqualTypeOf<
+      PluginListEventsOptions
+    >();
+    expectTypeOf<PluginSaveFilterInputFromCore>().toEqualTypeOf<
+      PluginSaveFilterInput
+    >();
+    expectTypeOf<PluginUpdateFilterInputFromCore>().toEqualTypeOf<
+      PluginUpdateFilterInput
+    >();
+    expectTypeOf<PluginListFiltersOptionsFromCore>().toEqualTypeOf<
+      PluginListFiltersOptions
+    >();
     expectTypeOf<PluginCommandRegistryFromCore>().toEqualTypeOf<
       PluginCommandRegistry
     >();
@@ -740,6 +945,27 @@ describe("Plugin API contracts", () => {
     >();
     expectTypeOf<PluginLifecycleResultFromCore>().toEqualTypeOf<
       PluginLifecycleResult
+    >();
+    expectTypeOf<PluginMetadataSetInput>().toEqualTypeOf<
+      PluginSetMetadataInput
+    >();
+    expectTypeOf<PluginMetadataListOptions>().toEqualTypeOf<
+      PluginListMetadataOptions
+    >();
+    expectTypeOf<PluginEventAppendInput>().toEqualTypeOf<
+      PluginAppendEventInput
+    >();
+    expectTypeOf<PluginEventListOptions>().toEqualTypeOf<
+      PluginListEventsOptions
+    >();
+    expectTypeOf<PluginFilterSaveInput>().toEqualTypeOf<
+      PluginSaveFilterInput
+    >();
+    expectTypeOf<PluginFilterUpdateInput>().toEqualTypeOf<
+      PluginUpdateFilterInput
+    >();
+    expectTypeOf<PluginFilterListOptions>().toEqualTypeOf<
+      PluginListFiltersOptions
     >();
     expectTypeOf<PluginCommandRegistryListOptions>().toEqualTypeOf<
       PluginCommandListOptions
@@ -1200,6 +1426,82 @@ describe("Plugin API contracts", () => {
     expectNoTypeLeak<CallerPluginIdSlotListLeak>();
   });
 
+  it("locks plugin-facing store input aliases to public shapes", () => {
+    const metadataInput = {
+      pageId: "page-1",
+      namespace: "example",
+      key: "status",
+      value: "open",
+      valueType: "string",
+    } satisfies PluginSetMetadataInput;
+    const metadataListOptions = {
+      pageId: "page-1",
+      namespace: "example",
+      key: "status",
+    } satisfies PluginListMetadataOptions;
+    const eventInput = {
+      pageId: "page-1",
+      namespace: "example",
+      type: "opened",
+      payload: { from: "shortcut" },
+    } satisfies PluginAppendEventInput;
+    const eventListOptions = {
+      pageId: "page-1",
+      namespace: "example",
+    } satisfies PluginListEventsOptions;
+    const filterInput = {
+      name: "Open Examples",
+      query: {
+        where: [{ field: "metadata.example.status", op: "eq", value: "open" }],
+      },
+      sort: [{ field: "metadata.example.status", direction: "asc" }],
+      group: { field: "metadata.example.status" },
+      viewType: "example.view",
+    } satisfies PluginSaveFilterInput;
+    const filterUpdate = {
+      query: {
+        where: [{ field: "metadata.example.status", op: "eq", value: null }],
+      },
+      sort: null,
+      group: null,
+      viewType: "example.timeline",
+    } satisfies PluginUpdateFilterInput;
+    const filterListOptions = {
+      viewType: "example.view",
+    } satisfies PluginListFiltersOptions;
+
+    expect(metadataInput.key).toBe("status");
+    expect(metadataListOptions.namespace).toBe("example");
+    expect(eventInput.payload).toEqual({ from: "shortcut" });
+    expect(eventListOptions.pageId).toBe("page-1");
+    expect(filterInput.query.where[0]?.value).toBe("open");
+    expect(filterUpdate.sort).toBeNull();
+    expect(filterListOptions.viewType).toBe("example.view");
+
+    expectNoTypeLeak<PluginPublicStoreShapeLeak>();
+    expectTypeOf<
+      Pick<PluginSetMetadataInput, keyof ExpectedPluginSetMetadataInput>
+    >().toEqualTypeOf<ExpectedPluginSetMetadataInput>();
+    expectTypeOf<
+      Pick<PluginListMetadataOptions, keyof ExpectedPluginListMetadataOptions>
+    >().toEqualTypeOf<ExpectedPluginListMetadataOptions>();
+    expectTypeOf<
+      Pick<PluginAppendEventInput, keyof ExpectedPluginAppendEventInput>
+    >().toEqualTypeOf<ExpectedPluginAppendEventInput>();
+    expectTypeOf<
+      Pick<PluginListEventsOptions, keyof ExpectedPluginListEventsOptions>
+    >().toEqualTypeOf<ExpectedPluginListEventsOptions>();
+    expectTypeOf<
+      Pick<PluginSaveFilterInput, keyof ExpectedPluginSaveFilterInput>
+    >().toEqualTypeOf<ExpectedPluginSaveFilterInput>();
+    expectTypeOf<
+      Pick<PluginUpdateFilterInput, keyof ExpectedPluginUpdateFilterInput>
+    >().toEqualTypeOf<ExpectedPluginUpdateFilterInput>();
+    expectTypeOf<
+      Pick<PluginListFiltersOptions, keyof ExpectedPluginListFiltersOptions>
+    >().toEqualTypeOf<ExpectedPluginListFiltersOptions>();
+  });
+
   it("rejects explicit undefined plugin ids from plugin registry inputs", () => {
     const component = () => null;
     const commandDefinitionWithUndefinedPluginId = {
@@ -1279,7 +1581,9 @@ describe("Plugin API contracts", () => {
   it("rejects caller-supplied source plugin ids from plugin store variables", () => {
     expectNoTypeLeak<CallerSuppliedSourcePluginIdTemplateKeyLeak>();
     expectNoTypeLeak<CallerSourcePluginIdMetadataSetLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdMetadataListLeak>();
     expectNoTypeLeak<CallerSourcePluginIdEventAppendLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdEventListLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterSaveLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterUpdateLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterListLeak>();
@@ -1294,11 +1598,19 @@ describe("Plugin API contracts", () => {
       valueType: "null" as const,
       sourcePluginId: undefined,
     };
+    const metadataListWithUndefinedSourcePluginId = {
+      pageId: "page-1",
+      sourcePluginId: undefined,
+    };
     const eventAppendWithUndefinedSourcePluginId = {
       pageId: "page-1",
       namespace: "example",
       type: "opened",
       payload: null,
+      sourcePluginId: undefined,
+    };
+    const eventListWithUndefinedSourcePluginId = {
+      namespace: "example",
       sourcePluginId: undefined,
     };
     const filterSaveWithUndefinedSourcePluginId = {
@@ -1320,8 +1632,12 @@ describe("Plugin API contracts", () => {
 
     // @ts-expect-error the Plugin Host supplies metadata source ownership
     void ({ pageId: "page-1", namespace: "example", key: "status", value: null, valueType: "null", sourcePluginId: undefined } satisfies PluginMetadataSetInput);
+    // @ts-expect-error the Plugin Host scopes metadata list source ownership
+    void ({ pageId: "page-1", sourcePluginId: undefined } satisfies PluginMetadataListOptions);
     // @ts-expect-error the Plugin Host supplies event source ownership
     void ({ pageId: "page-1", namespace: "example", type: "opened", payload: null, sourcePluginId: undefined } satisfies PluginEventAppendInput);
+    // @ts-expect-error the Plugin Host scopes event list source ownership
+    void ({ namespace: "example", sourcePluginId: undefined } satisfies PluginEventListOptions);
     // @ts-expect-error the Plugin Host supplies filter source ownership
     void ({ name: "Examples", query: { where: [] }, viewType: "example.view", sourcePluginId: undefined } satisfies PluginFilterSaveInput);
     // @ts-expect-error the Plugin Host supplies filter source ownership
@@ -1332,9 +1648,15 @@ describe("Plugin API contracts", () => {
     // @ts-expect-error the Plugin Host supplies metadata source ownership
     const rejectedMetadataSetInput: PluginMetadataSetInput =
       metadataSetWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host scopes metadata list source ownership
+    const rejectedMetadataListOptions: PluginMetadataListOptions =
+      metadataListWithUndefinedSourcePluginId;
     // @ts-expect-error the Plugin Host supplies event source ownership
     const rejectedEventAppendInput: PluginEventAppendInput =
       eventAppendWithUndefinedSourcePluginId;
+    // @ts-expect-error the Plugin Host scopes event list source ownership
+    const rejectedEventListOptions: PluginEventListOptions =
+      eventListWithUndefinedSourcePluginId;
     // @ts-expect-error the Plugin Host supplies filter source ownership
     const rejectedFilterSaveInput: PluginFilterSaveInput =
       filterSaveWithUndefinedSourcePluginId;
@@ -1346,7 +1668,9 @@ describe("Plugin API contracts", () => {
       filterListWithUndefinedSourcePluginId;
 
     void rejectedMetadataSetInput;
+    void rejectedMetadataListOptions;
     void rejectedEventAppendInput;
+    void rejectedEventListOptions;
     void rejectedFilterSaveInput;
     void rejectedFilterUpdateInput;
     void rejectedFilterListOptions;
