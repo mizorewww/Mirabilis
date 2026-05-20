@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: failing tests committed; implementation pending.
-- Active agents: none.
-- Next agent step: spawn an `implementer` for Plugin API contracts.
+- Status: implementation active.
+- Active agents:
+  - Anscombe (`implementer`, `019e4699-91c6-73f3-877d-3e195c73f349`): implement type-only Plugin API contracts.
+- Next agent step: wait for Anscombe's production patch and checks.
 
 ## Agent Handoffs
 
@@ -112,6 +113,19 @@
 - Parent decision:
   - Red signal is accepted. Implementation should add type-only Plugin API contracts, the `../core/plugin-api` subpath, and `../core` re-exports without adding Plugin Host runtime behavior.
 
+### Anscombe (`implementer`)
+
+- Status: active.
+- Agent id: `019e4699-91c6-73f3-877d-3e195c73f349`.
+- Ownership:
+  - `src/core/plugin-api/`.
+  - `src/core/index.ts`.
+  - `src/core/types/index.ts` only if directly necessary for type-only re-exports.
+- Assignment:
+  - Add the minimum type-only Plugin API contracts needed to pass `src/test/plugin-api-contracts.test.ts`.
+  - Keep contributions inert and data-only, `slots` canonical, plugin context facades scoped, and native/Tauri/Host/runtime behavior out of TASK-010.
+  - Do not edit tests, docs, config, package files, lockfiles, Tauri/Rust, UI, or existing runtime code unless a type-only import/export impossibility is found.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -121,4 +135,4 @@
 
 ## Next Action
 
-Spawn an `implementer` for Plugin API contracts.
+Wait for Anscombe's production patch, then run focused Plugin API checks.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:39 CST.
+Last updated: 2026-05-20 19:40 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 19:39 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 failing tests committed; implementation pending.
+- Current phase: TASK-010 implementation active.
 
 ## Active Agents
 
-- None.
+- Anscombe (`implementer`, `019e4699-91c6-73f3-877d-3e195c73f349`): implement type-only Plugin API contracts.
 
 ## Recent Agent Outcomes
 
+- Anscombe (`implementer`) spawned for TASK-010 production Plugin API contracts, with ownership of `src/core/plugin-api/` and `src/core/index.ts`.
 - Dewey (`test_writer`) completed and was closed after creating `src/test/plugin-api-contracts.test.ts`.
 - Harvey (`test_writer`) completed and was closed after refining Dewey's test file to reduce noisy diagnostics while preserving contract coverage.
 - Dewey's test commit: `b083d6c Dewey(test)(Define Plugin API contracts): add plugin API contract tests`.
@@ -383,10 +384,10 @@ Last updated: 2026-05-20 19:39 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests and implementation is pending.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests and Anscombe is implementing the type-only contracts.
 
 ## Next Actions
 
-1. Spawn `implementer` for Plugin API contracts.
+1. Wait for Anscombe's Plugin API contract patch.
 2. Run focused tests after implementation.
 3. Commit implementation if checks pass.
