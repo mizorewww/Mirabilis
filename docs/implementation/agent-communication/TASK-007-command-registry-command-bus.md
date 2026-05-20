@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete.
-- Active agents: none.
+- Status: acceptance test writing active.
+- Active agents:
+  - Ohm (`test_writer`, `019e434b-8cf4-7f73-9970-16430e686965`): write failing TASK-007 Command Registry/Bus acceptance tests.
 
 ## Agent Handoffs
 
@@ -91,4 +92,15 @@
 
 ## Next Action
 
-Delegate failing acceptance tests to a `test_writer`.
+Wait for Ohm's TASK-007 acceptance tests.
+
+### Ohm (`test_writer`)
+
+- Status: active.
+- Agent id: `019e434b-8cf4-7f73-9970-16430e686965`.
+- Ownership:
+  - `src/test/core-command-registry.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Add failing acceptance tests for public exports, command type shape, registration/listing, descriptor defensive copies, bus execution, duplicate rejection, unregister behavior, handler failure wrapping, runtime validation, inert context metadata, and in-flight handler snapshot behavior.
+  - Keep examples business-neutral and avoid task/timer/habit/calendar/AI examples.
+  - Do not edit production code, docs, or exports.

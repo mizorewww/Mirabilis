@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:50 CST.
+Last updated: 2026-05-20 10:51 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 10:50 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance complete.
+- Current phase: acceptance test writing active.
 
 ## Active Agents
 
-- None.
+- Ohm (`test_writer`, `019e434b-8cf4-7f73-9970-16430e686965`): write failing TASK-007 Command Registry/Bus acceptance tests.
 
 ## Recent Agent Outcomes
 
+- Ohm (`test_writer`) was spawned for TASK-007 failing acceptance tests in `src/test/core-command-registry.test.ts`.
 - TASK-007 pre-test guidance completed. Schrodinger planned the Command Registry/Bus API and acceptance tests, Bacon verified current TypeScript/Vitest guidance, and Poincare audited handler exposure, async error wrapping, generic unsoundness, validation, and descriptor clone risks.
 - Parent decisions: expose descriptor metadata without handlers from `get`/`list`/`register`/`unregister`; keep handlers private and executable only through the bus; use `defaultShortcut` as metadata only; treat `context` as inert cloneable descriptor data; use `execute(commandId, input?: unknown): Promise<unknown>` at Core level; wrap sync throws and async rejections as `COMMAND_HANDLER_FAILED` with `cause`.
 - Pre-test guidance agents spawned for TASK-007.
@@ -184,6 +185,6 @@ Last updated: 2026-05-20 10:50 CST.
 
 ## Next Actions
 
-1. Delegate failing acceptance tests to a `test_writer`.
+1. Wait for Ohm's TASK-007 acceptance tests.
 2. Confirm expected red signal.
 3. Delegate implementation to an `implementer`.
