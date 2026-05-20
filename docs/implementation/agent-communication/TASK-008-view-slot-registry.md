@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: targeted re-review findings recorded; P1/P2 test-fix pending.
-- Active agents: none.
+- Status: P1/P2 follow-up tests active.
+- Active agents:
+  - Euler (`test_writer`, `019e43a6-9023-7b11-abf7-3841ed3c7602`): add TASK-008 public type soundness tests and replace deprecated type assertions in `src/test/core-view-slot-registry.test.ts` only; do not edit production/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -235,4 +236,17 @@
 
 ## Next Action
 
-Commit targeted re-review findings, spawn a `test_writer` for public type soundness and matcher deprecation coverage, then delegate production type fixes after the expected red signal.
+Wait for Euler's P1/P2 follow-up test output, confirm the expected red `bun run typecheck` signal, commit the test patch, then delegate production type fixes.
+
+### Euler (`test_writer`)
+
+- Status: active.
+- Agent id: `019e43a6-9023-7b11-abf7-3841ed3c7602`.
+- Ownership:
+  - `src/test/core-view-slot-registry.test.ts` only.
+- Assignment:
+  - Add public type-soundness coverage for wrong-prop component assignability in `RegistryComponent`, `ViewDefinition`, and `SlotContribution`.
+  - Add public type-soundness coverage for slot condition assignability.
+  - Replace deprecated `.toMatchTypeOf()` assertions with current `.toExtend()` assertions.
+  - Remove test dependence on React lazy private `_payload`/`_init` shapes while preserving object/exotic component compatibility coverage.
+  - Do not edit production code, docs, config, or lockfiles, and do not commit.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:28 CST.
+Last updated: 2026-05-20 12:30 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 12:28 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: targeted re-review findings recorded; P1/P2 test-fix pending.
+- Current phase: P1/P2 follow-up tests active.
 
 ## Active Agents
 
-- None.
+- Euler (`test_writer`, `019e43a6-9023-7b11-abf7-3841ed3c7602`): add TASK-008 public type soundness tests and replace deprecated type assertions in `src/test/core-view-slot-registry.test.ts` only; do not edit production/docs/config and do not commit.
 
 ## Recent Agent Outcomes
 
+- Euler (`test_writer`) was spawned for TASK-008 P1/P2 follow-up tests covering wrong-prop component assignability, slot-condition assignability, `.toExtend()` matcher replacement, and removal of test dependence on React lazy private `_payload`/`_init` shapes.
 - TASK-008 targeted re-review completed and all re-review agents were closed.
 - Singer (`reviewer`) found one P2 correctness issue: `RegistryComponent<Props>` currently includes an unparameterized callable fallback and `SlotCondition` uses a bivariant method extraction, weakening explicit public prop generic safety.
 - Aquinas (`deprecation_auditor`) found one P1 API compatibility issue: `RegistryCallableComponent` lets any function or constructor satisfy any `RegistryComponent<Props>`, allowing wrong-prop components in `ViewDefinition<Props>` and `SlotContribution<Props>`. Aquinas also found one P2 deprecated Vitest type matcher issue: `.toMatchTypeOf()` should be replaced with current `.toExtend()` assertions, and one P3 issue where `_payload`/`_init` React lazy internals leak into public/test types.
@@ -255,6 +256,6 @@ Last updated: 2026-05-20 12:28 CST.
 
 ## Next Actions
 
-1. Commit targeted re-review findings.
-2. Spawn a `test_writer` for TASK-008 public type soundness and matcher-deprecation coverage.
-3. Confirm red signal, then delegate production type fixes to an `implementer`.
+1. Wait for Euler's P1/P2 follow-up test output.
+2. Confirm the expected red `bun run typecheck` signal.
+3. Commit Euler's test patch, then delegate production type fixes to an `implementer`.
