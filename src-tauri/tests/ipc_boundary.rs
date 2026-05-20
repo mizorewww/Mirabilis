@@ -12,20 +12,46 @@ fn ipc_boundary_registers_reviewed_persistence_commands_and_removes_greet() -> T
     let handler_body = extract_generate_handler_body(&lib_rs)
         .expect("Tauri invoke_handler should register reviewed app commands");
     let handler_commands = parse_generate_handler_commands(&handler_body);
+    let handler_command_names = handler_commands
+        .iter()
+        .map(|command| command_name(command))
+        .collect::<Vec<_>>();
 
     let mut violations = Vec::new();
     if lib_rs.contains("fn greet") || handler_body.contains("greet") {
         violations.push("remove scaffold greet command and handler registration".to_string());
     }
     for expected_command in ["db_execute", "db_transaction"] {
-        if !handler_commands.iter().any(|command| {
-            command == expected_command || command.ends_with(&format!("::{expected_command}"))
-        }) {
+        if !handler_command_names
+            .iter()
+            .any(|command| command == expected_command)
+        {
             violations.push(format!(
                 "missing reviewed command registration: {expected_command}"
             ));
         }
     }
+    let out_of_scope_commands = [
+        "shortcuts_register",
+        "shortcuts_unregister",
+        "notifications_notify",
+        "files_import_markdown",
+        "files_export_markdown",
+    ];
+    for command in &handler_command_names {
+        if out_of_scope_commands.contains(&command.as_str()) {
+            violations.push(format!(
+                "TASK-014 must not register out-of-scope native command: {command}"
+            ));
+        }
+    }
+    let mut sorted_handler_command_names = handler_command_names.clone();
+    sorted_handler_command_names.sort();
+    assert_eq!(
+        sorted_handler_command_names,
+        vec!["db_execute".to_string(), "db_transaction".to_string()],
+        "TASK-014 should register only the reviewed Core persistence IPC commands",
+    );
     assert_eq!(
         lib_rs.matches(".invoke_handler(").count(),
         1,
@@ -116,6 +142,15 @@ fn parse_generate_handler_commands(handler_body: &str) -> Vec<String> {
         .filter(|command| !command.is_empty())
         .map(ToOwned::to_owned)
         .collect()
+}
+
+fn command_name(command: &str) -> String {
+    command
+        .rsplit("::")
+        .next()
+        .unwrap_or(command)
+        .trim()
+        .to_string()
 }
 
 fn capability_paths(capabilities_dir: &Path) -> TestResult<Vec<PathBuf>> {

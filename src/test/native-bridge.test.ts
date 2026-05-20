@@ -183,10 +183,18 @@ type DbValueJsonPayloadLeak =
     : "db-value-does-not-accept-json-object-payloads";
 type DbValueFunctionPayloadLeak =
   (() => void) extends DbValue ? "db-value-accepts-function-payloads" : never;
+type ExpectedDbTransactionResult<Response> =
+  Response extends readonly unknown[]
+    ? number extends Response["length"]
+      ? Array<Response>
+      : Response
+    : Array<Response>;
 type ExpectedNativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
-    transaction<Response>(queries: DbQuery[]): Promise<Response[]>;
+    transaction<Response>(
+      queries: DbQuery[],
+    ): Promise<ExpectedDbTransactionResult<Response>>;
   };
   shortcuts: {
     register(shortcut: string, commandId: string): Promise<void>;
@@ -408,6 +416,31 @@ describe("NativeBridge TypeScript boundary", () => {
     await expect(transactionPromise).resolves.toStrictEqual(transactionResults);
     expectSingleInvoke(
       transactionInvoke,
+      NATIVE_BRIDGE_COMMANDS.dbTransaction,
+      { queries },
+    );
+
+    const mixedTransactionResults: [
+      null,
+      { id: string },
+      Array<{ id: string }>,
+    ] = [null, { id: "page-1" }, [{ id: "page-2" }]];
+    const mixedTransactionInvoke = createResolvedInvoke(mixedTransactionResults);
+    const mixedTransactionBridge = createNativeBridge({
+      invoke: mixedTransactionInvoke,
+    });
+    const mixedTransactionPromise = mixedTransactionBridge.db.transaction<
+      [null, { id: string }, Array<{ id: string }>]
+    >(queries);
+
+    expectTypeOf<typeof mixedTransactionPromise>().toEqualTypeOf<
+      Promise<[null, { id: string }, Array<{ id: string }>]>
+    >();
+    await expect(mixedTransactionPromise).resolves.toStrictEqual(
+      mixedTransactionResults,
+    );
+    expectSingleInvoke(
+      mixedTransactionInvoke,
       NATIVE_BRIDGE_COMMANDS.dbTransaction,
       { queries },
     );

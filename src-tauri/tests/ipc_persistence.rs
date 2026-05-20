@@ -234,7 +234,7 @@ fn metadata_get_and_delete_use_core_logical_key_instead_of_row_id() -> TestResul
             "page-1",
             "status",
             json!({"done": false}),
-            "object",
+            "json",
         ),
     )?;
     dispatch_db_execute(
@@ -749,23 +749,67 @@ fn db_execute_rejects_semantically_invalid_payloads_for_every_operation() -> Tes
 }
 
 #[test]
-fn metadata_value_type_must_match_value_shape() -> TestResult {
+fn metadata_value_type_must_match_core_value_types() -> TestResult {
     let database = TempIpcDatabase::new()?;
     dispatch_db_execute(
         database.state(),
         create_page_request("metadata-validation-page", "Metadata validation"),
     )?;
 
-    let cases = vec![
+    let valid_cases = vec![
+        ("string", json!("open"), "string"),
+        ("number", json!(3), "number"),
+        ("boolean", json!(true), "boolean"),
+        ("object json", json!({"done": false}), "json"),
+        ("array json", json!(["task"]), "json"),
+        ("date", json!("2026-05-21"), "date"),
+        ("null", Value::Null, "null"),
+    ];
+
+    for (index, (label, value, value_type)) in valid_cases.into_iter().enumerate() {
+        dispatch_db_execute(
+            database.state(),
+            set_metadata_request_with_key_value(
+                &format!("metadata-core-value-type-{index}"),
+                "metadata-validation-page",
+                &format!("valid-{index}"),
+                value.clone(),
+                value_type,
+            ),
+        )
+        .expect(&format!(
+            "{label} should be accepted as a Core metadata value type"
+        ));
+
+        assert_eq!(
+            dispatch_db_execute(
+                database.state(),
+                json!({
+                    "operation": "core.metadata.get",
+                    "payload": metadata_logical_key_payload_for(
+                        "metadata-validation-page",
+                        "task",
+                        &format!("valid-{index}"),
+                    )
+                }),
+            )?
+            .get("valueType")
+            .and_then(Value::as_str),
+            Some(value_type),
+            "{label} should round-trip its valueType"
+        );
+    }
+
+    let mismatch_cases = vec![
         ("string value as number", json!("open"), "number"),
         ("number value as string", json!(3), "string"),
-        ("boolean value as object", json!(true), "object"),
-        ("object value as array", json!({"done": false}), "array"),
-        ("array value as object", json!(["task"]), "object"),
+        ("boolean value as json", json!(true), "json"),
+        ("object value as boolean", json!({"done": false}), "boolean"),
+        ("array value as date", json!(["task"]), "date"),
         ("null value as boolean", Value::Null, "boolean"),
     ];
 
-    for (index, (label, value, value_type)) in cases.into_iter().enumerate() {
+    for (index, (label, value, value_type)) in mismatch_cases.into_iter().enumerate() {
         let error = dispatch_db_execute(
             database.state(),
             set_metadata_request_with_key_value(
@@ -777,6 +821,26 @@ fn metadata_value_type_must_match_value_shape() -> TestResult {
             ),
         )
         .expect_err(&format!("{label} should be rejected"));
+        assert_redacted_invalid_request(&error, &[value_type])?;
+    }
+
+    for (value_type, value) in [
+        ("object", json!({"done": false})),
+        ("array", json!(["task"])),
+    ] {
+        let error = dispatch_db_execute(
+            database.state(),
+            set_metadata_request_with_key_value(
+                &format!("metadata-unsupported-value-type-{value_type}"),
+                "metadata-validation-page",
+                &format!("unsupported-{value_type}"),
+                value,
+                value_type,
+            ),
+        )
+        .expect_err(&format!(
+            "{value_type} must be rejected because Core MetadataValueType uses json for structured values"
+        ));
         assert_redacted_invalid_request(&error, &[value_type])?;
     }
 
@@ -872,7 +936,7 @@ fn create_page_request(id: &str, title: &str) -> Value {
 }
 
 fn set_metadata_request(id: &str, page_id: &str) -> Value {
-    set_metadata_request_with_key_value(id, page_id, "status", json!({"done": false}), "object")
+    set_metadata_request_with_key_value(id, page_id, "status", json!({"done": false}), "json")
 }
 
 fn set_metadata_request_with_key_value(
@@ -985,7 +1049,7 @@ fn page_response(id: &str, title: &str, updated_at: &str, archived_at: Value) ->
 }
 
 fn metadata_response(id: &str, page_id: &str) -> Value {
-    metadata_response_with_value(id, page_id, "status", json!({"done": false}), "object")
+    metadata_response_with_value(id, page_id, "status", json!({"done": false}), "json")
 }
 
 fn metadata_response_with_value(
