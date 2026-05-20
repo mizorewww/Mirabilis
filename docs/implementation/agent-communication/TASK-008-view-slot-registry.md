@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: acceptance tests red; implementation handoff pending.
-- Active agents: none.
+- Status: implementation active.
+- Active agents:
+  - Linnaeus (`implementer`, `019e437a-2a2f-7c50-974c-e1eed53502f4`): implement the minimum View Registry and Slot Registry production code.
 
 ## Agent Handoffs
 
@@ -106,4 +107,20 @@ Wait for Pasteur's TASK-008 acceptance tests.
 
 ## Next Action
 
-Delegate minimum production implementation to an `implementer`.
+Wait for Linnaeus's implementation output.
+
+### Linnaeus (`implementer`)
+
+- Status: active.
+- Agent id: `019e437a-2a2f-7c50-974c-e1eed53502f4`.
+- Ownership:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+  - `src/core/types/index.ts`.
+  - `src/core/registries/view-registry.ts`.
+  - `src/core/registries/slot-registry.ts`.
+  - `src/core/registries/index.ts`.
+  - `src/core/index.ts`.
+- Assignment:
+  - Implement the minimum production View Registry and Slot Registry to pass Pasteur's acceptance tests.
+  - Preserve `component` and `when` references, clone only inert metadata, avoid React runtime imports, and keep TASK-008 out of rendering/business/plugin-host/native behavior.

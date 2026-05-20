@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:41 CST.
+Last updated: 2026-05-20 11:42 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 11:41 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: acceptance tests red; implementation handoff pending.
+- Current phase: implementation active.
 
 ## Active Agents
 
-- None.
+- Linnaeus (`implementer`, `019e437a-2a2f-7c50-974c-e1eed53502f4`): implement the minimum View Registry and Slot Registry production code.
 
 ## Recent Agent Outcomes
 
+- Linnaeus (`implementer`) was spawned for TASK-008 production implementation.
 - Pasteur (`test_writer`) completed and was closed after adding TASK-008 acceptance tests.
 - Pasteur's test commit: `5dc84cc Pasteur(test)(Add View Registry and Slot Registry): add view and slot registry acceptance tests`.
 - Parent confirmed expected red signal: `bun run typecheck` fails on missing View/Slot Registry exports and `../core/registries`; `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` fails during import resolution for `../core/registries` with no tests executed.
@@ -218,6 +219,6 @@ Last updated: 2026-05-20 11:41 CST.
 
 ## Next Actions
 
-1. Delegate minimum production implementation to an `implementer`.
-2. Run focused tests until green.
-3. Commit implementation.
+1. Wait for Linnaeus's implementation output.
+2. Repeat focused validation.
+3. If green, continue to review agents.
