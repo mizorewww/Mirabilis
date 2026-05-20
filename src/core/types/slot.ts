@@ -1,16 +1,29 @@
 import type { RegistryComponent } from "./view";
 
-export type SlotCondition<Props = unknown> = {
-  bivarianceHack(props: Props): boolean;
-}["bivarianceHack"];
+type IsExactlyUnknown<Props> = [unknown] extends [Props]
+  ? [Props] extends [unknown]
+    ? true
+    : false
+  : false;
 
-export type SlotContribution<Props = unknown> = {
+export type SlotCondition<Props = unknown> =
+  IsExactlyUnknown<Props> extends true ? unknown : (props: Props) => boolean;
+
+type SlotContributionComponent<Props> = [Props] extends [never]
+  ? RegistryComponent<unknown>
+  : RegistryComponent<Props>;
+
+type SlotContributionCondition<Props> = [Props] extends [never]
+  ? SlotCondition<unknown>
+  : (props: Props) => boolean;
+
+export type SlotContribution<Props = never> = {
   id: string;
   pluginId: string;
   slot: string;
   order?: number;
-  when?: SlotCondition<Props>;
-  component: RegistryComponent<Props>;
+  when?: SlotContributionCondition<Props>;
+  component: SlotContributionComponent<Props>;
 };
 
 export type SlotRegistryErrorCode =

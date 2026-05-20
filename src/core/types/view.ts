@@ -1,43 +1,38 @@
-import type { ComponentType, ExoticComponent } from "react";
+import type {
+  ComponentType,
+  ExoticComponent,
+  LazyExoticComponent,
+} from "react";
 
 import type { MetadataJsonValue } from "./metadata";
 
-type RegistryCallableComponent =
-  | ((...args: never[]) => unknown)
-  | (abstract new (...args: never[]) => unknown);
+type IsExactlyUnknown<Props> = [unknown] extends [Props]
+  ? [Props] extends [unknown]
+    ? true
+    : false
+  : false;
 
 type RegistryReactComponent<Props = unknown> =
   | ComponentType<Props>
   | ExoticComponent<Props>
-  | RegistryCallableComponent;
-
-export type RegistryObjectComponent<Props = unknown> =
-  | {
-      readonly $$typeof: symbol;
-      readonly type: RegistryReactComponent<Props>;
-    }
-  | {
-      readonly $$typeof: symbol;
-      readonly _payload: unknown;
-      readonly _init: (...args: unknown[]) => RegistryReactComponent<Props>;
-    }
-  | {
-      readonly $$typeof: symbol;
-      readonly _result: RegistryReactComponent<Props>;
-    };
+  | LazyExoticComponent<ComponentType<Props>>;
 
 export type RegistryComponent<Props = unknown> =
   | RegistryReactComponent<Props>
-  | RegistryObjectComponent<Props>;
+  | (IsExactlyUnknown<Props> extends true ? object : never);
 
 export type ViewDataShape = MetadataJsonValue;
 
-export type ViewDefinition<Props = unknown> = {
+type ViewDefinitionComponent<Props> = [Props] extends [never]
+  ? RegistryComponent<unknown>
+  : RegistryComponent<Props>;
+
+export type ViewDefinition<Props = never> = {
   id: string;
   pluginId: string;
   type: string;
   title: string;
-  component: RegistryComponent<Props>;
+  component: ViewDefinitionComponent<Props>;
   accepts: ViewDataShape;
 };
 
