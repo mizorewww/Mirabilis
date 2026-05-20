@@ -51,9 +51,11 @@ Markdown Extension Plugin
     "commands": [],
     "filters": [],
     "views": [],
-    "viewSlots": [],
+    "slots": [],
     "indexers": [],
-    "algorithms": []
+    "algorithms": [],
+    "mobileToolbarItems": [],
+    "settingsPanels": []
   }
 }
 ```
@@ -64,35 +66,27 @@ Manifest 用来声明插件能给系统贡献什么。
 
 ## 7. Plugin 可以贡献的能力
 
-插件可以注册以下能力：
+TASK-010 当前 API contract 覆盖以下贡献能力：
 
 ```text
 1. Markdown Syntax
-2. Markdown Block Renderer
-3. Inline Token
-4. Metadata Field
-5. Metadata Field Renderer
-6. Metadata Field Editor
-7. Event Type
-8. Command
-9. Filter
-10. View
-11. View Slot Contribution
-12. Indexer
-13. Algorithm
-14. Background Worker
-15. AI Tool
-16. Import / Export Handler
-17. Settings Panel
-18. Keyboard Shortcut
-19. Mobile Toolbar Button
+2. Metadata Field
+3. Event Type
+4. Command
+5. Filter
+6. View
+7. Slot Contribution
+8. Indexer
+9. Algorithm
+10. Mobile Toolbar Item
+11. Settings Panel
 ```
 
 这意味着：
 
 - `- [ ]` 是 Task Plugin 注册的 Markdown Syntax；
 
-- `#tag` 是 Tag Plugin 注册的 Inline Token；
+- `#tag` 可先通过 Tag Plugin 的 Markdown Syntax / Metadata Field 契约接入；Inline Token 是后续扩展；
 
 - `#habit` 是 Habit Plugin 识别的语义；
 
@@ -104,29 +98,40 @@ Manifest 用来声明插件能给系统贡献什么。
 
 - 机器学习预测是 Machine Learning Plugin 注册的 Algorithm；
 
-- AI 任务拆解是 AI Plugin 注册的 Command / AI Tool；
+- AI 任务拆解当前是 AI Plugin 注册的 Command；AI Tool 是后续扩展；
 
 - 日历是 Calendar Plugin 注册的 View；
 
 - 快速收集箱是 Quick Capture Plugin 注册的入口和命令。
 
+以下能力仍属于后续 Plugin Platform 工作，不属于 TASK-010 当前 API contract：
+
+```text
+Markdown Block Renderer
+Inline Token
+Metadata Field Renderer
+Metadata Field Editor
+Background Worker
+AI Tool
+Import / Export Handler
+Keyboard Shortcut
+```
 
 ---
 
 ## 8. Plugin 生命周期
 
-插件生命周期：
+TASK-010 当前 API contract 覆盖的生命周期：
 
 ```text
 install
 activate
 register
-migrate
-index
-render
 deactivate
 uninstall
 ```
+
+`migrate`、`index`、`render` 仍是后续 Plugin Host / Plugin Platform 的生命周期或运行时能力，不属于当前 TASK-010 API contract。
 
 ### 8.1 install
 
@@ -139,8 +144,8 @@ metadata field definitions
 event type definitions
 default filters
 default views
-plugin settings
-indexes
+plugin settings panel definitions
+indexer definitions
 ```
 
 ### 8.2 activate
@@ -158,28 +163,18 @@ metadata fields
 event types
 filters
 markdown syntax
-renderers
+slots
 indexers
 algorithms
+mobile toolbar items
+settings panels
 ```
 
-### 8.4 migrate
-
-插件升级时迁移自己负责的数据。
-
-### 8.5 index
-
-插件根据 Markdown Page、Metadata、Event 建立索引。
-
-### 8.6 render
-
-插件在 Core 提供的 View Slot 中渲染 UI。
-
-### 8.7 deactivate
+### 8.4 deactivate
 
 停用插件能力，但保留数据。
 
-### 8.8 uninstall
+### 8.5 uninstall
 
 卸载插件。默认保留数据，除非用户明确清理插件数据。
 
@@ -267,6 +262,8 @@ editor
 indexable
 filterable
 ```
+
+其中 `renderer` / `editor` 属于后续 UI 扩展能力；TASK-010 当前 contract 只定义 metadata field contribution 的基础字段。
 
 示例：
 

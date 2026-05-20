@@ -256,7 +256,8 @@ Acceptance criteria:
 
 Test plan:
 
-- Typecheck and focused unit tests for manifest validation if runtime validation is added.
+- Typecheck and focused type/export tests for `src/core/plugin-api` contracts.
+- Add runtime manifest validation tests only if runtime validation is introduced later.
 
 Dependencies:
 
