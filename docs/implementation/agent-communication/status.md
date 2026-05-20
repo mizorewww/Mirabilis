@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:36 CST.
+Last updated: 2026-05-21 01:39 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-21 01:36 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 install/register and pending-dependent TDD in progress.
+- Current phase: TASK-011 install/register and pending-dependent production fix handoff.
 
 ## Active Agents
 
-- Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`) is adding red tests for concurrent install/register failure cleanup and pending dependent registration dependency removal.
+- No active agents. Next handoff: `implementer` for concurrent install/register failure cleanup and pending dependent registration dependency removal.
 
 ## Recent Agent Outcomes
 
+- Newton (`test_writer`) completed and was closed after adding red tests for Goodall's two P1 lifecycle races.
+- Newton's test commit: `5cef44e Newton(test)(Implement Plugin Host lifecycle): cover pending install races`.
+- Parent confirmed Newton's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 39 tests with 36 passing and 3 failing in the new pending install/register and pending dependent dependency-removal cases; `git diff --check` passed.
 - Newton (`test_writer`) was spawned for red tests covering Goodall's two P1 lifecycle races. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
 - Final post-stale-register read-only re-review completed. Goodall (`security_reviewer`) found two P1 boundary issues: concurrent `register(plugin)` can run while `install(plugin)` is pending and leave orphaned contributions if install later fails; dependency removal can ignore dependents with pending registration because they are still `installed`.
 - Rawls (`reviewer`) found no P0/P1 correctness findings, but independently reproduced the concurrent install/register orphaned-contribution race as P2.

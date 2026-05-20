@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: install/register and pending-dependent TDD in progress.
-- Active agents:
-  - Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`).
-- Next parent step: wait for Newton, validate expected red signal, then delegate implementation.
+- Status: install/register and pending-dependent production fix handoff.
+- Active agents: none.
+- Next parent step: delegate implementation, then validate green checks.
 
 ## Agent Handoffs
 
@@ -590,7 +589,7 @@
 
 ### Install/Register And Pending-Dependent TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Newton (`test_writer`, `019e4676-1f7c-7b23-b389-dbb3ba88e563`).
 - Ownership:
@@ -599,6 +598,16 @@
   - Add deterministic red tests for concurrent `install(plugin)` / `register(plugin)` where install later fails and must not leave orphaned runtime contributions.
   - Add deterministic red tests for dependency removal while a dependent's async registration is pending, requiring deactivate/uninstall to account for pending dependents before hooks run.
   - Use public host APIs and runtime registry observations only; no production or docs edits.
+- Outcome:
+  - Newton changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added red coverage for failed pending `install()` racing concurrent `register()` cleanup.
+  - Added red coverage for pending required dependent registration blocking dependency `deactivate()` and `uninstall()`.
+- Commit:
+  - `5cef44e Newton(test)(Implement Plugin Host lifecycle): cover pending install races`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 39 tests with 36 passing and 3 failing in the expected pending install/register and pending dependent dependency-removal cases.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -609,4 +618,4 @@
 
 ## Next Action
 
-Wait for Newton's red tests, then validate and commit them.
+Delegate the production fix for Newton's red tests.
