@@ -37,7 +37,7 @@
 
 ## Current Status
 
-- Status: code/test review fixes complete; final docs patch pending.
+- Status: final local gate pending.
 - Active agents: none.
 - Current blocker before merge: documentation drift. Runtime flow, current layout, provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy need final docs sync.
 - Cleared by focused re-review:
@@ -45,7 +45,6 @@
   - Correctness: RuntimeProvider cache behavior, safe facade, App Shell use, and bootstrap plugin failure propagation have no P0/P1/P2 findings.
   - Docs/current-guidance: implementation aligns after provider-surface fix, but docs drift remains before merge.
 - Remaining work order:
-  - Delegate final docs patch from Ampere/Hubble/Newton recommendations.
   - Run local gate and mark TASK-015 complete.
 
 ### Harvey the 2nd (`test_writer`) Focused Test-Strength Handoff
@@ -58,6 +57,26 @@
 - Parent repeated focused check: `bun run test:frontend -- src/test/runtime-provider.test.tsx src/test/app-bootstrap-runtime.test.ts src/test/app-shell-boundary.test.ts` passed 18 tests.
 - Validation before commit: `git diff --cached --check` passed.
 - Test-fix commit: `e79659a Harvey the 2nd(test-fix)(Build app bootstrap and runtime provider): cover initialized runtime facade`.
+
+### Kant the 2nd (`doc_writer`) Final Docs Handoff
+
+- Status: completed and closed.
+- Ownership: final TASK-015 architecture/development/testing docs sync.
+- Files changed:
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/architecture/01-overview-and-monorepo.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/06-filter-native-database.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+- Summary:
+  - Synced startup flow to current `createAppRuntime()` order, empty `BUILT_IN_PLUGINS`, in-memory storage marker, and plugin failure rejection behavior.
+  - Documented current flat `src/bootstrap/*`, `src/providers/*`, and `src/App.tsx` layout.
+  - Added narrowed public `useRuntime()` facade boundary and private full-runtime rule.
+  - Clarified TASK-015 does not wire DB IPC, persistence, Tauri permissions, filesystem, shortcuts, notifications, WAL, `busy_timeout`, or `trusted_schema`.
+  - Added App Shell responsibilities and TASK-015 testing/merge guidance.
+- Validation: `git diff --check` passed.
+- Docs commit: `506b3e5 Kant the 2nd(docs)(Build app bootstrap and runtime provider): sync runtime provider docs`.
 
 ## Agent Handoffs
 

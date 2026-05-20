@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:26 CST.
+Last updated: 2026-05-21 07:31 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 07:26 CST.
 - Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: code/test review fixes complete; final docs patch pending.
+- Current phase: final local gate.
 
 ## Active Agents
 
@@ -70,7 +70,11 @@ Last updated: 2026-05-21 07:26 CST.
 - Harvey the 2nd (`test_writer`) was spawned for a narrow test-only follow-up: assert the `initializeRuntime` ready path also exposes only the safe public runtime facade. Production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
 - Harvey the 2nd completed and was closed after adding initialized-runtime public facade coverage in `src/test/runtime-provider.test.tsx`. Parent repeated focused frontend tests and confirmed 18 tests passed; `git diff --cached --check` passed before commit.
 - Harvey the 2nd's test-fix commit: `e79659a Harvey the 2nd(test-fix)(Build app bootstrap and runtime provider): cover initialized runtime facade`.
-- Parent next step: commit communication update, then delegate final docs patch.
+- Test-strength communication update was committed as `4efa19e Codex(progress)(Build app bootstrap and runtime provider): record test strength follow-up`.
+- Kant the 2nd (`doc_writer`) was spawned for final TASK-015 docs sync. Ownership is limited to architecture/development/testing docs; progress/status bookkeeping remains with the parent.
+- Kant the 2nd completed and was closed after syncing TASK-015 runtime/provider docs in architecture, development, and testing docs. `git diff --check` passed.
+- Kant the 2nd's docs commit: `506b3e5 Kant the 2nd(docs)(Build app bootstrap and runtime provider): sync runtime provider docs`.
+- Parent next step: commit communication update, run final local gate, then mark TASK-015 complete if checks pass.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
