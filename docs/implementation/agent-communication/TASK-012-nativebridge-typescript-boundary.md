@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: pre-test guidance completed; red-test handoff next.
+- Status: red tests in progress.
 - Active agents:
-  - None.
-- Next parent step: spawn a `test_writer` for focused red tests in `src/test/native-bridge.test.ts`.
+  - Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`).
+- Next parent step: wait for Boyle, run focused red checks, and commit the red-test patch if it is test-only and fails for the expected reason.
 
 ## Agent Handoffs
 
@@ -121,3 +121,14 @@
 - Vitest `vi.mock` and module mocking docs: `https://vitest.dev/api/vi` and `https://v4.vitest.dev/guide/mocking/modules`.
 - TypeScript `isolatedModules` and `verbatimModuleSyntax` docs.
 - Vite 7 migration notes.
+
+### TDD Tests
+
+- Status: running.
+- Agent:
+  - Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`).
+- Ownership:
+  - `src/test/native-bridge.test.ts`.
+- Assignment:
+  - Add focused red Vitest tests for NativeBridge public exports, grouped bridge methods, centralized command constants, exact camelCase DTO payloads, generic DB response typing, void methods, error normalization, malformed concrete native responses, production raw Tauri import/call boundary scanning, and absence of NativeBridge/raw native handles from Plugin API/PluginContext.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, or existing tests.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:43 CST.
+Last updated: 2026-05-21 02:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 02:43 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance completed; red-test handoff next.
+- Current phase: red tests in progress.
 
 ## Active Agents
 
-- None.
+- Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`) - TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Boyle (`test_writer`) was spawned for TASK-012 red tests. Ownership is limited to `src/test/native-bridge.test.ts`; production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, and existing tests are out of scope. Tests should cover public exports, grouped bridge methods, command constants and camelCase DTO payloads, generic DB response typing, void methods, normalized errors, malformed concrete responses, production raw Tauri import/call boundary scanning, and no plugin API exposure of NativeBridge/raw native handles.
 - TASK-012 pre-test guidance completed and all agents were closed.
 - Socrates (`planner`) recommended a TS-only NativeBridge surface under `src/core/native/`, with `native-bridge.ts`, `tauri-native-bridge.ts`, `index.ts`, Core barrel exports, focused `src/test/native-bridge.test.ts`, typed command constants, DTOs, `NativeBridgeError`, `createNativeBridge({ invoke })`, and `createTauriNativeBridge()`.
 - Parfit (`docs_researcher`) verified current official Tauri v2 guidance: command invocation imports `invoke` from `@tauri-apps/api/core`; `invoke<T>(cmd, args, options?)` returns `Promise<T>`; command args are camelCase by default; Rust command errors reject the JS promise with serialized values; Vitest module mocks are hoisted; and Tauri's `mockIPC` / `clearMocks()` are available for IPC tests.
