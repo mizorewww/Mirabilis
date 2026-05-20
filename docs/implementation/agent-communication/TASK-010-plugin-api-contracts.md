@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: P2 review-fix TDD/docs cleanup in progress.
-- Active agents: Planck (`test_writer`) and Heisenberg (`doc_writer`).
-- Next parent step: wait for Planck and Heisenberg, then validate/commit their outputs and continue to implementation for any red tests.
+- Status: P2 review-fix implementation next.
+- Active agents: none.
+- Next parent step: spawn `implementer` for Planck's red Plugin API store facade tests.
 
 ## Agent Handoffs
 
@@ -410,13 +410,24 @@
 
 ### P2 Review-Fix Handoffs
 
-- Status: in progress.
+- Status: test/docs work completed and committed; implementation pending.
 - Agents:
   - Planck (`test_writer`, `019e45b5-00fd-7dc2-9071-3243fe73513b`).
   - Heisenberg (`doc_writer`, `019e45b5-0507-7e12-b7e1-a26f1cd569a5`).
 - Assignments:
   - Planck owns only `src/test/plugin-api-contracts.test.ts` and is adding red coverage for metadata/event list ownership, public store helper exports, store input public shape locking, and feasible `keyof` surface coverage.
   - Heisenberg owns only product/architecture/development/task-index docs and is removing current-contract drift around unavailable facades and caller-supplied ownership keys.
+- Outcomes:
+  - Planck added tests for `PluginMetadataStore.list` / `PluginEventStore.list` source ownership, direct store helper alias exports from both public barrels, and public store input shape locks. Planck did not encode a stricter raw `keyof` assertion because rejecting explicit `undefined` under the current TypeScript config requires the synthetic reservation pattern.
+  - Heisenberg clarified current manifest-descriptor vs runtime-facade docs, removed stale caller-supplied `pluginId` / `sourcePluginId` examples, replaced unavailable `PluginContext` facade examples, added `uninstall` to the Plugin Host sketch, and marked future-only sketches as outside TASK-010.
+- Commits:
+  - `689f7cc Planck(test)(Define Plugin API contracts): cover plugin store facade gaps`.
+  - `c3a5ac7 Heisenberg(docs)(Define Plugin API contracts): align plugin facade examples`.
+- Red/validation checks:
+  - `bun run typecheck` fails on Planck's intended Plugin API contract gaps.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passes with 14 tests.
+  - `git diff --check` passes.
+  - Docs `rg` scans found no stale `ctx.metadataFields`, `ctx.algorithms`, `ctx.commands.execute`, plugin-facing `sourcePluginId`, or plugin-facing ownership-key examples outside Core internals and agent communication.
 
 ## Parent Decisions
 
@@ -427,4 +438,4 @@
 
 ## Next Action
 
-Wait for Planck and Heisenberg, then validate/commit their outputs and continue to implementation for any red tests.
+Spawn `implementer` for Planck's red Plugin API store facade tests.
