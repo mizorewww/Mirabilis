@@ -39,9 +39,10 @@
 
 ## Current Status
 
-- Status: install/register and pending-dependent production fix handoff.
-- Active agents: none.
-- Next parent step: delegate implementation, then validate green checks.
+- Status: install/register and pending-dependent production fix in progress.
+- Active agents:
+  - Noether (`implementer`, `019e4679-d2e0-7260-bd26-38d3de78068c`).
+- Next parent step: wait for Noether, then validate green checks.
 
 ## Agent Handoffs
 
@@ -609,6 +610,18 @@
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 39 tests with 36 passing and 3 failing in the expected pending install/register and pending dependent dependency-removal cases.
   - `git diff --check` passed.
 
+### Install/Register And Pending-Dependent Implementation
+
+- Status: in progress.
+- Agent:
+  - Noether (`implementer`, `019e4679-d2e0-7260-bd26-38d3de78068c`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Fix concurrent install/register race so a failed pending install cannot leave a resolved register result or orphaned command/view/slot contributions.
+  - Fix dependency removal checks so pending dependent registration blocks dependency deactivate/uninstall before hooks run.
+  - Preserve all existing TASK-011 lifecycle boundary behavior and stay within TypeScript Core Plugin Host scope.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -618,4 +631,4 @@
 
 ## Next Action
 
-Delegate the production fix for Newton's red tests.
+Wait for Noether, then validate and commit the pending install/register production fix.
