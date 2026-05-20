@@ -40,6 +40,8 @@ import type {
 } from "../stores";
 import type {
   CommandDescriptor,
+  FilterDefinition,
+  MetadataRecord,
   SlotContribution,
   ViewDefinition,
 } from "../types";
@@ -87,11 +89,15 @@ export type PluginHostOptions = {
 };
 
 export type PluginHostInstance = {
-  loadBuiltInPlugins(plugins: readonly AppPlugin[]): Promise<unknown>;
-  activateAll(): Promise<unknown>;
-  activate(pluginId: string): Promise<unknown>;
-  deactivate(pluginId: string): Promise<unknown>;
-  uninstall(pluginId: string): Promise<unknown>;
+  loadBuiltInPlugins(
+    plugins: readonly AppPlugin[],
+  ): Promise<readonly PluginHostRecord[]>;
+  install(plugin: AppPlugin): Promise<PluginHostRecord>;
+  register(plugin: AppPlugin): Promise<PluginHostRecord>;
+  activateAll(): Promise<readonly PluginHostRecord[]>;
+  activate(pluginId: string): Promise<PluginHostRecord>;
+  deactivate(pluginId: string): Promise<PluginHostRecord>;
+  uninstall(pluginId: string): Promise<PluginHostRecord>;
   getPlugin(pluginId: string): PluginHostRecord;
 };
 
@@ -161,6 +167,21 @@ type NormalizedDependency = {
   optional: boolean;
 };
 
+type PluginLifecyclePhase =
+  | "install"
+  | "register"
+  | "activate"
+  | "deactivate"
+  | "uninstall";
+
+type PluginContextScope = {
+  pluginId: string;
+  phase: PluginLifecyclePhase;
+  active: boolean;
+  allowsRuntimeContributionRegistration: boolean;
+  registrationTracker: RegisteredContribution[];
+};
+
 type SortablePlugin = {
   plugin: AppPlugin;
   index: number;
@@ -185,25 +206,16 @@ class PluginHostImpl implements PluginHostInstance {
 
   async loadBuiltInPlugins(
     plugins: readonly AppPlugin[],
-  ): Promise<unknown> {
+  ): Promise<readonly PluginHostRecord[]> {
     const orderedPlugins = sortPluginsByDependencies(
       plugins,
       new Set(this.records.keys()),
+      this.getDependencySatisfyingPluginIds(),
     );
     const installedRecords: StoredPluginRecord[] = [];
 
     for (const plugin of orderedPlugins) {
-      const manifest = cloneManifest(plugin.manifest);
-      const record: StoredPluginRecord = {
-        plugin,
-        manifest,
-        status: "installed",
-        order: this.nextOrder,
-        contributions: [],
-      };
-
-      this.nextOrder += 1;
-      this.records.set(manifest.id, record);
+      const record = this.addInstalledRecord(plugin);
       installedRecords.push(record);
     }
 
@@ -218,7 +230,44 @@ class PluginHostImpl implements PluginHostInstance {
     return installedRecords.map((record) => this.toPublicRecord(record));
   }
 
-  async activateAll(): Promise<unknown> {
+  async install(plugin: AppPlugin): Promise<PluginHostRecord> {
+    const existingRecord = this.records.get(plugin.manifest.id);
+
+    if (existingRecord !== undefined) {
+      return this.toPublicRecord(existingRecord);
+    }
+
+    sortPluginsByDependencies(
+      [plugin],
+      new Set(this.records.keys()),
+      this.getDependencySatisfyingPluginIds(),
+    );
+
+    const record = this.addInstalledRecord(plugin);
+
+    await this.runLifecycleHook(record, "install", record.plugin.install);
+
+    return this.toPublicRecord(record);
+  }
+
+  async register(plugin: AppPlugin): Promise<PluginHostRecord> {
+    if (!this.records.has(plugin.manifest.id)) {
+      await this.install(plugin);
+    }
+
+    const record = this.requireRecord(plugin.manifest.id);
+
+    if (record.status !== "installed") {
+      return this.toPublicRecord(record);
+    }
+
+    this.assertRequiredDependenciesSatisfied(record);
+    await this.registerInstalledPlugin(record);
+
+    return this.toPublicRecord(record);
+  }
+
+  async activateAll(): Promise<readonly PluginHostRecord[]> {
     const records = [...this.records.values()].sort(compareStoredRecordOrder);
 
     for (const record of records) {
@@ -228,7 +277,7 @@ class PluginHostImpl implements PluginHostInstance {
     return records.map((record) => this.toPublicRecord(record));
   }
 
-  async activate(pluginId: string): Promise<unknown> {
+  async activate(pluginId: string): Promise<PluginHostRecord> {
     const record = this.requireRecord(pluginId);
 
     if (record.status === "installed") {
@@ -249,8 +298,10 @@ class PluginHostImpl implements PluginHostInstance {
     return this.toPublicRecord(record);
   }
 
-  async deactivate(pluginId: string): Promise<unknown> {
+  async deactivate(pluginId: string): Promise<PluginHostRecord> {
     const record = this.requireRecord(pluginId);
+
+    this.assertNoRegisteredDependents(pluginId);
 
     if (record.status !== "installed") {
       await this.runLifecycleHook(
@@ -267,16 +318,24 @@ class PluginHostImpl implements PluginHostInstance {
     return this.toPublicRecord(record);
   }
 
-  async uninstall(pluginId: string): Promise<unknown> {
+  async uninstall(pluginId: string): Promise<PluginHostRecord> {
     const record = this.requireRecord(pluginId);
 
-    if (record.status !== "installed") {
-      await this.deactivate(pluginId);
+    this.assertNoRegisteredDependents(pluginId);
+
+    if (record.status === "active") {
+      await this.runLifecycleHook(
+        record,
+        "deactivate",
+        record.plugin.deactivate,
+      );
     }
 
     await this.runLifecycleHook(record, "uninstall", record.plugin.uninstall);
     const output = this.toPublicRecord(record);
 
+    this.unregisterTrackedContributions(record.contributions);
+    record.contributions = [];
     this.records.delete(pluginId);
 
     return output;
@@ -300,17 +359,93 @@ class PluginHostImpl implements PluginHostInstance {
     return record;
   }
 
+  private addInstalledRecord(plugin: AppPlugin): StoredPluginRecord {
+    const manifest = cloneManifest(plugin.manifest);
+    const record: StoredPluginRecord = {
+      plugin,
+      manifest,
+      status: "installed",
+      order: this.nextOrder,
+      contributions: [],
+    };
+
+    this.nextOrder += 1;
+    this.records.set(manifest.id, record);
+
+    return record;
+  }
+
+  private getDependencySatisfyingPluginIds(): Set<string> {
+    const pluginIds = new Set<string>();
+
+    for (const record of this.records.values()) {
+      if (record.status !== "installed") {
+        pluginIds.add(record.manifest.id);
+      }
+    }
+
+    return pluginIds;
+  }
+
+  private assertRequiredDependenciesSatisfied(
+    record: StoredPluginRecord,
+  ): void {
+    const satisfyingPluginIds = this.getDependencySatisfyingPluginIds();
+
+    for (const dependency of normalizeDependencies(record.manifest)) {
+      if (!dependency.optional && !satisfyingPluginIds.has(dependency.id)) {
+        throw new PluginHostError(
+          "PLUGIN_DEPENDENCY_MISSING",
+          `Plugin ${record.manifest.id} is missing ${dependency.id}`,
+          {
+            pluginId: record.manifest.id,
+            dependencyId: dependency.id,
+          },
+        );
+      }
+    }
+  }
+
+  private assertNoRegisteredDependents(pluginId: string): void {
+    for (const record of this.records.values()) {
+      if (record.manifest.id === pluginId || record.status === "installed") {
+        continue;
+      }
+
+      const requiredDependency = normalizeDependencies(record.manifest).find(
+        (dependency) => !dependency.optional && dependency.id === pluginId,
+      );
+
+      if (requiredDependency !== undefined) {
+        throw new PluginHostError(
+          "PLUGIN_DEPENDENCY_MISSING",
+          `Plugin ${record.manifest.id} requires ${pluginId}`,
+          {
+            pluginId: record.manifest.id,
+            dependencyId: pluginId,
+          },
+        );
+      }
+    }
+  }
+
   private async runLifecycleHook(
     record: StoredPluginRecord,
-    phase: string,
+    phase: PluginLifecyclePhase,
     hook: ((ctx: PluginContext) => void | Promise<void>) | undefined,
   ): Promise<void> {
     if (hook === undefined) {
       return;
     }
 
+    const scope = createPluginContextScope(
+      record.manifest.id,
+      phase,
+      false,
+    );
+
     try {
-      await hook(this.createPluginContext(record.manifest.id, []));
+      await hook(this.createPluginContext(scope));
     } catch (cause) {
       throw new PluginHostError(
         "PLUGIN_LIFECYCLE_FAILED",
@@ -321,20 +456,24 @@ class PluginHostImpl implements PluginHostInstance {
           cause,
         },
       );
+    } finally {
+      scope.active = false;
     }
   }
 
   private async registerInstalledPlugin(
     record: StoredPluginRecord,
   ): Promise<void> {
-    const registeredDuringAttempt: RegisteredContribution[] = [];
+    const scope = createPluginContextScope(
+      record.manifest.id,
+      "register",
+      true,
+    );
 
     try {
-      await record.plugin.register(
-        this.createPluginContext(record.manifest.id, registeredDuringAttempt),
-      );
+      await record.plugin.register(this.createPluginContext(scope));
     } catch (cause) {
-      this.unregisterTrackedContributions(registeredDuringAttempt);
+      this.unregisterTrackedContributions(scope.registrationTracker);
       record.contributions = [];
       record.status = "installed";
 
@@ -347,30 +486,32 @@ class PluginHostImpl implements PluginHostInstance {
           cause,
         },
       );
+    } finally {
+      scope.active = false;
     }
 
     record.contributions = [
       ...record.contributions,
-      ...registeredDuringAttempt,
+      ...scope.registrationTracker,
     ];
     record.status = "registered";
   }
 
-  private createPluginContext(
-    pluginId: string,
-    registrationTracker: RegisteredContribution[],
-  ): PluginContext {
+  private createPluginContext(scope: PluginContextScope): PluginContext {
     return {
-      pluginId,
+      pluginId: scope.pluginId,
       app: cloneAppRuntimeInfo(this.app),
       pages: createPluginPageStore(this.services.pages),
-      metadata: createPluginMetadataStore(pluginId, this.services.metadata),
-      events: createPluginEventStore(pluginId, this.services.events),
-      filters: createPluginFilterStore(pluginId, this.services.filters),
-      commands: this.createPluginCommandRegistry(pluginId, registrationTracker),
-      views: this.createPluginViewRegistry(pluginId, registrationTracker),
-      slots: this.createPluginSlotRegistry(pluginId, registrationTracker),
-      transaction: this.createPluginTransactionManager(pluginId),
+      metadata: createPluginMetadataStore(
+        scope.pluginId,
+        this.services.metadata,
+      ),
+      events: createPluginEventStore(scope.pluginId, this.services.events),
+      filters: createPluginFilterStore(scope.pluginId, this.services.filters),
+      commands: this.createPluginCommandRegistry(scope),
+      views: this.createPluginViewRegistry(scope),
+      slots: this.createPluginSlotRegistry(scope),
+      transaction: this.createPluginTransactionManager(scope.pluginId),
     };
   }
 
@@ -388,13 +529,15 @@ class PluginHostImpl implements PluginHostInstance {
   }
 
   private createPluginCommandRegistry(
-    pluginId: string,
-    registrationTracker: RegisteredContribution[],
+    scope: PluginContextScope,
   ): PluginCommandRegistry {
+    const pluginId = scope.pluginId;
+
     return {
       register: <Input = unknown, Output = unknown>(
         definition: PluginCommandDefinition<Input, Output>,
       ): PluginCommandDescriptor => {
+        assertCanRegisterRuntimeContribution(scope);
         assertNoOwnershipKeys(definition, pluginId, [pluginOwnershipPrefix]);
 
         const descriptor = this.registries.commands.register({
@@ -402,7 +545,10 @@ class PluginHostImpl implements PluginHostInstance {
           pluginId,
         });
 
-        registrationTracker.push({ kind: "command", id: descriptor.id });
+        scope.registrationTracker.push({
+          kind: "command",
+          id: descriptor.id,
+        });
 
         return toPluginCommandDescriptor(descriptor);
       },
@@ -424,13 +570,15 @@ class PluginHostImpl implements PluginHostInstance {
   }
 
   private createPluginViewRegistry(
-    pluginId: string,
-    registrationTracker: RegisteredContribution[],
+    scope: PluginContextScope,
   ): PluginViewRegistry {
+    const pluginId = scope.pluginId;
+
     return {
       register: <Props = unknown>(
         definition: PluginViewDefinition<Props>,
       ): PluginViewDescriptor => {
+        assertCanRegisterRuntimeContribution(scope);
         assertNoOwnershipKeys(definition, pluginId, [pluginOwnershipPrefix]);
 
         const descriptor = this.registries.views.register({
@@ -438,7 +586,7 @@ class PluginHostImpl implements PluginHostInstance {
           pluginId,
         });
 
-        registrationTracker.push({ kind: "view", id: descriptor.id });
+        scope.registrationTracker.push({ kind: "view", id: descriptor.id });
 
         return toPluginViewDescriptor(descriptor);
       },
@@ -463,13 +611,15 @@ class PluginHostImpl implements PluginHostInstance {
   }
 
   private createPluginSlotRegistry(
-    pluginId: string,
-    registrationTracker: RegisteredContribution[],
+    scope: PluginContextScope,
   ): PluginSlotRegistry {
+    const pluginId = scope.pluginId;
+
     return {
       register: <Props = unknown>(
         contribution: PluginSlotDefinition<Props>,
       ): PluginSlotDescriptor => {
+        assertCanRegisterRuntimeContribution(scope);
         assertNoOwnershipKeys(contribution, pluginId, [pluginOwnershipPrefix]);
 
         const descriptor = this.registries.slots.register({
@@ -477,7 +627,7 @@ class PluginHostImpl implements PluginHostInstance {
           pluginId,
         });
 
-        registrationTracker.push({ kind: "slot", id: descriptor.id });
+        scope.registrationTracker.push({ kind: "slot", id: descriptor.id });
 
         return toPluginSlotDescriptor(descriptor);
       },
@@ -629,6 +779,37 @@ export const PluginHost: {
   new (options: PluginHostOptions): PluginHostInstance;
 } = PluginHostImpl;
 
+function createPluginContextScope(
+  pluginId: string,
+  phase: PluginLifecyclePhase,
+  allowsRuntimeContributionRegistration: boolean,
+): PluginContextScope {
+  return {
+    pluginId,
+    phase,
+    active: true,
+    allowsRuntimeContributionRegistration,
+    registrationTracker: [],
+  };
+}
+
+function assertCanRegisterRuntimeContribution(
+  scope: PluginContextScope,
+): void {
+  if (scope.active && scope.allowsRuntimeContributionRegistration) {
+    return;
+  }
+
+  throw new PluginHostError(
+    "PLUGIN_LIFECYCLE_FAILED",
+    `Plugin ${scope.pluginId} cannot register runtime contributions now`,
+    {
+      pluginId: scope.pluginId,
+      phase: scope.phase,
+    },
+  );
+}
+
 function createPluginPageStore(pages: PageStore): PluginPageStore {
   return {
     create: (input) => pages.create(input),
@@ -646,6 +827,7 @@ function createPluginMetadataStore(
   return {
     set(input: PluginSetMetadataInput) {
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
+      assertMetadataWriteAllowed(pluginId, metadata, input);
 
       return metadata.set({
         ...input,
@@ -653,16 +835,82 @@ function createPluginMetadataStore(
       });
     },
 
-    get: (pageId, namespace, key) => metadata.get(pageId, namespace, key),
+    get: (pageId, namespace, key) =>
+      requireOwnedMetadataRecord(
+        pluginId,
+        metadata,
+        pageId,
+        namespace,
+        key,
+      ),
 
     list(options: PluginListMetadataOptions = {}) {
       assertNoOwnershipKeys(options, pluginId, [sourcePluginOwnershipPrefix]);
 
-      return metadata.list(options);
+      return metadata
+        .list(options)
+        .filter((record) => record.sourcePluginId === pluginId);
     },
 
-    delete: (pageId, namespace, key) => metadata.delete(pageId, namespace, key),
+    delete(pageId, namespace, key) {
+      requireOwnedMetadataRecord(pluginId, metadata, pageId, namespace, key);
+
+      return metadata.delete(pageId, namespace, key);
+    },
   };
+}
+
+function assertMetadataWriteAllowed(
+  pluginId: string,
+  metadata: MetadataStore,
+  input: PluginSetMetadataInput,
+): void {
+  const existingRecord = findMetadataRecord(
+    metadata,
+    input.pageId,
+    input.namespace,
+    input.key,
+  );
+
+  if (
+    existingRecord !== undefined &&
+    existingRecord.sourcePluginId !== pluginId
+  ) {
+    throw new PluginHostError(
+      "PLUGIN_CONTRIBUTION_NOT_FOUND",
+      `Metadata ${input.namespace}.${input.key} is not owned by ${pluginId}`,
+      { pluginId },
+    );
+  }
+}
+
+function requireOwnedMetadataRecord(
+  pluginId: string,
+  metadata: MetadataStore,
+  pageId: string,
+  namespace: string,
+  key: string,
+): MetadataRecord {
+  const record = findMetadataRecord(metadata, pageId, namespace, key);
+
+  if (record !== undefined && record.sourcePluginId === pluginId) {
+    return record;
+  }
+
+  throw new PluginHostError(
+    "PLUGIN_CONTRIBUTION_NOT_FOUND",
+    `Metadata ${namespace}.${key} was not found for ${pluginId}`,
+    { pluginId },
+  );
+}
+
+function findMetadataRecord(
+  metadata: MetadataStore,
+  pageId: string,
+  namespace: string,
+  key: string,
+): MetadataRecord | undefined {
+  return metadata.list({ pageId, namespace, key })[0];
 }
 
 function createPluginEventStore(
@@ -682,7 +930,9 @@ function createPluginEventStore(
     list(options: PluginListEventsOptions = {}) {
       assertNoOwnershipKeys(options, pluginId, [sourcePluginOwnershipPrefix]);
 
-      return events.list(options);
+      return events
+        .list(options)
+        .filter((event) => event.sourcePluginId === pluginId);
     },
   };
 }
@@ -701,10 +951,11 @@ function createPluginFilterStore(
       });
     },
 
-    get: (filterId) => filters.get(filterId),
+    get: (filterId) => requireOwnedFilter(pluginId, filters, filterId),
 
     update(filterId: string, input: PluginUpdateFilterInput) {
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
+      requireOwnedFilter(pluginId, filters, filterId);
 
       return filters.update(filterId, {
         ...input,
@@ -715,11 +966,47 @@ function createPluginFilterStore(
     list(options: PluginListFiltersOptions = {}) {
       assertNoOwnershipKeys(options, pluginId, [sourcePluginOwnershipPrefix]);
 
-      return filters.list(options);
+      return filters
+        .list(options)
+        .filter((filter) => filter.sourcePluginId === pluginId);
     },
 
-    delete: (filterId) => filters.delete(filterId),
+    delete(filterId) {
+      requireOwnedFilter(pluginId, filters, filterId);
+
+      return filters.delete(filterId);
+    },
   };
+}
+
+function requireOwnedFilter(
+  pluginId: string,
+  filters: FilterStore,
+  filterId: string,
+): FilterDefinition {
+  try {
+    const filter = filters.get(filterId);
+
+    if (filter.sourcePluginId === pluginId) {
+      return filter;
+    }
+
+    throw new PluginHostError(
+      "PLUGIN_CONTRIBUTION_NOT_FOUND",
+      `Filter ${filterId} is not owned by ${pluginId}`,
+      { pluginId },
+    );
+  } catch (error) {
+    if (error instanceof PluginHostError) {
+      throw error;
+    }
+
+    throw new PluginHostError(
+      "PLUGIN_CONTRIBUTION_NOT_FOUND",
+      `Filter ${filterId} was not found for ${pluginId}`,
+      { pluginId },
+    );
+  }
 }
 
 function createPluginTransaction(
@@ -743,6 +1030,7 @@ function createPluginTransaction(
 function sortPluginsByDependencies(
   plugins: readonly AppPlugin[],
   existingPluginIds: ReadonlySet<string>,
+  dependencySatisfyingPluginIds: ReadonlySet<string>,
 ): AppPlugin[] {
   const pluginsById = new Map<string, SortablePlugin>();
 
@@ -780,7 +1068,7 @@ function sortPluginsByDependencies(
       if (
         !dependency.optional &&
         !pluginsById.has(dependency.id) &&
-        !existingPluginIds.has(dependency.id)
+        !dependencySatisfyingPluginIds.has(dependency.id)
       ) {
         throw new PluginHostError(
           "PLUGIN_DEPENDENCY_MISSING",
@@ -846,16 +1134,33 @@ function normalizeDependencies(
   for (const reference of manifest.dependencies ?? []) {
     const dependency = normalizeDependency(reference, false);
 
-    dependencies.set(dependency.id, dependency);
+    addNormalizedDependency(dependencies, dependency);
   }
 
   for (const reference of manifest.optionalDependencies ?? []) {
     const dependency = normalizeDependency(reference, true);
 
-    dependencies.set(dependency.id, dependency);
+    addNormalizedDependency(dependencies, dependency);
   }
 
   return [...dependencies.values()];
+}
+
+function addNormalizedDependency(
+  dependencies: Map<string, NormalizedDependency>,
+  dependency: NormalizedDependency,
+): void {
+  const existingDependency = dependencies.get(dependency.id);
+
+  if (existingDependency === undefined) {
+    dependencies.set(dependency.id, dependency);
+    return;
+  }
+
+  dependencies.set(dependency.id, {
+    id: dependency.id,
+    optional: existingDependency.optional && dependency.optional,
+  });
 }
 
 function normalizeDependency(
