@@ -35,7 +35,7 @@ Status markers:
 
 ## Milestone M2: Native persistence boundary
 
-- [ ] TASK-010: Define Plugin API contracts
+- [x] TASK-010: Define Plugin API contracts
 - [ ] TASK-011: Implement Plugin Host lifecycle
 - [ ] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
@@ -78,6 +78,25 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 22:40 CST - TASK-010 completed
+
+- Branch: `feat/task-010-plugin-api-contracts`.
+- Task: Define Plugin API contracts.
+- Commits: `f1f8368` start orchestration, `458f3ce` pre-test guidance handoff, `a2921cc` pre-test guidance, `187d027` test writer handoff, `b083d6c` contract tests, `88a5e82` red signal, `4cc182a` implementation handoff, `9ec1dbb` test stabilization, `603c87b` implementation, `80d7a1b` green signal, `b5e8af2` review handoff, `826d611` review findings, `03836a4` review-fix tests, `1c28d5c` review-fix red signal, `4a7d33b` boundary hardening, `cf38684` docs sync, `43eff0e` review fixes record, `53d9849` targeted findings, `06ed813` ownership-key tests, `e00763b` ownership-key implementation, `cdec5f5` docs link fix, `f26256c` ownership fix record, `f587d31` overview docs link fix, `0aba310` ownership public-surface tests, `05c7b82` narrow ownership reservations, `3c91789` undefined ownership tests, `69195e0` red signal record, `aa20ab6` undefined ownership implementation, `535d3da` fix record, `489f1ea` re-review handoff, `b1cd5c9` re-review findings, `d8ea217` P2 review-fix handoff, `689f7cc` store facade tests, `c3a5ac7` docs facade examples, `81d1ebd` test/docs fixes record, `4b51b27` implementation handoff, `47f4cc6` store facade implementation, `75b9973` green signal, `314a7cf` P2 re-review handoff, and `9f19164` timer event facade docs.
+- Delivered: TypeScript Plugin API contracts under `src/core/plugin-api`, public re-exports from `src/core`, `PluginManifest`, `PluginContributions`, `AppPlugin`, lifecycle context types, declarative plugin dependencies and app-domain permissions, inert manifest contribution descriptors for markdown syntax, metadata fields, event types, commands, filters, views, slots, indexers, algorithms, mobile toolbar items, and settings panels, plugin-facing context facades for pages, metadata, events, filters, commands, views, slots, and transactions, helper descriptor/list/input aliases, host-supplied ownership reservations for `pluginId` / `sourcePluginId`, explicit plugin-facing store input/list shapes, and docs aligned to current contract boundaries.
+- Validation: `bun run check:quick` passed with 12 frontend test files and 185 tests plus Rust fmt, clippy, and tests. `bun run build` passed. Focused `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests after review fixes. Focused `bun run typecheck`, `bun run lint`, and `git diff --check` passed during review-fix rounds.
+- Review: correctness/API, security/boundary, deprecation/API, test-quality, docs/current-guidance, and doc-writer agents cleared all remaining P0/P1/P2 findings after targeted rounds. Fixed selected findings for raw executable registry descriptors, inert schema/filter values, `Omit`-coupled plugin-facing contracts, missing helper exports, metadata/event list ownership, structural and explicit-undefined ownership-key leaks, stale docs links, unavailable PluginContext facade examples, caller-supplied ownership docs, and unavailable timer event query facade examples.
+- External docs verified by agents: TypeScript type-only imports/exports, TypeScript `satisfies`, TypeScript utility types and `Omit`, TypeScript `@ts-expect-error`, TypeScript `exactOptionalPropertyTypes`, Vitest v4 type testing and `expectTypeOf`, Obsidian Manifest / Build a plugin / Events / load-time docs, Obsidian API `Plugin.onload()` and inherited `Component.onunload()`, Tauri v2 plugin/capability/runtime authority docs, and React 19 upgrade guidance.
+- Remaining risk: TASK-010 is type-contract only. Runtime manifest validation, Plugin Host lifecycle, persisted plugin registry, NativeBridge, Tauri IPC, SQLite, filesystem permissions, UI rendering, concrete built-in plugins, command execution from plugin contexts, specialized event/query facades, and runtime caller identity enforcement remain future tasks. The template-literal ownership reservation pattern is retained because it preserves explicit `undefined` ownership-key rejection under the current TypeScript config; future `packages/plugin-api` extraction should re-root type-only imports away from the Core barrel. `bun run check:full` was not run because TASK-010 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
+
+### 2026-05-20 19:11 CST - TASK-010 started
+
+- Branch: `feat/task-010-plugin-api-contracts`.
+- Task: Define Plugin API contracts.
+- Scope: define TypeScript Plugin API contracts for plugin manifests, contributions, lifecycle plugin objects, and plugin context surfaces without implementing Plugin Host lifecycle, built-in plugin behavior, Tauri plugins, persistence, IPC, UI rendering, or concrete business plugins.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/deprecation/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-20 19:11 CST - TASK-009 completed
 

@@ -1,21 +1,114 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:11 CST.
+Last updated: 2026-05-20 22:40 CST.
 
 ## Current Task
 
-- Task: TASK-009 - Add Transaction Manager and Core Runtime composition.
-- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
+- Task: TASK-010 - Define Plugin API contracts.
+- Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 final gate passed; progress completion update active.
+- Current phase: TASK-010 final gate passed; merge to `master` next.
 
 ## Active Agents
 
-- None.
+- None. Next step is committing progress and merging `feat/task-010-plugin-api-contracts` to `master`.
 
 ## Recent Agent Outcomes
 
+- Final TASK-010 gate passed: `bun run check:quick` passed with 12 frontend test files and 185 tests plus Rust fmt, clippy, and tests; `bun run build` passed.
+- McClintock (`docs_researcher`) completed and was closed after verifying Locke fixed Nash's remaining P2 docs finding around `tx.events.findTimerStart`. No P0/P1/P2 docs findings remain.
+- Locke (`doc_writer`) completed and was closed after rewriting the timer stop sketch to use current `PluginEventStore.list({ namespace: "timer" })` plus plugin-local payload narrowing, and tightening status wording around `sourcePluginId` references.
+- Locke's docs commit: `9f19164 Locke(docs)(Define Plugin API contracts): align timer event facade example`.
+- P2 narrow re-review completed and all agents were closed. Chandrasekhar, Descartes, Sagan, Nash, Faraday, and McClintock reported no remaining P0/P1/P2 findings after Locke.
+- Narrow re-review agents spawned after Epicurus's green P2 Plugin API store facade fix.
+- Epicurus (`implementer`) completed and was closed after implementing the P2 Plugin API store facade fixes.
+- Epicurus's review-fix commit: `47f4cc6 Epicurus(review-fix)(Define Plugin API contracts): harden plugin store facades`.
+- Parent repeated green checks after Epicurus: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 14 tests passing; `git diff --check`.
+- Remaining recorded tradeoff: the template-literal ownership reservation pattern remains to preserve explicit `undefined` ownership rejection under the current TypeScript config.
+- Epicurus (`implementer`) was spawned for Planck's P2 red tests, with ownership of `src/core/plugin-api/context.ts`, `src/core/plugin-api/index.ts`, and `src/core/index.ts`.
+- Planck (`test_writer`) completed and was closed after adding P2 review-fix tests for metadata/event list source ownership, public store helper exports, public store input shapes, and the documented `keyof` tradeoff.
+- Planck's test commit: `689f7cc Planck(test)(Define Plugin API contracts): cover plugin store facade gaps`.
+- Parent confirmed the expected red signal: `bun run typecheck` failed on missing store helper exports, metadata/event list ownership gaps, and public shape contract checks; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests; `git diff --check` passed.
+- Heisenberg (`doc_writer`) completed and was closed after aligning product/architecture docs with current Plugin API facades and host-injected ownership.
+- Heisenberg's docs commit: `c3a5ac7 Heisenberg(docs)(Define Plugin API contracts): align plugin facade examples`.
+- Parent confirmed docs cleanup with targeted `rg` scans and `git diff --check`; remaining `sourcePluginId` references are either Core model examples or negative guidance saying plugin-facing APIs must not accept caller-supplied ownership keys.
+- P2 review-fix agents spawned: Planck for metadata/event list ownership, store helper exports, store input shape tests, and feasible `keyof` surface coverage; Heisenberg for docs that still describe unavailable facades or caller-supplied ownership keys.
+- Targeted TASK-010 re-review round 2 completed and all agents were closed. No P0/P1 findings were reported.
+- Zeno (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/filesystem/SQLite/IPC boundary changes.
+- Erdos (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 13 focused Plugin API tests cover exports, manifest/contributions, lifecycle/context, inert descriptors, and ownership-key red/green cases.
+- Tesla (`docs_researcher`) found no P0/P1/P2 docs/current-guidance issues and two P3s: product `register` wording is broader than current runtime facades, and live status must be updated after review closes.
+- Helmholtz (`deprecation_auditor`) found three P2 API issues: plugin-facing store input aliases still derive from Core inputs with `Omit`, store helper aliases are not directly re-exported from public barrels, and template ownership reservations leak synthetic keys into `keyof` surfaces.
+- Meitner (`reviewer`) found one P2 correctness/API issue: `PluginMetadataStore.list` and `PluginEventStore.list` still expose raw `ListMetadataOptions` / `ListEventsOptions` without `sourcePluginId` reservation, leaving an ownership-key gap.
+- Laplace (`pr_explorer`) mapped the diff, found no scope creep, and highlighted the helper export gap, type-only barrel cycle extraction risk, and future runtime identity-enforcement risk.
+- Banach (`doc_writer`) found two P2 documentation drifts: docs still describe unavailable `PluginContext` facades as current registration APIs, and examples still pass `pluginId` / `sourcePluginId` through plugin-facing APIs that TASK-010 now rejects. Banach also noted P3 cleanup for the Plugin Host sketch missing `uninstall`.
+- Parent decision: fix the P2 ownership/list/export/docs drift before final gate. If the `keyof` synthetic-key issue cannot be fixed while preserving explicit-undefined rejection under the current TypeScript config, delegate the attempt and record the tradeoff with agent evidence.
+- Targeted TASK-010 re-review agents spawned after Hilbert's green undefined ownership-key fix. `doc_writer` will be spawned after a review slot frees because project agent threads are capped.
+- Mendel (`test_writer`) completed and was closed after validating the existing test-only undefined ownership-key patch in `src/test/plugin-api-contracts.test.ts`.
+- Mendel's test commit: `3c91789 Mendel(test)(Define Plugin API contracts): cover undefined ownership keys`.
+- Parent confirmed the expected red signal: `bun run typecheck` failed only on explicit `pluginId: undefined` / `sourcePluginId: undefined` ownership-key assignability and unused `@ts-expect-error` directives; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 13 tests; `git diff --check` passed.
+- Hilbert (`implementer`) completed and was closed after fixing the production Plugin API ownership reservation surface in `src/core/plugin-api/context.ts`.
+- Hilbert's review-fix commit: `aa20ab6 Hilbert(review-fix)(Define Plugin API contracts): reject undefined ownership keys`.
+- Parent repeated green checks after Hilbert: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 13 tests passing; `git diff --check`.
+- Dalton the 2nd (`test_writer`) previously added public-surface ownership-key coverage in commit `0aba310`, and Galileo the 2nd (`implementer`) narrowed ownership-key reservations in commit `05c7b82`.
+- Ampere the 2nd (`docs`) fixed the overview Obsidian docs link in commit `f587d31`.
+- Euler the 2nd (`test_writer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused test patch in `src/test/plugin-api-contracts.test.ts`.
+- Euler the 2nd's test commit: `06ed813 Euler the 2nd(test)(Define Plugin API contracts): cover ownership key leaks`.
+- Parent confirmed the expected targeted red signal: `bun run typecheck` failed only on structural variable assignment leaks for registry `pluginId` and store `sourcePluginId`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 11 tests; `git diff --check` passed.
+- Harvey the 2nd (`implementer`) completed and was closed after implementing the ownership-key production fix in `src/core/plugin-api/context.ts`.
+- Harvey the 2nd's review-fix commit: `e00763b Harvey the 2nd(review-fix)(Define Plugin API contracts): reserve plugin ownership keys`.
+- Codex fixed the stale Obsidian plugin docs link flagged by Turing the 2nd. Docs commit: `cdec5f5 Codex(docs)(Define Plugin API contracts): fix Obsidian plugin docs link`.
+- Parent repeated green checks after Harvey the 2nd: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 11 tests passing; `git diff --check`.
+- Targeted TASK-010 re-review round 1 completed. Confucius the 2nd (`security_reviewer`) found no P0/P1/P2 and confirmed prior security P1s are fixed.
+- Newton the 2nd (`reviewer`) found two P2 correctness/API issues: `pluginId` and `sourcePluginId` are still accepted through normal variable assignment because the plugin-facing types omit ownership keys but do not reserve them as `never`.
+- Poincare the 2nd (`deprecation_auditor`) found one P1 API issue for `PluginViewListOptions` and `PluginSlotListOptions`: variables containing `pluginId` remain structurally assignable. Poincare also found one P2 helper-export test gap for new descriptor/list/filter aliases.
+- Kierkegaard the 2nd (`test_quality_reviewer`) found the same P2 helper-export coverage gap and confirmed the other review-fix gaps are covered.
+- Turing the 2nd (`docs_researcher`) found no P0/P1/P2 docs issues and one P3 stale Obsidian link in `docs/architecture/03-plugin-api-and-host.md`.
+- Parent selected targeted fix plan: add failing tests for variable structural assignment of `pluginId`/`sourcePluginId`, add direct helper export coverage, then update plugin-facing types to reserve ownership keys with `?: never` and fix the P3 Obsidian link.
+- Popper the 2nd (`implementer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused production patch in `src/core/plugin-api/` and `src/core/index.ts`.
+- Parent validated and adopted Popper the 2nd's production patch after checks turned green.
+- Popper the 2nd's review-fix commit: `4a7d33b Popper the 2nd(review-fix)(Define Plugin API contracts): harden plugin API boundaries`.
+- Dewey the 2nd (`doc_writer`) completed and was closed after syncing TASK-010 product, architecture, and task-index docs to the current `src/core/plugin-api` contract.
+- Dewey the 2nd's docs commit: `cf38684 Dewey the 2nd(docs)(Define Plugin API contracts): sync plugin API contract docs`.
+- Parent repeated green checks after Popper the 2nd and Dewey the 2nd: `bun run typecheck`; `bun run test:frontend -- src/test/core-architecture-boundary.test.ts src/test/plugin-api-contracts.test.ts` with 10 tests passing; `bun run lint`; `git diff --check`.
+- Godel the 2nd (`test_writer`) was stopped after a status request and a second wait window because it produced no final output, but it left a test-only review-fix patch in `src/test/plugin-api-contracts.test.ts`.
+- Euclid the 2nd (`test_writer`) was spawned to clean up Godel the 2nd's test patch, then was stopped after a status request and a second wait window because it produced no final output. Parent validated Euclid the 2nd's test-only patch.
+- Euclid the 2nd's test commit: `03836a4 Euclid the 2nd(test)(Define Plugin API contracts): cover plugin API review gaps`.
+- Parent confirmed the expected review-fix red signal: `bun run typecheck` fails only on real Plugin API contract gaps (`MetadataFieldContribution.valueType` still broad, manifest schema/filter values still `unknown`, plugin registry return/list surfaces still leak executable/raw ownership surfaces); `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passes with 9 tests; `git diff --check` passes.
+- TASK-010 review round 1 completed and all review agents were closed.
+- Mendel (`pr_explorer`) mapped the diff to `src/core/plugin-api/`, `src/core/index.ts`, `src/test/plugin-api-contracts.test.ts`, and agent communication docs, and flagged stale live status plus broad schema/permission risks.
+- Hubble (`reviewer`) found one P1 public-contract gap around missing plugin-facing context facades for contribution categories and P2 issues for non-inert `unknown` schema fields plus free-string metadata field value types.
+- Hypatia (`security_reviewer`) found two P1 boundary issues: plugin view/slot facades return raw executable `ViewDefinition`/`SlotContribution` objects, and manifest contribution schema/filter fields allow executable or host values instead of inert data.
+- Dirac the 2nd (`deprecation_auditor`) found one P1 API hazard: plugin registration contracts are derived with `Omit` from runtime registry types, so future runtime-only fields can silently leak into the public Plugin API. Dirac also found P2 inert-schema and helper-export test gaps.
+- Maxwell the 2nd (`test_quality_reviewer`) found one P1 test gap: facade tests do not prove caller-supplied `pluginId` is impossible. Maxwell also found P2 gaps for helper export coverage and executable schema-field coverage.
+- Gauss the 2nd (`docs_researcher`) found no P0/P1 issues and P2 documentation drift in product/architecture docs plus stale live orchestration text.
+- Lorentz the 2nd (`doc_writer`) found required docs updates for canonical `slots`, current contribution buckets, current lifecycle, `src/core/plugin-api` transitional location, richer manifest/dependency/permission sketches, and narrowed plugin-facing `PluginContext`.
+- Parent selected review-fix plan: first add failing type tests for independent plugin-facing registration contracts, no caller-supplied `pluginId`, inert JSON-compatible manifest schema/filter values, `MetadataValueType` metadata field values, and helper exports; then delegate production type fixes and docs cleanup.
+- TASK-010 review round 1 agents spawned. `doc_writer` could not spawn because the agent thread limit was reached; parent will retry a documentation-specific check after a review slot frees if needed.
+- Anscombe (`implementer`) was stopped after a status request and a second wait window because it produced no final message, but it left a focused production patch in `src/core/plugin-api/` and `src/core/index.ts`.
+- Parent validated and adopted Anscombe's production patch after focused checks passed and no forbidden Core business/native/Host runtime surface was found in `src/core/plugin-api/`.
+- Raman (`test_writer`) completed and was closed after stabilizing Plugin API contract type assertions in `src/test/plugin-api-contracts.test.ts`.
+- Raman's test-fix commit: `9ec1dbb Raman(test-fix)(Define Plugin API contracts): stabilize plugin API type assertions`.
+- Anscombe's adopted implementation commit: `603c87b Anscombe(implementation)(Define Plugin API contracts): add plugin API type contracts`.
+- Parent repeated green checks after Raman and Anscombe: `bun run typecheck`; `bun run test:frontend -- src/test/core-architecture-boundary.test.ts src/test/plugin-api-contracts.test.ts` with 7 tests passing; `git diff --check`.
+- Anscombe (`implementer`) spawned for TASK-010 production Plugin API contracts, with ownership of `src/core/plugin-api/` and `src/core/index.ts`.
+- Dewey (`test_writer`) completed and was closed after creating `src/test/plugin-api-contracts.test.ts`.
+- Harvey (`test_writer`) completed and was closed after refining Dewey's test file to reduce noisy diagnostics while preserving contract coverage.
+- Dewey's test commit: `b083d6c Dewey(test)(Define Plugin API contracts): add plugin API contract tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails because `../core/plugin-api` does not exist and `../core` lacks Plugin API contract exports; focused Vitest fails because Vite cannot resolve `../core/plugin-api`; `git diff --check` passes.
+- Dewey (`test_writer`) spawned for TASK-010 failing Plugin API contract tests, with ownership of `src/test/plugin-api-contracts.test.ts`.
+- TASK-010 pre-test guidance completed and all agents were closed.
+- Kepler (`planner`) recommended a pure TypeScript contract task with `src/core/plugin-api/` files and public type-only exports from `../core/plugin-api` and `../core`.
+- Sagan (`docs_researcher`) verified TypeScript type-only imports/exports, `satisfies`, Vitest type testing and `expectTypeOf`, and identified local doc ambiguities around `main`, `slots` vs `viewSlots`, lifecycle breadth, and future `packages/plugin-api`.
+- Franklin (`deprecation_auditor`) found no P0 risks and flagged P1 risks around manifest-vs-runtime contribution separation, native permission modeling, raw `PluginContext` exposure, canonical slot naming, and runtime `SlotContribution` name reuse.
+- Feynman (`security_reviewer`) recommended declarative app-domain permissions, inert manifest contribution descriptors, plugin-facing context facades, plugin-scoped settings/storage placeholders, and no raw native/Tauri/filesystem/SQLite access in TASK-010.
+- Parent decisions: use `src/core/plugin-api/`, export from both `../core/plugin-api` and `../core`, canonicalize `slots`, include optional `main`, keep architecture's narrow lifecycle hooks, keep contributions data-only, define distinct `PluginSlotContribution`, model app-domain permissions as objects, and avoid exposing `CoreRuntime`/`CoreServices`/raw aggregate groups or native handles from `PluginContext`.
+- TASK-010 pre-test guidance agents spawned: Kepler, Sagan, Franklin, and Feynman.
+- TASK-009 merged to `master` and pushed. Merge commit: `a353767 Codex(merge)(Add Transaction Manager and Core Runtime composition): merge task branch`.
+- TASK-010 branch created from latest `master`.
+- TASK-010 started in progress ledger and task communication file.
+- `.codex/agents/*.toml` parsed successfully for TASK-010.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 - TASK-009 final local gate passed: `bun run check:quick` passed, including 11 frontend test files and 171 tests, Rust formatting check, Rust clippy with `-D warnings`, and Rust tests; `bun run build` passed with a successful Vite production build.
 - Final binary structured-clone re-review completed and all agents were closed.
 - James (`reviewer`) found no P0/P1/P2 correctness findings and confirmed ArrayBuffer/DataView conflicts, typed-array and non-zero-offset DataView probes, and existing comparator branches.
@@ -363,13 +456,13 @@ Last updated: 2026-05-20 19:11 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-009 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-009.
-- `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has no remaining P0/P1/P2 findings, final local gate passed, and progress completion notes are being committed.
+- `docs/implementation/progress.md` marks TASK-010 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-010.
+- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, targeted re-review fixes, and the Obsidian link fix.
 
 ## Next Actions
 
-1. Commit TASK-009 completion notes.
-2. Merge TASK-009 to `master` and push.
-3. Continue to TASK-010.
+1. Spawn final targeted re-review agents for the ownership-key and docs-link fixes.
+2. Fix any remaining P0/P1 findings.
+3. Run final local gate and mark TASK-010 complete.

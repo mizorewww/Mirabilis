@@ -10,7 +10,7 @@
 > Core 只负责 Markdown Page、Metadata、Event、Filter、View Registry、Command Registry、Plugin Host。
 > 任务、习惯、计时、热力图、统计图、机器学习、AI、日历、快速收集箱都通过 Plugin 接入。
 
-这套架构参考 Obsidian 的插件思路：Obsidian 插件通过 manifest 描述插件信息，通过生命周期方法加载/卸载，并通过注册命令、视图、编辑器扩展等方式接入宿主应用。我们的系统也采用“Core 提供注册点，Plugin 提供能力”的模式。([Developer Documentation](https://docs.obsidian.md/Plugins/Getting%2Bstarted/Build%2Ba%2Bplugin "Build a plugin - Developer Documentation"))
+这套架构参考 Obsidian 的插件思路：Obsidian 插件通过 manifest 描述插件信息，通过生命周期方法加载/卸载，并通过注册命令、视图、编辑器扩展等方式接入宿主应用。我们的系统也采用“Core 提供注册点，Plugin 提供能力”的模式。([Developer Documentation](https://docs.obsidian.md/Plugins/Getting%20started/Build%20a%20plugin "Build a plugin - Developer Documentation"))
 
 ---
 
