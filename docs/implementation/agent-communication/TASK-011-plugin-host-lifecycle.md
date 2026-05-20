@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: review-fix implementation in progress.
-- Active agents: Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`).
-- Next parent step: wait for Curie, then validate focused green checks.
+- Status: docs cleanup in progress after green review-fix implementation.
+- Active agents: Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`).
+- Next parent step: wait for Plato, validate docs diff, then run focused checks and narrow re-review.
 
 ## Agent Handoffs
 
@@ -173,7 +173,7 @@
 
 ### Review-Fix Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`).
 - Ownership:
@@ -183,6 +183,33 @@
 - Assignment:
   - Implement minimum production fixes for Carver's red tests: staged install/register API, concrete lifecycle return types, stale context registration prevention, owner-scoped store facades including transactions, dependency lifecycle/dependency-validation safety, required dependency normalization, and typed lifecycle failure state preservation.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
+- Outcome:
+  - Curie changed `src/core/plugin-host/plugin-host.ts` only.
+  - Added explicit staged `install(plugin)` and `register(plugin)` methods.
+  - Tightened public lifecycle return types to `PluginHostRecord` and `readonly PluginHostRecord[]`.
+  - Blocked stale captured contexts from registering runtime command/view/slot contributions after lifecycle exit.
+  - Scoped plugin-facing metadata/event/filter facades, including transaction facades, to the owning plugin.
+  - Rejected dependency deactivate/uninstall when registered dependents would be left incoherent.
+  - Made only registered/active records satisfy dependencies and preserved required dependencies duplicated in `optionalDependencies`.
+  - Preserved safe state and contributions on activate/deactivate/uninstall hook failures.
+- Commit:
+  - `6845f4c Curie(review-fix)(Implement Plugin Host lifecycle): harden lifecycle boundaries`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 26 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 40 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+
+### Docs Cleanup
+
+- Status: in progress.
+- Agent:
+  - Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`).
+- Ownership:
+  - `docs/architecture/03-plugin-api-and-host.md`.
+- Assignment:
+  - Fix Peirce's P2 docs drift by aligning the Plugin Host architecture sketch with the implemented `PluginHost({ services, registries, app })` constructor, explicit built-in loading, staged install/register API, concrete lifecycle methods, owner-scoped facades, dependency safety, and no native/filesystem/dynamic-loading behavior in TASK-011.
 
 ## Parent Decisions
 
@@ -193,4 +220,4 @@
 
 ## Next Action
 
-Wait for Curie, then run focused green checks.
+Wait for Plato, then validate docs and run narrow re-review.

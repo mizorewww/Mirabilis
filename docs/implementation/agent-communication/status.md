@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:46 CST.
+Last updated: 2026-05-20 23:53 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 23:46 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 review-fix implementation in progress.
+- Current phase: TASK-011 docs cleanup in progress after green review-fix implementation.
 
 ## Active Agents
 
-- Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`) is implementing the P1/P2 review fixes in `src/core/plugin-host/` and Core exports.
+- Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`) is aligning `docs/architecture/03-plugin-api-and-host.md` with the implemented Plugin Host lifecycle API.
 
 ## Recent Agent Outcomes
 
+- Plato (`doc_writer`) was spawned for the remaining TASK-011 P2 architecture docs drift. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`.
+- Curie (`implementer`) completed and was closed after fixing the TASK-011 P1/P2 review findings in `src/core/plugin-host/plugin-host.ts`.
+- Curie's review-fix commit: `6845f4c Curie(review-fix)(Implement Plugin Host lifecycle): harden lifecycle boundaries`.
+- Parent repeated green checks after Curie: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 26 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 40 tests passing; `bun run lint`; and `git diff --check`.
 - Curie (`implementer`) was spawned for the TASK-011 review-fix production changes. Ownership is limited to `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, and `src/core/index.ts` unless a required type export forces a reported scope expansion.
 - Carver's review-fix test commit: `a24bd27 Carver(test)(Implement Plugin Host lifecycle): cover lifecycle review gaps`.
 - Parent confirmed the expected red signal after Carver: `bun run typecheck` failed on missing `install` / `register` and concrete return type assertions; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 26 tests with 15 passing and 11 failing in the new P1/P2 review areas; `git diff --check` passed.
