@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:44 CST.
+Last updated: 2026-05-20 13:45 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-20 13:44 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final TASK-008 verification complete; progress update and merge pending.
+- Current phase: TASK-008 complete; merge to `master` pending.
 
 ## Active Agents
 
@@ -21,6 +21,7 @@ Last updated: 2026-05-20 13:44 CST.
 - Huygens (`test_quality_reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit-unknown tests cover Rawls's P2 without weakening earlier wrong-prop, narrow-condition, or unparameterized-return coverage.
 - Nash (`docs_researcher`) found one P3 stale task-communication/status issue; parent accepted it and updated status plus task communication.
 - Final TASK-008 gate passed: `bun run check:quick` and `bun run build`.
+- Progress ledger updated to mark TASK-008 complete and record final validation, review, external docs, and remaining risks.
 - Explicit-unknown test commit: `5fc28d8 Codex(test)(Add View Registry and Slot Registry): cover explicit unknown type aliases`.
 - Explicit-unknown test-fix commit: `a1622a5 Codex(test-fix)(Add View Registry and Slot Registry): distinguish explicit unknown types`.
 - Explicit-unknown production fix commit: `cdbea56 Codex(review-fix)(Add View Registry and Slot Registry): tighten explicit unknown aliases`.
@@ -290,6 +291,6 @@ Last updated: 2026-05-20 13:44 CST.
 
 ## Next Actions
 
-1. Commit final verification/status updates.
-2. Mark TASK-008 complete in `docs/implementation/progress.md`.
-3. Merge TASK-008 to `master`.
+1. Commit progress completion update.
+2. Merge TASK-008 to `master`.
+3. Continue to TASK-009 from latest `master`.

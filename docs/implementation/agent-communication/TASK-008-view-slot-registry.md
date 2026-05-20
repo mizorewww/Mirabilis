@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: final TASK-008 verification complete; progress update and merge pending.
+- Status: TASK-008 complete; merge to `master` pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -390,4 +390,4 @@
 
 ## Next Action
 
-Commit this final verification summary, mark TASK-008 complete in `docs/implementation/progress.md`, then merge the task branch to `master`.
+Commit the TASK-008 progress completion update, merge the task branch to `master`, then continue with TASK-009 from latest `master`.

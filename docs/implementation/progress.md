@@ -30,7 +30,7 @@ Status markers:
 - [x] TASK-005: Add in-memory Event Store
 - [x] TASK-006: Add Filter Store and Query AST baseline
 - [x] TASK-007: Add Command Registry and Command Bus
-- [~] TASK-008: Add View Registry and Slot Registry
+- [x] TASK-008: Add View Registry and Slot Registry
 - [ ] TASK-009: Add Transaction Manager and Core Runtime composition
 
 ## Milestone M2: Native persistence boundary
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 13:44 CST - TASK-008 completed
+
+- Branch: `feat/task-008-view-slot-registry`.
+- Task: Add View Registry and Slot Registry.
+- Commits: `0b13d3e` start orchestration, `1ad4889` pre-test guidance handoff, `92b5d8b` pre-test guidance, `c0e2e4c` test writer handoff, `5dc84cc` acceptance tests, `e1ad927` red signal, `9d56154` implementation handoff, `1e03f31` implementation, `d58ad60` green signal, `4370abb` review handoff, `bd59345` review findings, `57b56aa` review-fix test handoff, `319471b` review-fix coverage, `3d9ce5e` review-fix red signal, `b632e4f` review-fix implementation handoff, `81a7a94` proxy test follow-up, `c4dbc4a` proxy get-trap tests, `cfbb215` proxy red signal, `ffe8561` object component refs, `80882a6` review-fix green signal, `5e28881` targeted re-review handoff, `481e6cb` targeted re-review findings, `cd622c6` type-soundness test handoff, `9a3c1c2` public type-soundness tests, `c51cf53` type-soundness red signal, `90e84b8` type-fix implementation handoff, `66517cc` first type-fix replacement, `672e1e4` replacement handoff, `c951141` second replacement, `ba6bb84` third type-fix handoff, `57b14ba` parent fallback record, `a7eade7` public type-soundness fix, `f7b7157` type-fix green signal, `051370d` registry example docs, `c1eeae2` docs cleanup, `e18e308` final re-review handoff, `d1f511e` final re-review findings, `5fc28d8` explicit-unknown type tests, `a1622a5` explicit-unknown test split, `cdbea56` explicit-unknown type fix, `21ef5e6` explicit-unknown green signal, and `3ec23c6` final verification.
+- Delivered: Core View Registry and Slot Registry types, in-memory registry factories, Core barrel exports, duplicate ID rejection, exact plugin/type/slot filtering, unregister/re-register behavior, stable slot ordering by finite order plus registration sequence, defensive inert metadata copies, component and `when` reference identity preservation, React-compatible type-only component references including object/exotic/lazy-style refs, descriptor-value validation that avoids proxy `get` traps, and strict public type safety for explicit generic props and explicit `unknown`.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` passed with 20 tests, and focused `bun run typecheck`, `bun run lint`, and `git diff --check` passed after review fixes.
+- Review: final narrow correctness and test-quality re-review reported no P0/P1/P2/P3 findings. Earlier correctness, security, deprecation/API, docs, and test-quality findings around erased default generics, React object component refs, proxy descriptor reads, component inertness, type matcher drift, public prop soundness, explicit `unknown`, and stale docs were fixed or documented before the final gate.
+- External docs verified by agents: TypeScript type-only imports/exports, `import type` and `export type`, `verbatimModuleSyntax`, React TypeScript guidance, React `createElement`, React `isValidElement`, Vitest async assertions, Vitest `expectTypeOf`, and Vitest type testing.
+- Remaining risk: raw registries are Core-internal. Before Plugin Host or UI/plugin contexts receive view or slot services, caller-scoped facades must prevent plugins from unregistering or enumerating unrelated view/slot contributions. `bun run check:full` was not run because TASK-008 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-20 11:28 CST - TASK-008 started
 
