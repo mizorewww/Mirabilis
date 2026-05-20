@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: review round 1 completed; review-fix TDD handoff next.
-- Active agents: none.
-- Next parent step: delegate P1/P2 review-fix tests to `test_writer`, then delegate implementation to `implementer`.
+- Status: review-fix TDD in progress.
+- Active agents: Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`).
+- Next parent step: wait for Carver, validate expected red signal, commit tests, then delegate implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -151,6 +151,17 @@
   - Delegate production fixes to `implementer` after the red signal.
   - Delegate docs cleanup after production behavior is settled.
 
+### Review-Fix TDD
+
+- Status: in progress.
+- Agent:
+  - Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add red tests for stale captured contexts registering after lifecycle exit, owner-scoped metadata/event/filter facades including transaction facades, dependency cascade and dependency-validation gaps, duplicate dependency normalization, explicit staged `install(plugin)` / `register(plugin)` API, lifecycle hook failure behavior, and concrete Plugin Host return types.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -160,4 +171,4 @@
 
 ## Next Action
 
-Delegate review-fix tests for the P1/P2 findings.
+Wait for Carver, then validate and commit the red review-fix tests.

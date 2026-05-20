@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:37 CST.
+Last updated: 2026-05-20 23:38 CST.
 
 ## Current Task
 
@@ -8,15 +8,15 @@ Last updated: 2026-05-20 23:37 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 review findings recorded; review-fix TDD handoff next.
+- Current phase: TASK-011 review-fix TDD in progress.
 
 ## Active Agents
 
-- No active review agents. TASK-011 review round 1 completed.
-- Next agent handoff: `test_writer` for P1/P2 review-fix red tests.
+- Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`) is adding P1/P2 review-fix red tests in `src/test/plugin-host-lifecycle.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Carver (`test_writer`) was spawned for TASK-011 P1/P2 review-fix red tests. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`; production code, docs, config, lockfiles, Rust/Tauri, and other tests are out of scope.
 - TASK-011 review round 1 completed. Jason (`pr_explorer`) mapped the changed surfaces to `src/core/plugin-host/`, Core exports, lifecycle tests, and agent docs; Jason highlighted batch-load rollback, untracked non-register lifecycle contributions, deactivate/re-activate semantics, dependency cascades, and missing coverage risks.
 - Herschel (`reviewer`) found one P1 correctness issue: captured plugin contexts can register commands/views/slots after deactivate or uninstall because only the initial register tracker is copied into `record.contributions`. Herschel also found P2 issues for dependency deactivate/uninstall cascades, dependency satisfaction by installed-but-unregistered records, and duplicate dependency declarations downgrading required dependencies to optional.
 - Singer (`security_reviewer`) found two P1 boundary issues: captured plugin contexts stay live after lifecycle exit and can register untracked capabilities, and metadata/event/filter store facades are not owner-scoped, allowing cross-plugin read/delete/update and filter ownership hijacking.
