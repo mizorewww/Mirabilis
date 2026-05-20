@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: review-fix test coverage active.
-- Active agents:
-  - Godel (`test_writer`, `019e433d-a86c-7592-837a-c91a6784dd4b`): add focused node-count exhaustion coverage.
+- Status: node-count test coverage added; targeted test-quality re-review pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -205,18 +204,25 @@
   - Herschel found no remaining P0/P1/P2 issues. The non-enumerable property issue is fixed, the operator drift guard is reasonably covered by compile-time and runtime checks, and focused typecheck/test/lint commands passed.
   - Euclid found one blocking P2 test-quality gap: the suite does not yet include a focused wide/shallow payload that exceeds the `maxJsonValueNodes` budget, asserts a typed error, and proves the store is unchanged.
 
-## Next Action
-
-Wait for Godel's focused node-count exhaustion coverage output.
-
 ### Godel (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e433d-a86c-7592-837a-c91a6784dd4b`.
 - Ownership:
   - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
+- Commit:
+  - `bffe6a1 Godel(test)(Add Filter Store and Query AST baseline): cover filter query node-count limits`.
 - Assignment:
   - Add a focused wide/shallow payload test that exceeds the Filter Store `maxJsonValueNodes` budget.
   - Assert a typed validation error rather than a raw error.
   - Prove rejected `save` and `update` attempts do not mutate stored filters.
   - Do not edit production code or docs.
+- Checks run by Godel:
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing.
+  - `bun run typecheck`.
+- Parent note:
+  - Godel initially committed with the role name in the message; parent amended the HEAD commit message to use the actual agent nickname, then force-with-lease pushed the task branch.
+
+## Next Action
+
+Spawn a targeted `test_quality_reviewer` to confirm Euclid's node-count P2 is closed.
