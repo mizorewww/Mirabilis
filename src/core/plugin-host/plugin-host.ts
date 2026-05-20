@@ -223,6 +223,17 @@ class PluginHostImpl implements PluginHostInstance {
     const installedRecords: StoredPluginRecord[] = [];
 
     for (const plugin of orderedPlugins) {
+      const currentRecord = this.records.get(plugin.manifest.id);
+
+      if (currentRecord !== undefined) {
+        this.rollbackInstalledBatchRecords(installedRecords, batchStartOrder);
+        throw new PluginHostError(
+          "PLUGIN_DUPLICATE_ID",
+          `Plugin ${plugin.manifest.id} is duplicated`,
+          { pluginId: plugin.manifest.id },
+        );
+      }
+
       const record = this.addInstalledRecord(plugin);
 
       try {
@@ -851,8 +862,13 @@ class PluginHostImpl implements PluginHostInstance {
 
   private unregisterTrackedContributions(
     contributions: readonly RegisteredContribution[],
+    preservedContributions: ReadonlySet<string> = new Set(),
   ): void {
     for (const contribution of [...contributions].reverse()) {
+      if (preservedContributions.has(toRegisteredContributionKey(contribution))) {
+        continue;
+      }
+
       try {
         switch (contribution.kind) {
           case "command":
@@ -871,22 +887,31 @@ class PluginHostImpl implements PluginHostInstance {
     }
   }
 
-  private revokeLifecycleScopes(record: StoredPluginRecord): void {
+  private revokeLifecycleScopes(
+    record: StoredPluginRecord,
+    preservedContributions?: ReadonlySet<string>,
+  ): void {
     for (const scope of record.lifecycleScopes) {
       scope.active = false;
-      this.rollbackScopeRegistrationTracker(scope);
+      this.rollbackScopeRegistrationTracker(scope, preservedContributions);
     }
 
     record.lifecycleScopes.clear();
     delete record.registerPromise;
   }
 
-  private rollbackScopeRegistrationTracker(scope: PluginContextScope): void {
+  private rollbackScopeRegistrationTracker(
+    scope: PluginContextScope,
+    preservedContributions: ReadonlySet<string> = new Set(),
+  ): void {
     if (scope.registrationTrackerRolledBack) {
       return;
     }
 
-    this.unregisterTrackedContributions(scope.registrationTracker);
+    this.unregisterTrackedContributions(
+      scope.registrationTracker,
+      preservedContributions,
+    );
     scope.registrationTrackerRolledBack = true;
   }
 
@@ -915,13 +940,22 @@ class PluginHostImpl implements PluginHostInstance {
     restoredNextOrder: number,
   ): void {
     for (const record of [...records].reverse()) {
-      this.revokeLifecycleScopes(record);
-      this.unregisterTrackedContributions(record.contributions);
+      const preservedContributions =
+        this.getCurrentTrackedContributionKeys(record);
+
+      this.revokeLifecycleScopes(record, preservedContributions);
+      this.unregisterTrackedContributions(
+        record.contributions,
+        preservedContributions,
+      );
       record.contributions = [];
-      this.records.delete(record.manifest.id);
+
+      if (this.records.get(record.manifest.id) === record) {
+        this.records.delete(record.manifest.id);
+      }
     }
 
-    this.nextOrder = restoredNextOrder;
+    this.nextOrder = this.getRestoredNextOrder(restoredNextOrder);
   }
 
   private cleanupFailedInstallRecord(record: StoredPluginRecord): void {
@@ -934,6 +968,28 @@ class PluginHostImpl implements PluginHostInstance {
     this.unregisterTrackedContributions(record.contributions);
     record.contributions = [];
     this.records.delete(record.manifest.id);
+  }
+
+  private getCurrentTrackedContributionKeys(
+    record: StoredPluginRecord,
+  ): ReadonlySet<string> {
+    const currentRecord = this.records.get(record.manifest.id);
+
+    if (currentRecord === undefined || currentRecord === record) {
+      return new Set();
+    }
+
+    return getTrackedContributionKeys(currentRecord);
+  }
+
+  private getRestoredNextOrder(restoredNextOrder: number): number {
+    let nextOrder = restoredNextOrder;
+
+    for (const record of this.records.values()) {
+      nextOrder = Math.max(nextOrder, record.order + 1);
+    }
+
+    return nextOrder;
   }
 
   private toPublicRecord(record: StoredPluginRecord): PluginHostRecord {
@@ -975,6 +1031,30 @@ function hasActiveRegisterScope(record: StoredPluginRecord): boolean {
   }
 
   return false;
+}
+
+function getTrackedContributionKeys(
+  record: StoredPluginRecord,
+): ReadonlySet<string> {
+  const contributionKeys = new Set<string>();
+
+  for (const contribution of record.contributions) {
+    contributionKeys.add(toRegisteredContributionKey(contribution));
+  }
+
+  for (const scope of record.lifecycleScopes) {
+    for (const contribution of scope.registrationTracker) {
+      contributionKeys.add(toRegisteredContributionKey(contribution));
+    }
+  }
+
+  return contributionKeys;
+}
+
+function toRegisteredContributionKey(
+  contribution: RegisteredContribution,
+): string {
+  return `${contribution.kind}:${contribution.id}`;
 }
 
 function assertCanRegisterRuntimeContribution(
