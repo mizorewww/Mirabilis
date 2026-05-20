@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:15 CST.
+Last updated: 2026-05-20 10:17 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 10:15 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1 complete; review-fix tests pending.
+- Current phase: review-fix tests active.
 
 ## Active Agents
 
-- None.
+- Dirac (`test_writer`, `019e432c-87d5-7930-bf9c-eced69fd1366`): adding review-fix tests for TASK-006 P1/P2 findings.
 
 ## Recent Agent Outcomes
 
+- Dirac (`test_writer`) was spawned for TASK-006 review-fix tests.
 - Review round 1 completed. Bohr reported no correctness P0/P1/P2; Boyle found one P1 raw proxy/reflection-trap escape and one P2 unvalidated `filterId` raw-error path; Darwin found three P2 test coverage gaps; Confucius found one P2 non-enumerable Query AST property issue and one P3 operator drift risk; Laplace found no docs P0/P1/P2 and two P3 docs hygiene/traceability items.
 - TASK-006 review agents spawned. `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
 - Hume (`implementer`) completed and was closed after implementing the in-memory Filter Store.
@@ -158,6 +159,6 @@ Last updated: 2026-05-20 10:15 CST.
 
 ## Next Actions
 
-1. Commit review findings.
-2. Spawn test writer for selected P1/P2 review-fix tests.
-3. Spawn implementer after red/updated tests are committed.
+1. Wait for Dirac's review-fix test result.
+2. Confirm expected red/updated tests.
+3. Commit tests and spawn implementer.
