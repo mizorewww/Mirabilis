@@ -39,19 +39,28 @@
 
 ## Current Status
 
-- Status: task started; pre-test guidance handoff next.
+- Status: pre-test guidance agents running.
 - Active agents:
-  - None yet.
-- Next parent step: commit the start state, then spawn read-only planner/docs/deprecation/security agents for pre-test guidance.
+  - Socrates (`planner`, `019e46af-56e2-7d60-acda-6e5010986619`).
+  - Parfit (`docs_researcher`, `019e46af-5ac6-7ec0-82e2-b42db7892871`).
+  - Turing (`deprecation_auditor`, `019e46af-5f7c-73d2-a0e9-cf63956a1350`).
+  - Euclid (`security_reviewer`, `019e46af-6383-7ab0-94a4-8c01342a54e5`).
+- Next parent step: wait for pre-test guidance, summarize recommendations, and commit the handoff before delegating red tests.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: pending.
+- Status: running.
 - Agents:
-  - Pending.
+  - Socrates (`planner`, `019e46af-56e2-7d60-acda-6e5010986619`).
+  - Parfit (`docs_researcher`, `019e46af-5ac6-7ec0-82e2-b42db7892871`).
+  - Turing (`deprecation_auditor`, `019e46af-5f7c-73d2-a0e9-cf63956a1350`).
+  - Euclid (`security_reviewer`, `019e46af-6383-7ab0-94a4-8c01342a54e5`).
 - Assignment:
   - Produce focused behavior, API, current-doc, deprecation, and security-boundary guidance before TDD tests.
   - Stay read-only and do not edit files.
-
+  - Socrates should recommend the module/file surface, public API shape, DTO/error boundaries, out-of-scope items, acceptance-test behaviors, and validation commands.
+  - Parfit should verify current official `@tauri-apps/api` v2 `invoke` usage/import paths and relevant Vitest mocking guidance from primary sources.
+  - Turing should audit deprecated/API compatibility risks for Tauri v2 imports, TypeScript module patterns, and ESM mocking.
+  - Euclid should define IPC/native-boundary security criteria, including command centralization, typed DTOs, no UI raw Tauri persistence calls, and no new permissions/capabilities in this task.

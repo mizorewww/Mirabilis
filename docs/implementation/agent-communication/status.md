@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:37 CST.
+Last updated: 2026-05-21 02:39 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-21 02:37 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test guidance handoff next.
+- Current phase: pre-test guidance agents running.
 
 ## Active Agents
 
-- None.
+- Socrates (`planner`, `019e46af-56e2-7d60-acda-6e5010986619`) - TASK-012 planning and TDD/API scope guidance.
+- Parfit (`docs_researcher`, `019e46af-5ac6-7ec0-82e2-b42db7892871`) - current official Tauri invoke and boundary testing guidance.
+- Turing (`deprecation_auditor`, `019e46af-5f7c-73d2-a0e9-cf63956a1350`) - API/deprecation/import/mocking compatibility guidance.
+- Euclid (`security_reviewer`, `019e46af-6383-7ab0-94a4-8c01342a54e5`) - IPC/native boundary and permission-scope guidance.
 
 ## Recent Agent Outcomes
 
+- TASK-012 pre-test guidance agents spawned. All are read-only and must not edit files. Parent will summarize their recommendations in `docs/implementation/agent-communication/TASK-012-nativebridge-typescript-boundary.md` before delegating red tests.
 - TASK-012 branch `feat/task-012-nativebridge-typescript-boundary` was created from latest `master`.
 - TASK-012 scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Rust commands, SQLite schema/repositories, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, and new Tauri permissions/capabilities are out of scope.
 - `.codex/agents/*.toml` parsed successfully for TASK-012 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
