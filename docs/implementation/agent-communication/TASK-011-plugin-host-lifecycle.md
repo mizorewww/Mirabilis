@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: concurrent register test contract update in progress.
-- Active agents:
-  - Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`).
-- Next parent step: wait for Franklin, validate green checks, then commit the test contract update and Halley's implementation separately.
+- Status: final batch rollback re-review handoff.
+- Active agents: none.
+- Next parent step: spawn final focused read-only re-review, then run the local gate if no P0/P1 findings remain.
 
 ## Agent Handoffs
 
@@ -680,7 +679,7 @@
 
 ### Batch Rollback And Dependency-Removal Race Implementation
 
-- Status: revision in progress.
+- Status: completed and committed.
 - Agent:
   - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
 - Ownership:
@@ -695,10 +694,23 @@
 - Revised outcome:
   - Halley removed the source-inspection check and implemented explicit `registerPromise` single-flight state.
   - Focused checks found one old test still expected a second concurrent register hook to execute and reject; parent accepted single-flight register semantics and delegated a test contract update.
+- Final outcome:
+  - Halley changed `src/core/plugin-host/plugin-host.ts` only.
+  - Batch rollback now revokes pending lifecycle scopes and unregisters tentative command/view/slot contributions before deleting records.
+  - Dependency deactivation/uninstall in progress no longer satisfies required dependencies for new dependent registration.
+  - Concurrent successful `register(plugin)` calls share one in-flight register operation and publish one contribution set.
+- Commit:
+  - `b52772a Halley(review-fix)(Implement Plugin Host lifecycle): guard batch rollback races`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 43 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 57 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ### Concurrent Register Test Contract Update
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`).
 - Ownership:
@@ -706,6 +718,15 @@
 - Assignment:
   - Update the stale concurrent register failure test to assert accepted single-flight/idempotent register semantics.
   - Preserve contribution tracking and uninstall cleanup coverage without editing production code.
+- Outcome:
+  - Franklin changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - The concurrent register test now asserts a shared in-flight hook, both callers resolving to registered state, contribution tracking before uninstall, and empty registries after uninstall.
+- Commit:
+  - `b17ed99 Franklin(test-fix)(Implement Plugin Host lifecycle): align concurrent register contract`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 43 tests.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -716,4 +737,4 @@
 
 ## Next Action
 
-Wait for Franklin, then validate and commit the concurrent register test contract update and Halley's implementation separately.
+Spawn final focused read-only re-review after Franklin/Halley's green commits.

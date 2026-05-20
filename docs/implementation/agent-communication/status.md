@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:07 CST.
+Last updated: 2026-05-21 02:10 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-21 02:07 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 concurrent register test contract update in progress.
+- Current phase: TASK-011 final batch rollback re-review handoff.
 
 ## Active Agents
 
-- Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`) is updating one stale concurrent register test to match accepted single-flight register semantics.
+- No active agents. Next handoff: final focused read-only re-review after Franklin/Halley green commits.
 
 ## Recent Agent Outcomes
 
+- Halley (`implementer`) completed the revised production fix and was closed after removing source-inspection from the implementation.
+- Halley's review-fix commit: `b52772a Halley(review-fix)(Implement Plugin Host lifecycle): guard batch rollback races`.
+- Franklin (`test_writer`) completed and was closed after aligning the stale concurrent register test with accepted single-flight semantics.
+- Franklin's test-fix commit: `b17ed99 Franklin(test-fix)(Implement Plugin Host lifecycle): align concurrent register contract`.
+- Parent repeated green checks after Franklin/Halley: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 43 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 57 tests passing; `bun run lint`; and `git diff --check`.
 - Franklin (`test_writer`) was spawned to update the stale concurrent register failure test to the accepted single-flight/idempotent register semantics. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
 - Halley's revised implementation removed the function-source inspection and uses explicit `registerPromise` single-flight state, but one old test still expected a second concurrent register hook to execute and reject. Parent accepted the single-flight semantics and delegated the test contract update.
 - Parent validated Halley's first implementation with focused checks green, but rejected the use of `Function.prototype.toString().includes("throw")` to choose concurrent register behavior. Halley was resumed and asked to replace it with explicit lifecycle state/concurrency control before commit.
