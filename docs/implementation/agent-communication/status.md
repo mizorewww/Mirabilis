@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:10 CST.
+Last updated: 2026-05-21 07:17 CST.
 
 ## Current Task
 
@@ -53,7 +53,12 @@ Last updated: 2026-05-21 07:10 CST.
 - Socrates the 2nd completed and was closed after adding review-fix red tests in `src/test/runtime-provider.test.tsx`, `src/test/app-bootstrap-runtime.test.ts`, and `src/test/app-shell-boundary.test.ts`.
 - Parent confirmed the expected review-fix red signal: focused frontend tests fail 2 tests because public `useRuntime()` exposes unsafe runtime paths and failed initialization remains poisoned by cached rejection; the other 15 tests pass. `git diff --cached --check` passed before commit.
 - Socrates the 2nd's review-fix test commit: `49f6554 Socrates the 2nd(test)(Build app bootstrap and runtime provider): cover review findings`.
-- Parent next step: commit communication update, then spawn `implementer` for the review-fix production patch.
+- Review-fix red-test communication update was committed as `3b11328 Codex(progress)(Build app bootstrap and runtime provider): record review fix red tests`.
+- Euler the 2nd (`implementer`) was spawned for the review-fix production patch. Ownership is limited to `src/providers/**`, `src/bootstrap/**` if needed, and `src/App.tsx` if needed. Tests, docs, Tauri config/capabilities, Rust code, package/Cargo files, NativeBridge internals, DB IPC contracts, plugin-host internals, command registry internals, and broad Core rewrites are out of scope.
+- Euler the 2nd completed and was closed after narrowing public `useRuntime()` to a copied/frozen app-info facade, keeping full runtime handles internal to provider state, clearing rejected initializer promises from cache, preserving StrictMode single-flight for pending/success, and updating App Shell to use the safe public hook.
+- Parent repeated green checks after Euler the 2nd: focused TASK-015 frontend tests, `bun run typecheck`, `bun run lint`, `bun run build`, and `git diff --check`.
+- Euler the 2nd's review-fix implementation commit: `06186bb Euler the 2nd(review-fix)(Build app bootstrap and runtime provider): narrow runtime provider surface`.
+- Parent next step: commit communication update, then run focused re-review for provider boundary/cache fixes and docs gaps.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

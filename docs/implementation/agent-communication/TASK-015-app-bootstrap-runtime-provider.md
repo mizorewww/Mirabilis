@@ -37,7 +37,7 @@
 
 ## Current Status
 
-- Status: review-fix tests committed; implementation handoff pending.
+- Status: review-fix implementation committed; focused re-review pending.
 - Active agents: none.
 - Completed agents:
   - Jason the 2nd (`pr_explorer`): changed-surface mapping completed.
@@ -328,6 +328,28 @@
 - Parent red-test result: 2 failures and 15 passes. Failures are expected because public `useRuntime()` still exposes unsafe runtime paths and failed initialization remains poisoned by the cached rejected promise.
 - Validation before commit: `git diff --cached --check` passed.
 - Test commit: `49f6554 Socrates the 2nd(test)(Build app bootstrap and runtime provider): cover review findings`.
+
+### Euler the 2nd (`implementer`) Review-Fix Handoff
+
+- Status: completed and closed.
+- Ownership: minimum production changes to pass committed review-fix tests.
+- Files changed:
+  - `src/providers/**`.
+  - `src/App.tsx`.
+  - `src/test/runtime-provider.test.tsx` for a lint-only destructure change.
+- Delivered fixes:
+  - Public `useRuntime()` exposes only a safe facade, while full runtime handles remain private/trusted.
+  - Rejected initialization promises are cleared so future mounts with the same initializer can retry.
+  - Pending/successful initialization remains single-flight under StrictMode.
+  - Plugin load/activate failures continue to propagate.
+- Parent repeated green checks:
+  - `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `bun run build`.
+  - `git diff --check`.
+- Review-fix implementation commit: `06186bb Euler the 2nd(review-fix)(Build app bootstrap and runtime provider): narrow runtime provider surface`.
+- Remaining known gaps: no persistence wiring was added; production built-in plugin list remains intentionally empty.
 
 ### Hubble the 2nd (`doc_writer`) Handoff
 
