@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: review-fix implementation agent running.
-- Active agents:
-  - Aquinas the 2nd (`implementer`, id `019e475c-7dd0-7e20-bd58-60fa0dac2091`).
-- Next parent step: wait for Aquinas the 2nd, inspect its patch, then run focused checks until green.
+- Status: post-review-fix validation and re-review.
+- Active agents: none.
+- Next parent step: spawn focused read-only re-review agents.
 
 ## Agent Handoffs
 
@@ -197,7 +196,7 @@
 
 ### Review-Fix Implementation Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Aquinas the 2nd (`implementer`, id `019e475c-7dd0-7e20-bd58-60fa0dac2091`).
 - Assignment:
@@ -212,3 +211,13 @@
   - `src-tauri/src/commands/mod.rs` only if module visibility requires it.
   - `src-tauri/src/db/database.rs` and narrow DB helpers only if needed for transaction behavior.
   - `src-tauri/src/lib.rs` only if module visibility or command registration requires it.
+- Outcome:
+  - Changed files: `src/core/native/native-bridge.ts`, `src-tauri/src/commands/db.rs`, `src-tauri/src/db/database.rs`, and `src-tauri/tests/ipc_persistence.rs`.
+  - Updated `NativeBridge.db.transaction<Response>()` to return `Promise<Response[]>`.
+  - Updated Rust IPC dispatch so metadata get/delete use logical-key payloads and reject row-id-only payloads.
+  - Added missing-target `PERSISTENCE_FAILED` handling for page update/archive, metadata delete, and filter delete; transaction failures now roll back earlier writes.
+  - Added semantic validation for blank identifiers, metadata value-shape/value-type mismatches, and filter query/sort/group shapes.
+  - Replaced the raw manual transaction helper with rusqlite transaction handling.
+  - Accepted one minimal test-helper fix: whitespace-only forbidden fragments are ignored because the redacted error message is required to be `Native command failed`, which necessarily contains spaces.
+  - Parent repeated focused green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+  - Commit: `d0efbd8 Aquinas the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): enforce ipc validation semantics`.
