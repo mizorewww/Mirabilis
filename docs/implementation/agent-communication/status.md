@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:14 CST.
+Last updated: 2026-05-21 01:19 CST.
 
 ## Current Task
 
@@ -8,16 +8,18 @@ Last updated: 2026-05-21 01:14 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final concurrent lifecycle micro re-review in progress.
+- Current phase: TASK-011 concurrent register retry P1 found; TDD handoff next.
 
 ## Active Agents
 
-- Hypatia (`reviewer`, `019e4661-9196-7bd1-a798-17c473ce64cb`) is micro-reviewing concurrent lifecycle correctness.
-- Dirac (`security_reviewer`, `019e4661-9f3e-7be1-bf25-01ebc6fd09dd`) is micro-reviewing concurrent lifecycle security/boundary behavior.
-- Gibbs (`test_quality_reviewer`, `019e4661-a91f-7812-851e-00efce864de6`) is micro-reviewing the concurrent lifecycle test quality.
+- No active agents. Next handoff: `test_writer` for stale register cleanup and concurrent register contribution tracking.
 
 ## Recent Agent Outcomes
 
+- Final concurrent lifecycle micro re-review completed. Hypatia (`reviewer`) found one P1 correctness issue: a revoked pending `register` can later unregister same-ID contributions created by a fresh retry after concurrent uninstall/deactivate, and in the deactivate retry case can regress the shared record back to `installed`.
+- Dirac (`security_reviewer`) found one P2 boundary issue: concurrent `register()` calls can orphan runtime contributions because a failing second register clears `record.contributions` while the first registration's command/view/slot remain live.
+- Gibbs (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed the concurrent lifecycle test is deterministic and `.only` / `.skip` free.
+- Parent decision: add focused red tests for stale register cleanup after retry and concurrent register contribution tracking, then delegate a minimal production fix.
 - Final concurrent lifecycle micro re-review agents spawned after Copernicus's green fix.
 - Copernicus (`implementer`) completed and was closed after fixing concurrent register/uninstall lifecycle safety in `src/core/plugin-host/plugin-host.ts`.
 - Copernicus's review-fix commit: `ef4f25d Copernicus(review-fix)(Implement Plugin Host lifecycle): guard concurrent lifecycle scopes`.
@@ -557,10 +559,10 @@ Last updated: 2026-05-21 01:14 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, and the pending transaction fix. Final micro re-review found one remaining concurrent lifecycle P2 now entering TDD.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, the pending transaction fix, and the concurrent uninstall fix. Final micro re-review found stale register cleanup and concurrent register tracking gaps now entering TDD.
 
 ## Next Actions
 
-1. Spawn `test_writer` for the concurrent register/uninstall transaction rollback red test.
-2. Commit the expected red test, then spawn `implementer` for the minimal production fix.
+1. Spawn `test_writer` for stale register cleanup after retry and concurrent register contribution tracking.
+2. Commit the expected red tests, then spawn `implementer` for the minimal production fix.
 3. Re-run focused checks, micro re-review, and final local gate if clear.

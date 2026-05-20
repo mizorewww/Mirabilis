@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final concurrent lifecycle micro re-review in progress.
-- Active agents: Hypatia (`reviewer`), Dirac (`security_reviewer`), and Gibbs (`test_quality_reviewer`).
-- Next parent step: wait for final micro re-review, then local gate if clear.
+- Status: stale register cleanup P1 found; TDD handoff next.
+- Active agents: none.
+- Next parent step: delegate red tests for stale register cleanup after retry and concurrent register contribution tracking, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -505,13 +505,20 @@
 
 ### Final Concurrent Lifecycle Micro Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Hypatia (`reviewer`, `019e4661-9196-7bd1-a798-17c473ce64cb`).
   - Dirac (`security_reviewer`, `019e4661-9f3e-7be1-bf25-01ebc6fd09dd`).
   - Gibbs (`test_quality_reviewer`, `019e4661-a91f-7812-851e-00efce864de6`).
 - Assignment:
   - Read-only final micro re-review of the concurrent register/uninstall lifecycle fix and test.
+- Outcomes:
+  - Hypatia found one P1 correctness issue: stale pending `register` cleanup can corrupt a fresh retry after concurrent uninstall or deactivate by unregistering same-ID contributions from the new register and, in the deactivate case, regressing the shared record to `installed`.
+  - Dirac found one P2 boundary issue: concurrent `register()` calls can orphan runtime contributions when a failing second register clears `record.contributions` after a first register has succeeded.
+  - Gibbs found no P0/P1/P2 test-quality findings and confirmed the concurrent lifecycle test is deterministic and `.only` / `.skip` free.
+- Parent decision:
+  - Add focused red tests for stale register cleanup after retry and concurrent register contribution tracking.
+  - Delegate the minimal production fix after the expected red signal.
 
 ## Parent Decisions
 
@@ -522,4 +529,4 @@
 
 ## Next Action
 
-Wait for final concurrent lifecycle micro re-review, then run the local gate if clear.
+Delegate stale register cleanup and concurrent register tracking red tests.
