@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: batch rollback production fix revision in progress.
+- Status: concurrent register test contract update in progress.
 - Active agents:
-  - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
-- Next parent step: wait for Halley revision, then validate green checks.
+  - Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`).
+- Next parent step: wait for Franklin, validate green checks, then commit the test contract update and Halley's implementation separately.
 
 ## Agent Handoffs
 
@@ -692,6 +692,20 @@
 - Parent revision request:
   - Halley's first implementation passed focused checks, but used `Function.prototype.toString().includes("throw")` to choose concurrent register behavior.
   - Parent rejected that brittle source-inspection approach and asked Halley to replace it with explicit lifecycle state/concurrency control before commit.
+- Revised outcome:
+  - Halley removed the source-inspection check and implemented explicit `registerPromise` single-flight state.
+  - Focused checks found one old test still expected a second concurrent register hook to execute and reject; parent accepted single-flight register semantics and delegated a test contract update.
+
+### Concurrent Register Test Contract Update
+
+- Status: in progress.
+- Agent:
+  - Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Update the stale concurrent register failure test to assert accepted single-flight/idempotent register semantics.
+  - Preserve contribution tracking and uninstall cleanup coverage without editing production code.
 
 ## Parent Decisions
 
@@ -702,4 +716,4 @@
 
 ## Next Action
 
-Wait for Halley's revised implementation, then validate and commit the batch rollback/dependency-removal production fix.
+Wait for Franklin, then validate and commit the concurrent register test contract update and Halley's implementation separately.

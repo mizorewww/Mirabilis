@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:05 CST.
+Last updated: 2026-05-21 02:07 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-21 02:05 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 batch rollback production fix revision in progress.
+- Current phase: TASK-011 concurrent register test contract update in progress.
 
 ## Active Agents
 
-- Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`) is revising the green production patch to remove brittle function-source inspection while preserving batch rollback, dependency-removal/register, and concurrent-register behavior.
+- Franklin (`test_writer`, `019e4692-2aa6-7913-b120-a7ef7b35deed`) is updating one stale concurrent register test to match accepted single-flight register semantics.
 
 ## Recent Agent Outcomes
 
+- Franklin (`test_writer`) was spawned to update the stale concurrent register failure test to the accepted single-flight/idempotent register semantics. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Halley's revised implementation removed the function-source inspection and uses explicit `registerPromise` single-flight state, but one old test still expected a second concurrent register hook to execute and reject. Parent accepted the single-flight semantics and delegated the test contract update.
 - Parent validated Halley's first implementation with focused checks green, but rejected the use of `Function.prototype.toString().includes("throw")` to choose concurrent register behavior. Halley was resumed and asked to replace it with explicit lifecycle state/concurrency control before commit.
 - Halley (`implementer`) was spawned for the batch rollback stale-scope, dependency-removal/register race, and concurrent-register idempotency production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
 - Avicenna (`test_writer`) completed and was closed after adding red tests for batch rollback stale scopes, dependency-removal/register races, and concurrent register idempotency.
