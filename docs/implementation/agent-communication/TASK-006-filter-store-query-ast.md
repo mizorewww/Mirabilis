@@ -98,6 +98,19 @@
 - Do not create sibling `../mirabilis-task-*` worktree directories unless the user explicitly asks for worktree isolation.
 - If a worktree is explicitly used, prune/remove it after merge so Git branches and commits remain the only durable version-management surface.
 
+### Fermat (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4315-bb48-7ff3-a790-8b947bf4301d`.
+- Ownership:
+  - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Write failing TASK-006 acceptance tests for public exports, CRUD, update semantics, list filters, Query AST validation, typed errors, and defensive clone boundaries.
+  - Use `/home/aac6fef/Developer/Mirabilis`; do not create sibling worktree directories.
+  - Do not edit production code.
+- Expected signal:
+  - `bun run typecheck` and/or `bun run test:frontend -- src/test/core-filter-store.test.ts` should fail because Filter Store production exports are not implemented yet.
+
 ## Next Action
 
-Spawn a replacement test writer in `/home/aac6fef/Developer/Mirabilis`, then commit red tests.
+Wait for Fermat's red tests, then commit them.
