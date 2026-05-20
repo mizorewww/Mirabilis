@@ -42,9 +42,8 @@
 
 ## Current Status
 
-- Status: failing-test handoff active.
-- Active agents:
-  - Kant (`test_writer`, `019e43f4-4602-7d40-958d-276cc6031bfc`): write failing TASK-009 runtime composition and transaction manager tests only.
+- Status: test writer replacement pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -100,7 +99,7 @@
 
 ### Kant (`test_writer`)
 
-- Status: active.
+- Status: stopped and replaced.
 - Agent id: `019e43f4-4602-7d40-958d-276cc6031bfc`.
 - Ownership:
   - `src/test/core-runtime-composition.test.ts`.
@@ -109,6 +108,9 @@
   - Write failing tests for TASK-009 public runtime/services exports, runtime service availability by documented names, command execution through `runtime.commands`, successful transaction commit, read-your-writes, delayed live visibility while async transactions are pending, sync throw rollback, async rejection rollback, validation-error rollback, and defensive clone behavior.
   - Use Vitest runtime tests plus `expectTypeOf` assertions backed by `bun run typecheck`.
   - Do not edit production code, docs, config, lockfiles, or existing tests unless unavoidable for test-only support.
+- Outcome:
+  - Parent sent one status request after the first wait window and gave Kant a second wait window.
+  - Kant produced no final output and no worktree changes, so parent stopped it and will spawn a replacement `test_writer`.
 
 ## Parent Decisions
 
@@ -123,4 +125,4 @@
 
 ## Next Action
 
-Wait for Kant's failing-test patch, run focused red checks, then commit the tests if the red signal is expected.
+Spawn a replacement `test_writer`, run focused red checks after it returns, then commit the tests if the red signal is expected.
