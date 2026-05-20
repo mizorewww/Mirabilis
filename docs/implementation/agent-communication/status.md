@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:51 CST.
+Last updated: 2026-05-20 11:53 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 11:51 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation green; review handoff pending.
+- Current phase: review round 1 active.
 
 ## Active Agents
 
-- None.
+- Gauss (`pr_explorer`, `019e4384-24f7-7142-96b0-dc8c4fb9383f`): map TASK-008 branch diff and review focus areas.
+- Erdos (`reviewer`, `019e4384-29c3-7b81-954b-f2a92b8c8b4d`): correctness review for View/Slot Registries.
+- Averroes (`security_reviewer`, `019e4384-2f2c-70d2-8cf8-1f02086e4b37`): security and boundary review for component/condition/metadata surfaces.
+- Volta (`deprecation_auditor`, `019e4384-33de-7341-a26f-25a1fcc1d059`): TypeScript/React/Vitest/API risk audit.
+- Carson (`test_quality_reviewer`, `019e4384-4aab-7841-ac86-f4aad76333da`): TASK-008 acceptance-test quality review.
+- Ramanujan (`docs_researcher`, `019e4384-60a0-7413-8fa0-ba40b49ba15a`): TASK-008 docs consistency and traceability review.
 
 ## Recent Agent Outcomes
 
+- TASK-008 review agents spawned.
 - Linnaeus (`implementer`) completed and was closed after implementing TASK-008 production code.
 - Linnaeus's implementation commit: `1e03f31 Linnaeus(implementation)(Add View Registry and Slot Registry): implement view and slot registries`.
 - Parent corrected Linnaeus's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
@@ -223,6 +229,6 @@ Last updated: 2026-05-20 11:51 CST.
 
 ## Next Actions
 
-1. Spawn review agents for TASK-008.
+1. Wait for TASK-008 review agents.
 2. Record review findings.
 3. Fix P0/P1 findings before final gate.
