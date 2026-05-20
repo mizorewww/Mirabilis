@@ -42,8 +42,9 @@
 
 ## Current Status
 
-- Status: failing tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: implementation active.
+- Active agents:
+  - Plato (`implementer`, `019e4402-9dde-7a12-96c1-c3f3219cb8c2`): implement minimum Core runtime composition and in-memory Transaction Manager production code to pass TASK-009 tests.
 
 ## Agent Handoffs
 
@@ -143,6 +144,25 @@
   - `bun run typecheck` failed as expected because `../core` does not yet export `createCoreStores`, `createCoreRegistries`, `createCoreServices`, `createInMemoryAppRuntime`, `CoreRuntime`, `CoreStores`, `CoreRegistries`, `CoreServices`, `CoreTransaction`, or `TransactionHandler`, and because `../core/runtime` and `../core/services` do not exist yet.
   - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` failed as expected because `../core/runtime` could not be resolved and `createCoreStores` is not yet implemented/exported.
 
+### Plato (`implementer`)
+
+- Status: active.
+- Agent id: `019e4402-9dde-7a12-96c1-c3f3219cb8c2`.
+- Ownership:
+  - `src/core/runtime/app-runtime.ts`.
+  - `src/core/runtime/index.ts`.
+  - `src/core/services/transaction-manager.ts`.
+  - `src/core/services/index.ts`.
+  - Any internal Core transaction participant helper needed for in-memory staging/snapshots.
+  - Existing store modules only as needed for internal transaction support.
+  - `src/core/index.ts` and public barrels.
+- Assignment:
+  - Implement minimum production code to make the TASK-009 tests pass.
+  - Keep transaction scope to page, metadata, event, and filter stores.
+  - Compose command, view, and slot registries by reference and do not include registries in rollback.
+  - Preserve existing store validation, defensive copies, insertion order, typed errors, and clone-failure behavior.
+  - Do not touch tests, docs, config, Tauri/Rust, package files, or UI unless a production API impossibility is found.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -156,4 +176,4 @@
 
 ## Next Action
 
-Record implementation handoff, spawn `implementer` for minimum production code, then run focused checks after it returns.
+Wait for Plato's implementation patch, run focused checks, then commit implementation if checks pass.
