@@ -39,9 +39,15 @@
 
 ## Current Status
 
-- Status: final post-stale-register re-review handoff.
-- Active agents: none.
-- Next parent step: spawn final read-only re-review, then run the local gate if no P0/P1 findings remain.
+- Status: final post-stale-register read-only re-review in progress.
+- Active agents:
+  - Schrodinger (`pr_explorer`, `019e4670-54fc-73f1-9e45-450dcc343143`).
+  - Rawls (`reviewer`, `019e4670-6187-7ae3-9a92-f611d438ce2f`).
+  - Goodall (`security_reviewer`, `019e4670-6ac1-7762-bfbd-35afad7ee07a`).
+  - Feynman (`test_quality_reviewer`, `019e4670-6ecc-7161-9362-5eb620fa01fa`).
+  - Kierkegaard (`docs_researcher`, `019e4670-753a-76d3-995d-1a18f129d11b`).
+  - Euler (`deprecation_auditor`, `019e4670-7c7b-7433-807b-a0f911aca64d`).
+- Next parent step: wait for final re-review, fix any P0/P1 findings through delegated work, then run the local gate.
 
 ## Agent Handoffs
 
@@ -564,6 +570,20 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Post-Stale-Register Re-Review
+
+- Status: in progress.
+- Agents:
+  - Schrodinger (`pr_explorer`, `019e4670-54fc-73f1-9e45-450dcc343143`).
+  - Rawls (`reviewer`, `019e4670-6187-7ae3-9a92-f611d438ce2f`).
+  - Goodall (`security_reviewer`, `019e4670-6ac1-7762-bfbd-35afad7ee07a`).
+  - Feynman (`test_quality_reviewer`, `019e4670-6ecc-7161-9362-5eb620fa01fa`).
+  - Kierkegaard (`docs_researcher`, `019e4670-753a-76d3-995d-1a18f129d11b`).
+  - Euler (`deprecation_auditor`, `019e4670-7c7b-7433-807b-a0f911aca64d`).
+- Assignment:
+  - Read-only final review of TASK-011 after Galileo's stale register cleanup fix.
+  - Check scope, correctness, security boundaries, test quality, docs/status drift, and API/deprecation risk before the local gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -573,4 +593,4 @@
 
 ## Next Action
 
-Spawn final read-only re-review after Galileo's stale register cleanup fix.
+Wait for final read-only re-review, then handle findings or run the local gate.
