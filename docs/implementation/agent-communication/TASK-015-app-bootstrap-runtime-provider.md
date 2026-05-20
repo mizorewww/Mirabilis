@@ -37,17 +37,21 @@
 
 ## Current Status
 
-- Status: pre-test guidance handoff.
-- Active agents: none.
-- Next parent step: spawn read-only planner, docs/current-guidance, deprecation/API, and security-boundary agents before red tests.
+- Status: pre-test guidance agents running.
+- Active agents:
+  - Huygens the 2nd (`planner`) for scope, implementation slices, test split, dependencies, and risks.
+  - Goodall the 2nd (`docs_researcher`) for current React, Testing Library, Tauri, and local-doc guidance.
+  - Feynman the 2nd (`deprecation_auditor`) for React/Vite/Vitest/Tauri API and version-risk review.
+  - Parfit the 2nd (`security_reviewer`) for NativeBridge exposure, runtime/provider boundaries, and App Shell constraints.
+- Next parent step: wait for pre-test guidance, summarize recommendations here, then hand off red tests to `test_writer`.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: pending.
-- Planned agents:
-  - `planner` for TASK-015 scope, test split, implementation boundaries, dependencies, and risks.
-  - `docs_researcher` for current React, Testing Library, Tauri NativeBridge/bootstrap, and local-doc guidance.
-  - `deprecation_auditor` for React 19/Vite/Vitest/Tauri API risk and stale patterns.
-  - `security_reviewer` for NativeBridge exposure, plugin/runtime boundaries, startup error handling, and no business logic in App Shell.
+- Status: in progress.
+- Agents:
+  - Huygens the 2nd (`planner`): read-only plan for TASK-015 scope, test split, implementation boundaries, dependencies, and risks.
+  - Goodall the 2nd (`docs_researcher`): read-only current guidance for React providers/hooks, Testing Library/Vitest async tests, and Tauri v2 bootstrap considerations.
+  - Feynman the 2nd (`deprecation_auditor`): read-only deprecation/API risk audit for likely touched frontend/runtime/bootstrap code.
+  - Parfit the 2nd (`security_reviewer`): read-only review of NativeBridge exposure, plugin/runtime boundaries, startup error handling, and no business logic in App Shell.
