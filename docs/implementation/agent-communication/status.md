@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:35 CST.
+Last updated: 2026-05-20 22:36 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 22:35 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 review-fix implementation active.
+- Current phase: TASK-009 review-fix green; targeted re-review pending.
 
 ## Active Agents
 
-- Goodall (`implementer`, `019e45cf-e6b7-7543-9185-26764c127ef6`): implement transaction participant hiding, live-write conflict detection, and injected transaction manager support.
+- None.
 
 ## Recent Agent Outcomes
 
+- Goodall (`implementer`) completed and was closed after implementing TASK-009 review fixes.
+- Goodall's review-fix commit: `a86304e Goodall(review-fix)(Add Transaction Manager and Core Runtime composition): harden transaction commits`.
+- Parent repeated green checks after Goodall: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 14 tests passing, `bun run lint`, `git diff --check`, and a focused store/runtime regression run with 126 tests passing.
 - Review-fix test commit: `41db1dd Codex(test)(Add Transaction Manager and Core Runtime composition): add transaction review-fix coverage`.
 - Parent confirmed expected review-fix red signal: `bun run typecheck` fails because `createCoreServices` does not accept injected `transaction`; focused Vitest fails because injected transaction is ignored, pending live-write conflict resolves instead of rejects, and store participant symbols remain discoverable.
 - Goodall (`implementer`) spawned for TASK-009 review-fix production implementation.
@@ -326,6 +329,6 @@ Last updated: 2026-05-20 22:35 CST.
 
 ## Next Actions
 
-1. Wait for Goodall's review-fix implementation.
-2. Run focused checks.
-3. Commit review-fix implementation if checks pass.
+1. Record targeted re-review handoff.
+2. Spawn targeted re-review agents.
+3. Fix any remaining P0/P1 findings before final gate.

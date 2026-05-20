@@ -42,9 +42,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation active.
-- Active agents:
-  - Goodall (`implementer`, `019e45cf-e6b7-7543-9185-26764c127ef6`): implement transaction participant hiding, live-write conflict detection, and injected transaction manager support.
+- Status: review-fix green; targeted re-review pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -226,7 +225,7 @@
 
 ### Goodall (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e45cf-e6b7-7543-9185-26764c127ef6`.
 - Assignment:
   - Implement minimum production review fixes for the red review-fix tests.
@@ -234,6 +233,21 @@
   - Detect live store changes before commit and reject without replacing live state.
   - Support injected transaction managers in `createCoreServices`.
   - Preserve existing successful transaction behavior and store regression behavior.
+- Commit:
+  - `a86304e Goodall(review-fix)(Add Transaction Manager and Core Runtime composition): harden transaction commits`.
+- Files changed:
+  - `src/core/services/index.ts`.
+  - `src/core/services/transaction-manager.ts`.
+  - `src/core/stores/page-store.ts`.
+  - `src/core/stores/metadata-store.ts`.
+  - `src/core/stores/event-store.ts`.
+  - `src/core/stores/filter-store.ts`.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 14 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `bun run test:frontend -- src/test/core-page-store.test.ts src/test/core-metadata-store.test.ts src/test/core-event-store.test.ts src/test/core-filter-store.test.ts src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 126 tests.
 
 ## Parent Decisions
 
@@ -248,4 +262,4 @@
 
 ## Next Action
 
-Wait for Goodall's review-fix implementation, run focused checks, then commit if checks pass.
+Record targeted re-review handoff, spawn targeted re-review agents, then fix any remaining P0/P1 findings before final gate.
