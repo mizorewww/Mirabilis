@@ -97,14 +97,18 @@ export function createInMemoryFilterStore(
   const now = options.now ?? createCurrentInstant;
   const filters = new Map<string, FilterDefinition>();
 
-  function requireFilter(filterId: string): FilterDefinition {
-    const filter = filters.get(filterId);
+  function requireFilter(filterId: unknown): {
+    filterId: string;
+    filter: FilterDefinition;
+  } {
+    const normalizedFilterId = normalizeFilterId(filterId);
+    const filter = filters.get(normalizedFilterId);
 
     if (filter === undefined) {
-      throw new FilterStoreError("FILTER_NOT_FOUND", filterId);
+      throw new FilterStoreError("FILTER_NOT_FOUND", normalizedFilterId);
     }
 
-    return filter;
+    return { filterId: normalizedFilterId, filter };
   }
 
   return {
@@ -184,11 +188,12 @@ export function createInMemoryFilterStore(
     },
 
     get(filterId) {
-      return cloneFilter(requireFilter(filterId));
+      return cloneFilter(requireFilter(filterId).filter);
     },
 
     update(filterId, input) {
-      const current = requireFilter(filterId);
+      const { filterId: normalizedFilterId, filter: current } =
+        requireFilter(filterId);
       const nameInput = readOptionalProperty(
         input,
         "name",
@@ -307,7 +312,7 @@ export function createInMemoryFilterStore(
 
       const output = cloneFilter(next);
 
-      filters.set(filterId, next);
+      filters.set(normalizedFilterId, next);
 
       return output;
     },
@@ -321,14 +326,22 @@ export function createInMemoryFilterStore(
     },
 
     delete(filterId) {
-      const filter = requireFilter(filterId);
+      const { filterId: normalizedFilterId, filter } = requireFilter(filterId);
       const output = cloneFilter(filter);
 
-      filters.delete(filterId);
+      filters.delete(normalizedFilterId);
 
       return output;
     },
   };
+}
+
+function normalizeFilterId(value: unknown): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new FilterStoreError("FILTER_IDENTITY_REQUIRED", "filter id");
+  }
+
+  return value;
 }
 
 function readIdentityField(
@@ -430,7 +443,9 @@ function assertFilterQuery(value: unknown): asserts value is FilterQuery {
     "FILTER_QUERY_INVALID",
     "filter query must be JSON-compatible plain data",
   );
-  assertFilterQueryShape(value);
+  normalizeShapeTraversalErrors("FILTER_QUERY_INVALID", "filter query", () => {
+    assertFilterQueryShape(value);
+  });
 }
 
 function assertFilterQueryShape(
@@ -576,13 +591,15 @@ function assertFilterSorts(value: unknown): asserts value is FilterSort[] {
     "filter sort must be JSON-compatible plain data",
   );
 
-  if (!Array.isArray(value)) {
-    throw new FilterStoreError("FILTER_SORT_INVALID", "filter sort");
-  }
+  normalizeShapeTraversalErrors("FILTER_SORT_INVALID", "filter sort", () => {
+    if (!Array.isArray(value)) {
+      throw new FilterStoreError("FILTER_SORT_INVALID", "filter sort");
+    }
 
-  for (const sort of value) {
-    assertFilterSort(sort);
-  }
+    for (const sort of value) {
+      assertFilterSort(sort);
+    }
+  });
 }
 
 function assertFilterSort(value: unknown): void {
@@ -629,27 +646,29 @@ function assertFilterGroup(value: unknown): asserts value is FilterGroup {
     "filter group must be JSON-compatible plain data",
   );
 
-  if (!isPlainObjectValue(value)) {
-    throw new FilterStoreError("FILTER_GROUP_INVALID", "filter group");
-  }
+  normalizeShapeTraversalErrors("FILTER_GROUP_INVALID", "filter group", () => {
+    if (!isPlainObjectValue(value)) {
+      throw new FilterStoreError("FILTER_GROUP_INVALID", "filter group");
+    }
 
-  assertAllowedProperties(
-    value,
-    ["field"],
-    "FILTER_GROUP_INVALID",
-    "filter group",
-  );
+    assertAllowedProperties(
+      value,
+      ["field"],
+      "FILTER_GROUP_INVALID",
+      "filter group",
+    );
 
-  const field = readRequiredProperty(
-    value,
-    "field",
-    "FILTER_GROUP_INVALID",
-    "filter group field",
-  );
+    const field = readRequiredProperty(
+      value,
+      "field",
+      "FILTER_GROUP_INVALID",
+      "filter group field",
+    );
 
-  if (typeof field !== "string" || field.trim().length === 0) {
-    throw new FilterStoreError("FILTER_GROUP_INVALID", "filter group field");
-  }
+    if (typeof field !== "string" || field.trim().length === 0) {
+      throw new FilterStoreError("FILTER_GROUP_INVALID", "filter group field");
+    }
+  });
 }
 
 function readRequiredProperty(
@@ -711,6 +730,22 @@ function assertAllowedProperties(
         throw new FilterStoreError(code, detail);
       }
     }
+  } catch (error) {
+    if (error instanceof FilterStoreError) {
+      throw error;
+    }
+
+    throw new FilterStoreError(code, detail);
+  }
+}
+
+function normalizeShapeTraversalErrors(
+  code: FilterStoreErrorCode,
+  detail: string,
+  action: () => void,
+): void {
+  try {
+    action();
   } catch (error) {
     if (error instanceof FilterStoreError) {
       throw error;
@@ -810,7 +845,11 @@ function assertJsonArrayCompatible(
 
     const descriptor = Object.getOwnPropertyDescriptor(value, propertyName);
 
-    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+    if (
+      descriptor === undefined ||
+      isAccessorDescriptor(descriptor) ||
+      !descriptor.enumerable
+    ) {
       throw new FilterStoreError(code, detail);
     }
 
@@ -826,7 +865,11 @@ function assertJsonArrayCompatible(
 
     const descriptor = Object.getOwnPropertyDescriptor(value, index);
 
-    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+    if (
+      descriptor === undefined ||
+      isAccessorDescriptor(descriptor) ||
+      !descriptor.enumerable
+    ) {
       throw new FilterStoreError(code, detail);
     }
 
@@ -863,7 +906,11 @@ function assertJsonObjectCompatible(
   for (const propertyName of Object.getOwnPropertyNames(value)) {
     const descriptor = Object.getOwnPropertyDescriptor(value, propertyName);
 
-    if (descriptor === undefined || isAccessorDescriptor(descriptor)) {
+    if (
+      descriptor === undefined ||
+      isAccessorDescriptor(descriptor) ||
+      !descriptor.enumerable
+    ) {
       throw new FilterStoreError(code, detail);
     }
 
