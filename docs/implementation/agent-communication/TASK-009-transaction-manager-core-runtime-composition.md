@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: final local gate active.
+- Status: final gate passed; progress completion update active.
 - Active agents: none.
-- Next agent step: run `bun run check:quick` and `bun run build`.
+- Next agent step: commit completion notes, merge to `master`, and continue to the next unblocked task.
 
 ## Agent Handoffs
 
@@ -422,6 +422,15 @@
 - Parent decision:
   - No P0/P1/P2 findings remain. Proceed to final local gate.
 
+### Final Gate
+
+- Status: passed.
+- Checks:
+  - `bun run check:quick` passed. This ran frontend typecheck, lint, frontend tests with 11 files and 171 tests passing, Rust formatting check, Rust clippy with `-D warnings`, and Rust tests.
+  - `bun run build` passed. Vite built the production frontend successfully.
+- Parent decision:
+  - TASK-009 acceptance criteria are met. Mark progress complete, commit completion notes, merge the task branch to `master`, and continue to TASK-010.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -435,4 +444,4 @@
 
 ## Next Action
 
-Run final local gate, then update progress and merge TASK-009 if the gate passes.
+Commit TASK-009 completion notes, merge to `master`, then continue to TASK-010.

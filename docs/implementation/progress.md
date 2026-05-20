@@ -31,7 +31,7 @@ Status markers:
 - [x] TASK-006: Add Filter Store and Query AST baseline
 - [x] TASK-007: Add Command Registry and Command Bus
 - [x] TASK-008: Add View Registry and Slot Registry
-- [~] TASK-009: Add Transaction Manager and Core Runtime composition
+- [x] TASK-009: Add Transaction Manager and Core Runtime composition
 
 ## Milestone M2: Native persistence boundary
 
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 19:11 CST - TASK-009 completed
+
+- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
+- Task: Add Transaction Manager and Core Runtime composition.
+- Commits: `b86abdd` start orchestration, `b0a2ed0` pre-test guidance handoff, `85feeb8` pre-test guidance, `3585038` test writer handoff, `54152da` test writer replacement, `d24d444` replacement test handoff, `a46e950` parent test fallback, `de31382` acceptance tests, `2c9315e` red signal, `9e3d7c3` implementation handoff, `642c25d` implementation, `13597a4` green signal, `c15242b` review handoff, `5670393` review findings, `41db1dd` review-fix coverage, `a5dcfc4` review-fix implementation handoff, `a86304e` harden transaction commits, `e86ed5c` review-fix green signal, `8ff5849` targeted re-review handoff, `59a6554` targeted re-review findings, `c7e53a4` P1 test handoff, `01bf83f` non-plain conflict tests, `9ef0794` P1 test red signal, `546c6e7` P1 implementation handoff, `13ad41d` non-plain snapshot comparison, `73120bb` P1 review-fix green signal, `eaa6155` narrow re-review handoff, `a072f1c` binary snapshot review finding, `bdb0de5` binary test handoff, `7d6a1fd` binary conflict tests, `3835f86` binary test red signal, `66bffc9` binary implementation handoff, `af31b07` realm-safe binary assertions, `425a2b4` binary snapshot comparison, `b39065b` binary review-fix green signal, `82b161b` final binary re-review handoff, and `bd6a3fc` final review clearance.
+- Delivered: Core runtime composition factories (`createCoreStores`, `createCoreRegistries`, `createCoreServices`, `createInMemoryAppRuntime`), public runtime/services exports, grouped runtime aliases for stores/registries/services, in-memory Transaction Manager, transactional page/metadata/event/filter contexts, sync/async rollback on handler failure, delayed live visibility until commit, nested/concurrent transaction rejection, injected transaction manager support for custom service composition, WeakMap-backed internal transaction participants, pre-replace live-conflict detection, and deterministic snapshot comparison for plain data plus `Date`, `Map`, `Set`, `RegExp`, `ArrayBuffer`, `DataView`, and typed-array style views.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 21 tests, focused store/runtime regression passed with 133 tests, and focused `bun run typecheck`, `bun run lint`, and `git diff --check` passed after review fixes.
+- Review: correctness, security, deprecation/API, docs, and test-quality agents cleared all remaining P0/P1/P2 findings after targeted rounds. Selected findings for live-write lost updates, participant symbol visibility, nested/concurrent behavior, injected transaction composition, non-plain structured-clone snapshot comparison, binary structured-clone comparison, transaction-scoped participant non-discoverability, and stale status docs were fixed or documented before final gate.
+- External docs verified by agents: Vitest `expectTypeOf` and type testing, Vitest async `expect`/`rejects`, Vitest `vi.stubGlobal`, TypeScript type-only imports/exports, TypeScript `Awaited`, Node `structuredClone`, WHATWG structured data, MDN structured clone algorithm, and MDN `await`.
+- Remaining risk: ID/time generator side effects inside rolled-back transactions remain a documented non-goal for TASK-009. Custom non-in-memory stores must inject their own transaction manager through `createCoreServices`. Future persisted/native transaction layers must provide real database transaction semantics and a stronger protocol for participants that can throw during replacement. `bun run check:full` was not run because TASK-009 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-20 13:48 CST - TASK-009 started
 
