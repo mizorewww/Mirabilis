@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation active.
-- Active agents:
-  - Newton (`implementer`, `019e4363-1be5-7d53-87cf-99074b612e81`): hide raw handler causes and fix `CommandRegistryError.cause` semantics.
+- Status: review-fix implementation green; targeted re-review pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -190,11 +189,21 @@ Wait for Newton's review-fix implementation.
 
 ### Newton (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4363-1be5-7d53-87cf-99074b612e81`.
 - Ownership:
   - `src/core/commands/command-registry.ts` unless exports/types need unavoidable adjustment.
+- Commit:
+  - `6b4c3ac Newton(review-fix)(Add Command Registry and Command Bus): hide raw handler causes`.
 - Assignment:
   - Fix `CommandRegistryError.cause` visibility/privacy so handler failures do not expose raw thrown values and non-handler errors do not own `cause`.
   - Preserve existing registry behavior, error codes, and context validation.
   - Do not edit tests or docs unless unavoidable.
+- Checks run by Newton and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing.
+  - `bun run lint`.
+
+## Next Action
+
+Spawn targeted re-review agents for TASK-007 review fixes.

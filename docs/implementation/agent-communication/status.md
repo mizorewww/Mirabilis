@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:17 CST.
+Last updated: 2026-05-20 11:19 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 11:17 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation active.
+- Current phase: review-fix implementation green; targeted re-review pending.
 
 ## Active Agents
 
-- Newton (`implementer`, `019e4363-1be5-7d53-87cf-99074b612e81`): hide raw handler causes and fix `CommandRegistryError.cause` semantics.
+- None.
 
 ## Recent Agent Outcomes
 
+- Newton (`implementer`) completed and was closed after implementing TASK-007 review fixes.
+- Newton's review-fix commit: `6b4c3ac Newton(review-fix)(Add Command Registry and Command Bus): hide raw handler causes`.
+- Parent repeated green checks after Newton: `bun run typecheck`, `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing, and `bun run lint`.
 - Newton (`implementer`) was spawned for TASK-007 review-fix implementation.
 - Popper (`test_writer`) completed and was closed after adding review-fix coverage.
 - Popper's test commit: `1c6c6f3 Popper(test)(Add Command Registry and Command Bus): add review-fix coverage`.
@@ -201,6 +204,6 @@ Last updated: 2026-05-20 11:17 CST.
 
 ## Next Actions
 
-1. Wait for Newton's review-fix implementation.
-2. Repeat focused validation.
-3. Run targeted re-review after green checks.
+1. Spawn targeted re-review agents for TASK-007 review fixes.
+2. If clear, run final gate.
+3. Mark TASK-007 complete and merge to `master`.
