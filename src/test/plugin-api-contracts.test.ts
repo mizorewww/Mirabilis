@@ -16,8 +16,12 @@ import type {
   PluginContext,
   PluginContributions,
   PluginDependency,
+  PluginEventStore,
+  PluginFilterStore,
   PluginInstallContext,
   PluginManifest,
+  PluginMetadataStore,
+  PluginPageStore,
   PluginPermission,
   PluginSlotContribution,
   PluginSlotRegistry,
@@ -211,8 +215,23 @@ describe("Plugin API contracts", () => {
       },
     ] as const satisfies readonly PluginPermission[];
 
-    expectTypeOf<PluginDependency>().toMatchObjectType<{ id: string }>();
-    expectTypeOf<PluginPermission>().toMatchObjectType<{ id: string }>();
+    expectTypeOf<PluginDependency["id"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginDependency["version"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<PluginDependency["optional"]>().toEqualTypeOf<
+      boolean | undefined
+    >();
+    expectTypeOf<PluginPermission["id"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginPermission["scope"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<PluginPermission["action"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<PluginPermission["description"]>().toEqualTypeOf<
+      string | undefined
+    >();
     expectTypeOf<readonly string[]>().toExtend<
       NonNullable<PluginManifest["dependencies"]>
     >();
@@ -222,19 +241,29 @@ describe("Plugin API contracts", () => {
     expectTypeOf<readonly (string | PluginDependency)[]>().toExtend<
       NonNullable<PluginManifest["dependencies"]>
     >();
-    expectTypeOf<PluginManifest>().toMatchObjectType<{
-      id: string;
-      name: string;
-      version: string;
-      description?: string;
-      author?: string;
-      minAppVersion: string;
-      main?: string;
-      dependencies?: readonly (string | PluginDependency)[];
-      optionalDependencies?: readonly (string | PluginDependency)[];
-      permissions?: readonly PluginPermission[];
-      contributes?: PluginContributions;
-    }>();
+    expectTypeOf<PluginManifest["id"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginManifest["name"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginManifest["version"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginManifest["description"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<PluginManifest["author"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<PluginManifest["minAppVersion"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginManifest["main"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<PluginManifest["dependencies"]>().toEqualTypeOf<
+      readonly (string | PluginDependency)[] | undefined
+    >();
+    expectTypeOf<PluginManifest["optionalDependencies"]>().toEqualTypeOf<
+      readonly (string | PluginDependency)[] | undefined
+    >();
+    expectTypeOf<PluginManifest["permissions"]>().toEqualTypeOf<
+      readonly PluginPermission[] | undefined
+    >();
+    expectTypeOf<PluginManifest["contributes"]>().toEqualTypeOf<
+      PluginContributions | undefined
+    >();
 
     const manifestWithoutMain = {
       id: "example.coreless",
@@ -309,19 +338,39 @@ describe("Plugin API contracts", () => {
       title: "Example Settings",
     } satisfies SettingsPanelContribution;
 
-    expectTypeOf<PluginContributions>().toMatchObjectType<{
-      markdownSyntax?: readonly MarkdownSyntaxContribution[];
-      metadataFields?: readonly MetadataFieldContribution[];
-      eventTypes?: readonly EventTypeContribution[];
-      commands?: readonly CommandContribution[];
-      filters?: readonly FilterContribution[];
-      views?: readonly ViewContribution[];
-      slots?: readonly PluginSlotContribution[];
-      indexers?: readonly IndexerContribution[];
-      algorithms?: readonly AlgorithmContribution[];
-      mobileToolbarItems?: readonly MobileToolbarContribution[];
-      settingsPanels?: readonly SettingsPanelContribution[];
-    }>();
+    expectTypeOf<PluginContributions["markdownSyntax"]>().toEqualTypeOf<
+      readonly MarkdownSyntaxContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["metadataFields"]>().toEqualTypeOf<
+      readonly MetadataFieldContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["eventTypes"]>().toEqualTypeOf<
+      readonly EventTypeContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["commands"]>().toEqualTypeOf<
+      readonly CommandContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["filters"]>().toEqualTypeOf<
+      readonly FilterContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["views"]>().toEqualTypeOf<
+      readonly ViewContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["slots"]>().toEqualTypeOf<
+      readonly PluginSlotContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["indexers"]>().toEqualTypeOf<
+      readonly IndexerContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["algorithms"]>().toEqualTypeOf<
+      readonly AlgorithmContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["mobileToolbarItems"]>().toEqualTypeOf<
+      readonly MobileToolbarContribution[] | undefined
+    >();
+    expectTypeOf<PluginContributions["settingsPanels"]>().toEqualTypeOf<
+      readonly SettingsPanelContribution[] | undefined
+    >();
 
     const contributions = {
       markdownSyntax: [markdownSyntaxContribution],
@@ -364,14 +413,7 @@ describe("Plugin API contracts", () => {
   });
 
   it("defines AppPlugin lifecycle hooks around plugin-facing contexts", () => {
-    expectTypeOf<AppPlugin>().toMatchObjectType<{
-      manifest: PluginManifest;
-      register(ctx: PluginContext): LifecycleResult;
-      install?: (ctx: PluginInstallContext) => LifecycleResult;
-      activate?: (ctx: PluginContext) => LifecycleResult;
-      deactivate?: (ctx: PluginContext) => LifecycleResult;
-      uninstall?: (ctx: PluginUninstallContext) => LifecycleResult;
-    }>();
+    expectTypeOf<AppPlugin["manifest"]>().toEqualTypeOf<PluginManifest>();
     expectTypeOf<AppPlugin["register"]>().toEqualTypeOf<
       (ctx: PluginContext) => LifecycleResult
     >();
@@ -424,17 +466,22 @@ describe("Plugin API contracts", () => {
   });
 
   it("keeps PluginContext scoped to plugin-facing facades and away from raw runtime handles", () => {
-    expectTypeOf<PluginContext>().toMatchObjectType<{
-      app: AppRuntimeInfo;
-      pages: unknown;
-      metadata: unknown;
-      events: unknown;
-      filters: unknown;
-      commands: PluginCommandRegistry;
-      views: PluginViewRegistry;
-      slots: PluginSlotRegistry;
-      transaction: PluginTransactionManager;
-    }>();
+    expectTypeOf<PluginContext["pluginId"]>().toEqualTypeOf<string>();
+    expectTypeOf<PluginContext["app"]>().toEqualTypeOf<AppRuntimeInfo>();
+    expectTypeOf<PluginContext["pages"]>().toEqualTypeOf<PluginPageStore>();
+    expectTypeOf<PluginContext["metadata"]>().toEqualTypeOf<
+      PluginMetadataStore
+    >();
+    expectTypeOf<PluginContext["events"]>().toEqualTypeOf<PluginEventStore>();
+    expectTypeOf<PluginContext["filters"]>().toEqualTypeOf<PluginFilterStore>();
+    expectTypeOf<PluginContext["commands"]>().toEqualTypeOf<
+      PluginCommandRegistry
+    >();
+    expectTypeOf<PluginContext["views"]>().toEqualTypeOf<PluginViewRegistry>();
+    expectTypeOf<PluginContext["slots"]>().toEqualTypeOf<PluginSlotRegistry>();
+    expectTypeOf<PluginContext["transaction"]>().toEqualTypeOf<
+      PluginTransactionManager
+    >();
   });
 
   it("keeps plugin-facing boundaries scoped, inert, and caller-bound", () => {
