@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final micro re-review in progress.
-- Active agents: Bohr (`reviewer`) and Linnaeus (`security_reviewer`).
-- Next parent step: wait for final micro re-review, then local gate if clear.
+- Status: concurrent lifecycle P2 found; TDD handoff next.
+- Active agents: none.
+- Next parent step: delegate a focused red test for concurrent uninstall during pending register transaction, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -448,12 +448,18 @@
 
 ### Final Micro Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Bohr (`reviewer`, `019e4650-6f87-7592-be02-2d314a284d89`).
   - Linnaeus (`security_reviewer`, `019e4650-7e37-7b21-a147-8088f8a4d34a`).
 - Assignment:
   - Read-only micro re-review of the pending/unawaited transaction fix before final local gate.
+- Outcomes:
+  - Bohr found one P2 correctness issue: concurrent `uninstall(pluginId)` can delete the plugin record while `register(ctx)` is still pending, leaving the register scope active long enough for an unawaited transaction to commit after uninstall.
+  - Linnaeus found no P0/P1/P2 security findings for the pending transaction fix and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+- Parent decision:
+  - Add a focused red test for concurrent uninstall during pending register transaction.
+  - Delegate the minimal production fix after the expected red signal.
 
 ## Parent Decisions
 
@@ -464,4 +470,4 @@
 
 ## Next Action
 
-Wait for final micro re-review, then run local gate if clear.
+Delegate concurrent lifecycle red test for pending register transaction and uninstall.

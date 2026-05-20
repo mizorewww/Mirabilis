@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:55 CST.
+Last updated: 2026-05-21 00:59 CST.
 
 ## Current Task
 
@@ -8,15 +8,17 @@ Last updated: 2026-05-21 00:55 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final micro re-review in progress.
+- Current phase: TASK-011 concurrent lifecycle P2 found; TDD handoff next.
 
 ## Active Agents
 
-- Bohr (`reviewer`, `019e4650-6f87-7592-be02-2d314a284d89`) is micro-reviewing the pending transaction correctness fix.
-- Linnaeus (`security_reviewer`, `019e4650-7e37-7b21-a147-8088f8a4d34a`) is micro-reviewing the pending transaction security boundary.
+- No active agents. Next handoff: `test_writer` for concurrent register/uninstall transaction rollback.
 
 ## Recent Agent Outcomes
 
+- Final micro re-review completed. Bohr (`reviewer`) found one P2 correctness issue: concurrent `uninstall(pluginId)` can delete a plugin record while `register(ctx)` is still pending, leaving the register scope active long enough for an unawaited transaction to commit after uninstall.
+- Linnaeus (`security_reviewer`) found no P0/P1/P2 findings for the pending transaction fix and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+- Parent decision: add a focused red test for concurrent uninstall during a pending register transaction, then delegate the minimal lifecycle concurrency fix.
 - Final micro re-review agents spawned for the pending transaction fix.
 - Cicero (`implementer`) completed and was closed after implementing pending transaction liveness re-check before Core transaction commit.
 - Cicero's review-fix commit: `0bd3af3 Cicero(review-fix)(Implement Plugin Host lifecycle): reject stale transaction commits`.
@@ -545,9 +547,10 @@ Last updated: 2026-05-21 00:55 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, review-fix tests, review-fix implementation, architecture docs updates, runtime-flow docs updates, Lorentz's final red test commit, and Sartre's green batch rollback fix.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, and the pending transaction fix. Final micro re-review found one remaining concurrent lifecycle P2 now entering TDD.
 
 ## Next Actions
 
-1. Run the final TASK-011 narrow re-review and local gate.
-2. If final validation stays green, commit the docs/status cleanup and proceed with TASK-011 closeout from the parent thread.
+1. Spawn `test_writer` for the concurrent register/uninstall transaction rollback red test.
+2. Commit the expected red test, then spawn `implementer` for the minimal production fix.
+3. Re-run focused checks, micro re-review, and final local gate if clear.
