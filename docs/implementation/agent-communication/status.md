@@ -1,12 +1,12 @@
 # Agent Communication Status
 
-Last updated: 2026-05-19 23:56 CST.
+Last updated: 2026-05-20 10:42 CST.
 
 ## Current Task
 
-- Task: TASK-005 - Add in-memory Event Store.
-- Branch: `feat/task-005-in-memory-event-store`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-005`.
+- Task: TASK-006 - Add Filter Store and Query AST baseline.
+- Branch: `feat/task-006-filter-store-query-ast`.
+- Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
 - Current phase: final gate passed; progress update active.
 
@@ -16,6 +16,43 @@ Last updated: 2026-05-19 23:56 CST.
 
 ## Recent Agent Outcomes
 
+- Final TASK-006 gate passed: `bun run check:quick` and `bun run build`.
+- Kuhn (`test_quality_reviewer`) completed and was closed. Findings: no remaining P0/P1/P2/P3 test-quality issues; Euclid's node-count P2 blocker is closed. Checks: `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing, and `bun run typecheck`.
+- Laplace's P3 docs cleanup is complete: TASK-006 communication status is current and exact external documentation URLs are recorded.
+- Kuhn (`test_quality_reviewer`) was spawned for a narrow re-review of Godel's node-count coverage.
+- Parent repeated focused green checks after Godel: `bun run typecheck`, and `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing.
+- Godel (`test_writer`) completed and was closed after adding focused node-count exhaustion coverage. Parent corrected the commit message to use the actual agent nickname.
+- Godel's test commit: `bffe6a1 Godel(test)(Add Filter Store and Query AST baseline): cover filter query node-count limits`.
+- Godel reported green checks: `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing, and `bun run typecheck`.
+- Godel (`test_writer`) was spawned to add node-count exhaustion coverage in `src/test/core-filter-store.test.ts`.
+- Targeted re-review completed. Heisenberg (`security_reviewer`) found no remaining security P0/P1/P2/P3 and confirmed no native/IPC/package exposure broadened. Herschel (`deprecation_auditor`) found no remaining P0/P1/P2 issues and confirmed the non-enumerable property and operator drift fixes. Euclid (`test_quality_reviewer`) found one blocking P2: Darwin's node-count exhaustion test gap remains uncovered.
+- Targeted re-review agents spawned for TASK-006 review-fix changes.
+- Ptolemy (`implementer`) completed and was closed after fixing TASK-006 P1/P2 review findings.
+- Ptolemy's implementation commit: `ec5cc46 Ptolemy(implementation)(Add Filter Store and Query AST baseline): fix review edge cases`.
+- Parent repeated green checks after Ptolemy: `bun run typecheck`, `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing, and `bun run lint`.
+- Ptolemy (`implementer`) was spawned for selected TASK-006 P1/P2 production fixes.
+- Dirac (`test_writer`) completed and was closed after adding review-fix coverage.
+- Dirac's test commit: `a7d7aa0 Dirac(test)(Add Filter Store and Query AST baseline): add review-fix coverage`.
+- Parent confirmed expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 49 tests with 36 passing and 13 failing on hostile filter IDs, proxy/reflection trap escapes, and non-enumerable properties.
+- Dirac (`test_writer`) was spawned for TASK-006 review-fix tests.
+- Review round 1 completed. Bohr reported no correctness P0/P1/P2; Boyle found one P1 raw proxy/reflection-trap escape and one P2 unvalidated `filterId` raw-error path; Darwin found three P2 test coverage gaps; Confucius found one P2 non-enumerable Query AST property issue and one P3 operator drift risk; Laplace found no docs P0/P1/P2 and two P3 docs hygiene/traceability items.
+- TASK-006 review agents spawned. `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
+- Hume (`implementer`) completed and was closed after implementing the in-memory Filter Store.
+- Hume's implementation commit: `611125c Hume(implementation)(Add Filter Store and Query AST baseline): implement filter store`.
+- Parent repeated green checks after Hume: `bun run typecheck`, `bun run test:frontend -- src/test/core-filter-store.test.ts` with 22 tests passing, and `bun run lint`.
+- Hume (`implementer`) was spawned for TASK-006 production implementation.
+- Fermat (`test_writer`) completed and was closed after adding TASK-006 acceptance tests.
+- Fermat's test commit: `62ccd62 Fermat(test)(Add Filter Store and Query AST baseline): add filter store acceptance tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails on missing Filter Store exports, and `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 22 tests with 22 failing because `createInMemoryFilterStore` is not implemented/exported.
+- Fermat (`test_writer`) was spawned as replacement TASK-006 test writer in `/home/aac6fef/Developer/Mirabilis`.
+- Workflow correction: stale sibling task worktree records were pruned, the main repository checkout was switched to `feat/task-006-filter-store-query-ast`, and docs now require branch-only task work by default unless the user explicitly asks for worktree isolation.
+- Pauli the 2nd (`test_writer`) was assigned to the stale `/home/aac6fef/Developer/mirabilis-task-006` path and could not be reached for interruption after the worktree was gone; parent will replace it and record the replacement reason.
+- Pauli the 2nd (`test_writer`) was spawned for TASK-006 failing Filter Store acceptance tests.
+- TASK-006 pre-test guidance completed. Lovelace the 2nd planned store API/tests, Cicero the 2nd researched TypeScript/Vitest/structured clone guidance, and James the 2nd audited recursive validation and runtime input risks.
+- Pre-test guidance agents spawned for TASK-006.
+- TASK-006 started from latest `master` after TASK-005 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-006.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
 - Final TASK-005 gate passed: `bun run check:quick` and `bun run build`.
 - Append-read targeted re-review completed. Feynman the 2nd found no remaining security P0/P1/P2 and confirmed no native/IPC/package exposure broadened; Descartes the 2nd found no P0/P1/P2 test-quality blockers.
 - Append-read targeted re-review agents spawned for TASK-005.
@@ -134,12 +171,12 @@ Last updated: 2026-05-19 23:56 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-005 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-005.
-- `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md` will hold TASK-005 agent notes.
+- `docs/implementation/progress.md` marks TASK-006 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-006.
+- `docs/implementation/agent-communication/TASK-006-filter-store-query-ast.md` holds TASK-006 agent notes and parent decisions.
 
 ## Next Actions
 
-1. Commit TASK-005 progress update.
-2. Merge TASK-005 to `master`.
-3. Continue to TASK-006.
+1. Commit TASK-006 progress completion.
+2. Merge `feat/task-006-filter-store-query-ast` back to `master`.
+3. Continue to TASK-007 from latest `master`.

@@ -32,7 +32,7 @@ For each selected task:
 
 1. Validate `.codex/agents/*.toml` parses as TOML and that specialized agents can spawn. If agent types are unavailable, stop and debug configuration before coding.
 2. Mark the task `[~]` in `docs/implementation/progress.md` and add a Run Log entry.
-3. Ensure work starts from `master`, pull latest, then create a focused branch named `feat/<task-id>-<slug>`, `fix/<task-id>-<slug>`, `test/<task-id>-<slug>`, or `docs/<task-id>-<slug>`.
+3. Ensure work starts from `master`, pull latest, then create or switch to a focused branch named `feat/<task-id>-<slug>`, `fix/<task-id>-<slug>`, `test/<task-id>-<slug>`, or `docs/<task-id>-<slug>`. Use the existing repository checkout by default; do not create sibling `../mirabilis-task-*` worktrees unless the user explicitly asks for worktree isolation.
 4. Spawn `docs_researcher` and `deprecation_auditor` for current official docs when the task touches Tauri, React, Rust crates, Vite, Vitest, Testing Library, IPC, filesystem, permissions, or dependencies.
 5. Spawn `test_writer` to write failing tests first. It must not write production code. Wait for its result before proceeding.
 6. Run the focused failing-test command and confirm it fails for the expected reason.
@@ -52,7 +52,9 @@ For each selected task:
 
 The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed or was explicitly cancelled, and that fallback reason is recorded.
 
-Do not treat agent silence as failure by itself. For a long-running blocking step, wait first, send one concise status request if needed, and wait again. Stop or replace the agent only if it reports a blocker, remains silent after the status request with no useful output or file changes, writes in the wrong worktree, or must be cancelled to protect the worktree.
+Do not treat agent silence as failure by itself. For a long-running blocking step, wait first, send one concise status request if needed, and wait again. Stop or replace the agent only if it reports a blocker, remains silent after the status request with no useful output or file changes, writes in the wrong branch or path, or must be cancelled to protect the repository checkout.
+
+If a worktree was explicitly created, remove/prune it after the task is merged so Git branches and commits remain the only durable version-management surface.
 
 Persist agent coordination under `docs/implementation/agent-communication/`:
 

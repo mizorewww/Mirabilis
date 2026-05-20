@@ -40,7 +40,9 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 
 - `master` is the canonical integration branch for this repository. If any prompt or upstream document says `main`, treat it as `master` here.
 - Do not implement feature code directly on `master`.
-- Use one focused branch or worktree per task.
+- Use one focused Git branch per task in the repository checkout by default.
+- Do not create sibling `../mirabilis-task-*` worktree directories unless the user explicitly asks for worktree isolation.
+- If a worktree is explicitly used, remove/prune it after the task is merged so Git remains the only durable version-management surface.
 - Branch names:
   - `feat/<milestone>-<feature>` for feature work.
   - `fix/<issue>` for bug fixes.
@@ -56,9 +58,9 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 - Project agents must not wait for human approval during normal agent-development work.
 - Human review is skipped for this phase; local tests and agent review are the release gate.
 - Review-oriented agents may have full access, but they should stay read-only unless the parent task explicitly asks them to edit files.
-- The main Codex thread is the orchestration agent. It selects tasks, creates branches/worktrees, delegates to focused agents, waits for their outputs, integrates results, validates, commits, and merges.
+- The main Codex thread is the orchestration agent. It selects tasks, creates branches, delegates to focused agents, waits for their outputs, integrates results, validates, commits, and merges.
 - The main thread must not take over test writing, implementation, or review work that has been delegated unless the delegated agent fails, is unavailable, or is explicitly cancelled; in that case, stop and record the reason before continuing.
-- Do not treat agent silence as failure by itself. For a blocking agent step, wait first; if it runs unusually long, send one concise status request and give it another wait window before stopping it. Stop only when the agent reports a blocker, writes in the wrong place, produces no edits/output after the status request, or must be cancelled to protect the worktree.
+- Do not treat agent silence as failure by itself. For a blocking agent step, wait first; if it runs unusually long, send one concise status request and give it another wait window before stopping it. Stop only when the agent reports a blocker, writes in the wrong branch or path, produces no edits/output after the status request, or must be cancelled to protect the repository checkout.
 - If a specialized agent type is unavailable, stop all running agents and debug `.codex/agents/*.toml` validity, project trust/config loading, and `features.multi_agent` before doing more development work.
 
 ## Development Order
