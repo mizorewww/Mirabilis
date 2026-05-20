@@ -99,6 +99,14 @@ export {
   createInMemoryCommandRegistry,
 } from "./commands";
 export {
+  PluginHost,
+  PluginHostError,
+  type PluginHostErrorCode,
+  type PluginHostOptions,
+  type PluginHostRecord,
+  type PluginHostStatus,
+} from "./plugin-host";
+export {
   SlotRegistryError,
   ViewRegistryError,
   createInMemorySlotRegistry,
