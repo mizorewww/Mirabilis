@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:16 CST.
+Last updated: 2026-05-20 12:20 CST.
 
 ## Current Task
 
@@ -8,15 +8,17 @@ Last updated: 2026-05-20 12:16 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: follow-up review-fix tests active.
+- Current phase: review-fix implementation follow-up pending.
 
 ## Active Agents
 
 - Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
-- Avicenna (`test_writer`, `019e4399-a145-7760-a4fb-edd9e5a59152`): adjust TASK-008 proxy descriptor-read tests so valid data descriptors must not invoke Proxy `get` traps; do not edit production/docs/config and do not commit.
 
 ## Recent Agent Outcomes
 
+- Avicenna (`test_writer`) completed and was closed after strengthening TASK-008 proxy descriptor-read tests.
+- Avicenna's test commit: `c4dbc4a Avicenna(test)(Add View Registry and Slot Registry): forbid proxy get trap reads`.
+- Parent confirmed expected red signal after Avicenna against Locke's current production patch: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 18 passing and 2 failing because view and slot registration still invoke Proxy `get` traps.
 - Parent repeated Locke's checks and confirmed `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint` pass with Locke's uncommitted production patch, but found the implementation still probes Proxy `get` traps via `hasSelectivelyThrowingGetTrap`.
 - Avicenna (`test_writer`) was spawned for a test-only follow-up to align old proxy-invalid coverage with the accepted descriptor-value hardening decision and assert `get` traps are not invoked.
 - Locke (`implementer`) was spawned for TASK-008 review-fix production changes covering default public generic types, React object component refs, and descriptor-value property reads.
@@ -241,6 +243,6 @@ Last updated: 2026-05-20 12:16 CST.
 
 ## Next Actions
 
-1. Wait for Avicenna's follow-up test output.
-2. Confirm the strengthened tests fail against Locke's current production patch for the expected `get`-trap side effect.
-3. Commit Avicenna's test patch, then send Locke a follow-up to remove `get`-trap probing and restore green checks.
+1. Send Locke a follow-up to remove `get`-trap probing and keep descriptor-value reads.
+2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint`.
+3. Commit Locke's production patch if focused checks are green.

@@ -38,10 +38,9 @@
 
 ## Current Status
 
-- Status: follow-up review-fix tests active.
+- Status: review-fix implementation follow-up pending.
 - Active agents:
   - Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
-  - Avicenna (`test_writer`, `019e4399-a145-7760-a4fb-edd9e5a59152`): adjust TASK-008 proxy descriptor-read tests so valid data descriptors must not invoke Proxy `get` traps; do not edit production/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -197,15 +196,21 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ### Avicenna (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4399-a145-7760-a4fb-edd9e5a59152`.
 - Ownership:
   - `src/test/core-view-slot-registry.test.ts` only.
+- Commit:
+  - `c4dbc4a Avicenna(test)(Add View Registry and Slot Registry): forbid proxy get trap reads`.
 - Assignment:
   - Strengthen descriptor/proxy tests so a valid own data descriptor behind a Proxy registers without the registry invoking the Proxy `get` trap.
   - Resolve older contradictory invalid cases that treated a data-property `get` trap as invalid; keep raw descriptor failure coverage only where the descriptor lookup itself fails or an accessor is present.
   - Do not edit production code, docs, config, or lockfiles, and do not commit.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 18 passing and 2 failing.
+  - The two failures are the expected `getTrap.mock.calls.length` assertions: view registration reports 8 calls and slot registration reports 6 calls against Locke's current uncommitted production patch.
 
 ## Next Action
 
-Wait for Avicenna's follow-up test output, confirm the expected red assertion against Locke's current patch, commit Avicenna's tests, then send Locke a follow-up to remove `get`-trap probing and restore green checks.
+Send Locke a follow-up to remove `get`-trap probing, keep descriptor-value reads, and restore green focused checks.
