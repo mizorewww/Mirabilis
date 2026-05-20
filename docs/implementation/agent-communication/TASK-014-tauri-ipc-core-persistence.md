@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: review-fix implementation handoff.
-- Active agents: none.
-- Next parent step: spawn an `implementer` for the review-fix production patch, then run focused checks until green.
+- Status: review-fix implementation agent running.
+- Active agents:
+  - Aquinas the 2nd (`implementer`, id `019e475c-7dd0-7e20-bd58-60fa0dac2091`).
+- Next parent step: wait for Aquinas the 2nd, inspect its patch, then run focused checks until green.
 
 ## Agent Handoffs
 
@@ -193,3 +194,21 @@
     - `bun run typecheck` fails because `NativeBridge.db.transaction` still types as a single `Promise<Response>`.
   - Green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
   - Commit: `6662a4c Zeno the 2nd(test)(Expose Tauri IPC commands for core persistence): add review-fix acceptance tests`.
+
+### Review-Fix Implementation Round
+
+- Status: running.
+- Agent:
+  - Aquinas the 2nd (`implementer`, id `019e475c-7dd0-7e20-bd58-60fa0dac2091`).
+- Assignment:
+  - Make the review-fix tests from Zeno the 2nd green with minimum production changes.
+  - Do not edit tests or docs.
+  - Fix logical-key metadata IPC get/delete, missing-target mutation errors and rollback, semantic payload validation, and frontend transaction array typing.
+  - Keep TASK-014 scope narrow and avoid broad refactors or new dependency/capability surface.
+- Ownership:
+  - `src/core/native/native-bridge.ts`.
+  - `src/core/native/index.ts` and `src/core/index.ts` only if export typing requires it.
+  - `src-tauri/src/commands/db.rs`.
+  - `src-tauri/src/commands/mod.rs` only if module visibility requires it.
+  - `src-tauri/src/db/database.rs` and narrow DB helpers only if needed for transaction behavior.
+  - `src-tauri/src/lib.rs` only if module visibility or command registration requires it.
