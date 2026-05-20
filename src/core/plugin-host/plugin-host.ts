@@ -212,6 +212,7 @@ class PluginHostImpl implements PluginHostInstance {
       new Set(this.records.keys()),
       this.getDependencySatisfyingPluginIds(),
     );
+    const batchStartOrder = this.nextOrder;
     const installedRecords: StoredPluginRecord[] = [];
 
     for (const plugin of orderedPlugins) {
@@ -220,7 +221,10 @@ class PluginHostImpl implements PluginHostInstance {
       try {
         await this.runLifecycleHook(record, "install", record.plugin.install);
       } catch (error) {
-        this.records.delete(record.manifest.id);
+        this.rollbackInstalledBatchRecords(
+          [...installedRecords, record],
+          batchStartOrder,
+        );
         throw error;
       }
 
@@ -773,6 +777,18 @@ class PluginHostImpl implements PluginHostInstance {
         // Missing tracked contributions should not block lifecycle cleanup.
       }
     }
+  }
+
+  private rollbackInstalledBatchRecords(
+    records: readonly StoredPluginRecord[],
+    restoredNextOrder: number,
+  ): void {
+    for (const record of [...records].reverse()) {
+      this.unregisterTrackedContributions(record.contributions);
+      this.records.delete(record.manifest.id);
+    }
+
+    this.nextOrder = restoredNextOrder;
   }
 
   private toPublicRecord(record: StoredPluginRecord): PluginHostRecord {
