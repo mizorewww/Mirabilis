@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: ultra-narrow review-fix TDD in progress.
-- Active agents: Lorentz (`test_writer`, `019e4634-f4ad-7fb3-88ea-c41bd17010a3`).
-- Next parent step: wait for Lorentz, validate expected red signal, then delegate implementation.
+- Status: ultra-narrow implementation in progress.
+- Active agents: Sartre (`implementer`, `019e4637-b8e8-7e33-98c7-07a1f93df89a`).
+- Next parent step: wait for Sartre, validate focused green checks, then update docs/status.
 
 ## Agent Handoffs
 
@@ -323,7 +323,7 @@
 
 ### Ultra-Narrow Review-Fix TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Lorentz (`test_writer`, `019e4634-f4ad-7fb3-88ea-c41bd17010a3`).
 - Ownership:
@@ -332,6 +332,27 @@
   - Add a red test for batch `loadBuiltInPlugins()` rollback when a later install hook fails after earlier records were installed, including successful retry behavior.
   - Strengthen dependency rejection tests to assert blocked dependency lifecycle hooks are not called.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+- Outcome:
+  - Lorentz changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added a red test proving a later failed built-in install rolls back the whole batch and allows the same list to retry.
+  - Added exact events assertions proving dependency-blocked deactivate/uninstall do not call blocked lifecycle hooks.
+- Commit:
+  - `d1482b3 Lorentz(test)(Implement Plugin Host lifecycle): cover batch install rollback`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 31 tests with 30 passing and one failing in the new batch rollback case.
+  - `git diff --check` passed.
+
+### Ultra-Narrow Implementation
+
+- Status: in progress.
+- Agent:
+  - Sartre (`implementer`, `019e4637-b8e8-7e33-98c7-07a1f93df89a`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Fix `loadBuiltInPlugins()` so any install-hook failure rolls back all records installed during that batch and allows retry of the same explicit plugin list.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
 
 ## Parent Decisions
 
@@ -342,4 +363,4 @@
 
 ## Next Action
 
-Wait for Lorentz, then validate and commit the final red tests.
+Wait for Sartre, then validate focused green checks.
