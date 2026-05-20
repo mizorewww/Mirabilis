@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix active.
-- Active agents:
-  - Banach (`implementer`, `019e43c5-e97f-71d2-8a3d-c73884dc6010`): third implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
+- Status: P1/P2 production type fix parent fallback active.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -287,13 +286,9 @@
   - Parent sent a status request and waited two windows. Planck produced no final response and its uncommitted production type patches did not pass `bun run typecheck`.
   - Parent rejected and reverted Planck's uncommitted patches. Euler's committed type-soundness tests remain the active red signal.
 
-## Next Action
-
-Wait for Banach's public type soundness implementation output, repeat focused checks, and commit Banach's production type patch if green.
-
 ### Banach (`implementer`)
 
-- Status: active.
+- Status: stopped; parent fallback accepted.
 - Agent id: `019e43c5-e97f-71d2-8a3d-c73884dc6010`.
 - Ownership:
   - `src/core/types/view.ts`.
@@ -305,3 +300,11 @@ Wait for Banach's public type soundness implementation output, repeat focused ch
   - Use exact-`unknown` property-level fallback types if needed for unparameterized registry returns.
   - Avoid public/test dependence on React lazy private `_payload`/`_init` internals.
   - Do not edit tests, docs, registries, config, or lockfiles, and do not commit.
+- Stop reason:
+  - Parent sent a status request and waited two windows. Banach produced no final response.
+  - Banach's uncommitted patch fixed the view-side type direction but still failed `bun run typecheck` on default `SlotContribution` / `SlotCondition<unknown>` assignability.
+  - After Carver, Planck, and Banach failed or remained unavailable, parent fallback is accepted for the remaining narrow type fix.
+
+## Next Action
+
+Commit this parent fallback note, complete the narrow production type fix in `src/core/types/view.ts` and `src/core/types/slot.ts`, then repeat focused checks.

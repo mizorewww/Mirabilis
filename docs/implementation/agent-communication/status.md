@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:05 CST.
+Last updated: 2026-05-20 13:16 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-20 13:05 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P1/P2 production type fix active.
+- Current phase: P1/P2 production type fix parent fallback active.
 
 ## Active Agents
 
-- Banach (`implementer`, `019e43c5-e97f-71d2-8a3d-c73884dc6010`): third implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
+- None.
 
 ## Recent Agent Outcomes
 
+- Banach (`implementer`) was stopped after a status request and two wait windows because it produced no final output. Its uncommitted patch fixed the view-side type soundness direction but still failed `bun run typecheck` on default `SlotContribution` / `SlotCondition<unknown>` assignability.
+- Parent is taking over the remaining narrow type fix after three implementer attempts failed or remained unavailable. Fallback scope is limited to `src/core/types/view.ts` and `src/core/types/slot.ts`; tests, docs, registries, config, and lockfiles remain unchanged for the production fix.
 - Banach (`implementer`) was spawned as the third implementer for TASK-008 P1/P2 production type fixes, with a narrower suggested design using exact-`unknown` property-level fallbacks instead of top-level conditional contribution/definition types.
 - Planck (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
 - Parent rejected and reverted Planck's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
@@ -266,6 +268,6 @@ Last updated: 2026-05-20 13:05 CST.
 
 ## Next Actions
 
-1. Wait for Banach's public type soundness implementation output.
-2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, `bun run lint`, and `git diff --check`.
-3. Commit Banach's production type patch if focused checks are green.
+1. Commit this parent fallback note.
+2. Complete the narrow production type fix in `src/core/types/view.ts` and `src/core/types/slot.ts`.
+3. Repeat focused checks and commit the parent fallback patch if green.
