@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review-fix red test refinement in progress.
+- Status: review-fix red tests committed; implementation handoff next.
 - Active agents:
-  - Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`).
-- Next parent step: wait for Halley the 2nd's test-only refinement, rerun focused red checks, and commit the review-fix test patch if it fails cleanly for accepted review findings.
+  - None.
+- Next parent step: spawn an `implementer` for the review-fix production changes.
 
 ## Agent Handoffs
 
@@ -219,7 +219,7 @@
 
 ### Review-Fix TDD
 
-- Status: running.
+- Status: completed and committed.
 - Agent:
   - Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`).
 - Ownership:
@@ -238,3 +238,12 @@
   - Parent red check `bun run typecheck` failed for expected command literal and SQL-shaped `DbQuery` issues, but also produced noisy test-design failures around `ExpectedDbValue` and object payload examples.
 - Follow-up:
   - Parent resumed Halley the 2nd to refine only `src/test/native-bridge.test.ts` so the red signal is clean before commit.
+- Outcome:
+  - Halley the 2nd updated `src/test/native-bridge.test.ts` with review-fix red coverage for exact command literal types, no `string` / `greet` command leaks, non-SQL operation-shaped `DbQuery`, JSON-compatible payload support, stable safe command-failure messages, non-DB error normalization, Tauri adapter delegation through mocked `@tauri-apps/api/core` `invoke`, and root `@tauri-apps/api` scan coverage.
+- Commit:
+  - `6d5b98b Halley the 2nd(test)(Add NativeBridge TypeScript boundary): cover review boundary gaps`.
+- Red checks:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` failed with four expected raw-error-message failures.
+  - `bun run typecheck` failed only on command literal widening, SQL-shaped `DbQuery`, and `DbValue` JSON object payload support.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
