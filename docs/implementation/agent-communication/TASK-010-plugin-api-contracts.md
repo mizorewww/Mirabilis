@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: review round 1 completed; review-fix tests next.
+- Status: review-fix tests committed; production review-fix next.
 - Active agents: none.
-- Next agent step: spawn a `test_writer` for review-fix type tests.
+- Next agent step: spawn an `implementer` for production type-contract fixes.
 
 ## Agent Handoffs
 
@@ -186,6 +186,25 @@
   - Keep `settings`, `storage`, `query`, and `eventBus` out of TASK-010 production contracts unless review-fix tests prove they are necessary; record them as future Plugin Host/API surfaces because pre-test parent decisions had deferred them.
   - Patch product and architecture docs after type fixes are green so docs identify `src/core/plugin-api` as the current transitional contract source and `packages/plugin-api` as a future split.
 
+### Review-Fix Tests
+
+- Status: completed and committed.
+- Agents:
+  - Godel the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-41cd511c596a`).
+  - Euclid the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-424b37d0b65d`).
+- Assignment:
+  - Add type tests for review round 1 gaps in `src/test/plugin-api-contracts.test.ts` only.
+  - Cover helper exports, no caller-supplied registry `pluginId`, inert JSON-compatible manifest schema/filter values, `MetadataValueType` metadata field values, and plugin-facing registry return descriptors.
+- Outcome:
+  - Godel the 2nd left a focused test patch but no final response after a status request and second wait window, so the parent stopped the agent.
+  - Euclid the 2nd cleaned up the test patch so the red signal no longer contained unused `@ts-expect-error` placement issues, but also produced no final response after a status request and second wait window. Parent stopped Euclid the 2nd and validated the patch.
+- Commit:
+  - `03836a4 Euclid the 2nd(test)(Define Plugin API contracts): cover plugin API review gaps`.
+- Red checks:
+  - `bun run typecheck` fails because production still has broad `MetadataFieldContribution.valueType`, `unknown` schema/filter values, and plugin registry return/list surfaces that leak executable/raw ownership surfaces.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 9 tests.
+  - `git diff --check` passed.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -195,4 +214,4 @@
 
 ## Next Action
 
-Spawn a review-fix `test_writer`, confirm the focused red signal, then delegate the production type-contract fixes to an `implementer`.
+Spawn an `implementer` to make the review-fix type tests green, then patch the required product and architecture docs drift.
