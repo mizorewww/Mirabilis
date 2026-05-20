@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:56 CST.
+Last updated: 2026-05-20 10:57 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 10:56 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: acceptance tests red; implementation handoff pending.
+- Current phase: implementation active.
 
 ## Active Agents
 
-- None.
+- Curie (`implementer`, `019e4350-fd27-73d1-aeaa-7098934023cf`): implement the minimum Command Registry and Command Bus production code.
 
 ## Recent Agent Outcomes
 
+- Curie (`implementer`) was spawned for TASK-007 production implementation.
 - Ohm (`test_writer`) completed and was closed after adding TASK-007 acceptance tests.
 - Ohm's test commit: `65e8727 Ohm(test)(Add Command Registry and Command Bus): add command registry acceptance tests`.
 - Parent confirmed expected red signal: `bun run typecheck` fails on missing Command Registry exports and `../core/commands`; `bun run test:frontend -- src/test/core-command-registry.test.ts` fails during import resolution for `../core/commands` with no tests executed.
@@ -188,6 +189,6 @@ Last updated: 2026-05-20 10:56 CST.
 
 ## Next Actions
 
-1. Delegate minimum production implementation to an `implementer`.
-2. Run focused tests until green.
-3. Commit implementation.
+1. Wait for Curie's implementation output.
+2. Repeat focused validation.
+3. If green, continue to review agents.

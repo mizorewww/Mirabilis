@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: acceptance tests red; implementation handoff pending.
-- Active agents: none.
+- Status: implementation active.
+- Active agents:
+  - Curie (`implementer`, `019e4350-fd27-73d1-aeaa-7098934023cf`): implement the minimum Command Registry and Command Bus production code.
 
 ## Agent Handoffs
 
@@ -111,4 +112,20 @@ Wait for Ohm's TASK-007 acceptance tests.
 
 ## Next Action
 
-Delegate minimum production implementation to an `implementer`.
+Wait for Curie's implementation output.
+
+### Curie (`implementer`)
+
+- Status: active.
+- Agent id: `019e4350-fd27-73d1-aeaa-7098934023cf`.
+- Ownership:
+  - `src/core/types/command.ts`.
+  - `src/core/types/index.ts`.
+  - `src/core/commands/command-registry.ts`.
+  - `src/core/commands/index.ts`.
+  - `src/core/index.ts`.
+- Assignment:
+  - Implement the minimum production Command Registry and Command Bus to pass Ohm's acceptance tests.
+  - Keep handlers private and expose handler-free descriptors.
+  - Preserve Core-level `execute(commandId: string, input?: unknown): Promise<unknown>`.
+  - Keep TASK-007 out of business commands, UI, shortcuts integration, plugin host lifecycle, IPC, permissions, persistence, and Tauri.
