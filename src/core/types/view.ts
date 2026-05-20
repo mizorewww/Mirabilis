@@ -1,21 +1,43 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ExoticComponent } from "react";
 
 import type { MetadataJsonValue } from "./metadata";
 
-type ViewDefinitionComponent<Props> = [Props] extends [never]
-  ? unknown
-  : RegistryComponent<Props>;
+type RegistryCallableComponent =
+  | ((...args: never[]) => unknown)
+  | (abstract new (...args: never[]) => unknown);
 
-export type RegistryComponent<Props = unknown> = ComponentType<Props>;
+type RegistryReactComponent<Props = unknown> =
+  | ComponentType<Props>
+  | ExoticComponent<Props>
+  | RegistryCallableComponent;
+
+export type RegistryObjectComponent<Props = unknown> =
+  | {
+      readonly $$typeof: symbol;
+      readonly type: RegistryReactComponent<Props>;
+    }
+  | {
+      readonly $$typeof: symbol;
+      readonly _payload: unknown;
+      readonly _init: (...args: unknown[]) => RegistryReactComponent<Props>;
+    }
+  | {
+      readonly $$typeof: symbol;
+      readonly _result: RegistryReactComponent<Props>;
+    };
+
+export type RegistryComponent<Props = unknown> =
+  | RegistryReactComponent<Props>
+  | RegistryObjectComponent<Props>;
 
 export type ViewDataShape = MetadataJsonValue;
 
-export type ViewDefinition<Props = never> = {
+export type ViewDefinition<Props = unknown> = {
   id: string;
   pluginId: string;
   type: string;
   title: string;
-  component: ViewDefinitionComponent<Props>;
+  component: RegistryComponent<Props>;
   accepts: ViewDataShape;
 };
 

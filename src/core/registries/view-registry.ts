@@ -178,7 +178,7 @@ function readComponent<Props>(
     "view component",
   );
 
-  if (typeof component !== "function") {
+  if (!isRegistryComponentReference(component)) {
     throw new ViewRegistryError("VIEW_COMPONENT_REQUIRED", "view component");
   }
 
@@ -232,7 +232,7 @@ function readOptionalProperty(
 
     return {
       present: true,
-      value: Reflect.get(input, field),
+      value: descriptor.value,
     };
   } catch (error) {
     if (error instanceof ViewRegistryError) {
@@ -517,6 +517,12 @@ function cloneViewDataShape<T extends ViewDataShape>(value: T): T {
 
 function isAccessorDescriptor(descriptor: PropertyDescriptor): boolean {
   return "get" in descriptor || "set" in descriptor;
+}
+
+function isRegistryComponentReference(value: unknown): boolean {
+  return (
+    typeof value === "function" || (typeof value === "object" && value !== null)
+  );
 }
 
 function isPlainObjectValue(value: unknown): value is object {

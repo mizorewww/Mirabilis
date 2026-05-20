@@ -186,7 +186,7 @@ function readComponent<Props>(
     "slot contribution component",
   );
 
-  if (typeof component !== "function") {
+  if (!isRegistryComponentReference(component)) {
     throw new SlotRegistryError(
       "SLOT_COMPONENT_REQUIRED",
       "slot contribution component",
@@ -276,7 +276,7 @@ function readOptionalProperty(
 
     return {
       present: true,
-      value: Reflect.get(input, field),
+      value: descriptor.value,
     };
   } catch (error) {
     if (error instanceof SlotRegistryError) {
@@ -395,4 +395,10 @@ function cloneSlotContribution<Props>(
 
 function isAccessorDescriptor(descriptor: PropertyDescriptor): boolean {
   return "get" in descriptor || "set" in descriptor;
+}
+
+function isRegistryComponentReference(value: unknown): boolean {
+  return (
+    typeof value === "function" || (typeof value === "object" && value !== null)
+  );
 }
