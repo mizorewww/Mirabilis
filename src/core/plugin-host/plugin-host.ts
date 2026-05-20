@@ -162,6 +162,8 @@ type StoredPluginRecord = {
   contributions: RegisteredContribution[];
   lifecycleScopes: Set<PluginContextScope>;
   installPromise?: Promise<void>;
+  registerPromise?: Promise<void>;
+  removalPhase?: PluginRemovalPhase;
 };
 
 type NormalizedDependency = {
@@ -175,6 +177,8 @@ type PluginLifecyclePhase =
   | "activate"
   | "deactivate"
   | "uninstall";
+
+type PluginRemovalPhase = "deactivate" | "uninstall";
 
 type PluginContextScope = {
   pluginId: string;
@@ -319,45 +323,59 @@ class PluginHostImpl implements PluginHostInstance {
     const record = this.requireRecord(pluginId);
 
     this.assertNoRegisteredDependents(pluginId);
+    record.removalPhase = "deactivate";
     this.revokeLifecycleScopes(record);
 
-    if (record.status !== "installed") {
-      await this.runLifecycleHook(
-        record,
-        "deactivate",
-        record.plugin.deactivate,
-      );
+    try {
+      if (record.status !== "installed") {
+        await this.runLifecycleHook(
+          record,
+          "deactivate",
+          record.plugin.deactivate,
+        );
+      }
+
+      this.unregisterTrackedContributions(record.contributions);
+      record.contributions = [];
+      record.status = "installed";
+
+      return this.toPublicRecord(record);
+    } finally {
+      if (this.records.get(pluginId) === record) {
+        delete record.removalPhase;
+      }
     }
-
-    this.unregisterTrackedContributions(record.contributions);
-    record.contributions = [];
-    record.status = "installed";
-
-    return this.toPublicRecord(record);
   }
 
   async uninstall(pluginId: string): Promise<PluginHostRecord> {
     const record = this.requireRecord(pluginId);
 
     this.assertNoRegisteredDependents(pluginId);
+    record.removalPhase = "uninstall";
     this.revokeLifecycleScopes(record);
 
-    if (record.status === "active") {
-      await this.runLifecycleHook(
-        record,
-        "deactivate",
-        record.plugin.deactivate,
-      );
+    try {
+      if (record.status === "active") {
+        await this.runLifecycleHook(
+          record,
+          "deactivate",
+          record.plugin.deactivate,
+        );
+      }
+
+      await this.runLifecycleHook(record, "uninstall", record.plugin.uninstall);
+      const output = this.toPublicRecord(record);
+
+      this.unregisterTrackedContributions(record.contributions);
+      record.contributions = [];
+      this.records.delete(pluginId);
+
+      return output;
+    } finally {
+      if (this.records.get(pluginId) === record) {
+        delete record.removalPhase;
+      }
     }
-
-    await this.runLifecycleHook(record, "uninstall", record.plugin.uninstall);
-    const output = this.toPublicRecord(record);
-
-    this.unregisterTrackedContributions(record.contributions);
-    record.contributions = [];
-    this.records.delete(pluginId);
-
-    return output;
   }
 
   getPlugin(pluginId: string): PluginHostRecord {
@@ -399,7 +417,7 @@ class PluginHostImpl implements PluginHostInstance {
     const pluginIds = new Set<string>();
 
     for (const record of this.records.values()) {
-      if (record.status !== "installed") {
+      if (record.status !== "installed" && record.removalPhase === undefined) {
         pluginIds.add(record.manifest.id);
       }
     }
@@ -520,6 +538,22 @@ class PluginHostImpl implements PluginHostInstance {
   private async registerInstalledPlugin(
     record: StoredPluginRecord,
   ): Promise<void> {
+    if (record.registerPromise !== undefined) {
+      return record.registerPromise;
+    }
+
+    const registerPromise = this.runRegisterLifecycle(record).finally(() => {
+      if (record.registerPromise === registerPromise) {
+        delete record.registerPromise;
+      }
+    });
+
+    record.registerPromise = registerPromise;
+
+    return registerPromise;
+  }
+
+  private async runRegisterLifecycle(record: StoredPluginRecord): Promise<void> {
     const scope = createPluginContextScope(
       record.manifest.id,
       "register",
@@ -844,6 +878,7 @@ class PluginHostImpl implements PluginHostInstance {
     }
 
     record.lifecycleScopes.clear();
+    delete record.registerPromise;
   }
 
   private rollbackScopeRegistrationTracker(scope: PluginContextScope): void {
@@ -880,7 +915,9 @@ class PluginHostImpl implements PluginHostInstance {
     restoredNextOrder: number,
   ): void {
     for (const record of [...records].reverse()) {
+      this.revokeLifecycleScopes(record);
       this.unregisterTrackedContributions(record.contributions);
+      record.contributions = [];
       this.records.delete(record.manifest.id);
     }
 
