@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: acceptance test writing active.
-- Active agents:
-  - Pasteur (`test_writer`, `019e4373-8e3a-7af0-9700-9b6d89f6b631`): write failing TASK-008 View/Slot Registry acceptance tests.
+- Status: acceptance tests red; implementation handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -92,10 +91,19 @@ Wait for Pasteur's TASK-008 acceptance tests.
 
 ### Pasteur (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4373-8e3a-7af0-9700-9b6d89f6b631`.
 - Ownership:
   - `src/test/core-view-slot-registry.test.ts` only unless unavoidable test-only support is needed.
+- Commit:
+  - `5dc84cc Pasteur(test)(Add View Registry and Slot Registry): add view and slot registry acceptance tests`.
 - Assignment:
   - Add failing acceptance tests for public exports, view/slot type contracts, registration/listing/unregister behavior, ordering, duplicate handling, component/condition reference identity, defensive metadata copies, JSON-compatible `accepts`, inert `when`, runtime validation, and business-neutral examples.
   - Do not edit production code, docs, or exports.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` fails on missing View/Slot Registry exports and `../core/registries`.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` fails during import resolution for `../core/registries`, so no tests execute until production files are added.
+
+## Next Action
+
+Delegate minimum production implementation to an `implementer`.
