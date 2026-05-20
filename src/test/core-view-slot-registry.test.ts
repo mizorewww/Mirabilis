@@ -127,6 +127,16 @@ describe("in-memory View Registry and Slot Registry", () => {
         component: ComponentType<WrongViewProps>;
       }
     >().not.toExtend<ViewDefinition<ViewProps>>();
+    expectTypeOf<{
+      readonly arbitrary: true;
+    }>().not.toExtend<RegistryComponent<unknown>>();
+    expectTypeOf<
+      Omit<ViewDefinition<unknown>, "component"> & {
+        component: {
+          readonly arbitrary: true;
+        };
+      }
+    >().not.toExtend<ViewDefinition<unknown>>();
     expectTypeOf<ViewDataShape>().toEqualTypeOf<MetadataJsonValue>();
     expectTypeOf<ViewDefinition<ViewProps>>().toEqualTypeOf<{
       id: string;
@@ -175,6 +185,7 @@ describe("in-memory View Registry and Slot Registry", () => {
     expectTypeOf<SlotCondition<NarrowSlotProps>>().not.toExtend<
       SlotCondition<SlotProps>
     >();
+    expectTypeOf<string>().not.toExtend<SlotCondition<unknown>>();
     expectTypeOf<
       Omit<SlotContribution<SlotProps>, "component"> & {
         component: ComponentType<WrongSlotProps>;
