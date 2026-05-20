@@ -45,20 +45,24 @@
 
 ## Current Status
 
-- Status: task started; pre-test guidance agents pending.
-- Active agents: none.
-- Next parent step: spawn pre-test guidance agents.
+- Status: pre-test guidance agents running.
+- Active agents:
+  - Turing the 2nd (`planner`, id `019e4731-2f2d-7902-b5d2-85b96dae36b3`).
+  - Franklin the 2nd (`docs_researcher`, id `019e4731-32ff-7130-9f19-1774a2ebb017`).
+  - Pascal the 2nd (`deprecation_auditor`, id `019e4731-37b7-7520-abaa-c6280a39dbc7`).
+  - Herschel the 2nd (`security_reviewer`, id `019e4731-3c54-75a3-baaa-8e0fcf5eea7b`).
+- Next parent step: wait for pre-test guidance, record parent decisions, then spawn `test_writer`.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: pending agent handoff.
-- Planned agents:
-  - `planner` for TASK-014 scope, operation allowlist shape, test split, implementation boundaries, dependencies, and risks.
-  - `docs_researcher` for current Tauri v2 command, capability, test, Rust state, and IPC guidance.
-  - `deprecation_auditor` for Tauri v2 API/dependency risk, Rust/serde/rusqlite IPC integration risk, and stale patterns.
-  - `security_reviewer` for IPC boundary, capability permissions, database path/state ownership, error redaction, and no-raw-SQL enforcement.
+- Status: running.
+- Agents:
+  - Turing the 2nd (`planner`) for TASK-014 scope, operation allowlist shape, test split, implementation boundaries, dependencies, and risks.
+  - Franklin the 2nd (`docs_researcher`) for current Tauri v2 command, capability, test, Rust state, and IPC guidance.
+  - Pascal the 2nd (`deprecation_auditor`) for Tauri v2 API/dependency risk, Rust/serde/rusqlite IPC integration risk, and stale patterns.
+  - Herschel the 2nd (`security_reviewer`) for IPC boundary, capability permissions, database path/state ownership, error redaction, and no-raw-SQL enforcement.
 - Assignment:
   - Stay read-only and do not edit files.
   - Produce guidance for the later `test_writer` before any tests are written.

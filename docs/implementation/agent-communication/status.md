@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:59 CST.
+Last updated: 2026-05-21 05:01 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 04:59 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test guidance agents pending.
+- Current phase: pre-test guidance agents running.
 
 ## Active Agents
 
-- None.
+- Turing the 2nd (`planner`, id `019e4731-2f2d-7902-b5d2-85b96dae36b3`) - TASK-014 scope and TDD plan.
+- Franklin the 2nd (`docs_researcher`, id `019e4731-32ff-7130-9f19-1774a2ebb017`) - current Tauri v2 command/capability/test docs.
+- Pascal the 2nd (`deprecation_auditor`, id `019e4731-37b7-7520-abaa-c6280a39dbc7`) - Tauri/Rust API and migration risk guidance.
+- Herschel the 2nd (`security_reviewer`, id `019e4731-3c54-75a3-baaa-8e0fcf5eea7b`) - IPC, capability, persistence, and raw-SQL boundary guidance.
 
 ## Recent Agent Outcomes
 
@@ -21,7 +24,8 @@ Last updated: 2026-05-21 04:59 CST.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
 - TASK-014 out of scope unless agents find a local-doc requirement: app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export, global shortcuts, notifications, plugin-owned business index lifecycle, release packaging, and concrete business-plugin behavior.
 - `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
-- Parent next step: spawn pre-test guidance agents for current Tauri v2 command/capability/testing docs, deprecation/API risks, security boundary guidance, and TASK-014 implementation/test planning.
+- TASK-014 pre-test guidance agents were spawned. All are read-only and must not edit files.
+- Parent next step: wait for pre-test guidance, record parent decisions, then spawn `test_writer`.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
