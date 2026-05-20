@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix parent fallback active.
+- Status: P1/P2 type fix green; docs P3 cleanup pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -305,6 +305,26 @@
   - Banach's uncommitted patch fixed the view-side type direction but still failed `bun run typecheck` on default `SlotContribution` / `SlotCondition<unknown>` assignability.
   - After Carver, Planck, and Banach failed or remained unavailable, parent fallback is accepted for the remaining narrow type fix.
 
+### Parent Type-Fix Fallback
+
+- Status: completed.
+- Commit:
+  - `a7eade7 Codex(review-fix)(Add View Registry and Slot Registry): fix public type soundness`.
+- Scope:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+- Outcome:
+  - Explicit public `RegistryComponent<Props>` / `SlotCondition<Props>` now keep prop-safety coverage green.
+  - Unparameterized registry return shapes remain erased enough for existing registry storage and returned lists.
+  - React object/exotic compatibility uses public React type-only imports and no `_payload` / `_init` runtime internals.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` passed with 20 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+- Push note:
+  - Auto-push and the first manual push for `a7eade7` failed with an SSH connection close. Parent will retry before merge.
+
 ## Next Action
 
-Commit this parent fallback note, complete the narrow production type fix in `src/core/types/view.ts` and `src/core/types/slot.ts`, then repeat focused checks.
+Retry pushing the task branch, clean up remaining P3 docs issues from Kierkegaard, and run targeted re-review before final gate.
