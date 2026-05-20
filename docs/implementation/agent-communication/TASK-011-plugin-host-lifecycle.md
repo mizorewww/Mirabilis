@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: stale register cleanup P1 found; TDD handoff next.
-- Active agents: none.
-- Next parent step: delegate red tests for stale register cleanup after retry and concurrent register contribution tracking, then delegate implementation.
+- Status: stale register cleanup TDD in progress.
+- Active agents: Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`).
+- Next parent step: wait for Carson, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -520,6 +520,16 @@
   - Add focused red tests for stale register cleanup after retry and concurrent register contribution tracking.
   - Delegate the minimal production fix after the expected red signal.
 
+### Stale Register Cleanup TDD
+
+- Status: in progress.
+- Agent:
+  - Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add deterministic red tests for stale pending register cleanup after a fresh retry and concurrent register contribution tracking, without editing production code or docs.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -529,4 +539,4 @@
 
 ## Next Action
 
-Delegate stale register cleanup and concurrent register tracking red tests.
+Wait for Carson, then validate and commit the stale register cleanup red tests.

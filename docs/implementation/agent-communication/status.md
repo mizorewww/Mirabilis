@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:19 CST.
+Last updated: 2026-05-21 01:20 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 01:19 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 concurrent register retry P1 found; TDD handoff next.
+- Current phase: TASK-011 stale register cleanup TDD in progress.
 
 ## Active Agents
 
-- No active agents. Next handoff: `test_writer` for stale register cleanup and concurrent register contribution tracking.
+- Carson (`test_writer`, `019e4667-333b-7d90-a1ff-a8931583b89d`) is adding stale register cleanup and concurrent register contribution tracking red tests.
 
 ## Recent Agent Outcomes
 
+- Carson (`test_writer`) was spawned for red tests covering stale register cleanup after retry and concurrent register contribution tracking.
 - Final concurrent lifecycle micro re-review completed. Hypatia (`reviewer`) found one P1 correctness issue: a revoked pending `register` can later unregister same-ID contributions created by a fresh retry after concurrent uninstall/deactivate, and in the deactivate retry case can regress the shared record back to `installed`.
 - Dirac (`security_reviewer`) found one P2 boundary issue: concurrent `register()` calls can orphan runtime contributions because a failing second register clears `record.contributions` while the first registration's command/view/slot remain live.
 - Gibbs (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed the concurrent lifecycle test is deterministic and `.only` / `.skip` free.
