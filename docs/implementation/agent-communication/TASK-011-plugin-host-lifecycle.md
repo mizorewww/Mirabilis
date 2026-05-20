@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: concurrent lifecycle TDD in progress.
-- Active agents: Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`).
-- Next parent step: wait for Dewey, validate expected red signal, then delegate implementation.
+- Status: concurrent lifecycle implementation in progress.
+- Active agents: Copernicus (`implementer`, `019e4659-7f32-73d2-bb22-7e55becb7521`).
+- Next parent step: wait for Copernicus, validate focused green checks, then micro re-review.
 
 ## Agent Handoffs
 
@@ -463,7 +463,7 @@
 
 ### Concurrent Lifecycle TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`).
 - Ownership:
@@ -471,6 +471,26 @@
 - Assignment:
   - Add a deterministic red test for concurrent `uninstall(pluginId)` while `register(ctx)` is still pending and has started an unawaited transaction.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+- Outcome:
+  - Dewey changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added a deterministic red test where `register(ctx)` starts an unawaited transaction and remains pending, `host.uninstall(pluginId)` runs concurrently, then the transaction/register gates release. The test requires no staged page/metadata/event/filter writes to commit and the original load/transaction not to resolve as a successful registration after uninstall.
+- Commit:
+  - `34cec0d Dewey(test)(Implement Plugin Host lifecycle): cover concurrent lifecycle revocation`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 33 tests with 32 passing and one failing in the new concurrent lifecycle case.
+  - `git diff --check` passed.
+
+### Concurrent Lifecycle Implementation
+
+- Status: in progress.
+- Agent:
+  - Copernicus (`implementer`, `019e4659-7f32-73d2-bb22-7e55becb7521`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Implement the minimal production fix so concurrent uninstall/deactivate cannot delete plugin records while register is pending in a way that allows pending transaction writes to commit or load/register to later resolve as registered.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
 
 ## Parent Decisions
 
@@ -481,4 +501,4 @@
 
 ## Next Action
 
-Wait for Dewey, then validate and commit the concurrent lifecycle red test.
+Wait for Copernicus, then validate focused green checks and micro re-review.

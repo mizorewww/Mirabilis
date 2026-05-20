@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:01 CST.
+Last updated: 2026-05-21 01:05 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-21 01:01 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 concurrent lifecycle TDD in progress.
+- Current phase: TASK-011 concurrent lifecycle implementation in progress.
 
 ## Active Agents
 
-- Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`) is adding the concurrent register/uninstall transaction rollback red test.
+- Copernicus (`implementer`, `019e4659-7f32-73d2-bb22-7e55becb7521`) is fixing concurrent register/uninstall lifecycle safety in `src/core/plugin-host/plugin-host.ts`.
 
 ## Recent Agent Outcomes
 
+- Copernicus (`implementer`) was spawned for the concurrent lifecycle production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Dewey's test commit: `34cec0d Dewey(test)(Implement Plugin Host lifecycle): cover concurrent lifecycle revocation`.
+- Parent confirmed the expected red signal after Dewey: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 33 tests with 32 passing and one failing because staged transaction data can commit after concurrent uninstall; `git diff --check` passed.
 - Dewey (`test_writer`) was spawned for the concurrent lifecycle red test in `src/test/plugin-host-lifecycle.test.ts`.
 - Final micro re-review completed. Bohr (`reviewer`) found one P2 correctness issue: concurrent `uninstall(pluginId)` can delete a plugin record while `register(ctx)` is still pending, leaving the register scope active long enough for an unawaited transaction to commit after uninstall.
 - Linnaeus (`security_reviewer`) found no P0/P1/P2 findings for the pending transaction fix and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
