@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: undefined ownership-key review fix green; targeted re-review next.
-- Active agents: none.
-- Next parent step: spawn targeted re-review agents, fix any P0/P1 findings, then run the local gate.
+- Status: targeted re-review in progress after undefined ownership-key fix.
+- Active agents: Laplace (`pr_explorer`), Meitner (`reviewer`), Zeno (`security_reviewer`), Helmholtz (`deprecation_auditor`), Erdos (`test_quality_reviewer`), and Tesla (`docs_researcher`).
+- Next parent step: wait for targeted re-review agents, then spawn `doc_writer` when a review slot frees.
 
 ## Agent Handoffs
 
@@ -383,6 +383,20 @@
   - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 13 tests.
   - `git diff --check` passed.
 
+### Targeted Re-Review Round 2
+
+- Status: in progress.
+- Agents:
+  - Laplace (`pr_explorer`, `019e45ab-b5dc-7c01-a6be-f39dfd792333`).
+  - Meitner (`reviewer`, `019e45ab-b910-7332-a86c-30a07c877ead`).
+  - Zeno (`security_reviewer`, `019e45ab-bc9d-7af2-8058-4807b9c34f3e`).
+  - Helmholtz (`deprecation_auditor`, `019e45ab-c215-73d0-9604-6781ca121a52`).
+  - Erdos (`test_quality_reviewer`, `019e45ab-c56b-7dd2-a8f1-1065126e3ccc`).
+  - Tesla (`docs_researcher`, `019e45ab-c897-7130-8033-19bd1e15f4b3`).
+- Assignment:
+  - Read-only re-review of TASK-010 against `master`, with focus on Plugin API contracts, ownership-key reservation behavior, public exports, docs/status drift, security boundaries, deprecated/API risks, and test quality.
+  - `doc_writer` will run after a review slot frees because project agent threads are capped.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -392,4 +406,4 @@
 
 ## Next Action
 
-Spawn targeted re-review agents, fix any P0/P1 findings, then run the local gate.
+Wait for targeted re-review agents, spawn `doc_writer` when a review slot frees, fix any P0/P1 findings, then run the local gate.
