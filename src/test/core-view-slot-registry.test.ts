@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
-import type { ComponentType } from "react";
+import type { ComponentType, ExoticComponent, LazyExoticComponent } from "react";
 
 import {
   SlotRegistryError,
@@ -49,15 +49,16 @@ type SlotProps = {
   region: string;
 };
 
-type MemoLikeComponentRef<Props> = {
-  readonly $$typeof: symbol;
-  readonly type: ComponentType<Props>;
+type WrongViewProps = {
+  entryId: string;
 };
 
-type LazyLikeComponentRef<Props> = {
-  readonly $$typeof: symbol;
-  readonly _payload: unknown;
-  readonly _init: () => ComponentType<Props>;
+type WrongSlotProps = {
+  panelId: string;
+};
+
+type NarrowSlotProps = SlotProps & {
+  requiredItemId: string;
 };
 
 const WorkspaceListPanel: ComponentType<ViewProps> = () => null;
@@ -109,15 +110,23 @@ describe("in-memory View Registry and Slot Registry", () => {
       ListSlotContributionsOptionsFromRegistries
     >().toEqualTypeOf<ListSlotContributionsOptions>();
 
-    expectTypeOf<ComponentType<ViewProps>>().toMatchTypeOf<
+    expectTypeOf<ComponentType<ViewProps>>().toExtend<
       RegistryComponent<ViewProps>
     >();
-    expectTypeOf<MemoLikeComponentRef<ViewProps>>().toMatchTypeOf<
+    expectTypeOf<ExoticComponent<ViewProps>>().toExtend<
       RegistryComponent<ViewProps>
     >();
-    expectTypeOf<LazyLikeComponentRef<ViewProps>>().toMatchTypeOf<
+    expectTypeOf<
+      LazyExoticComponent<ComponentType<ViewProps>>
+    >().toExtend<RegistryComponent<ViewProps>>();
+    expectTypeOf<ComponentType<WrongViewProps>>().not.toExtend<
       RegistryComponent<ViewProps>
     >();
+    expectTypeOf<
+      Omit<ViewDefinition<ViewProps>, "component"> & {
+        component: ComponentType<WrongViewProps>;
+      }
+    >().not.toExtend<ViewDefinition<ViewProps>>();
     expectTypeOf<ViewDataShape>().toEqualTypeOf<MetadataJsonValue>();
     expectTypeOf<ViewDefinition<ViewProps>>().toEqualTypeOf<{
       id: string;
@@ -160,6 +169,22 @@ describe("in-memory View Registry and Slot Registry", () => {
     expectTypeOf<SlotCondition<SlotProps>>().toEqualTypeOf<
       (props: SlotProps) => boolean
     >();
+    expectTypeOf<ComponentType<WrongSlotProps>>().not.toExtend<
+      RegistryComponent<SlotProps>
+    >();
+    expectTypeOf<SlotCondition<NarrowSlotProps>>().not.toExtend<
+      SlotCondition<SlotProps>
+    >();
+    expectTypeOf<
+      Omit<SlotContribution<SlotProps>, "component"> & {
+        component: ComponentType<WrongSlotProps>;
+      }
+    >().not.toExtend<SlotContribution<SlotProps>>();
+    expectTypeOf<
+      Omit<SlotContribution<SlotProps>, "when"> & {
+        when: SlotCondition<NarrowSlotProps>;
+      }
+    >().not.toExtend<SlotContribution<SlotProps>>();
     expectTypeOf<SlotContribution<SlotProps>>().toEqualTypeOf<{
       id: string;
       pluginId: string;
@@ -319,12 +344,9 @@ describe("in-memory View Registry and Slot Registry", () => {
 
   it("accepts and preserves React-compatible object view component references", () => {
     const views = createInMemoryViewRegistry();
-    const memoLikeComponentRef = {
+    const exoticComponentRef = {
       $$typeof: Symbol.for("react.memo"),
-      type: WorkspaceListPanel,
-    } satisfies MemoLikeComponentRef<ViewProps>;
-    const memoLikeComponent =
-      memoLikeComponentRef as unknown as RegistryComponent<ViewProps>;
+    } as unknown as ExoticComponent<ViewProps>;
 
     const registered = views.register(
       viewDefinition({
@@ -332,15 +354,17 @@ describe("in-memory View Registry and Slot Registry", () => {
         pluginId: "workspace",
         type: "workspace.list",
         title: "Memo-like workspace list",
-        component: memoLikeComponent,
+        component: exoticComponentRef,
       }),
     );
 
-    expect(registered.component).toBe(memoLikeComponent);
-    expect(views.get("workspace.memo-like").component).toBe(memoLikeComponent);
-    expect(views.list()[0]!.component).toBe(memoLikeComponent);
+    expect(registered.component).toBe(exoticComponentRef);
+    expect(views.get("workspace.memo-like").component).toBe(
+      exoticComponentRef,
+    );
+    expect(views.list()[0]!.component).toBe(exoticComponentRef);
     expect(views.unregister("workspace.memo-like").component).toBe(
-      memoLikeComponent,
+      exoticComponentRef,
     );
   });
 
@@ -773,30 +797,26 @@ describe("in-memory View Registry and Slot Registry", () => {
 
   it("accepts and preserves React-compatible object slot component references", () => {
     const slots = createInMemorySlotRegistry();
-    const lazyLikeComponentRef = {
+    const lazyComponentRef = {
       $$typeof: Symbol.for("react.lazy"),
-      _payload: { component: WorkspaceHeaderSlot },
-      _init: () => WorkspaceHeaderSlot,
-    } satisfies LazyLikeComponentRef<SlotProps>;
-    const lazyLikeComponent =
-      lazyLikeComponentRef as unknown as RegistryComponent<SlotProps>;
+    } as unknown as LazyExoticComponent<typeof WorkspaceHeaderSlot>;
 
     const registered = slots.register(
       slotContribution({
         id: "workspace.header.lazy-like",
         pluginId: "workspace",
         slot: "workspace.header",
-        component: lazyLikeComponent,
+        component: lazyComponentRef,
       }),
     );
 
-    expect(registered.component).toBe(lazyLikeComponent);
+    expect(registered.component).toBe(lazyComponentRef);
     expect(slots.get("workspace.header.lazy-like").component).toBe(
-      lazyLikeComponent,
+      lazyComponentRef,
     );
-    expect(slots.list()[0]!.component).toBe(lazyLikeComponent);
+    expect(slots.list()[0]!.component).toBe(lazyComponentRef);
     expect(slots.unregister("workspace.header.lazy-like").component).toBe(
-      lazyLikeComponent,
+      lazyComponentRef,
     );
   });
 
