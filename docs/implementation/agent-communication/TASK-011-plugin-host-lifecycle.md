@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final re-review found pending transaction P1; TDD handoff next.
-- Active agents: none.
-- Next parent step: delegate a focused red test for pending/unawaited plugin transaction revocation, then delegate implementation.
+- Status: pending transaction TDD in progress.
+- Active agents: Bacon (`test_writer`, `019e4648-adf3-73b2-879c-2e1ccf0a6ba1`).
+- Next parent step: wait for Bacon, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -404,6 +404,17 @@
   - Add a focused red test for pending/unawaited `ctx.transaction.run` committing after context revocation/uninstall.
   - Delegate the minimal production fix after the expected red signal.
 
+### Pending Transaction TDD
+
+- Status: in progress.
+- Agent:
+  - Bacon (`test_writer`, `019e4648-adf3-73b2-879c-2e1ccf0a6ba1`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add a deterministic red test proving unawaited plugin transactions started during register cannot commit page/store writes after lifecycle context revocation or plugin uninstall.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -413,4 +424,4 @@
 
 ## Next Action
 
-Delegate pending transaction revocation red test.
+Wait for Bacon, then validate and commit the pending transaction red test.

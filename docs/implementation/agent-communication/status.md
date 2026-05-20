@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:46 CST.
+Last updated: 2026-05-21 00:47 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 00:46 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final re-review found pending transaction P1; TDD handoff next.
+- Current phase: TASK-011 pending transaction TDD in progress.
 
 ## Active Agents
 
-- No active agents. Next handoff: `test_writer` for pending/unawaited plugin transaction revocation.
+- Bacon (`test_writer`, `019e4648-adf3-73b2-879c-2e1ccf0a6ba1`) is adding a pending/unawaited plugin transaction revocation red test.
 
 ## Recent Agent Outcomes
 
+- Bacon (`test_writer`) was spawned for a focused pending/unawaited plugin transaction revocation red test in `src/test/plugin-host-lifecycle.test.ts`.
 - Final TASK-011 re-review completed. James (`reviewer`) found one P1 correctness issue: unawaited plugin transactions that start while a lifecycle context is active can still commit after that context is revoked or the plugin is uninstalled because `ctx.transaction.run` only checks liveness before delegating to the Core transaction manager.
 - Mencius (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
 - Einstein (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 31 lifecycle tests, 45 lifecycle/API tests, typecheck, lint, and diff-check passed.
