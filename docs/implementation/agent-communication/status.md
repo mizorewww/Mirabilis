@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:38 CST.
+Last updated: 2026-05-21 06:49 CST.
 
 ## Current Task
 
@@ -27,7 +27,12 @@ Last updated: 2026-05-21 06:38 CST.
 - Huygens the 2nd (`planner`) completed read-only planning. Recommendation: keep TASK-015 as app-level composition, not a Core rewrite; add bootstrap/provider/built-in-plugin-list/App Shell boundary tests first, with likely files under `src/bootstrap`, `src/providers`, `src/plugins` or `src/shell`, `src/App.tsx`, and focused tests under `src/test`.
 - Feynman the 2nd (`deprecation_auditor`) completed read-only API/deprecation audit. P1 guidance: make bootstrap single-flight/idempotent under React StrictMode, do not expose `NativeBridge` or raw Tauri `invoke` through providers, and either implement storage honestly or keep the first bootstrap explicitly in-memory without claiming persistence.
 - Parent decisions for red tests: delegate bootstrap/provider/App Shell boundary tests to `test_writer`; cover initialization order, StrictMode duplicate-start protection, provider/hook availability, generic redacted startup failure UI, no raw bridge/storage/runtime exposure through plugin-reachable surfaces, and no new Tauri capability/config changes.
-- Parent next step: commit pre-test guidance summary, close completed read-only agents, then spawn `test_writer` for failing tests.
+- TASK-015 pre-test guidance summary was committed as `78c37e0 Codex(progress)(Build app bootstrap and runtime provider): summarize pre-test guidance`; completed read-only agents were closed.
+- Ramanujan the 2nd (`test_writer`) was spawned for red tests. Ownership is limited to failing frontend tests and test helpers; production implementation, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Ramanujan the 2nd completed and was closed after adding red tests in `src/test/app-bootstrap-runtime.test.ts`, `src/test/runtime-provider.test.tsx`, and `src/test/app-shell-boundary.test.ts`.
+- Parent confirmed the expected red signal: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts` fails 8 tests because `src/bootstrap` and `src/providers` are missing and the current App Shell lacks startup failure alert UI; 3 App Shell boundary tests pass. `git diff --cached --check` passed before commit.
+- Ramanujan the 2nd's test commit: `75e3bc7 Ramanujan the 2nd(test)(Build app bootstrap and runtime provider): add bootstrap provider acceptance tests`.
+- Parent next step: commit communication update, then spawn `implementer` for the minimum production code needed to pass the focused TASK-015 tests.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

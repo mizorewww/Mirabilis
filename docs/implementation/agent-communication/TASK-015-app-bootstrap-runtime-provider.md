@@ -37,14 +37,14 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; red-test handoff pending.
+- Status: red tests committed; implementation handoff pending.
 - Active agents: none.
 - Completed agents:
   - Huygens the 2nd (`planner`): read-only scope and implementation plan completed.
   - Parfit the 2nd (`security_reviewer`): read-only security boundary review completed.
   - Goodall the 2nd (`docs_researcher`): read-only current-docs guidance completed.
   - Feynman the 2nd (`deprecation_auditor`): read-only API/deprecation risk audit completed.
-- Next parent step: hand off red tests to `test_writer`.
+- Next parent step: spawn `implementer` for the minimum production code needed to pass the focused TASK-015 tests.
 
 ## Agent Handoffs
 
@@ -163,3 +163,27 @@
   - App Shell has no direct Tauri import, no task/habit/timer/calendar/editor business behavior, and no new Tauri capability/config changes.
   - Bootstrap uses an explicit built-in plugin list; production can be empty while tests inject fake plugins.
 - Red-test ownership should stay in frontend test files and test helpers only. Production files, docs, Tauri config/capabilities, Rust code, and package/Cargo dependency changes are out of scope for `test_writer`.
+
+### Ramanujan the 2nd (`test_writer`) Handoff
+
+- Status: completed and closed.
+- Ownership: failing TASK-015 frontend tests and test helpers only.
+- Files changed:
+  - `src/test/app-bootstrap-runtime.test.ts`.
+  - `src/test/runtime-provider.test.tsx`.
+  - `src/test/app-shell-boundary.test.ts`.
+- Assertions added:
+  - Bootstrap order, explicit built-in plugin list, injectable failure behavior, and safe plugin/runtime public surfaces.
+  - Provider/hook consumer behavior, outside-provider error, StrictMode single-flight startup, and generic redacted startup failure UI.
+  - App Shell boundary scans for direct Tauri imports, business behavior, and bootstrap-related native expansion.
+- Parent focused red command:
+  - `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`.
+- Parent red-test result:
+  - 8 tests failed for expected TASK-015 gaps.
+  - `src/test/app-bootstrap-runtime.test.ts` failed because `src/bootstrap` does not exist yet.
+  - `src/test/runtime-provider.test.tsx` failed because `src/providers` does not exist yet.
+  - Startup failure UI failed because current `App` still renders the starter Tauri/Vite/React UI and no `role="alert"` state.
+  - 3 App Shell boundary tests passed.
+- Validation before commit: `git diff --cached --check` passed.
+- Test commit: `75e3bc7 Ramanujan the 2nd(test)(Build app bootstrap and runtime provider): add bootstrap provider acceptance tests`.
+- Parent decision: failures are expected and suitable for implementation handoff.
