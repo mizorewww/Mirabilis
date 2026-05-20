@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: second review-fix TDD in progress.
-- Active agents: Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`).
-- Next parent step: wait for Lovelace, validate expected red signal, commit tests, then delegate implementation.
+- Status: final review-fix implementation in progress.
+- Active agents: Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`).
+- Next parent step: wait for Maxwell, validate focused green checks, then re-review.
 
 ## Agent Handoffs
 
@@ -257,7 +257,7 @@
 
 ### Second Review-Fix TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`).
 - Ownership:
@@ -265,6 +265,28 @@
 - Assignment:
   - Add red tests for stale captured contexts mutating pages/metadata/events/filters/transactions after lifecycle exit, failed-install rollback/retry safety, typed late register errors, and typed dependency rejection for deactivate/uninstall with registered dependents.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+- Outcome:
+  - Lovelace changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Tests now require stale captured contexts to reject page, metadata, event, filter, and transaction writes after deactivate/uninstall.
+  - Tests require failed explicit install and failed batch built-in loading to remove records and preserve retry safety.
+  - Tests require late command/view/slot registration and dependency removal failures to throw typed `PluginHostError`.
+- Commit:
+  - `fa3a44c Lovelace(test)(Implement Plugin Host lifecycle): cover final lifecycle gaps`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 30 tests with 26 passing and 4 failing in the expected stale-context and failed-install cleanup areas.
+  - `git diff --check` passed.
+
+### Final Review-Fix Implementation
+
+- Status: in progress.
+- Agent:
+  - Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Implement minimum production fixes for stale context write revocation after lifecycle exit and failed-install record cleanup/retry safety.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
 
 ## Parent Decisions
 
@@ -275,4 +297,4 @@
 
 ## Next Action
 
-Wait for Lovelace, then validate and commit the second review-fix red tests.
+Wait for Maxwell, then validate focused green checks and re-review.

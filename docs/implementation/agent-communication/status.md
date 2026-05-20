@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:09 CST.
+Last updated: 2026-05-21 00:15 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-21 00:09 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 second review-fix TDD in progress.
+- Current phase: TASK-011 final review-fix implementation in progress.
 
 ## Active Agents
 
-- Lovelace (`test_writer`, `019e4626-71a6-7013-9545-b6bbeff551a8`) is adding remaining P1/P2 red tests in `src/test/plugin-host-lifecycle.test.ts`.
+- Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`) is implementing the final lifecycle revocation and failed-install cleanup fixes in `src/core/plugin-host/plugin-host.ts`.
 
 ## Recent Agent Outcomes
 
+- Maxwell (`implementer`) was spawned for the final TASK-011 production review-fix pass. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
+- Lovelace's second review-fix test commit: `fa3a44c Lovelace(test)(Implement Plugin Host lifecycle): cover final lifecycle gaps`.
+- Parent confirmed the expected red signal after Lovelace: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 30 tests with 26 passing and 4 failing around stale context page/store/transaction writes and failed-install record cleanup; `git diff --check` passed.
 - Lovelace (`test_writer`) was spawned for the second TASK-011 review-fix TDD pass. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
 - TASK-011 narrow re-review completed. Popper (`pr_explorer`) found no scope creep and highlighted install-failure state, stale context liveness, and stale status-text hotspots.
 - Kepler (`reviewer`) found one P1 correctness issue: failed install hooks leave `installed` records, and later `register(plugin)` can skip the failed install and move that plugin to registered/active.
