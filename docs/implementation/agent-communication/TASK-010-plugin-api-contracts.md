@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: targeted ownership-key fixes green; final targeted re-review next.
-- Active agents: none.
-- Next agent step: spawn final targeted re-review agents.
+- Status: undefined ownership-key review-fix implementation in progress.
+- Active agent: Hilbert (`implementer`, `019e45a6-37f2-75c2-b809-d07c7057de7`) owns the production fix for explicit `pluginId: undefined` / `sourcePluginId: undefined` ownership-key leaks.
+- Next parent step: wait for Hilbert, validate focused checks, commit the production fix if green, then run targeted re-review agents.
 
 ## Agent Handoffs
 
@@ -326,6 +326,54 @@
 - Commit:
   - `cdec5f5 Codex(docs)(Define Plugin API contracts): fix Obsidian plugin docs link`.
 
+### Ownership-Key Public Surface Follow-Up
+
+- Status: completed and committed.
+- Agents:
+  - Dalton the 2nd (`test_writer`).
+  - Galileo the 2nd (`implementer`).
+  - Ampere the 2nd (`docs`).
+- Outcome:
+  - Dalton the 2nd added public-surface type coverage for ownership-key reservations.
+  - Galileo the 2nd narrowed the ownership-key reservation helper types in `src/core/plugin-api/context.ts`.
+  - Ampere the 2nd fixed the stale Obsidian docs link in `docs/architecture/01-overview-and-monorepo.md`.
+- Commits:
+  - `0aba310 Dalton the 2nd(test)(Define Plugin API contracts): cover ownership key public surface`.
+  - `05c7b82 Galileo the 2nd(review-fix)(Define Plugin API contracts): narrow ownership key reservations`.
+  - `f587d31 Ampere the 2nd(docs)(Define Plugin API contracts): fix overview Obsidian docs link`.
+
+### Undefined Ownership-Key Tests
+
+- Status: completed and committed.
+- Agent:
+  - Mendel (`test_writer`, `019e45a3-4cbd-72e0-ad16-3b48b68a05a8`).
+- Ownership:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Assignment:
+  - Validate and finish the existing test-only patch for explicit `pluginId: undefined` and `sourcePluginId: undefined` ownership-key leaks.
+  - Preserve type-level Plugin API contract coverage and do not edit production code.
+- Outcome:
+  - Mendel left the existing patch unchanged after confirming it is focused red coverage.
+- Commit:
+  - `3c91789 Mendel(test)(Define Plugin API contracts): cover undefined ownership keys`.
+- Red checks:
+  - `bun run typecheck` failed only in `src/test/plugin-api-contracts.test.ts` on explicit undefined ownership-key assignability and unused `@ts-expect-error` directives.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 13 tests.
+  - `git diff --check` passed.
+
+### Undefined Ownership-Key Implementation
+
+- Status: in progress.
+- Agent:
+  - Hilbert (`implementer`, `019e45a6-37f2-75c2-b809-d07c7057de7`).
+- Ownership:
+  - Primary: `src/core/plugin-api/context.ts`.
+  - Other `src/core/plugin-api/*.ts` or `src/core/index.ts` only if strictly necessary for exported type compatibility.
+- Assignment:
+  - Make the undefined ownership-key type tests green without editing tests, docs, config, package files, lockfiles, Rust/Tauri, UI, or agent communication docs.
+  - Preserve valid Plugin API usage without requiring plugins to pass ownership keys.
+  - Report a blocker if TypeScript cannot express the constraint under the current config without widening scope.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -335,4 +383,4 @@
 
 ## Next Action
 
-Spawn final targeted re-review agents, then run the final local gate and mark TASK-010 complete if no P0/P1 findings remain.
+Wait for Hilbert's implementation result, validate focused checks, commit the production fix if green, then spawn targeted re-review agents.
