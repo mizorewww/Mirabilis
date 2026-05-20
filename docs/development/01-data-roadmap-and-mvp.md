@@ -4,9 +4,20 @@
 
 ## 27. 数据表设计方向
 
-使用 SQLite。
+使用 SQLite。TASK-013 通过 `src-tauri/src/db` 的私有 Rust `rusqlite` 层落地 schema、migration 和 typed repositories；前端与插件不提交 raw SQL。
 
-### 27.1 core_pages
+### 27.1 core_schema_migrations
+
+```text
+version
+name
+checksum
+applied_at
+```
+
+Migration ledger 配合 SQLite `PRAGMA user_version` 记录已应用的 Core schema 版本。TASK-013 当前版本为 `1` / `001_core_schema`。
+
+### 27.2 core_pages
 
 ```text
 id
@@ -18,7 +29,7 @@ updated_at
 archived_at
 ```
 
-### 27.2 core_metadata
+### 27.3 core_metadata
 
 ```text
 id
@@ -32,7 +43,7 @@ created_at
 updated_at
 ```
 
-### 27.3 core_events
+### 27.4 core_events
 
 ```text
 id
@@ -44,7 +55,7 @@ source_plugin_id
 created_at
 ```
 
-### 27.4 core_filters
+### 27.5 core_filters
 
 ```text
 id
@@ -58,7 +69,7 @@ created_at
 updated_at
 ```
 
-### 27.5 core_plugins
+### 27.6 core_plugins
 
 ```text
 id
@@ -71,7 +82,7 @@ installed_at
 updated_at
 ```
 
-### 27.6 core_commands
+### 27.7 core_commands
 
 ```text
 id
@@ -82,7 +93,9 @@ shortcut
 context
 ```
 
-### 27.7 core_views
+`core_commands` 保存 command descriptor。它不是 handler、函数、可执行路径、动态 import 或插件代码持久化。
+
+### 27.8 core_views
 
 ```text
 id
@@ -92,23 +105,29 @@ name
 accepted_data_shape_json
 ```
 
-### 27.8 plugin indexes
+`core_views` 保存 view descriptor 与 accepted data shape。它不是 React component、renderer、动态 import 或插件代码持久化。
 
-插件可以创建自己的索引表。
-
-示例：
+### 27.9 core_plugin_indexes
 
 ```text
-task_index
-tag_index
-timer_segment_index
-habit_completion_index
-stats_cache
-ml_feature_store
+id
+plugin_id
+index_name
+table_name
+created_at
+updated_at
 ```
 
-插件索引可以重建。
-事实数据仍然来自 Markdown Page、Metadata、Event。
+`core_plugin_indexes` 是未来 plugin-owned index metadata 的中立 baseline registry。`plugin_id` 属于 owning Core plugin，并通过 `REFERENCES core_plugins(id) ON DELETE CASCADE` 约束；它不是具体 task、tag、timer、habit、stats 或 ml 业务表，也不是插件提交动态 DDL 的通道。
+
+未来插件索引可以重建。事实数据仍然来自：
+
+```text
+Markdown Page
+Metadata
+Event
+Filter
+```
 
 ---
 
