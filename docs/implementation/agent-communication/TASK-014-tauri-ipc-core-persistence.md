@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: review round complete; review-fix TDD needed.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for review-fix tests.
+- Status: review-fix test agent running.
+- Active agents:
+  - Zeno the 2nd (`test_writer`, id `019e4755-71fe-7142-9235-7b55e3b80f44`).
+- Next parent step: wait for Zeno the 2nd, then run focused red checks.
 
 ## Agent Handoffs
 
@@ -174,9 +175,10 @@
 
 ### Review-Fix Test Round
 
-- Status: pending agent handoff.
-- Planned agent:
-  - `test_writer` for review-fix red tests.
+- Status: running.
+- Agent:
+  - Zeno the 2nd (`test_writer`, id `019e4755-71fe-7142-9235-7b55e3b80f44`).
 - Assignment:
   - Write failing tests only.
   - Do not edit production implementation.
+  - Cover metadata logical-key get/delete, real capability permission/commands.allow parsing, missing-target mutation errors and rollback, representative semantic validation across operations, and frontend transaction array typing.
