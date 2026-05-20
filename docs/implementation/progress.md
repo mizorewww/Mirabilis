@@ -44,7 +44,7 @@ Status markers:
 
 ## Milestone M3: Editor and plugin runtime
 
-- [ ] TASK-016: Implement Markdown Editor Plugin shell
+- [~] TASK-016: Implement Markdown Editor Plugin shell
 - [ ] TASK-017: Add stable block IDs and markdown import/export
 
 ## Milestone M4: Task and tag MVP
@@ -78,6 +78,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 07:35 CST - TASK-016 started
+
+- Branch: `feat/task-016-markdown-editor-plugin-shell`.
+- Task: Implement Markdown Editor Plugin shell.
+- Scope: add the first Markdown Editor Plugin shell that registers a page editor view, insert text command, and mobile toolbar slot; support baseline markdown text for headings, paragraphs, lists, task syntax, tag text, and page-link text; collect markdown editor extensions from runtime; and prove save/reopen through the existing Core/runtime/native boundary available after TASK-015.
+- Out of scope until agents narrow it: Task Plugin page creation semantics, checkbox toggle behavior, tag plugin behavior, stable block IDs/import-export, advanced ProseMirror/Tiptap schema behavior, sync, release packaging, and new Tauri command/capability expansion.
+- Agent orchestration: parent thread remains orchestration-only; planner, current-docs research, security/deprecation review, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-016-markdown-editor-plugin-shell.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 07:32 CST - TASK-015 completed
 

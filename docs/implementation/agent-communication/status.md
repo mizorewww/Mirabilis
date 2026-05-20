@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:33 CST.
+Last updated: 2026-05-21 07:35 CST.
 
 ## Current Task
 
-- Task: TASK-015 - Build app bootstrap and runtime provider.
-- Branch: `feat/task-015-app-bootstrap-runtime-provider`.
+- Task: TASK-016 - Implement Markdown Editor Plugin shell.
+- Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: ready to merge after progress commit.
+- Current phase: pre-test guidance handoff.
 
 ## Active Agents
 
@@ -77,7 +77,12 @@ Last updated: 2026-05-21 07:33 CST.
 - Documentation communication update was committed as `98895d3 Codex(progress)(Build app bootstrap and runtime provider): record docs sync`. The post-commit auto-push failed once due to an SSH timeout, so parent must retry push before or during merge cleanup.
 - Final TASK-015 local gate passed: focused TASK-015 frontend tests, `bun run typecheck`, `bun run lint`, `bun run build`, `bun run check:quick`, and `git diff --check`.
 - Parent updated `docs/implementation/progress.md` to mark TASK-015 complete and recorded validation, review, docs, and remaining risks.
-- Parent next step: commit completion progress, retry pushing the task branch, merge to `master`, push `master`, then continue to TASK-016.
+- TASK-015 completion progress was committed as `3cab44c Codex(progress)(Build app bootstrap and runtime provider): mark task complete`; the task branch was pushed; merge commit `c6b161b Codex(merge)(Build app bootstrap and runtime provider): merge task branch` was created on `master`; merge-after `bun run check:quick` passed; `master` was pushed to origin.
+- TASK-016 branch `feat/task-016-markdown-editor-plugin-shell` was created from latest `master`.
+- TASK-016 scope: register Markdown editor view, insert text command, and mobile toolbar slot; support baseline markdown text forms; collect markdown extensions from runtime; prove save/reopen through the post-TASK-015 runtime/native boundary.
+- TASK-016 out of scope unless agents find a local-doc requirement: Task Plugin page creation semantics, checkbox toggle behavior, tag plugin behavior, stable block IDs/import-export, advanced editor schema behavior, sync, release packaging, and new Tauri command/capability expansion.
+- `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: commit TASK-016 start state, then spawn read-only pre-test guidance agents.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
