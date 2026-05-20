@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: install/register and pending-dependent production fix in progress.
-- Active agents:
-  - Noether (`implementer`, `019e4679-d2e0-7260-bd26-38d3de78068c`).
-- Next parent step: wait for Noether, then validate green checks.
+- Status: post-pending-install fix re-review handoff.
+- Active agents: none.
+- Next parent step: spawn focused read-only re-review, then run local gate if no P0/P1 findings remain.
 
 ## Agent Handoffs
 
@@ -612,7 +611,7 @@
 
 ### Install/Register And Pending-Dependent Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Noether (`implementer`, `019e4679-d2e0-7260-bd26-38d3de78068c`).
 - Ownership:
@@ -621,6 +620,19 @@
   - Fix concurrent install/register race so a failed pending install cannot leave a resolved register result or orphaned command/view/slot contributions.
   - Fix dependency removal checks so pending dependent registration blocks dependency deactivate/uninstall before hooks run.
   - Preserve all existing TASK-011 lifecycle boundary behavior and stay within TypeScript Core Plugin Host scope.
+- Outcome:
+  - Noether changed `src/core/plugin-host/plugin-host.ts` only.
+  - `register(plugin)` now waits for any pending install on the same record, so a failed install rejects racing registration and record/contribution cleanup remains coherent.
+  - Failed installs revoke active lifecycle scopes, unregister tracked runtime contributions, and remove the host record.
+  - Dependency removal guards now treat active pending register scopes as dependents, even while the dependent record is still `installed`.
+- Commit:
+  - `c46cfa4 Noether(review-fix)(Implement Plugin Host lifecycle): guard pending install races`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 39 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 53 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -631,4 +643,4 @@
 
 ## Next Action
 
-Wait for Noether, then validate and commit the pending install/register production fix.
+Spawn focused read-only re-review after Noether's pending install/register fix.
