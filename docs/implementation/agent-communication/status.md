@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:17 CST.
+Last updated: 2026-05-20 10:23 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 10:17 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix tests active.
+- Current phase: review-fix tests committed; implementation pending.
 
 ## Active Agents
 
-- Dirac (`test_writer`, `019e432c-87d5-7930-bf9c-eced69fd1366`): adding review-fix tests for TASK-006 P1/P2 findings.
+- None.
 
 ## Recent Agent Outcomes
 
+- Dirac (`test_writer`) completed and was closed after adding review-fix coverage.
+- Dirac's test commit: `a7d7aa0 Dirac(test)(Add Filter Store and Query AST baseline): add review-fix coverage`.
+- Parent confirmed expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 49 tests with 36 passing and 13 failing on hostile filter IDs, proxy/reflection trap escapes, and non-enumerable properties.
 - Dirac (`test_writer`) was spawned for TASK-006 review-fix tests.
 - Review round 1 completed. Bohr reported no correctness P0/P1/P2; Boyle found one P1 raw proxy/reflection-trap escape and one P2 unvalidated `filterId` raw-error path; Darwin found three P2 test coverage gaps; Confucius found one P2 non-enumerable Query AST property issue and one P3 operator drift risk; Laplace found no docs P0/P1/P2 and two P3 docs hygiene/traceability items.
 - TASK-006 review agents spawned. `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
@@ -159,6 +162,6 @@ Last updated: 2026-05-20 10:17 CST.
 
 ## Next Actions
 
-1. Wait for Dirac's review-fix test result.
-2. Confirm expected red/updated tests.
-3. Commit tests and spawn implementer.
+1. Spawn implementer for selected P1/P2 production fixes.
+2. Repeat focused checks after implementation.
+3. Commit implementation if green.

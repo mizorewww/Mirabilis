@@ -157,21 +157,23 @@
   - Add a low-cost operator drift regression test or type check if it fits the test file cleanly.
   - Clean up Laplace's P3 docs items before merge.
 
-## Next Action
-
-Wait for Dirac's review-fix tests, then commit them.
-
 ### Dirac (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e432c-87d5-7930-bf9c-eced69fd1366`.
 - Ownership:
   - `src/test/core-filter-store.test.ts` only unless unavoidable.
+- Commit:
+  - `a7d7aa0 Dirac(test)(Add Filter Store and Query AST baseline): add review-fix coverage`.
 - Assignment:
   - Add tests for Boyle's P1 raw proxy/reflection-trap escape and P2 hostile `filterId` errors.
   - Add tests for Confucius's P2 non-enumerable Query AST property issue.
   - Add focused coverage for Darwin's P2 gaps around hostile JSON values, nested defensive copies, and mixed-field rejected update atomicity.
   - Keep production code untouched.
-- Expected signal:
-  - `bun run typecheck` should pass.
-  - `bun run test:frontend -- src/test/core-filter-store.test.ts` should fail on current P1/P2 gaps before implementation fixes.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 49 tests with 36 passing and 13 failing on hostile filter IDs, proxy/reflection trap escapes, and non-enumerable properties.
+
+## Next Action
+
+Spawn implementer for selected P1/P2 production fixes.
