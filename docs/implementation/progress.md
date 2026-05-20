@@ -28,7 +28,7 @@ Status markers:
 - [x] TASK-003: Add in-memory Page Store
 - [x] TASK-004: Add in-memory Metadata Store
 - [x] TASK-005: Add in-memory Event Store
-- [~] TASK-006: Add Filter Store and Query AST baseline
+- [x] TASK-006: Add Filter Store and Query AST baseline
 - [ ] TASK-007: Add Command Registry and Command Bus
 - [ ] TASK-008: Add View Registry and Slot Registry
 - [ ] TASK-009: Add Transaction Manager and Core Runtime composition
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 10:42 CST - TASK-006 completed
+
+- Branch: `feat/task-006-filter-store-query-ast`.
+- Task: Add Filter Store and Query AST baseline.
+- Commits: `a097393` start orchestration, `8df7418` pre-test guidance handoff, `c03eb51` pre-test guidance, `40bcc3f` test writer handoff, `1b60a72` branch-only workflow correction, `8625477` replacement test handoff, `62ccd62` acceptance tests, `255bb76` red signal, `ba4c314` implementation handoff, `611125c` implementation, `c79b63e` green signal, `c7efc5e` review handoff, `7750de0` review findings, `ab3e4aa` review-fix test handoff, `a7d7aa0` review-fix coverage, `6552296` review-fix red signal, `26c5e09` review-fix implementation handoff, `ec5cc46` review edge fixes, `916047b` review-fix green signal, `8ac6457` targeted review handoff, `ab47a01` targeted review outcome, `bffe6a1` node-count coverage, `c1fceec` node-count coverage notes, `3fff10d` node-count re-review handoff, and `4c1bf61` review traceability cleanup.
+- Delivered: `createInMemoryFilterStore`, `FilterStoreError`, Filter Store save/get/update/list/delete contracts, required `viewType`, exact `viewType` and `sourcePluginId` list filters, optional sort/group/source clearing, defensive clone boundaries, unsupported-operator typed errors, baseline Query AST validation for `eq`, `exists`, `within`, recursive `and`/`or`, and JSON-compatible query/sort/group validation with typed errors for hostile values, accessors, non-enumerable data, proxy traps, excess depth, and excess node counts.
+- Validation: `bun run check:quick` passed, `bun run build` passed, focused `bun run test:frontend -- src/test/core-filter-store.test.ts` passed with 50 tests, and `bun run typecheck` passed after the final node-count coverage.
+- Review: correctness, security, deprecation, docs, and test-quality agents reported no remaining P0/P1/P2/P3 findings after targeted review-fix rounds. Selected findings for raw proxy/reflection traps, hostile filter IDs, non-enumerable properties, operator drift coverage, and node-count exhaustion coverage were fixed before final gate.
+- External docs verified by agents: TypeScript recursive aliases and `satisfies`, Vitest `expectTypeOf`, Vitest type testing and `test.each`/`it.each`, WHATWG structured clone, TC39 `JSON.stringify`, and Node.js `structuredClone`.
+- Remaining risk: TASK-006 is storage and validation only. Later plugin-facing Filter Service, query execution, IPC, or persistence layers must add caller-bound authorization, query-cost limits, and execution semantics before exposing saved filters beyond Core. `bun run check:full` was not run because TASK-006 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-19 23:59 CST - TASK-006 started
 

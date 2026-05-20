@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: reviews clear; final gate pending.
+- Status: final gate passed; merge pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -246,4 +246,9 @@
 
 ## Next Action
 
-Run the final TASK-006 local gate.
+Commit progress completion and merge TASK-006 to `master`.
+
+## Final Gate
+
+- `bun run check:quick` passed.
+- `bun run build` passed.
