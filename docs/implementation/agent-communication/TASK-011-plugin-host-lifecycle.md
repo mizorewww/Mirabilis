@@ -39,13 +39,23 @@
 
 ## Current Status
 
-- Status: started; pre-test guidance next.
-- Active agents: none.
-- Next parent step: commit TASK-011 start state, then spawn pre-test guidance agents.
+- Status: pre-test guidance in progress.
+- Active agents: Darwin (`planner`), Hume (`docs_researcher`), Fermat (`deprecation_auditor`), and Ohm (`security_reviewer`).
+- Next parent step: wait for pre-test guidance agents, summarize decisions, then spawn `test_writer`.
 
 ## Agent Handoffs
 
-None yet.
+### Pre-test Guidance Round
+
+- Status: in progress.
+- Agents:
+  - Darwin (`planner`, `019e45d7-cde9-7f53-abee-8c535aed815f`).
+  - Hume (`docs_researcher`, `019e45d7-d5c3-7701-9849-7fff0f1607ca`).
+  - Fermat (`deprecation_auditor`, `019e45d7-e769-7532-a276-daa9377f14c5`).
+  - Ohm (`security_reviewer`, `019e45d7-eefb-73d0-b1c5-aec43f6fb750`).
+- Assignment:
+  - Produce focused behavior, test, docs, API, deprecation, and security-boundary guidance before TDD tests.
+  - Stay read-only and do not edit files.
 
 ## Parent Decisions
 
@@ -56,4 +66,4 @@ None yet.
 
 ## Next Action
 
-Commit TASK-011 start state and spawn pre-test guidance agents.
+Wait for pre-test guidance agents, summarize decisions, then spawn `test_writer`.

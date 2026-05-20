@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:45 CST.
+Last updated: 2026-05-20 22:50 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 22:45 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 started; pre-test guidance next.
+- Current phase: TASK-011 pre-test guidance in progress.
 
 ## Active Agents
 
-- None. Next step is commit TASK-011 start state, then spawn pre-test guidance agents.
+- Darwin (`planner`, `019e45d7-cde9-7f53-abee-8c535aed815f`) is planning TASK-011 behavior and tests.
+- Hume (`docs_researcher`, `019e45d7-d5c3-7701-9849-7fff0f1607ca`) is checking current lifecycle docs for inspiration.
+- Fermat (`deprecation_auditor`, `019e45d7-e769-7532-a276-daa9377f14c5`) is reviewing API/deprecation risks.
+- Ohm (`security_reviewer`, `019e45d7-eefb-73d0-b1c5-aec43f6fb750`) is reviewing Plugin Host security/boundary risks.
 
 ## Recent Agent Outcomes
 
+- TASK-011 pre-test guidance agents spawned: Darwin, Hume, Fermat, and Ohm. All are read-only.
 - TASK-010 was merged to `master` and pushed. Merge commit: `ec361c5 Codex(merge)(Define Plugin API contracts): merge task branch`.
 - TASK-011 branch `feat/task-011-plugin-host-lifecycle` was created from latest `master`.
 - TASK-011 scope: implement TypeScript Plugin Host lifecycle orchestration for explicit built-in plugin lists, deterministic dependency ordering, install/activate/register/deactivate/uninstall/get behavior, duplicate/dependency handling, and typed failure behavior without corrupting Core registries. Native/Tauri plugin loading, persistence, IPC, SQLite, UI rendering, filesystem plugin discovery, and concrete business plugins are out of scope.
