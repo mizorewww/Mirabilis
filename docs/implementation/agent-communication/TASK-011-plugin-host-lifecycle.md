@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: concurrent lifecycle fix green; final micro re-review next.
-- Active agents: none.
-- Next parent step: run final micro re-review for concurrent lifecycle fix, then local gate if clear.
+- Status: final concurrent lifecycle micro re-review in progress.
+- Active agents: Hypatia (`reviewer`), Dirac (`security_reviewer`), and Gibbs (`test_quality_reviewer`).
+- Next parent step: wait for final micro re-review, then local gate if clear.
 
 ## Agent Handoffs
 
@@ -503,6 +503,16 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Concurrent Lifecycle Micro Re-Review
+
+- Status: in progress.
+- Agents:
+  - Hypatia (`reviewer`, `019e4661-9196-7bd1-a798-17c473ce64cb`).
+  - Dirac (`security_reviewer`, `019e4661-9f3e-7be1-bf25-01ebc6fd09dd`).
+  - Gibbs (`test_quality_reviewer`, `019e4661-a91f-7812-851e-00efce864de6`).
+- Assignment:
+  - Read-only final micro re-review of the concurrent register/uninstall lifecycle fix and test.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -512,4 +522,4 @@
 
 ## Next Action
 
-Run final micro re-review for concurrent lifecycle fix.
+Wait for final concurrent lifecycle micro re-review, then run the local gate if clear.
