@@ -42,9 +42,12 @@
 
 ## Current Status
 
-- Status: P1 review-fix green; narrow re-review pending.
-- Active agents: none.
-- Next agent step: spawn narrow targeted re-review agents for the non-plain snapshot fix.
+- Status: P1 review-fix narrow re-review active.
+- Active agents:
+  - Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`): narrow correctness re-review for Peirce's snapshot comparison fix.
+  - McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`): narrow test-quality re-review for Chandrasekhar's coverage.
+  - Aristotle (`security_reviewer`, `019e4699-91b8-73f3-877d-3890cbfc7565`): narrow boundary/security re-review for comparator and transaction visibility.
+- Next agent step: wait for narrow targeted re-review.
 
 ## Agent Handoffs
 
@@ -317,6 +320,18 @@
 - Remaining risk:
   - Snapshot comparison remains intentionally scoped to supported structured-clone values needed for TASK-009. Opaque future structured-clone classes may need explicit comparators later.
 
+### Narrow P1 Re-review
+
+- Status: active.
+- Agents:
+  - Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`).
+  - McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`).
+  - Aristotle (`security_reviewer`, `019e4699-91b8-73f3-877d-3890cbfc7565`).
+- Assignment:
+  - Verify Peirce's `Date`, `Set`, and `RegExp` snapshot comparison fix closes Boole's P1 without regressing transaction behavior.
+  - Verify Chandrasekhar's new tests meaningfully cover the P1 and Leibniz's low-cost P2 coverage requests.
+  - Check for new P0/P1/P2 boundary or security issues around participant visibility, getter/proxy invocation, and pre-replace conflict safety.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -330,4 +345,4 @@
 
 ## Next Action
 
-Spawn narrow targeted re-review agents for the P1 fix, then run the final local gate if no P0/P1 findings remain.
+Wait for narrow targeted re-review, then run the final local gate if no P0/P1 findings remain.

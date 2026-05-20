@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:41 CST.
+Last updated: 2026-05-20 18:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 18:41 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 P1 review-fix green; narrow re-review pending.
+- Current phase: TASK-009 P1 review-fix narrow re-review active.
 
 ## Active Agents
 
-- None.
+- Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`): narrow correctness re-review for Peirce's snapshot comparison fix.
+- McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`): narrow test-quality re-review for Chandrasekhar's coverage.
+- Aristotle (`security_reviewer`, `019e4699-91b8-73f3-877d-3890cbfc7565`): narrow boundary/security re-review for comparator and transaction visibility.
 
 ## Recent Agent Outcomes
 
+- Narrow TASK-009 P1 re-review agents spawned after Peirce's green review-fix commit.
 - Peirce (`implementer`) completed and was closed after fixing Boole's P1 non-plain snapshot comparison issue.
 - Peirce's review-fix commit: `13ad41d Peirce(review-fix)(Add Transaction Manager and Core Runtime composition): compare non-plain transaction snapshots`.
 - Peirce changed only `src/core/services/transaction-manager.ts`, adding explicit deterministic `Date`, `Set`, and `RegExp` snapshot comparisons before Map, Array, and object comparison fallbacks.
@@ -342,10 +345,10 @@ Last updated: 2026-05-20 18:41 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has a green P1 review-fix and is ready for narrow targeted re-review.
+- TASK-008 is complete and merged. TASK-009 has a green P1 review-fix and narrow targeted re-review is active.
 
 ## Next Actions
 
-1. Spawn narrow targeted re-review agents for Peirce's P1 fix.
+1. Wait for narrow targeted re-review agents.
 2. Run final local gate if no P0/P1 findings remain.
 3. Update progress, commit completion notes, merge to `master`, and continue.
