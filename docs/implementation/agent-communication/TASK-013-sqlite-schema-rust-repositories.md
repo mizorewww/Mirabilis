@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: focused re-review complete; final P2 cleanup handoff next.
+- Status: final P2 cleanup test agent running.
 - Active agents:
-  - None.
-- Next parent step: commit re-review outcomes, then delegate final P2 cleanup tests.
+  - Lovelace the 2nd (`test_writer`, id `019e4713-3b05-7f52-a3f2-765b08d583ab`).
+- Next parent step: wait for Lovelace the 2nd, review the test patch, run focused checks, then commit if the red signal is clean.
 
 ## Agent Handoffs
 
@@ -169,6 +169,19 @@
   - Introduce immutable `MIGRATION_001_VERSION`.
   - Update migration 001 checksum to reflect the final v1 schema.
   - Reject future ledger versions independent of `PRAGMA user_version`.
+
+### Final P2 Cleanup Test Round
+
+- Status: running.
+- Agent:
+  - Lovelace the 2nd (`test_writer`, id `019e4713-3b05-7f52-a3f2-765b08d583ab`).
+- Ownership:
+  - `src-tauri/tests/sqlite_repositories.rs`.
+  - `src-tauri/tests/sqlite_boundary.rs`.
+- Assignment:
+  - Strengthen FK cascade behavior coverage for `core_plugin_indexes`.
+  - Relax boundary scans so TASK-014 can narrow `DbQuery.operation` and add reviewed non-SQL object permissions.
+  - Add red checks for old v1 checksum/schema drift, future ledger rows, and specific migration error variants.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1
