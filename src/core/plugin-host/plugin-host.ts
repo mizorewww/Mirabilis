@@ -161,6 +161,7 @@ type StoredPluginRecord = {
   order: number;
   contributions: RegisteredContribution[];
   lifecycleScopes: Set<PluginContextScope>;
+  installPromise?: Promise<void>;
 };
 
 type NormalizedDependency = {
@@ -221,7 +222,7 @@ class PluginHostImpl implements PluginHostInstance {
       const record = this.addInstalledRecord(plugin);
 
       try {
-        await this.runLifecycleHook(record, "install", record.plugin.install);
+        await this.installRecord(record);
       } catch (error) {
         this.rollbackInstalledBatchRecords(
           [...installedRecords, record],
@@ -244,6 +245,8 @@ class PluginHostImpl implements PluginHostInstance {
     const existingRecord = this.records.get(plugin.manifest.id);
 
     if (existingRecord !== undefined) {
+      await this.awaitPendingInstall(existingRecord);
+
       return this.toPublicRecord(existingRecord);
     }
 
@@ -255,19 +258,18 @@ class PluginHostImpl implements PluginHostInstance {
 
     const record = this.addInstalledRecord(plugin);
 
-    try {
-      await this.runLifecycleHook(record, "install", record.plugin.install);
-    } catch (error) {
-      this.records.delete(record.manifest.id);
-      throw error;
-    }
+    await this.installRecord(record);
 
     return this.toPublicRecord(record);
   }
 
   async register(plugin: AppPlugin): Promise<PluginHostRecord> {
-    if (!this.records.has(plugin.manifest.id)) {
+    const existingRecord = this.records.get(plugin.manifest.id);
+
+    if (existingRecord === undefined) {
       await this.install(plugin);
+    } else {
+      await this.awaitPendingInstall(existingRecord);
     }
 
     const record = this.requireRecord(plugin.manifest.id);
@@ -405,6 +407,36 @@ class PluginHostImpl implements PluginHostInstance {
     return pluginIds;
   }
 
+  private installRecord(record: StoredPluginRecord): Promise<void> {
+    if (record.installPromise !== undefined) {
+      return record.installPromise;
+    }
+
+    const installPromise = Promise.resolve()
+      .then(() =>
+        this.runLifecycleHook(record, "install", record.plugin.install),
+      )
+      .catch((error: unknown) => {
+        this.cleanupFailedInstallRecord(record);
+        throw error;
+      })
+      .finally(() => {
+        if (record.installPromise === installPromise) {
+          delete record.installPromise;
+        }
+      });
+
+    record.installPromise = installPromise;
+
+    return installPromise;
+  }
+
+  private async awaitPendingInstall(record: StoredPluginRecord): Promise<void> {
+    if (record.installPromise !== undefined) {
+      await record.installPromise;
+    }
+  }
+
   private assertRequiredDependenciesSatisfied(
     record: StoredPluginRecord,
   ): void {
@@ -426,7 +458,10 @@ class PluginHostImpl implements PluginHostInstance {
 
   private assertNoRegisteredDependents(pluginId: string): void {
     for (const record of this.records.values()) {
-      if (record.manifest.id === pluginId || record.status === "installed") {
+      if (
+        record.manifest.id === pluginId ||
+        (record.status === "installed" && !hasActiveRegisterScope(record))
+      ) {
         continue;
       }
 
@@ -852,6 +887,18 @@ class PluginHostImpl implements PluginHostInstance {
     this.nextOrder = restoredNextOrder;
   }
 
+  private cleanupFailedInstallRecord(record: StoredPluginRecord): void {
+    this.revokeLifecycleScopes(record);
+
+    if (this.records.get(record.manifest.id) !== record) {
+      return;
+    }
+
+    this.unregisterTrackedContributions(record.contributions);
+    record.contributions = [];
+    this.records.delete(record.manifest.id);
+  }
+
   private toPublicRecord(record: StoredPluginRecord): PluginHostRecord {
     return {
       id: record.manifest.id,
@@ -881,6 +928,16 @@ function createPluginContextScope(
     registrationTracker: [],
     registrationTrackerRolledBack: false,
   };
+}
+
+function hasActiveRegisterScope(record: StoredPluginRecord): boolean {
+  for (const scope of record.lifecycleScopes) {
+    if (scope.phase === "register" && scope.active) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function assertCanRegisterRuntimeContribution(
