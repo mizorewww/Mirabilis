@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:06 CST.
+Last updated: 2026-05-20 19:07 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 19:06 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 binary structured-clone P1 green; final narrow re-review pending.
+- Current phase: TASK-009 final binary structured-clone re-review active.
 
 ## Active Agents
 
-- None.
+- James (`reviewer`, `019e4699-91c6-73f3-877d-3a849a83e3d4`): final correctness re-review for binary snapshot comparison.
+- Hegel (`security_reviewer`, `019e4699-91c6-73f3-877d-3aace056bbce`): final boundary/security re-review for binary snapshot comparison.
+- Zeno (`test_quality_reviewer`, `019e4699-91c6-73f3-877d-3acccdd19202`): final test-quality re-review for binary conflict coverage.
 
 ## Recent Agent Outcomes
 
+- Final binary structured-clone re-review agents spawned after `af31b07`, `425a2b4`, and `b39065b`.
 - Galileo (`implementer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused production patch in `src/core/services/transaction-manager.ts`.
 - Parent validated Galileo's patch and found one realm-sensitive ArrayBuffer test assertion failure, then delegated a test-only assertion fix to Faraday.
 - Faraday (`test_writer`) completed and was closed after replacing the realm-sensitive binary test assertions with structured-clone tag and exact-byte checks.
@@ -359,10 +362,10 @@ Last updated: 2026-05-20 19:06 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has a green binary structured-clone P1 fix and is ready for final narrow re-review.
+- TASK-008 is complete and merged. TASK-009 has a green binary structured-clone P1 fix and final narrow re-review is active.
 
 ## Next Actions
 
-1. Spawn final narrow re-review agents for the binary structured-clone comparator fix.
+1. Wait for final narrow re-review agents.
 2. Run final local gate if no P0/P1 findings remain.
 3. Update progress, commit completion notes, merge to `master`, and continue.
