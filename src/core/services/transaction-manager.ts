@@ -197,8 +197,20 @@ function snapshotsEqual(left: unknown, right: unknown): boolean {
     return false;
   }
 
+  if (left instanceof Date || right instanceof Date) {
+    return datesEqual(left, right);
+  }
+
   if (left instanceof Map || right instanceof Map) {
     return mapsEqual(left, right);
+  }
+
+  if (left instanceof Set || right instanceof Set) {
+    return setsEqual(left, right);
+  }
+
+  if (left instanceof RegExp || right instanceof RegExp) {
+    return regexpsEqual(left, right);
   }
 
   if (Array.isArray(left) || Array.isArray(right)) {
@@ -206,6 +218,14 @@ function snapshotsEqual(left: unknown, right: unknown): boolean {
   }
 
   return objectsEqual(left, right);
+}
+
+function datesEqual(left: object, right: object): boolean {
+  if (!(left instanceof Date) || !(right instanceof Date)) {
+    return false;
+  }
+
+  return Object.is(left.getTime(), right.getTime());
 }
 
 function mapsEqual(left: object, right: object): boolean {
@@ -253,6 +273,35 @@ function arraysEqual(left: object, right: object): boolean {
       readSnapshotProperty(right, key),
     );
   });
+}
+
+function setsEqual(left: object, right: object): boolean {
+  if (!(left instanceof Set) || !(right instanceof Set)) {
+    return false;
+  }
+
+  if (left.size !== right.size) {
+    return false;
+  }
+
+  const leftValues = [...left.values()];
+  const rightValues = [...right.values()];
+
+  return leftValues.every((leftValue, index) =>
+    snapshotsEqual(leftValue, rightValues[index]),
+  );
+}
+
+function regexpsEqual(left: object, right: object): boolean {
+  if (!(left instanceof RegExp) || !(right instanceof RegExp)) {
+    return false;
+  }
+
+  return (
+    left.source === right.source &&
+    left.flags === right.flags &&
+    left.lastIndex === right.lastIndex
+  );
 }
 
 function objectsEqual(left: object, right: object): boolean {
