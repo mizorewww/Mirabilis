@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: red test agent running.
+- Status: red tests committed; implementation handoff next.
 - Active agents:
-  - Einstein the 2nd (`test_writer`, id `019e46ec-db58-7e33-a0c3-a778b295a5ab`).
-- Next parent step: wait for Einstein the 2nd, review the red-test patch, run focused red checks, then commit the tests if the failure is clean.
+  - None.
+- Next parent step: commit this red-signal record, then delegate minimum Rust DB production implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -87,7 +87,7 @@
 
 ### Red Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Einstein the 2nd (`test_writer`, id `019e46ec-db58-7e33-a0c3-a778b295a5ab`).
 - Ownership:
@@ -106,3 +106,9 @@
   - SQL injection regression strings persisted literally with tables still intact.
   - Deterministic list ordering.
   - Boundary scans proving no frontend raw SQL package, no TASK-013 IPC command exposure, no capability additions, and no SQL-shaped TypeScript `DbQuery`.
+- Outcome:
+  - Changed files: `src-tauri/tests/sqlite_repositories.rs`, `src-tauri/tests/sqlite_boundary.rs`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`.
+  - Commit: `3092b67 Einstein the 2nd(test)(Add SQLite schema and Rust repositories): add sqlite repository acceptance tests`.
+  - Expected red check: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails because `mirabilis_lib::db` is missing.
+  - Green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
+  - Test-surface assumptions for implementation: public Rust surface under `mirabilis_lib::db`; `DbError::InvalidJson { table, column, record_id, .. }`; migration `001_core_schema`; schema version `1`; migration ledger table `core_schema_migrations`; event repository is append/get/list oriented.
