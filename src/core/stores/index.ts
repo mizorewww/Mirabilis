@@ -10,6 +10,10 @@ export {
   EventStoreError,
   createInMemoryEventStore,
 } from "./event-store";
+export {
+  FilterStoreError,
+  createInMemoryFilterStore,
+} from "./filter-store";
 export type {
   CreateInMemoryPageStoreOptions,
   CreatePageInput,
@@ -32,3 +36,11 @@ export type {
   EventStoreErrorCode,
   ListEventsOptions,
 } from "./event-store";
+export type {
+  CreateInMemoryFilterStoreOptions,
+  FilterStore,
+  FilterStoreErrorCode,
+  ListFiltersOptions,
+  SaveFilterInput,
+  UpdateFilterInput,
+} from "./filter-store";
