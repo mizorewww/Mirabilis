@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:36 CST.
+Last updated: 2026-05-20 22:37 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-20 22:36 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 review-fix green; targeted re-review pending.
+- Current phase: TASK-009 targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`): targeted correctness re-review for live-write conflict and nested/concurrent transaction behavior.
+- Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`): targeted boundary review for participant visibility and commit conflict safety.
+- Leibniz (`test_quality_reviewer`, `019e4699-90db-73f3-877d-35efd961b5cf`): targeted test-quality re-review for review-fix coverage.
+- Parfit (`deprecation_auditor`, `019e4699-9193-73f3-877d-364a90819f4b`): targeted API/deprecation re-review.
+- Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`): targeted docs/status re-review.
 
 ## Recent Agent Outcomes
 
+- TASK-009 targeted re-review agents spawned after `a86304e` and `e86ed5c`.
 - Goodall (`implementer`) completed and was closed after implementing TASK-009 review fixes.
 - Goodall's review-fix commit: `a86304e Goodall(review-fix)(Add Transaction Manager and Core Runtime composition): harden transaction commits`.
 - Parent repeated green checks after Goodall: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 14 tests passing, `bun run lint`, `git diff --check`, and a focused store/runtime regression run with 126 tests passing.
@@ -329,6 +334,6 @@ Last updated: 2026-05-20 22:36 CST.
 
 ## Next Actions
 
-1. Record targeted re-review handoff.
-2. Spawn targeted re-review agents.
-3. Fix any remaining P0/P1 findings before final gate.
+1. Wait for targeted re-review agents.
+2. Record targeted re-review findings.
+3. Run final gate if no P0/P1 findings remain.

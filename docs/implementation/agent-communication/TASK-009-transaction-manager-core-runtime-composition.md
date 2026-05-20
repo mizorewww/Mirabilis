@@ -42,8 +42,13 @@
 
 ## Current Status
 
-- Status: review-fix green; targeted re-review pending.
-- Active agents: none.
+- Status: targeted re-review active.
+- Active agents:
+  - Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`): targeted correctness re-review for live-write conflict and nested/concurrent transaction behavior.
+  - Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`): targeted boundary review for participant visibility and commit conflict safety.
+  - Leibniz (`test_quality_reviewer`, `019e4699-90db-73f3-877d-35efd961b5cf`): targeted test-quality re-review for review-fix coverage.
+  - Parfit (`deprecation_auditor`, `019e4699-9193-73f3-877d-364a90819f4b`): targeted API/deprecation re-review.
+  - Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`): targeted docs/status re-review.
 
 ## Agent Handoffs
 
@@ -249,6 +254,18 @@
   - `git diff --check` passed.
   - `bun run test:frontend -- src/test/core-page-store.test.ts src/test/core-metadata-store.test.ts src/test/core-event-store.test.ts src/test/core-filter-store.test.ts src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 126 tests.
 
+### Targeted Re-review
+
+- Status: active.
+- Agents:
+  - Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`).
+  - Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`).
+  - Leibniz (`test_quality_reviewer`, `019e4699-90db-73f3-877d-35efd961b5cf`).
+  - Parfit (`deprecation_auditor`, `019e4699-9193-73f3-877d-364a90819f4b`).
+  - Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`).
+- Assignment:
+  - Verify review round 1 P1/P2 findings are closed after review-fix tests and Goodall's production fix.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -262,4 +279,4 @@
 
 ## Next Action
 
-Record targeted re-review handoff, spawn targeted re-review agents, then fix any remaining P0/P1 findings before final gate.
+Wait for targeted re-review agents, record findings, then run final gate if no P0/P1 findings remain.
