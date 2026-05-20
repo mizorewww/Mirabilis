@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 05:13 CST.
+Last updated: 2026-05-21 05:14 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 05:13 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance complete; parent decisions recorded.
+- Current phase: red-test agent running.
 
 ## Active Agents
 
-- None. Pre-test guidance agents were closed after reporting.
+- Bacon the 2nd (`test_writer`, id `019e473d-a698-7fc3-8975-ee6c95e82e8d`) - TASK-014 Rust IPC/capability and frontend NativeBridge red tests.
 
 ## Recent Agent Outcomes
 
@@ -24,7 +24,8 @@ Last updated: 2026-05-21 05:13 CST.
 - TASK-014 pre-test guidance agents were spawned. All are read-only and must not edit files.
 - TASK-014 pre-test guidance completed. Turing the 2nd (`planner`) recommended one shared TS/Rust operation allowlist for pages, metadata, events, and filters; `db_transaction` returns ordered per-operation results and rolls back on failure. Franklin the 2nd (`docs_researcher`) verified current Tauri v2 command/state/capability/test docs and warned that `Database` must be wrapped in `Mutex` or a `Send + Sync` service for Tauri state. Pascal the 2nd (`deprecation_auditor`) flagged P0 guardrails against raw SQL exposure and direct `Database` state, plus P1 removal of scaffold `greet` and single `invoke_handler`. Herschel the 2nd (`security_reviewer`) required allowlisted operations, app-owned DB state/path, strict DTO validation, atomic transactions, typed/redacted errors, capability review, and preserved frontend/plugin boundaries.
 - Parent decisions for red tests: add tests first for a shared operation allowlist, `db_execute` / `db_transaction` command surface, strict payload validation, typed/redacted IPC errors, transaction rollback, no caller-supplied DB path, removal of `greet`, no raw SQL / SQL plugin / broad capability scope, and NativeBridge operation narrowing while preserving exact `{ query }` / `{ queries }` envelopes. Include minimal Rust DB state/path ownership in TASK-014; leave React runtime/provider composition, UI persistence flows, WAL/busy-timeout/trusted-schema hardening, and business plugin behavior for later tasks.
-- Parent next step: spawn `test_writer` for red tests.
+- Bacon the 2nd (`test_writer`) was spawned for TASK-014 red tests. Ownership is limited to Rust integration tests, frontend NativeBridge contract tests, and test-only dev-dependencies only if required. Production implementation files are out of scope.
+- Parent next step: wait for Bacon the 2nd, then run focused red checks and commit the test patch if valid.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.

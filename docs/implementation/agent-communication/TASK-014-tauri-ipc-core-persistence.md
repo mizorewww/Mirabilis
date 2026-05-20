@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; parent decisions recorded.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for red tests.
+- Status: red-test agent running.
+- Active agents:
+  - Bacon the 2nd (`test_writer`, id `019e473d-a698-7fc3-8975-ee6c95e82e8d`).
+- Next parent step: wait for Bacon the 2nd, then run focused red checks.
 
 ## Agent Handoffs
 
@@ -95,9 +96,10 @@
 
 ### Red Test Round
 
-- Status: pending agent handoff.
-- Planned agent:
-  - `test_writer` for Rust IPC/capability tests and frontend NativeBridge operation allowlist tests.
+- Status: running.
+- Agent:
+  - Bacon the 2nd (`test_writer`, id `019e473d-a698-7fc3-8975-ee6c95e82e8d`).
 - Assignment:
   - Write failing tests only.
   - Avoid production implementation changes.
+  - Cover shared operation allowlist, NativeBridge envelopes, Rust IPC command contract, temp DB state behavior, strict validation/redacted errors, transaction rollback, capability/config scans, `greet` removal, no raw SQL, and no native/plugin boundary leaks.
