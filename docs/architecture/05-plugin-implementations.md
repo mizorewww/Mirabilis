@@ -2,6 +2,10 @@
 
 描述 Timer、Habit、Heatmap、Stats、Chart、ML 和 AI 插件在代码层的目录与注册方式。
 
+TASK-010 当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
+只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；metadata fields、event types、indexers、algorithms、mobile toolbar items 和 settings panels 目前是 manifest contribution descriptor。
+插件调用 plugin-facing APIs 时不传 `pluginId` 或 `sourcePluginId`；Plugin Host 根据当前插件身份注入 ownership。
+
 ## 10. Timer Plugin 代码架构
 
 Timer Plugin 是另一个核心插件。
@@ -44,18 +48,17 @@ plugins/timer/
 
 ### 10.1 Timer Plugin 注册内容
 
+Timer manifest 声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
+当前 `register(ctx)` 只注册 commands、views 和 slots 这三个 TASK-010 runtime registration facades。
+
 ```ts
 export const TimerPlugin: AppPlugin = {
   manifest,
 
   register(ctx) {
-    registerTimerMetadata(ctx);
-    registerTimerEvents(ctx);
     registerTimerCommands(ctx);
-    registerTimerFilters(ctx);
     registerTimerViews(ctx);
     registerTimerSlots(ctx);
-    registerTimerIndexers(ctx);
   }
 };
 ```
@@ -76,10 +79,12 @@ runtime.commands.execute("timer.start", { pageId });
 
 Timer Plugin handler：
 
+这个 sketch 里的 active timer state 使用后续 plugin-local runtime storage，不是 TASK-010 当前的 `ctx.metadata` facade。
+
 ```ts
 async function startTimer(ctx, { pageId }) {
   await ctx.transaction.run(async tx => {
-    const active = await tx.metadata.getGlobal("timer", "activeSegmentId");
+    const active = await readTimerRuntimeState("activeSegmentId");
 
     if (active) {
       await stopActiveTimer(tx);
@@ -87,12 +92,7 @@ async function startTimer(ctx, { pageId }) {
 
     const segmentId = createId();
 
-    await tx.metadata.setGlobal({
-      namespace: "timer",
-      key: "activeSegmentId",
-      value: segmentId,
-      sourcePluginId: "timer"
-    });
+    await writeTimerRuntimeState("activeSegmentId", segmentId);
 
     await tx.events.append({
       pageId,
@@ -101,8 +101,7 @@ async function startTimer(ctx, { pageId }) {
       payload: {
         segmentId,
         startAt: now()
-      },
-      sourcePluginId: "timer"
+      }
     });
   });
 }
@@ -115,7 +114,7 @@ Stop 后生成 Time Segment。
 ```ts
 async function stopTimer(ctx) {
   await ctx.transaction.run(async tx => {
-    const activeSegmentId = await tx.metadata.getGlobal("timer", "activeSegmentId");
+    const activeSegmentId = await readTimerRuntimeState("activeSegmentId");
 
     const startedEvent = await tx.events.findTimerStart(activeSegmentId);
 
@@ -135,16 +134,10 @@ async function stopTimer(ctx) {
         durationSeconds: diffSeconds(startedEvent.payload.startAt, now()),
         notePageId: notePage.id,
         source: "timer"
-      },
-      sourcePluginId: "timer"
+      }
     });
 
-    await tx.metadata.setGlobal({
-      namespace: "timer",
-      key: "activeSegmentId",
-      value: null,
-      sourcePluginId: "timer"
-    });
+    await writeTimerRuntimeState("activeSegmentId", null);
   });
 }
 ```
@@ -182,15 +175,26 @@ plugins/habit/
 ```
 
 Habit Plugin 只提供 habit 数据语义。
+当前 TASK-010 通过 manifest descriptor 声明 metadata field；renderer / editor 注册是后续 UI runtime facade。
 
 ```ts
-ctx.metadataFields.register({
-  namespace: "habit",
-  key: "enabled",
-  valueType: "boolean",
-  renderer: HabitEnabledRenderer,
-  editor: HabitEnabledEditor
-});
+export const habitManifest: PluginManifest = {
+  id: "habit",
+  name: "Habit Plugin",
+  version: "0.1.0",
+  minAppVersion: "0.1.0",
+  contributes: {
+    metadataFields: [
+      {
+        id: "habit.enabled",
+        namespace: "habit",
+        key: "enabled",
+        name: "Habit enabled",
+        valueType: "boolean"
+      }
+    ]
+  }
+};
 ```
 
 ### 11.2 Heatmap Plugin
@@ -215,7 +219,6 @@ Heatmap Plugin 注册通用 heatmap view：
 ```ts
 ctx.views.register({
   id: "heatmap.calendar",
-  pluginId: "heatmap",
   type: "heatmap",
   title: "Heatmap calendar",
   component: HeatmapView,
@@ -254,16 +257,26 @@ plugins/stats/
       InsightCard.tsx
 ```
 
-Stats Plugin 注册 aggregation：
+Stats Plugin 通过 manifest descriptor 声明 aggregation。
+可执行 algorithm registry 和 handler 绑定是后续 Plugin Platform 工作，不是 TASK-010 当前 runtime facade。
 
 ```ts
-ctx.algorithms.register({
-  id: "stats.sum-time-by-tag",
-  pluginId: "stats",
-  inputSchema: SumTimeByTagInput,
-  outputSchema: SumTimeByTagOutput,
-  handler: sumTimeByTag
-});
+export const statsManifest: PluginManifest = {
+  id: "stats",
+  name: "Stats Plugin",
+  version: "0.1.0",
+  minAppVersion: "0.1.0",
+  contributes: {
+    algorithms: [
+      {
+        id: "stats.sum-time-by-tag",
+        name: "Sum time by tag",
+        inputSchema: SumTimeByTagInput,
+        outputSchema: SumTimeByTagOutput
+      }
+    ]
+  }
+};
 ```
 
 ### 12.2 Chart Plugin
@@ -285,7 +298,6 @@ Chart Plugin 注册：
 ```ts
 ctx.views.register({
   id: "chart.bar",
-  pluginId: "chart",
   type: "chart.bar",
   title: "Bar chart",
   component: BarChartView,
@@ -319,22 +331,32 @@ plugins/ml/
       refreshPredictions.ts
 ```
 
-ML Plugin 注册：
+ML Plugin 通过 manifest descriptor 声明 algorithm；可执行 algorithm handler 绑定是后续 runtime facade。
 
 ```ts
-ctx.algorithms.register({
-  id: "ml.predict-remaining-time",
-  pluginId: "ml",
-  inputSchema: PredictRemainingInput,
-  outputSchema: PredictRemainingOutput,
-  handler: predictRemainingTime
-});
+export const mlManifest: PluginManifest = {
+  id: "ml",
+  name: "Machine Learning Plugin",
+  version: "0.1.0",
+  minAppVersion: "0.1.0",
+  contributes: {
+    algorithms: [
+      {
+        id: "ml.predict-remaining-time",
+        name: "Predict remaining time",
+        inputSchema: PredictRemainingInput,
+        outputSchema: PredictRemainingOutput
+      }
+    ]
+  }
+};
 ```
 
 预测结果写入 Metadata：
 
 ```ts
-await ctx.metadata.set(pageId, {
+await ctx.metadata.set({
+  pageId,
   namespace: "ml",
   key: "predictedRemainingTime",
   value: {
@@ -342,7 +364,7 @@ await ctx.metadata.set(pageId, {
     maxHours: 9,
     confidence: 0.72
   },
-  sourcePluginId: "ml"
+  valueType: "json"
 });
 ```
 
@@ -352,7 +374,6 @@ ML Panel 通过 Slot 渲染在页面侧边：
 ctx.slots.register({
   id: "ml.page-sidebar.prediction-panel",
   slot: "page.sidebar.panel",
-  pluginId: "ml",
   component: PredictionPanel,
   when: ({ pageId }) => isTaskPage(pageId)
 });
@@ -392,7 +413,6 @@ AI Plugin 注册命令：
 ```ts
 ctx.commands.register({
   id: "ai.generate-subtasks",
-  pluginId: "ai",
   title: "Generate subtasks",
   handler: generateSubtasks
 });

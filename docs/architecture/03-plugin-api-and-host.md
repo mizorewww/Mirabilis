@@ -57,6 +57,10 @@ export type PluginContributions = {
 };
 ```
 
+这些 buckets 是 TASK-010 当前的 manifest contribution descriptor。
+它们声明插件贡献的形状和身份，但不是同名 runtime facade：当前 `PluginContext` 没有用于 metadata field、event type、algorithm、indexer、mobile toolbar item 或 settings panel 的 runtime registration facade。
+这些运行时 facade 属于后续 Plugin Host / Plugin Platform 工作。
+
 ---
 
 ### 5.3 AppPlugin
@@ -122,6 +126,8 @@ export type PluginContext = {
 插件不直接操作全局数据库。
 插件通过 `ctx.pages`、`ctx.metadata`、`ctx.events`、`ctx.filters`、`ctx.transaction` 操作 Core 数据。
 插件通过 `PluginCommandRegistry`、`PluginViewRegistry`、`PluginSlotRegistry` 这类 plugin-facing facade 注册能力，并拿到 descriptor；不直接暴露 Core 内部的 `CommandRegistry`、`ViewRegistry`、`SlotRegistry`、`AlgorithmRegistry`。
+`PluginCommandRegistry` 当前只有 `register`、`get` 和 `list`；命令执行属于 app runtime / Command Service，不在 TASK-010 `PluginContext` 中暴露。
+Plugin-facing stores 和 registries 的输入不接受调用方传入的 `pluginId` 或 `sourcePluginId`，这些 ownership key 由 Plugin Host 按当前插件身份注入。
 `settings`、`storage`、`query`、`eventBus` 和独立 `packages/plugin-api` 包拆分是后续接口面，不属于 TASK-010 当前 contract。
 
 ---
@@ -144,6 +150,8 @@ export class PluginHost {
   async activate(pluginId: string) {}
 
   async deactivate(pluginId: string) {}
+
+  async uninstall(pluginId: string) {}
 
   async register(plugin: AppPlugin) {}
 

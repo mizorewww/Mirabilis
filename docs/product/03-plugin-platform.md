@@ -61,6 +61,9 @@ Markdown Extension Plugin
 ```
 
 Manifest 用来声明插件能给系统贡献什么。
+TASK-010 中，`contributes` 里的能力是 manifest contribution descriptor，不等于已经存在同名 runtime facade。
+当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
+其中只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；`metadataFields`、`eventTypes`、`indexers`、`algorithms`、`mobileToolbarItems`、`settingsPanels` 目前由 manifest 描述，后续 Plugin Host / Plugin Platform 再把它们接成可执行或可渲染运行时能力。
 
 ---
 
@@ -154,16 +157,16 @@ App 启动或用户启用插件时运行。
 
 ### 8.3 register
 
-向 Core 注册能力：
+当前 `register(ctx)` 通过 `ctx.commands.register`、`ctx.views.register` 和 `ctx.slots.register` 注册可执行或可渲染能力，并可通过 `ctx.pages`、`ctx.metadata`、`ctx.events`、`ctx.filters` 和 `ctx.transaction` 操作 Core 数据。
+Plugin-facing 注册输入不携带 `pluginId` 或 `sourcePluginId`；这些 ownership key 由 Plugin Host 根据当前插件身份注入。
+
+以下能力在 TASK-010 中是 manifest contribution descriptor，不是当前 `ctx.*.register` facade：
 
 ```text
-commands
-views
 metadata fields
 event types
 filters
 markdown syntax
-slots
 indexers
 algorithms
 mobile toolbar items

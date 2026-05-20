@@ -102,7 +102,7 @@ Core 只负责以下六类东西：
 7. Plugin Host / Plugin Registry
 ```
 
-Plugin Host 只负责加载、启用、禁用、注册插件能力。
+Plugin Host 只负责加载、启用、禁用、注册和卸载插件能力。
 它本身不包含任务、习惯、计时、统计、机器学习或 AI 逻辑。
 
 Core 不需要知道什么是任务。

@@ -8,6 +8,8 @@ Slot 是插件挂 UI 的地方。
 
 ### 7.1 SlotRegistry
 
+Core 内部 `SlotRegistry` descriptor 会带 ownership：
+
 ```ts
 export interface SlotContribution<Props = unknown> {
   id: string;
@@ -17,6 +19,19 @@ export interface SlotContribution<Props = unknown> {
   when?: SlotCondition<Props>;
   component: React.ComponentType<Props>;
 }
+```
+
+但 TASK-010 的 plugin-facing `ctx.slots.register` 输入不允许插件传入 `pluginId`。
+Plugin Host 会按当前插件身份注入 ownership。
+
+```ts
+export type PluginSlotDefinition<Props = unknown> = {
+  id: string;
+  slot: string;
+  order?: number;
+  when?: SlotCondition<Props>;
+  component: RegistryComponent<Props>;
+};
 ```
 
 ### 7.2 推荐 Slot
@@ -103,7 +118,6 @@ export const MarkdownEditorPlugin: AppPlugin = {
   register(ctx) {
     ctx.views.register({
       id: "markdown.page-editor",
-      pluginId: "markdown-editor",
       type: "page.editor",
       title: "Markdown page editor",
       component: MarkdownPageEditor,
@@ -112,7 +126,6 @@ export const MarkdownEditorPlugin: AppPlugin = {
 
     ctx.commands.register({
       id: "markdown.insert-text",
-      pluginId: "markdown-editor",
       title: "Insert text",
       handler: insertTextHandler
     });
@@ -120,7 +133,6 @@ export const MarkdownEditorPlugin: AppPlugin = {
     ctx.slots.register({
       id: "markdown.editor-mobile-toolbar.base",
       slot: "editor.mobile.toolbar",
-      pluginId: "markdown-editor",
       component: BaseMarkdownToolbar
     });
   }
@@ -183,18 +195,17 @@ plugins/task/
 
 ### 9.1 Task Plugin 注册内容
 
+Task manifest 声明 markdown syntax、metadata fields、event types、default filters 和 indexers 等 descriptor。
+当前 `register(ctx)` 只注册 TASK-010 已暴露的 runtime facades：commands、views 和 slots。
+
 ```ts
 export const TaskPlugin: AppPlugin = {
   manifest,
 
   register(ctx) {
-    registerTaskSyntax(ctx);
-    registerTaskMetadataFields(ctx);
     registerTaskCommands(ctx);
-    registerTaskFilters(ctx);
     registerTaskViews(ctx);
     registerTaskSlots(ctx);
-    registerTaskIndexers(ctx);
   }
 };
 ```
@@ -219,10 +230,10 @@ type TaskBlock = {
 };
 ```
 
-如果没有 `boundPageId`，执行：
+如果没有 `boundPageId`，由 app runtime / Command Service 执行命令；TASK-010 的 `PluginCommandRegistry` 不在 `ctx.commands` 上暴露 `execute`：
 
 ```ts
-ctx.commands.execute("task.resolve-task-block", {
+runtime.commands.execute("task.resolve-task-block", {
   sourcePageId,
   sourceBlockId,
   title: "设计 Timer Plugin"
@@ -240,32 +251,36 @@ async function resolveTaskBlock(ctx, input) {
       body: createEmptyMarkdownDoc()
     });
 
-    await tx.metadata.set(taskPage.id, {
+    await tx.metadata.set({
+      pageId: taskPage.id,
       namespace: "task",
       key: "enabled",
       value: true,
-      sourcePluginId: "task"
+      valueType: "boolean"
     });
 
-    await tx.metadata.set(taskPage.id, {
+    await tx.metadata.set({
+      pageId: taskPage.id,
       namespace: "task",
       key: "status",
       value: "todo",
-      sourcePluginId: "task"
+      valueType: "string"
     });
 
-    await tx.metadata.set(taskPage.id, {
+    await tx.metadata.set({
+      pageId: taskPage.id,
       namespace: "task",
       key: "sourcePageId",
       value: input.sourcePageId,
-      sourcePluginId: "task"
+      valueType: "string"
     });
 
-    await tx.metadata.set(taskPage.id, {
+    await tx.metadata.set({
+      pageId: taskPage.id,
       namespace: "task",
       key: "sourceBlockId",
       value: input.sourceBlockId,
-      sourcePluginId: "task"
+      valueType: "string"
     });
 
     await tx.pages.updateBlockAttrs(input.sourcePageId, input.sourceBlockId, {
@@ -274,6 +289,9 @@ async function resolveTaskBlock(ctx, input) {
   });
 }
 ```
+
+以上 metadata 写入示例按当前 plugin-facing store 形状省略 `sourcePluginId`；Plugin Host 会注入来源插件身份。
+`updateBlockAttrs` 是后续编辑器桥接能力的占位，不属于 TASK-010 当前 `PluginContext`。
 
 开发时可以不照抄这段，但事务边界要保持：
 

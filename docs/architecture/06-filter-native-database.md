@@ -41,7 +41,6 @@ JS Filter 作为 Filter Plugin 的高级能力。
 ```ts
 ctx.commands.register({
   id: "filter.create-js-filter",
-  pluginId: "filter",
   title: "Create JavaScript filter",
   handler: createJsFilter
 });
