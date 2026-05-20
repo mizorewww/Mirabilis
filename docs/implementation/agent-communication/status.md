@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:39 CST.
+Last updated: 2026-05-21 02:43 CST.
 
 ## Current Task
 
@@ -8,17 +8,21 @@ Last updated: 2026-05-21 02:39 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance agents running.
+- Current phase: pre-test guidance completed; red-test handoff next.
 
 ## Active Agents
 
-- Socrates (`planner`, `019e46af-56e2-7d60-acda-6e5010986619`) - TASK-012 planning and TDD/API scope guidance.
-- Parfit (`docs_researcher`, `019e46af-5ac6-7ec0-82e2-b42db7892871`) - current official Tauri invoke and boundary testing guidance.
-- Turing (`deprecation_auditor`, `019e46af-5f7c-73d2-a0e9-cf63956a1350`) - API/deprecation/import/mocking compatibility guidance.
-- Euclid (`security_reviewer`, `019e46af-6383-7ab0-94a4-8c01342a54e5`) - IPC/native boundary and permission-scope guidance.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-012 pre-test guidance completed and all agents were closed.
+- Socrates (`planner`) recommended a TS-only NativeBridge surface under `src/core/native/`, with `native-bridge.ts`, `tauri-native-bridge.ts`, `index.ts`, Core barrel exports, focused `src/test/native-bridge.test.ts`, typed command constants, DTOs, `NativeBridgeError`, `createNativeBridge({ invoke })`, and `createTauriNativeBridge()`.
+- Parfit (`docs_researcher`) verified current official Tauri v2 guidance: command invocation imports `invoke` from `@tauri-apps/api/core`; `invoke<T>(cmd, args, options?)` returns `Promise<T>`; command args are camelCase by default; Rust command errors reject the JS promise with serialized values; Vitest module mocks are hoisted; and Tauri's `mockIPC` / `clearMocks()` are available for IPC tests.
+- Turing (`deprecation_auditor`) found P1 guidance: do not use v1 `@tauri-apps/api/tauri`, root `@tauri-apps/api` `invoke`, or `window.__TAURI__`; normalize caught errors as `unknown`; use camelCase DTO payload keys; and remove or route the current `src/App.tsx` template raw `invoke` before merge.
+- Euclid (`security_reviewer`) recommended acceptance tests for NativeBridge as the only production raw Tauri import/call site, centralized command names, explicit DTOs, response validation before returning typed values, normalized redacted errors, no raw native handles through Plugin API/PluginContext, and no Tauri/Rust/capability/config/dependency expansion.
+- Parent decisions for TDD: add red tests for `src/core/native` public exports, grouped bridge methods, exact command constants and DTO payloads, generic DB response typing, void methods, response validation for malformed native payloads where practical, error normalization for typed object/string/Error/null/unknown rejections, and a production scan that allows `@tauri-apps/api/core` / raw `invoke` only in `src/core/native/tauri-native-bridge.ts`. Do not add `greet` to the NativeBridge API; implementation may remove the template UI direct `invoke`.
+- External docs verified by agents: Tauri v2 calling Rust / `@tauri-apps/api/core` reference / mocks / migration docs; Vitest v4 module mocking and `vi.mock` guidance; TypeScript `isolatedModules` and `verbatimModuleSyntax`; Vite 7 migration compatibility notes.
 - TASK-012 pre-test guidance agents spawned. All are read-only and must not edit files. Parent will summarize their recommendations in `docs/implementation/agent-communication/TASK-012-nativebridge-typescript-boundary.md` before delegating red tests.
 - TASK-012 branch `feat/task-012-nativebridge-typescript-boundary` was created from latest `master`.
 - TASK-012 scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Rust commands, SQLite schema/repositories, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, and new Tauri permissions/capabilities are out of scope.
