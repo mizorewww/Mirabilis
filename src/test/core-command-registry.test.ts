@@ -13,11 +13,17 @@ import type {
   CommandRegistry,
   CommandRegistryErrorCode,
   CommandService,
+  ListCommandsOptions,
 } from "../core";
 import type {
+  CommandBus as CommandBusFromCommands,
+  CommandDefinition as CommandDefinitionFromCommands,
+  CommandDescriptor as CommandDescriptorFromCommands,
+  CommandHandler as CommandHandlerFromCommands,
   CommandRegistry as CommandRegistryFromCommands,
   CommandRegistryErrorCode as CommandRegistryErrorCodeFromCommands,
   CommandService as CommandServiceFromCommands,
+  ListCommandsOptions as ListCommandsOptionsFromCommands,
 } from "../core/commands";
 
 describe("in-memory Command Registry and Command Bus", () => {
@@ -31,6 +37,17 @@ describe("in-memory Command Registry and Command Bus", () => {
 
     expectTypeOf<CommandRegistryFromCommands>().toEqualTypeOf<CommandRegistry>();
     expectTypeOf<CommandServiceFromCommands>().toEqualTypeOf<CommandService>();
+    expectTypeOf<CommandBusFromCommands>().toEqualTypeOf<CommandBus>();
+    expectTypeOf<CommandDefinitionFromCommands>().toEqualTypeOf<
+      CommandDefinition
+    >();
+    expectTypeOf<CommandDescriptorFromCommands>().toEqualTypeOf<
+      CommandDescriptor
+    >();
+    expectTypeOf<CommandHandlerFromCommands>().toEqualTypeOf<CommandHandler>();
+    expectTypeOf<ListCommandsOptionsFromCommands>().toEqualTypeOf<
+      ListCommandsOptions
+    >();
     expectTypeOf<CommandRegistryErrorCodeFromCommands>().toEqualTypeOf<
       CommandRegistryErrorCode
     >();
@@ -54,12 +71,15 @@ describe("in-memory Command Registry and Command Bus", () => {
       defaultShortcut?: string;
       context?: unknown;
     }>();
+    expectTypeOf<ListCommandsOptions>().toEqualTypeOf<{
+      pluginId?: string;
+    }>();
     expectTypeOf<CommandRegistry>().toEqualTypeOf<{
       register<Input = unknown, Output = unknown>(
         definition: CommandDefinition<Input, Output>,
       ): CommandDescriptor;
       get(commandId: string): CommandDescriptor;
-      list(options?: { pluginId?: string }): CommandDescriptor[];
+      list(options?: ListCommandsOptions): CommandDescriptor[];
       unregister(commandId: string): CommandDescriptor;
     }>();
     expectTypeOf<CommandBus>().toEqualTypeOf<{
@@ -187,12 +207,14 @@ describe("in-memory Command Registry and Command Bus", () => {
     );
 
     const readDescriptor = commands.get("workspace.toggle-panel");
+    expectNoHandler(readDescriptor);
     mutateContext(readDescriptor, "changed-get-return");
     expect(commands.get("workspace.toggle-panel")).toStrictEqual(
       expectedDescriptor,
     );
 
     const listedDescriptors = commands.list();
+    expectNoHandler(listedDescriptors[0]!);
     mutateContext(listedDescriptors[0]!, "changed-list-return");
     listedDescriptors.push({
       id: "extra.command",
@@ -339,11 +361,12 @@ describe("in-memory Command Registry and Command Bus", () => {
     );
   });
 
-  it("wraps sync throws, async rejections, and non-Error thrown values without unregistering commands", async () => {
+  it("wraps sync throws, async rejections, and non-Error thrown values without exposing raw causes or unregistering commands", async () => {
     const commands = createInMemoryCommandRegistry();
     const syncCause = new Error("sync failure");
     const asyncCause = new Error("async failure");
-    const nonErrorCause = { reason: "plain object failure" };
+    const nonErrorObjectCause = { reason: "plain object failure" };
+    const nonErrorStringCause = "plain string failure";
 
     commands.register(
       commandDefinition({
@@ -369,9 +392,19 @@ describe("in-memory Command Registry and Command Bus", () => {
       commandDefinition({
         id: "workspace.non-error-failure",
         pluginId: "workspace",
-        title: "Non-error failure",
+        title: "Non-error object failure",
         handler: () => {
-          throw nonErrorCause;
+          throw nonErrorObjectCause;
+        },
+      }),
+    );
+    commands.register(
+      commandDefinition({
+        id: "workspace.string-failure",
+        pluginId: "workspace",
+        title: "Non-error string failure",
+        handler: () => {
+          throw nonErrorStringCause;
         },
       }),
     );
@@ -379,17 +412,22 @@ describe("in-memory Command Registry and Command Bus", () => {
     await expectCommandRegistryErrorAsync(
       () => commands.execute("workspace.sync-failure"),
       "COMMAND_HANDLER_FAILED",
-      { cause: syncCause },
+      { hiddenCause: syncCause },
     );
     await expectCommandRegistryErrorAsync(
       () => commands.execute("workspace.async-failure"),
       "COMMAND_HANDLER_FAILED",
-      { cause: asyncCause },
+      { hiddenCause: asyncCause },
     );
     await expectCommandRegistryErrorAsync(
       () => commands.execute("workspace.non-error-failure"),
       "COMMAND_HANDLER_FAILED",
-      { cause: nonErrorCause },
+      { hiddenCause: nonErrorObjectCause },
+    );
+    await expectCommandRegistryErrorAsync(
+      () => commands.execute("workspace.string-failure"),
+      "COMMAND_HANDLER_FAILED",
+      { hiddenCause: nonErrorStringCause },
     );
     expect(
       commands.list().map((command: CommandDescriptor) => command.id),
@@ -397,7 +435,59 @@ describe("in-memory Command Registry and Command Bus", () => {
       "workspace.sync-failure",
       "workspace.async-failure",
       "workspace.non-error-failure",
+      "workspace.string-failure",
     ]);
+  });
+
+  it("uses standard Error cause visibility for command registry errors", () => {
+    const commands = createInMemoryCommandRegistry();
+    const existing = commands.register(
+      commandDefinition({
+        id: "workspace.existing-command",
+        pluginId: "workspace",
+        title: "Existing command",
+        handler: () => "existing",
+      }),
+    );
+
+    const notFoundError = captureCommandRegistryError(
+      () => commands.get("workspace.missing-command"),
+      "COMMAND_NOT_FOUND",
+    );
+    expectNoOwnCause(notFoundError);
+
+    const validationError = captureCommandRegistryError(
+      () => commands.register(commandDefinition({ id: " " })),
+      "COMMAND_IDENTITY_REQUIRED",
+    );
+    expectNoOwnCause(validationError);
+
+    const collisionError = captureCommandRegistryError(
+      () =>
+        commands.register(
+          commandDefinition({
+            id: "workspace.existing-command",
+            pluginId: "workspace",
+            title: "Duplicate command",
+            handler: () => "duplicate",
+          }),
+        ),
+      "COMMAND_ID_COLLISION",
+    );
+    expectNoOwnCause(collisionError);
+    expect(commands.list()).toStrictEqual([existing]);
+
+    const rawCause = new Error("constructor cause");
+    const causedError = new CommandRegistryError(
+      "COMMAND_NOT_FOUND",
+      "manual cause",
+      { cause: rawCause },
+    );
+
+    expect(causedError.code).toBe("COMMAND_NOT_FOUND");
+    expect(causedError.cause).toBe(rawCause);
+    expectCauseIfPresentIsNonEnumerable(causedError);
+    expect(Object.keys(causedError)).not.toContain("cause");
   });
 
   it("rejects invalid definitions with typed validation errors without mutating the registry", () => {
@@ -464,6 +554,85 @@ describe("in-memory Command Registry and Command Bus", () => {
         name: "function context",
         definition: () =>
           commandDefinition({ context: { value: () => "not json" } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "nested undefined context",
+        definition: () =>
+          commandDefinition({ context: { nested: { value: undefined } } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "NaN context",
+        definition: () =>
+          commandDefinition({ context: { value: Number.NaN } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "Infinity context",
+        definition: () =>
+          commandDefinition({ context: { value: Number.POSITIVE_INFINITY } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "bigint context",
+        definition: () => commandDefinition({ context: { value: 1n } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "symbol context",
+        definition: () =>
+          commandDefinition({ context: { value: Symbol("context") } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "Date context",
+        definition: () =>
+          commandDefinition({ context: { value: new Date("2026-05-20") } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "sparse array context",
+        definition: () =>
+          commandDefinition({ context: { values: sparseContextArray() } }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "accessor context",
+        definition: () =>
+          commandDefinition({ context: contextWithThrowingGetter() }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "symbol-key context",
+        definition: () =>
+          commandDefinition({ context: contextWithSymbolKey() }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "non-enumerable context",
+        definition: () =>
+          commandDefinition({ context: contextWithNonEnumerableProperty() }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "proxy getPrototypeOf trap context",
+        definition: () =>
+          commandDefinition({ context: proxyContextWithThrowingGetPrototype() }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "proxy ownKeys trap context",
+        definition: () =>
+          commandDefinition({ context: proxyContextWithThrowingOwnKeys() }),
+        code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
+      },
+      {
+        name: "proxy getOwnPropertyDescriptor trap context",
+        definition: () =>
+          commandDefinition({
+            context: proxyContextWithThrowingOwnPropertyDescriptor(),
+          }),
         code: "COMMAND_CONTEXT_NOT_JSON_COMPATIBLE",
       },
       {
@@ -600,6 +769,11 @@ function commandDefinition<Input = unknown, Output = unknown>(
 
 function expectNoHandler(descriptor: CommandDescriptor): void {
   expect(descriptor).not.toHaveProperty("handler");
+  expect("handler" in descriptor).toBe(false);
+  expect(Object.prototype.hasOwnProperty.call(descriptor, "handler")).toBe(
+    false,
+  );
+  expect(Object.getOwnPropertyDescriptor(descriptor, "handler")).toBeUndefined();
 }
 
 function mutateContext(
@@ -623,6 +797,11 @@ function mutateContext(
 }
 
 type CommandRegistryErrorExpectationOptions = {
+  hiddenCause?: unknown;
+};
+
+type CapturedCommandRegistryError = Error & {
+  code: CommandRegistryErrorCode;
   cause?: unknown;
 };
 
@@ -631,11 +810,18 @@ function expectCommandRegistryError(
   code: CommandRegistryErrorCode,
   options: CommandRegistryErrorExpectationOptions = {},
 ): void {
+  captureCommandRegistryError(action, code, options);
+}
+
+function captureCommandRegistryError(
+  action: () => unknown,
+  code: CommandRegistryErrorCode,
+  options: CommandRegistryErrorExpectationOptions = {},
+): CapturedCommandRegistryError {
   try {
     action();
   } catch (error) {
-    expectCommandRegistryErrorObject(error, code, options);
-    return;
+    return expectCommandRegistryErrorObject(error, code, options);
   }
 
   throw new Error("Expected CommandRegistryError");
@@ -660,18 +846,120 @@ function expectCommandRegistryErrorObject(
   error: unknown,
   code: CommandRegistryErrorCode,
   options: CommandRegistryErrorExpectationOptions,
-): void {
-  if (options.cause !== undefined) {
-    expect(error).not.toBe(options.cause);
+): CapturedCommandRegistryError {
+  if ("hiddenCause" in options) {
+    expect(error).not.toBe(options.hiddenCause);
   }
 
   expect(error).toBeInstanceOf(CommandRegistryError);
 
-  expect((error as { code: CommandRegistryErrorCode }).code).toBe(code);
+  const registryError = error as CapturedCommandRegistryError;
 
-  if (options.cause !== undefined) {
-    expect((error as { cause?: unknown }).cause).toBe(options.cause);
+  expect(registryError.code).toBe(code);
+  expectNoOwnCause(registryError);
+
+  if ("hiddenCause" in options) {
+    expect(registryError.cause).not.toBe(options.hiddenCause);
   }
+
+  return registryError;
+}
+
+function expectNoOwnCause(error: object): void {
+  expect(Object.prototype.hasOwnProperty.call(error, "cause")).toBe(false);
+  expect(Object.getOwnPropertyDescriptor(error, "cause")).toBeUndefined();
+}
+
+function expectCauseIfPresentIsNonEnumerable(error: object): void {
+  const causeDescriptor = Object.getOwnPropertyDescriptor(error, "cause");
+
+  if (causeDescriptor !== undefined) {
+    expect(causeDescriptor.enumerable).toBe(false);
+  }
+}
+
+function sparseContextArray(): unknown[] {
+  const values: unknown[] = ["first"];
+  values[2] = "third";
+
+  return values;
+}
+
+function contextWithThrowingGetter(): object {
+  const context = {};
+
+  Object.defineProperty(context, "value", {
+    enumerable: true,
+    get() {
+      throw new Error("context getter escaped");
+    },
+  });
+
+  return context;
+}
+
+function contextWithSymbolKey(): object {
+  return {
+    [Symbol("context")]: "hidden",
+  };
+}
+
+function contextWithNonEnumerableProperty(): object {
+  const context = {
+    surface: "workspace",
+  };
+
+  Object.defineProperty(context, "hidden", {
+    value: "hidden",
+    enumerable: false,
+  });
+
+  return context;
+}
+
+function proxyContextWithThrowingGetPrototype(): object {
+  return new Proxy(
+    {
+      surface: "workspace",
+    },
+    {
+      getPrototypeOf() {
+        throw new Error("context getPrototypeOf trap escaped");
+      },
+    },
+  );
+}
+
+function proxyContextWithThrowingOwnKeys(): object {
+  return new Proxy(
+    {
+      surface: "workspace",
+    },
+    {
+      getPrototypeOf() {
+        return Object.prototype;
+      },
+      ownKeys() {
+        throw new Error("context ownKeys trap escaped");
+      },
+    },
+  );
+}
+
+function proxyContextWithThrowingOwnPropertyDescriptor(): object {
+  return new Proxy(
+    {
+      surface: "workspace",
+    },
+    {
+      getPrototypeOf() {
+        return Object.prototype;
+      },
+      getOwnPropertyDescriptor() {
+        throw new Error("context descriptor trap escaped");
+      },
+    },
+  );
 }
 
 class WorkspaceContext {
