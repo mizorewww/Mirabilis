@@ -38,11 +38,22 @@
 
 ## Current Status
 
-- Status: pre-test guidance pending.
-- Active agents: none.
+- Status: pre-test guidance active.
+- Active agents:
+  - Hooke (`planner`, `019e436e-7986-7ba2-b8c5-6a2d8fab1838`): TASK-008 API, scope, and TDD plan.
+  - Halley (`docs_researcher`, `019e436e-7cc2-7f01-983a-c26bea4748f7`): current TypeScript/React/Vitest guidance for view/slot registry tests.
+  - Tesla (`deprecation_auditor`, `019e436e-93cb-7ec0-b695-7e2b1ed98b87`): TASK-008 risk and deprecated-pattern audit.
 
 ## Agent Handoffs
 
+### Pre-test Guidance Round
+
+- Status: active.
+- Agents:
+  - Hooke (`planner`, `019e436e-7986-7ba2-b8c5-6a2d8fab1838`): propose focused View Registry and Slot Registry API, validation, ordering, duplicate handling, unregister behavior, component-reference semantics, and acceptance tests.
+  - Halley (`docs_researcher`, `019e436e-7cc2-7f01-983a-c26bea4748f7`): verify current official TypeScript, React, and Vitest guidance relevant to component-compatible registry types and tests.
+  - Tesla (`deprecation_auditor`, `019e436e-93cb-7ec0-b695-7e2b1ed98b87`): audit component-reference cloning, condition function exposure, slot ordering edge cases, duplicate atomicity, UI-framework coupling, and boundary risks.
+
 ## Next Action
 
-Spawn planner, docs researcher, and deprecation auditor for TASK-008 pre-test guidance.
+Wait for TASK-008 pre-test guidance agents.

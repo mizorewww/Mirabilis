@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:28 CST.
+Last updated: 2026-05-20 11:29 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 11:28 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance pending.
+- Current phase: pre-test guidance active.
 
 ## Active Agents
 
-- None.
+- Hooke (`planner`, `019e436e-7986-7ba2-b8c5-6a2d8fab1838`): TASK-008 API, scope, and TDD plan.
+- Halley (`docs_researcher`, `019e436e-7cc2-7f01-983a-c26bea4748f7`): current TypeScript/React/Vitest guidance for view/slot registry tests.
+- Tesla (`deprecation_auditor`, `019e436e-93cb-7ec0-b695-7e2b1ed98b87`): TASK-008 risk and deprecated-pattern audit.
 
 ## Recent Agent Outcomes
 
+- Pre-test guidance agents spawned for TASK-008.
 - TASK-008 started from latest `master` after TASK-007 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-008.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
@@ -211,6 +214,6 @@ Last updated: 2026-05-20 11:28 CST.
 
 ## Next Actions
 
-1. Spawn pre-test guidance agents for TASK-008.
+1. Wait for TASK-008 pre-test guidance agents.
 2. Record parent decisions.
 3. Delegate failing acceptance tests to a `test_writer`.
