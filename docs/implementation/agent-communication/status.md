@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:31 CST.
+Last updated: 2026-05-20 13:34 CST.
 
 ## Current Task
 
@@ -8,17 +8,20 @@ Last updated: 2026-05-20 13:31 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final targeted re-review active.
+- Current phase: final targeted re-review findings recorded; public-unknown tests pending.
 
 ## Active Agents
 
-- Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): final correctness re-review for TASK-008 type soundness and registry behavior.
-- Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): final TypeScript/React/Vitest API compatibility audit.
-- Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): final test-quality review for TASK-008 type/proxy coverage.
-- Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): final docs/traceability review for TASK-008 cleanup.
+- None.
 
 ## Recent Agent Outcomes
 
+- Final targeted TASK-008 re-review completed and all agents were closed.
+- Rawls (`reviewer`) found two P2 public type issues: `RegistryComponent<unknown>` / `ViewDefinition<unknown>` are too broad because `object` leaks into the explicit unknown path, and `SlotCondition<unknown>` resolves to `unknown`, allowing non-functions.
+- Lorentz (`deprecation_auditor`) found no remaining API/deprecation issues and confirmed `.toExtend()`, type-only public React types, and no `_payload` / `_init` usage.
+- Wegener (`test_quality_reviewer`) found no remaining test-quality issues.
+- Helmholtz (`docs_researcher`) found one P2 stale status sentence and two P3 status hygiene issues; parent will update status after this review round and after push state is current.
+- Selected follow-up: add tests for explicit `unknown` public aliases rejecting arbitrary objects/non-functions, then adjust public types without regressing unparameterized registry returns.
 - Final targeted TASK-008 re-review agents spawned after type-fix and docs cleanup.
 - Parent repeated focused green checks after docs cleanup: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, and `bun run lint`.
 - Docs cleanup commit: `051370d Codex(docs)(Add View Registry and Slot Registry): align registry examples`.
@@ -274,10 +277,10 @@ Last updated: 2026-05-20 13:31 CST.
 - `docs/implementation/progress.md` marks TASK-008 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-008.
 - `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
-- Targeted re-review found P1/P2 public type issues that must be fixed before final gate. TASK-008 remains in progress.
+- Final targeted re-review found P2 public explicit-`unknown` type issues and stale status text that must be fixed before final gate. TASK-008 remains in progress.
 
 ## Next Actions
 
-1. Wait for final targeted TASK-008 re-review agents.
-2. Record findings and parent decisions.
-3. Address any remaining P0/P1/P2 findings before final gate.
+1. Commit final re-review findings.
+2. Add test-only coverage for explicit `unknown` public aliases.
+3. Fix public types and status docs, then rerun focused checks.

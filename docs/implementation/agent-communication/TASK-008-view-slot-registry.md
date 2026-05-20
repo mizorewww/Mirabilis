@@ -38,12 +38,8 @@
 
 ## Current Status
 
-- Status: final targeted re-review active.
-- Active agents:
-  - Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): final correctness re-review for TASK-008 type soundness and registry behavior.
-  - Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): final TypeScript/React/Vitest API compatibility audit.
-  - Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): final test-quality review for TASK-008 type/proxy coverage.
-  - Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): final docs/traceability review for TASK-008 cleanup.
+- Status: final targeted re-review findings recorded; public-unknown tests pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -342,15 +338,24 @@
   - Added required `id` fields to slot contribution examples.
   - Communication status stale-next-action issues were already removed during the type-fix orchestration updates.
 
-## Next Action
-
-Wait for final targeted TASK-008 re-review agents, record findings, and address any remaining P0/P1/P2 findings before final gate.
-
 ### Final Targeted Re-review
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): correctness and acceptance criteria after type soundness fix.
   - Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): TypeScript/React/Vitest API compatibility after matcher/type changes.
   - Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): test quality for type/proxy coverage.
   - Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): communication and architecture docs traceability.
+- Findings:
+  - Rawls found two P2 public type issues: `RegistryComponent<unknown>` / `ViewDefinition<unknown>` are too broad because the erased `object` fallback leaks into the explicit unknown path, and `SlotCondition<unknown>` resolves to `unknown`, allowing non-functions.
+  - Lorentz found no remaining API/deprecation issues and confirmed `.toExtend()` usage, type-only public React imports, and no `_payload` / `_init` usage.
+  - Wegener found no remaining test-quality issues.
+  - Helmholtz found one P2 stale status sentence and two P3 status hygiene issues; parent will update status after this review round and after push state is current.
+- Parent decisions:
+  - Add test-only coverage for explicit `RegistryComponent<unknown>`, `ViewDefinition<unknown>`, and `SlotCondition<unknown>` public aliases rejecting arbitrary objects/non-functions.
+  - Fix public types without regressing unparameterized registry returns.
+  - Refresh status docs after the fix and current push state are known.
+
+## Next Action
+
+Commit final re-review findings, add public explicit-`unknown` type tests, fix public types/status docs, and rerun focused checks.
