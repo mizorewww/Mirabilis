@@ -160,6 +160,7 @@ type StoredPluginRecord = {
   status: PluginHostStatus;
   order: number;
   contributions: RegisteredContribution[];
+  lifecycleScopes: Set<PluginContextScope>;
 };
 
 type NormalizedDependency = {
@@ -315,6 +316,7 @@ class PluginHostImpl implements PluginHostInstance {
     const record = this.requireRecord(pluginId);
 
     this.assertNoRegisteredDependents(pluginId);
+    this.revokeLifecycleScopes(record);
 
     if (record.status !== "installed") {
       await this.runLifecycleHook(
@@ -335,6 +337,7 @@ class PluginHostImpl implements PluginHostInstance {
     const record = this.requireRecord(pluginId);
 
     this.assertNoRegisteredDependents(pluginId);
+    this.revokeLifecycleScopes(record);
 
     if (record.status === "active") {
       await this.runLifecycleHook(
@@ -380,6 +383,7 @@ class PluginHostImpl implements PluginHostInstance {
       status: "installed",
       order: this.nextOrder,
       contributions: [],
+      lifecycleScopes: new Set(),
     };
 
     this.nextOrder += 1;
@@ -456,9 +460,11 @@ class PluginHostImpl implements PluginHostInstance {
       phase,
       false,
     );
+    record.lifecycleScopes.add(scope);
 
     try {
       await hook(this.createPluginContext(scope));
+      this.assertLifecycleScopeStillCurrent(record, scope);
     } catch (cause) {
       throw new PluginHostError(
         "PLUGIN_LIFECYCLE_FAILED",
@@ -471,6 +477,7 @@ class PluginHostImpl implements PluginHostInstance {
       );
     } finally {
       scope.active = false;
+      record.lifecycleScopes.delete(scope);
     }
   }
 
@@ -482,9 +489,11 @@ class PluginHostImpl implements PluginHostInstance {
       "register",
       true,
     );
+    record.lifecycleScopes.add(scope);
 
     try {
       await record.plugin.register(this.createPluginContext(scope));
+      this.assertLifecycleScopeStillCurrent(record, scope);
     } catch (cause) {
       this.unregisterTrackedContributions(scope.registrationTracker);
       record.contributions = [];
@@ -501,6 +510,7 @@ class PluginHostImpl implements PluginHostInstance {
       );
     } finally {
       scope.active = false;
+      record.lifecycleScopes.delete(scope);
     }
 
     record.contributions = [
@@ -783,6 +793,35 @@ class PluginHostImpl implements PluginHostInstance {
         // Missing tracked contributions should not block lifecycle cleanup.
       }
     }
+  }
+
+  private revokeLifecycleScopes(record: StoredPluginRecord): void {
+    for (const scope of record.lifecycleScopes) {
+      scope.active = false;
+      this.unregisterTrackedContributions(scope.registrationTracker);
+    }
+
+    record.lifecycleScopes.clear();
+  }
+
+  private assertLifecycleScopeStillCurrent(
+    record: StoredPluginRecord,
+    scope: PluginContextScope,
+  ): void {
+    assertCanMutatePluginData(scope);
+
+    if (this.records.get(record.manifest.id) === record) {
+      return;
+    }
+
+    throw new PluginHostError(
+      "PLUGIN_LIFECYCLE_FAILED",
+      `Plugin ${record.manifest.id} ${scope.phase} no longer has a live record`,
+      {
+        pluginId: record.manifest.id,
+        phase: scope.phase,
+      },
+    );
   }
 
   private rollbackInstalledBatchRecords(
