@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:58 CST.
+Last updated: 2026-05-21 00:03 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-20 23:58 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 narrow re-review in progress.
+- Current phase: TASK-011 narrow re-review completed; second review-fix TDD handoff next.
 
 ## Active Agents
 
-- Popper (`pr_explorer`, `019e461c-22ee-7aa1-8902-272b7e3700c1`) is mapping the final TASK-011 diff.
-- Kepler (`reviewer`, `019e461c-28cd-7ca2-91a4-0f581c1a232b`) is re-reviewing correctness/API behavior.
-- Harvey (`security_reviewer`, `019e461c-2d98-7653-baab-f1e0ad215d75`) is re-reviewing plugin boundary/security behavior.
-- Ptolemy (`deprecation_auditor`, `019e461c-330f-7ab1-af36-87a48c31c4f4`) is re-reviewing public API/deprecation risk.
-- Mill (`test_quality_reviewer`, `019e461c-379a-77e1-a041-4835184d6b09`) is re-reviewing test quality.
-- Arendt (`docs_researcher`, `019e461c-4f1f-7b03-97de-d83e9f39f14d`) is re-reviewing docs drift.
+- No active agents. Narrow re-review agents have completed and were closed.
+- Next handoff: `test_writer` for the remaining P1/P2 review-fix tests.
 
 ## Recent Agent Outcomes
 
+- TASK-011 narrow re-review completed. Popper (`pr_explorer`) found no scope creep and highlighted install-failure state, stale context liveness, and stale status-text hotspots.
+- Kepler (`reviewer`) found one P1 correctness issue: failed install hooks leave `installed` records, and later `register(plugin)` can skip the failed install and move that plugin to registered/active.
+- Harvey (`security_reviewer`) found one P1 boundary issue: captured plugin contexts still retain page/store/transaction write capability after deactivate or uninstall. Harvey also found the failed-install residual-record issue as P2 security/boundary risk.
+- Mill (`test_quality_reviewer`) found two P2 test-strength issues: dependency deactivate/uninstall tests should assert typed dependency rejection, and stale captured-context tests should assert late register calls throw typed errors rather than merely not surviving in registries.
+- Arendt (`docs_researcher`) found no remaining architecture docs drift, but found a P2 stale `Current Worktree State` / `Next Actions` block that still described TASK-010. Parent updated this block in the current orchestration status.
+- Ptolemy (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings. It verified current Vitest `expectTypeOf`, type-testing guidance, MDN `Error.cause`, and TypeScript `es2022.error` declarations.
+- Parent decision: run a second TDD review-fix loop for stale context data-write revocation, failed-install rollback/retry safety, stricter late-register assertions, and exact typed dependency removal assertions. Then delegate production fixes and re-review again.
 - TASK-011 narrow re-review agents spawned after Curie's review-fix implementation and Plato/Dalton docs commits.
 - Dalton (`doc_writer`) completed and was closed after updating `docs/architecture/07-runtime-flows.md` to use `new PluginHost({ services, registries, app })` and explicit built-in plugin objects.
 - Dalton's docs commit: `25c1859 Dalton(docs)(Implement Plugin Host lifecycle): align runtime flow sketch`.
@@ -56,7 +59,7 @@ Last updated: 2026-05-20 23:58 CST.
 - Hume (`docs_researcher`) verified current Obsidian, Tauri, Vitest, and TypeScript docs; confirmed Tauri native plugins and Obsidian plugin APIs are inspiration only, and recommended async Vitest rejection assertions.
 - Fermat (`deprecation_auditor`) flagged P1 decisions to pin lifecycle semantics, avoid raw registry objects in `PluginContext`, and rollback failed registration. It recommended `loadBuiltInPlugins(AppPlugin[])` as install/register, followed by `activateAll()` / `activate(id)` for activation.
 - Ohm (`security_reviewer`) recommended runtime ownership injection, caller-scoped facades, no raw native handles, owner-scoped get/list, duplicate/dependency validation before hooks, and rollback of command/view/slot registrations on failure.
-- Parent decisions for TDD: implement a local TypeScript Plugin Host under `src/core/plugin-host`; expose `PluginHost`, `PluginHostError`, and `PluginHostErrorCode` from Core; constructor should accept `{ services, registries, app }`; `loadBuiltInPlugins` validates/sorts/install/registers but does not activate; `activateAll` activates in dependency order; `deactivate` / `uninstall` run dependents before dependencies; registration rollback covers commands/views/slots, not arbitrary store writes; runtime facades inject `pluginId` / `sourcePluginId`; no Tauri/native/fs/dynamic loading/persistence/UI.
+- Parent decisions for TDD: implement a local TypeScript Plugin Host under `src/core/plugin-host`; expose `PluginHost`, `PluginHostError`, and `PluginHostErrorCode` from Core; constructor should accept `{ services, registries, app }`; `loadBuiltInPlugins` validates/sorts/install/registers but does not activate; `activateAll` activates in dependency order; initial dependency-removal handling was later refined by review fixes to reject deactivation/uninstall when registered dependents still require the target plugin; registration rollback covers commands/views/slots, not arbitrary store writes; runtime facades inject `pluginId` / `sourcePluginId`; no Tauri/native/fs/dynamic loading/persistence/UI.
 - TASK-011 pre-test guidance agents spawned: Darwin, Hume, Fermat, and Ohm. All are read-only.
 - TASK-010 was merged to `master` and pushed. Merge commit: `ec361c5 Codex(merge)(Define Plugin API contracts): merge task branch`.
 - TASK-011 branch `feat/task-011-plugin-host-lifecycle` was created from latest `master`.
@@ -502,13 +505,13 @@ Last updated: 2026-05-20 23:58 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-010 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-010.
-- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, targeted re-review fixes, and the Obsidian link fix.
+- `docs/implementation/progress.md` marks TASK-011 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-011.
+- `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, review-fix tests, review-fix implementation, architecture docs updates, runtime-flow docs updates, and narrow re-review handoff/status commits.
 
 ## Next Actions
 
-1. Spawn final targeted re-review agents for the ownership-key and docs-link fixes.
-2. Fix any remaining P0/P1 findings.
-3. Run final local gate and mark TASK-010 complete.
+1. Spawn `test_writer` for the remaining TASK-011 P1/P2 review-fix tests.
+2. Commit the expected red tests, then spawn `implementer` for production fixes.
+3. Re-run focused checks and narrow re-review before the final local gate.

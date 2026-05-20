@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: narrow re-review in progress.
-- Active agents: Popper (`pr_explorer`), Kepler (`reviewer`), Harvey (`security_reviewer`), Ptolemy (`deprecation_auditor`), Mill (`test_quality_reviewer`), and Arendt (`docs_researcher`).
-- Next parent step: wait for narrow re-review, then fix any remaining P0/P1/P2 findings.
+- Status: narrow re-review completed; second review-fix TDD handoff next.
+- Active agents: none.
+- Next parent step: delegate remaining P1/P2 red tests to `test_writer`, then delegate implementation after the expected red signal.
 
 ## Agent Handoffs
 
@@ -234,7 +234,7 @@
 
 ### Narrow Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Popper (`pr_explorer`, `019e461c-22ee-7aa1-8902-272b7e3700c1`).
   - Kepler (`reviewer`, `019e461c-28cd-7ca2-91a4-0f581c1a232b`).
@@ -244,6 +244,16 @@
   - Arendt (`docs_researcher`, `019e461c-4f1f-7b03-97de-d83e9f39f14d`).
 - Assignment:
   - Read-only narrow re-review of the final TASK-011 diff and P1/P2 review-fix surfaces.
+- Outcomes:
+  - Popper found no scope creep and highlighted failed install state, active uninstall failure coverage, stale context liveness, dependency behavior, and ownership spoof checks as review hotspots.
+  - Kepler found one P1 correctness issue: failed install hooks leave `installed` records, and later `register(plugin)` can skip the failed install and register a plugin whose install never completed.
+  - Harvey found one P1 boundary issue: captured plugin contexts still retain page/store/transaction write capability after deactivate or uninstall because lifecycle revocation only guards command/view/slot registration. Harvey also found failed-install residual records as P2.
+  - Ptolemy found no P0/P1/P2 API/deprecation findings and verified current Vitest type-testing, `expectTypeOf`, TypeScript, and `Error.cause` guidance.
+  - Mill found two P2 test-quality issues: dependency removal tests should assert typed dependency rejection, and stale captured-context tests should assert late registration throws typed errors rather than only not surviving in registries.
+  - Arendt found no remaining architecture docs drift and confirmed the Plugin Host docs now align with implementation. Arendt found a P2 stale TASK-010 block in live `status.md`; parent updated that block.
+- Parent decision:
+  - Fix the remaining P1/P2 findings through a second TDD loop.
+  - Red tests should cover stale captured contexts mutating pages/metadata/events/filters/transactions after deactivate/uninstall; failed install rollback/retry safety for both explicit `install(plugin)` / `register(plugin)` and `loadBuiltInPlugins`; strict typed errors for late command/view/slot registration; and typed dependency rejection for deactivate/uninstall with registered dependents.
 
 ## Parent Decisions
 
@@ -254,4 +264,4 @@
 
 ## Next Action
 
-Wait for narrow re-review, then fix any remaining P0/P1/P2 findings.
+Delegate second review-fix tests for the remaining P1/P2 findings.
