@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:02 CST.
+Last updated: 2026-05-20 11:04 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 11:02 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation green; review handoff pending.
+- Current phase: review round 1 active.
 
 ## Active Agents
 
-- None.
+- Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map TASK-007 branch diff and review focus areas.
+- Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): correctness review for Command Registry/Bus.
+- Cicero (`security_reviewer`, `019e4357-0727-7262-aef2-5db1537d0787`): security and boundary review for handler/context/descriptor surfaces.
+- Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): TypeScript/Vitest/deprecation risk audit.
+- Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): acceptance-test quality review.
+- Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): docs consistency and traceability review.
 
 ## Recent Agent Outcomes
 
+- TASK-007 review agents spawned.
 - Curie (`implementer`) completed and was closed after implementing TASK-007 production code.
 - Curie's implementation commit: `883c1aa Curie(implementation)(Add Command Registry and Command Bus): implement command registry`.
 - Parent corrected Curie's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
@@ -193,6 +199,6 @@ Last updated: 2026-05-20 11:02 CST.
 
 ## Next Actions
 
-1. Spawn review agents for TASK-007.
+1. Wait for TASK-007 review agents.
 2. Record review findings.
 3. Fix P0/P1 findings before final gate.

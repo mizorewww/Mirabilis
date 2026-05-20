@@ -38,8 +38,14 @@
 
 ## Current Status
 
-- Status: implementation green; review handoff pending.
-- Active agents: none.
+- Status: review round 1 active.
+- Active agents:
+  - Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map TASK-007 branch diff and review focus areas.
+  - Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): correctness review for Command Registry/Bus.
+  - Cicero (`security_reviewer`, `019e4357-0727-7262-aef2-5db1537d0787`): security and boundary review for handler/context/descriptor surfaces.
+  - Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): TypeScript/Vitest/deprecation risk audit.
+  - Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): acceptance-test quality review.
+  - Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): docs consistency and traceability review.
 
 ## Agent Handoffs
 
@@ -137,6 +143,17 @@ Wait for Curie's implementation output.
 - Parent note:
   - Curie initially committed with `Codex(implementation)` in the message. Parent amended the HEAD commit message to use the actual agent nickname and force-with-lease pushed the task branch.
 
+### Review Round 1
+
+- Status: active.
+- Agents:
+  - Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map changed code paths and reviewer focus areas.
+  - Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): review correctness and acceptance criteria.
+  - Cicero (`security_reviewer`, `019e4357-0727-7262-aef2-5db1537d0787`): review handler exposure, descriptor mutation leaks, hostile context/raw-error paths, and native/permission boundary.
+  - Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): audit TypeScript/Vitest/API/deprecation risks.
+  - Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): review test coverage quality.
+  - Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): review local-doc and official-doc traceability.
+
 ## Next Action
 
-Spawn review agents for TASK-007.
+Wait for TASK-007 review agents.
