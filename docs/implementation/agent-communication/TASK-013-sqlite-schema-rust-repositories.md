@@ -40,10 +40,12 @@
 
 ## Current Status
 
-- Status: frontend boundary-test P2 follow-up delegated.
+- Status: frontend boundary-test follow-up committed; narrow re-review running.
 - Active agents:
-  - Singer the 2nd (`test_writer`, id `019e471f-5825-7bd3-b094-d63c6292351f`).
-- Next parent step: wait for Singer the 2nd, then run focused checks.
+  - Lagrange the 2nd (`security_reviewer`, id `019e4722-0487-7033-a0fe-fa48c1c1ec82`).
+  - Hume the 2nd (`test_quality_reviewer`, id `019e4722-09bf-73b1-ab51-259431cfdeb3`).
+  - Ptolemy the 2nd (`reviewer`, id `019e4722-0e1c-7712-8656-142e96e4b5db`).
+- Next parent step: wait for narrow re-review, then run local gate if clear.
 
 ## Agent Handoffs
 
@@ -229,13 +231,31 @@
 
 ### Frontend Boundary-Test Follow-Up
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Singer the 2nd (`test_writer`, id `019e471f-5825-7bd3-b094-d63c6292351f`).
 - Assignment:
   - Relax the NativeBridge `DbQuery` type assertion so future TASK-014 operation narrowing is legal.
   - Preserve the stable assertions that `DbQuery` has no raw `sql` / `params` keys, accepts JSON-compatible payload values, rejects function payloads, and remains the `NativeBridge.db.execute` / `transaction` query type.
   - Do not change production code, Rust DB code, docs, capabilities, Tauri config, or package files unless a blocker is reported first.
+- Outcome:
+  - Changed file: `src/test/native-bridge.test.ts`.
+  - Commit: `52f99f6 Singer the 2nd(test-fix)(Add SQLite schema and Rust repositories): relax native bridge db query boundary test`.
+  - Delivered assignability/shape assertions instead of exact equality to `{ operation: string; payload?: DbValue }`, preserving raw `sql` / `params` rejection, JSON-compatible `DbValue` object coverage, function-payload rejection, and `NativeBridge.db.execute` / `transaction` use of `DbQuery`.
+  - Parent repeated green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check`.
+  - Residual risk noted by Singer: TASK-014 should add its own operation allowlist and IPC contract coverage when it narrows `DbQuery.operation`.
+
+### Frontend Boundary-Test Narrow Re-Review
+
+- Status: running.
+- Agents:
+  - Lagrange the 2nd (`security_reviewer`) for security/boundary.
+  - Hume the 2nd (`test_quality_reviewer`) for test quality.
+  - Ptolemy the 2nd (`reviewer`) for correctness.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review Singer the 2nd's test-fix commit `52f99f6`.
+  - Confirm the test no longer blocks TASK-014 `DbQuery.operation` narrowing while preserving stable no-raw-SQL and bridge typing assertions.
 
 ### Review Round 1
 
