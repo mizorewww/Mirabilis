@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: review-fix implementation pending.
-- Active agents: none.
+- Status: review-fix implementation active.
+- Active agents:
+  - Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -172,4 +173,21 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ## Next Action
 
-Commit this red-signal summary, spawn an `implementer` for review-fix production changes, then run focused checks until green.
+Wait for Locke's review-fix implementation output, repeat focused checks, then commit Locke's production patch if green.
+
+### Locke (`implementer`)
+
+- Status: active.
+- Agent id: `019e4392-b734-7f53-b304-5063a8a09c92`.
+- Ownership:
+  - `src/core/types/view.ts`.
+  - `src/core/types/slot.ts`.
+  - `src/core/registries/view-registry.ts`.
+  - `src/core/registries/slot-registry.ts`.
+- Assignment:
+  - Fix public default generic types so unparameterized view/slot definitions expose `RegistryComponent<unknown>` and `SlotCondition<unknown> | undefined`.
+  - Allow React-compatible object/exotic component references without importing React runtime values.
+  - Accept function and non-null object component refs at runtime while rejecting nullish/primitives.
+  - Read own data descriptor values without invoking Proxy `get` traps.
+  - Preserve existing duplicate, ordering, defensive-copy, exact-filter, and inert `when` behavior.
+  - Do not edit tests, docs, config, or lockfiles, and do not commit.

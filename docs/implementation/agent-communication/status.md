@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:08 CST.
+Last updated: 2026-05-20 12:09 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 12:08 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation pending.
+- Current phase: review-fix implementation active.
 
 ## Active Agents
 
-- None.
+- Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
 
 ## Recent Agent Outcomes
 
+- Locke (`implementer`) was spawned for TASK-008 review-fix production changes covering default public generic types, React object component refs, and descriptor-value property reads.
 - Socrates (`test_writer`) completed and was closed after adding TASK-008 review-fix tests.
 - Socrates's test commit: `319471b Socrates(test)(Add View Registry and Slot Registry): add review-fix coverage`.
 - Parent confirmed expected red signal after Socrates: `bun run typecheck` fails with `TS2344` for object component compatibility and default `component`/`when` types resolving as `unknown`; `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 16 passing and 4 failing on rejected object component refs and proxy descriptor reads triggering typed required-field errors.
@@ -237,6 +238,6 @@ Last updated: 2026-05-20 12:08 CST.
 
 ## Next Actions
 
-1. Commit the Socrates red-signal documentation.
-2. Spawn an `implementer` for TASK-008 review-fix production changes.
-3. Run focused checks until green.
+1. Wait for Locke's review-fix implementation output.
+2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint`.
+3. Commit Locke's production patch if the focused checks are green.
