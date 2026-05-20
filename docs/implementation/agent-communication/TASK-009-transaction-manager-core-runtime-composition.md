@@ -42,8 +42,14 @@
 
 ## Current Status
 
-- Status: implementation green; review handoff pending.
-- Active agents: none.
+- Status: review active.
+- Active agents:
+  - Ampere (`pr_explorer`, `019e440c-14c7-76c3-9497-092f497a34bb`): map TASK-009 changed paths and review focus.
+  - Lagrange (`reviewer`, `019e440c-1958-70c2-b909-0a1b9bcce1ce`): correctness review for runtime composition and transaction semantics.
+  - Descartes (`security_reviewer`, `019e440c-20e7-7860-9ea4-ce49362202f5`): boundary/security review for internal transaction participants and service exposure.
+  - Maxwell (`deprecation_auditor`, `019e440c-250c-7881-9478-faa8d3e6a59f`): TypeScript/API/deprecation review.
+  - Bernoulli (`test_quality_reviewer`, `019e440c-2e78-7f71-a4b8-77d73d11de1d`): TASK-009 test quality review.
+  - Pascal (`docs_researcher`, `019e440c-322c-7ae1-9691-268e2f886dc4`): TASK-009 docs/status traceability review.
 
 ## Agent Handoffs
 
@@ -180,6 +186,19 @@
   - `git diff --check` passed.
   - `bun run test:frontend -- src/test/core-page-store.test.ts src/test/core-metadata-store.test.ts src/test/core-event-store.test.ts src/test/core-filter-store.test.ts src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 122 tests.
 
+### Review Round 1
+
+- Status: active.
+- Agents:
+  - Ampere (`pr_explorer`, `019e440c-14c7-76c3-9497-092f497a34bb`).
+  - Lagrange (`reviewer`, `019e440c-1958-70c2-b909-0a1b9bcce1ce`).
+  - Descartes (`security_reviewer`, `019e440c-20e7-7860-9ea4-ce49362202f5`).
+  - Maxwell (`deprecation_auditor`, `019e440c-250c-7881-9478-faa8d3e6a59f`).
+  - Bernoulli (`test_quality_reviewer`, `019e440c-2e78-7f71-a4b8-77d73d11de1d`).
+  - Pascal (`docs_researcher`, `019e440c-322c-7ae1-9691-268e2f886dc4`).
+- Assignment:
+  - Review TASK-009 changed paths, transaction semantics, public APIs, boundary/security risks, test quality, and docs/status traceability.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -193,4 +212,4 @@
 
 ## Next Action
 
-Record TASK-009 review handoff, spawn focused review agents, then fix any P0/P1 findings before final gate.
+Wait for TASK-009 review agents, record findings, then fix any P0/P1 findings before final gate.
