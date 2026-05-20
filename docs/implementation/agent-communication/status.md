@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:35 CST.
+Last updated: 2026-05-20 12:49 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-20 12:35 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P1/P2 production type fix active.
+- Current phase: P1/P2 production type fix pending replacement.
 
 ## Active Agents
 
-- Carver (`implementer`, `019e43aa-60f1-7be0-aa5b-119c99d19d64`): implement TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
+- None.
 
 ## Recent Agent Outcomes
 
+- Carver (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
+- Parent rejected and reverted Carver's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
 - Carver (`implementer`) was spawned for TASK-008 P1/P2 production type fixes covering `RegistryComponent<Props>` prop safety and normal `SlotCondition<Props>` variance.
 - Euler (`test_writer`) completed and was closed after adding TASK-008 P1/P2 follow-up type tests.
 - Euler's test commit: `9a3c1c2 Euler(test)(Add View Registry and Slot Registry): cover public type soundness`.
@@ -260,6 +262,6 @@ Last updated: 2026-05-20 12:35 CST.
 
 ## Next Actions
 
-1. Wait for Carver's public type soundness implementation output.
-2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint`.
-3. Commit Carver's production type patch if focused checks are green.
+1. Commit the Carver replacement note.
+2. Spawn a replacement `implementer` for TASK-008 public type soundness fixes.
+3. Repeat focused checks until green.
