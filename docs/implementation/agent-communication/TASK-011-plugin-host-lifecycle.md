@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: TDD tests in progress.
-- Active agent: Averroes (`test_writer`).
-- Next parent step: wait for Averroes, validate red signal, and commit tests if correct.
+- Status: red tests committed; implementation next.
+- Active agents: none.
+- Next parent step: spawn `implementer` for Plugin Host production code.
 
 ## Agent Handoffs
 
@@ -82,7 +82,7 @@
 
 ### TDD Tests
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Averroes (`test_writer`, `019e45e0-f1df-7b61-b1d8-19b4a6208abb`).
 - Ownership:
@@ -90,6 +90,16 @@
 - Assignment:
   - Add focused red Vitest tests for public Plugin Host exports, explicit built-in list loading, install/register/activate/deactivate/uninstall/get behavior, deterministic dependency order and errors, scoped plugin-facing facades, runtime ownership injection, spoof rejection, failed register rollback, and raw-handle absence.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or existing tests.
+- Outcome:
+  - Averroes created `src/test/plugin-host-lifecycle.test.ts`.
+  - Tests cover public exports, explicit built-in plugin lifecycle ordering, activation/deactivation/uninstall behavior, dependency validation and ordering, typed host errors, scoped plugin-facing facades, ownership spoof rejection, raw context handle absence, and sync/async register rollback.
+  - Store-write rollback and out-of-scope native/persistence/UI/plugin-discovery work are intentionally not covered.
+- Commit:
+  - `12f04de Averroes(test)(Implement Plugin Host lifecycle): add lifecycle acceptance tests`.
+- Red checks:
+  - `bun run typecheck` failed because `PluginHost`, `PluginHostError`, `PluginHostErrorCode`, `PluginHostRecord`, `PluginHostStatus`, and `../core/plugin-host` do not exist.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` failed because Vite cannot resolve `../core/plugin-host`.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -100,4 +110,4 @@
 
 ## Next Action
 
-Wait for Averroes, validate red signal, and commit tests if correct.
+Spawn `implementer` for Plugin Host production code.
