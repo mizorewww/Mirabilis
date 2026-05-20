@@ -2,10 +2,11 @@ use rusqlite::{params, OptionalExtension};
 
 use super::{Database, DbError, DbResult};
 
-pub const LATEST_SCHEMA_VERSION: i64 = 1;
+const MIGRATION_001_VERSION: i64 = 1;
+pub const LATEST_SCHEMA_VERSION: i64 = MIGRATION_001_VERSION;
 
 const MIGRATION_001_NAME: &str = "001_core_schema";
-const MIGRATION_001_CHECKSUM: &str = "mirabilis-core-schema-v1";
+const MIGRATION_001_CHECKSUM: &str = "mirabilis-core-schema-v1-plugin-index-fk";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AppliedMigration {
@@ -27,6 +28,7 @@ pub fn apply_migrations(database: &Database) -> DbResult<()> {
     database
         .connection()
         .execute_batch(CORE_SCHEMA_LEDGER_SQL)?;
+    reject_future_ledger_versions(database)?;
     validate_migration_001(database)?;
     database
         .connection()
@@ -35,7 +37,7 @@ pub fn apply_migrations(database: &Database) -> DbResult<()> {
         "INSERT OR IGNORE INTO core_schema_migrations (version, name, checksum, applied_at)
          VALUES (?1, ?2, ?3, datetime('now'))",
         params![
-            LATEST_SCHEMA_VERSION,
+            MIGRATION_001_VERSION,
             MIGRATION_001_NAME,
             MIGRATION_001_CHECKSUM
         ],
@@ -73,6 +75,25 @@ pub fn schema_version(database: &Database) -> DbResult<i64> {
         .map_or(Ok(0), Ok)
 }
 
+fn reject_future_ledger_versions(database: &Database) -> DbResult<()> {
+    let future_ledger_version = database.connection().query_row(
+        "SELECT MAX(version)
+         FROM core_schema_migrations
+         WHERE version > ?1",
+        params![LATEST_SCHEMA_VERSION],
+        |row| row.get::<_, Option<i64>>(0),
+    )?;
+
+    if let Some(current_version) = future_ledger_version {
+        return Err(DbError::FutureSchemaVersion {
+            current_version,
+            latest_supported_version: LATEST_SCHEMA_VERSION,
+        });
+    }
+
+    Ok(())
+}
+
 fn validate_migration_001(database: &Database) -> DbResult<()> {
     let row = database
         .connection()
@@ -80,7 +101,7 @@ fn validate_migration_001(database: &Database) -> DbResult<()> {
             "SELECT name, checksum
              FROM core_schema_migrations
              WHERE version = ?1",
-            params![LATEST_SCHEMA_VERSION],
+            params![MIGRATION_001_VERSION],
             |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
         )
         .optional()?;
@@ -91,7 +112,7 @@ fn validate_migration_001(database: &Database) -> DbResult<()> {
 
     if actual_name != MIGRATION_001_NAME || actual_checksum != MIGRATION_001_CHECKSUM {
         return Err(DbError::MigrationDrift {
-            version: LATEST_SCHEMA_VERSION,
+            version: MIGRATION_001_VERSION,
             expected_name: MIGRATION_001_NAME,
             expected_checksum: MIGRATION_001_CHECKSUM,
             actual_name,
