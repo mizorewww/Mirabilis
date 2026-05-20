@@ -38,8 +38,11 @@
 
 ## Current Status
 
-- Status: review-fix implementation green; targeted re-review pending.
-- Active agents: none.
+- Status: targeted re-review active.
+- Active agents:
+  - Hilbert (`security_reviewer`, `019e4366-4586-74b0-a83b-1c30b8a645a0`): targeted security re-review for handler cause/context fixes.
+  - Mill (`deprecation_auditor`, `019e4366-4838-7621-af87-d4b580bb7576`): targeted Error.cause/API/deprecation re-review.
+  - Arendt (`test_quality_reviewer`, `019e4366-4b02-74e0-ac9d-2c7d8c474b38`): targeted test-quality re-review for context/type-barrel/handler privacy coverage.
 
 ## Agent Handoffs
 
@@ -206,4 +209,12 @@ Wait for Newton's review-fix implementation.
 
 ## Next Action
 
-Spawn targeted re-review agents for TASK-007 review fixes.
+Wait for TASK-007 targeted re-review agents.
+
+### Targeted Re-review Round
+
+- Status: active.
+- Agents:
+  - Hilbert (`security_reviewer`, `019e4366-4586-74b0-a83b-1c30b8a645a0`): verify Cicero's handler cause/context findings after review fixes.
+  - Mill (`deprecation_auditor`, `019e4366-4838-7621-af87-d4b580bb7576`): verify Turing's `Error.cause` semantics finding after review fixes.
+  - Arendt (`test_quality_reviewer`, `019e4366-4b02-74e0-ac9d-2c7d8c474b38`): verify Epicurus's review-fix coverage gaps after Popper's tests.

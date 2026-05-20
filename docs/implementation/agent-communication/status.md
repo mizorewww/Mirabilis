@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:19 CST.
+Last updated: 2026-05-20 11:20 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 11:19 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation green; targeted re-review pending.
+- Current phase: targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Hilbert (`security_reviewer`, `019e4366-4586-74b0-a83b-1c30b8a645a0`): targeted security re-review for handler cause/context fixes.
+- Mill (`deprecation_auditor`, `019e4366-4838-7621-af87-d4b580bb7576`): targeted Error.cause/API/deprecation re-review.
+- Arendt (`test_quality_reviewer`, `019e4366-4b02-74e0-ac9d-2c7d8c474b38`): targeted test-quality re-review for context/type-barrel/handler privacy coverage.
 
 ## Recent Agent Outcomes
 
+- Targeted re-review agents spawned for TASK-007 review-fix changes.
 - Newton (`implementer`) completed and was closed after implementing TASK-007 review fixes.
 - Newton's review-fix commit: `6b4c3ac Newton(review-fix)(Add Command Registry and Command Bus): hide raw handler causes`.
 - Parent repeated green checks after Newton: `bun run typecheck`, `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing, and `bun run lint`.
@@ -204,6 +207,6 @@ Last updated: 2026-05-20 11:19 CST.
 
 ## Next Actions
 
-1. Spawn targeted re-review agents for TASK-007 review fixes.
+1. Wait for TASK-007 targeted re-review agents.
 2. If clear, run final gate.
 3. Mark TASK-007 complete and merge to `master`.
