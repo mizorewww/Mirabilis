@@ -1323,6 +1323,79 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
+  it("deduplicates concurrent successful register calls and tracks one runtime contribution set", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstRegisterContributed = createDeferred<void>();
+    const releaseFirstRegister = createDeferred<void>();
+    const pluginId = "concurrent-register-success";
+    let registerAttempts = 0;
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        registerAttempts += 1;
+        registerRuntimeContributions(
+          ctx,
+          registerAttempts === 1
+            ? pluginId
+            : `${pluginId}-duplicate-${registerAttempts}`,
+        );
+
+        if (registerAttempts === 1) {
+          firstRegisterContributed.resolve();
+          await releaseFirstRegister.promise;
+        }
+      },
+    });
+
+    await host.install(plugin);
+
+    const firstRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    await firstRegisterContributed.promise;
+
+    const secondRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    releaseFirstRegister.resolve();
+
+    const [firstRegisterResult, secondRegisterResult] = await Promise.all([
+      firstRegisterOutcome,
+      secondRegisterOutcome,
+    ]);
+
+    expect(firstRegisterResult.status).toBe("resolved");
+    expect(secondRegisterResult.status).toBe("resolved");
+
+    if (firstRegisterResult.status === "resolved") {
+      expect(firstRegisterResult.value).toMatchObject({
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      });
+    }
+
+    if (secondRegisterResult.status === "resolved") {
+      expect(secondRegisterResult.value).toMatchObject({
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      });
+    }
+
+    expect(registerAttempts).toBe(1);
+    expect(registryIds(runtime)).toStrictEqual(
+      runtimeContributionIds(pluginId),
+    );
+
+    await host.uninstall(pluginId);
+
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+  });
+
   it("cleans up runtime contributions when register races a failed pending install", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
@@ -1376,6 +1449,164 @@ describe("Plugin Host lifecycle", () => {
     expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
       pluginId,
     });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+  });
+
+  it("revokes pending register scopes when failed built-in batch rollback deletes their records", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstRegisterContributed = createDeferred<void>();
+    const releaseFirstRegister = createDeferred<void>();
+    const secondInstallStarted = createDeferred<void>();
+    const releaseSecondInstallFailure = createDeferred<void>();
+    const installCause = new Error(
+      "second install fails after first register starts",
+    );
+    const pluginId = "batch-pending-register";
+    const failingPluginId = "batch-later-failure";
+    const skippedRegister = vi.fn();
+    let capturedContext: PluginContext | undefined;
+    let pageId = "";
+    const filterIds: StaleContextFilterIds = {
+      direct: "",
+      transaction: "",
+    };
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        capturedContext = ctx;
+        registerRuntimeContributions(ctx, pluginId);
+
+        const page = ctx.pages.create({
+          title: `${pluginId} pending page`,
+          body: emptyDocument(),
+        });
+
+        pageId = page.id;
+        ctx.metadata.set({
+          pageId,
+          namespace: pluginId,
+          key: "state",
+          value: "pending",
+          valueType: "string",
+        });
+        ctx.events.append({
+          pageId,
+          namespace: pluginId,
+          type: "pending",
+          payload: { pluginId },
+        });
+        filterIds.direct = ctx.filters.save({
+          name: `${pluginId} direct filter`,
+          query: { where: [{ field: `${pluginId}.state`, op: "exists" }] },
+          viewType: `${pluginId}.view`,
+        }).id;
+        filterIds.transaction = ctx.filters.save({
+          name: `${pluginId} transaction filter`,
+          query: { where: [] },
+          viewType: `${pluginId}.view`,
+        }).id;
+        firstRegisterContributed.resolve();
+
+        await releaseFirstRegister.promise;
+      },
+    });
+    const failingPlugin = createPlugin({
+      id: failingPluginId,
+      async install() {
+        secondInstallStarted.resolve();
+        await releaseSecondInstallFailure.promise;
+        throw installCause;
+      },
+      register: skippedRegister,
+    });
+    const loadOutcome = capturePromiseOutcome(
+      host.loadBuiltInPlugins([plugin, failingPlugin]),
+    );
+
+    await secondInstallStarted.promise;
+
+    const pendingRegisterOutcome = capturePromiseOutcome(
+      host.register(plugin),
+    );
+
+    await firstRegisterContributed.promise;
+
+    releaseSecondInstallFailure.resolve();
+
+    const loadResult = await loadOutcome;
+
+    expect(loadResult.status).toBe("rejected");
+
+    if (loadResult.status === "rejected") {
+      expectPluginHostError(loadResult.error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId: failingPluginId,
+        phase: "install",
+        cause: installCause,
+      });
+    }
+
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+    expectPluginHostError(
+      () => host.getPlugin(failingPluginId),
+      "PLUGIN_NOT_FOUND",
+      {
+        pluginId: failingPluginId,
+      },
+    );
+    expect(skippedRegister).not.toHaveBeenCalled();
+    expect(pageId).not.toBe("");
+    expect(filterIds.direct).not.toBe("");
+    expect(filterIds.transaction).not.toBe("");
+
+    const contextAfterRollback = expectDefined(capturedContext);
+    const registryAfterRollback = registryIds(runtime);
+    const dataAfterRollback = runtimeDataSnapshot(runtime);
+    const lateRegistrationErrors = tryLateRuntimeRegistrations(
+      contextAfterRollback,
+      `${pluginId}-stale`,
+    );
+    const staleWriteErrors = await collectStaleWriteErrors(
+      staleContextWriteAttempts(
+        contextAfterRollback,
+        "after-batch-rollback",
+        pageId,
+        filterIds,
+      ),
+    );
+    const dataAfterLateAttempts = runtimeDataSnapshot(runtime);
+
+    releaseFirstRegister.resolve();
+
+    const pendingRegisterResult = await pendingRegisterOutcome;
+
+    expect(registryAfterRollback).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+    expectLateRuntimeRegistrationErrors(lateRegistrationErrors, pluginId);
+    expectStaleWriteErrors(staleWriteErrors, pluginId, "register");
+    expect(dataAfterLateAttempts).toStrictEqual(dataAfterRollback);
+    expect(pendingRegisterResult.status).toBe("rejected");
+
+    if (pendingRegisterResult.status === "rejected") {
+      expectPluginHostError(
+        pendingRegisterResult.error,
+        "PLUGIN_LIFECYCLE_FAILED",
+        {
+          pluginId,
+          phase: "register",
+        },
+      );
+    }
+
     expect(registryIds(runtime)).toStrictEqual({
       commands: [],
       views: [],
@@ -1750,6 +1981,12 @@ describe("Plugin Host lifecycle", () => {
     await expectDependencyRemovalBlockedWhileDependentRegisters("deactivate");
   });
 
+  it("rejects dependent registration while dependency deactivation is in progress", async () => {
+    await expectDependentRegisterBlockedWhileDependencyRemovalRuns(
+      "deactivate",
+    );
+  });
+
   it("rejects uninstall with a typed dependency error before a dependency record disappears from registered dependents", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
@@ -1806,6 +2043,10 @@ describe("Plugin Host lifecycle", () => {
 
   it("blocks dependency uninstall while required dependent registration is pending", async () => {
     await expectDependencyRemovalBlockedWhileDependentRegisters("uninstall");
+  });
+
+  it("rejects dependent registration while dependency uninstall is in progress", async () => {
+    await expectDependentRegisterBlockedWhileDependencyRemovalRuns("uninstall");
   });
 
   it("does not treat installed-only dependency records as satisfying later required dependencies", async () => {
@@ -2830,6 +3071,145 @@ async function expectDependencyRemovalBlockedWhileDependentRegisters(
   );
 }
 
+async function expectDependentRegisterBlockedWhileDependencyRemovalRuns(
+  action: "deactivate" | "uninstall",
+) {
+  const runtime = createInMemoryAppRuntime();
+  const host = createHost(runtime);
+  const removalStarted = createDeferred<void>();
+  const releaseRemoval = createDeferred<void>();
+  const dependentRegisterStarted = createDeferred<void>();
+  const dependencyId = `${action}-removing-dependency`;
+  const dependentId = `${action}-registering-dependent`;
+  const events: string[] = [];
+  const dependency = createPlugin({
+    id: dependencyId,
+    register(ctx) {
+      events.push(`${dependencyId}.register`);
+      registerRuntimeContributions(ctx, dependencyId);
+    },
+    activate() {
+      events.push(`${dependencyId}.activate`);
+    },
+    async deactivate() {
+      events.push(`${dependencyId}.deactivate`);
+      removalStarted.resolve();
+      await releaseRemoval.promise;
+    },
+    async uninstall() {
+      events.push(`${dependencyId}.uninstall`);
+      removalStarted.resolve();
+      await releaseRemoval.promise;
+    },
+  });
+  const dependent = createPlugin({
+    id: dependentId,
+    dependencies: [dependencyId],
+    register(ctx) {
+      events.push(`${dependentId}.register`);
+      registerRuntimeContributions(ctx, dependentId);
+      dependentRegisterStarted.resolve();
+    },
+  });
+
+  await host.loadBuiltInPlugins([dependency]);
+
+  if (action === "deactivate") {
+    await host.activate(dependencyId);
+  }
+
+  const removalOutcome = capturePromiseOutcome(
+    action === "deactivate"
+      ? host.deactivate(dependencyId)
+      : host.uninstall(dependencyId),
+  );
+
+  await removalStarted.promise;
+
+  const dependentRegisterOutcome = capturePromiseOutcome(
+    host.register(dependent),
+  );
+
+  await Promise.race([
+    dependentRegisterStarted.promise,
+    flushMicrotasks(20),
+  ]);
+
+  releaseRemoval.resolve();
+
+  const [removalResult, dependentRegisterResult] = await Promise.all([
+    removalOutcome,
+    dependentRegisterOutcome,
+  ]);
+
+  expect(removalResult.status).toBe("resolved");
+
+  if (removalResult.status === "resolved" && action === "deactivate") {
+    expect(removalResult.value).toMatchObject({
+      id: dependencyId,
+      enabled: false,
+      status: "installed",
+    });
+  }
+
+  if (action === "deactivate") {
+    expect(host.getPlugin(dependencyId)).toMatchObject({
+      enabled: false,
+      status: "installed",
+    });
+  } else {
+    expectPluginHostError(
+      () => host.getPlugin(dependencyId),
+      "PLUGIN_NOT_FOUND",
+      {
+        pluginId: dependencyId,
+      },
+    );
+  }
+
+  expect(dependentRegisterResult.status).toBe("rejected");
+
+  if (dependentRegisterResult.status === "rejected") {
+    expectPluginHostError(
+      dependentRegisterResult.error,
+      "PLUGIN_DEPENDENCY_MISSING",
+      {
+        pluginId: dependentId,
+        dependencyId,
+      },
+    );
+  }
+
+  const dependentRecordError = captureOptionalSyncError(() =>
+    host.getPlugin(dependentId),
+  );
+
+  if (dependentRecordError === undefined) {
+    expect(host.getPlugin(dependentId)).toMatchObject({
+      enabled: false,
+      status: "installed",
+    });
+  } else {
+    expectPluginHostError(dependentRecordError, "PLUGIN_NOT_FOUND", {
+      pluginId: dependentId,
+    });
+  }
+  expect(registryIds(runtime)).toStrictEqual({
+    commands: [],
+    views: [],
+    slots: [],
+  });
+  expect(events).toStrictEqual(
+    action === "deactivate"
+      ? [
+          `${dependencyId}.register`,
+          `${dependencyId}.activate`,
+          `${dependencyId}.deactivate`,
+        ]
+      : [`${dependencyId}.register`, `${dependencyId}.uninstall`],
+  );
+}
+
 function registryIds(runtime: CoreRuntime) {
   return {
     commands: runtime.registries.commands.list().map((command) => command.id),
@@ -2887,6 +3267,12 @@ function createDeferred<T>(): {
   });
 
   return { promise, resolve, reject };
+}
+
+async function flushMicrotasks(turns = 3) {
+  for (let index = 0; index < turns; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 function capturePromiseOutcome<Value>(
