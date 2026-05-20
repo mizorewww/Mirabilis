@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: documentation sync agent running.
-- Active agents:
-  - Godel the 2nd (`doc_writer`, id `019e4771-5434-7413-93e2-1ace20106cc1`).
-- Next parent step: wait for Godel the 2nd, inspect docs, run checks, and commit docs if valid.
+- Status: documentation sync re-review.
+- Active agents: none.
+- Next parent step: run a focused read-only docs/current-guidance re-review.
 
 ## Agent Handoffs
 
@@ -296,7 +295,7 @@
 
 ### Documentation Sync Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Godel the 2nd (`doc_writer`, id `019e4771-5434-7413-93e2-1ace20106cc1`).
 - Assignment:
@@ -304,3 +303,10 @@
   - Patch `docs/architecture/06-filter-native-database.md`; inspect `docs/testing/strategy.md` and `docs/development/01-data-roadmap-and-mvp.md` for stale TASK-014 boundary wording.
   - Do not edit code, tests, or `docs/implementation/progress.md`.
   - Document the final NativeBridge DB contract, 15-operation allowlist, metadata logical-key/valueType contract, typed/redacted IPC errors, validation semantics, transaction result/rollback semantics, app-owned DB path, generated app-command ACLs, default capability grants, no raw SQL/path/native permission expansion, and `Transaction::new_unchecked` rationale.
+- Outcome:
+  - Changed files: `docs/architecture/06-filter-native-database.md` and `docs/testing/strategy.md`.
+  - Updated the architecture docs with the final TASK-014 NativeBridge DB contract, conditional transaction result typing, 15-operation allowlist, logical-key metadata read/delete contract, metadata valueType rules, typed/redacted Rust IPC errors, validation semantics, transaction rollback semantics, app-owned DB path, generated permission/ACL mapping, default capability grants, and no raw SQL/path/plugin-sql expansion.
+  - Added a concise TASK-014 DB IPC/capability durable gate note to the testing strategy.
+  - Inspected `docs/development/01-data-roadmap-and-mvp.md` and found no stale TASK-014 boundary wording.
+  - Check: `git diff --check` passed.
+  - Commit: `e023498 Godel the 2nd(docs)(Expose Tauri IPC commands for core persistence): document db ipc capability contract`.

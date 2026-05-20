@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:11 CST.
+Last updated: 2026-05-21 06:14 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 06:11 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: documentation sync agent running.
+- Current phase: documentation sync re-review.
 
 ## Active Agents
 
-- Godel the 2nd (`doc_writer`, id `019e4771-5434-7413-93e2-1ace20106cc1`) - final TASK-014 architecture/capability docs sync.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -58,7 +58,9 @@ Last updated: 2026-05-21 06:11 CST.
 - Parent repeated focused green checks after Kierkegaard the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - Parent next step: spawn `doc_writer` to fix the remaining P1 architecture/capability docs drift before merge.
 - Godel the 2nd (`doc_writer`) was spawned for final TASK-014 architecture/capability docs sync. Required coverage includes the final NativeBridge DB contract, 15-operation allowlist, metadata logical-key/valueType contract, typed/redacted IPC errors, transaction result/rollback semantics, app-owned DB path, generated app-command ACLs, capability grants, and the accepted `Transaction::new_unchecked` rationale.
-- Parent next step: wait for Godel the 2nd, inspect docs, run checks, and commit docs if valid.
+- Godel the 2nd completed final TASK-014 docs sync in `docs/architecture/06-filter-native-database.md` and `docs/testing/strategy.md`; it inspected `docs/development/01-data-roadmap-and-mvp.md` and found no stale TASK-014 boundary wording. `git diff --check` passed for the docs patch.
+- Godel the 2nd's docs commit: `e023498 Godel the 2nd(docs)(Expose Tauri IPC commands for core persistence): document db ipc capability contract`.
+- Parent next step: run a focused read-only docs/current-guidance re-review to confirm the P1 docs drift is closed.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
