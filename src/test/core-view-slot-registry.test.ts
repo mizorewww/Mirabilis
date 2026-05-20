@@ -373,6 +373,11 @@ describe("in-memory View Registry and Slot Registry", () => {
 
   it("registers view definitions from own data descriptors without invoking proxy get traps", () => {
     const views = createInMemoryViewRegistry();
+    const getTrap = vi.fn<
+      NonNullable<ProxyHandler<ViewDefinition<ViewProps>>["get"]>
+    >(() => {
+      throw new Error("view proxy get trap escaped");
+    });
     const proxiedDefinition = viewProxyWithThrowingGetForAllProperties(
       viewDefinition({
         id: "workspace.proxy-descriptor",
@@ -382,11 +387,12 @@ describe("in-memory View Registry and Slot Registry", () => {
         component: WorkspaceListPanel,
         accepts: { shape: "collection" },
       }),
-      new Error("view proxy get trap escaped"),
+      getTrap,
     );
 
     const registered = views.register(proxiedDefinition);
 
+    expect(getTrap.mock.calls.length).toBe(0);
     expect(registered).toStrictEqual({
       id: "workspace.proxy-descriptor",
       pluginId: "workspace",
@@ -519,6 +525,9 @@ describe("in-memory View Registry and Slot Registry", () => {
   });
 
   it("rejects invalid view definitions with typed errors without mutating state", () => {
+    const viewPluginDescriptorError = new Error(
+      "view plugin descriptor escaped",
+    );
     const invalidCases: Array<{
       name: string;
       definition: () => ViewDefinition;
@@ -590,11 +599,12 @@ describe("in-memory View Registry and Slot Registry", () => {
         code: "VIEW_IDENTITY_REQUIRED",
       },
       {
-        name: "plugin id proxy",
+        name: "plugin id descriptor trap",
+        rawError: viewPluginDescriptorError,
         definition: () =>
-          viewProxyWithThrowingGet(
+          viewProxyWithThrowingDescriptor(
             "pluginId",
-            new Error("view plugin getter escaped"),
+            viewPluginDescriptorError,
           ),
         code: "VIEW_PLUGIN_ID_REQUIRED",
       },
@@ -819,6 +829,11 @@ describe("in-memory View Registry and Slot Registry", () => {
   it("registers slot contributions from own data descriptors without invoking proxy get traps", () => {
     const slots = createInMemorySlotRegistry();
     const when = vi.fn<SlotCondition<SlotProps>>(() => true);
+    const getTrap = vi.fn<
+      NonNullable<ProxyHandler<SlotContribution<SlotProps>>["get"]>
+    >(() => {
+      throw new Error("slot proxy get trap escaped");
+    });
     const proxiedContribution = slotProxyWithThrowingGetForAllProperties(
       slotContribution({
         id: "workspace.header.proxy-descriptor",
@@ -828,11 +843,12 @@ describe("in-memory View Registry and Slot Registry", () => {
         when,
         component: WorkspaceHeaderSlot,
       }),
-      new Error("slot proxy get trap escaped"),
+      getTrap,
     );
 
     const registered = slots.register(proxiedContribution);
 
+    expect(getTrap.mock.calls.length).toBe(0);
     expect(registered).toStrictEqual({
       id: "workspace.header.proxy-descriptor",
       pluginId: "workspace",
@@ -1109,6 +1125,7 @@ describe("in-memory View Registry and Slot Registry", () => {
   });
 
   it("rejects invalid slot contributions with typed errors without mutating state", () => {
+    const slotNameDescriptorError = new Error("slot name descriptor escaped");
     const invalidCases: Array<{
       name: string;
       contribution: () => SlotContribution;
@@ -1174,11 +1191,12 @@ describe("in-memory View Registry and Slot Registry", () => {
         code: "SLOT_IDENTITY_REQUIRED",
       },
       {
-        name: "slot proxy",
+        name: "slot descriptor trap",
+        rawError: slotNameDescriptorError,
         contribution: () =>
-          slotProxyWithThrowingGet(
+          slotProxyWithThrowingDescriptor(
             "slot",
-            new Error("slot name getter escaped"),
+            slotNameDescriptorError,
           ),
         code: "SLOT_NAME_REQUIRED",
       },
@@ -1513,29 +1531,27 @@ function viewWithThrowingGetter(
   return result as ViewDefinition;
 }
 
-function viewProxyWithThrowingGet(
+function viewProxyWithThrowingDescriptor(
   key: keyof ViewDefinition,
   rawError: Error,
 ): ViewDefinition {
   return new Proxy(viewDefinition(), {
-    get(target, property, receiver) {
+    getOwnPropertyDescriptor(target, property) {
       if (property === key) {
         throw rawError;
       }
 
-      return Reflect.get(target, property, receiver);
+      return Reflect.getOwnPropertyDescriptor(target, property);
     },
   }) as ViewDefinition;
 }
 
 function viewProxyWithThrowingGetForAllProperties<Props>(
   definition: ViewDefinition<Props>,
-  rawError: Error,
+  getTrap: NonNullable<ProxyHandler<ViewDefinition<Props>>["get"]>,
 ): ViewDefinition<Props> {
   return new Proxy(definition, {
-    get() {
-      throw rawError;
-    },
+    get: getTrap,
   });
 }
 
@@ -1556,29 +1572,27 @@ function slotWithThrowingGetter<Props>(
   return result as SlotContribution<Props>;
 }
 
-function slotProxyWithThrowingGet(
+function slotProxyWithThrowingDescriptor(
   key: keyof SlotContribution,
   rawError: Error,
 ): SlotContribution {
   return new Proxy(slotContribution(), {
-    get(target, property, receiver) {
+    getOwnPropertyDescriptor(target, property) {
       if (property === key) {
         throw rawError;
       }
 
-      return Reflect.get(target, property, receiver);
+      return Reflect.getOwnPropertyDescriptor(target, property);
     },
   }) as SlotContribution;
 }
 
 function slotProxyWithThrowingGetForAllProperties<Props>(
   contribution: SlotContribution<Props>,
-  rawError: Error,
+  getTrap: NonNullable<ProxyHandler<SlotContribution<Props>>["get"]>,
 ): SlotContribution<Props> {
   return new Proxy(contribution, {
-    get() {
-      throw rawError;
-    },
+    get: getTrap,
   });
 }
 
