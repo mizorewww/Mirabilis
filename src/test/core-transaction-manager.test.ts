@@ -8,6 +8,8 @@ import {
 import type {
   CoreRuntime,
   CoreTransaction,
+  AppEvent,
+  FilterDefinition,
   FilterQuery,
   MarkdownPage,
   MetadataRecord,
@@ -88,6 +90,46 @@ describe("in-memory Transaction Manager", () => {
     expect(runtime.metadata.list()).toHaveLength(1);
     expect(runtime.events.list()).toHaveLength(1);
     expect(runtime.filters.list()).toHaveLength(1);
+    expect(runtime.pages.get("page_created")).toStrictEqual({
+      id: "page_created",
+      title: "Transaction page",
+      body: documentWithText("inside transaction"),
+      createdAt: "2026-05-20T01:00:00.000Z",
+      updatedAt: "2026-05-20T01:00:00.000Z",
+    });
+    expect(
+      runtime.metadata.get("page_created", "task", "status"),
+    ).toStrictEqual({
+      id: "metadata_created",
+      pageId: "page_created",
+      namespace: "task",
+      key: "status",
+      value: "todo",
+      valueType: "string",
+      sourcePluginId: "task",
+      createdAt: "2026-05-20T01:01:00.000Z",
+      updatedAt: "2026-05-20T01:01:00.000Z",
+    });
+    expect(runtime.events.list({ pageId: "page_created" })).toStrictEqual([
+      {
+        id: "event_created",
+        pageId: "page_created",
+        namespace: "task",
+        type: "created",
+        payload: { pageId: "page_created" },
+        sourcePluginId: "task",
+        createdAt: "2026-05-20T01:02:00.000Z",
+      },
+    ]);
+    expect(runtime.filters.get("filter_created")).toStrictEqual({
+      id: "filter_created",
+      name: "Task pages",
+      query: existsQuery("metadata.task.status"),
+      viewType: "task.list",
+      sourcePluginId: "task",
+      createdAt: "2026-05-20T01:03:00.000Z",
+      updatedAt: "2026-05-20T01:03:00.000Z",
+    });
   });
 
   it("keeps live stores unchanged while an async transaction is pending, then publishes on commit", async () => {
@@ -128,6 +170,79 @@ describe("in-memory Transaction Manager", () => {
         updatedAt: "2026-05-20T02:00:00.000Z",
       },
     ]);
+  });
+
+  it("rejects nested and concurrent transactions through the same runtime manager", async () => {
+    const runtime = createRuntime({
+      ids: ["page_outer"],
+      instants: ["2026-05-20T02:30:00.000Z"],
+    });
+    const staged = createDeferred<void>();
+    const finish = createDeferred<void>();
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.pages.create({
+        title: "Outer transaction",
+        body: documentWithText("outer"),
+      });
+      staged.resolve();
+
+      await expect(
+        runtime.transaction.run(() => "nested"),
+      ).rejects.toThrow("A Core transaction is already running");
+
+      await finish.promise;
+
+      return "outer";
+    });
+
+    await staged.promise;
+    await expect(runtime.transaction.run(() => "concurrent")).rejects.toThrow(
+      "A Core transaction is already running",
+    );
+
+    finish.resolve();
+
+    await expect(running).resolves.toBe("outer");
+    expect(runtime.pages.list()).toHaveLength(1);
+  });
+
+  it("rejects commit when live stores changed during a pending transaction and preserves the live write", async () => {
+    const runtime = createRuntime({
+      ids: ["page_tx", "page_live"],
+      instants: [
+        "2026-05-20T02:40:00.000Z",
+        "2026-05-20T02:41:00.000Z",
+      ],
+    });
+    const staged = createDeferred<void>();
+    const commit = createDeferred<void>();
+
+    const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+      tx.pages.create({
+        title: "Transaction page",
+        body: documentWithText("tx"),
+      });
+      staged.resolve();
+
+      await commit.promise;
+
+      return "should not commit";
+    });
+
+    await staged.promise;
+
+    const livePage = runtime.pages.create({
+      title: "Live page",
+      body: documentWithText("live"),
+    });
+
+    commit.resolve();
+
+    await expect(running).rejects.toThrow(
+      "Core transaction conflict: live page store changed before commit",
+    );
+    expect(runtime.pages.list()).toStrictEqual([livePage]);
   });
 
   it("rolls back staged writes when a synchronous handler throws", async () => {
@@ -283,38 +398,87 @@ describe("in-memory Transaction Manager", () => {
         valueType: "json",
         sourcePluginId: "clone",
       });
+      const event = tx.events.append({
+        pageId: page.id,
+        namespace: "clone",
+        type: "payload",
+        payload: { nested: ["original"] },
+        sourcePluginId: "clone",
+      });
+      const filter = tx.filters.save({
+        name: "Clone filter",
+        query: eqQuery("metadata.clone.payload", { nested: ["original"] }),
+        viewType: "clone.list",
+        sourcePluginId: "clone",
+      });
 
       pageId = page.id;
       mutatePage(page, "mutated return");
       mutateMetadata(metadata, "mutated return");
+      mutateEvent(event, "mutated return");
+      mutateFilter(filter, "mutated return");
 
       expect(pageText(tx.pages.get(page.id))).toBe("original");
       expect(
         metadataValue(tx.metadata.get(page.id, "clone", "payload")).nested[0],
       ).toBe("original");
+      expect(eventPayload(tx.events.list({ pageId: page.id })[0]!).nested[0])
+        .toBe("original");
+      expect(filterValue(tx.filters.get(filter.id)).nested[0]).toBe(
+        "original",
+      );
 
       const readPage = tx.pages.get(page.id);
       const readMetadata = tx.metadata.get(page.id, "clone", "payload");
+      const readEvent = tx.events.list({ pageId: page.id })[0]!;
+      const readFilter = tx.filters.get(filter.id);
 
       mutatePage(readPage, "mutated read");
       mutateMetadata(readMetadata, "mutated read");
+      mutateEvent(readEvent, "mutated read");
+      mutateFilter(readFilter, "mutated read");
 
       expect(pageText(tx.pages.get(page.id))).toBe("original");
       expect(
         metadataValue(tx.metadata.get(page.id, "clone", "payload")).nested[0],
       ).toBe("original");
+      expect(eventPayload(tx.events.list({ pageId: page.id })[0]!).nested[0])
+        .toBe("original");
+      expect(filterValue(tx.filters.get(filter.id)).nested[0]).toBe(
+        "original",
+      );
     });
 
     const committedPage = runtime.pages.get(pageId);
     const committedMetadata = runtime.metadata.get(pageId, "clone", "payload");
+    const committedEvent = runtime.events.list({ pageId })[0]!;
+    const committedFilter = runtime.filters.list()[0]!;
 
     mutatePage(committedPage, "mutated committed read");
     mutateMetadata(committedMetadata, "mutated committed read");
+    mutateEvent(committedEvent, "mutated committed read");
+    mutateFilter(committedFilter, "mutated committed read");
 
     expect(pageText(runtime.pages.get(pageId))).toBe("original");
     expect(
       metadataValue(runtime.metadata.get(pageId, "clone", "payload")).nested[0],
     ).toBe("original");
+    expect(eventPayload(runtime.events.list({ pageId })[0]!).nested[0]).toBe(
+      "original",
+    );
+    expect(filterValue(runtime.filters.list()[0]!).nested[0]).toBe("original");
+  });
+
+  it("does not expose transaction participants as discoverable store properties", () => {
+    const runtime = createRuntime({
+      ids: [],
+      instants: [],
+    });
+
+    expect(Object.getOwnPropertySymbols(runtime.pages)).toStrictEqual([]);
+    expect(Object.getOwnPropertySymbols(runtime.metadata)).toStrictEqual([]);
+    expect(Object.getOwnPropertySymbols(runtime.events)).toStrictEqual([]);
+    expect(Object.getOwnPropertySymbols(runtime.filters)).toStrictEqual([]);
   });
 
   it("keeps transaction handler types aligned with the public transaction context", () => {
@@ -481,4 +645,20 @@ function mutateMetadata(record: MetadataRecord, text: string): void {
 
 function metadataValue(record: MetadataRecord): { nested: string[] } {
   return record.value as { nested: string[] };
+}
+
+function mutateEvent(event: AppEvent, text: string): void {
+  eventPayload(event).nested[0] = text;
+}
+
+function eventPayload(event: AppEvent): { nested: string[] } {
+  return event.payload as { nested: string[] };
+}
+
+function mutateFilter(filter: FilterDefinition, text: string): void {
+  filterValue(filter).nested[0] = text;
+}
+
+function filterValue(filter: FilterDefinition): { nested: string[] } {
+  return filter.query.where[0]!.value as { nested: string[] };
 }

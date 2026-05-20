@@ -153,6 +153,20 @@ describe("Core runtime composition", () => {
       run: expect.any(Function),
     });
   });
+
+  it("can compose an injected transaction manager for custom store implementations", () => {
+    const stores = createCoreStores(createDeterministicStoreOptions());
+    const registries = createCoreRegistries();
+    const transaction: TransactionManager = {
+      run: async <Result>(
+        handler: TransactionHandler<Result>,
+      ): Promise<Awaited<Result>> =>
+        (await handler(stores)) as Awaited<Result>,
+    };
+    const services = createCoreServices({ stores, registries, transaction });
+
+    expect(services.transaction).toBe(transaction);
+  });
 });
 
 function createDeterministicStoreOptions() {
