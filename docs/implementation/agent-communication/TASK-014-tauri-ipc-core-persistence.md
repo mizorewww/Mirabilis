@@ -45,9 +45,9 @@
 
 ## Current Status
 
-- Status: documentation sync re-review.
+- Status: final local gate.
 - Active agents: none.
-- Next parent step: run a focused read-only docs/current-guidance re-review.
+- Next parent step: run final local gate for TASK-014.
 
 ## Agent Handoffs
 
@@ -310,3 +310,14 @@
   - Inspected `docs/development/01-data-roadmap-and-mvp.md` and found no stale TASK-014 boundary wording.
   - Check: `git diff --check` passed.
   - Commit: `e023498 Godel the 2nd(docs)(Expose Tauri IPC commands for core persistence): document db ipc capability contract`.
+
+### Documentation Re-Review
+
+- Status: complete.
+- Agent:
+  - Fermat the 2nd (`docs_researcher`, id `019e4775-3519-7992-98ed-7e22cf39fb7e`).
+- Outcome:
+  - Found no P0/P1/P2 docs/current-guidance findings.
+  - Confirmed the prior P1 docs drift is closed.
+  - Verified the final docs cover the NativeBridge DB contract, conditional transaction result typing, 15-operation allowlist, metadata logical-key/valueType rules, redacted Rust IPC error DTOs, validation semantics, transaction rollback semantics, app-owned DB path, generated app-command ACLs, default capability grants, and accepted `Transaction::new_unchecked` rationale.
+  - Official docs checked: Tauri commands/errors/camelCase args, Tauri capabilities and command ACLs, Tauri `commands.allow`, `tauri_build::AppManifest::commands`, `tauri::State`, and rusqlite transaction rollback / `new_unchecked`.
