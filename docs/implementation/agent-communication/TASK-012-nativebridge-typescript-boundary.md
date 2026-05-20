@@ -39,13 +39,10 @@
 
 ## Current Status
 
-- Status: post-fix re-review agents running.
+- Status: post-fix re-review cleared; local gate next.
 - Active agents:
-  - Aristotle the 2nd (`reviewer`, `019e46de-a734-7800-84ca-985e90bba0a9`).
-  - Hilbert the 2nd (`security_reviewer`, `019e46de-ab1f-7873-9d19-f6fb67cdc038`).
-  - Linnaeus the 2nd (`test_quality_reviewer`, `019e46de-b068-7053-80c0-9b937c142280`).
-  - Hypatia the 2nd (`docs_researcher`, `019e46de-b462-7ab2-a0e5-ab820a8ef475`).
-- Next parent step: wait for re-review, then run local gate if no P0/P1/P2 blockers remain.
+  - None.
+- Next parent step: run `bun run check:quick` and then complete TASK-012 if the gate passes.
 
 ## Agent Handoffs
 
@@ -298,7 +295,7 @@
 
 ### Post-Fix Re-Review
 
-- Status: running.
+- Status: completed and closed.
 - Agents:
   - Aristotle the 2nd (`reviewer`, `019e46de-a734-7800-84ca-985e90bba0a9`).
   - Hilbert the 2nd (`security_reviewer`, `019e46de-ab1f-7873-9d19-f6fb67cdc038`).
@@ -307,3 +304,15 @@
 - Assignment:
   - Read-only narrow re-review of the review-fix code, tests, and docs against the prior findings.
   - Confirm command literal typing, operation/payload `DbQuery`, JSON-compatible `DbValue`, safe error messages, Tauri adapter delegation test, raw Tauri boundary scans, and architecture docs sync.
+- Outcomes:
+  - Aristotle the 2nd found no P0/P1/P2 correctness findings and confirmed prior command literal, `DbQuery`, `DbValue`, safe message, adapter delegation, and raw UI/Tauri issues are cleared.
+  - Hilbert the 2nd found no P0/P1/P2 security findings and confirmed raw errors are redacted, `DbQuery` is no longer SQL-shaped, raw Tauri import is confined to the adapter, PluginContext has no native/raw handles, and no Rust/Tauri config/capability/dependency files changed.
+  - Linnaeus the 2nd found no P0/P1/P2/P3 test-quality findings and confirmed review-fix tests were not weakened after Darwin the 2nd.
+  - Hypatia the 2nd found no P0/P1/P2 docs/current-guidance findings and verified docs match code/tests plus current Tauri v2 `invoke` guidance.
+- Checks reported by agents:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 17 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check master...HEAD` passed.
+- Remaining risks:
+  - Rust-side `DbQuery.operation` allowlist enforcement and file path canonicalization/authorization remain deferred to TASK-014, as documented.
