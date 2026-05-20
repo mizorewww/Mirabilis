@@ -105,6 +105,7 @@ export const MarkdownEditorPlugin: AppPlugin = {
       id: "markdown.page-editor",
       pluginId: "markdown-editor",
       type: "page.editor",
+      title: "Markdown page editor",
       component: MarkdownPageEditor,
       accepts: { kind: "markdown-page" }
     });
@@ -117,6 +118,7 @@ export const MarkdownEditorPlugin: AppPlugin = {
     });
 
     ctx.slots.register({
+      id: "markdown.editor-mobile-toolbar.base",
       slot: "editor.mobile.toolbar",
       pluginId: "markdown-editor",
       component: BaseMarkdownToolbar
