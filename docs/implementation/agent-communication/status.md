@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:51 CST.
+Last updated: 2026-05-20 18:54 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 18:51 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 binary structured-clone P1 implementation pending.
+- Current phase: TASK-009 binary structured-clone P1 implementation active.
 
 ## Active Agents
 
-- None.
+- Galileo (`implementer`, `019e4699-91c6-73f3-877d-39b5519d7b34`): fix ArrayBuffer/DataView snapshot comparison.
 
 ## Recent Agent Outcomes
 
+- Galileo (`implementer`) spawned for binary structured-clone comparator fix, with ownership of `src/core/services/transaction-manager.ts`.
 - Pauli (`test_writer`) completed and was closed after adding binary structured-clone conflict regression tests.
 - Pauli's test commit: `7d6a1fd Pauli(test)(Add Transaction Manager and Core Runtime composition): cover binary transaction conflicts`.
 - Parent confirmed expected red signal: `bun run typecheck` passes; `bun run test:frontend -- src/test/core-transaction-manager.test.ts` runs 17 tests with 15 passing and two failing because `ArrayBuffer` and `DataView` conflict cases currently resolve instead of rejecting; `git diff --check` passes.
@@ -352,10 +353,10 @@ Last updated: 2026-05-20 18:51 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has red-signal binary structured-clone conflict tests and needs the production fix.
+- TASK-008 is complete and merged. TASK-009 has red-signal binary structured-clone conflict tests and Galileo is implementing the production fix.
 
 ## Next Actions
 
-1. Spawn an `implementer` for the binary structured-clone comparator fix.
+1. Wait for Galileo's binary structured-clone production patch.
 2. Run focused transaction/runtime checks after the patch.
 3. Re-review or run final gate once no P0/P1 findings remain.

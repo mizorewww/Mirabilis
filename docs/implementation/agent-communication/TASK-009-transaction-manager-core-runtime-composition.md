@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: binary structured-clone P1 implementation pending.
-- Active agents: none.
-- Next agent step: spawn an `implementer` for ArrayBuffer/DataView snapshot comparison.
+- Status: binary structured-clone P1 implementation active.
+- Active agents:
+  - Galileo (`implementer`, `019e4699-91c6-73f3-877d-39b5519d7b34`): fix ArrayBuffer/DataView snapshot comparison.
+- Next agent step: wait for Galileo's production patch and focused checks.
 
 ## Agent Handoffs
 
@@ -361,6 +362,19 @@
 - Parent decision:
   - Red signal is accepted. Production code must compare binary structured-clone values before falling through to enumerable object comparison.
 
+### Galileo (`implementer`)
+
+- Status: active.
+- Agent id: `019e4699-91c6-73f3-877d-39b5519d7b34`.
+- Ownership:
+  - `src/core/services/transaction-manager.ts`.
+  - Other `src/core/services` files only if directly necessary.
+- Assignment:
+  - Fix Dalton and Aristotle's P1 by adding deterministic snapshot comparison for `ArrayBuffer` and `DataView` before fallback object comparison.
+  - Consider typed-array view support through `ArrayBuffer.isView` if it remains local and deterministic.
+  - Preserve existing `Date`, `Map`, `Set`, `RegExp`, Array, and plain-object behavior.
+  - Do not edit tests, docs, config, package files, lockfiles, or unrelated store modules.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -374,4 +388,4 @@
 
 ## Next Action
 
-Spawn an `implementer` for the binary structured-clone comparator fix, then rerun focused transaction/runtime checks.
+Wait for Galileo's production patch, then rerun focused transaction/runtime checks.
