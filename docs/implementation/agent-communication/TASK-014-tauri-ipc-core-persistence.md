@@ -45,9 +45,15 @@
 
 ## Current Status
 
-- Status: post-review-fix validation and re-review.
-- Active agents: none.
-- Next parent step: spawn focused read-only re-review agents.
+- Status: post-review-fix read-only re-review running.
+- Active agents:
+  - Locke the 2nd (`pr_explorer`, id `019e4764-ea3b-7870-adfc-e0c7f3e6bbd8`).
+  - Nietzsche the 2nd (`reviewer`, id `019e4764-eea6-71a0-b0bb-ebb4410a4072`).
+  - Cicero the 2nd (`security_reviewer`, id `019e4764-f319-7da3-9fa9-cb59b3225790`).
+  - Tesla the 2nd (`deprecation_auditor`, id `019e4764-f76f-75d3-84f3-b31383977d52`).
+  - Anscombe the 2nd (`docs_researcher`, id `019e4764-fbe5-77e0-8417-abd016363223`).
+  - Schrodinger the 2nd (`test_quality_reviewer`, id `019e4764-ff88-7990-8814-1c031d991884`).
+- Next parent step: wait for re-review outcomes and decide follow-up fixes or docs sync.
 
 ## Agent Handoffs
 
@@ -221,3 +227,18 @@
   - Accepted one minimal test-helper fix: whitespace-only forbidden fragments are ignored because the redacted error message is required to be `Native command failed`, which necessarily contains spaces.
   - Parent repeated focused green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
   - Commit: `d0efbd8 Aquinas the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): enforce ipc validation semantics`.
+
+### Focused Re-Review Round
+
+- Status: running.
+- Agents:
+  - Locke the 2nd (`pr_explorer`) for changed-surface and hotspot mapping.
+  - Nietzsche the 2nd (`reviewer`) for correctness.
+  - Cicero the 2nd (`security_reviewer`) for IPC/capability/security boundaries.
+  - Tesla the 2nd (`deprecation_auditor`) for Tauri/rusqlite/serde/TypeScript API risk.
+  - Anscombe the 2nd (`docs_researcher`) for local docs and current official guidance drift.
+  - Schrodinger the 2nd (`test_quality_reviewer`) for review-fix test quality.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review latest TASK-014 state after commits `6662a4c` and `d0efbd8`.
+  - Return P0/P1/P2 findings with file/line references, or explicitly say no findings and list residual risks.
