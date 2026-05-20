@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review round 1 completed; review-fix red-test handoff next.
+- Status: review-fix red tests in progress.
 - Active agents:
-  - None.
-- Next parent step: spawn a `test_writer` for red tests covering the accepted review findings.
+  - Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`).
+- Next parent step: wait for Halley the 2nd, run focused red checks, and commit the review-fix test patch if it is test-only and fails for expected review findings.
 
 ## Agent Handoffs
 
@@ -216,3 +216,19 @@
   - `bun run typecheck` passed.
   - `bun run lint` passed.
   - `git diff --check master...HEAD` passed.
+
+### Review-Fix TDD
+
+- Status: running.
+- Agent:
+  - Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`).
+- Ownership:
+  - `src/test/native-bridge.test.ts`.
+- Assignment:
+  - Add red tests for exact `NativeBridgeCommand` literal union and no arbitrary string / `greet` command assignability.
+  - Add red tests that `DbQuery` is not SQL-shaped and uses an allowlist-friendly operation/payload DTO.
+  - Add red tests for safe stable `NativeBridgeError.message` values that do not include raw SQL/path/token details.
+  - Add at least one non-DB path error normalization test.
+  - Add a mocked Tauri adapter test for `createTauriNativeBridge()` delegating to `@tauri-apps/api/core` `invoke` with exact command/DTO.
+  - Extend raw-native scan coverage for root `@tauri-apps/api` imports.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, or other tests.

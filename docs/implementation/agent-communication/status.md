@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:14 CST.
+Last updated: 2026-05-21 03:15 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 03:14 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix test handoff next.
+- Current phase: review-fix red tests in progress.
 
 ## Active Agents
 
-- None.
+- Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`) - TASK-012 review-fix red tests in `src/test/native-bridge.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Halley the 2nd (`test_writer`) was spawned for review-fix red tests covering command literal typing, non-SQL `DbQuery`, safe error messages, non-db error normalization, Tauri adapter delegation, and root `@tauri-apps/api` scan coverage. Ownership is limited to `src/test/native-bridge.test.ts`.
 - TASK-012 review round 1 completed and all agents were closed.
 - Poincare (`reviewer`) found two P1 correctness/boundary issues: `NativeBridgeCommand` widens to `string`, and public `NativeBridgeError.message` forwards raw native messages that may contain SQL, paths, or secrets.
 - Pascal (`deprecation_auditor`) independently found the same P1 command widening issue and otherwise cleared Tauri v2 import/deprecation usage.
