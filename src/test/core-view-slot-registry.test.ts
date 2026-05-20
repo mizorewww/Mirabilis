@@ -146,7 +146,8 @@ describe("in-memory View Registry and Slot Registry", () => {
       component: RegistryComponent<ViewProps>;
       accepts: ViewDataShape;
     }>();
-    expectTypeOf<ViewDefinition["component"]>().toEqualTypeOf<
+    expectTypeOf<ViewDefinition["component"]>().toEqualTypeOf<unknown>();
+    expectTypeOf<ViewDefinition<unknown>["component"]>().toEqualTypeOf<
       RegistryComponent<unknown>
     >();
     expectTypeOf<ListViewsOptions>().toEqualTypeOf<{
@@ -186,6 +187,9 @@ describe("in-memory View Registry and Slot Registry", () => {
       SlotCondition<SlotProps>
     >();
     expectTypeOf<string>().not.toExtend<SlotCondition<unknown>>();
+    expectTypeOf<SlotCondition<unknown>>().toEqualTypeOf<
+      (props: unknown) => boolean
+    >();
     expectTypeOf<
       Omit<SlotContribution<SlotProps>, "component"> & {
         component: ComponentType<WrongSlotProps>;
@@ -204,10 +208,12 @@ describe("in-memory View Registry and Slot Registry", () => {
       when?: SlotCondition<SlotProps>;
       component: RegistryComponent<SlotProps>;
     }>();
-    expectTypeOf<SlotContribution["component"]>().toEqualTypeOf<
+    expectTypeOf<SlotContribution["component"]>().toEqualTypeOf<unknown>();
+    expectTypeOf<SlotContribution<unknown>["component"]>().toEqualTypeOf<
       RegistryComponent<unknown>
     >();
-    expectTypeOf<SlotContribution["when"]>().toEqualTypeOf<
+    expectTypeOf<SlotContribution["when"]>().toEqualTypeOf<unknown>();
+    expectTypeOf<SlotContribution<unknown>["when"]>().toEqualTypeOf<
       SlotCondition<unknown> | undefined
     >();
     expectTypeOf<ListSlotContributionsOptions>().toEqualTypeOf<{
