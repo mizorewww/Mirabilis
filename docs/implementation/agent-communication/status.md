@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:40 CST.
+Last updated: 2026-05-21 03:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-21 03:40 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance agents running.
+- Current phase: pre-test guidance complete; red test handoff next.
 
 ## Active Agents
 
-- Dewey the 2nd (`planner`, id `019e46e5-ec64-7473-ba01-8aacba8f1423`) - read-only TASK-013 implementation plan and TDD scope guidance.
-- Poincare the 2nd (`docs_researcher`, id `019e46e5-f1c9-76f0-a37c-91ef5dae86ab`) - read-only current Rust SQLite / Tauri v2 storage documentation guidance.
-- Raman the 2nd (`deprecation_auditor`, id `019e46e6-0938-7a03-a25b-92cdca3808bf`) - read-only API/deprecation and dependency-risk guidance.
-- Epicurus the 2nd (`security_reviewer`, id `019e46e6-0e3f-7c22-8767-d33b76cd0ced`) - read-only persistence-boundary and data-safety guidance.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -23,7 +20,13 @@ Last updated: 2026-05-21 03:40 CST.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
 - `.codex/agents/*.toml` parsed successfully for TASK-013 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
-- TASK-013 pre-test guidance agents were spawned and are running. Parent next step: wait for planner, current-doc, deprecation/API, and security guidance, record decisions, then delegate Rust red tests to `test_writer`.
+- TASK-013 pre-test guidance completed and all agents were closed.
+- Dewey the 2nd (`planner`) recommended `src-tauri/src/db/` with typed Rust repositories, versioned/idempotent migrations, Core tables for pages, metadata, events, filters, plugins, commands, views, and neutral plugin-owned index baseline support. Dewey also flagged the local docs drift where architecture SQL omits commands/views but task acceptance requires them.
+- Poincare the 2nd (`docs_researcher`) verified current guidance and recommended `rusqlite = { version = "0.39", features = ["bundled", "serde_json"] }`, plus optional `tempfile` for file-backed tests, and avoiding `tauri-plugin-sql` because it exposes a frontend SQL/capability surface.
+- Raman the 2nd (`deprecation_auditor`) confirmed `tauri-plugin-sql` is a poor TASK-013 fit, recommended backend-only `rusqlite`, warned that SQLite foreign keys are off by default per connection, and required explicit JSON/NULL semantics and deterministic `ORDER BY` behavior in repository tests.
+- Epicurus the 2nd (`security_reviewer`) required parameterized repository access, no raw SQL or IPC exposure, no Tauri capability/config/frontend NativeBridge changes, corrupt JSON typed errors, SQL injection regression coverage, and no dynamic plugin-owned DDL from plugin input.
+- Parent decisions for red tests: target a private Rust SQLite/repository layer under `src-tauri/src/db`; use `rusqlite` and file-backed temp DB coverage; test `core_commands` and `core_views`; interpret plugin-owned index baseline as a neutral `core_plugin_indexes` registry/support table rather than business-plugin tables; keep app data path resolution, IPC commands, capability changes, frontend wiring, and NativeBridge operation allowlisting out of scope.
+- Parent next step: commit pre-test guidance, then delegate Rust acceptance tests to `test_writer`.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.
