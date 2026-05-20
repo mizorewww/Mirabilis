@@ -39,9 +39,10 @@
 
 ## Current Status
 
-- Status: batch rollback and dependency-removal race production fix handoff.
-- Active agents: none.
-- Next parent step: delegate implementation, then validate green checks.
+- Status: batch rollback and dependency-removal race production fix in progress.
+- Active agents:
+  - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
+- Next parent step: wait for Halley, then validate green checks.
 
 ## Agent Handoffs
 
@@ -677,6 +678,18 @@
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 43 tests with 39 passing and 4 failing in the expected new cases.
   - `git diff --check` passed.
 
+### Batch Rollback And Dependency-Removal Race Implementation
+
+- Status: in progress.
+- Agent:
+  - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Fix batch rollback so pending register scopes from deleted earlier batch records are revoked and tentative contributions/stale context capabilities are cleaned up.
+  - Block required dependent registration while dependency deactivate/uninstall is already in progress.
+  - Make concurrent successful `register(plugin)` calls idempotent and uninstall-cleanable.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -686,4 +699,4 @@
 
 ## Next Action
 
-Delegate the production fix for Avicenna's red tests.
+Wait for Halley, then validate and commit the batch rollback/dependency-removal production fix.
