@@ -5,19 +5,19 @@ import type {
   PageStore,
 } from "../stores";
 import {
-  inMemoryEventStoreTransactionParticipant,
+  getInMemoryEventStoreTransactionParticipant,
   type InMemoryEventStoreTransactionParticipant,
 } from "../stores/event-store";
 import {
-  inMemoryFilterStoreTransactionParticipant,
+  getInMemoryFilterStoreTransactionParticipant,
   type InMemoryFilterStoreTransactionParticipant,
 } from "../stores/filter-store";
 import {
-  inMemoryMetadataStoreTransactionParticipant,
+  getInMemoryMetadataStoreTransactionParticipant,
   type InMemoryMetadataStoreTransactionParticipant,
 } from "../stores/metadata-store";
 import {
-  inMemoryPageStoreTransactionParticipant,
+  getInMemoryPageStoreTransactionParticipant,
   type InMemoryPageStoreTransactionParticipant,
 } from "../stores/page-store";
 
@@ -58,18 +58,22 @@ export function createTransactionManager(
         const metadataParticipant = requireMetadataParticipant(stores.metadata);
         const eventParticipant = requireEventParticipant(stores.events);
         const filterParticipant = requireFilterParticipant(stores.filters);
+        const initialPageState = pageParticipant.snapshot();
+        const initialMetadataState = metadataParticipant.snapshot();
+        const initialEventState = eventParticipant.snapshot();
+        const initialFilterState = filterParticipant.snapshot();
 
         const stagedPages = pageParticipant.createStoreFromSnapshot(
-          pageParticipant.snapshot(),
+          initialPageState,
         );
         const stagedMetadata = metadataParticipant.createStoreFromSnapshot(
-          metadataParticipant.snapshot(),
+          initialMetadataState,
         );
         const stagedEvents = eventParticipant.createStoreFromSnapshot(
-          eventParticipant.snapshot(),
+          initialEventState,
         );
         const stagedFilters = filterParticipant.createStoreFromSnapshot(
-          filterParticipant.snapshot(),
+          initialFilterState,
         );
         const transaction: CoreTransaction = {
           pages: stagedPages,
@@ -88,6 +92,23 @@ export function createTransactionManager(
         const nextMetadataState = stagedMetadataParticipant.snapshot();
         const nextEventState = stagedEventParticipant.snapshot();
         const nextFilterState = stagedFilterParticipant.snapshot();
+        const livePageState = pageParticipant.snapshot();
+        const liveMetadataState = metadataParticipant.snapshot();
+        const liveEventState = eventParticipant.snapshot();
+        const liveFilterState = filterParticipant.snapshot();
+
+        assertLiveSnapshotUnchanged("page", livePageState, initialPageState);
+        assertLiveSnapshotUnchanged(
+          "metadata",
+          liveMetadataState,
+          initialMetadataState,
+        );
+        assertLiveSnapshotUnchanged("event", liveEventState, initialEventState);
+        assertLiveSnapshotUnchanged(
+          "filter",
+          liveFilterState,
+          initialFilterState,
+        );
 
         pageParticipant.replaceState(nextPageState);
         metadataParticipant.replaceState(nextMetadataState);
@@ -102,29 +123,11 @@ export function createTransactionManager(
   };
 }
 
-type PageStoreWithTransactionParticipant = PageStore & {
-  [inMemoryPageStoreTransactionParticipant]?: InMemoryPageStoreTransactionParticipant;
-};
-
-type MetadataStoreWithTransactionParticipant = MetadataStore & {
-  [inMemoryMetadataStoreTransactionParticipant]?: InMemoryMetadataStoreTransactionParticipant;
-};
-
-type EventStoreWithTransactionParticipant = EventStore & {
-  [inMemoryEventStoreTransactionParticipant]?: InMemoryEventStoreTransactionParticipant;
-};
-
-type FilterStoreWithTransactionParticipant = FilterStore & {
-  [inMemoryFilterStoreTransactionParticipant]?: InMemoryFilterStoreTransactionParticipant;
-};
-
 function requirePageParticipant(
   store: PageStore,
 ): InMemoryPageStoreTransactionParticipant {
   return requireParticipant(
-    (store as PageStoreWithTransactionParticipant)[
-      inMemoryPageStoreTransactionParticipant
-    ],
+    getInMemoryPageStoreTransactionParticipant(store),
     "page",
   );
 }
@@ -133,9 +136,7 @@ function requireMetadataParticipant(
   store: MetadataStore,
 ): InMemoryMetadataStoreTransactionParticipant {
   return requireParticipant(
-    (store as MetadataStoreWithTransactionParticipant)[
-      inMemoryMetadataStoreTransactionParticipant
-    ],
+    getInMemoryMetadataStoreTransactionParticipant(store),
     "metadata",
   );
 }
@@ -144,9 +145,7 @@ function requireEventParticipant(
   store: EventStore,
 ): InMemoryEventStoreTransactionParticipant {
   return requireParticipant(
-    (store as EventStoreWithTransactionParticipant)[
-      inMemoryEventStoreTransactionParticipant
-    ],
+    getInMemoryEventStoreTransactionParticipant(store),
     "event",
   );
 }
@@ -155,9 +154,7 @@ function requireFilterParticipant(
   store: FilterStore,
 ): InMemoryFilterStoreTransactionParticipant {
   return requireParticipant(
-    (store as FilterStoreWithTransactionParticipant)[
-      inMemoryFilterStoreTransactionParticipant
-    ],
+    getInMemoryFilterStoreTransactionParticipant(store),
     "filter",
   );
 }
@@ -173,4 +170,115 @@ function requireParticipant<Participant>(
   }
 
   return participant;
+}
+
+function assertLiveSnapshotUnchanged(
+  storeName: string,
+  liveSnapshot: unknown,
+  initialSnapshot: unknown,
+): void {
+  if (!snapshotsEqual(liveSnapshot, initialSnapshot)) {
+    throw new Error(
+      `Core transaction conflict: live ${storeName} store changed before commit`,
+    );
+  }
+}
+
+function snapshotsEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) {
+    return true;
+  }
+
+  if (typeof left !== "object" || left === null) {
+    return false;
+  }
+
+  if (typeof right !== "object" || right === null) {
+    return false;
+  }
+
+  if (left instanceof Map || right instanceof Map) {
+    return mapsEqual(left, right);
+  }
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return arraysEqual(left, right);
+  }
+
+  return objectsEqual(left, right);
+}
+
+function mapsEqual(left: object, right: object): boolean {
+  if (!(left instanceof Map) || !(right instanceof Map)) {
+    return false;
+  }
+
+  if (left.size !== right.size) {
+    return false;
+  }
+
+  const leftEntries = [...left.entries()];
+  const rightEntries = [...right.entries()];
+
+  return leftEntries.every(
+    ([leftKey, leftValue], index) =>
+      snapshotsEqual(leftKey, rightEntries[index]?.[0]) &&
+      snapshotsEqual(leftValue, rightEntries[index]?.[1]),
+  );
+}
+
+function arraysEqual(left: object, right: object): boolean {
+  if (!Array.isArray(left) || !Array.isArray(right)) {
+    return false;
+  }
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every((key, index) => {
+    if (key !== rightKeys[index]) {
+      return false;
+    }
+
+    return snapshotsEqual(
+      readSnapshotProperty(left, key),
+      readSnapshotProperty(right, key),
+    );
+  });
+}
+
+function objectsEqual(left: object, right: object): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every((key, index) => {
+    if (key !== rightKeys[index]) {
+      return false;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(right, key)) {
+      return false;
+    }
+
+    return snapshotsEqual(
+      readSnapshotProperty(left, key),
+      readSnapshotProperty(right, key),
+    );
+  });
+}
+
+function readSnapshotProperty(value: object, key: string): unknown {
+  return (value as Record<string, unknown>)[key];
 }

@@ -73,9 +73,16 @@ export type InMemoryFilterStoreTransactionParticipant = {
   replaceState(snapshot: InMemoryFilterStoreState): void;
 };
 
-export const inMemoryFilterStoreTransactionParticipant: unique symbol = Symbol(
-  "Mirabilis.inMemoryFilterStoreTransactionParticipant",
-);
+const inMemoryFilterStoreTransactionParticipants = new WeakMap<
+  FilterStore,
+  InMemoryFilterStoreTransactionParticipant
+>();
+
+export function getInMemoryFilterStoreTransactionParticipant(
+  store: FilterStore,
+): InMemoryFilterStoreTransactionParticipant | undefined {
+  return inMemoryFilterStoreTransactionParticipants.get(store);
+}
 
 type OptionalPropertyRead =
   | {
@@ -350,22 +357,19 @@ export function createInMemoryFilterStore(
     },
   };
 
-  Object.defineProperty(store, inMemoryFilterStoreTransactionParticipant, {
-    enumerable: false,
-    value: {
-      snapshot() {
-        return cloneState(state);
-      },
-      createStoreFromSnapshot(snapshot: InMemoryFilterStoreState) {
-        return createInMemoryFilterStoreFromState(
-          storeOptions,
-          cloneState(snapshot),
-        );
-      },
-      replaceState(snapshot: InMemoryFilterStoreState) {
-        state = cloneState(snapshot);
-      },
-    } satisfies InMemoryFilterStoreTransactionParticipant,
+  inMemoryFilterStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryFilterStoreState) {
+      return createInMemoryFilterStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryFilterStoreState) {
+      state = cloneState(snapshot);
+    },
   });
 
   return store;
@@ -376,11 +380,11 @@ function createInMemoryFilterStoreFromState(
   initialState: InMemoryFilterStoreState,
 ): FilterStore {
   const store = createInMemoryFilterStore(options);
-  const participant = (
-    store as FilterStore & {
-      [inMemoryFilterStoreTransactionParticipant]: InMemoryFilterStoreTransactionParticipant;
-    }
-  )[inMemoryFilterStoreTransactionParticipant];
+  const participant = getInMemoryFilterStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error("Expected in-memory filter store transaction participant");
+  }
 
   participant.replaceState(initialState);
 

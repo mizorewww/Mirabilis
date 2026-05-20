@@ -54,9 +54,16 @@ export type InMemoryEventStoreTransactionParticipant = {
   replaceState(snapshot: InMemoryEventStoreState): void;
 };
 
-export const inMemoryEventStoreTransactionParticipant: unique symbol = Symbol(
-  "Mirabilis.inMemoryEventStoreTransactionParticipant",
-);
+const inMemoryEventStoreTransactionParticipants = new WeakMap<
+  EventStore,
+  InMemoryEventStoreTransactionParticipant
+>();
+
+export function getInMemoryEventStoreTransactionParticipant(
+  store: EventStore,
+): InMemoryEventStoreTransactionParticipant | undefined {
+  return inMemoryEventStoreTransactionParticipants.get(store);
+}
 
 type JsonCompatibilityValidationState = {
   seen: WeakSet<object>;
@@ -117,22 +124,19 @@ export function createInMemoryEventStore(
     },
   };
 
-  Object.defineProperty(store, inMemoryEventStoreTransactionParticipant, {
-    enumerable: false,
-    value: {
-      snapshot() {
-        return cloneState(state);
-      },
-      createStoreFromSnapshot(snapshot: InMemoryEventStoreState) {
-        return createInMemoryEventStoreFromState(
-          storeOptions,
-          cloneState(snapshot),
-        );
-      },
-      replaceState(snapshot: InMemoryEventStoreState) {
-        state = cloneState(snapshot);
-      },
-    } satisfies InMemoryEventStoreTransactionParticipant,
+  inMemoryEventStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryEventStoreState) {
+      return createInMemoryEventStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryEventStoreState) {
+      state = cloneState(snapshot);
+    },
   });
 
   return store;
@@ -143,11 +147,11 @@ function createInMemoryEventStoreFromState(
   initialState: InMemoryEventStoreState,
 ): EventStore {
   const store = createInMemoryEventStore(options);
-  const participant = (
-    store as EventStore & {
-      [inMemoryEventStoreTransactionParticipant]: InMemoryEventStoreTransactionParticipant;
-    }
-  )[inMemoryEventStoreTransactionParticipant];
+  const participant = getInMemoryEventStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error("Expected in-memory event store transaction participant");
+  }
 
   participant.replaceState(initialState);
 

@@ -56,9 +56,16 @@ export type InMemoryPageStoreTransactionParticipant = {
   replaceState(snapshot: InMemoryPageStoreState): void;
 };
 
-export const inMemoryPageStoreTransactionParticipant: unique symbol = Symbol(
-  "Mirabilis.inMemoryPageStoreTransactionParticipant",
-);
+const inMemoryPageStoreTransactionParticipants = new WeakMap<
+  PageStore,
+  InMemoryPageStoreTransactionParticipant
+>();
+
+export function getInMemoryPageStoreTransactionParticipant(
+  store: PageStore,
+): InMemoryPageStoreTransactionParticipant | undefined {
+  return inMemoryPageStoreTransactionParticipants.get(store);
+}
 
 export function createInMemoryPageStore(
   options: CreateInMemoryPageStoreOptions = {},
@@ -172,22 +179,19 @@ export function createInMemoryPageStore(
     },
   };
 
-  Object.defineProperty(store, inMemoryPageStoreTransactionParticipant, {
-    enumerable: false,
-    value: {
-      snapshot() {
-        return cloneState(state);
-      },
-      createStoreFromSnapshot(snapshot: InMemoryPageStoreState) {
-        return createInMemoryPageStoreFromState(
-          storeOptions,
-          cloneState(snapshot),
-        );
-      },
-      replaceState(snapshot: InMemoryPageStoreState) {
-        state = cloneState(snapshot);
-      },
-    } satisfies InMemoryPageStoreTransactionParticipant,
+  inMemoryPageStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryPageStoreState) {
+      return createInMemoryPageStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryPageStoreState) {
+      state = cloneState(snapshot);
+    },
   });
 
   return store;
@@ -198,11 +202,11 @@ function createInMemoryPageStoreFromState(
   initialState: InMemoryPageStoreState,
 ): PageStore {
   const store = createInMemoryPageStore(options);
-  const participant = (
-    store as PageStore & {
-      [inMemoryPageStoreTransactionParticipant]: InMemoryPageStoreTransactionParticipant;
-    }
-  )[inMemoryPageStoreTransactionParticipant];
+  const participant = getInMemoryPageStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error("Expected in-memory page store transaction participant");
+  }
 
   participant.replaceState(initialState);
 

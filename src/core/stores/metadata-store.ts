@@ -80,8 +80,16 @@ export type InMemoryMetadataStoreTransactionParticipant = {
   replaceState(snapshot: InMemoryMetadataStoreState): void;
 };
 
-export const inMemoryMetadataStoreTransactionParticipant: unique symbol =
-  Symbol("Mirabilis.inMemoryMetadataStoreTransactionParticipant");
+const inMemoryMetadataStoreTransactionParticipants = new WeakMap<
+  MetadataStore,
+  InMemoryMetadataStoreTransactionParticipant
+>();
+
+export function getInMemoryMetadataStoreTransactionParticipant(
+  store: MetadataStore,
+): InMemoryMetadataStoreTransactionParticipant | undefined {
+  return inMemoryMetadataStoreTransactionParticipants.get(store);
+}
 
 export function createInMemoryMetadataStore(
   options: CreateInMemoryMetadataStoreOptions = {},
@@ -182,22 +190,19 @@ export function createInMemoryMetadataStore(
     },
   };
 
-  Object.defineProperty(store, inMemoryMetadataStoreTransactionParticipant, {
-    enumerable: false,
-    value: {
-      snapshot() {
-        return cloneState(state);
-      },
-      createStoreFromSnapshot(snapshot: InMemoryMetadataStoreState) {
-        return createInMemoryMetadataStoreFromState(
-          storeOptions,
-          cloneState(snapshot),
-        );
-      },
-      replaceState(snapshot: InMemoryMetadataStoreState) {
-        state = cloneState(snapshot);
-      },
-    } satisfies InMemoryMetadataStoreTransactionParticipant,
+  inMemoryMetadataStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryMetadataStoreState) {
+      return createInMemoryMetadataStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryMetadataStoreState) {
+      state = cloneState(snapshot);
+    },
   });
 
   return store;
@@ -208,11 +213,13 @@ function createInMemoryMetadataStoreFromState(
   initialState: InMemoryMetadataStoreState,
 ): MetadataStore {
   const store = createInMemoryMetadataStore(options);
-  const participant = (
-    store as MetadataStore & {
-      [inMemoryMetadataStoreTransactionParticipant]: InMemoryMetadataStoreTransactionParticipant;
-    }
-  )[inMemoryMetadataStoreTransactionParticipant];
+  const participant = getInMemoryMetadataStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error(
+      "Expected in-memory metadata store transaction participant",
+    );
+  }
 
   participant.replaceState(initialState);
 

@@ -51,6 +51,7 @@ type CreateCoreStoresOptions = {
 type CreateCoreServicesOptions = {
   stores: CoreStores;
   registries: CoreRegistries;
+  transaction?: TransactionManager;
 };
 
 export function createCoreStores(
@@ -75,6 +76,7 @@ export function createCoreRegistries(): CoreRegistries {
 export function createCoreServices({
   stores,
   registries,
+  transaction,
 }: CreateCoreServicesOptions): CoreServices {
   return {
     pages: stores.pages,
@@ -84,7 +86,7 @@ export function createCoreServices({
     commands: registries.commands,
     views: registries.views,
     slots: registries.slots,
-    transaction: createTransactionManager(stores),
+    transaction: transaction ?? createTransactionManager(stores),
   };
 }
 
