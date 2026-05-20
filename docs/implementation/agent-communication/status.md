@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:38 CST.
+Last updated: 2026-05-21 00:46 CST.
 
 ## Current Task
 
@@ -8,17 +8,19 @@ Last updated: 2026-05-21 00:38 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final re-review in progress.
+- Current phase: TASK-011 final re-review found pending transaction P1; TDD handoff next.
 
 ## Active Agents
 
-- James (`reviewer`, `019e4640-8d3d-7fa3-aaa0-a25eeeedebbc`) is running final correctness review.
-- Mencius (`security_reviewer`, `019e4640-9044-7f62-9180-4461db34d992`) is running final security/boundary review.
-- Einstein (`test_quality_reviewer`, `019e4640-941e-7583-b04b-305119d3d6e6`) is running final test-quality review.
-- Bernoulli (`docs_researcher`, `019e4640-9850-7dc2-be6d-cbcda623a5c7`) is running final docs/status review.
+- No active agents. Next handoff: `test_writer` for pending/unawaited plugin transaction revocation.
 
 ## Recent Agent Outcomes
 
+- Final TASK-011 re-review completed. James (`reviewer`) found one P1 correctness issue: unawaited plugin transactions that start while a lifecycle context is active can still commit after that context is revoked or the plugin is uninstalled because `ctx.transaction.run` only checks liveness before delegating to the Core transaction manager.
+- Mencius (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+- Einstein (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed 31 lifecycle tests, 45 lifecycle/API tests, typecheck, lint, and diff-check passed.
+- Bernoulli (`docs_researcher`) found one P2 live-status drift in the bottom Next Actions block; parent will update status after the pending transaction TDD fix.
+- Parent decision: add a focused red test for pending/unawaited `ctx.transaction.run` committing after context revocation/uninstall, then delegate the minimal production fix.
 - Final TASK-011 re-review agents spawned after Volta's docs/status cleanup commit.
 - Volta's docs commit: `b68a2af Volta(docs)(Implement Plugin Host lifecycle): document final lifecycle semantics`.
 - Volta (`doc_writer`) completed final TASK-011 docs/status cleanup: Plugin Host docs now cover failed install cleanup/retry, batch install rollback, stale context write revocation, and dependency rejection before blocked hooks; live status no longer points to earlier test/implementation handoffs.

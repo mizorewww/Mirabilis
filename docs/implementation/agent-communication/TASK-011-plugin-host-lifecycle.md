@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final re-review in progress.
-- Active agents: James (`reviewer`), Mencius (`security_reviewer`), Einstein (`test_quality_reviewer`), and Bernoulli (`docs_researcher`).
-- Next parent step: wait for final re-review, then run final local gate if clear.
+- Status: final re-review found pending transaction P1; TDD handoff next.
+- Active agents: none.
+- Next parent step: delegate a focused red test for pending/unawaited plugin transaction revocation, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -387,7 +387,7 @@
 
 ### Final Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - James (`reviewer`, `019e4640-8d3d-7fa3-aaa0-a25eeeedebbc`).
   - Mencius (`security_reviewer`, `019e4640-9044-7f62-9180-4461db34d992`).
@@ -395,6 +395,14 @@
   - Bernoulli (`docs_researcher`, `019e4640-9850-7dc2-be6d-cbcda623a5c7`).
 - Assignment:
   - Read-only final re-review of TASK-011 implementation, tests, security boundaries, and docs/status before local gate.
+- Outcomes:
+  - James found one P1 correctness issue: unawaited plugin transactions that begin while a lifecycle context is active can still commit after the context is revoked or the plugin is uninstalled because transaction liveness is checked only before delegating to the Core transaction manager.
+  - Mencius found no P0/P1/P2 security findings and confirmed boundary behavior plus no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
+  - Einstein found no P0/P1/P2 test-quality findings and confirmed focused tests/typecheck/lint/diff-check passed.
+  - Bernoulli found one P2 status drift in the bottom Next Actions block; parent will update status after the pending transaction fix.
+- Parent decision:
+  - Add a focused red test for pending/unawaited `ctx.transaction.run` committing after context revocation/uninstall.
+  - Delegate the minimal production fix after the expected red signal.
 
 ## Parent Decisions
 
@@ -405,4 +413,4 @@
 
 ## Next Action
 
-Wait for final re-review, then run the local gate if clear.
+Delegate pending transaction revocation red test.
