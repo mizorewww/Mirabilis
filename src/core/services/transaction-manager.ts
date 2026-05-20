@@ -213,6 +213,14 @@ function snapshotsEqual(left: unknown, right: unknown): boolean {
     return regexpsEqual(left, right);
   }
 
+  if (isArrayBuffer(left) || isArrayBuffer(right)) {
+    return arrayBuffersEqual(left, right);
+  }
+
+  if (ArrayBuffer.isView(left) || ArrayBuffer.isView(right)) {
+    return arrayBufferViewsEqual(left, right);
+  }
+
   if (Array.isArray(left) || Array.isArray(right)) {
     return arraysEqual(left, right);
   }
@@ -302,6 +310,51 @@ function regexpsEqual(left: object, right: object): boolean {
     left.flags === right.flags &&
     left.lastIndex === right.lastIndex
   );
+}
+
+function arrayBuffersEqual(left: object, right: object): boolean {
+  if (!isArrayBuffer(left) || !isArrayBuffer(right)) {
+    return false;
+  }
+
+  return arrayBufferBytesEqual(left, right);
+}
+
+function isArrayBuffer(value: object): value is ArrayBuffer {
+  return Object.prototype.toString.call(value) === "[object ArrayBuffer]";
+}
+
+function arrayBufferViewsEqual(left: object, right: object): boolean {
+  if (!ArrayBuffer.isView(left) || !ArrayBuffer.isView(right)) {
+    return false;
+  }
+
+  if (Object.getPrototypeOf(left) !== Object.getPrototypeOf(right)) {
+    return false;
+  }
+
+  if (
+    left.byteOffset !== right.byteOffset ||
+    left.byteLength !== right.byteLength
+  ) {
+    return false;
+  }
+
+  return arrayBufferBytesEqual(left.buffer, right.buffer);
+}
+
+function arrayBufferBytesEqual(
+  left: ArrayBufferLike,
+  right: ArrayBufferLike,
+): boolean {
+  if (left.byteLength !== right.byteLength) {
+    return false;
+  }
+
+  const leftBytes = new Uint8Array(left);
+  const rightBytes = new Uint8Array(right);
+
+  return leftBytes.every((byte, index) => byte === rightBytes[index]);
 }
 
 function objectsEqual(left: object, right: object): boolean {
