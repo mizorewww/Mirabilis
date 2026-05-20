@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:43 CST.
+Last updated: 2026-05-20 18:41 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 18:43 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 P1 review-fix implementation active.
+- Current phase: TASK-009 P1 review-fix green; narrow re-review pending.
 
 ## Active Agents
 
-- Peirce (`implementer`, `019e4699-91b8-73f3-877d-37d83b0e2125`): fix non-plain snapshot comparison in transaction conflict detection.
+- None.
 
 ## Recent Agent Outcomes
 
+- Peirce (`implementer`) completed and was closed after fixing Boole's P1 non-plain snapshot comparison issue.
+- Peirce's review-fix commit: `13ad41d Peirce(review-fix)(Add Transaction Manager and Core Runtime composition): compare non-plain transaction snapshots`.
+- Peirce changed only `src/core/services/transaction-manager.ts`, adding explicit deterministic `Date`, `Set`, and `RegExp` snapshot comparisons before Map, Array, and object comparison fallbacks.
+- Parent repeated green checks after Peirce: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 19 tests passing, `git diff --check`, and the focused store/runtime regression run with 131 tests passing.
 - Peirce (`implementer`) spawned for Boole's P1 production fix, with ownership of `src/core/services/transaction-manager.ts`.
 - Chandrasekhar (`test_writer`) completed and was closed after adding targeted TASK-009 review-fix tests.
 - Chandrasekhar's test commit: `01bf83f Chandrasekhar(test)(Add Transaction Manager and Core Runtime composition): cover non-plain transaction conflicts`.
@@ -338,10 +342,10 @@ Last updated: 2026-05-20 18:43 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has red-signal P1 review-fix tests and Peirce is implementing the production fix.
+- TASK-008 is complete and merged. TASK-009 has a green P1 review-fix and is ready for narrow targeted re-review.
 
 ## Next Actions
 
-1. Wait for Peirce's P1 production patch.
-2. Run focused transaction/runtime checks after the patch.
-3. Re-review or run final gate once no P0/P1 findings remain.
+1. Spawn narrow targeted re-review agents for Peirce's P1 fix.
+2. Run final local gate if no P0/P1 findings remain.
+3. Update progress, commit completion notes, merge to `master`, and continue.

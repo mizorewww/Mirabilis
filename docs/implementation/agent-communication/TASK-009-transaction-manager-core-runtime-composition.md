@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: P1 review-fix implementation active.
-- Active agents:
-  - Peirce (`implementer`, `019e4699-91b8-73f3-877d-37d83b0e2125`): fix non-plain snapshot comparison in transaction conflict detection.
-- Next agent step: wait for Peirce's production patch and focused checks.
+- Status: P1 review-fix green; narrow re-review pending.
+- Active agents: none.
+- Next agent step: spawn narrow targeted re-review agents for the non-plain snapshot fix.
 
 ## Agent Handoffs
 
@@ -296,7 +295,7 @@
 
 ### Peirce (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4699-91b8-73f3-877d-37d83b0e2125`.
 - Ownership:
   - `src/core/services/transaction-manager.ts`.
@@ -305,6 +304,18 @@
   - Fix Boole's P1 by strengthening `snapshotsEqual` for structured-clone non-plain values, at least `Date`, `Set`, and `RegExp`.
   - Preserve existing Map, Array, and plain-object snapshot comparison behavior.
   - Do not edit tests, docs, config, package files, lockfiles, or unrelated store modules.
+- Commit:
+  - `13ad41d Peirce(review-fix)(Add Transaction Manager and Core Runtime composition): compare non-plain transaction snapshots`.
+- Files changed:
+  - `src/core/services/transaction-manager.ts`.
+- Checks:
+  - Peirce confirmed the targeted non-plain conflict test failed before the fix.
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-transaction-manager.test.ts` passed with 15 tests.
+  - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 19 tests.
+  - Parent repeated `bun run typecheck`, the 19-test focused runtime/transaction run, `git diff --check`, and the store/runtime regression run with 131 tests passing.
+- Remaining risk:
+  - Snapshot comparison remains intentionally scoped to supported structured-clone values needed for TASK-009. Opaque future structured-clone classes may need explicit comparators later.
 
 ## Parent Decisions
 
@@ -319,4 +330,4 @@
 
 ## Next Action
 
-Wait for Peirce's production patch, then rerun focused transaction/runtime checks.
+Spawn narrow targeted re-review agents for the P1 fix, then run the final local gate if no P0/P1 findings remain.
