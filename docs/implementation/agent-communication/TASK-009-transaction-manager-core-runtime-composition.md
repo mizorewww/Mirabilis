@@ -42,13 +42,9 @@
 
 ## Current Status
 
-- Status: targeted re-review active.
-- Active agents:
-  - Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`): targeted correctness re-review for live-write conflict and nested/concurrent transaction behavior.
-  - Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`): targeted boundary review for participant visibility and commit conflict safety.
-  - Leibniz (`test_quality_reviewer`, `019e4699-90db-73f3-877d-35efd961b5cf`): targeted test-quality re-review for review-fix coverage.
-  - Parfit (`deprecation_auditor`, `019e4699-9193-73f3-877d-364a90819f4b`): targeted API/deprecation re-review.
-  - Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`): targeted docs/status re-review.
+- Status: targeted re-review complete; P1 review-fix selected.
+- Active agents: none.
+- Next agent step: spawn an `implementer` for the P1 non-plain snapshot comparison fix and related coverage follow-up.
 
 ## Agent Handoffs
 
@@ -256,7 +252,7 @@
 
 ### Targeted Re-review
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`).
   - Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`).
@@ -265,6 +261,17 @@
   - Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`).
 - Assignment:
   - Verify review round 1 P1/P2 findings are closed after review-fix tests and Goodall's production fix.
+- Findings:
+  - Boole found one P1 correctness issue: snapshot equality still misses cloneable non-plain values such as `Date`, `Set`, and `RegExp` when those values appear inside page bodies and `updatedAt` does not change. Because the current fallback compares only enumerable object keys, a pending transaction can miss a live page body update and overwrite it at commit.
+  - Noether found no P0/P1/P2 security or boundary issues. Participant data is now stored in module-private WeakMaps and live conflict checks run before replacement.
+  - Leibniz found no remaining P1 test-quality gaps. Leibniz recommended P2 coverage for metadata/event/filter live-write conflicts and transaction-scoped store participant non-discoverability.
+  - Parfit found no API/deprecation issues and confirmed the injected transaction manager option closes Maxwell's API mismatch.
+  - Russell found no blocking docs/status issue. Russell recommended using stable Vitest v4 links in final completion notes where available.
+- Parent decisions:
+  - Fix Boole's P1 before final gate.
+  - Strengthen snapshot comparison for supported structured-clone data rather than rejecting non-plain page body values in this task.
+  - Add focused regression coverage for non-plain live page body conflicts, metadata/event/filter live-write conflicts, and transaction-scoped store participant non-discoverability.
+  - Keep custom non-in-memory store transaction composition as an injected-transaction-manager responsibility for TASK-009.
 
 ## Parent Decisions
 
@@ -279,4 +286,4 @@
 
 ## Next Action
 
-Wait for targeted re-review agents, record findings, then run final gate if no P0/P1 findings remain.
+Spawn an `implementer` for the targeted P1 review fix and coverage follow-up, then rerun focused transaction/runtime checks.

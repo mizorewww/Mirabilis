@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:37 CST.
+Last updated: 2026-05-20 18:31 CST.
 
 ## Current Task
 
@@ -8,18 +8,21 @@ Last updated: 2026-05-20 22:37 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 targeted re-review active.
+- Current phase: TASK-009 targeted P1 review-fix selected.
 
 ## Active Agents
 
-- Boole (`reviewer`, `019e4699-8f46-73f3-877d-35871b78d33d`): targeted correctness re-review for live-write conflict and nested/concurrent transaction behavior.
-- Noether (`security_reviewer`, `019e4699-90db-73f3-877d-35af31161cb7`): targeted boundary review for participant visibility and commit conflict safety.
-- Leibniz (`test_quality_reviewer`, `019e4699-90db-73f3-877d-35efd961b5cf`): targeted test-quality re-review for review-fix coverage.
-- Parfit (`deprecation_auditor`, `019e4699-9193-73f3-877d-364a90819f4b`): targeted API/deprecation re-review.
-- Russell (`docs_researcher`, `019e4699-9193-73f3-877d-366fef3011c0`): targeted docs/status re-review.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-009 targeted re-review completed and all agents were closed.
+- Boole (`reviewer`) found one P1 correctness issue: snapshot equality misses cloneable non-plain values such as `Date`, `Set`, and `RegExp` in page bodies when enumerable keys are empty and `updatedAt` does not change; a pending transaction can miss a live page body update and overwrite it at commit.
+- Noether (`security_reviewer`) found no P0/P1/P2 security or boundary findings and confirmed participant WeakMaps, reflection non-discoverability, and pre-replace conflict checks.
+- Leibniz (`test_quality_reviewer`) found no remaining P1 test-quality gaps and recommended P2 coverage for metadata/event/filter live-write conflicts plus transaction-scoped store participant non-discoverability.
+- Parfit (`deprecation_auditor`) found no API/deprecation findings and confirmed `createCoreServices({ transaction })` closes the custom-store composition mismatch for TASK-009.
+- Russell (`docs_researcher`) found no blocking docs/status issue and recommended stable Vitest v4 links in final completion notes where possible.
+- Parent decision: fix Boole's P1 before final gate, strengthen snapshot comparison for supported structured-clone values, and add focused regression coverage for the P1 plus Leibniz's low-cost P2 coverage surfaces.
 - TASK-009 targeted re-review agents spawned after `a86304e` and `e86ed5c`.
 - Goodall (`implementer`) completed and was closed after implementing TASK-009 review fixes.
 - Goodall's review-fix commit: `a86304e Goodall(review-fix)(Add Transaction Manager and Core Runtime composition): harden transaction commits`.
@@ -330,10 +333,10 @@ Last updated: 2026-05-20 22:37 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 is in review-fix after review round 1.
+- TASK-008 is complete and merged. TASK-009 is in targeted P1 review-fix after targeted re-review.
 
 ## Next Actions
 
-1. Wait for targeted re-review agents.
-2. Record targeted re-review findings.
-3. Run final gate if no P0/P1 findings remain.
+1. Spawn an `implementer` for Boole's P1 non-plain snapshot comparison fix and related coverage.
+2. Run focused transaction/runtime checks after the patch.
+3. Re-review or run final gate once no P0/P1 findings remain.
