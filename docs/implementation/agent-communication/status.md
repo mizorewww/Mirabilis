@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:51 CST.
+Last updated: 2026-05-21 02:53 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-21 02:51 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: red test refinement in progress.
+- Current phase: red tests committed; implementation handoff next.
 
 ## Active Agents
 
-- Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`) - refining TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
+- None.
 
 ## Recent Agent Outcomes
 
+- Boyle (`test_writer`) completed and was closed after adding TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
+- Boyle's test commit: `9b9b204 Boyle(test)(Add NativeBridge TypeScript boundary): add native bridge boundary tests`.
+- Parent confirmed the expected red signal: `bun run test:frontend -- src/test/native-bridge.test.ts` failed because Vite cannot resolve `../core/native`; `bun run typecheck` failed only on missing `../core/native` and missing Core NativeBridge exports; `bun run lint` and `git diff --check` passed.
+- Parent next step: delegate minimum production implementation to `implementer`.
 - Parent reviewed Boyle's initial red test patch. Focused `bun run test:frontend -- src/test/native-bridge.test.ts` failed for the expected missing `../core/native` module. `bun run typecheck` also found test-internal type errors in the command-key type assertion and raw-invoke violation list typing. Parent resumed Boyle to fix only `src/test/native-bridge.test.ts` so the red signal is clean.
 - Boyle (`test_writer`) was spawned for TASK-012 red tests. Ownership is limited to `src/test/native-bridge.test.ts`; production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, and existing tests are out of scope. Tests should cover public exports, grouped bridge methods, command constants and camelCase DTO payloads, generic DB response typing, void methods, normalized errors, malformed concrete responses, production raw Tauri import/call boundary scanning, and no plugin API exposure of NativeBridge/raw native handles.
 - TASK-012 pre-test guidance completed and all agents were closed.

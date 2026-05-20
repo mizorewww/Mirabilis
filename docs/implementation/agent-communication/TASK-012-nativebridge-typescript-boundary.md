@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: red test refinement in progress.
+- Status: red tests committed; implementation handoff next.
 - Active agents:
-  - Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`).
-- Next parent step: wait for Boyle's test-only refinement, rerun focused red checks, and commit the red-test patch if it fails only for the expected missing NativeBridge/App raw invoke boundary reasons.
+  - None.
+- Next parent step: spawn an `implementer` for the minimum production NativeBridge code and App raw invoke cleanup needed to pass the focused tests.
 
 ## Agent Handoffs
 
@@ -124,7 +124,7 @@
 
 ### TDD Tests
 
-- Status: running.
+- Status: completed and committed.
 - Agent:
   - Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`).
 - Ownership:
@@ -138,3 +138,13 @@
   - Parent red check `bun run typecheck` also found test-internal TypeScript errors in a command-key type assertion and raw-invoke violation list typing.
 - Follow-up:
   - Parent resumed Boyle to fix only `src/test/native-bridge.test.ts` so the red signal is clean before commit.
+- Outcome:
+  - Boyle added `src/test/native-bridge.test.ts`.
+  - Tests cover public exports from `../core/native` and `../core`, grouped bridge surfaces, exact command constants and camelCase DTOs, DB generic response typing, void method behavior, `NativeBridgeError` normalization for typed object/string/`Error`/`null`/unknown rejection values, malformed markdown import response rejection, production raw Tauri import/call boundary scanning, Plugin API native-handle exclusion, and no `greet` bridge surface.
+- Commit:
+  - `9b9b204 Boyle(test)(Add NativeBridge TypeScript boundary): add native bridge boundary tests`.
+- Red checks:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` failed because Vite cannot resolve `../core/native`.
+  - `bun run typecheck` failed only on missing `../core/native` and missing Core NativeBridge exports.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
