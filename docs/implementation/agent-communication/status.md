@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:53 CST.
+Last updated: 2026-05-20 23:56 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 23:53 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 docs cleanup in progress after green review-fix implementation.
+- Current phase: TASK-011 runtime-flow docs cleanup in progress.
 
 ## Active Agents
 
-- Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`) is aligning `docs/architecture/03-plugin-api-and-host.md` with the implemented Plugin Host lifecycle API.
+- Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`) is aligning `docs/architecture/07-runtime-flows.md` with the implemented Plugin Host constructor and explicit built-in loading flow.
 
 ## Recent Agent Outcomes
 
+- Dalton (`doc_writer`) was spawned for the remaining runtime-flow docs drift in `docs/architecture/07-runtime-flows.md`, specifically the stale `new PluginHost(registries, services)` startup sketch.
+- Plato (`doc_writer`) completed and was closed after updating `docs/architecture/03-plugin-api-and-host.md` to reflect the TASK-011 Plugin Host API and lifecycle semantics.
+- Plato's docs commit: `3311da9 Plato(docs)(Implement Plugin Host lifecycle): align plugin host architecture`.
 - Plato (`doc_writer`) was spawned for the remaining TASK-011 P2 architecture docs drift. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`.
 - Curie (`implementer`) completed and was closed after fixing the TASK-011 P1/P2 review findings in `src/core/plugin-host/plugin-host.ts`.
 - Curie's review-fix commit: `6845f4c Curie(review-fix)(Implement Plugin Host lifecycle): harden lifecycle boundaries`.

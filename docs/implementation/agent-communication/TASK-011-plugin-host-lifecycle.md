@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: docs cleanup in progress after green review-fix implementation.
-- Active agents: Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`).
-- Next parent step: wait for Plato, validate docs diff, then run focused checks and narrow re-review.
+- Status: runtime-flow docs cleanup in progress.
+- Active agents: Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`).
+- Next parent step: wait for Dalton, validate docs diff, then run focused checks and narrow re-review.
 
 ## Agent Handoffs
 
@@ -203,13 +203,29 @@
 
 ### Docs Cleanup
 
-- Status: in progress.
+- Status: completed and partially extended.
 - Agent:
   - Plato (`doc_writer`, `019e4617-b412-7c40-be36-41e84254e291`).
 - Ownership:
   - `docs/architecture/03-plugin-api-and-host.md`.
 - Assignment:
   - Fix Peirce's P2 docs drift by aligning the Plugin Host architecture sketch with the implemented `PluginHost({ services, registries, app })` constructor, explicit built-in loading, staged install/register API, concrete lifecycle methods, owner-scoped facades, dependency safety, and no native/filesystem/dynamic-loading behavior in TASK-011.
+- Outcome:
+  - Plato updated `docs/architecture/03-plugin-api-and-host.md` only.
+  - Parent validated the diff and committed it.
+  - Plato also noted `docs/architecture/07-runtime-flows.md` still showed the older constructor; parent confirmed with a targeted `rg` scan and delegated that file separately.
+- Commit:
+  - `3311da9 Plato(docs)(Implement Plugin Host lifecycle): align plugin host architecture`.
+
+### Runtime-Flow Docs Cleanup
+
+- Status: in progress.
+- Agent:
+  - Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`).
+- Ownership:
+  - `docs/architecture/07-runtime-flows.md`.
+- Assignment:
+  - Replace the stale `new PluginHost(registries, services)` runtime-flow sketch with the current `new PluginHost({ services, registries, app })` constructor and keep built-in plugin loading explicit and illustrative.
 
 ## Parent Decisions
 
@@ -220,4 +236,4 @@
 
 ## Next Action
 
-Wait for Plato, then validate docs and run narrow re-review.
+Wait for Dalton, then validate docs and run narrow re-review.
