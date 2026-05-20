@@ -1,21 +1,92 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:35 CST.
+Last updated: 2026-05-21 04:56 CST.
 
 ## Current Task
 
-- Task: TASK-012 - Add NativeBridge TypeScript boundary.
-- Branch: `feat/task-012-nativebridge-typescript-boundary`.
+- Task: TASK-013 - Add SQLite schema and Rust repositories.
+- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: local gate passed; progress update in progress before merge.
+- Current phase: local gate passed; marking TASK-013 complete for merge.
 
 ## Active Agents
 
-- None.
+- None. Second narrow re-review agents were closed after reporting.
 
 ## Recent Agent Outcomes
 
+- TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
+- TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
+- TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-013 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- TASK-013 pre-test guidance completed and all agents were closed.
+- Dewey the 2nd (`planner`) recommended `src-tauri/src/db/` with typed Rust repositories, versioned/idempotent migrations, Core tables for pages, metadata, events, filters, plugins, commands, views, and neutral plugin-owned index baseline support. Dewey also flagged the local docs drift where architecture SQL omits commands/views but task acceptance requires them.
+- Poincare the 2nd (`docs_researcher`) verified current guidance and recommended `rusqlite = { version = "0.39", features = ["bundled", "serde_json"] }`, plus optional `tempfile` for file-backed tests, and avoiding `tauri-plugin-sql` because it exposes a frontend SQL/capability surface.
+- Raman the 2nd (`deprecation_auditor`) confirmed `tauri-plugin-sql` is a poor TASK-013 fit, recommended backend-only `rusqlite`, warned that SQLite foreign keys are off by default per connection, and required explicit JSON/NULL semantics and deterministic `ORDER BY` behavior in repository tests.
+- Epicurus the 2nd (`security_reviewer`) required parameterized repository access, no raw SQL or IPC exposure, no Tauri capability/config/frontend NativeBridge changes, corrupt JSON typed errors, SQL injection regression coverage, and no dynamic plugin-owned DDL from plugin input.
+- Parent decisions for red tests: target a private Rust SQLite/repository layer under `src-tauri/src/db`; use `rusqlite` and file-backed temp DB coverage; test `core_commands` and `core_views`; interpret plugin-owned index baseline as a neutral `core_plugin_indexes` registry/support table rather than business-plugin tables; keep app data path resolution, IPC commands, capability changes, frontend wiring, and NativeBridge operation allowlisting out of scope.
+- Einstein the 2nd (`test_writer`) completed and was closed after adding TASK-013 Rust acceptance tests in `src-tauri/tests/sqlite_repositories.rs` and `src-tauri/tests/sqlite_boundary.rs`, plus test-only `rusqlite` / `tempfile` dev-dependencies.
+- Einstein the 2nd's test commit: `3092b67 Einstein the 2nd(test)(Add SQLite schema and Rust repositories): add sqlite repository acceptance tests`.
+- Parent confirmed the expected red signal: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails only because `mirabilis_lib::db` does not exist yet. Parent also confirmed green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
+- James the 2nd (`implementer`) completed and was closed after adding the TASK-013 Rust DB layer under `src-tauri/src/db/`.
+- James the 2nd's implementation commit: `ef3583c James the 2nd(implementation)(Add SQLite schema and Rust repositories): implement core sqlite repositories`.
+- Delivered: `mirabilis_lib::db` with `Database`, `DbError`, versioned migration helpers, typed DTOs/records, and table-specific repositories for pages, metadata, events, filters, plugins, command descriptors, and view descriptors. The migration creates Core schema version `1` / `001_core_schema` for pages, metadata, events, filters, plugins, commands, views, and neutral `core_plugin_indexes`. `rusqlite` moved to production dependencies and `tempfile` remains test-only.
+- Parent repeated focused green checks after James the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- TASK-013 review round agents were spawned. `doc_writer` was deferred because the agent thread limit was reached; parent will spawn it after a review slot is available if docs gaps remain or need dedicated review.
+- Faraday the 2nd (`security_reviewer`) completed and was closed with no P0/P1/P2 findings. Residual risks: TASK-014 must constrain DB path selection away from caller-supplied filesystem paths and must map `DbError` to redacted IPC DTOs instead of exposing debug/source internals.
+- Wegener the 2nd (`doc_writer`) was spawned for the deferred read-only documentation gap review.
+- TASK-013 review round 1 completed and all agents were closed.
+- Hegel the 2nd (`pr_explorer`) found no scope creep and mapped hotspots: `core_plugin_indexes` is schema-only, list APIs cannot distinguish no-filter from NULL filters, logical-key upserts may conflict, and migration drift is not verified.
+- Galileo the 2nd (`reviewer`) found one P1 correctness issue: `MetadataRepository::upsert` conflicts on `id` even though Core metadata identity is `(page_id, namespace, key)`, so setting the same metadata key with a new generated id fails instead of replacing the record. Galileo also found P2 issues for migration checksum/version drift and upserts overwriting `created_at` / `installed_at`.
+- Hooke the 2nd (`deprecation_auditor`) found no P0/P1 API/deprecation findings and one P2 migration-integrity finding: migration ledger rows are not checksum/name validated and migration steps are not transactional. Hooke verified current `rusqlite 0.39` usage and no `tauri-plugin-sql` / `sqlx` / raw frontend SQL route.
+- Plato the 2nd (`docs_researcher`) found no P0/P1 docs/current-guidance findings and P2 docs/schema gaps: architecture docs omit `core_commands`, `core_views`, and neutral `core_plugin_indexes`; `core_plugin_indexes.plugin_id` ownership is not documented/enforced; `trusted_schema` hardening is not documented.
+- Heisenberg the 2nd (`test_quality_reviewer`) found one P1 test-quality issue: `sqlite_boundary.rs` permanently bans DB IPC/capability changes, which would block TASK-014. Heisenberg also found P2 test gaps for injection literal assertions, update/upsert observable assertions, over-specific index/ledger assertions, and brittle `DbQuery` string parsing.
+- Wegener the 2nd (`doc_writer`) recommended P1 architecture docs sync for the implemented Rust schema/repositories, `core_commands`, `core_views`, `core_plugin_indexes`, migration ledger, private `rusqlite` layer, and TASK-013 out-of-scope IPC/capability/frontend wiring.
+- Parent decisions: fix the P1 boundary-test issue and P1 metadata logical-key upsert through delegated TDD. Include adjacent P2 fixes in the same review-fix loop for migration checksum/version drift, creation/install timestamp preservation, stronger injection/upsert assertions, and `core_plugin_indexes` ownership FK. Delegate architecture/testing docs sync before merge. Defer `trusted_schema`, app DB path ownership, WAL/busy timeout, and NULL-specific list filters to TASK-014/bootstrap unless a later reviewer escalates them.
+- Dalton the 2nd (`test_writer`) completed and was closed after adding review-fix red tests and relaxing the temporary no-DB-IPC/no-capability boundary assertions.
+- Dalton the 2nd's review-fix test commit: `daa4385 Dalton the 2nd(test)(Add SQLite schema and Rust repositories): cover review fix expectations`.
+- Parent confirmed the expected red signal: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails because `MetadataRepository` is missing `get_by_logical_key` and `delete_by_logical_key`. Parent also confirmed green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
+- Arendt the 2nd (`doc_writer`) completed and was closed after drafting docs sync in `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`. Parent is holding that patch uncommitted until the production review-fix confirms whether `core_plugin_indexes.plugin_id` gains an FK.
+- Beauvoir the 2nd (`implementer`) was spawned for production review fixes. Ownership is limited to `src-tauri/src/db/**`; tests, docs, Cargo files, frontend, NativeBridge, Plugin API, capabilities, Tauri config, and IPC/app bootstrap are out of scope.
+- Beauvoir the 2nd (`implementer`) completed and was closed after implementing production review fixes in `src-tauri/src/db/error.rs`, `src-tauri/src/db/migrations.rs`, and `src-tauri/src/db/repositories.rs`.
+- Beauvoir the 2nd's review-fix commit: `97ee8b2 Beauvoir the 2nd(review-fix)(Add SQLite schema and Rust repositories): address repository review findings`.
+- Delivered review fixes: metadata logical-key upsert/get/delete, migration future-version and checksum/name drift errors, timestamp preservation for metadata/filter/plugin upserts, and `core_plugin_indexes.plugin_id` FK to `core_plugins(id)`.
+- Parent repeated focused green checks after Beauvoir the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Arendt the 2nd (`doc_writer`) completed docs sync and was closed after aligning architecture/development/testing docs to the final review-fix schema, including the `core_plugin_indexes.plugin_id` FK.
+- Arendt the 2nd's docs commit: `ca2c461 Arendt the 2nd(docs)(Add SQLite schema and Rust repositories): sync sqlite persistence docs`.
+- Focused TASK-013 re-review completed and all agents were closed.
+- Archimedes the 2nd (`test_quality_reviewer`) confirmed the prior P1 boundary-test issue is fixed. It found one P2 test-strength gap: the FK test checks declaration only and does not verify `ON DELETE CASCADE` behavior for `core_plugin_indexes`.
+- Erdos the 2nd (`security_reviewer`) found no P0/P1 issues. P2 findings: `sqlite_boundary.rs` still freezes `DbQuery.operation` as `string` instead of only guarding no raw `sql` / `params`, and capability permission scanning assumes every permission is a string, which may block future reviewed non-SQL capability object forms.
+- Copernicus the 2nd (`reviewer`) found no P0/P1 issues. P2 findings: the final v1 schema changed without changing the migration checksum, so earlier branch-local v1 DBs without the FK are accepted; future ledger rows greater than `LATEST_SCHEMA_VERSION` are not rejected when `PRAGMA user_version` is stale/lower.
+- Bohr the 2nd (`deprecation_auditor`) found no P0/P1 issues. P2 finding: migration 001 validation is coupled to `LATEST_SCHEMA_VERSION` instead of an immutable `MIGRATION_001_VERSION`.
+- Boole the 2nd (`docs_researcher`) found no P0/P1/P2 docs drift and verified docs match the final private Rust `rusqlite` layer, schema, FK, migration ledger, TASK-014 boundaries, and current official guidance.
+- Parent decisions: run one final delegated P2 cleanup loop. Add tests for FK cascade behavior, flexible boundary scans, old-v1 checksum/schema drift, future ledger rows, and specific migration error variants. Then delegate implementation to update the migration checksum/version constants and future ledger detection if tests are red.
+- Lovelace the 2nd (`test_writer`) completed and was closed after adding final P2 cleanup tests for FK cascade behavior, flexible boundary scans, old v1 checksum/schema drift, future ledger rows, and specific migration error variants.
+- Lovelace the 2nd's test commit: `f8759c2 Lovelace the 2nd(test)(Add SQLite schema and Rust repositories): cover final migration cleanup`.
+- Parent confirmed the expected red signal: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails only in `sqlite_migrations_reject_old_branch_local_v1_checksum_after_schema_changes` and `sqlite_migrations_reject_future_ledger_version_with_stale_user_version`. `cargo fmt --manifest-path src-tauri/Cargo.toml --check` and `git diff --check` passed.
+- Lorentz the 2nd (`implementer`) was spawned for the final migration cleanup implementation. Ownership is limited to `src-tauri/src/db/migrations.rs` and `src-tauri/src/db/error.rs` only if needed.
+- Lorentz the 2nd (`implementer`) completed and was closed after implementing final migration cleanup in `src-tauri/src/db/migrations.rs`.
+- Lorentz the 2nd's review-fix commit: `f2c8017 Lorentz the 2nd(review-fix)(Add SQLite schema and Rust repositories): harden migration version checks`.
+- Delivered final cleanup: immutable `MIGRATION_001_VERSION`, updated v1 checksum for the final FK schema, and future ledger row detection independent of `PRAGMA user_version`.
+- Parent repeated focused green checks after Lorentz the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Final read-only re-review agents were spawned for correctness, security/boundary, and test quality.
+- Final TASK-013 re-review completed. Maxwell the 2nd (`reviewer`) and Boyle the 2nd (`test_quality_reviewer`) found no P0/P1/P2 findings. Russell the 2nd (`security_reviewer`) found no P0/P1 and one P2: `src/test/native-bridge.test.ts` still exact-matches `DbQuery` as `{ operation: string; payload?: DbValue }`, which can freeze TASK-014-safe narrowing. Russell confirmed the Rust boundary cleanup is relaxed correctly and found no IPC, capability, command exposure, frontend invoke scope creep, or SQL plugin markers.
+- Parent decision: delegate a test-only frontend boundary follow-up for `src/test/native-bridge.test.ts` before the local gate. The test should keep guarding that `DbQuery` has no raw `sql` / `params` fields and remains usable through the bridge, while avoiding exact equality to a broad `operation: string` shape. No production implementation or Rust DB changes are expected for this follow-up.
+- Singer the 2nd (`test_writer`) completed the NativeBridge boundary-test follow-up in `src/test/native-bridge.test.ts`.
+- Singer the 2nd's test-fix commit: `52f99f6 Singer the 2nd(test-fix)(Add SQLite schema and Rust repositories): relax native bridge db query boundary test`.
+- Parent repeated focused green checks after Singer the 2nd: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check`.
+- Narrow read-only re-review agents were spawned for Singer the 2nd's test-fix commit.
+- NativeBridge boundary-test narrow re-review completed. Lagrange the 2nd (`security_reviewer`) found no P0/P1/P2 and confirmed `52f99f6` clears the original over-broad exact-equality issue. Hume the 2nd (`test_quality_reviewer`) found a P2: the no-raw-SQL type guard still uses non-distributive `Extract<keyof DbQuery, "sql" | "params">`, which can miss forbidden keys if TASK-014 makes `DbQuery` a discriminated union. Ptolemy the 2nd (`reviewer`) found a P2: `toMatchTypeOf` no longer guards optional `payload?: DbValue` or exact top-level key shape, so a future required payload or extra non-SQL key could pass.
+- Parent decision: delegate a second test-only follow-up in `src/test/native-bridge.test.ts` to add a distributive forbidden-key guard and explicit optional-payload / exact-key assertions while still avoiding exact equality on `operation`.
+- Dirac the 2nd (`test_writer`) was spawned for the second NativeBridge boundary-test follow-up. Ownership is limited to `src/test/native-bridge.test.ts`; production code, Rust DB code, docs, package/Cargo files, capabilities, Tauri config, NativeBridge implementation, and Plugin API files are out of scope.
+- Dirac the 2nd (`test_writer`) completed the second NativeBridge boundary-test follow-up in `src/test/native-bridge.test.ts`.
+- Dirac the 2nd's test-fix commit: `3fc4902 Dirac the 2nd(test-fix)(Add SQLite schema and Rust repositories): harden native bridge query type guards`.
+- Parent repeated focused green checks after Dirac the 2nd: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check`.
+- Narrow read-only re-review agents were spawned for Dirac the 2nd's test-fix commit.
+- Second NativeBridge boundary-test narrow re-review completed. Chandrasekhar the 2nd (`reviewer`), Peirce the 2nd (`test_quality_reviewer`), and Descartes the 2nd (`security_reviewer`) found no P0/P1/P2 findings. They confirmed `DbQuery.operation` can still narrow, top-level keys are guarded as `operation` plus optional `payload`, raw `sql` / `params` detection is distributive across union members, and the change is test-only.
+- TASK-013 local gate passed: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and full Rust tests. `bun run build` passed. `bun run check:full` was not run because TASK-013 does not expose persistence through IPC/capabilities/app runtime wiring or packaging.
+- Parent is marking TASK-013 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

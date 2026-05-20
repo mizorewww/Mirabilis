@@ -38,7 +38,7 @@ Status markers:
 - [x] TASK-010: Define Plugin API contracts
 - [x] TASK-011: Implement Plugin Host lifecycle
 - [x] TASK-012: Add NativeBridge TypeScript boundary
-- [ ] TASK-013: Add SQLite schema and Rust repositories
+- [x] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
 
@@ -78,6 +78,25 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 04:56 CST - TASK-013 completed
+
+- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
+- Task: Add SQLite schema and Rust repositories.
+- Commits: `a958a1f` start orchestration, `a83633c` pre-test guidance handoff, `aa6ed08` pre-test guidance, `6e70972` red test handoff, `3092b67` SQLite repository acceptance tests, `b14a0c6` red signal, `9f4e77d` implementation handoff, `ef3583c` core SQLite repositories, `e426d7f` implementation green signal, `005262e` review handoff, `8bc669c` review findings, `1a2863f` review-fix handoff, `daa4385` review-fix tests, `d4b0822` review-fix test signal, `97ee8b2` repository review fixes, `ca2c461` SQLite persistence docs, `1cfe224` review-fix record, `521faf6` focused re-review handoff, `9da0a77` focused re-review record, `17b1154` final cleanup test handoff, `f8759c2` final migration cleanup tests, `c830797` final cleanup implementation handoff, `f2c8017` migration version hardening, `4baa382` final cleanup record, `3257e31` final re-review handoff, `bc2bb76` final re-review record, `b2189ed` NativeBridge test follow-up handoff, `52f99f6` NativeBridge DB query boundary test relaxation, `e9ed4f1` NativeBridge test re-review handoff, `a703fd2` NativeBridge test re-review record, `cac0950` second NativeBridge test follow-up handoff, `3fc4902` hardened NativeBridge query type guards, `f574947` second NativeBridge test re-review handoff, and `4ab4d26` second NativeBridge test re-review record.
+- Delivered: private Rust SQLite persistence layer under `src-tauri/src/db`, `mirabilis_lib::db` public exports, `Database` connection wrapper with foreign keys enabled, typed `DbError` / `DbResult`, versioned/idempotent migration helpers, schema version `1` / `001_core_schema`, migration ledger and `PRAGMA user_version`, Core tables for pages, metadata, events, filters, plugins, commands, views, and neutral `core_plugin_indexes`, typed table-specific repositories, JSON round-trip and corrupt JSON typed errors, deterministic ordering, metadata logical-key upsert/get/delete, timestamp preservation on upserts, `core_plugin_indexes.plugin_id -> core_plugins(id) ON DELETE CASCADE`, migration drift/future-version hardening, and docs aligned to the private Rust persistence boundary.
+- Validation: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and full Rust tests. `bun run build` passed. Focused final checks passed: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` with 17 SQLite tests, `bun run test:frontend -- src/test/native-bridge.test.ts` with 17 tests, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Review: correctness, security/boundary, deprecation/API, docs/current-guidance, docs-writing, and test-quality agents cleared all P0/P1/P2 findings after delegated TDD review-fix loops. Fixed selected findings for metadata logical-key identity, temporary no-IPC boundary tests, migration checksum/name drift, future migration versions, timestamp preservation, `core_plugin_indexes` ownership/cascade coverage, Rust boundary scan flexibility, frontend `DbQuery` type-test over-constraint, union-shaped raw SQL key detection, optional `payload?: DbValue`, and exact top-level `DbQuery` keys without freezing future operation narrowing.
+- External docs verified by agents: Tauri SQL plugin and Tauri v2 guidance, `tauri-plugin-sql` 2.4.0 docs, `rusqlite` 0.39 docs and feature guidance, SQLx 0.8 docs for tradeoff comparison, SQLite in-memory database / `PRAGMA user_version` / foreign key documentation, `tempfile` docs, and `serde_json::Value` docs.
+- Remaining risk: TASK-013 is private Rust repository persistence only. It does not expose Tauri IPC commands, Tauri capabilities/permissions, frontend operation allowlists, app database path ownership, runtime provider/bootstrap wiring, UI persistence flows, filesystem import/export behavior, or business plugin index lifecycle. TASK-014 must add Rust-side operation allowlisting, payload validation, repository/SQL translation, safe redacted IPC error DTOs, and reviewed Tauri capability scope before exposing persistence through NativeBridge. `bun run check:full` was not run because TASK-013 does not touch Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior.
+
+### 2026-05-21 03:37 CST - TASK-013 started
+
+- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
+- Task: Add SQLite schema and Rust repositories.
+- Scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Do not expose Tauri IPC commands, change capabilities/permissions, wire frontend NativeBridge operations, implement app bootstrap/runtime provider, add UI persistence flows, or build plugin-owned index behavior beyond baseline schema support.
+- Agent orchestration: parent thread remains orchestration-only; current SQLite/Tauri/Rust crate guidance, security review, TDD tests, implementation, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-013-sqlite-schema-rust-repositories.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 03:35 CST - TASK-012 completed
 

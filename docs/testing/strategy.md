@@ -80,12 +80,31 @@ For each task in `docs/implementation/task-index.md`:
 - `security_reviewer` runs for IPC, permission, filesystem, SQLite, or plugin-boundary changes.
 - `deprecation_auditor` runs for dependency, framework, or API changes.
 
+## Rust SQLite Repository Guidance
+
+For private Rust repository work under `src-tauri/src/db`, tests should use temporary file-backed databases rather than only in-memory databases. File-backed tests must apply migrations, insert data, reopen the same path, apply migrations again, and verify existing data is still present.
+
+SQLite persistence tests should cover:
+
+- `PRAGMA user_version` and `PRAGMA foreign_keys` on opened connections.
+- `core_schema_migrations` ledger rows, migration names/checksums, repeat application, and future/drift behavior when implemented.
+- Expected tables, columns, foreign keys where present, and indexes for Core repository queries, including `core_plugin_indexes.plugin_id -> core_plugins(id) ON DELETE CASCADE`.
+- JSON round trips through repository DTOs, including SQL `NULL` versus JSON `null`.
+- Corrupt JSON stored in JSON columns returning typed repository errors instead of panics or raw parse failures.
+- Deterministic list ordering with explicit `ORDER BY`.
+- SQL-injection-looking strings preserved literally in records while tables remain queryable.
+- Typed table-specific repositories for pages, metadata, events, filters, plugins, command descriptors, and view descriptors instead of a generic SQL executor.
+
+Boundary scans for SQLite work should keep stable architecture contracts narrow: no `tauri-plugin-sql` dependency/configuration, no frontend/plugin raw-SQL DTO, and no `sql` / `params` shape in TypeScript `DbQuery`. Temporary TASK-013 assertions that no DB IPC or capability exists must not become long-lived blockers for TASK-014; once DB IPC is implemented, tests should instead verify reviewed operation allowlists, DTOs, and Tauri capability scope.
+
+TASK-013 repository persistence does not by itself require app-data path, provider/bootstrap, IPC, or capability tests because it is private Rust persistence only. When a task wires persistence into the app runtime or Tauri IPC, add checks for app database path ownership, capability permissions, safe IPC error DTOs, operation allowlisting, and bootstrap lifecycle. WAL, `busy_timeout`, and `PRAGMA trusted_schema = OFF` are deferred bootstrap hardening topics unless a task explicitly changes connection policy.
+
 ## Merge Gate
 
 Before merging to `master`:
 
 1. Run focused tests for the changed behavior.
 2. Run `bun run check:quick` for the branch local gate.
-3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
+3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior. Private Rust repository persistence should still run focused `cargo test`, `fmt`, and `clippy`; escalate to `check:full` when it is exposed through IPC, capabilities, app data paths, bootstrap providers, or release packaging.
 4. Fix P0/P1 review findings.
 5. Record remaining P2/P3 findings as follow-up tasks when not fixed in the branch.
