@@ -1,10 +1,23 @@
 import type {
   FilterGroup,
-  FilterQuery,
+  FilterOperator,
   FilterSort,
   MetadataJsonValue,
+  MetadataValueType,
   ViewDataShape,
 } from "../types";
+
+export type PluginFilterCondition = {
+  field: string;
+  op: FilterOperator;
+  value?: MetadataJsonValue;
+};
+
+export type PluginFilterQuery = {
+  where: PluginFilterCondition[];
+  and?: PluginFilterQuery[];
+  or?: PluginFilterQuery[];
+};
 
 export type MarkdownSyntaxContribution = {
   id: string;
@@ -19,7 +32,7 @@ export type MetadataFieldContribution = {
   key?: string;
   name?: string;
   description?: string;
-  valueType?: string;
+  valueType?: MetadataValueType;
 };
 
 export type EventTypeContribution = {
@@ -28,7 +41,7 @@ export type EventTypeContribution = {
   type?: string;
   name?: string;
   description?: string;
-  payloadSchema?: unknown;
+  payloadSchema?: MetadataJsonValue;
 };
 
 export type CommandContribution = {
@@ -42,7 +55,7 @@ export type CommandContribution = {
 export type FilterContribution = {
   id: string;
   name: string;
-  query: FilterQuery;
+  query: PluginFilterQuery;
   sort?: readonly FilterSort[];
   group?: FilterGroup;
   viewType: string;
@@ -74,8 +87,8 @@ export type AlgorithmContribution = {
   id: string;
   name?: string;
   description?: string;
-  inputSchema?: unknown;
-  outputSchema?: unknown;
+  inputSchema?: MetadataJsonValue;
+  outputSchema?: MetadataJsonValue;
 };
 
 export type MobileToolbarContribution = {

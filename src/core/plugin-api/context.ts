@@ -1,25 +1,23 @@
 import type {
   AppendEventInput,
   AppEvent,
-  CommandDefinition,
-  CommandDescriptor,
+  CommandHandler,
   CreatePageInput,
   FilterDefinition,
-  ListCommandsOptions,
   ListEventsOptions,
   ListFiltersOptions,
   ListMetadataOptions,
   ListPagesOptions,
-  ListSlotContributionsOptions,
-  ListViewsOptions,
   MarkdownPage,
   MetadataRecord,
+  MetadataJsonValue,
+  RegistryComponent,
   SaveFilterInput,
   SetMetadataInput,
-  SlotContribution,
+  SlotCondition,
   UpdateFilterInput,
   UpdatePageInput,
-  ViewDefinition,
+  ViewDataShape,
 } from "../index";
 
 export type AppRuntimeInfo = {
@@ -80,45 +78,90 @@ export type PluginFilterStore = {
   delete(filterId: string): FilterDefinition;
 };
 
-export type PluginCommandDefinition<Input = unknown, Output = unknown> = Omit<
-  CommandDefinition<Input, Output>,
-  "pluginId"
->;
+export type PluginCommandDefinition<Input = unknown, Output = unknown> = {
+  id: string;
+  title: string;
+  description?: string;
+  defaultShortcut?: string;
+  context?: MetadataJsonValue;
+  handler: CommandHandler<Input, Output>;
+};
+
+export type PluginCommandDescriptor = {
+  id: string;
+  title: string;
+  description?: string;
+  defaultShortcut?: string;
+  context?: MetadataJsonValue;
+};
+
+export type PluginCommandListOptions = Record<string, never>;
 
 export type PluginCommandRegistry = {
   register<Input = unknown, Output = unknown>(
     definition: PluginCommandDefinition<Input, Output>,
-  ): CommandDescriptor;
-  get(commandId: string): CommandDescriptor;
-  list(options?: Omit<ListCommandsOptions, "pluginId">): readonly CommandDescriptor[];
+  ): PluginCommandDescriptor;
+  get(commandId: string): PluginCommandDescriptor;
+  list(options?: PluginCommandListOptions): readonly PluginCommandDescriptor[];
 };
 
-export type PluginViewDefinition<Props = unknown> = Omit<
-  ViewDefinition<Props>,
-  "pluginId"
->;
+export type PluginViewDefinition<Props = unknown> = {
+  id: string;
+  type: string;
+  title: string;
+  component: RegistryComponent<Props>;
+  accepts: ViewDataShape;
+  description?: string;
+};
+
+export type PluginViewDescriptor = {
+  id: string;
+  type: string;
+  title: string;
+  accepts: ViewDataShape;
+  description?: string;
+};
+
+export type PluginViewListOptions =
+  | Record<string, never>
+  | {
+      type: string;
+    };
 
 export type PluginViewRegistry = {
   register<Props = unknown>(
     definition: PluginViewDefinition<Props>,
-  ): ViewDefinition<Props>;
-  get(viewId: string): ViewDefinition;
-  list(options?: Omit<ListViewsOptions, "pluginId">): readonly ViewDefinition[];
+  ): PluginViewDescriptor;
+  get(viewId: string): PluginViewDescriptor;
+  list(options?: PluginViewListOptions): readonly PluginViewDescriptor[];
 };
 
-export type PluginSlotDefinition<Props = unknown> = Omit<
-  SlotContribution<Props>,
-  "pluginId"
->;
+export type PluginSlotDefinition<Props = unknown> = {
+  id: string;
+  slot: string;
+  order?: number;
+  component: RegistryComponent<Props>;
+  when?: SlotCondition<Props>;
+};
+
+export type PluginSlotDescriptor = {
+  id: string;
+  slot: string;
+  order?: number;
+};
+
+export type PluginSlotListOptions =
+  | Record<string, never>
+  | {
+      slot: string;
+    };
 
 export type PluginSlotRegistry = {
   register<Props = unknown>(
     contribution: PluginSlotDefinition<Props>,
-  ): SlotContribution<Props>;
-  get(contributionId: string): SlotContribution;
-  list(
-    options?: Omit<ListSlotContributionsOptions, "pluginId">,
-  ): readonly SlotContribution[];
+  ): PluginSlotDescriptor;
+  get(contributionId: string): PluginSlotDescriptor;
+  list(options?: PluginSlotListOptions): readonly PluginSlotDescriptor[];
 };
 
 export type PluginTransaction = {
