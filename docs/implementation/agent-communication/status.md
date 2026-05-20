@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:46 CST.
+Last updated: 2026-05-20 18:48 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 18:46 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 binary structured-clone P1 follow-up selected.
+- Current phase: TASK-009 binary structured-clone P1 test writing active.
 
 ## Active Agents
 
-- None.
+- Pauli (`test_writer`, `019e4699-91c6-73f3-877d-3956c45a276c`): add ArrayBuffer/DataView live-write conflict regression coverage.
 
 ## Recent Agent Outcomes
 
+- Pauli (`test_writer`) spawned for binary structured-clone conflict regression coverage, with ownership of `src/test/core-transaction-manager.test.ts`.
 - Narrow TASK-009 P1 re-review completed and all agents were closed.
 - Dalton (`reviewer`) found one remaining P1 correctness issue: `ArrayBuffer`, `DataView`, and similar structured-clone values with internal state but no enumerable keys still fall through to `objectsEqual`, allowing a pending transaction to overwrite live binary page body changes.
 - Aristotle (`security_reviewer`) found the same P1 boundary issue for `ArrayBuffer`/`DataView` and recommended blocking final gate until binary/opaque structured-clone values are rejected or compared explicitly.
@@ -348,10 +349,10 @@ Last updated: 2026-05-20 18:46 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 needs binary structured-clone conflict tests and production fix before final gate.
+- TASK-008 is complete and merged. TASK-009 is writing binary structured-clone conflict tests before the production fix.
 
 ## Next Actions
 
-1. Spawn a `test_writer` for ArrayBuffer/DataView conflict regression coverage.
+1. Wait for Pauli's ArrayBuffer/DataView conflict regression tests.
 2. Confirm and commit the red-signal tests.
 3. Spawn an `implementer` for the binary structured-clone comparator fix.

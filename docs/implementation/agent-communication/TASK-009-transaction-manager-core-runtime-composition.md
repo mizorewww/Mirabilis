@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: binary structured-clone P1 follow-up selected.
-- Active agents: none.
-- Next agent step: spawn a `test_writer` for ArrayBuffer/DataView conflict regression coverage.
+- Status: binary structured-clone P1 test writing active.
+- Active agents:
+  - Pauli (`test_writer`, `019e4699-91c6-73f3-877d-3956c45a276c`): add ArrayBuffer/DataView live-write conflict regression coverage.
+- Next agent step: wait for Pauli's red-signal tests.
 
 ## Agent Handoffs
 
@@ -342,6 +343,17 @@
   - Add failing regression coverage for at least `ArrayBuffer` and `DataView` live-write conflicts with stable timestamps.
   - Prefer explicit deterministic comparison for binary structured-clone values over rejecting supported page body values in TASK-009.
 
+### Pauli (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4699-91c6-73f3-877d-3956c45a276c`.
+- Ownership:
+  - `src/test/core-transaction-manager.test.ts`.
+- Assignment:
+  - Add failing regression coverage for pending transaction conflicts when live page body updates change `ArrayBuffer` and `DataView` values while timestamps remain stable.
+  - Assert the transaction rejects and preserves the live binary values.
+  - Do not edit production code, docs, config, package files, or lockfiles.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -355,4 +367,4 @@
 
 ## Next Action
 
-Spawn a `test_writer` for binary structured-clone conflict regression coverage, confirm the red signal, then spawn an `implementer`.
+Wait for Pauli's binary structured-clone conflict tests, confirm the red signal, then spawn an `implementer`.
