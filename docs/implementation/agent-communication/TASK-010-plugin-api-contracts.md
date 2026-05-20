@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: P2 review-fix implementation in progress.
-- Active agent: Epicurus (`implementer`).
-- Next parent step: wait for Epicurus, validate focused checks, and commit implementation if green.
+- Status: P2 review-fix green; narrow re-review next.
+- Active agents: none.
+- Next parent step: spawn narrow re-review agents for P2 fixes and docs cleanup.
 
 ## Agent Handoffs
 
@@ -410,7 +410,7 @@
 
 ### P2 Review-Fix Handoffs
 
-- Status: test/docs work completed and committed; implementation in progress.
+- Status: completed and committed; narrow re-review pending.
 - Agents:
   - Planck (`test_writer`, `019e45b5-00fd-7dc2-9071-3243fe73513b`).
   - Heisenberg (`doc_writer`, `019e45b5-0507-7e12-b7e1-a26f1cd569a5`).
@@ -429,6 +429,16 @@
   - `bun run typecheck` fails on Planck's intended Plugin API contract gaps.
   - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passes with 14 tests.
   - `git diff --check` passes.
+  - After Epicurus, `bun run typecheck` passed, `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests, and `git diff --check` passed.
+- Implementation outcome:
+  - Epicurus added explicit plugin-facing store input/list option shapes for metadata, events, and filters.
+  - Metadata/event list options now reserve `sourcePluginId`.
+  - Store helper aliases are exported from both `../core/plugin-api` and `../core`.
+  - `Omit`-derived plugin-facing store aliases were replaced with direct public shapes.
+- Review-fix implementation commit:
+  - `47f4cc6 Epicurus(review-fix)(Define Plugin API contracts): harden plugin store facades`.
+- Remaining tradeoff:
+  - The template-literal ownership reservation pattern remains because it preserves explicit `undefined` ownership-key rejection under the current TypeScript config.
   - Docs `rg` scans found no stale `ctx.metadataFields`, `ctx.algorithms`, `ctx.commands.execute`, plugin-facing `sourcePluginId`, or plugin-facing ownership-key examples outside Core internals and agent communication.
 
 ## Parent Decisions
@@ -440,4 +450,4 @@
 
 ## Next Action
 
-Wait for Epicurus, validate focused checks, and commit implementation if green.
+Spawn narrow re-review agents for the P2 fixes and docs cleanup.

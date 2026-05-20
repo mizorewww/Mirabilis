@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:19 CST.
+Last updated: 2026-05-20 22:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 22:19 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 P2 review-fix implementation in progress.
+- Current phase: TASK-010 P2 review-fix green; narrow re-review next.
 
 ## Active Agents
 
-- Epicurus (`implementer`, `019e45bc-f64f-7063-abcd-73d279f8bf26`) owns the production fix for Planck's red Plugin API store facade tests.
+- None. Next step is narrow re-review of the P2 review fixes.
 
 ## Recent Agent Outcomes
 
+- Epicurus (`implementer`) completed and was closed after implementing the P2 Plugin API store facade fixes.
+- Epicurus's review-fix commit: `47f4cc6 Epicurus(review-fix)(Define Plugin API contracts): harden plugin store facades`.
+- Parent repeated green checks after Epicurus: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 14 tests passing; `git diff --check`.
+- Remaining recorded tradeoff: the template-literal ownership reservation pattern remains to preserve explicit `undefined` ownership rejection under the current TypeScript config.
 - Epicurus (`implementer`) was spawned for Planck's P2 red tests, with ownership of `src/core/plugin-api/context.ts`, `src/core/plugin-api/index.ts`, and `src/core/index.ts`.
 - Planck (`test_writer`) completed and was closed after adding P2 review-fix tests for metadata/event list source ownership, public store helper exports, public store input shapes, and the documented `keyof` tradeoff.
 - Planck's test commit: `689f7cc Planck(test)(Define Plugin API contracts): cover plugin store facade gaps`.
