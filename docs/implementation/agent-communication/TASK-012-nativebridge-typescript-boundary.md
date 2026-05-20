@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review-fix red tests in progress.
+- Status: review-fix red test refinement in progress.
 - Active agents:
   - Halley the 2nd (`test_writer`, `019e46d0-83be-7440-8b99-9a01fb27560d`).
-- Next parent step: wait for Halley the 2nd, run focused red checks, and commit the review-fix test patch if it is test-only and fails for expected review findings.
+- Next parent step: wait for Halley the 2nd's test-only refinement, rerun focused red checks, and commit the review-fix test patch if it fails cleanly for accepted review findings.
 
 ## Agent Handoffs
 
@@ -232,3 +232,9 @@
   - Add a mocked Tauri adapter test for `createTauriNativeBridge()` delegating to `@tauri-apps/api/core` `invoke` with exact command/DTO.
   - Extend raw-native scan coverage for root `@tauri-apps/api` imports.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, or other tests.
+- Initial outcome:
+  - Halley the 2nd added review-fix tests in `src/test/native-bridge.test.ts`.
+  - Parent red check `bun run test:frontend -- src/test/native-bridge.test.ts` failed with four expected raw-error-message failures.
+  - Parent red check `bun run typecheck` failed for expected command literal and SQL-shaped `DbQuery` issues, but also produced noisy test-design failures around `ExpectedDbValue` and object payload examples.
+- Follow-up:
+  - Parent resumed Halley the 2nd to refine only `src/test/native-bridge.test.ts` so the red signal is clean before commit.
