@@ -9,7 +9,7 @@ import type {
 
 class CommandRegistryErrorImpl extends Error {
   readonly code: CommandRegistryErrorCode;
-  readonly cause?: unknown;
+  declare readonly cause?: unknown;
 
   constructor(
     code: CommandRegistryErrorCode,
@@ -21,7 +21,12 @@ class CommandRegistryErrorImpl extends Error {
     this.code = code;
 
     if ("cause" in options) {
-      this.cause = options.cause;
+      Object.defineProperty(this, "cause", {
+        configurable: true,
+        enumerable: false,
+        value: options.cause,
+        writable: true,
+      });
     }
   }
 }
@@ -132,11 +137,10 @@ export function createInMemoryCommandRegistry(): CommandService {
 
       try {
         return await handler(input);
-      } catch (cause) {
+      } catch {
         throw new CommandRegistryError(
           "COMMAND_HANDLER_FAILED",
           normalizedCommandId,
-          { cause },
         );
       }
     },
