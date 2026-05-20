@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:22 CST.
+Last updated: 2026-05-21 07:26 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 07:22 CST.
 - Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused re-review complete; test-strength follow-up pending.
+- Current phase: code/test review fixes complete; final docs patch pending.
 
 ## Active Agents
 
@@ -66,7 +66,11 @@ Last updated: 2026-05-21 07:22 CST.
 - Newton the 2nd (`docs_researcher`) completed focused docs/current-guidance re-review with no implementation/test mismatch after the provider fix, but blocking docs drift remains before merge.
 - Sagan the 2nd (`deprecation_auditor`) completed focused API/deprecation re-review with no P0/P1 findings. P2: initializer prop is mount-only due to ref/empty deps; P3: older context provider syntax and mutable `PublicRuntime.app` type.
 - Ampere the 2nd (`doc_writer`) completed final docs patch planning for runtime flow, current layout, runtime-provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy.
-- Parent next step: commit focused re-review summary, then delegate a small test-only follow-up for Curie's P1 before final docs patch.
+- Focused re-review summary was committed as `05333f7 Codex(progress)(Build app bootstrap and runtime provider): summarize focused re-review`.
+- Harvey the 2nd (`test_writer`) was spawned for a narrow test-only follow-up: assert the `initializeRuntime` ready path also exposes only the safe public runtime facade. Production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Harvey the 2nd completed and was closed after adding initialized-runtime public facade coverage in `src/test/runtime-provider.test.tsx`. Parent repeated focused frontend tests and confirmed 18 tests passed; `git diff --cached --check` passed before commit.
+- Harvey the 2nd's test-fix commit: `e79659a Harvey the 2nd(test-fix)(Build app bootstrap and runtime provider): cover initialized runtime facade`.
+- Parent next step: commit communication update, then delegate final docs patch.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

@@ -37,19 +37,27 @@
 
 ## Current Status
 
-- Status: focused re-review complete; delegated test-strength follow-up pending.
+- Status: code/test review fixes complete; final docs patch pending.
 - Active agents: none.
-- Current blocker before docs patch: Curie the 2nd found a P1 test-quality gap. Public runtime surface narrowing is only asserted for the direct `runtime` prop path; a new test should cover the production `initializeRuntime` ready branch returning a full unsafe runtime and verify public `useRuntime()` still exposes only `{ app }`.
+- Current blocker before merge: documentation drift. Runtime flow, current layout, provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy need final docs sync.
 - Cleared by focused re-review:
   - Security: provider boundary, startup error redaction, and native/Tauri surface checks have no P0/P1/P2 findings.
   - Correctness: RuntimeProvider cache behavior, safe facade, App Shell use, and bootstrap plugin failure propagation have no P0/P1/P2 findings.
   - Docs/current-guidance: implementation aligns after provider-surface fix, but docs drift remains before merge.
 - Remaining work order:
-  - Delegate the P1 test-strength follow-up.
-  - Run focused checks.
-  - Commit the test-only follow-up.
   - Delegate final docs patch from Ampere/Hubble/Newton recommendations.
   - Run local gate and mark TASK-015 complete.
+
+### Harvey the 2nd (`test_writer`) Focused Test-Strength Handoff
+
+- Status: completed and closed.
+- Ownership: test-only patch for Curie the 2nd's P1 coverage gap.
+- File changed: `src/test/runtime-provider.test.tsx`.
+- Added initialized `RuntimeProvider initializeRuntime={...}` path coverage where the initializer resolves a full unsafe runtime-like object with stores, registries, services, pluginHost, nativeBridge, db/sqlite/storage, and command mutation handles.
+- Assertions added: public `useRuntime()` after initialization exposes exactly `{ app }` and `findUnsafePublicRuntimeSurfacePaths(...)` returns `[]`.
+- Parent repeated focused check: `bun run test:frontend -- src/test/runtime-provider.test.tsx src/test/app-bootstrap-runtime.test.ts src/test/app-shell-boundary.test.ts` passed 18 tests.
+- Validation before commit: `git diff --cached --check` passed.
+- Test-fix commit: `e79659a Harvey the 2nd(test-fix)(Build app bootstrap and runtime provider): cover initialized runtime facade`.
 
 ## Agent Handoffs
 
