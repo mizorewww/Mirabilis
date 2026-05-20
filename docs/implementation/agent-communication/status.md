@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:22 CST.
+Last updated: 2026-05-20 12:24 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-20 12:22 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: targeted re-review pending.
+- Current phase: targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): targeted correctness re-review for TASK-008 review-fix changes.
+- Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): targeted security re-review for descriptor reads, component refs, and deferred plugin-facing boundary risk.
+- Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): targeted TypeScript/React/Vitest API compatibility audit.
+- Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): targeted test-quality re-review for Socrates and Avicenna coverage.
+- Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): targeted docs/traceability review for TASK-008 communication and progress state.
 
 ## Recent Agent Outcomes
 
+- Targeted TASK-008 re-review agents spawned after Locke's green review-fix commit.
 - Locke (`implementer`) completed and was closed after implementing TASK-008 review fixes.
 - Locke's review-fix commit: `ffe8561 Locke(review-fix)(Add View Registry and Slot Registry): accept object component refs`.
 - Parent repeated green checks after Locke: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
@@ -247,6 +252,6 @@ Last updated: 2026-05-20 12:22 CST.
 
 ## Next Actions
 
-1. Commit this Locke completion summary.
-2. Spawn targeted re-review agents for TASK-008 review-fix changes.
+1. Wait for targeted TASK-008 re-review agents.
+2. Record findings and parent decisions.
 3. Address any remaining P0/P1/P2 findings before final gate.

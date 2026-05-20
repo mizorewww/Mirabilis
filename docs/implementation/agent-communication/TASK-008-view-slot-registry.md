@@ -38,8 +38,13 @@
 
 ## Current Status
 
-- Status: targeted re-review pending.
-- Active agents: none.
+- Status: targeted re-review active.
+- Active agents:
+  - Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): targeted correctness re-review for TASK-008 review-fix changes.
+  - Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): targeted security re-review for descriptor reads, component refs, and deferred plugin-facing boundary risk.
+  - Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): targeted TypeScript/React/Vitest API compatibility audit.
+  - Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): targeted test-quality re-review for Socrates and Avicenna coverage.
+  - Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): targeted docs/traceability review for TASK-008 communication and progress state.
 
 ## Agent Handoffs
 
@@ -216,4 +221,14 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ## Next Action
 
-Commit this Locke completion summary, spawn targeted re-review agents, and address any remaining P0/P1/P2 findings before final gate.
+Wait for targeted TASK-008 re-review agents, record findings, and address any remaining P0/P1/P2 findings before final gate.
+
+### Targeted Re-review
+
+- Status: active.
+- Agents:
+  - Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): correctness and acceptance criteria.
+  - Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): descriptor-read, component-ref, and plugin-boundary security.
+  - Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): current TypeScript/React/Vitest API compatibility.
+  - Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): test-quality review for Socrates and Avicenna coverage.
+  - Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): communication docs and progress traceability.
