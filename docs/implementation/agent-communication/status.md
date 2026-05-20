@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:38 CST.
+Last updated: 2026-05-20 23:46 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 23:38 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 review-fix TDD in progress.
+- Current phase: TASK-011 review-fix implementation in progress.
 
 ## Active Agents
 
-- Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`) is adding P1/P2 review-fix red tests in `src/test/plugin-host-lifecycle.test.ts`.
+- Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`) is implementing the P1/P2 review fixes in `src/core/plugin-host/` and Core exports.
 
 ## Recent Agent Outcomes
 
+- Curie (`implementer`) was spawned for the TASK-011 review-fix production changes. Ownership is limited to `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, and `src/core/index.ts` unless a required type export forces a reported scope expansion.
+- Carver's review-fix test commit: `a24bd27 Carver(test)(Implement Plugin Host lifecycle): cover lifecycle review gaps`.
+- Parent confirmed the expected red signal after Carver: `bun run typecheck` failed on missing `install` / `register` and concrete return type assertions; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 26 tests with 15 passing and 11 failing in the new P1/P2 review areas; `git diff --check` passed.
 - Carver (`test_writer`) was spawned for TASK-011 P1/P2 review-fix red tests. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`; production code, docs, config, lockfiles, Rust/Tauri, and other tests are out of scope.
 - TASK-011 review round 1 completed. Jason (`pr_explorer`) mapped the changed surfaces to `src/core/plugin-host/`, Core exports, lifecycle tests, and agent docs; Jason highlighted batch-load rollback, untracked non-register lifecycle contributions, deactivate/re-activate semantics, dependency cascades, and missing coverage risks.
 - Herschel (`reviewer`) found one P1 correctness issue: captured plugin contexts can register commands/views/slots after deactivate or uninstall because only the initial register tracker is copied into `record.contributions`. Herschel also found P2 issues for dependency deactivate/uninstall cascades, dependency satisfaction by installed-but-unregistered records, and duplicate dependency declarations downgrading required dependencies to optional.

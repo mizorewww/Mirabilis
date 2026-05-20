@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: review-fix TDD in progress.
-- Active agents: Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`).
-- Next parent step: wait for Carver, validate expected red signal, commit tests, then delegate implementation to `implementer`.
+- Status: review-fix implementation in progress.
+- Active agents: Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`).
+- Next parent step: wait for Curie, then validate focused green checks.
 
 ## Agent Handoffs
 
@@ -153,7 +153,7 @@
 
 ### Review-Fix TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Carver (`test_writer`, `019e460a-1484-75f2-8f6e-f6eb5016c232`).
 - Ownership:
@@ -161,6 +161,28 @@
 - Assignment:
   - Add red tests for stale captured contexts registering after lifecycle exit, owner-scoped metadata/event/filter facades including transaction facades, dependency cascade and dependency-validation gaps, duplicate dependency normalization, explicit staged `install(plugin)` / `register(plugin)` API, lifecycle hook failure behavior, and concrete Plugin Host return types.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+- Outcome:
+  - Carver added tests in `src/test/plugin-host-lifecycle.test.ts` only.
+  - New coverage exercises stale captured `PluginContext` late registrations, plugin-owned metadata/event/filter facades including transaction facades, dependency deactivate/uninstall safety, installed-only and failed lifecycle dependency validation, required-vs-optional dependency normalization, explicit staged install/register methods, activate/deactivate/uninstall failure state preservation, and concrete public return types.
+- Commit:
+  - `a24bd27 Carver(test)(Implement Plugin Host lifecycle): cover lifecycle review gaps`.
+- Red checks:
+  - `bun run typecheck` failed on missing `install` / `register` and concrete return type assertions.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 26 tests with 15 passing and 11 failing in the new P1/P2 review areas.
+  - `git diff --check` passed.
+
+### Review-Fix Implementation
+
+- Status: in progress.
+- Agent:
+  - Curie (`implementer`, `019e4610-ba79-7df0-a030-a4f9f5659037`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/core/plugin-host/index.ts`.
+  - `src/core/index.ts`.
+- Assignment:
+  - Implement minimum production fixes for Carver's red tests: staged install/register API, concrete lifecycle return types, stale context registration prevention, owner-scoped store facades including transactions, dependency lifecycle/dependency-validation safety, required dependency normalization, and typed lifecycle failure state preservation.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
 
 ## Parent Decisions
 
@@ -171,4 +193,4 @@
 
 ## Next Action
 
-Wait for Carver, then validate and commit the red review-fix tests.
+Wait for Curie, then run focused green checks.
