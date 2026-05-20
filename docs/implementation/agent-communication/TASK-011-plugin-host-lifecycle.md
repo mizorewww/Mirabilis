@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: fresh-record batch race TDD in progress.
-- Active agents:
-  - Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`).
-- Next parent step: wait for Kuhn, validate expected red signal, then delegate implementation.
+- Status: fresh-record batch race production fix handoff.
+- Active agents: none.
+- Next parent step: delegate implementation, then validate green checks.
 
 ## Agent Handoffs
 
@@ -751,7 +750,7 @@
 
 ### Fresh-Record Batch Race TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`).
 - Ownership:
@@ -759,6 +758,16 @@
 - Assignment:
   - Add deterministic red tests proving stale batch rollback cannot delete a fresh same-id record or orphan its fresh runtime contributions.
   - Add deterministic red tests proving batch loading cannot overwrite a concurrently registered same-id record and lose contribution tracking.
+- Outcome:
+  - Kuhn changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added red coverage for stale batch rollback preserving a fresh same-id record and tracked contributions, including later uninstall cleanup.
+  - Added red coverage for pending batch load reaching a same-id plugin that was already registered concurrently without overwriting the live record or losing tracking.
+- Commit:
+  - `f909a4b Kuhn(test)(Implement Plugin Host lifecycle): cover fresh batch races`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 45 tests with 43 passing and 2 failing in the expected fresh-record batch race cases.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -769,4 +778,4 @@
 
 ## Next Action
 
-Wait for Kuhn's red tests, then validate and commit them.
+Delegate the production fix for Kuhn's red tests.

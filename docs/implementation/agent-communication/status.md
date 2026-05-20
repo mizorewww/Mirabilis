@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:16 CST.
+Last updated: 2026-05-21 02:19 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-21 02:16 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 fresh-record batch race TDD in progress.
+- Current phase: TASK-011 fresh-record batch race production fix handoff.
 
 ## Active Agents
 
-- Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`) is adding red tests for stale batch rollback deleting fresh same-id records and batch load overwriting concurrently registered same-id records.
+- No active agents. Next handoff: `implementer` for fresh-record batch rollback and concurrent same-id batch load races.
 
 ## Recent Agent Outcomes
 
+- Kuhn (`test_writer`) completed and was closed after adding red tests for fresh-record batch rollback and concurrent same-id batch load races.
+- Kuhn's test commit: `f909a4b Kuhn(test)(Implement Plugin Host lifecycle): cover fresh batch races`.
+- Parent confirmed Kuhn's expected red signal: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 45 tests with 43 passing and 2 failing in the new fresh-record batch race cases; `git diff --check` passed.
 - Kuhn (`test_writer`) was spawned for red tests covering the latest Beauvoir/Pauli batch concurrency P1 findings. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
 - Final batch rollback focused re-review completed. Pauli (`security_reviewer`) found one P1: stale batch rollback can delete a fresh same-id record and leave fresh runtime contributions orphaned.
 - Beauvoir (`reviewer`) found the same stale rollback/fresh record P1 and another P1: batch loading validates duplicates only once before async install work, then can blindly overwrite a concurrently registered same-id record and lose contribution tracking.
