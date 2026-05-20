@@ -26,11 +26,11 @@ export type AppRuntimeInfo = {
 };
 
 type PluginOwnershipKeyReserved = {
-  readonly pluginId?: never;
+  readonly [key: `pluginId${string}`]: never;
 };
 
 type SourcePluginOwnershipKeyReserved = {
-  readonly sourcePluginId?: never;
+  readonly [key: `sourcePluginId${string}`]: never;
 };
 
 export type PluginPageStore = {
