@@ -38,9 +38,10 @@
 
 ## Current Status
 
-- Status: review-fix implementation active.
+- Status: follow-up review-fix tests active.
 - Active agents:
   - Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
+  - Avicenna (`test_writer`, `019e4399-a145-7760-a4fb-edd9e5a59152`): adjust TASK-008 proxy descriptor-read tests so valid data descriptors must not invoke Proxy `get` traps; do not edit production/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -171,13 +172,9 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
   - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 16 passing and 4 failing.
   - The 4 focused runtime failures are rejected object view component refs (`VIEW_COMPONENT_REQUIRED`), rejected proxy view descriptors (`VIEW_IDENTITY_REQUIRED`), rejected object slot component refs (`SLOT_COMPONENT_REQUIRED`), and rejected proxy slot descriptors (`SLOT_IDENTITY_REQUIRED`).
 
-## Next Action
-
-Wait for Locke's review-fix implementation output, repeat focused checks, then commit Locke's production patch if green.
-
 ### Locke (`implementer`)
 
-- Status: active.
+- Status: completed with follow-up needed.
 - Agent id: `019e4392-b734-7f53-b304-5063a8a09c92`.
 - Ownership:
   - `src/core/types/view.ts`.
@@ -191,3 +188,24 @@ Wait for Locke's review-fix implementation output, repeat focused checks, then c
   - Read own data descriptor values without invoking Proxy `get` traps.
   - Preserve existing duplicate, ordering, defensive-copy, exact-filter, and inert `when` behavior.
   - Do not edit tests, docs, config, or lockfiles, and do not commit.
+- Parent validation:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` passed with 20 tests.
+  - `bun run lint` passed.
+- Parent follow-up:
+  - Locke's uncommitted production patch still invokes Proxy `get` traps through `hasSelectivelyThrowingGetTrap`, which conflicts with the accepted descriptor-value hardening decision. Avicenna is adding a test-only guard before Locke is asked to remove the probing.
+
+### Avicenna (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4399-a145-7760-a4fb-edd9e5a59152`.
+- Ownership:
+  - `src/test/core-view-slot-registry.test.ts` only.
+- Assignment:
+  - Strengthen descriptor/proxy tests so a valid own data descriptor behind a Proxy registers without the registry invoking the Proxy `get` trap.
+  - Resolve older contradictory invalid cases that treated a data-property `get` trap as invalid; keep raw descriptor failure coverage only where the descriptor lookup itself fails or an accessor is present.
+  - Do not edit production code, docs, config, or lockfiles, and do not commit.
+
+## Next Action
+
+Wait for Avicenna's follow-up test output, confirm the expected red assertion against Locke's current patch, commit Avicenna's tests, then send Locke a follow-up to remove `get`-trap probing and restore green checks.
