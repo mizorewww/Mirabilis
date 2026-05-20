@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:01 CST.
+Last updated: 2026-05-20 12:03 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 12:01 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1 complete; review-fix tests pending.
+- Current phase: review-fix tests active.
 
 ## Active Agents
 
-- None.
+- Socrates (`test_writer`, `019e438d-94d0-7d80-a996-c8fd5ad56986`): add TASK-008 review-fix coverage in `src/test/core-view-slot-registry.test.ts` only; do not edit production/docs/config and do not commit.
 
 ## Recent Agent Outcomes
 
+- Socrates (`test_writer`) was spawned for TASK-008 review-fix tests covering default generic types, React object component references, component inertness, exact whitespace filters, and descriptor/proxy property-read hardening.
 - TASK-008 review round 1 completed and all review agents were closed.
 - Gauss (`pr_explorer`) mapped the diff to Core registry/type/test/doc files only and flagged review focus on React component-reference shape, slot ordering, `accepts` validation, and default prop typing.
 - Erdos (`reviewer`) found one P2 correctness issue: unparameterized `ViewDefinition` and `SlotContribution` currently erase `component` and `when` to `unknown`; parent accepts fixing them to default `Props = unknown`.
@@ -233,6 +234,6 @@ Last updated: 2026-05-20 12:01 CST.
 
 ## Next Actions
 
-1. Commit review-findings documentation.
-2. Spawn a `test_writer` for TASK-008 review-fix coverage in `src/test/core-view-slot-registry.test.ts`.
-3. Confirm the review-fix tests fail for the expected reasons, then delegate production fixes to an `implementer`.
+1. Wait for Socrates's review-fix test output.
+2. Confirm the review-fix tests fail for the expected reasons.
+3. Commit Socrates's test patch with the actual agent nickname, then delegate production fixes to an `implementer`.

@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: review round 1 complete; review-fix tests pending.
-- Active agents: none.
+- Status: review-fix tests active.
+- Active agents:
+  - Socrates (`test_writer`, `019e438d-94d0-7d80-a996-c8fd5ad56986`): add TASK-008 review-fix coverage in `src/test/core-view-slot-registry.test.ts` only; do not edit production/docs/config and do not commit.
 
 ## Agent Handoffs
 
@@ -151,4 +152,15 @@
 
 ## Next Action
 
-Commit this review summary, spawn a `test_writer` for review-fix coverage, confirm the expected red signal, then delegate production fixes to an `implementer`.
+Wait for Socrates's review-fix test output, confirm the expected red signal, commit the test patch with Socrates's nickname, then delegate production fixes to an `implementer`.
+
+### Socrates (`test_writer`)
+
+- Status: active.
+- Agent id: `019e438d-94d0-7d80-a996-c8fd5ad56986`.
+- Ownership:
+  - `src/test/core-view-slot-registry.test.ts` only.
+- Assignment:
+  - Add review-fix coverage for unparameterized public type defaults, React-compatible object/exotic component references, component inertness, exact significant whitespace filters, and descriptor/proxy property-read hardening.
+  - Do not edit production code, docs, config, or lockfiles.
+  - Do not commit; parent will commit after confirming the expected red signal.
