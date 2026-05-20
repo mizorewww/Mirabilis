@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:35 CST.
+Last updated: 2026-05-21 07:44 CST.
 
 ## Current Task
 
@@ -82,7 +82,14 @@ Last updated: 2026-05-21 07:35 CST.
 - TASK-016 scope: register Markdown editor view, insert text command, and mobile toolbar slot; support baseline markdown text forms; collect markdown extensions from runtime; prove save/reopen through the post-TASK-015 runtime/native boundary.
 - TASK-016 out of scope unless agents find a local-doc requirement: Task Plugin page creation semantics, checkbox toggle behavior, tag plugin behavior, stable block IDs/import-export, advanced editor schema behavior, sync, release packaging, and new Tauri command/capability expansion.
 - `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
-- Parent next step: commit TASK-016 start state, then spawn read-only pre-test guidance agents.
+- TASK-016 start state was committed as `faf94bb Codex(progress)(Implement Markdown Editor Plugin shell): start task orchestration`.
+- TASK-016 pre-test guidance agents were spawned. All are read-only and must not edit files.
+- Averroes the 2nd (`docs_researcher`) completed current-docs research. Recommendation: start with a plain controlled React textarea shell, not Tiptap/ProseMirror; test visible Markdown typing, toolbar insertion, plugin registration, save/reopen through a runtime/page facade, and extension collection separately.
+- Confucius the 2nd (`security_reviewer`) completed security boundary review. P0/P1 guardrails: no raw Markdown/HTML XSS, no full runtime/native/db exposure to editor/plugin UI, no stale register-time `PluginContext`, no new native permissions for save/reopen, validate persisted document shape, and keep App Shell generic.
+- Kuhn the 2nd (`planner`) completed read-only planning. Recommendation: use a smaller controlled textarea shell under `src/plugins/markdown-editor/**`, register it as a built-in plugin, add view/command/slot registration, preserve textual Markdown syntax, add minimal extension collection from manifest descriptors, and keep save/reopen persistence narrow instead of rewiring all Core stores to SQLite.
+- Leibniz the 2nd (`deprecation_auditor`) completed API/deprecation audit. P1 findings: no markdown extension registry exists yet; plugin command handlers cannot safely close over register-time `PluginContext`; save/reopen through Core/NativeBridge is not wired through runtime. It also recommends avoiding Tiptap/ProseMirror for this slice.
+- Parent decisions for TASK-016 red tests: test first for a plain textarea editor plugin shell, owned view/command/slot registration, textual baseline Markdown preservation, toolbar insertion, narrow save/reopen facade or NativeBridge DTO coverage if claimed, markdown extension collection gap, and editor security boundaries. Tiptap/ProseMirror, Task Plugin semantics, stable block IDs, new Tauri permissions, and broad persistence rewiring are out of scope.
+- Parent next step: commit pre-test guidance summary, close completed read-only agents, then delegate red tests to `test_writer`.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
