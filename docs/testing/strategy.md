@@ -99,6 +99,8 @@ Boundary scans for SQLite work should keep stable architecture contracts narrow:
 
 TASK-013 repository persistence does not by itself require app-data path, provider/bootstrap, IPC, or capability tests because it is private Rust persistence only. When a task wires persistence into the app runtime or Tauri IPC, add checks for app database path ownership, capability permissions, safe IPC error DTOs, operation allowlisting, and bootstrap lifecycle. WAL, `busy_timeout`, and `PRAGMA trusted_schema = OFF` are deferred bootstrap hardening topics unless a task explicitly changes connection policy.
 
+For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are the only registered TASK-014 app commands, `DbQuery.operation` matches the reviewed 15-operation allowlist, generated permission TOMLs map `allow-db-execute` and `allow-db-transaction` to `commands.allow`, default capability grants only those DB command permissions for this task, IPC errors remain redacted, and transactions roll back earlier writes on validation or persistence failure.
+
 ## Merge Gate
 
 Before merging to `master`:
