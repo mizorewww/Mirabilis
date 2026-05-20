@@ -37,15 +37,18 @@
 
 ## Current Status
 
-- Status: final local gate pending.
+- Status: ready to merge after progress commit.
 - Active agents: none.
-- Current blocker before merge: documentation drift. Runtime flow, current layout, provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy need final docs sync.
+- Current blocker before merge: none after progress commit and branch push retry.
 - Cleared by focused re-review:
   - Security: provider boundary, startup error redaction, and native/Tauri surface checks have no P0/P1/P2 findings.
   - Correctness: RuntimeProvider cache behavior, safe facade, App Shell use, and bootstrap plugin failure propagation have no P0/P1/P2 findings.
   - Docs/current-guidance: implementation aligns after provider-surface fix, but docs drift remains before merge.
 - Remaining work order:
-  - Run local gate and mark TASK-015 complete.
+  - Commit completion progress.
+  - Retry pushing the task branch; prior post-commit push for `98895d3` timed out.
+  - Merge into `master` and push `master`.
+  - Continue to TASK-016.
 
 ### Harvey the 2nd (`test_writer`) Focused Test-Strength Handoff
 
@@ -77,6 +80,16 @@
   - Added App Shell responsibilities and TASK-015 testing/merge guidance.
 - Validation: `git diff --check` passed.
 - Docs commit: `506b3e5 Kant the 2nd(docs)(Build app bootstrap and runtime provider): sync runtime provider docs`.
+
+## Final TASK-015 Validation
+
+- Focused frontend tests: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts` passed with 18 tests.
+- Typecheck: `bun run typecheck` passed.
+- Lint: `bun run lint` passed.
+- Build: `bun run build` passed.
+- Quick gate: `bun run check:quick` passed with 17 frontend test files / 265 tests, Rust fmt, Rust clippy, and full Rust tests.
+- Diff hygiene: `git diff --check` passed.
+- `check:full` was not run because TASK-015 did not add persistence wiring, Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior.
 
 ## Agent Handoffs
 
