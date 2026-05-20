@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: binary structured-clone P1 test writing active.
-- Active agents:
-  - Pauli (`test_writer`, `019e4699-91c6-73f3-877d-3956c45a276c`): add ArrayBuffer/DataView live-write conflict regression coverage.
-- Next agent step: wait for Pauli's red-signal tests.
+- Status: binary structured-clone P1 implementation pending.
+- Active agents: none.
+- Next agent step: spawn an `implementer` for ArrayBuffer/DataView snapshot comparison.
 
 ## Agent Handoffs
 
@@ -345,7 +344,7 @@
 
 ### Pauli (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4699-91c6-73f3-877d-3956c45a276c`.
 - Ownership:
   - `src/test/core-transaction-manager.test.ts`.
@@ -353,6 +352,14 @@
   - Add failing regression coverage for pending transaction conflicts when live page body updates change `ArrayBuffer` and `DataView` values while timestamps remain stable.
   - Assert the transaction rejects and preserves the live binary values.
   - Do not edit production code, docs, config, package files, or lockfiles.
+- Commit:
+  - `7d6a1fd Pauli(test)(Add Transaction Manager and Core Runtime composition): cover binary transaction conflicts`.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-transaction-manager.test.ts` failed as expected with 17 tests run, 15 passed, and the `ArrayBuffer` plus `DataView` conflict cases failing because the transaction resolved instead of rejecting.
+  - `git diff --check` passed.
+- Parent decision:
+  - Red signal is accepted. Production code must compare binary structured-clone values before falling through to enumerable object comparison.
 
 ## Parent Decisions
 
@@ -367,4 +374,4 @@
 
 ## Next Action
 
-Wait for Pauli's binary structured-clone conflict tests, confirm the red signal, then spawn an `implementer`.
+Spawn an `implementer` for the binary structured-clone comparator fix, then rerun focused transaction/runtime checks.

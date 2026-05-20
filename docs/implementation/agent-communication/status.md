@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:48 CST.
+Last updated: 2026-05-20 18:51 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 18:48 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 binary structured-clone P1 test writing active.
+- Current phase: TASK-009 binary structured-clone P1 implementation pending.
 
 ## Active Agents
 
-- Pauli (`test_writer`, `019e4699-91c6-73f3-877d-3956c45a276c`): add ArrayBuffer/DataView live-write conflict regression coverage.
+- None.
 
 ## Recent Agent Outcomes
 
+- Pauli (`test_writer`) completed and was closed after adding binary structured-clone conflict regression tests.
+- Pauli's test commit: `7d6a1fd Pauli(test)(Add Transaction Manager and Core Runtime composition): cover binary transaction conflicts`.
+- Parent confirmed expected red signal: `bun run typecheck` passes; `bun run test:frontend -- src/test/core-transaction-manager.test.ts` runs 17 tests with 15 passing and two failing because `ArrayBuffer` and `DataView` conflict cases currently resolve instead of rejecting; `git diff --check` passes.
 - Pauli (`test_writer`) spawned for binary structured-clone conflict regression coverage, with ownership of `src/test/core-transaction-manager.test.ts`.
 - Narrow TASK-009 P1 re-review completed and all agents were closed.
 - Dalton (`reviewer`) found one remaining P1 correctness issue: `ArrayBuffer`, `DataView`, and similar structured-clone values with internal state but no enumerable keys still fall through to `objectsEqual`, allowing a pending transaction to overwrite live binary page body changes.
@@ -349,10 +352,10 @@ Last updated: 2026-05-20 18:48 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 is writing binary structured-clone conflict tests before the production fix.
+- TASK-008 is complete and merged. TASK-009 has red-signal binary structured-clone conflict tests and needs the production fix.
 
 ## Next Actions
 
-1. Wait for Pauli's ArrayBuffer/DataView conflict regression tests.
-2. Confirm and commit the red-signal tests.
-3. Spawn an `implementer` for the binary structured-clone comparator fix.
+1. Spawn an `implementer` for the binary structured-clone comparator fix.
+2. Run focused transaction/runtime checks after the patch.
+3. Re-review or run final gate once no P0/P1 findings remain.
