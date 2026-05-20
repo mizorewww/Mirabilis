@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:45 CST.
+Last updated: 2026-05-20 10:50 CST.
 
 ## Current Task
 
@@ -8,16 +8,16 @@ Last updated: 2026-05-20 10:45 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance active.
+- Current phase: pre-test guidance complete.
 
 ## Active Agents
 
-- Schrodinger (`planner`, `019e4346-6f25-7710-ba44-e7dc2aae5bb0`): TASK-007 API, scope, and TDD plan.
-- Bacon (`docs_researcher`, `019e4346-73ce-7851-b8b0-704b45d106eb`): current TypeScript/Vitest guidance for command API tests.
-- Poincare (`deprecation_auditor`, `019e4346-77cc-7a41-b1a4-be8d337f3f13`): TASK-007 risk and deprecated-pattern audit.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-007 pre-test guidance completed. Schrodinger planned the Command Registry/Bus API and acceptance tests, Bacon verified current TypeScript/Vitest guidance, and Poincare audited handler exposure, async error wrapping, generic unsoundness, validation, and descriptor clone risks.
+- Parent decisions: expose descriptor metadata without handlers from `get`/`list`/`register`/`unregister`; keep handlers private and executable only through the bus; use `defaultShortcut` as metadata only; treat `context` as inert cloneable descriptor data; use `execute(commandId, input?: unknown): Promise<unknown>` at Core level; wrap sync throws and async rejections as `COMMAND_HANDLER_FAILED` with `cause`.
 - Pre-test guidance agents spawned for TASK-007.
 - TASK-007 started from latest `master` after TASK-006 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-007.
@@ -184,6 +184,6 @@ Last updated: 2026-05-20 10:45 CST.
 
 ## Next Actions
 
-1. Wait for TASK-007 pre-test guidance agents.
-2. Record parent decisions.
-3. Delegate failing acceptance tests to a `test_writer`.
+1. Delegate failing acceptance tests to a `test_writer`.
+2. Confirm expected red signal.
+3. Delegate implementation to an `implementer`.
