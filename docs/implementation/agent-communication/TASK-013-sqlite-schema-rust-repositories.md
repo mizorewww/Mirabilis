@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: implementation agent running.
+- Status: implementation committed; review handoff next.
 - Active agents:
-  - James the 2nd (`implementer`, id `019e46f5-1b48-7de0-9a0a-48420cc3740f`).
-- Next parent step: wait for James the 2nd, review the patch, run focused checks, then commit if green.
+  - None.
+- Next parent step: spawn read-only review agents for correctness, diff mapping, deprecation/API, security/boundary, docs/current guidance, test quality, and documentation needs.
 
 ## Agent Handoffs
 
@@ -115,7 +115,7 @@
 
 ### Implementation Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - James the 2nd (`implementer`, id `019e46f5-1b48-7de0-9a0a-48420cc3740f`).
 - Ownership:
@@ -130,3 +130,10 @@
   - `cargo fmt --manifest-path src-tauri/Cargo.toml --check`.
   - `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`.
   - `git diff --check`.
+- Outcome:
+  - Changed files: `src-tauri/Cargo.toml`, `src-tauri/src/lib.rs`, `src-tauri/src/db/mod.rs`, `src-tauri/src/db/database.rs`, `src-tauri/src/db/error.rs`, `src-tauri/src/db/migrations.rs`, `src-tauri/src/db/repositories.rs`, and `src-tauri/src/db/types.rs`.
+  - Commit: `ef3583c James the 2nd(implementation)(Add SQLite schema and Rust repositories): implement core sqlite repositories`.
+  - Delivered `mirabilis_lib::db` with `Database`, `DbError`, migration helpers, typed records/DTOs, and table-specific repositories for the accepted Core tables.
+  - Delivered schema version `1` / `001_core_schema`, `core_schema_migrations`, `PRAGMA user_version`, and neutral `core_plugin_indexes` baseline table.
+  - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+  - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
