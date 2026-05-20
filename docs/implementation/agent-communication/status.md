@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:35 CST.
+Last updated: 2026-05-21 03:37 CST.
 
 ## Current Task
 
-- Task: TASK-012 - Add NativeBridge TypeScript boundary.
-- Branch: `feat/task-012-nativebridge-typescript-boundary`.
+- Task: TASK-013 - Add SQLite schema and Rust repositories.
+- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: local gate passed; progress update in progress before merge.
+- Current phase: task started; pre-test guidance handoff next.
 
 ## Active Agents
 
@@ -16,6 +16,11 @@ Last updated: 2026-05-21 03:35 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
+- TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
+- TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-013 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: commit TASK-013 start state, then spawn read-only planner, docs/current-guidance, deprecation/API, and security-boundary agents before TDD tests.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

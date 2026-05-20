@@ -38,7 +38,7 @@ Status markers:
 - [x] TASK-010: Define Plugin API contracts
 - [x] TASK-011: Implement Plugin Host lifecycle
 - [x] TASK-012: Add NativeBridge TypeScript boundary
-- [ ] TASK-013: Add SQLite schema and Rust repositories
+- [~] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
 
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 03:37 CST - TASK-013 started
+
+- Branch: `feat/task-013-sqlite-schema-rust-repositories`.
+- Task: Add SQLite schema and Rust repositories.
+- Scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Do not expose Tauri IPC commands, change capabilities/permissions, wire frontend NativeBridge operations, implement app bootstrap/runtime provider, add UI persistence flows, or build plugin-owned index behavior beyond baseline schema support.
+- Agent orchestration: parent thread remains orchestration-only; current SQLite/Tauri/Rust crate guidance, security review, TDD tests, implementation, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-013-sqlite-schema-rust-repositories.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 03:35 CST - TASK-012 completed
 
