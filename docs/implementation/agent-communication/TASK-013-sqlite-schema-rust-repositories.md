@@ -40,10 +40,14 @@
 
 ## Current Status
 
-- Status: review fixes committed; focused re-review handoff next.
+- Status: focused re-review agents running.
 - Active agents:
-  - None.
-- Next parent step: commit this status update, then spawn focused read-only re-review agents for correctness, security/boundary, API/deprecation, docs/current guidance, and test quality.
+  - Copernicus the 2nd (`reviewer`, id `019e470e-ca8e-70e0-aeba-238568ecc912`).
+  - Erdos the 2nd (`security_reviewer`, id `019e470e-cf5d-7ba1-bf5b-95c1deae08b6`).
+  - Bohr the 2nd (`deprecation_auditor`, id `019e470e-e5de-7650-af5c-77dc776e82cb`).
+  - Boole the 2nd (`docs_researcher`, id `019e470e-eb85-7a41-a69f-d1e1107a719f`).
+  - Archimedes the 2nd (`test_quality_reviewer`, id `019e470e-f074-7c42-89cf-19c65a8ab935`).
+- Next parent step: wait for focused re-review, record outcomes, then either delegate further fixes or run the local gate.
 
 ## Agent Handoffs
 
@@ -136,6 +140,19 @@
   - Delivered `mirabilis_lib::db` with `Database`, `DbError`, migration helpers, typed records/DTOs, and table-specific repositories for the accepted Core tables.
   - Delivered schema version `1` / `001_core_schema`, `core_schema_migrations`, `PRAGMA user_version`, and neutral `core_plugin_indexes` baseline table.
   - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+
+### Focused Re-Review Round
+
+- Status: running.
+- Agents:
+  - Copernicus the 2nd (`reviewer`) for correctness re-review.
+  - Erdos the 2nd (`security_reviewer`) for security/boundary re-review.
+  - Bohr the 2nd (`deprecation_auditor`) for API/deprecation re-review.
+  - Boole the 2nd (`docs_researcher`) for docs/current-guidance re-review.
+  - Archimedes the 2nd (`test_quality_reviewer`) for test-quality re-review.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Focus on review-fix commits `daa4385`, `97ee8b2`, and `ca2c461`, especially whether the prior P1s are cleared and whether the targeted P2 fixes introduced regressions.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1

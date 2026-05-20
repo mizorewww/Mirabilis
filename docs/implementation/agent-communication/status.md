@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:22 CST.
+Last updated: 2026-05-21 04:23 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-21 04:22 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review fixes committed; focused re-review handoff next.
+- Current phase: focused re-review agents running.
 
 ## Active Agents
 
-- None.
+- Copernicus the 2nd (`reviewer`, id `019e470e-ca8e-70e0-aeba-238568ecc912`) - focused correctness re-review.
+- Erdos the 2nd (`security_reviewer`, id `019e470e-cf5d-7ba1-bf5b-95c1deae08b6`) - focused security/boundary re-review.
+- Bohr the 2nd (`deprecation_auditor`, id `019e470e-e5de-7650-af5c-77dc776e82cb`) - focused API/deprecation re-review.
+- Boole the 2nd (`docs_researcher`, id `019e470e-eb85-7a41-a69f-d1e1107a719f`) - focused docs/current-guidance re-review.
+- Archimedes the 2nd (`test_quality_reviewer`, id `019e470e-f074-7c42-89cf-19c65a8ab935`) - focused test-quality re-review.
 
 ## Recent Agent Outcomes
 
@@ -55,7 +59,8 @@ Last updated: 2026-05-21 04:22 CST.
 - Parent repeated focused green checks after Beauvoir the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - Arendt the 2nd (`doc_writer`) completed docs sync and was closed after aligning architecture/development/testing docs to the final review-fix schema, including the `core_plugin_indexes.plugin_id` FK.
 - Arendt the 2nd's docs commit: `ca2c461 Arendt the 2nd(docs)(Add SQLite schema and Rust repositories): sync sqlite persistence docs`.
-- Parent next step: commit this status update, then spawn focused read-only re-review agents for correctness, security/boundary, API/deprecation, docs/current guidance, and test quality.
+- Focused TASK-013 re-review agents were spawned for correctness, security/boundary, API/deprecation, docs/current guidance, and test quality.
+- Parent next step: wait for focused re-review, record outcomes, then either delegate further fixes or run the local gate.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.
