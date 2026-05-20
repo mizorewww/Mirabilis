@@ -37,15 +37,16 @@
 
 ## Current Status
 
-- Status: red tests completed and committed; implementation handoff pending.
-- Active agents: none.
+- Status: implementation in progress.
+- Active agents:
+  - Mill the 2nd (`implementer`) for minimum TASK-016 production code.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
   - Leibniz the 2nd (`deprecation_auditor`): API/deprecation audit completed.
   - Confucius the 2nd (`security_reviewer`): security boundary review completed.
   - Ohm the 2nd (`test_writer`): red tests completed, verified red, committed, and closed.
-- Next parent step: spawn `implementer` for the minimum production patch to satisfy the committed TASK-016 tests.
+- Next parent step: wait for Mill the 2nd, run focused green checks, and commit implementation if scope and validation match.
 
 ## Agent Handoffs
 
@@ -169,3 +170,22 @@
   - `git diff --cached --check` passed before commit.
 - Commit: `a3e515f Ohm the 2nd(test)(Implement Markdown Editor Plugin shell): add editor shell acceptance tests`.
 - Parent decision: proceed to an `implementer` handoff. The implementation must stay inside the textarea plugin shell scope, avoid Tiptap/ProseMirror and new native permissions, keep save/reopen narrow, and keep privileged runtime/native handles out of editor-rendered surfaces.
+
+### Mill the 2nd (`implementer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e47d3-c41e-7ac1-b620-015a0f9cf23b`.
+- Ownership: minimum production code for TASK-016 acceptance.
+- Allowed write scope:
+  - `src/plugins/markdown-editor/**`.
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/bootstrap/create-app-runtime.ts` only if needed for runtime markdown facade or page persistence wiring.
+  - `src/core/plugin-host/plugin-host.ts` only if needed to expose loaded manifest/contribution metadata safely.
+  - `src/core/runtime/**` only if needed for minimal markdown extension collector or page persistence adapter.
+  - Small adjacent type/helper files only when required by tests and existing architecture.
+- Required checks:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+- Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, Tiptap/ProseMirror, new native commands, or broad Core store-to-SQLite rewiring unless the agent reports a blocker first.

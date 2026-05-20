@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:56 CST.
+Last updated: 2026-05-21 07:58 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 07:56 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation handoff.
+- Current phase: implementation in progress.
 
 ## Active Agents
 
-- None. Next agent handoff is TASK-016 implementation.
+- Mill the 2nd (`implementer`) - TASK-016 minimum production implementation.
 
 ## Recent Agent Outcomes
 
@@ -94,7 +94,8 @@ Last updated: 2026-05-21 07:56 CST.
 - Ohm the 2nd completed and was closed after adding red tests in `src/test/markdown-editor-plugin-shell.test.tsx`, `src/test/markdown-runtime-extensions.test.ts`, and `src/test/markdown-page-persistence.test.tsx`.
 - Parent confirmed the expected TASK-016 red signal: `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` failed because the Markdown built-in plugin, `markdown.page-editor`, `markdown.insert-text`, markdown UI source files, and `runtime.markdown.collectEditorExtensions()` are not implemented yet. The native-surface guard passed.
 - Ohm the 2nd's test commit: `a3e515f Ohm the 2nd(test)(Implement Markdown Editor Plugin shell): add editor shell acceptance tests`.
-- Parent next step: spawn an `implementer` for the minimum TASK-016 production patch, with scope limited to the textarea editor plugin shell, built-in plugin registration, runtime markdown extension collection, and narrow page save/reopen boundary.
+- Mill the 2nd (`implementer`) was spawned for the minimum TASK-016 production patch. Ownership is limited to the textarea editor plugin shell, built-in plugin registration, runtime markdown extension collection, and narrow page save/reopen boundary. Tests, docs, Tauri config/capabilities, Rust code, package/Cargo dependencies, Tiptap/ProseMirror, new native commands, and broad Core store-to-SQLite rewiring are out of scope unless the agent reports a blocker first.
+- Parent next step: wait for Mill the 2nd, run focused green checks, and commit implementation if scope and validation match.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
