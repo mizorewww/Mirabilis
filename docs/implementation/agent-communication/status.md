@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:23 CST.
+Last updated: 2026-05-20 19:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 19:23 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 pre-test guidance complete; failing-test handoff pending.
+- Current phase: TASK-010 failing-test writing active.
 
 ## Active Agents
 
-- None.
+- Dewey (`test_writer`, `019e4699-91c6-73f3-877d-3d3e0272fd65`): add failing Plugin API contract tests.
 
 ## Recent Agent Outcomes
 
+- Dewey (`test_writer`) spawned for TASK-010 failing Plugin API contract tests, with ownership of `src/test/plugin-api-contracts.test.ts`.
 - TASK-010 pre-test guidance completed and all agents were closed.
 - Kepler (`planner`) recommended a pure TypeScript contract task with `src/core/plugin-api/` files and public type-only exports from `../core/plugin-api` and `../core`.
 - Sagan (`docs_researcher`) verified TypeScript type-only imports/exports, `satisfies`, Vitest type testing and `expectTypeOf`, and identified local doc ambiguities around `main`, `slots` vs `viewSlots`, lifecycle breadth, and future `packages/plugin-api`.
@@ -378,10 +379,10 @@ Last updated: 2026-05-20 19:23 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
-- TASK-009 is complete and merged. TASK-010 pre-test guidance is complete and failing-test handoff is pending.
+- TASK-009 is complete and merged. TASK-010 failing-test writing is active.
 
 ## Next Actions
 
-1. Spawn `test_writer` for failing Plugin API contract tests.
-2. Confirm the red signal.
+1. Wait for Dewey's Plugin API contract tests.
+2. Confirm and commit the red signal.
 3. Spawn `implementer` for Plugin API contracts.

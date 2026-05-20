@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; failing-test handoff pending.
-- Active agents: none.
-- Next agent step: spawn a `test_writer` for Plugin API contract tests.
+- Status: failing-test writing active.
+- Active agents:
+  - Dewey (`test_writer`, `019e4699-91c6-73f3-877d-3d3e0272fd65`): add failing Plugin API contract tests.
+- Next agent step: wait for Dewey's red-signal tests.
 
 ## Agent Handoffs
 
@@ -89,6 +90,18 @@
   - Tauri runtime authority: https://v2.tauri.app/security/runtime-authority/
   - React 19 upgrade guide: https://react.dev/blog/2024/04/25/react-19-upgrade-guide
 
+### Dewey (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4699-91c6-73f3-877d-3d3e0272fd65`.
+- Ownership:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Assignment:
+  - Add failing tests for Plugin API exports from `../core/plugin-api` and `../core`.
+  - Cover `PluginManifest`, dependencies, app-domain permissions, all required `PluginContributions` buckets, inert manifest descriptors, `AppPlugin` lifecycle types, and `PluginContext` plugin-facing facade boundaries.
+  - Use `expectTypeOf`, `satisfies`, and `@ts-expect-error` negative tests.
+  - Do not edit production code, docs, config, package files, lockfiles, or existing tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -98,4 +111,4 @@
 
 ## Next Action
 
-Spawn a `test_writer` for failing Plugin API contract tests.
+Wait for Dewey's Plugin API contract tests, confirm the red signal, then spawn an `implementer`.
