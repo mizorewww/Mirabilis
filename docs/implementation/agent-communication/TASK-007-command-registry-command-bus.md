@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: review-fix test writing active.
-- Active agents:
-  - Popper (`test_writer`, `019e435e-8d92-7063-b01e-ea0dd6b3e6cc`): add TASK-007 review-fix coverage.
+- Status: review-fix tests red; implementation handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -169,12 +168,21 @@ Wait for Popper's review-fix coverage.
 
 ### Popper (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e435e-8d92-7063-b01e-ea0dd6b3e6cc`.
 - Ownership:
   - `src/test/core-command-registry.test.ts` only unless unavoidable test-only support is needed.
+- Commit:
+  - `1c6c6f3 Popper(test)(Add Command Registry and Command Bus): add review-fix coverage`.
 - Assignment:
   - Add review-fix tests for sanitized/no public raw handler cause and standard `Error.cause` semantics.
   - Broaden invalid context coverage for JSON-compatible plain-data validation.
   - Strengthen `get()` handler privacy assertions and `../core/commands` type-barrel assertions.
   - Do not edit production code or docs.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` passes.
+  - `bun run test:frontend -- src/test/core-command-registry.test.ts` runs 11 tests with 5 passing and 6 failing because production `CommandRegistryError` instances still expose public own `cause`.
+
+## Next Action
+
+Delegate review-fix implementation to an `implementer`.
