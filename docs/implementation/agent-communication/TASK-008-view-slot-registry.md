@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: P1/P2 production type fix active.
-- Active agents:
-  - Planck (`implementer`, `019e43b8-e8ae-73c2-b1bd-459a5187b6c7`): replacement implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
+- Status: P1/P2 production type fix pending second replacement.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -270,13 +269,9 @@
   - Parent sent a status request and waited two windows. Carver produced no final response and its uncommitted production type patches did not pass `bun run typecheck`.
   - Parent rejected and reverted Carver's uncommitted patches. Euler's committed type-soundness tests remain the active red signal.
 
-## Next Action
-
-Wait for Planck's public type soundness implementation output, repeat focused checks, and commit Planck's production type patch if green.
-
 ### Planck (`implementer`)
 
-- Status: active.
+- Status: stopped and replaced.
 - Agent id: `019e43b8-e8ae-73c2-b1bd-459a5187b6c7`.
 - Ownership:
   - `src/core/types/view.ts`.
@@ -287,3 +282,10 @@ Wait for Planck's public type soundness implementation output, repeat focused ch
   - Avoid public/test dependence on React lazy private `_payload`/`_init` internals.
   - Make explicit `SlotCondition<Props>` sound while keeping existing unparameterized registry returns type-correct without editing registries.
   - Do not edit tests, docs, registries, config, or lockfiles, and do not commit.
+- Stop reason:
+  - Parent sent a status request and waited two windows. Planck produced no final response and its uncommitted production type patches did not pass `bun run typecheck`.
+  - Parent rejected and reverted Planck's uncommitted patches. Euler's committed type-soundness tests remain the active red signal.
+
+## Next Action
+
+Commit this replacement note, spawn another replacement `implementer` with a narrower suggested type design, and repeat focused checks until green.

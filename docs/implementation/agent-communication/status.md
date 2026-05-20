@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:51 CST.
+Last updated: 2026-05-20 13:03 CST.
 
 ## Current Task
 
@@ -8,14 +8,16 @@ Last updated: 2026-05-20 12:51 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P1/P2 production type fix active.
+- Current phase: P1/P2 production type fix pending second replacement.
 
 ## Active Agents
 
-- Planck (`implementer`, `019e43b8-e8ae-73c2-b1bd-459a5187b6c7`): replacement implementer for TASK-008 public type soundness fixes in `src/core/types/view.ts` and `src/core/types/slot.ts` only; do not edit tests/docs/config and do not commit.
+- None.
 
 ## Recent Agent Outcomes
 
+- Planck (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
+- Parent rejected and reverted Planck's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
 - Planck (`implementer`) was spawned as the replacement for TASK-008 P1/P2 production type fixes.
 - Carver (`implementer`) was stopped after a status request and two wait windows because it produced no final output and its uncommitted production type patches did not pass `bun run typecheck`.
 - Parent rejected and reverted Carver's uncommitted patches. The repository is back to a clean worktree, with Euler's committed type-soundness tests still producing the expected red `bun run typecheck` signal.
@@ -263,6 +265,6 @@ Last updated: 2026-05-20 12:51 CST.
 
 ## Next Actions
 
-1. Wait for Planck's public type soundness implementation output.
-2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, `bun run lint`, and `git diff --check`.
-3. Commit Planck's production type patch if focused checks are green.
+1. Commit the Planck replacement note.
+2. Spawn another replacement `implementer` with a narrower suggested type design.
+3. Repeat focused checks until green.
