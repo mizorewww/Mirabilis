@@ -174,6 +174,22 @@
   - `bun run typecheck` passes.
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 49 tests with 36 passing and 13 failing on hostile filter IDs, proxy/reflection trap escapes, and non-enumerable properties.
 
+### Ptolemy (`implementer`)
+
+- Status: active.
+- Agent id: `019e4333-a10b-7682-b904-2d48afc172b1`.
+- Ownership:
+  - `src/core/stores/filter-store.ts` only unless unavoidable.
+- Assignment:
+  - Normalize proxy/reflection traps during Query AST and sort/group shape traversal.
+  - Runtime-validate `filterId` for `get`, `update`, and `delete`.
+  - Reject non-enumerable query, condition, sort, and group properties before cloning.
+  - Preserve existing public behavior and operator support.
+- Expected checks:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing.
+  - `bun run lint`.
+
 ## Next Action
 
-Spawn implementer for selected P1/P2 production fixes.
+Wait for Ptolemy's implementation result.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:23 CST.
+Last updated: 2026-05-20 10:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 10:23 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix tests committed; implementation pending.
+- Current phase: review-fix implementation active.
 
 ## Active Agents
 
-- None.
+- Ptolemy (`implementer`, `019e4333-a10b-7682-b904-2d48afc172b1`): fixing TASK-006 P1/P2 review findings in Filter Store production code.
 
 ## Recent Agent Outcomes
 
+- Ptolemy (`implementer`) was spawned for selected TASK-006 P1/P2 production fixes.
 - Dirac (`test_writer`) completed and was closed after adding review-fix coverage.
 - Dirac's test commit: `a7d7aa0 Dirac(test)(Add Filter Store and Query AST baseline): add review-fix coverage`.
 - Parent confirmed expected red signal: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-filter-store.test.ts` runs 49 tests with 36 passing and 13 failing on hostile filter IDs, proxy/reflection trap escapes, and non-enumerable properties.
@@ -162,6 +163,6 @@ Last updated: 2026-05-20 10:23 CST.
 
 ## Next Actions
 
-1. Spawn implementer for selected P1/P2 production fixes.
+1. Wait for Ptolemy's implementation result.
 2. Repeat focused checks after implementation.
 3. Commit implementation if green.
