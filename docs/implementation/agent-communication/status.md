@@ -1,21 +1,25 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:40 CST.
+Last updated: 2026-05-20 22:45 CST.
 
 ## Current Task
 
-- Task: TASK-010 - Define Plugin API contracts.
-- Branch: `feat/task-010-plugin-api-contracts`.
+- Task: TASK-011 - Implement Plugin Host lifecycle.
+- Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 final gate passed; merge to `master` next.
+- Current phase: TASK-011 started; pre-test guidance next.
 
 ## Active Agents
 
-- None. Next step is committing progress and merging `feat/task-010-plugin-api-contracts` to `master`.
+- None. Next step is commit TASK-011 start state, then spawn pre-test guidance agents.
 
 ## Recent Agent Outcomes
 
+- TASK-010 was merged to `master` and pushed. Merge commit: `ec361c5 Codex(merge)(Define Plugin API contracts): merge task branch`.
+- TASK-011 branch `feat/task-011-plugin-host-lifecycle` was created from latest `master`.
+- TASK-011 scope: implement TypeScript Plugin Host lifecycle orchestration for explicit built-in plugin lists, deterministic dependency ordering, install/activate/register/deactivate/uninstall/get behavior, duplicate/dependency handling, and typed failure behavior without corrupting Core registries. Native/Tauri plugin loading, persistence, IPC, SQLite, UI rendering, filesystem plugin discovery, and concrete business plugins are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-011. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/reachability OK, a WebSocket timeout with HTTPS fallback still available, and the known desktop-terminal `TERM=dumb` failure. Parent treats these as non-blocking for repository agent work.
 - Final TASK-010 gate passed: `bun run check:quick` passed with 12 frontend test files and 185 tests plus Rust fmt, clippy, and tests; `bun run build` passed.
 - McClintock (`docs_researcher`) completed and was closed after verifying Locke fixed Nash's remaining P2 docs finding around `tx.events.findTimerStart`. No P0/P1/P2 docs findings remain.
 - Locke (`doc_writer`) completed and was closed after rewriting the timer stop sketch to use current `PluginEventStore.list({ namespace: "timer" })` plus plugin-local payload narrowing, and tightening status wording around `sourcePluginId` references.

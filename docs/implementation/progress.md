@@ -36,7 +36,7 @@ Status markers:
 ## Milestone M2: Native persistence boundary
 
 - [x] TASK-010: Define Plugin API contracts
-- [ ] TASK-011: Implement Plugin Host lifecycle
+- [~] TASK-011: Implement Plugin Host lifecycle
 - [ ] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 22:45 CST - TASK-011 started
+
+- Branch: `feat/task-011-plugin-host-lifecycle`.
+- Task: Implement Plugin Host lifecycle.
+- Scope: implement TypeScript Plugin Host lifecycle orchestration for explicit built-in plugin lists, deterministic dependency ordering, install/activate/register/deactivate/uninstall/get behavior, duplicate/dependency handling, and typed failure behavior without corrupting Core registries. Do not implement native/Tauri plugin loading, persistence, IPC, SQLite, UI rendering, filesystem plugin discovery, or concrete business plugins.
+- Agent orchestration: parent thread remains orchestration-only; docs/deprecation/security/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/reachability OK, a WebSocket timeout with HTTPS fallback still available, and the known desktop-terminal `TERM=dumb` failure. Parent treats these as non-blocking for repository agent work because configured agents and HTTPS reachability remain available.
 
 ### 2026-05-20 22:40 CST - TASK-010 completed
 
