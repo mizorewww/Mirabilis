@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: final P2 cleanup implementation agent running.
+- Status: final cleanup committed; final re-review handoff next.
 - Active agents:
-  - Lorentz the 2nd (`implementer`, id `019e4717-a85b-7360-8654-7b2289f5a159`).
-- Next parent step: wait for Lorentz the 2nd, review the patch, run focused checks, and commit if green.
+  - None.
+- Next parent step: commit this status update, then spawn final read-only re-review agents for the last cleanup.
 
 ## Agent Handoffs
 
@@ -190,7 +190,7 @@
 
 ### Final P2 Cleanup Implementation Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Lorentz the 2nd (`implementer`, id `019e4717-a85b-7360-8654-7b2289f5a159`).
 - Ownership:
@@ -200,6 +200,11 @@
   - Introduce immutable `MIGRATION_001_VERSION`.
   - Update migration 001 checksum away from the old branch-local checksum.
   - Reject future ledger rows independently of `PRAGMA user_version`.
+- Outcome:
+  - Changed file: `src-tauri/src/db/migrations.rs`.
+  - Commit: `f2c8017 Lorentz the 2nd(review-fix)(Add SQLite schema and Rust repositories): harden migration version checks`.
+  - Delivered immutable `MIGRATION_001_VERSION`, updated v1 checksum for the final plugin-index-FK schema, and future ledger row detection independent of `PRAGMA user_version`.
+  - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1
