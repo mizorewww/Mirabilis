@@ -40,14 +40,10 @@
 
 ## Current Status
 
-- Status: focused re-review agents running.
+- Status: focused re-review complete; final P2 cleanup handoff next.
 - Active agents:
-  - Copernicus the 2nd (`reviewer`, id `019e470e-ca8e-70e0-aeba-238568ecc912`).
-  - Erdos the 2nd (`security_reviewer`, id `019e470e-cf5d-7ba1-bf5b-95c1deae08b6`).
-  - Bohr the 2nd (`deprecation_auditor`, id `019e470e-e5de-7650-af5c-77dc776e82cb`).
-  - Boole the 2nd (`docs_researcher`, id `019e470e-eb85-7a41-a69f-d1e1107a719f`).
-  - Archimedes the 2nd (`test_quality_reviewer`, id `019e470e-f074-7c42-89cf-19c65a8ab935`).
-- Next parent step: wait for focused re-review, record outcomes, then either delegate further fixes or run the local gate.
+  - None.
+- Next parent step: commit re-review outcomes, then delegate final P2 cleanup tests.
 
 ## Agent Handoffs
 
@@ -143,7 +139,7 @@
 
 ### Focused Re-Review Round
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Copernicus the 2nd (`reviewer`) for correctness re-review.
   - Erdos the 2nd (`security_reviewer`) for security/boundary re-review.
@@ -153,6 +149,26 @@
 - Assignment:
   - Stay read-only and do not edit files.
   - Focus on review-fix commits `daa4385`, `97ee8b2`, and `ca2c461`, especially whether the prior P1s are cleared and whether the targeted P2 fixes introduced regressions.
+- Outcomes:
+  - Copernicus the 2nd (`reviewer`) found no P0/P1 correctness findings. P2: changed v1 schema still uses the prior checksum so older branch-local v1 DBs without the `core_plugin_indexes` FK can pass validation; future ledger rows greater than `LATEST_SCHEMA_VERSION` are not rejected when `PRAGMA user_version` is stale/lower.
+  - Erdos the 2nd (`security_reviewer`) found no P0/P1 security findings. P2: `sqlite_boundary.rs` should not require `operation: string`, because TASK-014 may narrow operations to an allowlisted type, and capability permission scanning should not assume all permission entries are strings.
+  - Bohr the 2nd (`deprecation_auditor`) found no P0/P1 API/deprecation findings. P2: migration 001 should use an immutable `MIGRATION_001_VERSION` constant instead of coupling validation to `LATEST_SCHEMA_VERSION`.
+  - Boole the 2nd (`docs_researcher`) found no P0/P1/P2 docs drift. It verified docs match `core_commands`, `core_views`, `core_plugin_indexes` FK, private Rust `rusqlite` layer, migration ledger/user_version, and TASK-014 boundaries.
+  - Archimedes the 2nd (`test_quality_reviewer`) confirmed the prior P1 boundary-test issue is fixed. P2: `core_plugin_indexes` FK coverage checks declaration but not `ON DELETE CASCADE` behavior.
+
+#### Parent Decisions After Focused Re-Review
+
+- Run a final delegated P2 cleanup loop before local gate.
+- Test cleanup targets:
+  - Assert `core_plugin_indexes` FK has cascade behavior, not just a declaration.
+  - Keep `sqlite_boundary.rs` focused on no raw SQL fields / no `tauri-plugin-sql`; do not freeze `DbQuery.operation` to `string`.
+  - Make capability permission scans tolerate future reviewed non-SQL object permissions while still rejecting SQL plugin permissions.
+  - Add red checks for old v1 checksum/schema drift and future ledger rows with stale/lower `PRAGMA user_version`.
+  - Match specific migration error variants where useful.
+- Implementation cleanup targets:
+  - Introduce immutable `MIGRATION_001_VERSION`.
+  - Update migration 001 checksum to reflect the final v1 schema.
+  - Reject future ledger versions independent of `PRAGMA user_version`.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1
