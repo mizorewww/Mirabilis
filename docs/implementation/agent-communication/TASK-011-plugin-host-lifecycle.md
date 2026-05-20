@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: concurrent lifecycle implementation in progress.
-- Active agents: Copernicus (`implementer`, `019e4659-7f32-73d2-bb22-7e55becb7521`).
-- Next parent step: wait for Copernicus, validate focused green checks, then micro re-review.
+- Status: concurrent lifecycle fix green; final micro re-review next.
+- Active agents: none.
+- Next parent step: run final micro re-review for concurrent lifecycle fix, then local gate if clear.
 
 ## Agent Handoffs
 
@@ -483,7 +483,7 @@
 
 ### Concurrent Lifecycle Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Copernicus (`implementer`, `019e4659-7f32-73d2-bb22-7e55becb7521`).
 - Ownership:
@@ -491,6 +491,17 @@
 - Assignment:
   - Implement the minimal production fix so concurrent uninstall/deactivate cannot delete plugin records while register is pending in a way that allows pending transaction writes to commit or load/register to later resolve as registered.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
+- Outcome:
+  - Copernicus changed `src/core/plugin-host/plugin-host.ts` only.
+  - Plugin Host now tracks active lifecycle scopes per plugin record, revokes them before `deactivate`/`uninstall`, unregisters staged runtime contributions from revoked register scopes, and prevents a revoked or deleted record's pending lifecycle hook from later completing as a successful registration.
+- Commit:
+  - `ef4f25d Copernicus(review-fix)(Implement Plugin Host lifecycle): guard concurrent lifecycle scopes`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 33 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 47 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -501,4 +512,4 @@
 
 ## Next Action
 
-Wait for Copernicus, then validate focused green checks and micro re-review.
+Run final micro re-review for concurrent lifecycle fix.
