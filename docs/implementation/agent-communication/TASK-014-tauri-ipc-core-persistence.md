@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: focused P2 cleanup implementation agent running.
-- Active agents:
-  - Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`).
-- Next parent step: wait for Kierkegaard the 2nd, inspect its patch, and rerun focused checks.
+- Status: documentation sync handoff.
+- Active agents: none.
+- Next parent step: spawn `doc_writer` for final TASK-014 architecture/capability docs sync.
 
 ## Agent Handoffs
 
@@ -272,7 +271,7 @@
 
 ### Focused P2 Cleanup Implementation Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`).
 - Assignment:
@@ -285,3 +284,11 @@
   - `src/core/native/native-bridge.ts`.
   - `src-tauri/src/commands/db.rs`.
   - `src-tauri/src/db/database.rs` only for narrow transaction helper refinement.
+- Outcome:
+  - Changed files: `src/core/native/native-bridge.ts`, `src-tauri/src/commands/db.rs`, and `src-tauri/tests/ipc_persistence.rs`.
+  - Rust metadata `valueType` validation now rejects `object` / `array`; structured metadata values must use `json`.
+  - NativeBridge `db.transaction` now supports homogeneous array result typing and mixed ordered tuple result typing.
+  - One test change was a mechanical clippy-only `expect(format!(...))` fix that preserved behavior.
+  - `Database::transaction` still uses `Transaction::new_unchecked`; Kierkegaard judged the preferred `transaction_with_behavior(&mut self)` path out of scope because repositories currently operate through `&Database` and a clean change would require repository abstraction work.
+  - Parent repeated focused green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+  - Commit: `92f3323 Kierkegaard the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): align p2 ipc contracts`.

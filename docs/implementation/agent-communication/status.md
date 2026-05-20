@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:06 CST.
+Last updated: 2026-05-21 06:10 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 06:06 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused P2 cleanup implementation agent running.
+- Current phase: documentation sync handoff.
 
 ## Active Agents
 
-- Kierkegaard the 2nd (`implementer`, id `019e476d-6043-7882-a813-1d7ce9ff9de1`) - production cleanup for Core metadata valueType parity, mixed transaction result typing, and optional transaction helper refinement.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -53,7 +53,10 @@ Last updated: 2026-05-21 06:06 CST.
 - Carson the 2nd's focused P2 test commit: `d80bbf2 Carson the 2nd(test)(Expose Tauri IPC commands for core persistence): cover p2 ipc contract cleanup`.
 - Parent next step: spawn an `implementer` for the focused P2 production cleanup.
 - Kierkegaard the 2nd (`implementer`) was spawned for the focused P2 production cleanup. Ownership is limited to `src/core/native/native-bridge.ts`, `src-tauri/src/commands/db.rs`, and `src-tauri/src/db/database.rs` if a narrow transaction helper refinement is practical.
-- Parent next step: wait for Kierkegaard the 2nd, inspect its patch, and rerun the focused checks.
+- Kierkegaard the 2nd completed the focused P2 cleanup implementation. It aligned Rust metadata `valueType` validation with Core by rejecting `object` / `array`, added conditional NativeBridge transaction result typing for homogeneous arrays and mixed tuples, and made one mechanical clippy-only test fix. It did not replace `Transaction::new_unchecked` because doing so cleanly would require repository abstraction changes beyond this cleanup.
+- Kierkegaard the 2nd's review-fix commit: `92f3323 Kierkegaard the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): align p2 ipc contracts`.
+- Parent repeated focused green checks after Kierkegaard the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Parent next step: spawn `doc_writer` to fix the remaining P1 architecture/capability docs drift before merge.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
