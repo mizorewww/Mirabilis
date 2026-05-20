@@ -1,24 +1,21 @@
 import type {
-  AppendEventInput,
   AppEvent,
   CommandHandler,
   CreatePageInput,
   FilterDefinition,
-  ListEventsOptions,
-  ListFiltersOptions,
-  ListMetadataOptions,
   ListPagesOptions,
   MarkdownPage,
   MetadataRecord,
   MetadataJsonValue,
+  MetadataValueType,
   RegistryComponent,
-  SaveFilterInput,
-  SetMetadataInput,
   SlotCondition,
-  UpdateFilterInput,
   UpdatePageInput,
   ViewDataShape,
+  FilterGroup,
+  FilterSort,
 } from "../index";
+import type { PluginFilterQuery } from "./contributions";
 
 export type AppRuntimeInfo = {
   version: string;
@@ -41,47 +38,63 @@ export type PluginPageStore = {
   list(options?: ListPagesOptions): readonly MarkdownPage[];
 };
 
-export type PluginSetMetadataInput = Omit<
-  SetMetadataInput,
-  "sourcePluginId"
-> &
-  SourcePluginOwnershipKeyReserved;
+export type PluginSetMetadataInput = {
+  pageId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+} & SourcePluginOwnershipKeyReserved;
+
+export type PluginListMetadataOptions = {
+  pageId?: string;
+  namespace?: string;
+  key?: string;
+} & SourcePluginOwnershipKeyReserved;
 
 export type PluginMetadataStore = {
   set(input: PluginSetMetadataInput): MetadataRecord;
   get(pageId: string, namespace: string, key: string): MetadataRecord;
-  list(options?: ListMetadataOptions): readonly MetadataRecord[];
+  list(options?: PluginListMetadataOptions): readonly MetadataRecord[];
   delete(pageId: string, namespace: string, key: string): MetadataRecord;
 };
 
-export type PluginAppendEventInput = Omit<
-  AppendEventInput,
-  "sourcePluginId"
-> &
-  SourcePluginOwnershipKeyReserved;
+export type PluginAppendEventInput = {
+  pageId?: string;
+  namespace: string;
+  type: string;
+  payload: MetadataJsonValue;
+} & SourcePluginOwnershipKeyReserved;
+
+export type PluginListEventsOptions = {
+  pageId?: string;
+  namespace?: string;
+} & SourcePluginOwnershipKeyReserved;
 
 export type PluginEventStore = {
   append(input: PluginAppendEventInput): AppEvent;
-  list(options?: ListEventsOptions): readonly AppEvent[];
+  list(options?: PluginListEventsOptions): readonly AppEvent[];
 };
 
-export type PluginSaveFilterInput = Omit<
-  SaveFilterInput,
-  "sourcePluginId"
-> &
-  SourcePluginOwnershipKeyReserved;
+export type PluginSaveFilterInput = {
+  name: string;
+  query: PluginFilterQuery;
+  sort?: FilterSort[];
+  group?: FilterGroup;
+  viewType: string;
+} & SourcePluginOwnershipKeyReserved;
 
-export type PluginUpdateFilterInput = Omit<
-  UpdateFilterInput,
-  "sourcePluginId"
-> &
-  SourcePluginOwnershipKeyReserved;
+export type PluginUpdateFilterInput = {
+  name?: string;
+  query?: PluginFilterQuery;
+  sort?: FilterSort[] | null;
+  group?: FilterGroup | null;
+  viewType?: string;
+} & SourcePluginOwnershipKeyReserved;
 
-export type PluginListFiltersOptions = Omit<
-  ListFiltersOptions,
-  "sourcePluginId"
-> &
-  SourcePluginOwnershipKeyReserved;
+export type PluginListFiltersOptions = {
+  viewType?: string;
+} & SourcePluginOwnershipKeyReserved;
 
 export type PluginFilterStore = {
   save(input: PluginSaveFilterInput): FilterDefinition;
