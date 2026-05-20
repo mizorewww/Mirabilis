@@ -69,16 +69,30 @@ type MetadataIdentity = Pick<MetadataRecord, "pageId" | "namespace" | "key">;
 
 type MetadataIndex = Map<string, Map<string, Map<string, MetadataRecord>>>;
 
+type InMemoryMetadataStoreState = {
+  records: MetadataRecord[];
+  recordsByIdentity: MetadataIndex;
+};
+
+export type InMemoryMetadataStoreTransactionParticipant = {
+  snapshot(): InMemoryMetadataStoreState;
+  createStoreFromSnapshot(snapshot: InMemoryMetadataStoreState): MetadataStore;
+  replaceState(snapshot: InMemoryMetadataStoreState): void;
+};
+
+export const inMemoryMetadataStoreTransactionParticipant: unique symbol =
+  Symbol("Mirabilis.inMemoryMetadataStoreTransactionParticipant");
+
 export function createInMemoryMetadataStore(
   options: CreateInMemoryMetadataStoreOptions = {},
 ): MetadataStore {
   const createId = options.createId ?? createDefaultId;
   const now = options.now ?? createCurrentInstant;
-  const records: MetadataRecord[] = [];
-  const recordsByIdentity: MetadataIndex = new Map();
+  const storeOptions: CreateInMemoryMetadataStoreOptions = { createId, now };
+  let state = createEmptyState();
 
   function requireRecord(identity: MetadataIdentity): MetadataRecord {
-    const record = getIndexedRecord(recordsByIdentity, identity);
+    const record = getIndexedRecord(state.recordsByIdentity, identity);
 
     if (record === undefined) {
       throw new MetadataStoreError("METADATA_NOT_FOUND", identity);
@@ -87,7 +101,7 @@ export function createInMemoryMetadataStore(
     return record;
   }
 
-  return {
+  const store: MetadataStore = {
     set(input) {
       const identity = normalizeIdentity(input);
       const sourcePluginId = normalizeSourcePluginId(input, identity);
@@ -95,7 +109,7 @@ export function createInMemoryMetadataStore(
       assertValueMatchesType(input.value, input.valueType, identity);
 
       const storedValue = cloneForMetadata(identity, input.value);
-      const current = getIndexedRecord(recordsByIdentity, identity);
+      const current = getIndexedRecord(state.recordsByIdentity, identity);
 
       if (current !== undefined) {
         const next: MetadataRecord = {
@@ -106,17 +120,17 @@ export function createInMemoryMetadataStore(
           updatedAt: now(),
         };
         const output = cloneRecord(next);
-        const currentIndex = records.indexOf(current);
+        const currentIndex = state.records.indexOf(current);
 
-        records[currentIndex] = next;
-        setIndexedRecord(recordsByIdentity, next);
+        state.records[currentIndex] = next;
+        setIndexedRecord(state.recordsByIdentity, next);
 
         return output;
       }
 
       const metadataId = createId();
 
-      if (records.some((record) => record.id === metadataId)) {
+      if (state.records.some((record) => record.id === metadataId)) {
         throw new MetadataStoreError("METADATA_ID_COLLISION", {
           ...identity,
           metadataId,
@@ -135,8 +149,8 @@ export function createInMemoryMetadataStore(
       };
       const output = cloneRecord(record);
 
-      records.push(record);
-      setIndexedRecord(recordsByIdentity, record);
+      state.records.push(record);
+      setIndexedRecord(state.recordsByIdentity, record);
 
       return output;
     },
@@ -150,7 +164,7 @@ export function createInMemoryMetadataStore(
     list(options = {}) {
       const filters = normalizeListOptions(options);
 
-      return records
+      return state.records
         .filter((record) => matchesFilters(record, filters))
         .map((record) => cloneRecord(record));
     },
@@ -159,13 +173,72 @@ export function createInMemoryMetadataStore(
       const identity = normalizeIdentity({ pageId, namespace, key });
       const record = requireRecord(identity);
       const output = cloneRecord(record);
-      const recordIndex = records.indexOf(record);
+      const recordIndex = state.records.indexOf(record);
 
-      records.splice(recordIndex, 1);
-      deleteIndexedRecord(recordsByIdentity, identity);
+      state.records.splice(recordIndex, 1);
+      deleteIndexedRecord(state.recordsByIdentity, identity);
 
       return output;
     },
+  };
+
+  Object.defineProperty(store, inMemoryMetadataStoreTransactionParticipant, {
+    enumerable: false,
+    value: {
+      snapshot() {
+        return cloneState(state);
+      },
+      createStoreFromSnapshot(snapshot: InMemoryMetadataStoreState) {
+        return createInMemoryMetadataStoreFromState(
+          storeOptions,
+          cloneState(snapshot),
+        );
+      },
+      replaceState(snapshot: InMemoryMetadataStoreState) {
+        state = cloneState(snapshot);
+      },
+    } satisfies InMemoryMetadataStoreTransactionParticipant,
+  });
+
+  return store;
+}
+
+function createInMemoryMetadataStoreFromState(
+  options: CreateInMemoryMetadataStoreOptions,
+  initialState: InMemoryMetadataStoreState,
+): MetadataStore {
+  const store = createInMemoryMetadataStore(options);
+  const participant = (
+    store as MetadataStore & {
+      [inMemoryMetadataStoreTransactionParticipant]: InMemoryMetadataStoreTransactionParticipant;
+    }
+  )[inMemoryMetadataStoreTransactionParticipant];
+
+  participant.replaceState(initialState);
+
+  return store;
+}
+
+function createEmptyState(): InMemoryMetadataStoreState {
+  return {
+    records: [],
+    recordsByIdentity: new Map(),
+  };
+}
+
+function cloneState(
+  state: InMemoryMetadataStoreState,
+): InMemoryMetadataStoreState {
+  const records = state.records.map((record) => cloneRecord(record));
+  const recordsByIdentity: MetadataIndex = new Map();
+
+  for (const record of records) {
+    setIndexedRecord(recordsByIdentity, record);
+  }
+
+  return {
+    records,
+    recordsByIdentity,
   };
 }
 
