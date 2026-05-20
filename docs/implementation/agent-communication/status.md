@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 14:22 CST.
+Last updated: 2026-05-20 22:29 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-20 14:22 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 review active.
+- Current phase: TASK-009 review findings recorded; review-fix tests pending.
 
 ## Active Agents
 
-- Ampere (`pr_explorer`, `019e440c-14c7-76c3-9497-092f497a34bb`): map TASK-009 changed paths and review focus.
-- Lagrange (`reviewer`, `019e440c-1958-70c2-b909-0a1b9bcce1ce`): correctness review for runtime composition and transaction semantics.
-- Descartes (`security_reviewer`, `019e440c-20e7-7860-9ea4-ce49362202f5`): boundary/security review for internal transaction participants and service exposure.
-- Maxwell (`deprecation_auditor`, `019e440c-250c-7881-9478-faa8d3e6a59f`): TypeScript/API/deprecation review.
-- Bernoulli (`test_quality_reviewer`, `019e440c-2e78-7f71-a4b8-77d73d11de1d`): TASK-009 test quality review.
-- Pascal (`docs_researcher`, `019e440c-322c-7ae1-9691-268e2f886dc4`): TASK-009 docs/status traceability review.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-009 review round 1 completed and all review agents were closed.
+- Ampere (`pr_explorer`) mapped TASK-009 to Core runtime/services, in-memory store participant changes, tests, and docs, and highlighted lost-update, participant visibility, custom-store transaction mismatch, and missing nested/concurrent coverage risks.
+- Lagrange (`reviewer`) found one P1 correctness issue: a pending transaction can drop live writes made after the transaction snapshot because commit replaces whole live store state. Lagrange also found one P2: rolled-back transactions still advance injected ID/time generators; parent keeps this as a documented non-goal unless later product docs require generator rollback.
+- Descartes (`security_reviewer`) found one P1 boundary issue: transaction participants are discoverable as own symbol properties on exposed store objects. Descartes also found P2 risks around live aliases bypassing transaction isolation and non-fail-atomic sequential replace commits, plus a P3 inherited metadata getter/proxy validation issue.
+- Maxwell (`deprecation_auditor`) found no deprecated API usage, but flagged a public API contract mismatch: `createCoreServices` accepts structural `CoreStores` while default transactions require hidden in-memory participants.
+- Bernoulli (`test_quality_reviewer`) found one P1 test gap for nested/concurrent transaction behavior, plus P2 gaps for stronger post-commit assertions and transaction-path event/filter clone boundaries.
+- Pascal (`docs_researcher`) found one P2 stale `Current Worktree State` block in `status.md`; parent accepts and will update it with the review fixes.
+- Selected review-fix plan: add focused tests for hidden participant non-discoverability, live-write conflict preservation, nested/concurrent transaction rejection, stronger grouped-commit assertions, and event/filter clone boundaries; then refactor participants behind WeakMaps and make commit conflict detection fail before replacing state.
 - TASK-009 review agents spawned.
 - Plato (`implementer`) completed and was closed after implementing TASK-009 production code.
 - Plato's implementation commit: `642c25d Plato(implementation)(Add Transaction Manager and Core Runtime composition): implement runtime transactions`.
@@ -313,13 +316,13 @@ Last updated: 2026-05-20 14:22 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-008 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-008.
-- `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
-- Final targeted re-review P2 public explicit-`unknown` type issues are fixed. TASK-008 remains in progress pending final verification and full gate.
+- `docs/implementation/progress.md` marks TASK-009 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-009.
+- `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
+- TASK-008 is complete and merged. TASK-009 is in review-fix after review round 1.
 
 ## Next Actions
 
-1. Wait for TASK-009 review agents.
-2. Record review findings.
-3. Fix any P0/P1 findings before final gate.
+1. Add review-fix tests for P1/P2 findings.
+2. Implement participant hiding and transaction conflict fixes.
+3. Refresh stale status docs.

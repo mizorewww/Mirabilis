@@ -42,14 +42,8 @@
 
 ## Current Status
 
-- Status: review active.
-- Active agents:
-  - Ampere (`pr_explorer`, `019e440c-14c7-76c3-9497-092f497a34bb`): map TASK-009 changed paths and review focus.
-  - Lagrange (`reviewer`, `019e440c-1958-70c2-b909-0a1b9bcce1ce`): correctness review for runtime composition and transaction semantics.
-  - Descartes (`security_reviewer`, `019e440c-20e7-7860-9ea4-ce49362202f5`): boundary/security review for internal transaction participants and service exposure.
-  - Maxwell (`deprecation_auditor`, `019e440c-250c-7881-9478-faa8d3e6a59f`): TypeScript/API/deprecation review.
-  - Bernoulli (`test_quality_reviewer`, `019e440c-2e78-7f71-a4b8-77d73d11de1d`): TASK-009 test quality review.
-  - Pascal (`docs_researcher`, `019e440c-322c-7ae1-9691-268e2f886dc4`): TASK-009 docs/status traceability review.
+- Status: review findings recorded; review-fix tests pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -188,7 +182,7 @@
 
 ### Review Round 1
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Ampere (`pr_explorer`, `019e440c-14c7-76c3-9497-092f497a34bb`).
   - Lagrange (`reviewer`, `019e440c-1958-70c2-b909-0a1b9bcce1ce`).
@@ -198,6 +192,20 @@
   - Pascal (`docs_researcher`, `019e440c-322c-7ae1-9691-268e2f886dc4`).
 - Assignment:
   - Review TASK-009 changed paths, transaction semantics, public APIs, boundary/security risks, test quality, and docs/status traceability.
+- Findings:
+  - Ampere mapped changed paths to runtime/services, transaction manager, in-memory store participant changes, tests, and docs. Ampere highlighted lost-update risk during async transactions, per-manager concurrency guards, custom-store transaction mismatch, participant symbol visibility, ID/time generator side effects, and missing nested/concurrent coverage.
+  - Lagrange found one P1 correctness issue: pending transactions can drop live writes made after the transaction snapshot because commit replaces whole live store state. Lagrange also found one P2: rolled-back transactions still advance injected ID/time generators.
+  - Descartes found one P1 boundary issue: transaction participants are reachable via own symbol properties on exposed store references. Descartes also found P2 risks for direct live writes bypassing transaction isolation and sequential replace commit not being fail-atomic, plus a P3 inherited metadata getter/proxy validation concern.
+  - Maxwell found no deprecated API usage, confirmed current Vitest/TypeScript API usage, and flagged a public API mismatch where `createCoreServices` accepts structural `CoreStores` while default transactions require hidden in-memory participants.
+  - Bernoulli found one P1 test-quality issue: nested/concurrent transaction behavior is untested. Bernoulli also found P2 gaps around post-commit assertions and transaction-path event/filter clone boundaries.
+  - Pascal found one P2 stale status-doc issue in the old `Current Worktree State` block.
+- Parent decisions:
+  - Fix the P1 lost-update issue by detecting live store changes before commit and rejecting the transaction without replacing live state.
+  - Fix the P1 participant visibility issue by moving transaction participants off store objects and into internal WeakMaps.
+  - Add review-fix tests for live-write conflict preservation, participant non-discoverability, nested/concurrent rejection, stronger grouped commit assertions, and event/filter clone boundaries.
+  - Improve commit fail-atomicity by checking all live snapshots before any replace, and keep staged next snapshots precomputed before replacement.
+  - Allow `createCoreServices` to accept an injected transaction manager for future non-in-memory store composition while keeping default in-memory transaction behavior for TASK-009.
+  - Record ID/time generator side effects as a non-goal for TASK-009 because pre-test guidance explicitly said not to assert or promise generator rollback.
 
 ## Parent Decisions
 
@@ -212,4 +220,4 @@
 
 ## Next Action
 
-Wait for TASK-009 review agents, record findings, then fix any P0/P1 findings before final gate.
+Add review-fix tests for the accepted findings, then implement participant hiding and transaction conflict fixes.
