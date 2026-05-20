@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:42 CST.
+Last updated: 2026-05-20 10:44 CST.
 
 ## Current Task
 
-- Task: TASK-006 - Add Filter Store and Query AST baseline.
-- Branch: `feat/task-006-filter-store-query-ast`.
+- Task: TASK-007 - Add Command Registry and Command Bus.
+- Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; progress update active.
+- Current phase: pre-test guidance pending.
 
 ## Active Agents
 
@@ -16,6 +16,10 @@ Last updated: 2026-05-20 10:42 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-007 started from latest `master` after TASK-006 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-007.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
+- TASK-006 was merged to `master` and pushed. Merge commit: `df37c25 Codex(merge)(Add Filter Store and Query AST baseline): merge task branch`.
 - Final TASK-006 gate passed: `bun run check:quick` and `bun run build`.
 - Kuhn (`test_quality_reviewer`) completed and was closed. Findings: no remaining P0/P1/P2/P3 test-quality issues; Euclid's node-count P2 blocker is closed. Checks: `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing, and `bun run typecheck`.
 - Laplace's P3 docs cleanup is complete: TASK-006 communication status is current and exact external documentation URLs are recorded.
@@ -177,6 +181,6 @@ Last updated: 2026-05-20 10:42 CST.
 
 ## Next Actions
 
-1. Commit TASK-006 progress completion.
-2. Merge `feat/task-006-filter-store-query-ast` back to `master`.
-3. Continue to TASK-007 from latest `master`.
+1. Spawn pre-test guidance agents for TASK-007.
+2. Record parent decisions.
+3. Delegate failing acceptance tests to a `test_writer`.
