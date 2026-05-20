@@ -103,16 +103,36 @@ type ExpectedOperationPayload = {
     archived: boolean | null;
   };
 };
-type SqlShapedDbQueryLeak = Extract<keyof DbQuery, "sql" | "params">;
-type DbQueryOperationShapeLeak = DbQuery extends { operation: string }
-  ? never
-  : "db-query-operation-is-not-a-string-operation-key";
-type DbQueryPayloadKeyLeak = "payload" extends keyof DbQuery
-  ? never
-  : "db-query-payload-key-is-missing";
-type DbQueryPayloadShapeLeak = DbQuery["payload"] extends DbValue | undefined
-  ? never
-  : "db-query-payload-is-not-json-compatible";
+type DistributiveKeys<T> = T extends unknown ? keyof T : never;
+type ExpectedDbQueryTopLevelKey = "operation" | "payload";
+type SqlShapedDbQueryLeak = Extract<
+  DistributiveKeys<DbQuery>,
+  "sql" | "params"
+>;
+type DbQueryExtraTopLevelKeyLeak = Exclude<
+  DistributiveKeys<DbQuery>,
+  ExpectedDbQueryTopLevelKey
+>;
+type DbQueryMissingTopLevelKeyLeak<T> = T extends unknown
+  ? Exclude<ExpectedDbQueryTopLevelKey, keyof T>
+  : never;
+type DbQueryOperationShapeLeak<T> = T extends unknown
+  ? T extends { operation: string }
+    ? never
+    : "db-query-operation-is-not-a-string-operation-key"
+  : never;
+type DbQueryRequiredPayloadLeak<T> = T extends unknown
+  ? T extends { payload: unknown }
+    ? "db-query-payload-is-required"
+    : never
+  : never;
+type DbQueryPayloadShapeLeak<T> = T extends unknown
+  ? "payload" extends keyof T
+    ? T["payload"] extends DbValue | undefined
+      ? never
+      : "db-query-payload-is-not-json-compatible"
+    : "db-query-payload-key-is-missing"
+  : never;
 type DbValueJsonPayloadLeak =
   ExpectedOperationPayload extends DbValue
     ? never
@@ -252,9 +272,11 @@ describe("NativeBridge TypeScript boundary", () => {
     expectNoTypeLeak<WidenedNativeBridgeCommandLeak>();
     expectNoTypeLeak<GreetNativeBridgeCommandLeak>();
     expectNoTypeLeak<SqlShapedDbQueryLeak>();
-    expectNoTypeLeak<DbQueryOperationShapeLeak>();
-    expectNoTypeLeak<DbQueryPayloadKeyLeak>();
-    expectNoTypeLeak<DbQueryPayloadShapeLeak>();
+    expectNoTypeLeak<DbQueryExtraTopLevelKeyLeak>();
+    expectNoTypeLeak<DbQueryMissingTopLevelKeyLeak<DbQuery>>();
+    expectNoTypeLeak<DbQueryOperationShapeLeak<DbQuery>>();
+    expectNoTypeLeak<DbQueryRequiredPayloadLeak<DbQuery>>();
+    expectNoTypeLeak<DbQueryPayloadShapeLeak<DbQuery>>();
     expectNoTypeLeak<DbValueJsonPayloadLeak>();
     expectNoTypeLeak<DbValueFunctionPayloadLeak>();
     expectNoTypeLeak<NativeBridgeSurfaceLeak>();
