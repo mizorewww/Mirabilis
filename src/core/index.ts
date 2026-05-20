@@ -32,6 +32,15 @@ export type {
   ViewRegistryErrorCode,
 } from "./types";
 export type {
+  DbQuery,
+  DbValue,
+  NativeBridge,
+  NativeBridgeCommand,
+  NativeBridgeErrorCode,
+  NativeInvoke,
+  NotificationInput,
+} from "./native";
+export type {
   AlgorithmContribution,
   AppPlugin,
   AppRuntimeInfo,
@@ -98,6 +107,12 @@ export {
   CommandRegistryError,
   createInMemoryCommandRegistry,
 } from "./commands";
+export {
+  NATIVE_BRIDGE_COMMANDS,
+  NativeBridgeError,
+  createNativeBridge,
+  createTauriNativeBridge,
+} from "./native";
 export {
   PluginHost,
   PluginHostError,
