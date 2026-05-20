@@ -4,11 +4,11 @@ Last updated: 2026-05-20 19:11 CST.
 
 ## Current Task
 
-- Task: TASK-009 - Add Transaction Manager and Core Runtime composition.
-- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
+- Task: TASK-010 - Define Plugin API contracts.
+- Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 final gate passed; progress completion update active.
+- Current phase: TASK-010 pre-test guidance pending.
 
 ## Active Agents
 
@@ -16,6 +16,11 @@ Last updated: 2026-05-20 19:11 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-009 merged to `master` and pushed. Merge commit: `a353767 Codex(merge)(Add Transaction Manager and Core Runtime composition): merge task branch`.
+- TASK-010 branch created from latest `master`.
+- TASK-010 started in progress ledger and task communication file.
+- `.codex/agents/*.toml` parsed successfully for TASK-010.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 - TASK-009 final local gate passed: `bun run check:quick` passed, including 11 frontend test files and 171 tests, Rust formatting check, Rust clippy with `-D warnings`, and Rust tests; `bun run build` passed with a successful Vite production build.
 - Final binary structured-clone re-review completed and all agents were closed.
 - James (`reviewer`) found no P0/P1/P2 correctness findings and confirmed ArrayBuffer/DataView conflicts, typed-array and non-zero-offset DataView probes, and existing comparator branches.
@@ -363,13 +368,13 @@ Last updated: 2026-05-20 19:11 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-009 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-009.
-- `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has no remaining P0/P1/P2 findings, final local gate passed, and progress completion notes are being committed.
+- `docs/implementation/progress.md` marks TASK-010 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-010.
+- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
+- TASK-009 is complete and merged. TASK-010 has started pre-test guidance.
 
 ## Next Actions
 
-1. Commit TASK-009 completion notes.
-2. Merge TASK-009 to `master` and push.
-3. Continue to TASK-010.
+1. Spawn TASK-010 pre-test guidance agents.
+2. Record guidance and parent decisions.
+3. Spawn `test_writer` for failing Plugin API contract tests.

@@ -35,7 +35,7 @@ Status markers:
 
 ## Milestone M2: Native persistence boundary
 
-- [ ] TASK-010: Define Plugin API contracts
+- [~] TASK-010: Define Plugin API contracts
 - [ ] TASK-011: Implement Plugin Host lifecycle
 - [ ] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 19:11 CST - TASK-010 started
+
+- Branch: `feat/task-010-plugin-api-contracts`.
+- Task: Define Plugin API contracts.
+- Scope: define TypeScript Plugin API contracts for plugin manifests, contributions, lifecycle plugin objects, and plugin context surfaces without implementing Plugin Host lifecycle, built-in plugin behavior, Tauri plugins, persistence, IPC, UI rendering, or concrete business plugins.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/deprecation/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-20 19:11 CST - TASK-009 completed
 
