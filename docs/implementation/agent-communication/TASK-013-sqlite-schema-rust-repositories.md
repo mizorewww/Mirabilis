@@ -40,10 +40,12 @@
 
 ## Current Status
 
-- Status: final cleanup committed; final re-review handoff next.
+- Status: final re-review agents running.
 - Active agents:
-  - None.
-- Next parent step: commit this status update, then spawn final read-only re-review agents for the last cleanup.
+  - Maxwell the 2nd (`reviewer`, id `019e471a-f151-76c3-96b0-dc4f11361960`).
+  - Russell the 2nd (`security_reviewer`, id `019e471a-f5ac-7240-a756-3db6f87a8efc`).
+  - Boyle the 2nd (`test_quality_reviewer`, id `019e471a-fa0c-70b1-9879-1a68e2ffdcc1`).
+- Next parent step: wait for final re-review, then run local gate if no P0/P1/P2 findings remain.
 
 ## Agent Handoffs
 
@@ -205,6 +207,17 @@
   - Commit: `f2c8017 Lorentz the 2nd(review-fix)(Add SQLite schema and Rust repositories): harden migration version checks`.
   - Delivered immutable `MIGRATION_001_VERSION`, updated v1 checksum for the final plugin-index-FK schema, and future ledger row detection independent of `PRAGMA user_version`.
   - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+
+### Final Re-Review Round
+
+- Status: running.
+- Agents:
+  - Maxwell the 2nd (`reviewer`) for correctness.
+  - Russell the 2nd (`security_reviewer`) for security/boundary.
+  - Boyle the 2nd (`test_quality_reviewer`) for test quality.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review final cleanup commits `f8759c2` and `f2c8017` only.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
 
 ### Review Round 1

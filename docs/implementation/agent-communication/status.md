@@ -8,11 +8,13 @@ Last updated: 2026-05-21 04:36 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final cleanup committed; final re-review handoff next.
+- Current phase: final re-review agents running.
 
 ## Active Agents
 
-- None.
+- Maxwell the 2nd (`reviewer`, id `019e471a-f151-76c3-96b0-dc4f11361960`) - final correctness re-review.
+- Russell the 2nd (`security_reviewer`, id `019e471a-f5ac-7240-a756-3db6f87a8efc`) - final security/boundary re-review.
+- Boyle the 2nd (`test_quality_reviewer`, id `019e471a-fa0c-70b1-9879-1a68e2ffdcc1`) - final test-quality re-review.
 
 ## Recent Agent Outcomes
 
@@ -70,7 +72,8 @@ Last updated: 2026-05-21 04:36 CST.
 - Lorentz the 2nd's review-fix commit: `f2c8017 Lorentz the 2nd(review-fix)(Add SQLite schema and Rust repositories): harden migration version checks`.
 - Delivered final cleanup: immutable `MIGRATION_001_VERSION`, updated v1 checksum for the final FK schema, and future ledger row detection independent of `PRAGMA user_version`.
 - Parent repeated focused green checks after Lorentz the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
-- Parent next step: commit this status update, then spawn final read-only re-review agents for the last cleanup.
+- Final read-only re-review agents were spawned for correctness, security/boundary, and test quality.
+- Parent next step: wait for final re-review, then run local gate if no P0/P1/P2 findings remain.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.
