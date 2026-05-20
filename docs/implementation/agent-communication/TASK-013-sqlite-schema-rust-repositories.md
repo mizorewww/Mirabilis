@@ -40,12 +40,9 @@
 
 ## Current Status
 
-- Status: second frontend boundary-test follow-up committed; narrow re-review running.
-- Active agents:
-  - Chandrasekhar the 2nd (`reviewer`, id `019e4729-1ea3-7d20-8d67-d9aafdd7f558`).
-  - Peirce the 2nd (`test_quality_reviewer`, id `019e4729-23a1-7641-816f-9f0d3ac6e294`).
-  - Descartes the 2nd (`security_reviewer`, id `019e4729-28e5-7b83-be08-9cd5136427a3`).
-- Next parent step: wait for narrow re-review, then run local gate if clear.
+- Status: second frontend boundary-test narrow re-review complete; local gate next.
+- Active agents: none.
+- Next parent step: run the TASK-013 local gate.
 
 ## Agent Handoffs
 
@@ -282,7 +279,7 @@
 
 ### Second Frontend Boundary-Test Narrow Re-Review
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Chandrasekhar the 2nd (`reviewer`) for correctness.
   - Peirce the 2nd (`test_quality_reviewer`) for test quality.
@@ -291,6 +288,12 @@
   - Stay read-only and do not edit files.
   - Review Dirac the 2nd's test-fix commit `3fc4902`.
   - Confirm the previous P2s are fixed without blocking TASK-014 operation narrowing or weakening no-raw-SQL coverage.
+- Outcomes:
+  - Chandrasekhar the 2nd (`reviewer`) found no P0/P1/P2. It confirmed operation can still narrow, top-level keys are guarded distributively as exactly `operation` plus optional `payload`, raw `sql` / `params` detection is distributive, and existing `DbValue` / NativeBridge assertions remain meaningful.
+  - Peirce the 2nd (`test_quality_reviewer`) found no P0/P1/P2. It confirmed the union-shaped `DbQuery` false-negative is closed, `payload?: DbValue` is preserved, `.only` / `.skip` are absent, and typecheck remains necessary for these compile-time guards.
+  - Descartes the 2nd (`security_reviewer`) found no P0/P1/P2. It confirmed the change is test-only and TASK-014 can still narrow operations safely within the `operation` plus optional JSON-compatible `payload` shape.
+  - Focused checks run by agents passed: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check 3fc4902^ 3fc4902 -- src/test/native-bridge.test.ts`.
+  - Residual handoff risk: TASK-014 still needs Rust-side operation allowlisting, payload validation, typed/redacted IPC errors, and reviewed Tauri capability scope before exposing persistence through IPC.
 
 ### Review Round 1
 
