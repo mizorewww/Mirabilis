@@ -132,6 +132,19 @@
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 22 tests passing.
   - `bun run lint`.
 
+### Review Round 1
+
+- Status: active.
+- Agents:
+  - Nietzsche (`pr_explorer`, `019e4325-de52-7ea0-abb5-35717f88ba3e`): branch diff and risk surface mapping.
+  - Bohr (`reviewer`, `019e4325-ef7f-73b2-a26b-0837f2cbc9ff`): correctness review.
+  - Boyle (`security_reviewer`, `019e4326-10f1-7d60-ae74-d98d4956ba74`): security review.
+  - Darwin (`test_quality_reviewer`, `019e4326-1ccb-7732-916d-692bc543c854`): test-quality review.
+  - Confucius (`deprecation_auditor`, `019e4326-288f-7e22-8271-1cb3951c30c9`): deprecation/runtime validation review.
+  - Laplace (`docs_researcher`, `019e4326-2fba-7892-90aa-9c2e3231e6d9`): docs alignment and current-docs review.
+- Notes:
+  - `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
+
 ## Next Action
 
-Spawn review agents for TASK-006.
+Wait for review agents and triage findings.

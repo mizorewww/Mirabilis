@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:09 CST.
+Last updated: 2026-05-20 10:10 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 10:09 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation committed; review pending.
+- Current phase: review active.
 
 ## Active Agents
 
-- None.
+- Nietzsche (`pr_explorer`, `019e4325-de52-7ea0-abb5-35717f88ba3e`): mapping TASK-006 branch diff and risk surfaces.
+- Bohr (`reviewer`, `019e4325-ef7f-73b2-a26b-0837f2cbc9ff`): correctness review for Filter Store behavior.
+- Boyle (`security_reviewer`, `019e4326-10f1-7d60-ae74-d98d4956ba74`): security review for hostile runtime input and native exposure.
+- Darwin (`test_quality_reviewer`, `019e4326-1ccb-7732-916d-692bc543c854`): test-quality review for TASK-006 coverage.
+- Confucius (`deprecation_auditor`, `019e4326-288f-7e22-8271-1cb3951c30c9`): deprecation and runtime validation risk review.
+- Laplace (`docs_researcher`, `019e4326-2fba-7892-90aa-9c2e3231e6d9`): docs alignment and current-docs review.
 
 ## Recent Agent Outcomes
 
+- TASK-006 review agents spawned. `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
 - Hume (`implementer`) completed and was closed after implementing the in-memory Filter Store.
 - Hume's implementation commit: `611125c Hume(implementation)(Add Filter Store and Query AST baseline): implement filter store`.
 - Parent repeated green checks after Hume: `bun run typecheck`, `bun run test:frontend -- src/test/core-filter-store.test.ts` with 22 tests passing, and `bun run lint`.
@@ -156,6 +162,6 @@ Last updated: 2026-05-20 10:09 CST.
 
 ## Next Actions
 
-1. Commit this implementation green-signal record.
-2. Spawn review agents for TASK-006.
+1. Wait for active TASK-006 review agents.
+2. Start `doc_writer` later if docs review is still needed and a slot is free.
 3. Fix any P0/P1 findings before final gate.
