@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: runtime-flow docs cleanup in progress.
-- Active agents: Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`).
-- Next parent step: wait for Dalton, validate docs diff, then run focused checks and narrow re-review.
+- Status: narrow re-review in progress.
+- Active agents: Popper (`pr_explorer`), Kepler (`reviewer`), Harvey (`security_reviewer`), Ptolemy (`deprecation_auditor`), Mill (`test_quality_reviewer`), and Arendt (`docs_researcher`).
+- Next parent step: wait for narrow re-review, then fix any remaining P0/P1/P2 findings.
 
 ## Agent Handoffs
 
@@ -219,13 +219,31 @@
 
 ### Runtime-Flow Docs Cleanup
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`).
 - Ownership:
   - `docs/architecture/07-runtime-flows.md`.
 - Assignment:
   - Replace the stale `new PluginHost(registries, services)` runtime-flow sketch with the current `new PluginHost({ services, registries, app })` constructor and keep built-in plugin loading explicit and illustrative.
+- Outcome:
+  - Dalton updated `docs/architecture/07-runtime-flows.md` only.
+  - Parent confirmed no stale `new PluginHost(registries, services)` references remained in targeted architecture/product/development/task-index scan.
+- Commit:
+  - `25c1859 Dalton(docs)(Implement Plugin Host lifecycle): align runtime flow sketch`.
+
+### Narrow Re-Review
+
+- Status: in progress.
+- Agents:
+  - Popper (`pr_explorer`, `019e461c-22ee-7aa1-8902-272b7e3700c1`).
+  - Kepler (`reviewer`, `019e461c-28cd-7ca2-91a4-0f581c1a232b`).
+  - Harvey (`security_reviewer`, `019e461c-2d98-7653-baab-f1e0ad215d75`).
+  - Ptolemy (`deprecation_auditor`, `019e461c-330f-7ab1-af36-87a48c31c4f4`).
+  - Mill (`test_quality_reviewer`, `019e461c-379a-77e1-a041-4835184d6b09`).
+  - Arendt (`docs_researcher`, `019e461c-4f1f-7b03-97de-d83e9f39f14d`).
+- Assignment:
+  - Read-only narrow re-review of the final TASK-011 diff and P1/P2 review-fix surfaces.
 
 ## Parent Decisions
 
@@ -236,4 +254,4 @@
 
 ## Next Action
 
-Wait for Dalton, then validate docs and run narrow re-review.
+Wait for narrow re-review, then fix any remaining P0/P1/P2 findings.

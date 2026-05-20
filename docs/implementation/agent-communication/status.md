@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:56 CST.
+Last updated: 2026-05-20 23:58 CST.
 
 ## Current Task
 
@@ -8,14 +8,22 @@ Last updated: 2026-05-20 23:56 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 runtime-flow docs cleanup in progress.
+- Current phase: TASK-011 narrow re-review in progress.
 
 ## Active Agents
 
-- Dalton (`doc_writer`, `019e4619-cbce-74a1-9851-d81b2a9e8a12`) is aligning `docs/architecture/07-runtime-flows.md` with the implemented Plugin Host constructor and explicit built-in loading flow.
+- Popper (`pr_explorer`, `019e461c-22ee-7aa1-8902-272b7e3700c1`) is mapping the final TASK-011 diff.
+- Kepler (`reviewer`, `019e461c-28cd-7ca2-91a4-0f581c1a232b`) is re-reviewing correctness/API behavior.
+- Harvey (`security_reviewer`, `019e461c-2d98-7653-baab-f1e0ad215d75`) is re-reviewing plugin boundary/security behavior.
+- Ptolemy (`deprecation_auditor`, `019e461c-330f-7ab1-af36-87a48c31c4f4`) is re-reviewing public API/deprecation risk.
+- Mill (`test_quality_reviewer`, `019e461c-379a-77e1-a041-4835184d6b09`) is re-reviewing test quality.
+- Arendt (`docs_researcher`, `019e461c-4f1f-7b03-97de-d83e9f39f14d`) is re-reviewing docs drift.
 
 ## Recent Agent Outcomes
 
+- TASK-011 narrow re-review agents spawned after Curie's review-fix implementation and Plato/Dalton docs commits.
+- Dalton (`doc_writer`) completed and was closed after updating `docs/architecture/07-runtime-flows.md` to use `new PluginHost({ services, registries, app })` and explicit built-in plugin objects.
+- Dalton's docs commit: `25c1859 Dalton(docs)(Implement Plugin Host lifecycle): align runtime flow sketch`.
 - Dalton (`doc_writer`) was spawned for the remaining runtime-flow docs drift in `docs/architecture/07-runtime-flows.md`, specifically the stale `new PluginHost(registries, services)` startup sketch.
 - Plato (`doc_writer`) completed and was closed after updating `docs/architecture/03-plugin-api-and-host.md` to reflect the TASK-011 Plugin Host API and lifecycle semantics.
 - Plato's docs commit: `3311da9 Plato(docs)(Implement Plugin Host lifecycle): align plugin host architecture`.
