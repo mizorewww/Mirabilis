@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: P2 review-fix narrow re-review in progress.
-- Active agents: Chandrasekhar (`reviewer`), Descartes (`deprecation_auditor`), Sagan (`test_quality_reviewer`), Nash (`docs_researcher`), and Faraday (`security_reviewer`).
-- Next parent step: wait for narrow re-review, then either fix remaining P0/P1/P2 findings or run the local gate.
+- Status: final gate passed; merge to `master` next.
+- Active agents: none.
+- Next parent step: commit progress/status update, merge `feat/task-010-plugin-api-contracts` to `master`, push, then start TASK-011.
 
 ## Agent Handoffs
 
@@ -442,7 +442,7 @@
 
 ### P2 Narrow Re-Review
 
-- Status: in progress.
+- Status: completed and closed.
 - Agents:
   - Chandrasekhar (`reviewer`, `019e45c7-8031-7ee2-8c15-be98e1d803f0`).
   - Descartes (`deprecation_auditor`, `019e45c7-8947-74e1-9bf7-2f155395834a`).
@@ -452,6 +452,19 @@
 - Assignment:
   - Read-only review of Planck's tests, Heisenberg's docs cleanup, and Epicurus's production Plugin API type fixes.
   - Docs `rg` scans found no stale `ctx.metadataFields`, `ctx.algorithms`, `ctx.commands.execute`, plugin-facing `sourcePluginId`, or plugin-facing ownership-key examples outside Core internals and agent communication.
+- Outcomes:
+  - Chandrasekhar found no P0/P1/P2 correctness/API findings and confirmed metadata/event list ownership, explicit helper exports, direct store input shapes, and docs alignment.
+  - Descartes found no P0/P1/P2 API/deprecation findings and recorded one P3 future extraction risk around type-only Core barrel imports.
+  - Sagan found no P0/P1/P2 test-quality findings and accepted Planck's documented choice not to encode raw `keyof` synthetic reservation leakage.
+  - Faraday found no P0/P1/P2 security findings and confirmed no native/Tauri/filesystem/SQLite/IPC/package/config changes.
+  - Nash found one remaining P2 docs finding for a `tx.events.findTimerStart` example.
+  - Locke (`doc_writer`, `019e45cd-a171-7520-94b8-36b8702e6ea2`) fixed Nash's remaining docs P2 by rewriting the timer stop sketch to use current `PluginEventStore.list({ namespace: "timer" })` plus plugin-local payload narrowing, and by marking specialized timer event query facades future-only.
+  - McClintock (`docs_researcher`, `019e45d0-4bdf-7370-8b95-97a717030aa7`) re-reviewed Locke's docs fix and reported no remaining P0/P1/P2 docs findings.
+- Final validation:
+  - `bun run check:quick` passed with 12 frontend test files and 185 tests plus Rust fmt, clippy, and tests.
+  - `bun run build` passed.
+  - Focused `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests after review fixes.
+  - Focused `bun run typecheck`, `bun run lint`, and `git diff --check` passed during review-fix rounds.
 
 ## Parent Decisions
 
@@ -462,4 +475,4 @@
 
 ## Next Action
 
-Wait for narrow re-review, then either fix remaining P0/P1/P2 findings or run the local gate.
+Commit progress/status update, merge `feat/task-010-plugin-api-contracts` to `master`, push, then start TASK-011.
