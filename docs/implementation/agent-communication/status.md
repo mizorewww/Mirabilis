@@ -31,7 +31,7 @@ Last updated: 2026-05-20 22:28 CST.
 - Parent confirmed the expected red signal: `bun run typecheck` failed on missing store helper exports, metadata/event list ownership gaps, and public shape contract checks; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 14 tests; `git diff --check` passed.
 - Heisenberg (`doc_writer`) completed and was closed after aligning product/architecture docs with current Plugin API facades and host-injected ownership.
 - Heisenberg's docs commit: `c3a5ac7 Heisenberg(docs)(Define Plugin API contracts): align plugin facade examples`.
-- Parent confirmed docs cleanup with targeted `rg` scans and `git diff --check`; remaining `sourcePluginId` references are in Core internal docs.
+- Parent confirmed docs cleanup with targeted `rg` scans and `git diff --check`; remaining `sourcePluginId` references are either Core model examples or negative guidance saying plugin-facing APIs must not accept caller-supplied ownership keys.
 - P2 review-fix agents spawned: Planck for metadata/event list ownership, store helper exports, store input shape tests, and feasible `keyof` surface coverage; Heisenberg for docs that still describe unavailable facades or caller-supplied ownership keys.
 - Targeted TASK-010 re-review round 2 completed and all agents were closed. No P0/P1 findings were reported.
 - Zeno (`security_reviewer`) found no P0/P1/P2 security findings and confirmed no native/Tauri/filesystem/SQLite/IPC boundary changes.

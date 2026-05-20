@@ -110,13 +110,26 @@ async function startTimer(ctx, { pageId }) {
 ### 10.3 Stop Timer
 
 Stop 后生成 Time Segment。
+当前 TASK-010 `PluginEventStore` 只暴露 `append` 和 `list`；插件需要通过 `list` 查询事件并在插件内收窄 payload。更专用的 timer event 查询 facade 属于后续接口面。
 
 ```ts
 async function stopTimer(ctx) {
   await ctx.transaction.run(async tx => {
     const activeSegmentId = await readTimerRuntimeState("activeSegmentId");
 
-    const startedEvent = await tx.events.findTimerStart(activeSegmentId);
+    const startedEvent = tx.events
+      .list({ namespace: "timer" })
+      .find(event => {
+        const payload = event.payload as { segmentId?: string };
+
+        return event.type === "started" && payload.segmentId === activeSegmentId;
+      });
+
+    if (!startedEvent) {
+      throw new Error("No active timer start event");
+    }
+
+    const startedPayload = startedEvent.payload as { startAt: string };
 
     const notePage = await tx.pages.create({
       title: "Time Segment Note",
@@ -129,9 +142,9 @@ async function stopTimer(ctx) {
       type: "time_segment_created",
       payload: {
         segmentId: activeSegmentId,
-        startAt: startedEvent.payload.startAt,
+        startAt: startedPayload.startAt,
         endAt: now(),
-        durationSeconds: diffSeconds(startedEvent.payload.startAt, now()),
+        durationSeconds: diffSeconds(startedPayload.startAt, now()),
         notePageId: notePage.id,
         source: "timer"
       }
