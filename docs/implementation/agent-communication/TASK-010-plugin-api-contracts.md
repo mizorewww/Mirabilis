@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: undefined ownership-key review-fix implementation in progress.
-- Active agent: Hilbert (`implementer`, `019e45a6-37f2-75c2-b809-d07c7057de7`) owns the production fix for explicit `pluginId: undefined` / `sourcePluginId: undefined` ownership-key leaks.
-- Next parent step: wait for Hilbert, validate focused checks, commit the production fix if green, then run targeted re-review agents.
+- Status: undefined ownership-key review fix green; targeted re-review next.
+- Active agents: none.
+- Next parent step: spawn targeted re-review agents, fix any P0/P1 findings, then run the local gate.
 
 ## Agent Handoffs
 
@@ -363,7 +363,7 @@
 
 ### Undefined Ownership-Key Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Hilbert (`implementer`, `019e45a6-37f2-75c2-b809-d07c7057de7`).
 - Ownership:
@@ -373,6 +373,15 @@
   - Make the undefined ownership-key type tests green without editing tests, docs, config, package files, lockfiles, Rust/Tauri, UI, or agent communication docs.
   - Preserve valid Plugin API usage without requiring plugins to pass ownership keys.
   - Report a blocker if TypeScript cannot express the constraint under the current config without widening scope.
+- Outcome:
+  - Replaced the optional ownership-key reservation helpers with template-literal index-signature reservations in `src/core/plugin-api/context.ts`.
+  - Explicit `pluginId: undefined` and `sourcePluginId: undefined` now fail for fresh object literals and structural variables.
+- Commit:
+  - `aa20ab6 Hilbert(review-fix)(Define Plugin API contracts): reject undefined ownership keys`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 13 tests.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -383,4 +392,4 @@
 
 ## Next Action
 
-Wait for Hilbert's implementation result, validate focused checks, commit the production fix if green, then spawn targeted re-review agents.
+Spawn targeted re-review agents, fix any P0/P1 findings, then run the local gate.
