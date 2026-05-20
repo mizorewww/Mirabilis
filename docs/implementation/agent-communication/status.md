@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:17 CST.
+Last updated: 2026-05-21 04:22 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 04:17 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation agent running; docs sync patch pending.
+- Current phase: review fixes committed; focused re-review handoff next.
 
 ## Active Agents
 
-- Beauvoir the 2nd (`implementer`, id `019e4709-70c9-77d2-949f-e61df480eb37`) - production review-fix implementation for TASK-013.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -49,7 +49,13 @@ Last updated: 2026-05-21 04:17 CST.
 - Parent confirmed the expected red signal: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails because `MetadataRepository` is missing `get_by_logical_key` and `delete_by_logical_key`. Parent also confirmed green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
 - Arendt the 2nd (`doc_writer`) completed and was closed after drafting docs sync in `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`. Parent is holding that patch uncommitted until the production review-fix confirms whether `core_plugin_indexes.plugin_id` gains an FK.
 - Beauvoir the 2nd (`implementer`) was spawned for production review fixes. Ownership is limited to `src-tauri/src/db/**`; tests, docs, Cargo files, frontend, NativeBridge, Plugin API, capabilities, Tauri config, and IPC/app bootstrap are out of scope.
-- Parent next step: wait for Beauvoir the 2nd, review the patch, run focused checks, then commit implementation and reconcile/commit docs sync.
+- Beauvoir the 2nd (`implementer`) completed and was closed after implementing production review fixes in `src-tauri/src/db/error.rs`, `src-tauri/src/db/migrations.rs`, and `src-tauri/src/db/repositories.rs`.
+- Beauvoir the 2nd's review-fix commit: `97ee8b2 Beauvoir the 2nd(review-fix)(Add SQLite schema and Rust repositories): address repository review findings`.
+- Delivered review fixes: metadata logical-key upsert/get/delete, migration future-version and checksum/name drift errors, timestamp preservation for metadata/filter/plugin upserts, and `core_plugin_indexes.plugin_id` FK to `core_plugins(id)`.
+- Parent repeated focused green checks after Beauvoir the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Arendt the 2nd (`doc_writer`) completed docs sync and was closed after aligning architecture/development/testing docs to the final review-fix schema, including the `core_plugin_indexes.plugin_id` FK.
+- Arendt the 2nd's docs commit: `ca2c461 Arendt the 2nd(docs)(Add SQLite schema and Rust repositories): sync sqlite persistence docs`.
+- Parent next step: commit this status update, then spawn focused read-only re-review agents for correctness, security/boundary, API/deprecation, docs/current guidance, and test quality.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

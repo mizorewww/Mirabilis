@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: review-fix implementation agent running; docs sync patch pending.
+- Status: review fixes committed; focused re-review handoff next.
 - Active agents:
-  - Beauvoir the 2nd (`implementer`, id `019e4709-70c9-77d2-949f-e61df480eb37`).
-- Next parent step: wait for Beauvoir the 2nd, review the patch, run focused checks, then commit implementation and reconcile/commit docs sync.
+  - None.
+- Next parent step: commit this status update, then spawn focused read-only re-review agents for correctness, security/boundary, API/deprecation, docs/current guidance, and test quality.
 
 ## Agent Handoffs
 
@@ -200,7 +200,7 @@
 
 ### Docs Sync Round
 
-- Status: complete; patch pending commit after implementation reconciliation.
+- Status: complete.
 - Agent:
   - Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`).
 - Ownership:
@@ -211,11 +211,12 @@
   - Sync architecture/development/testing docs to TASK-013's private Rust `rusqlite` repository layer, implemented schema, migration ledger/user_version, neutral plugin index baseline, and out-of-scope TASK-014 boundaries.
 - Outcome:
   - Changed files: `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`.
-  - Arendt's patch is uncommitted while production review-fix runs because it may need one more alignment pass if `core_plugin_indexes.plugin_id` gains a foreign key.
+  - Arendt's patch was reconciled after Beauvoir added the `core_plugin_indexes.plugin_id` foreign key.
+  - Commit: `ca2c461 Arendt the 2nd(docs)(Add SQLite schema and Rust repositories): sync sqlite persistence docs`.
 
 ### Review-Fix Implementation Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Beauvoir the 2nd (`implementer`, id `019e4709-70c9-77d2-949f-e61df480eb37`).
 - Ownership:
@@ -226,3 +227,8 @@
   - Preserve metadata/filter/plugin creation or install timestamps on updates.
   - Add `core_plugin_indexes.plugin_id REFERENCES core_plugins(id) ON DELETE CASCADE`.
   - Preserve scope boundaries: no tests, docs, Cargo files, IPC commands, capabilities, frontend, NativeBridge, Plugin API, or app bootstrap changes.
+- Outcome:
+  - Changed files: `src-tauri/src/db/error.rs`, `src-tauri/src/db/migrations.rs`, and `src-tauri/src/db/repositories.rs`.
+  - Commit: `97ee8b2 Beauvoir the 2nd(review-fix)(Add SQLite schema and Rust repositories): address repository review findings`.
+  - Delivered metadata logical-key upsert/get/delete, migration future-version and checksum/name drift errors, timestamp preservation for metadata/filter/plugin upsert updates, and `core_plugin_indexes.plugin_id` FK to `core_plugins(id)`.
+  - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
