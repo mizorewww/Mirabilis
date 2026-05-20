@@ -101,6 +101,33 @@ TASK-013 repository persistence does not by itself require app-data path, provid
 
 For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are the only registered TASK-014 app commands, `DbQuery.operation` matches the reviewed 15-operation allowlist, generated permission TOMLs map `allow-db-execute` and `allow-db-transaction` to `commands.allow`, default capability grants only those DB command permissions for this task, IPC errors remain redacted, and transactions roll back earlier writes on validation or persistence failure.
 
+## TASK-015 App Bootstrap and Runtime Provider Guidance
+
+TASK-015 tests should cover the observable app bootstrap/provider contract without adding business plugin behavior:
+
+- Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`.
+- Explicit empty production `BUILT_IN_PLUGINS` until later plugin tasks, while tests may inject fake plugins to prove load/activation behavior.
+- Rejection propagation for startup failures, including `loadBuiltInPlugins()` and `activateAll()` failures; startup must not report a ready runtime after those failures.
+- React StrictMode single-flight initialization so bootstrap and plugin activation are not duplicated during development double-mount behavior.
+- Retry after a failed initializer mount with the same initializer; rejected initializer promises must not poison future mounts forever.
+- Safe public runtime facade from `useRuntime()`: only copied/frozen `{ app: { version, pluginApiVersion? } }`, with no stores, registries, services, pluginHost, NativeBridge, raw invoke, db, storage, filesystem, file, or path APIs.
+- `useRuntime()` guard outside `RuntimeProvider`.
+- Generic visible startup failure alert that does not leak raw errors, stack traces, SQL, filesystem paths, plugin IDs, tokens, or causes.
+- App Shell boundary checks for no raw Tauri imports, no task/habit/timer/calendar/editor business behavior, no business plugin owner imports, and no direct Core owner-module imports.
+- Diff-based native-surface guard against `master` for Tauri config, capabilities, generated permissions, Rust command registration, Cargo files, and `src-tauri` command surfaces.
+
+TASK-015 merge checks should include:
+
+```bash
+bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts
+bun run typecheck
+bun run lint
+bun run build
+bun run check:quick
+```
+
+Run `bun run check:full` only if later edits add or change persistence wiring, Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior.
+
 ## Merge Gate
 
 Before merging to `master`:

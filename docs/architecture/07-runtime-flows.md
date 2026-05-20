@@ -6,19 +6,19 @@
 
 ```ts
 async function createAppRuntime() {
-  // Native/storage setup is illustrative.
-  const nativeBridge = createTauriNativeBridge();
+  const nativeBridge = await createTauriNativeBridge();
 
-  const storage = new TauriStorageDriver(nativeBridge);
+  const storage = {
+    persistence: "in-memory-core"
+  };
 
-  const stores = createCoreStores(storage);
+  const stores = await createCoreStores();
 
-  const registries = createCoreRegistries();
+  const registries = await createCoreRegistries();
 
-  const services = createCoreServices({
+  const services = await createCoreServices({
     stores,
-    registries,
-    storage
+    registries
   });
 
   const app = {
@@ -32,21 +32,16 @@ async function createAppRuntime() {
     app
   });
 
-  const runtime = new AppRuntime({
+  const runtime = {
+    app,
     stores,
     registries,
     services,
     pluginHost,
-    app
-  });
+    ...services
+  };
 
-  await pluginHost.loadBuiltInPlugins([
-    markdownEditorBuiltInPlugin,
-    quickCaptureBuiltInPlugin,
-    searchBuiltInPlugin,
-    taskFeatureBuiltInPlugin,
-    timerFeatureBuiltInPlugin
-  ]);
+  await pluginHost.loadBuiltInPlugins(BUILT_IN_PLUGINS);
 
   await pluginHost.activateAll();
 
@@ -54,7 +49,13 @@ async function createAppRuntime() {
 }
 ```
 
-`loadBuiltInPlugins([...])` 接收的是 App 启动时显式传入的内置插件对象，不表示文件系统发现、动态 import 或 native 插件加载。任务、计时、日历等业务能力由插件贡献，Core 不内置这些业务实现。
+TASK-015 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
+
+TASK-015 只在 bootstrap 阶段创建 in-memory Core runtime 和 Plugin Host。`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。
+
+`BUILT_IN_PLUGINS` 在 TASK-015 中有意为空数组。Markdown editor、quick capture、search、task、timer、calendar 等具体业务内置插件属于后续插件任务，不应出现在当前启动片段中。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+
+任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
 ---
 

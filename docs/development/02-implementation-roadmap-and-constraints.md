@@ -329,6 +329,10 @@ Plugins
 
 React App Shell
   负责：
+    RuntimeProvider composition
+    启动 loading state
+    通用 startup failure alert
+    从 public runtime app info 显示 shell status
     布局
     路由
     Slot 渲染
@@ -346,6 +350,13 @@ Tauri / Rust
     托盘
     同步传输
 ```
+
+TASK-015 App Shell 边界：
+
+- App Shell 可以组合 `RuntimeProvider`、启动 loading state、通用启动失败 alert，以及基于 public runtime `{ app }` info 的 shell status。
+- App Shell 不实现 task、habit、timer、calendar、editor 或其他业务插件行为。
+- App Shell 不直接 import Tauri API，不直接调用 `NativeBridge`，不接入 DB IPC 或 persistence wiring。
+- App Shell / `useRuntime()` 不向 React descendants 暴露 full Core runtime handles，包括 stores、registries、services、pluginHost、NativeBridge、storage、db、filesystem 或 path APIs。
 
 用户写：
 

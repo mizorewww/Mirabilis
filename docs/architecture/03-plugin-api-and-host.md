@@ -132,6 +132,33 @@ Plugin-facing stores 和 registries 的输入不接受调用方传入的 `plugin
 
 ---
 
+### 5.5 React Runtime Provider boundary
+
+TASK-015 的 React `RuntimeProvider` 不是 Plugin API。它只给 React descendants 暴露 public `useRuntime()` facade：
+
+```ts
+type PublicRuntime = {
+  readonly app: {
+    readonly version: string;
+    readonly pluginApiVersion?: string;
+  };
+};
+```
+
+Provider 从 full runtime 复制 app info，并发布 frozen `{ app: { version, pluginApiVersion? } }`。full `AppRuntime` handles 只属于 bootstrap 和 trusted App Shell composition，不属于 plugin-rendered UI 的公共入口。
+
+`useRuntime()` / public provider value 必须继续禁止暴露：
+
+- Core stores、registries、services。
+- `pluginHost` 或 lifecycle/load/activate handles。
+- `NativeBridge`、raw `invoke`、Tauri API 对象。
+- `db`、SQLite、storage driver、filesystem、file、path、shortcut、notification APIs。
+- Command registry mutation handles such as direct `register` / `unregister` / raw `execute`.
+
+后续如果插件贡献 view、slot 或其他 plugin-rendered React subtree，这些 subtree 不能通过 `useRuntime()` 获取 full runtime。它们只能接收 `PluginContext`、plugin-scoped facades，或 App Shell 明确传入的 controlled props。
+
+---
+
 ## 6. Plugin Host
 
 Plugin Host 负责按生命周期加载和运行已提供的插件对象。
