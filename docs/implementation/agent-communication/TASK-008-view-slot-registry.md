@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: review-fix tests active.
-- Active agents:
-  - Socrates (`test_writer`, `019e438d-94d0-7d80-a996-c8fd5ad56986`): add TASK-008 review-fix coverage in `src/test/core-view-slot-registry.test.ts` only; do not edit production/docs/config and do not commit.
+- Status: review-fix implementation pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -156,11 +155,21 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ### Socrates (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e438d-94d0-7d80-a996-c8fd5ad56986`.
 - Ownership:
   - `src/test/core-view-slot-registry.test.ts` only.
+- Commit:
+  - `319471b Socrates(test)(Add View Registry and Slot Registry): add review-fix coverage`.
 - Assignment:
   - Add review-fix coverage for unparameterized public type defaults, React-compatible object/exotic component references, component inertness, exact significant whitespace filters, and descriptor/proxy property-read hardening.
   - Do not edit production code, docs, config, or lockfiles.
   - Do not commit; parent will commit after confirming the expected red signal.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` fails with `TS2344` for object component compatibility and default `component`/`when` types resolving as `unknown`.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 16 passing and 4 failing.
+  - The 4 focused runtime failures are rejected object view component refs (`VIEW_COMPONENT_REQUIRED`), rejected proxy view descriptors (`VIEW_IDENTITY_REQUIRED`), rejected object slot component refs (`SLOT_COMPONENT_REQUIRED`), and rejected proxy slot descriptors (`SLOT_IDENTITY_REQUIRED`).
+
+## Next Action
+
+Commit this red-signal summary, spawn an `implementer` for review-fix production changes, then run focused checks until green.
