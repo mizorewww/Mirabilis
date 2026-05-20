@@ -40,11 +40,10 @@
 
 ## Current Status
 
-- Status: review-fix tests and docs agents running.
+- Status: review-fix implementation agent running; docs sync patch pending.
 - Active agents:
-  - Dalton the 2nd (`test_writer`, id `019e4702-a9e1-73b0-bbf8-10791d21ac54`).
-  - Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`).
-- Next parent step: wait for Dalton and Arendt, review their disjoint patches, run focused checks, then commit tests/docs separately if clean.
+  - Beauvoir the 2nd (`implementer`, id `019e4709-70c9-77d2-949f-e61df480eb37`).
+- Next parent step: wait for Beauvoir the 2nd, review the patch, run focused checks, then commit implementation and reconcile/commit docs sync.
 
 ## Agent Handoffs
 
@@ -183,7 +182,7 @@
 
 ### Review-Fix Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Dalton the 2nd (`test_writer`, id `019e4702-a9e1-73b0-bbf8-10791d21ac54`).
 - Ownership:
@@ -193,10 +192,15 @@
   - Remove the long-lived no-DB-IPC/no-capability assertions that would block TASK-014 while preserving stable no-frontend-raw-SQL / no `tauri-plugin-sql` guards.
   - Add red tests for metadata logical-key behavior by `(page_id, namespace, key)`.
   - Add targeted tests for migration drift detection, timestamp preservation, injection literal assertions, observable upsert replacement, and `core_plugin_indexes` ownership FK.
+- Outcome:
+  - Changed files: `src-tauri/tests/sqlite_repositories.rs` and `src-tauri/tests/sqlite_boundary.rs`.
+  - Commit: `daa4385 Dalton the 2nd(test)(Add SQLite schema and Rust repositories): cover review fix expectations`.
+  - Expected red check: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails because `MetadataRepository` lacks `get_by_logical_key` and `delete_by_logical_key`.
+  - Green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
 
 ### Docs Sync Round
 
-- Status: running.
+- Status: complete; patch pending commit after implementation reconciliation.
 - Agent:
   - Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`).
 - Ownership:
@@ -205,3 +209,20 @@
   - `docs/testing/strategy.md`.
 - Assignment:
   - Sync architecture/development/testing docs to TASK-013's private Rust `rusqlite` repository layer, implemented schema, migration ledger/user_version, neutral plugin index baseline, and out-of-scope TASK-014 boundaries.
+- Outcome:
+  - Changed files: `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`.
+  - Arendt's patch is uncommitted while production review-fix runs because it may need one more alignment pass if `core_plugin_indexes.plugin_id` gains a foreign key.
+
+### Review-Fix Implementation Round
+
+- Status: running.
+- Agent:
+  - Beauvoir the 2nd (`implementer`, id `019e4709-70c9-77d2-949f-e61df480eb37`).
+- Ownership:
+  - `src-tauri/src/db/**`.
+- Assignment:
+  - Implement metadata logical-key behavior and methods expected by Dalton's red tests.
+  - Reject migration checksum/name drift and future `user_version` without downgrading.
+  - Preserve metadata/filter/plugin creation or install timestamps on updates.
+  - Add `core_plugin_indexes.plugin_id REFERENCES core_plugins(id) ON DELETE CASCADE`.
+  - Preserve scope boundaries: no tests, docs, Cargo files, IPC commands, capabilities, frontend, NativeBridge, Plugin API, or app bootstrap changes.
