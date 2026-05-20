@@ -39,10 +39,15 @@
 
 ## Current Status
 
-- Status: implementation green; review handoff next.
+- Status: review agents running.
 - Active agents:
-  - None.
-- Next parent step: spawn read-only review agents for TASK-012.
+  - Kant (`pr_explorer`, `019e46c9-69d0-7d23-aedf-e287836824e8`).
+  - Poincare (`reviewer`, `019e46c9-6da3-7152-96b8-2aa7c753a9dc`).
+  - Pascal (`deprecation_auditor`, `019e46c9-71b6-7223-87a1-ac1934875de1`).
+  - Confucius (`security_reviewer`, `019e46c9-7735-7632-9cc5-88772026d6f7`).
+  - Kepler the 2nd (`docs_researcher`, `019e46c9-7b19-7721-aa9c-220423a9247b`).
+  - Gauss the 2nd (`test_quality_reviewer`, `019e46c9-8010-7a40-b824-262d3523e4f5`).
+- Next parent step: wait for review results, summarize findings, and delegate fixes for any P0/P1 findings.
 
 ## Agent Handoffs
 
@@ -182,3 +187,17 @@
   - `bun run typecheck` passed.
   - `bun run lint` passed.
   - `git diff --check` passed.
+
+### Review Round 1
+
+- Status: running.
+- Agents:
+  - Kant (`pr_explorer`, `019e46c9-69d0-7d23-aedf-e287836824e8`).
+  - Poincare (`reviewer`, `019e46c9-6da3-7152-96b8-2aa7c753a9dc`).
+  - Pascal (`deprecation_auditor`, `019e46c9-71b6-7223-87a1-ac1934875de1`).
+  - Confucius (`security_reviewer`, `019e46c9-7735-7632-9cc5-88772026d6f7`).
+  - Kepler the 2nd (`docs_researcher`, `019e46c9-7b19-7721-aa9c-220423a9247b`).
+  - Gauss the 2nd (`test_quality_reviewer`, `019e46c9-8010-7a40-b824-262d3523e4f5`).
+- Assignment:
+  - Read-only review against `master` for diff scope, correctness, API/deprecation risk, security/native boundary, docs/current-guidance drift, and test quality.
+  - Report P0/P1/P2 findings with tight file/line references and no code edits.
