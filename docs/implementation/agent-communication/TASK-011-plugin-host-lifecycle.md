@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: pending transaction TDD in progress.
-- Active agents: Bacon (`test_writer`, `019e4648-adf3-73b2-879c-2e1ccf0a6ba1`).
-- Next parent step: wait for Bacon, validate expected red signal, then delegate implementation.
+- Status: pending transaction implementation in progress.
+- Active agents: Cicero (`implementer`, `019e464c-612f-74a2-bbe7-1d958fb1b394`).
+- Next parent step: wait for Cicero, validate focused green checks, then run final re-review.
 
 ## Agent Handoffs
 
@@ -406,7 +406,7 @@
 
 ### Pending Transaction TDD
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Bacon (`test_writer`, `019e4648-adf3-73b2-879c-2e1ccf0a6ba1`).
 - Ownership:
@@ -414,6 +414,26 @@
 - Assignment:
   - Add a deterministic red test proving unawaited plugin transactions started during register cannot commit page/store writes after lifecycle context revocation or plugin uninstall.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+- Outcome:
+  - Bacon changed `src/test/plugin-host-lifecycle.test.ts` only.
+  - Added a deterministic red test where `register(ctx)` starts an unawaited transaction, uninstall revokes the plugin context before the transaction handler resolves, and the transaction must reject without committing page/metadata/event/filter writes.
+- Commit:
+  - `f78822e Bacon(test)(Implement Plugin Host lifecycle): cover pending transaction revocation`.
+- Red checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 32 tests with 31 passing and one failing in the new pending transaction case.
+  - `git diff --check` passed.
+
+### Pending Transaction Implementation
+
+- Status: in progress.
+- Agent:
+  - Cicero (`implementer`, `019e464c-612f-74a2-bbe7-1d958fb1b394`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Ensure plugin transaction liveness is checked after the async transaction handler resolves and before Core commits staged page/metadata/event/filter writes.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
 
 ## Parent Decisions
 
@@ -424,4 +444,4 @@
 
 ## Next Action
 
-Wait for Bacon, then validate and commit the pending transaction red test.
+Wait for Cicero, then validate focused green checks and re-review.
