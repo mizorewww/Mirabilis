@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: stale register cleanup production fix in progress.
-- Active agents: Galileo (`implementer`, `019e466b-ab51-79d2-86cc-a58bc11e2f44`).
-- Next parent step: wait for Galileo, validate green checks, then commit the production fix.
+- Status: final post-stale-register re-review handoff.
+- Active agents: none.
+- Next parent step: spawn final read-only re-review, then run the local gate if no P0/P1 findings remain.
 
 ## Agent Handoffs
 
@@ -542,7 +542,7 @@
 
 ### Stale Register Cleanup Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Galileo (`implementer`, `019e466b-ab51-79d2-86cc-a58bc11e2f44`).
 - Ownership:
@@ -551,6 +551,18 @@
   - Fix stale pending `register` cleanup so it cannot corrupt fresh retry contributions/status after concurrent uninstall or deactivate.
   - Fix concurrent `register(plugin)` tracking so a failed concurrent attempt cannot clear successful contribution tracking and leave uninstall with orphaned command/view/slot contributions.
   - Preserve existing lifecycle boundaries and TASK-011 scope.
+- Outcome:
+  - Galileo changed `src/core/plugin-host/plugin-host.ts` only.
+  - Revoked pending `register` scopes now roll back their tentative contribution tracker only once, preventing stale cleanup from unregistering fresh retry contributions with the same IDs.
+  - Failed concurrent `register` attempts no longer clear successful contribution tracking or regress status after another register has succeeded.
+- Commit:
+  - `c2c27b1 Galileo(review-fix)(Implement Plugin Host lifecycle): isolate stale register cleanup`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 36 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 50 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -561,4 +573,4 @@
 
 ## Next Action
 
-Wait for Galileo, then validate and commit the stale register cleanup production fix.
+Spawn final read-only re-review after Galileo's stale register cleanup fix.
