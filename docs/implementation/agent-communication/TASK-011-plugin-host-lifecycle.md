@@ -39,13 +39,10 @@
 
 ## Current Status
 
-- Status: final fresh-record batch focused re-review in progress.
+- Status: final docs/status cleanup in progress.
 - Active agents:
-  - Aquinas (`reviewer`, `019e46a3-326b-7902-95b1-5f157925d6f8`).
-  - Boole (`security_reviewer`, `019e46a3-368a-7c70-a809-7d8b9f3c1e1d`).
-  - Russell (`test_quality_reviewer`, `019e46a3-3a56-7c52-94dd-f5a2a770e966`).
-  - Lagrange (`docs_researcher`, `019e46a3-3e54-7752-affc-1784af107a69`).
-- Next parent step: wait for final focused re-review, then handle findings or run the local gate.
+  - Gauss (`doc_writer`, `019e46a6-cb46-79d1-95c1-91a200470bbb`).
+- Next parent step: wait for Gauss, validate docs/status cleanup, then run the local gate.
 
 ## Agent Handoffs
 
@@ -798,7 +795,7 @@
 
 ### Final Fresh-Record Batch Focused Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Aquinas (`reviewer`, `019e46a3-326b-7902-95b1-5f157925d6f8`).
   - Boole (`security_reviewer`, `019e46a3-368a-7c70-a809-7d8b9f3c1e1d`).
@@ -807,6 +804,26 @@
 - Assignment:
   - Read-only focused re-review after Raman's green fix.
   - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+- Outcomes:
+  - Aquinas found no P0/P1/P2 correctness findings and confirmed the fresh-record batch P1s appear fixed.
+  - Boole found no P0/P1/P2 security findings, confirmed the prior P1s are addressed, and found no Tauri/capability/filesystem/IPC/SQLite/dynamic import/native-loading/package-extraction surface.
+  - Russell found no P0/P1/P2 test-quality findings for Kuhn's tests.
+  - Lagrange found no P0/P1 docs drift, plus P2 architecture docs/status cleanup needed for final batch rollback identity, same-id duplicate/concurrent handling, pending-register dependents, and single-flight register semantics.
+- Parent decision:
+  - Delegate docs/status P2 cleanup, then run the local gate if clear.
+
+### Final Docs/Status Cleanup
+
+- Status: in progress.
+- Agent:
+  - Gauss (`doc_writer`, `019e46a6-cb46-79d1-95c1-91a200470bbb`).
+- Ownership:
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.
+- Assignment:
+  - Document final TASK-011 lifecycle semantics for record-identity batch rollback, same-id duplicate/concurrent handling, single-flight register, and dependency removal/pending-register guards.
+  - Update live status and task communication so next action is final local gate, progress mark, and merge.
 
 ## Parent Decisions
 
@@ -817,4 +834,4 @@
 
 ## Next Action
 
-Wait for final focused re-review, then handle findings or run the local gate.
+Wait for Gauss's docs/status cleanup, then run the local gate.
