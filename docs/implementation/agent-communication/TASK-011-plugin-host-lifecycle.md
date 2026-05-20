@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: final docs/status cleanup completed.
+- Status: complete on task branch; merge pending.
 - Active agents:
   - None.
-- Next parent step: run the local gate, then mark progress and merge if clear.
+- Next parent step: commit progress update, merge to `master`, and continue to the next unblocked task.
 
 ## Agent Handoffs
 
@@ -829,6 +829,15 @@
   - Live status and this task log now reflect that the final focused re-review completed with no P0/P1/P2 correctness, security, or test-quality findings; only P2 docs/status findings were addressed by this docs cleanup.
   - Next action is the final local gate, followed by progress marking and merge if clear.
 
+### Final Local Gate
+
+- Status: passed.
+- Checks:
+  - `bun run check:quick` passed with 13 frontend test files, 230 frontend tests, Rust fmt, Rust clippy, and Rust tests.
+  - `bun run build` passed.
+- Parent decision:
+  - Mark TASK-011 complete in `docs/implementation/progress.md`, commit the progress update, merge the task branch to `master`, then continue to the next unblocked task.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -838,4 +847,4 @@
 
 ## Next Action
 
-Run the final local gate, then mark TASK-011 progress and merge if clear.
+Commit the TASK-011 progress update, merge to `master`, then continue to the next unblocked task.

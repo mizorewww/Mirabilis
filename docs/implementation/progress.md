@@ -36,7 +36,7 @@ Status markers:
 ## Milestone M2: Native persistence boundary
 
 - [x] TASK-010: Define Plugin API contracts
-- [~] TASK-011: Implement Plugin Host lifecycle
+- [x] TASK-011: Implement Plugin Host lifecycle
 - [ ] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 02:33 CST - TASK-011 completed
+
+- Branch: `feat/task-011-plugin-host-lifecycle`.
+- Task: Implement Plugin Host lifecycle.
+- Commits: `559e077` start orchestration, `12f04de` lifecycle acceptance tests, `766ba86` Plugin Host runtime, `a24bd27` review-gap tests, `6845f4c` lifecycle boundary hardening, `3311da9` and `25c1859` architecture/runtime-flow docs, `fa3a44c` stale context and failed-install tests, `85a3f71` stale context and failed-install fixes, `d1482b3` batch rollback tests, `b955cb3` batch rollback fix, `b68a2af` lifecycle semantics docs, `f78822e` pending transaction tests, `0bd3af3` pending transaction fix, `34cec0d` concurrent lifecycle tests, `ef4f25d` concurrent lifecycle fix, `3ac6fd1` stale register tests, `c2c27b1` stale register fix, `5cef44e` pending install/dependent tests, `c46cfa4` pending install/dependent fix, `4de95c2` batch rollback/dependency-removal race tests, `b17ed99` concurrent register contract update, `b52772a` batch rollback/dependency-removal race fix, `f909a4b` fresh batch race tests, `ad169f3` fresh batch race fix, and `ad4a2d9` final lifecycle docs.
+- Delivered: TypeScript `PluginHost` runtime under `src/core/plugin-host`, public Core exports, typed `PluginHostError` / statuses / records, explicit built-in plugin list loading, deterministic dependency ordering, staged `install(plugin)` and `register(plugin)` APIs, `loadBuiltInPlugins()`, `activateAll()`, `activate()`, `deactivate()`, `uninstall()`, `getPlugin()`, owner-scoped plugin contexts for pages/metadata/events/filters/commands/views/slots/transactions, runtime ownership injection and spoof rejection, failed install cleanup/retry, record-identity-aware batch rollback/retry, same-id concurrent batch duplicate protection, single-flight concurrent register semantics, lifecycle-scope revocation for stale contexts, pending transaction commit rejection after revocation, dependency guards for registered/active/pending-register dependents and removal-phase dependencies, and docs aligned to final lifecycle behavior.
+- Validation: `bun run check:quick` passed with 13 frontend test files and 230 tests plus Rust fmt, clippy, and tests. `bun run build` passed. Focused final checks passed: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 45 tests, `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 59 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Review: correctness, security/boundary, deprecation/API, docs/current-guidance, and test-quality agents cleared all remaining P0/P1/P2 findings after targeted TDD review-fix rounds. Fixed selected findings for stale captured contexts, owner-scoped store facades, dependency cascade/removal guards, failed install cleanup, batch rollback retry, pending transaction liveness, concurrent lifecycle revocation, stale register cleanup, pending install/register races, dependency removal/register races, concurrent register idempotency, record-identity-aware batch rollback, and same-id concurrent batch overwrite protection.
+- External docs verified by agents: Obsidian Manifest / Build a plugin / Events cleanup / load-time guidance and generated API source for lifecycle concepts; Tauri v2 plugin, capability, capability reference, and core permission docs; Vitest v4 `expectTypeOf`, async assertions, and type-testing docs; TypeScript type-only imports/exports, utility/module guidance, and exact optional property behavior; MDN `Error.cause`; React 19 testing/deprecation notes.
+- Remaining risk: TASK-011 is a local TypeScript Plugin Host only. It does not implement NativeBridge, filesystem plugin discovery, dynamic imports, Tauri/native plugin loading, SQLite persistence, persisted plugin registry/settings, app bootstrap/runtime provider wiring, IPC, UI rendering, package extraction, concrete business plugins, or plugin marketplace behavior. Future NativeBridge, persistence, IPC, and bootstrap tasks must preserve caller-scoped Plugin Host boundaries at those edges. `bun run check:full` was not run because TASK-011 does not touch Tauri IPC, permissions, filesystem, persistence, packaging, or release behavior.
 
 ### 2026-05-20 22:45 CST - TASK-011 started
 
