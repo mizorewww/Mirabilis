@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:34 CST.
+Last updated: 2026-05-20 13:40 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-20 13:34 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final targeted re-review findings recorded; public-unknown tests pending.
+- Current phase: explicit unknown public type fix green; final verification pending.
 
 ## Active Agents
 
@@ -16,6 +16,10 @@ Last updated: 2026-05-20 13:34 CST.
 
 ## Recent Agent Outcomes
 
+- Explicit-unknown test commit: `5fc28d8 Codex(test)(Add View Registry and Slot Registry): cover explicit unknown type aliases`.
+- Explicit-unknown test-fix commit: `a1622a5 Codex(test-fix)(Add View Registry and Slot Registry): distinguish explicit unknown types`.
+- Explicit-unknown production fix commit: `cdbea56 Codex(review-fix)(Add View Registry and Slot Registry): tighten explicit unknown aliases`.
+- Parent repeated green checks after the explicit-unknown fix: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
 - Final targeted TASK-008 re-review completed and all agents were closed.
 - Rawls (`reviewer`) found two P2 public type issues: `RegistryComponent<unknown>` / `ViewDefinition<unknown>` are too broad because `object` leaks into the explicit unknown path, and `SlotCondition<unknown>` resolves to `unknown`, allowing non-functions.
 - Lorentz (`deprecation_auditor`) found no remaining API/deprecation issues and confirmed `.toExtend()`, type-only public React types, and no `_payload` / `_init` usage.
@@ -277,10 +281,10 @@ Last updated: 2026-05-20 13:34 CST.
 - `docs/implementation/progress.md` marks TASK-008 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-008.
 - `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
-- Final targeted re-review found P2 public explicit-`unknown` type issues and stale status text that must be fixed before final gate. TASK-008 remains in progress.
+- Final targeted re-review P2 public explicit-`unknown` type issues are fixed. TASK-008 remains in progress pending final verification and full gate.
 
 ## Next Actions
 
-1. Commit final re-review findings.
-2. Add test-only coverage for explicit `unknown` public aliases.
-3. Fix public types and status docs, then rerun focused checks.
+1. Commit this explicit-unknown green summary.
+2. Run final targeted local verification.
+3. Run the TASK-008 final gate if no P0/P1/P2 findings remain.

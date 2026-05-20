@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: final targeted re-review findings recorded; public-unknown tests pending.
+- Status: explicit unknown public type fix green; final verification pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -356,6 +356,23 @@
   - Fix public types without regressing unparameterized registry returns.
   - Refresh status docs after the fix and current push state are known.
 
+### Explicit Unknown Public Type Fix
+
+- Status: completed.
+- Commits:
+  - `5fc28d8 Codex(test)(Add View Registry and Slot Registry): cover explicit unknown type aliases`.
+  - `a1622a5 Codex(test-fix)(Add View Registry and Slot Registry): distinguish explicit unknown types`.
+  - `cdbea56 Codex(review-fix)(Add View Registry and Slot Registry): tighten explicit unknown aliases`.
+- Outcome:
+  - Explicit `RegistryComponent<unknown>` / `ViewDefinition<unknown>` no longer accept arbitrary objects.
+  - Explicit `SlotCondition<unknown>` remains a function type and rejects non-functions.
+  - Unparameterized registry return shapes remain erased via internal default sentinels so existing registry storage and lists stay type-correct.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` passed with 20 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+
 ## Next Action
 
-Commit final re-review findings, add public explicit-`unknown` type tests, fix public types/status docs, and rerun focused checks.
+Commit this explicit-unknown green summary, run final targeted local verification, then run the TASK-008 final gate if no P0/P1/P2 findings remain.
