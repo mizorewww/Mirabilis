@@ -42,9 +42,15 @@
 
 ## Current Status
 
-- Status: implementation green; review handoff next.
-- Active agents: none.
-- Next agent step: spawn TASK-010 review agents for correctness, security, API/deprecation, docs, and test quality.
+- Status: review round 1 active.
+- Active agents:
+  - Mendel (`pr_explorer`, `019e4699-91c6-73f3-877d-3ee19ddd2d49`): map TASK-010 diff, changed surfaces, and review focus.
+  - Hubble (`reviewer`, `019e4699-91c6-73f3-877d-3f0965129602`): correctness and public API review.
+  - Hypatia (`security_reviewer`, `019e4699-91c6-73f3-877d-3f41ae9c20d0`): plugin boundary and permission review.
+  - Dirac the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-3f7e98ffecd4`): TypeScript/Vitest/API/deprecation review.
+  - Maxwell the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-3fc89ddaadcf`): acceptance-test quality review.
+  - Gauss the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-400fee5a0a1e`): local-doc and current official-doc review.
+- Next agent step: wait for review outputs, then fix any P0/P1 findings before final gate.
 
 ## Agent Handoffs
 
@@ -151,6 +157,22 @@
   - `bun run typecheck` passed.
   - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts src/test/plugin-api-contracts.test.ts` passed with 7 tests.
   - `git diff --check` passed.
+
+### Review Round 1
+
+- Status: active.
+- Agents:
+  - Mendel (`pr_explorer`, `019e4699-91c6-73f3-877d-3ee19ddd2d49`).
+  - Hubble (`reviewer`, `019e4699-91c6-73f3-877d-3f0965129602`).
+  - Hypatia (`security_reviewer`, `019e4699-91c6-73f3-877d-3f41ae9c20d0`).
+  - Dirac the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-3f7e98ffecd4`).
+  - Maxwell the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-3fc89ddaadcf`).
+  - Gauss the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-400fee5a0a1e`).
+- Assignment:
+  - Review the TASK-010 diff against `master` for changed surfaces, correctness, public API design, security boundaries, deprecation/API risks, docs consistency, and test quality.
+  - Stay read-only and return exact file/line findings or explicitly report no blocking issues.
+- Spawn note:
+  - `doc_writer` could not spawn because the agent thread limit was reached. Parent will retry a documentation-specific check after a review slot frees if needed.
 
 ## Parent Decisions
 
