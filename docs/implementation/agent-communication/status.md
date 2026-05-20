@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:53 CST.
+Last updated: 2026-05-20 12:01 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-20 11:53 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1 active.
+- Current phase: review round 1 complete; review-fix tests pending.
 
 ## Active Agents
 
-- Gauss (`pr_explorer`, `019e4384-24f7-7142-96b0-dc8c4fb9383f`): map TASK-008 branch diff and review focus areas.
-- Erdos (`reviewer`, `019e4384-29c3-7b81-954b-f2a92b8c8b4d`): correctness review for View/Slot Registries.
-- Averroes (`security_reviewer`, `019e4384-2f2c-70d2-8cf8-1f02086e4b37`): security and boundary review for component/condition/metadata surfaces.
-- Volta (`deprecation_auditor`, `019e4384-33de-7341-a26f-25a1fcc1d059`): TypeScript/React/Vitest/API risk audit.
-- Carson (`test_quality_reviewer`, `019e4384-4aab-7841-ac86-f4aad76333da`): TASK-008 acceptance-test quality review.
-- Ramanujan (`docs_researcher`, `019e4384-60a0-7413-8fa0-ba40b49ba15a`): TASK-008 docs consistency and traceability review.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-008 review round 1 completed and all review agents were closed.
+- Gauss (`pr_explorer`) mapped the diff to Core registry/type/test/doc files only and flagged review focus on React component-reference shape, slot ordering, `accepts` validation, and default prop typing.
+- Erdos (`reviewer`) found one P2 correctness issue: unparameterized `ViewDefinition` and `SlotContribution` currently erase `component` and `when` to `unknown`; parent accepts fixing them to default `Props = unknown`.
+- Averroes (`security_reviewer`) found one P2 deferred boundary risk and one P3 hardening issue: raw registries must not become plugin-facing without caller-scoped facades, and descriptor reads should use `descriptor.value` instead of `Reflect.get` to avoid hostile Proxy `get` traps. Parent records caller scoping as a later Plugin Host/UI exposure risk and accepts the descriptor-read hardening for TASK-008.
+- Volta (`deprecation_auditor`) found one P2 React API compatibility issue: registry runtime validation rejects React object/exotic component references such as memo/lazy-style references even though the public type advertises React `ComponentType` compatibility. Parent accepts broadening component refs to function or non-null object references without importing React runtime.
+- Carson (`test_quality_reviewer`) found one P2 and one P3 test gap: tests should prove components are inert and not executed by registry operations, and filters should cover exact significant whitespace preservation. Parent accepts both coverage additions.
+- Ramanujan (`docs_researcher`) found P3 traceability drift between status and task communication files. Parent accepts updating both docs now.
+- Selected TASK-008 review-fix plan: add review-fix tests for default generic component/condition types, React object component refs, component inertness, exact whitespace filters, and descriptor/proxy `get`-trap avoidance; then delegate production fixes if the tests fail as expected.
 - TASK-008 review agents spawned.
 - Linnaeus (`implementer`) completed and was closed after implementing TASK-008 production code.
 - Linnaeus's implementation commit: `1e03f31 Linnaeus(implementation)(Add View Registry and Slot Registry): implement view and slot registries`.
@@ -226,9 +229,10 @@ Last updated: 2026-05-20 11:53 CST.
 - `docs/implementation/progress.md` marks TASK-008 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-008.
 - `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
+- Review round 1 found no P0/P1 issues. Accepted P2/P3 fixes are ready for a review-fix TDD pass.
 
 ## Next Actions
 
-1. Wait for TASK-008 review agents.
-2. Record review findings.
-3. Fix P0/P1 findings before final gate.
+1. Commit review-findings documentation.
+2. Spawn a `test_writer` for TASK-008 review-fix coverage in `src/test/core-view-slot-registry.test.ts`.
+3. Confirm the review-fix tests fail for the expected reasons, then delegate production fixes to an `implementer`.

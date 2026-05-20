@@ -38,14 +38,8 @@
 
 ## Current Status
 
-- Status: review round 1 active.
-- Active agents:
-  - Gauss (`pr_explorer`, `019e4384-24f7-7142-96b0-dc8c4fb9383f`): map TASK-008 branch diff and review focus areas.
-  - Erdos (`reviewer`, `019e4384-29c3-7b81-954b-f2a92b8c8b4d`): correctness review for View/Slot Registries.
-  - Averroes (`security_reviewer`, `019e4384-2f2c-70d2-8cf8-1f02086e4b37`): security and boundary review for component/condition/metadata surfaces.
-  - Volta (`deprecation_auditor`, `019e4384-33de-7341-a26f-25a1fcc1d059`): TypeScript/React/Vitest/API risk audit.
-  - Carson (`test_quality_reviewer`, `019e4384-4aab-7841-ac86-f4aad76333da`): TASK-008 acceptance-test quality review.
-  - Ramanujan (`docs_researcher`, `019e4384-60a0-7413-8fa0-ba40b49ba15a`): TASK-008 docs consistency and traceability review.
+- Status: review round 1 complete; review-fix tests pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -91,10 +85,6 @@
 - Slot `when` is stored and exposed for a future renderer, but registry operations never execute it.
 - Do not hard-code production constants for documented business view or slot names.
 
-## Next Action
-
-Wait for Pasteur's TASK-008 acceptance tests.
-
 ### Pasteur (`test_writer`)
 
 - Status: completed and closed.
@@ -109,10 +99,6 @@ Wait for Pasteur's TASK-008 acceptance tests.
 - Parent confirmed expected red signal:
   - `bun run typecheck` fails on missing View/Slot Registry exports and `../core/registries`.
   - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` fails during import resolution for `../core/registries`, so no tests execute until production files are added.
-
-## Next Action
-
-Wait for Linnaeus's implementation output.
 
 ### Linnaeus (`implementer`)
 
@@ -140,7 +126,7 @@ Wait for Linnaeus's implementation output.
 
 ### Review Round 1
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Gauss (`pr_explorer`, `019e4384-24f7-7142-96b0-dc8c4fb9383f`): map changed code paths and reviewer focus areas.
   - Erdos (`reviewer`, `019e4384-29c3-7b81-954b-f2a92b8c8b4d`): review correctness and acceptance criteria.
@@ -148,7 +134,21 @@ Wait for Linnaeus's implementation output.
   - Volta (`deprecation_auditor`, `019e4384-33de-7341-a26f-25a1fcc1d059`): audit TypeScript/React/Vitest/API risks.
   - Carson (`test_quality_reviewer`, `019e4384-4aab-7841-ac86-f4aad76333da`): review test coverage quality.
   - Ramanujan (`docs_researcher`, `019e4384-60a0-7413-8fa0-ba40b49ba15a`): review local-doc and official-doc traceability.
+- Outcomes:
+  - Gauss confirmed the TASK-008 diff is limited to Core registry/type/test/docs paths and highlighted likely review areas: React component-reference shape, slot ordering, `accepts` validation, and default prop typing.
+  - Erdos found one P2 correctness issue: `ViewDefinition` and `SlotContribution` default to `Props = never`, which erases unparameterized `component` and `when` to `unknown`; this conflicts with the parent decision to default public registry types to `Props = unknown`.
+  - Averroes found one P2 deferred boundary risk and one P3 hardening issue: raw registries should remain internal until Plugin Host/UI adds caller-scoped facades, and descriptor property reads should avoid `Reflect.get` so hostile Proxy `get` traps cannot escape.
+  - Volta found one P2 React compatibility issue: the public type is React-compatible, but runtime validation currently rejects non-function React object/exotic component references such as memo/lazy-style references.
+  - Carson found one P2 and one P3 test gap: tests should prove registry operations never execute component refs, and exact significant whitespace should be covered for view/slot filters.
+  - Ramanujan found P3 traceability drift between this task file and the live status file.
+- Parent decisions:
+  - Accept the default-generic type fix and add type assertions for unparameterized view/slot definitions.
+  - Accept broadening runtime component references to functions or non-null objects without importing React runtime values.
+  - Accept tests that use throwing or spying component refs to prove registration, get, list, and unregister treat components as inert references.
+  - Accept exact whitespace filter tests for view `pluginId`/`type` and slot `pluginId`/`slot`.
+  - Accept descriptor-read hardening and tests that prove registry validation does not trigger Proxy `get` traps for data descriptor properties.
+  - Defer caller-bound plugin facades to the later Plugin Host/UI task; TASK-008 raw registries stay Core-internal and are not a plugin-facing security boundary.
 
 ## Next Action
 
-Wait for TASK-008 review agents.
+Commit this review summary, spawn a `test_writer` for review-fix coverage, confirm the expected red signal, then delegate production fixes to an `implementer`.
