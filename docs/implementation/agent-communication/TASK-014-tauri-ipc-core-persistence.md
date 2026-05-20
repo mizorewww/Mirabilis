@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: focused P2 cleanup test agent running.
-- Active agents:
-  - Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`).
-- Next parent step: wait for Carson the 2nd, run focused red checks, and commit tests if valid.
+- Status: focused P2 cleanup implementation handoff.
+- Active agents: none.
+- Next parent step: spawn an `implementer` for the focused P2 production cleanup.
 
 ## Agent Handoffs
 
@@ -252,7 +251,7 @@
 
 ### Focused P2 Cleanup Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`).
 - Assignment:
@@ -261,3 +260,11 @@
   - Cover metadata `valueType` support matching Core (`string`, `number`, `boolean`, `json`, `date`, `null`) and rejection of `object` / `array`.
   - Cover mixed ordered `db.transaction` result typing while preserving the homogeneous array convenience.
   - Restore the TASK-014 boundary guard against unrelated command registrations using the parsed-command approach.
+- Outcome:
+  - Changed files: `src-tauri/tests/ipc_persistence.rs`, `src-tauri/tests/ipc_boundary.rs`, and `src/test/native-bridge.test.ts`.
+  - Metadata tests now use `valueType: "json"` for structured object/array values and reject unsupported `object` / `array` type labels.
+  - NativeBridge type tests now require both homogeneous array results and mixed ordered tuple results from `db.transaction`.
+  - IPC boundary tests now assert TASK-014 registers only `db_execute` and `db_transaction`, preserving the parsed-command approach.
+  - Expected red checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary` fails only on `metadata_value_type_must_match_core_value_types`; `bun run typecheck` fails on mixed transaction tuple typing.
+  - Green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
+  - Commit: `d80bbf2 Carson the 2nd(test)(Expose Tauri IPC commands for core persistence): cover p2 ipc contract cleanup`.

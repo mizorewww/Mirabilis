@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:02 CST.
+Last updated: 2026-05-21 06:06 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 06:02 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused P2 cleanup test agent running.
+- Current phase: focused P2 cleanup implementation handoff.
 
 ## Active Agents
 
-- Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`) - focused P2 cleanup tests for metadata valueType parity, mixed transaction result typing, and TASK-014 command-scope guard.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -48,7 +48,10 @@ Last updated: 2026-05-21 06:02 CST.
 - Focused read-only re-review completed. Locke the 2nd (`pr_explorer`) found no blocking scope creep and mapped hotspots. Cicero the 2nd (`security_reviewer`) found no P0/P1/P2 security findings. Tesla the 2nd (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings. Schrodinger the 2nd (`test_quality_reviewer`) found one P2: TASK-014 boundary tests no longer forbid unrelated command registrations. Anscombe the 2nd (`docs_researcher`) found P1 docs drift: architecture docs do not yet capture the final operation allowlist, transaction result typing, error DTOs, rollback semantics, app-owned DB path, generated app-command ACLs, or capability grants. Nietzsche the 2nd (`reviewer`) found P2s for unsupported metadata `valueType` strings `object` / `array` and homogeneous-only transaction result typing.
 - Parent decisions: run a small delegated P2 cleanup TDD loop for metadata valueType parity, mixed transaction result typing, and restored command-scope guard before docs sync. Defer the P1 docs patch until this behavior stabilizes. Treat `Transaction::new_unchecked` as a residual P2 to either refine in the implementation cleanup or document in the docs patch.
 - Carson the 2nd (`test_writer`) was spawned for focused P2 cleanup tests only.
-- Parent next step: wait for Carson the 2nd, run focused red checks, commit tests if valid, then delegate implementation cleanup.
+- Carson the 2nd completed focused P2 cleanup tests in `src-tauri/tests/ipc_persistence.rs`, `src-tauri/tests/ipc_boundary.rs`, and `src/test/native-bridge.test.ts`. Tests now require metadata `valueType` parity with Core (`string`, `number`, `boolean`, `json`, `date`, `null`), reject `object` / `array`, restore TASK-014 command-scope registration guard, and require both homogeneous and mixed ordered transaction result typing.
+- Parent confirmed expected red/green signals: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary` fails only because metadata `object` valueType is still accepted; `bun run typecheck` fails on transaction tuple typing; `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check` pass.
+- Carson the 2nd's focused P2 test commit: `d80bbf2 Carson the 2nd(test)(Expose Tauri IPC commands for core persistence): cover p2 ipc contract cleanup`.
+- Parent next step: spawn an `implementer` for the focused P2 production cleanup.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
