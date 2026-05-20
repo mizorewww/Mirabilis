@@ -134,17 +134,29 @@
 
 ### Review Round 1
 
-- Status: active.
+- Status: completed with P1/P2 findings.
 - Agents:
-  - Nietzsche (`pr_explorer`, `019e4325-de52-7ea0-abb5-35717f88ba3e`): branch diff and risk surface mapping.
-  - Bohr (`reviewer`, `019e4325-ef7f-73b2-a26b-0837f2cbc9ff`): correctness review.
-  - Boyle (`security_reviewer`, `019e4326-10f1-7d60-ae74-d98d4956ba74`): security review.
-  - Darwin (`test_quality_reviewer`, `019e4326-1ccb-7732-916d-692bc543c854`): test-quality review.
-  - Confucius (`deprecation_auditor`, `019e4326-288f-7e22-8271-1cb3951c30c9`): deprecation/runtime validation review.
-  - Laplace (`docs_researcher`, `019e4326-2fba-7892-90aa-9c2e3231e6d9`): docs alignment and current-docs review.
-- Notes:
-  - `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
+  - Nietzsche (`pr_explorer`) mapped branch diff and confirmed no unrelated native/package/Tauri surfaces changed.
+  - Bohr (`reviewer`) found no correctness P0/P1/P2/P3. Checks: `bun run test:frontend -- src/test/core-filter-store.test.ts`, `bun run typecheck`, `bun run lint`.
+  - Boyle (`security_reviewer`) found one P1 and one P2:
+    - P1: proxy/reflection traps can still escape as raw errors after the first JSON-compatible validation pass during later Query AST shape traversal.
+    - P2: `get`, `update`, and `delete` do not runtime-validate `filterId`, allowing hostile `toString` or `Symbol` values to escape raw errors in `FILTER_NOT_FOUND` details.
+  - Darwin (`test_quality_reviewer`) found three P2 test gaps:
+    - Hostile JSON-compatible input coverage is incomplete for functions, symbols, bigint, raw `undefined`, `Date`, `Map`, `Set`, class instances, sparse arrays, symbol keys, node-count exhaustion, and hostile sort/group shapes.
+    - Defensive-copy tests do not mutate nested condition `value` objects or recursive `and`/`or` branches.
+    - Mutation atomicity tests do not cover mixed-field rejected updates such as valid query plus invalid `sourcePluginId` or valid name plus unsupported operator.
+  - Confucius (`deprecation_auditor`) found one P2 and one P3:
+    - P2: non-enumerable Query AST properties pass validation but are dropped by `structuredClone`.
+    - P3: future `FilterOperator` drift is not compile-exhaustive.
+  - Laplace (`docs_researcher`) found no docs P0/P1/P2 and two P3 docs improvements:
+    - Refresh this task communication file's current status before merge.
+    - Add exact external documentation URLs for traceability.
+- Selected fixes:
+  - Add review-fix tests for Boyle's P1/P2 and Confucius's P2.
+  - Add coverage for Darwin's P2 gaps where focused and practical.
+  - Add a low-cost operator drift regression test or type check if it fits the test file cleanly.
+  - Clean up Laplace's P3 docs items before merge.
 
 ## Next Action
 
-Wait for review agents and triage findings.
+Spawn review-fix test writer for selected P1/P2 findings.

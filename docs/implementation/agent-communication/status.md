@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:10 CST.
+Last updated: 2026-05-20 10:15 CST.
 
 ## Current Task
 
@@ -8,19 +8,15 @@ Last updated: 2026-05-20 10:10 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review active.
+- Current phase: review round 1 complete; review-fix tests pending.
 
 ## Active Agents
 
-- Nietzsche (`pr_explorer`, `019e4325-de52-7ea0-abb5-35717f88ba3e`): mapping TASK-006 branch diff and risk surfaces.
-- Bohr (`reviewer`, `019e4325-ef7f-73b2-a26b-0837f2cbc9ff`): correctness review for Filter Store behavior.
-- Boyle (`security_reviewer`, `019e4326-10f1-7d60-ae74-d98d4956ba74`): security review for hostile runtime input and native exposure.
-- Darwin (`test_quality_reviewer`, `019e4326-1ccb-7732-916d-692bc543c854`): test-quality review for TASK-006 coverage.
-- Confucius (`deprecation_auditor`, `019e4326-288f-7e22-8271-1cb3951c30c9`): deprecation and runtime validation risk review.
-- Laplace (`docs_researcher`, `019e4326-2fba-7892-90aa-9c2e3231e6d9`): docs alignment and current-docs review.
+- None.
 
 ## Recent Agent Outcomes
 
+- Review round 1 completed. Bohr reported no correctness P0/P1/P2; Boyle found one P1 raw proxy/reflection-trap escape and one P2 unvalidated `filterId` raw-error path; Darwin found three P2 test coverage gaps; Confucius found one P2 non-enumerable Query AST property issue and one P3 operator drift risk; Laplace found no docs P0/P1/P2 and two P3 docs hygiene/traceability items.
 - TASK-006 review agents spawned. `doc_writer` could not start immediately because the agent thread limit was reached; parent will start it later if docs review is still needed.
 - Hume (`implementer`) completed and was closed after implementing the in-memory Filter Store.
 - Hume's implementation commit: `611125c Hume(implementation)(Add Filter Store and Query AST baseline): implement filter store`.
@@ -156,12 +152,12 @@ Last updated: 2026-05-20 10:10 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-005 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-005.
-- `docs/implementation/agent-communication/TASK-005-in-memory-event-store.md` will hold TASK-005 agent notes.
+- `docs/implementation/progress.md` marks TASK-006 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-006.
+- `docs/implementation/agent-communication/TASK-006-filter-store-query-ast.md` holds TASK-006 agent notes and parent decisions.
 
 ## Next Actions
 
-1. Wait for active TASK-006 review agents.
-2. Start `doc_writer` later if docs review is still needed and a slot is free.
-3. Fix any P0/P1 findings before final gate.
+1. Commit review findings.
+2. Spawn test writer for selected P1/P2 review-fix tests.
+3. Spawn implementer after red/updated tests are committed.
