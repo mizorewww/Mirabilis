@@ -186,7 +186,7 @@ type DbValueFunctionPayloadLeak =
 type ExpectedNativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
-    transaction<Response>(queries: DbQuery[]): Promise<Response>;
+    transaction<Response>(queries: DbQuery[]): Promise<Response[]>;
   };
   shortcuts: {
     register(shortcut: string, commandId: string): Promise<void>;
@@ -387,8 +387,8 @@ describe("NativeBridge TypeScript boundary", () => {
       query,
     });
 
-    const transactionResult = { changed: 2 };
-    const transactionInvoke = createResolvedInvoke(transactionResult);
+    const transactionResults = [{ changed: 1 }, { changed: 2 }];
+    const transactionInvoke = createResolvedInvoke(transactionResults);
     const transactionBridge = createNativeBridge({ invoke: transactionInvoke });
     const queries = [
       dbQuery(DB_PERSISTENCE_OPERATIONS.pagesCreate, {
@@ -403,9 +403,9 @@ describe("NativeBridge TypeScript boundary", () => {
       transactionBridge.db.transaction<{ changed: number }>(queries);
 
     expectTypeOf<typeof transactionPromise>().toEqualTypeOf<
-      Promise<{ changed: number }>
+      Promise<Array<{ changed: number }>>
     >();
-    await expect(transactionPromise).resolves.toStrictEqual(transactionResult);
+    await expect(transactionPromise).resolves.toStrictEqual(transactionResults);
     expectSingleInvoke(
       transactionInvoke,
       NATIVE_BRIDGE_COMMANDS.dbTransaction,

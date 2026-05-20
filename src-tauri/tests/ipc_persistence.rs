@@ -129,7 +129,10 @@ fn db_execute_round_trips_pages_metadata_events_and_filters() -> TestResult {
     assert_eq!(
         dispatch_db_execute(
             database.state(),
-            json!({"operation": "core.metadata.get", "payload": {"id": "metadata-1"}}),
+            json!({
+                "operation": "core.metadata.get",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
         )?,
         metadata_record
     );
@@ -143,14 +146,20 @@ fn db_execute_round_trips_pages_metadata_events_and_filters() -> TestResult {
     assert_eq!(
         dispatch_db_execute(
             database.state(),
-            json!({"operation": "core.metadata.delete", "payload": {"id": "metadata-1"}}),
+            json!({
+                "operation": "core.metadata.delete",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
         )?,
         Value::Null
     );
     assert_eq!(
         dispatch_db_execute(
             database.state(),
-            json!({"operation": "core.metadata.get", "payload": {"id": "metadata-1"}}),
+            json!({
+                "operation": "core.metadata.get",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
         )?,
         Value::Null
     );
@@ -206,6 +215,93 @@ fn db_execute_round_trips_pages_metadata_events_and_filters() -> TestResult {
         dispatch_db_execute(
             database.state(),
             json!({"operation": "core.filters.get", "payload": {"id": "filter-1"}}),
+        )?,
+        Value::Null
+    );
+
+    Ok(())
+}
+
+#[test]
+fn metadata_get_and_delete_use_core_logical_key_instead_of_row_id() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+    dispatch_db_execute(database.state(), create_page_request("page-1", "Roadmap"))?;
+
+    dispatch_db_execute(
+        database.state(),
+        set_metadata_request_with_key_value(
+            "metadata-original",
+            "page-1",
+            "status",
+            json!({"done": false}),
+            "object",
+        ),
+    )?;
+    dispatch_db_execute(
+        database.state(),
+        set_metadata_request_with_key_value(
+            "metadata-replacement",
+            "page-1",
+            "status",
+            json!("done"),
+            "string",
+        ),
+    )?;
+
+    let expected = metadata_response_with_value(
+        "metadata-original",
+        "page-1",
+        "status",
+        json!("done"),
+        "string",
+    );
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.metadata.get",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
+        )?,
+        expected
+    );
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.metadata.listForPage",
+                "payload": {"pageId": "page-1"}
+            }),
+        )?,
+        json!([expected])
+    );
+
+    for request in [
+        json!({"operation": "core.metadata.get", "payload": {"id": "metadata-original"}}),
+        json!({"operation": "core.metadata.delete", "payload": {"id": "metadata-original"}}),
+    ] {
+        let error = dispatch_db_execute(database.state(), request)
+            .expect_err("metadata get/delete must reject row-id-only IPC payloads");
+        assert_redacted_invalid_request(&error, &["metadata-original"])?;
+    }
+
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.metadata.delete",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
+        )?,
+        Value::Null
+    );
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.metadata.get",
+                "payload": metadata_logical_key_payload("page-1")
+            }),
         )?,
         Value::Null
     );
@@ -399,6 +495,340 @@ fn db_transaction_rolls_back_repository_constraint_failures_and_redacts_errors()
     Ok(())
 }
 
+#[test]
+fn missing_target_mutations_return_typed_redacted_errors() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+
+    let cases = vec![
+        (
+            "page update",
+            json!({
+                "operation": "core.pages.update",
+                "payload": {
+                    "id": "missing-page-update",
+                    "title": "Missing",
+                    "parentPageId": null,
+                    "body": {"blocks": []},
+                    "updatedAt": UPDATED_AT
+                }
+            }),
+            "missing-page-update",
+        ),
+        (
+            "page archive",
+            json!({
+                "operation": "core.pages.archive",
+                "payload": {"id": "missing-page-archive", "archivedAt": ARCHIVED_AT}
+            }),
+            "missing-page-archive",
+        ),
+        (
+            "metadata delete",
+            json!({
+                "operation": "core.metadata.delete",
+                "payload": {
+                    "pageId": "missing-page",
+                    "namespace": "task",
+                    "key": "status"
+                }
+            }),
+            "missing-page",
+        ),
+        (
+            "filter delete",
+            json!({
+                "operation": "core.filters.delete",
+                "payload": {"id": "missing-filter"}
+            }),
+            "missing-filter",
+        ),
+    ];
+
+    for (label, request, forbidden_fragment) in cases {
+        let error = dispatch_db_execute(database.state(), request)
+            .expect_err(&format!("{label} should reject missing targets"));
+        assert_redacted_persistence_failed(&error, &[forbidden_fragment])?;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn transaction_rolls_back_earlier_writes_when_later_missing_target_mutation_fails() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+
+    let error = dispatch_db_transaction(
+        database.state(),
+        vec![
+            create_page_request("tx-missing-target-rollback", "Rolled back"),
+            json!({
+                "operation": "core.pages.update",
+                "payload": {
+                    "id": "missing-page-in-transaction",
+                    "title": "Missing",
+                    "parentPageId": null,
+                    "body": {"blocks": []},
+                    "updatedAt": UPDATED_AT
+                }
+            }),
+        ],
+    )
+    .expect_err("missing-target mutation should fail the whole transaction");
+    assert_redacted_persistence_failed(
+        &error,
+        &["tx-missing-target-rollback", "missing-page-in-transaction"],
+    )?;
+
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.pages.get",
+                "payload": {"id": "tx-missing-target-rollback"}
+            }),
+        )?,
+        Value::Null
+    );
+
+    Ok(())
+}
+
+#[test]
+fn db_execute_rejects_semantically_invalid_payloads_for_every_operation() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+    dispatch_db_execute(
+        database.state(),
+        create_page_request("validation-page", "Validation"),
+    )?;
+    dispatch_db_execute(database.state(), save_filter_request("validation-filter"))?;
+
+    let cases = vec![
+        (
+            "core.pages.create",
+            create_page_request("   ", "Blank page id"),
+            "   ",
+        ),
+        (
+            "core.pages.get",
+            json!({"operation": "core.pages.get", "payload": {"id": ""}}),
+            "",
+        ),
+        (
+            "core.pages.list",
+            json!({
+                "operation": "core.pages.list",
+                "payload": {"parentPageId": "\n\t"}
+            }),
+            "\n\t",
+        ),
+        (
+            "core.pages.update",
+            json!({
+                "operation": "core.pages.update",
+                "payload": {
+                    "id": " ",
+                    "title": "Blank id",
+                    "parentPageId": null,
+                    "body": {"blocks": []},
+                    "updatedAt": UPDATED_AT
+                }
+            }),
+            " ",
+        ),
+        (
+            "core.pages.archive",
+            json!({
+                "operation": "core.pages.archive",
+                "payload": {"id": "\t", "archivedAt": ARCHIVED_AT}
+            }),
+            "\t",
+        ),
+        (
+            "core.metadata.set",
+            set_metadata_request_with_key_value(
+                "metadata-invalid-page",
+                " ",
+                "status",
+                json!("open"),
+                "string",
+            ),
+            " ",
+        ),
+        (
+            "core.metadata.get",
+            json!({
+                "operation": "core.metadata.get",
+                "payload": {"pageId": "", "namespace": "task", "key": "status"}
+            }),
+            "",
+        ),
+        (
+            "core.metadata.listForPage",
+            json!({
+                "operation": "core.metadata.listForPage",
+                "payload": {"pageId": " "}
+            }),
+            " ",
+        ),
+        (
+            "core.metadata.delete",
+            json!({
+                "operation": "core.metadata.delete",
+                "payload": {"pageId": "validation-page", "namespace": " ", "key": "status"}
+            }),
+            " ",
+        ),
+        (
+            "core.events.append",
+            json!({
+                "operation": "core.events.append",
+                "payload": {
+                    "id": "event-invalid-namespace",
+                    "pageId": "validation-page",
+                    "namespace": " ",
+                    "eventType": "timer.started",
+                    "payload": {},
+                    "sourcePluginId": "core.timer",
+                    "createdAt": CREATED_AT
+                }
+            }),
+            " ",
+        ),
+        (
+            "core.events.list",
+            json!({
+                "operation": "core.events.list",
+                "payload": {"namespace": " "}
+            }),
+            " ",
+        ),
+        (
+            "core.filters.save",
+            save_filter_request_with_parts(
+                "",
+                valid_filter_query(),
+                Some(valid_filter_sort()),
+                None,
+            ),
+            "",
+        ),
+        (
+            "core.filters.get",
+            json!({"operation": "core.filters.get", "payload": {"id": " "}}),
+            " ",
+        ),
+        (
+            "core.filters.list",
+            json!({
+                "operation": "core.filters.list",
+                "payload": {"viewType": "\t"}
+            }),
+            "\t",
+        ),
+        (
+            "core.filters.delete",
+            json!({"operation": "core.filters.delete", "payload": {"id": ""}}),
+            "",
+        ),
+    ];
+
+    let covered_operations = cases
+        .iter()
+        .map(|(operation, _, _)| *operation)
+        .collect::<Vec<_>>();
+    assert_eq!(covered_operations.as_slice(), EXPECTED_DB_OPERATIONS);
+
+    for (operation, request, forbidden_fragment) in cases {
+        let error = dispatch_db_execute(database.state(), request).expect_err(&format!(
+            "{operation} should reject semantic invalid payloads"
+        ));
+        assert_redacted_invalid_request(&error, &[forbidden_fragment])?;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn metadata_value_type_must_match_value_shape() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+    dispatch_db_execute(
+        database.state(),
+        create_page_request("metadata-validation-page", "Metadata validation"),
+    )?;
+
+    let cases = vec![
+        ("string value as number", json!("open"), "number"),
+        ("number value as string", json!(3), "string"),
+        ("boolean value as object", json!(true), "object"),
+        ("object value as array", json!({"done": false}), "array"),
+        ("array value as object", json!(["task"]), "object"),
+        ("null value as boolean", Value::Null, "boolean"),
+    ];
+
+    for (index, (label, value, value_type)) in cases.into_iter().enumerate() {
+        let error = dispatch_db_execute(
+            database.state(),
+            set_metadata_request_with_key_value(
+                &format!("metadata-type-mismatch-{index}"),
+                "metadata-validation-page",
+                &format!("status-{index}"),
+                value,
+                value_type,
+            ),
+        )
+        .expect_err(&format!("{label} should be rejected"));
+        assert_redacted_invalid_request(&error, &[value_type])?;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn filter_save_rejects_malformed_query_sort_and_group_shapes() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+
+    let cases = vec![
+        (
+            "unsupported query operator",
+            save_filter_request_with_parts(
+                "filter-invalid-query",
+                json!({"where": [{"field": "metadata.task.title", "op": "regex", "value": "^fix"}]}),
+                Some(valid_filter_sort()),
+                None,
+            ),
+            "regex",
+        ),
+        (
+            "malformed sort direction",
+            save_filter_request_with_parts(
+                "filter-invalid-sort",
+                valid_filter_query(),
+                Some(json!([{"field": "createdAt", "direction": "sideways"}])),
+                None,
+            ),
+            "sideways",
+        ),
+        (
+            "malformed group field",
+            save_filter_request_with_parts(
+                "filter-invalid-group",
+                valid_filter_query(),
+                None,
+                Some(json!({"field": " "})),
+            ),
+            " ",
+        ),
+    ];
+
+    for (label, request, forbidden_fragment) in cases {
+        let error = dispatch_db_execute(database.state(), request)
+            .expect_err(&format!("{label} should be rejected"));
+        assert_redacted_invalid_request(&error, &[forbidden_fragment])?;
+    }
+
+    Ok(())
+}
+
 struct TempIpcDatabase {
     _dir: TempDir,
     path: PathBuf,
@@ -442,19 +872,41 @@ fn create_page_request(id: &str, title: &str) -> Value {
 }
 
 fn set_metadata_request(id: &str, page_id: &str) -> Value {
+    set_metadata_request_with_key_value(id, page_id, "status", json!({"done": false}), "object")
+}
+
+fn set_metadata_request_with_key_value(
+    id: &str,
+    page_id: &str,
+    key: &str,
+    value: Value,
+    value_type: &str,
+) -> Value {
     json!({
         "operation": "core.metadata.set",
         "payload": {
             "id": id,
             "pageId": page_id,
             "namespace": "task",
-            "key": "status",
-            "value": {"done": false},
-            "valueType": "object",
+            "key": key,
+            "value": value,
+            "valueType": value_type,
             "sourcePluginId": "core.task",
             "createdAt": CREATED_AT,
             "updatedAt": UPDATED_AT
         }
+    })
+}
+
+fn metadata_logical_key_payload(page_id: &str) -> Value {
+    metadata_logical_key_payload_for(page_id, "task", "status")
+}
+
+fn metadata_logical_key_payload_for(page_id: &str, namespace: &str, key: &str) -> Value {
+    json!({
+        "pageId": page_id,
+        "namespace": namespace,
+        "key": key
     })
 }
 
@@ -474,20 +926,39 @@ fn append_event_request(id: &str, page_id: &str) -> Value {
 }
 
 fn save_filter_request(id: &str) -> Value {
+    save_filter_request_with_parts(id, valid_filter_query(), Some(valid_filter_sort()), None)
+}
+
+fn save_filter_request_with_parts(
+    id: &str,
+    query: Value,
+    sort: Option<Value>,
+    group: Option<Value>,
+) -> Value {
     json!({
         "operation": "core.filters.save",
         "payload": {
             "id": id,
             "name": "Open tasks",
-            "query": {"operator": "eq", "field": "task.done", "value": false},
-            "sort": {"field": "createdAt", "direction": "asc"},
-            "group": null,
+            "query": query,
+            "sort": sort,
+            "group": group,
             "viewType": "list",
             "sourcePluginId": "core.search",
             "createdAt": CREATED_AT,
             "updatedAt": UPDATED_AT
         }
     })
+}
+
+fn valid_filter_query() -> Value {
+    json!({
+        "where": [{"field": "metadata.task.done", "op": "eq", "value": false}]
+    })
+}
+
+fn valid_filter_sort() -> Value {
+    json!([{"field": "createdAt", "direction": "asc"}])
 }
 
 fn request_with_path_like_payload_field(field_name: &str, path: &str) -> Value {
@@ -514,13 +985,23 @@ fn page_response(id: &str, title: &str, updated_at: &str, archived_at: Value) ->
 }
 
 fn metadata_response(id: &str, page_id: &str) -> Value {
+    metadata_response_with_value(id, page_id, "status", json!({"done": false}), "object")
+}
+
+fn metadata_response_with_value(
+    id: &str,
+    page_id: &str,
+    key: &str,
+    value: Value,
+    value_type: &str,
+) -> Value {
     json!({
         "id": id,
         "pageId": page_id,
         "namespace": "task",
-        "key": "status",
-        "value": {"done": false},
-        "valueType": "object",
+        "key": key,
+        "value": value,
+        "valueType": value_type,
         "sourcePluginId": "core.task",
         "createdAt": CREATED_AT,
         "updatedAt": UPDATED_AT
@@ -543,14 +1024,44 @@ fn filter_response(id: &str) -> Value {
     json!({
         "id": id,
         "name": "Open tasks",
-        "query": {"operator": "eq", "field": "task.done", "value": false},
-        "sort": {"field": "createdAt", "direction": "asc"},
+        "query": valid_filter_query(),
+        "sort": valid_filter_sort(),
         "group": null,
         "viewType": "list",
         "sourcePluginId": "core.search",
         "createdAt": CREATED_AT,
         "updatedAt": UPDATED_AT
     })
+}
+
+fn assert_redacted_invalid_request(
+    error: &impl Serialize,
+    forbidden_fragments: &[&str],
+) -> TestResult {
+    assert_redacted_ipc_error(
+        error,
+        "INVALID_REQUEST",
+        &forbidden_fragments
+            .iter()
+            .filter(|fragment| !fragment.is_empty())
+            .map(|fragment| (*fragment).to_string())
+            .collect::<Vec<_>>(),
+    )
+}
+
+fn assert_redacted_persistence_failed(
+    error: &impl Serialize,
+    forbidden_fragments: &[&str],
+) -> TestResult {
+    assert_redacted_ipc_error(
+        error,
+        "PERSISTENCE_FAILED",
+        &forbidden_fragments
+            .iter()
+            .filter(|fragment| !fragment.is_empty())
+            .map(|fragment| (*fragment).to_string())
+            .collect::<Vec<_>>(),
+    )
 }
 
 fn assert_redacted_ipc_error(
