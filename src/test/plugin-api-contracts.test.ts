@@ -15,18 +15,25 @@ import type {
   PluginCommandRegistry,
   PluginContext,
   PluginContributions,
+  PluginCommandDefinition,
   PluginDependency,
+  PluginDependencyReference,
   PluginEventStore,
   PluginFilterStore,
   PluginInstallContext,
+  PluginLifecycleResult,
   PluginManifest,
   PluginMetadataStore,
   PluginPageStore,
   PluginPermission,
   PluginSlotContribution,
+  PluginSlotDefinition,
   PluginSlotRegistry,
+  PluginTransaction,
+  PluginTransactionHandler,
   PluginTransactionManager,
   PluginUninstallContext,
+  PluginViewDefinition,
   PluginViewRegistry,
   SettingsPanelContribution,
   ViewContribution,
@@ -47,16 +54,25 @@ import type {
   MetadataStore,
   MobileToolbarContribution as MobileToolbarContributionFromCore,
   PluginCommandRegistry as PluginCommandRegistryFromCore,
+  PluginCommandDefinition as PluginCommandDefinitionFromCore,
   PluginContext as PluginContextFromCore,
   PluginContributions as PluginContributionsFromCore,
   PluginDependency as PluginDependencyFromCore,
+  PluginDependencyReference as PluginDependencyReferenceFromCore,
   PluginInstallContext as PluginInstallContextFromCore,
+  PluginLifecycleResult as PluginLifecycleResultFromCore,
   PluginManifest as PluginManifestFromCore,
+  MetadataJsonValue,
+  MetadataValueType,
   PluginPermission as PluginPermissionFromCore,
   PluginSlotContribution as PluginSlotContributionFromCore,
+  PluginSlotDefinition as PluginSlotDefinitionFromCore,
   PluginSlotRegistry as PluginSlotRegistryFromCore,
+  PluginTransaction as PluginTransactionFromCore,
+  PluginTransactionHandler as PluginTransactionHandlerFromCore,
   PluginTransactionManager as PluginTransactionManagerFromCore,
   PluginUninstallContext as PluginUninstallContextFromCore,
+  PluginViewDefinition as PluginViewDefinitionFromCore,
   PluginViewRegistry as PluginViewRegistryFromCore,
   PageStore,
   SettingsPanelContribution as SettingsPanelContributionFromCore,
@@ -66,7 +82,30 @@ import type {
   ViewRegistry,
 } from "../core";
 
-type LifecycleResult = void | Promise<void>;
+type LifecycleResult = PluginLifecycleResult;
+type ArrayElement<Value> = Value extends readonly (infer Element)[]
+  ? Element
+  : never;
+type KeyLeak<
+  Surface,
+  Key extends PropertyKey,
+  Label extends string,
+> = Extract<keyof Surface, Key> extends never ? never : Label;
+type FunctionAssignableLeak<Value, Label extends string> = (() => boolean) extends
+  NonNullable<Value>
+  ? Label
+  : never;
+type JsonCompatibilityLeak<Value, Label extends string> = NonNullable<
+  Value
+> extends MetadataJsonValue
+  ? never
+  : Label;
+type SlotExecutableSurfaceConditionLeak<
+  Surface,
+  Label extends string,
+> = Surface extends { when?: infer Condition }
+  ? FunctionAssignableLeak<Condition, Label>
+  : never;
 type ForbiddenPluginContextKey =
   | "stores"
   | "registries"
@@ -119,6 +158,85 @@ type CallerSuppliedSourcePluginIdKey =
   | Extract<keyof PluginFilterSaveInput, "sourcePluginId">
   | Extract<keyof PluginFilterUpdateInput, "sourcePluginId">
   | Extract<keyof PluginFilterListOptions, "sourcePluginId">;
+type PluginCommandRegisterInput = Parameters<
+  PluginCommandRegistry["register"]
+>[0];
+type PluginViewRegisterInput = Parameters<PluginViewRegistry["register"]>[0];
+type PluginSlotRegisterInput = Parameters<PluginSlotRegistry["register"]>[0];
+type PluginCommandListOptions = NonNullable<
+  Parameters<PluginCommandRegistry["list"]>[0]
+>;
+type PluginViewListOptions = NonNullable<
+  Parameters<PluginViewRegistry["list"]>[0]
+>;
+type PluginSlotListOptions = NonNullable<
+  Parameters<PluginSlotRegistry["list"]>[0]
+>;
+type CallerSuppliedRegistryPluginIdKey =
+  | KeyLeak<
+      PluginCommandRegisterInput,
+      "pluginId",
+      "commands.register.pluginId"
+    >
+  | KeyLeak<PluginViewRegisterInput, "pluginId", "views.register.pluginId">
+  | KeyLeak<PluginSlotRegisterInput, "pluginId", "slots.register.pluginId">
+  | KeyLeak<PluginCommandListOptions, "pluginId", "commands.list.pluginId">
+  | KeyLeak<PluginViewListOptions, "pluginId", "views.list.pluginId">
+  | KeyLeak<PluginSlotListOptions, "pluginId", "slots.list.pluginId">;
+type CallerSuppliedRegistryPluginIdAssignableLeak =
+  | ({ pluginId: string } extends PluginCommandListOptions
+      ? "commands.list.pluginId"
+      : never)
+  | ({ pluginId: string } extends PluginViewListOptions
+      ? "views.list.pluginId"
+      : never)
+  | ({ pluginId: string } extends PluginSlotListOptions
+      ? "slots.list.pluginId"
+      : never);
+type PluginViewRegisterResult = ReturnType<PluginViewRegistry["register"]>;
+type PluginViewGetResult = ReturnType<PluginViewRegistry["get"]>;
+type PluginViewListResult = ArrayElement<ReturnType<PluginViewRegistry["list"]>>;
+type PluginSlotRegisterResult = ReturnType<PluginSlotRegistry["register"]>;
+type PluginSlotGetResult = ReturnType<PluginSlotRegistry["get"]>;
+type PluginSlotListResult = ArrayElement<ReturnType<PluginSlotRegistry["list"]>>;
+type PluginRegistryExecutableReturnLeak =
+  | KeyLeak<
+      PluginViewRegisterResult,
+      "component",
+      "views.register.component"
+    >
+  | KeyLeak<PluginViewGetResult, "component", "views.get.component">
+  | KeyLeak<PluginViewListResult, "component", "views.list.component">
+  | KeyLeak<
+      PluginSlotRegisterResult,
+      "component",
+      "slots.register.component"
+    >
+  | KeyLeak<PluginSlotGetResult, "component", "slots.get.component">
+  | KeyLeak<PluginSlotListResult, "component", "slots.list.component">
+  | SlotExecutableSurfaceConditionLeak<
+      PluginSlotRegisterResult,
+      "slots.register.when"
+    >
+  | SlotExecutableSurfaceConditionLeak<PluginSlotGetResult, "slots.get.when">
+  | SlotExecutableSurfaceConditionLeak<PluginSlotListResult, "slots.list.when">;
+type PluginContributionJsonCompatibilityLeak =
+  | JsonCompatibilityLeak<
+      EventTypeContribution["payloadSchema"],
+      "eventTypes.payloadSchema"
+    >
+  | JsonCompatibilityLeak<
+      AlgorithmContribution["inputSchema"],
+      "algorithms.inputSchema"
+    >
+  | JsonCompatibilityLeak<
+      AlgorithmContribution["outputSchema"],
+      "algorithms.outputSchema"
+    >
+  | JsonCompatibilityLeak<
+      FilterContribution["query"]["where"][number]["value"],
+      "filters.query.where.value"
+    >;
 type PluginApiBoundaryLeak =
   | RawPermissionLeak
   | LegacyContributionKey
@@ -133,7 +251,11 @@ type PluginApiBoundaryLeak =
     >
   | ManifestExecutableDescriptorKey
   | SlotExecutableConditionLeak
-  | CallerSuppliedSourcePluginIdKey;
+  | CallerSuppliedSourcePluginIdKey
+  | CallerSuppliedRegistryPluginIdKey
+  | CallerSuppliedRegistryPluginIdAssignableLeak
+  | PluginContributionJsonCompatibilityLeak
+  | PluginRegistryExecutableReturnLeak;
 
 describe("Plugin API contracts", () => {
   it("provides a public plugin-api module and re-exports contracts from Core", () => {
@@ -141,6 +263,9 @@ describe("Plugin API contracts", () => {
 
     expectTypeOf<PluginManifestFromCore>().toEqualTypeOf<PluginManifest>();
     expectTypeOf<PluginDependencyFromCore>().toEqualTypeOf<PluginDependency>();
+    expectTypeOf<PluginDependencyReferenceFromCore>().toEqualTypeOf<
+      PluginDependencyReference
+    >();
     expectTypeOf<PluginPermissionFromCore>().toEqualTypeOf<PluginPermission>();
     expectTypeOf<PluginContributionsFromCore>().toEqualTypeOf<
       PluginContributions
@@ -188,14 +313,29 @@ describe("Plugin API contracts", () => {
     expectTypeOf<PluginCommandRegistryFromCore>().toEqualTypeOf<
       PluginCommandRegistry
     >();
+    expectTypeOf<
+      PluginCommandDefinitionFromCore<{ pageId: string }, string>
+    >().toEqualTypeOf<PluginCommandDefinition<{ pageId: string }, string>>();
     expectTypeOf<PluginViewRegistryFromCore>().toEqualTypeOf<
       PluginViewRegistry
     >();
+    expectTypeOf<PluginViewDefinitionFromCore<{ pageId: string }>>()
+      .toEqualTypeOf<PluginViewDefinition<{ pageId: string }>>();
     expectTypeOf<PluginSlotRegistryFromCore>().toEqualTypeOf<
       PluginSlotRegistry
     >();
+    expectTypeOf<PluginSlotDefinitionFromCore<{ pageId: string }>>()
+      .toEqualTypeOf<PluginSlotDefinition<{ pageId: string }>>();
+    expectTypeOf<PluginTransactionFromCore>().toEqualTypeOf<
+      PluginTransaction
+    >();
+    expectTypeOf<PluginTransactionHandlerFromCore<string>>()
+      .toEqualTypeOf<PluginTransactionHandler<string>>();
     expectTypeOf<PluginTransactionManagerFromCore>().toEqualTypeOf<
       PluginTransactionManager
+    >();
+    expectTypeOf<PluginLifecycleResultFromCore>().toEqualTypeOf<
+      PluginLifecycleResult
     >();
   });
 
@@ -253,10 +393,10 @@ describe("Plugin API contracts", () => {
     expectTypeOf<PluginManifest["minAppVersion"]>().toEqualTypeOf<string>();
     expectTypeOf<PluginManifest["main"]>().toEqualTypeOf<string | undefined>();
     expectTypeOf<PluginManifest["dependencies"]>().toEqualTypeOf<
-      readonly (string | PluginDependency)[] | undefined
+      readonly PluginDependencyReference[] | undefined
     >();
     expectTypeOf<PluginManifest["optionalDependencies"]>().toEqualTypeOf<
-      readonly (string | PluginDependency)[] | undefined
+      readonly PluginDependencyReference[] | undefined
     >();
     expectTypeOf<PluginManifest["permissions"]>().toEqualTypeOf<
       readonly PluginPermission[] | undefined
@@ -372,6 +512,10 @@ describe("Plugin API contracts", () => {
       readonly SettingsPanelContribution[] | undefined
     >();
 
+    expectTypeOf<MetadataFieldContribution["valueType"]>().toEqualTypeOf<
+      MetadataValueType | undefined
+    >();
+
     const contributions = {
       markdownSyntax: [markdownSyntaxContribution],
       metadataFields: [metadataFieldContribution],
@@ -465,6 +609,175 @@ describe("Plugin API contracts", () => {
     expect(plugin.manifest.id).toBe("example.lifecycle");
   });
 
+  it("keeps manifest descriptors inert and JSON-compatible", () => {
+    const payloadSchema = {
+      type: "object",
+      properties: {
+        pageId: { type: "string" },
+        completed: { type: "boolean" },
+      },
+      required: ["pageId"],
+      additionalProperties: false,
+    } satisfies MetadataJsonValue;
+    const inputSchema = {
+      type: "array",
+      items: { type: "number" },
+    } satisfies MetadataJsonValue;
+    const outputSchema = {
+      anyOf: [{ type: "string" }, { type: "null" }],
+    } satisfies MetadataJsonValue;
+    const filterValue = {
+      namespace: "task",
+      tags: ["focus", "review"],
+      active: true,
+      limit: 3,
+      empty: null,
+    } satisfies MetadataJsonValue;
+
+    const eventType = {
+      id: "example.event.completed",
+      namespace: "example",
+      type: "completed",
+      payloadSchema,
+    } satisfies EventTypeContribution;
+    const algorithm = {
+      id: "example.algorithm.rank",
+      inputSchema,
+      outputSchema,
+    } satisfies AlgorithmContribution;
+    const filter = {
+      id: "example.filter.focus",
+      name: "Focused Examples",
+      query: {
+        where: [
+          {
+            field: "metadata.example.tags",
+            op: "eq",
+            value: filterValue,
+          },
+        ],
+      },
+      viewType: "example.view",
+    } satisfies FilterContribution;
+
+    expect(eventType.payloadSchema).toBe(payloadSchema);
+    expect(algorithm.inputSchema).toBe(inputSchema);
+    expect(algorithm.outputSchema).toBe(outputSchema);
+    expect(filter.query.where[0]?.value).toBe(filterValue);
+
+    expectTypeOf<EventTypeContribution["payloadSchema"]>().toEqualTypeOf<
+      MetadataJsonValue | undefined
+    >();
+    expectTypeOf<AlgorithmContribution["inputSchema"]>().toEqualTypeOf<
+      MetadataJsonValue | undefined
+    >();
+    expectTypeOf<AlgorithmContribution["outputSchema"]>().toEqualTypeOf<
+      MetadataJsonValue | undefined
+    >();
+    expectTypeOf<
+      FilterContribution["query"]["where"][number]["value"]
+    >().toEqualTypeOf<MetadataJsonValue | undefined>();
+  });
+
+  it("uses Core metadata value types for metadata field contributions", () => {
+    const field = {
+      id: "example.metadata.status",
+      namespace: "example",
+      key: "status",
+      name: "Status",
+      valueType: "string",
+    } satisfies MetadataFieldContribution;
+    const valueTypes = [
+      "string",
+      "number",
+      "boolean",
+      "json",
+      "date",
+      "null",
+    ] as const satisfies readonly MetadataValueType[];
+
+    expect(field.valueType).toBe("string");
+    expect(valueTypes).toContain("json");
+  });
+
+  it("keeps plugin registry registration inputs caller-scoped and return surfaces inert", () => {
+    const commandDefinition = {
+      id: "example.command.open",
+      title: "Open Example",
+      context: { surface: "example.workspace" },
+      handler(input: { pageId: string }) {
+        return input.pageId;
+      },
+    } satisfies PluginCommandDefinition<{ pageId: string }, string>;
+    const viewDefinition = {
+      id: "example.view.primary",
+      type: "example.view",
+      title: "Example View",
+      accepts: { kind: "example.page" },
+      component() {
+        return null;
+      },
+    } satisfies PluginViewDefinition;
+    const slotDefinition = {
+      id: "example.slot.primary",
+      slot: "example.workspace.panel",
+      order: 10,
+      component() {
+        return null;
+      },
+      when() {
+        return true;
+      },
+    } satisfies PluginSlotDefinition;
+    const commandListOptions = {} satisfies PluginCommandListOptions;
+    const viewListOptions = {
+      type: "example.view",
+    } satisfies PluginViewListOptions;
+    const slotListOptions = {
+      slot: "example.workspace.panel",
+    } satisfies PluginSlotListOptions;
+
+    expect(commandDefinition.id).toBe("example.command.open");
+    expect(viewDefinition.type).toBe("example.view");
+    expect(slotDefinition.slot).toBe("example.workspace.panel");
+    expect(commandListOptions).toEqual({});
+    expect(viewListOptions.type).toBe("example.view");
+    expect(slotListOptions.slot).toBe("example.workspace.panel");
+
+    expectTypeOf<PluginRegistryExecutableReturnLeak>().toBeNever();
+    expectTypeOf<CallerSuppliedRegistryPluginIdAssignableLeak>().toBeNever();
+
+    ({
+      id: "example.command.bad-owner",
+      // @ts-expect-error the Plugin Host supplies command plugin ownership
+      pluginId: "other.plugin",
+      title: "Bad Owner",
+      handler() {},
+    } satisfies PluginCommandDefinition);
+
+    ({
+      id: "example.view.bad-owner",
+      // @ts-expect-error the Plugin Host supplies view plugin ownership
+      pluginId: "other.plugin",
+      type: "example.view",
+      title: "Bad Owner",
+      accepts: { kind: "example.page" },
+      component() {
+        return null;
+      },
+    } satisfies PluginViewDefinition);
+
+    ({
+      id: "example.slot.bad-owner",
+      // @ts-expect-error the Plugin Host supplies slot plugin ownership
+      pluginId: "other.plugin",
+      slot: "example.workspace.panel",
+      component() {
+        return null;
+      },
+    } satisfies PluginSlotDefinition);
+  });
+
   it("keeps PluginContext scoped to plugin-facing facades and away from raw runtime handles", () => {
     expectTypeOf<PluginContext["pluginId"]>().toEqualTypeOf<string>();
     expectTypeOf<PluginContext["app"]>().toEqualTypeOf<AppRuntimeInfo>();
@@ -485,6 +798,6 @@ describe("Plugin API contracts", () => {
   });
 
   it("keeps plugin-facing boundaries scoped, inert, and caller-bound", () => {
-    expectTypeOf<PluginApiBoundaryLeak>().toEqualTypeOf<never>();
+    expectTypeOf<PluginApiBoundaryLeak>().toBeNever();
   });
 });
