@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: concurrent lifecycle P2 found; TDD handoff next.
-- Active agents: none.
-- Next parent step: delegate a focused red test for concurrent uninstall during pending register transaction, then delegate implementation.
+- Status: concurrent lifecycle TDD in progress.
+- Active agents: Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`).
+- Next parent step: wait for Dewey, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -461,6 +461,17 @@
   - Add a focused red test for concurrent uninstall during pending register transaction.
   - Delegate the minimal production fix after the expected red signal.
 
+### Concurrent Lifecycle TDD
+
+- Status: in progress.
+- Agent:
+  - Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add a deterministic red test for concurrent `uninstall(pluginId)` while `register(ctx)` is still pending and has started an unawaited transaction.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -470,4 +481,4 @@
 
 ## Next Action
 
-Delegate concurrent lifecycle red test for pending register transaction and uninstall.
+Wait for Dewey, then validate and commit the concurrent lifecycle red test.

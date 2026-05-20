@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:59 CST.
+Last updated: 2026-05-21 01:01 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 00:59 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 concurrent lifecycle P2 found; TDD handoff next.
+- Current phase: TASK-011 concurrent lifecycle TDD in progress.
 
 ## Active Agents
 
-- No active agents. Next handoff: `test_writer` for concurrent register/uninstall transaction rollback.
+- Dewey (`test_writer`, `019e4655-7e6f-7582-8991-ce18128c784a`) is adding the concurrent register/uninstall transaction rollback red test.
 
 ## Recent Agent Outcomes
 
+- Dewey (`test_writer`) was spawned for the concurrent lifecycle red test in `src/test/plugin-host-lifecycle.test.ts`.
 - Final micro re-review completed. Bohr (`reviewer`) found one P2 correctness issue: concurrent `uninstall(pluginId)` can delete a plugin record while `register(ctx)` is still pending, leaving the register scope active long enough for an unawaited transaction to commit after uninstall.
 - Linnaeus (`security_reviewer`) found no P0/P1/P2 findings for the pending transaction fix and confirmed no native/Tauri/fs/dynamic import/IPC/SQLite/package scope creep.
 - Parent decision: add a focused red test for concurrent uninstall during a pending register transaction, then delegate the minimal lifecycle concurrency fix.
