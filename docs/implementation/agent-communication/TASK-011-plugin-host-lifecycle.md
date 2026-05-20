@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final review-fix implementation green; final narrow re-review next.
-- Active agents: none.
-- Next parent step: run final narrow re-review for stale context revocation and failed-install cleanup.
+- Status: final narrow re-review in progress.
+- Active agents: Aristotle (`reviewer`), Anscombe (`security_reviewer`), Huygens (`test_quality_reviewer`), and Hooke (`docs_researcher`).
+- Next parent step: wait for final narrow re-review, then run final local gate if no P0/P1/P2 findings remain.
 
 ## Agent Handoffs
 
@@ -301,6 +301,17 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Narrow Re-Review
+
+- Status: in progress.
+- Agents:
+  - Aristotle (`reviewer`, `019e4630-8930-7802-bce8-404b37d826fe`).
+  - Anscombe (`security_reviewer`, `019e4630-9fc1-7911-8302-a63591273ef7`).
+  - Huygens (`test_quality_reviewer`, `019e4630-a601-7d30-ad72-bb8b5a18e7ad`).
+  - Hooke (`docs_researcher`, `019e4630-abcc-7860-9ee2-38ace68b0396`).
+- Assignment:
+  - Read-only final narrow re-review of stale context revocation, failed-install cleanup, test strength, and docs/status alignment.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -310,4 +321,4 @@
 
 ## Next Action
 
-Run final narrow re-review for stale context revocation and failed-install cleanup.
+Wait for final narrow re-review, then run the final local gate if clear.
