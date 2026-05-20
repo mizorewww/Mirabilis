@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:20 CST.
+Last updated: 2026-05-20 12:22 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 12:20 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation follow-up pending.
+- Current phase: targeted re-review pending.
 
 ## Active Agents
 
-- Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
+- None.
 
 ## Recent Agent Outcomes
 
+- Locke (`implementer`) completed and was closed after implementing TASK-008 review fixes.
+- Locke's review-fix commit: `ffe8561 Locke(review-fix)(Add View Registry and Slot Registry): accept object component refs`.
+- Parent repeated green checks after Locke: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
+- Parent also confirmed `rg -n "hasSelectivelyThrowingGetTrap|Reflect\\.get" src/core/registries/view-registry.ts src/core/registries/slot-registry.ts` returns no matches.
 - Avicenna (`test_writer`) completed and was closed after strengthening TASK-008 proxy descriptor-read tests.
 - Avicenna's test commit: `c4dbc4a Avicenna(test)(Add View Registry and Slot Registry): forbid proxy get trap reads`.
 - Parent confirmed expected red signal after Avicenna against Locke's current production patch: `bun run typecheck` passes, and `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 18 passing and 2 failing because view and slot registration still invoke Proxy `get` traps.
@@ -243,6 +247,6 @@ Last updated: 2026-05-20 12:20 CST.
 
 ## Next Actions
 
-1. Send Locke a follow-up to remove `get`-trap probing and keep descriptor-value reads.
-2. Repeat `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts`, and `bun run lint`.
-3. Commit Locke's production patch if focused checks are green.
+1. Commit this Locke completion summary.
+2. Spawn targeted re-review agents for TASK-008 review-fix changes.
+3. Address any remaining P0/P1/P2 findings before final gate.

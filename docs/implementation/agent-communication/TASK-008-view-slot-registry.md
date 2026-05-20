@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation follow-up pending.
-- Active agents:
-  - Locke (`implementer`, `019e4392-b734-7f53-b304-5063a8a09c92`): implement TASK-008 review fixes in Core production type/registry files only; do not edit tests/docs/config and do not commit.
+- Status: targeted re-review pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -173,7 +172,7 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ### Locke (`implementer`)
 
-- Status: completed with follow-up needed.
+- Status: completed and closed.
 - Agent id: `019e4392-b734-7f53-b304-5063a8a09c92`.
 - Ownership:
   - `src/core/types/view.ts`.
@@ -187,12 +186,16 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
   - Read own data descriptor values without invoking Proxy `get` traps.
   - Preserve existing duplicate, ordering, defensive-copy, exact-filter, and inert `when` behavior.
   - Do not edit tests, docs, config, or lockfiles, and do not commit.
+- Commit:
+  - `ffe8561 Locke(review-fix)(Add View Registry and Slot Registry): accept object component refs`.
 - Parent validation:
   - `bun run typecheck` passed.
   - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` passed with 20 tests.
   - `bun run lint` passed.
-- Parent follow-up:
-  - Locke's uncommitted production patch still invokes Proxy `get` traps through `hasSelectivelyThrowingGetTrap`, which conflicts with the accepted descriptor-value hardening decision. Avicenna is adding a test-only guard before Locke is asked to remove the probing.
+  - `git diff --check` passed.
+  - `rg -n "hasSelectivelyThrowingGetTrap|Reflect\\.get" src/core/registries/view-registry.ts src/core/registries/slot-registry.ts` returned no matches.
+- Parent note:
+  - Locke first produced a green patch that still probed Proxy `get` traps; Avicenna added the missing test guard and Locke removed the probing in the final committed patch.
 
 ### Avicenna (`test_writer`)
 
@@ -213,4 +216,4 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
 
 ## Next Action
 
-Send Locke a follow-up to remove `get`-trap probing, keep descriptor-value reads, and restore green focused checks.
+Commit this Locke completion summary, spawn targeted re-review agents, and address any remaining P0/P1/P2 findings before final gate.
