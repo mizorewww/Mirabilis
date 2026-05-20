@@ -61,50 +61,7 @@ describe("runtime provider", () => {
 
   it("exposes only a safe public runtime facade through useRuntime", async () => {
     const { RuntimeProvider, useRuntime } = await loadRuntimeProviderModule();
-    const fullRuntime: RuntimeLike = {
-      app: {
-        version: "safe-public-runtime",
-        pluginApiVersion: "test",
-      },
-      stores: {
-        pages: {
-          put: vi.fn(),
-        },
-      },
-      registries: {
-        commands: {
-          register: vi.fn(),
-          unregister: vi.fn(),
-          execute: vi.fn(),
-        },
-      },
-      services: {
-        commands: {
-          register: vi.fn(),
-          unregister: vi.fn(),
-          execute: vi.fn(),
-        },
-      },
-      pluginHost: {
-        loadBuiltInPlugins: vi.fn(async () => []),
-        activateAll: vi.fn(async () => []),
-      },
-      nativeBridge: {
-        invoke: vi.fn(),
-        db: {
-          execute: vi.fn(),
-        },
-        files: {
-          importMarkdown: vi.fn(),
-        },
-        path: {
-          appDataDir: vi.fn(),
-        },
-      },
-      storage: {
-        sqlite: {},
-      },
-    };
+    const fullRuntime = createUnsafeFullRuntime("safe-public-runtime");
     let publicRuntime: unknown;
 
     function PublicConsumer() {
@@ -131,6 +88,44 @@ describe("runtime provider", () => {
     expect(publicRuntime).toStrictEqual({
       app: {
         version: "safe-public-runtime",
+        pluginApiVersion: "test",
+      },
+    });
+  });
+
+  it("exposes only the safe public facade after initialized runtime resolves", async () => {
+    const { RuntimeProvider, useRuntime } = await loadRuntimeProviderModule();
+    const fullRuntime = createUnsafeFullRuntime("initialized-safe-runtime");
+    const initializeRuntime = vi.fn(async () => fullRuntime);
+    let publicRuntime: unknown;
+
+    function PublicConsumer() {
+      publicRuntime = useRuntime();
+      const runtime = publicRuntime as RuntimeLike;
+
+      return (
+        <p role="status" aria-label="Initialized public runtime version">
+          {runtime.app.version}
+        </p>
+      );
+    }
+
+    render(
+      <RuntimeProvider initializeRuntime={initializeRuntime}>
+        <PublicConsumer />
+      </RuntimeProvider>,
+    );
+
+    expect(
+      await screen.findByRole("status", {
+        name: "Initialized public runtime version",
+      }),
+    ).toHaveTextContent("initialized-safe-runtime");
+    expect(initializeRuntime).toHaveBeenCalledTimes(1);
+    expect(findUnsafePublicRuntimeSurfacePaths(publicRuntime)).toStrictEqual([]);
+    expect(publicRuntime).toStrictEqual({
+      app: {
+        version: "initialized-safe-runtime",
         pluginApiVersion: "test",
       },
     });
@@ -274,6 +269,88 @@ function createRuntime(
       pluginApiVersion: "test",
     },
     pluginHost,
+  };
+}
+
+function createUnsafeFullRuntime(version: string): RuntimeLike {
+  const commandMutationHandles = {
+    register: vi.fn(),
+    unregister: vi.fn(),
+    execute: vi.fn(),
+  };
+
+  return {
+    app: {
+      version,
+      pluginApiVersion: "test",
+    },
+    stores: {
+      pages: {
+        put: vi.fn(),
+      },
+      metadata: {
+        set: vi.fn(),
+      },
+      events: {
+        append: vi.fn(),
+      },
+      filters: {
+        save: vi.fn(),
+      },
+    },
+    registries: {
+      commands: commandMutationHandles,
+      views: {
+        register: vi.fn(),
+      },
+      slots: {
+        register: vi.fn(),
+      },
+    },
+    services: {
+      pages: {
+        put: vi.fn(),
+      },
+      metadata: {
+        set: vi.fn(),
+      },
+      events: {
+        append: vi.fn(),
+      },
+      filters: {
+        save: vi.fn(),
+      },
+      commands: {
+        register: vi.fn(),
+        unregister: vi.fn(),
+        execute: vi.fn(),
+      },
+      transaction: {
+        run: vi.fn(),
+      },
+    },
+    pluginHost: {
+      loadBuiltInPlugins: vi.fn(async () => []),
+      activateAll: vi.fn(async () => []),
+    },
+    nativeBridge: {
+      invoke: vi.fn(),
+      db: {
+        execute: vi.fn(),
+        transaction: vi.fn(),
+      },
+      files: {
+        importMarkdown: vi.fn(),
+      },
+      path: {
+        appDataDir: vi.fn(),
+      },
+    },
+    storage: {
+      sqlite: {
+        execute: vi.fn(),
+      },
+    },
   };
 }
 
