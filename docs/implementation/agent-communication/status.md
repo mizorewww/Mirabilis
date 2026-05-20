@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 20:44 CST.
+Last updated: 2026-05-20 20:55 CST.
 
 ## Current Task
 
@@ -8,14 +8,21 @@ Last updated: 2026-05-20 20:44 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 targeted re-review P1/P2 fixes active.
+- Current phase: TASK-010 targeted ownership-key fixes green; final targeted re-review next.
 
 ## Active Agents
 
-- Euler the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-45d77364b703`): add targeted type tests for structural ownership-key leaks and helper exports.
+- None. Next step is final targeted re-review.
 
 ## Recent Agent Outcomes
 
+- Euler the 2nd (`test_writer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused test patch in `src/test/plugin-api-contracts.test.ts`.
+- Euler the 2nd's test commit: `06ed813 Euler the 2nd(test)(Define Plugin API contracts): cover ownership key leaks`.
+- Parent confirmed the expected targeted red signal: `bun run typecheck` failed only on structural variable assignment leaks for registry `pluginId` and store `sourcePluginId`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 11 tests; `git diff --check` passed.
+- Harvey the 2nd (`implementer`) completed and was closed after implementing the ownership-key production fix in `src/core/plugin-api/context.ts`.
+- Harvey the 2nd's review-fix commit: `e00763b Harvey the 2nd(review-fix)(Define Plugin API contracts): reserve plugin ownership keys`.
+- Codex fixed the stale Obsidian plugin docs link flagged by Turing the 2nd. Docs commit: `cdec5f5 Codex(docs)(Define Plugin API contracts): fix Obsidian plugin docs link`.
+- Parent repeated green checks after Harvey the 2nd: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 11 tests passing; `git diff --check`.
 - Targeted TASK-010 re-review round 1 completed. Confucius the 2nd (`security_reviewer`) found no P0/P1/P2 and confirmed prior security P1s are fixed.
 - Newton the 2nd (`reviewer`) found two P2 correctness/API issues: `pluginId` and `sourcePluginId` are still accepted through normal variable assignment because the plugin-facing types omit ownership keys but do not reserve them as `never`.
 - Poincare the 2nd (`deprecation_auditor`) found one P1 API issue for `PluginViewListOptions` and `PluginSlotListOptions`: variables containing `pluginId` remain structurally assignable. Poincare also found one P2 helper-export test gap for new descriptor/list/filter aliases.
@@ -416,11 +423,10 @@ Last updated: 2026-05-20 20:44 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, and targeted re-review findings.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, implementation, review-fix tests, review-fix implementation, docs sync, targeted re-review fixes, and the Obsidian link fix.
 
 ## Next Actions
 
-1. Wait for Euler the 2nd's targeted tests and confirm the expected red signal.
-2. Delegate production ownership-key type fixes to `implementer`.
-3. Fix the P3 Obsidian link.
-4. Run final local gate and mark TASK-010 complete.
+1. Spawn final targeted re-review agents for the ownership-key and docs-link fixes.
+2. Fix any remaining P0/P1 findings.
+3. Run final local gate and mark TASK-010 complete.

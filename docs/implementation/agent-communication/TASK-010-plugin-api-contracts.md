@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: targeted re-review P1/P2 fixes active.
-- Active agents:
-  - Euler the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-45d77364b703`): add targeted type tests for structural ownership-key leaks and helper exports.
-- Next agent step: wait for Euler the 2nd, then confirm expected red signal.
+- Status: targeted ownership-key fixes green; final targeted re-review next.
+- Active agents: none.
+- Next agent step: spawn final targeted re-review agents.
 
 ## Agent Handoffs
 
@@ -277,6 +276,56 @@
   - Then update plugin-facing types to reserve ownership keys with `?: never`.
   - Fix the P3 Obsidian link before final gate.
 
+### Targeted Ownership-Key Tests
+
+- Status: completed and committed.
+- Agent:
+  - Euler the 2nd (`test_writer`, `019e4699-91ca-73f3-877d-45d77364b703`).
+- Ownership:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Assignment:
+  - Add tests for structural variable assignment of registry `pluginId` and store `sourcePluginId`.
+  - Add direct helper export coverage for new descriptor/list/filter aliases from both public barrels.
+- Outcome:
+  - Euler the 2nd left a focused test patch but no final response after a status request and second wait window, so the parent stopped the agent.
+  - Parent validated and adopted the patch.
+- Commit:
+  - `06ed813 Euler the 2nd(test)(Define Plugin API contracts): cover ownership key leaks`.
+- Red checks:
+  - `bun run typecheck` failed only on structural variable assignment leaks for registry `pluginId` and store `sourcePluginId`.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 11 tests.
+  - `git diff --check` passed.
+
+### Targeted Ownership-Key Implementation
+
+- Status: completed and committed.
+- Agent:
+  - Harvey the 2nd (`implementer`, `019e4699-91ca-73f3-877d-465a9a190c45`).
+- Ownership:
+  - `src/core/plugin-api/context.ts`.
+- Assignment:
+  - Reserve plugin ownership keys in plugin-facing registry/store input types so variables containing `pluginId` or `sourcePluginId` are not structurally assignable.
+  - Do not expose those exact ownership keys through the existing `keyof` leak tests.
+- Outcome:
+  - Added template ownership-key reserved helper types for `plugin${string}` and `sourcePlugin${string}` keys.
+  - Applied the reserved helpers to plugin-facing registry definitions/list options and store inputs/options.
+- Commit:
+  - `e00763b Harvey the 2nd(review-fix)(Define Plugin API contracts): reserve plugin ownership keys`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` passed with 11 tests.
+  - `git diff --check` passed.
+
+### Targeted Docs Link Fix
+
+- Status: completed and committed.
+- Agent:
+  - Codex (`docs`).
+- Outcome:
+  - Replaced the stale Obsidian Anatomy link with the current official Build a plugin link in `docs/architecture/03-plugin-api-and-host.md`.
+- Commit:
+  - `cdec5f5 Codex(docs)(Define Plugin API contracts): fix Obsidian plugin docs link`.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -286,4 +335,4 @@
 
 ## Next Action
 
-Wait for Euler the 2nd's targeted tests, confirm the expected red signal, then delegate the production ownership-key fixes.
+Spawn final targeted re-review agents, then run the final local gate and mark TASK-010 complete if no P0/P1 findings remain.
