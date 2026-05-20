@@ -537,9 +537,15 @@ class PluginHostImpl implements PluginHostInstance {
       ): Promise<Awaited<Result>> => {
         assertCanMutatePluginData(scope);
 
-        return this.services.transaction.run((transaction) =>
-          handler(createPluginTransaction(scope, transaction)),
-        );
+        return this.services.transaction.run(async (transaction) => {
+          const result = await handler(
+            createPluginTransaction(scope, transaction),
+          );
+
+          assertCanMutatePluginData(scope);
+
+          return result;
+        });
       },
     };
   }
