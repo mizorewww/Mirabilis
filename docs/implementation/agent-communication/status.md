@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:26 CST.
+Last updated: 2026-05-20 11:28 CST.
 
 ## Current Task
 
-- Task: TASK-007 - Add Command Registry and Command Bus.
-- Branch: `feat/task-007-command-registry-command-bus`.
+- Task: TASK-008 - Add View Registry and Slot Registry.
+- Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final gate passed; progress update active.
+- Current phase: pre-test guidance pending.
 
 ## Active Agents
 
@@ -16,6 +16,10 @@ Last updated: 2026-05-20 11:26 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-008 started from latest `master` after TASK-007 was merged and pushed.
+- `.codex/agents/*.toml` parsed successfully for TASK-008.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
+- TASK-007 was merged to `master` and pushed. Merge commit: `9f3a4e5 Codex(merge)(Add Command Registry and Command Bus): merge task branch`.
 - Final TASK-007 gate passed: `bun run check:quick` and `bun run build`.
 - Targeted re-review completed. Hilbert found no remaining P0/P1/P2/P3 security issues, confirmed handler failures no longer expose raw causes, confirmed context invalid/proxy coverage, and accepted caller identity/capability as a deferred Plugin Host/UI exposure risk. Mill found no remaining P0/P1/P2/P3 deprecation/API issues and confirmed standard `Error.cause` semantics. Arendt found no remaining P0/P1/P2/P3 test-quality issues.
 - Targeted re-review agents spawned for TASK-007 review-fix changes.
@@ -201,12 +205,12 @@ Last updated: 2026-05-20 11:26 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-007 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-007.
-- `docs/implementation/agent-communication/TASK-007-command-registry-command-bus.md` holds TASK-007 agent notes and parent decisions.
+- `docs/implementation/progress.md` marks TASK-008 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-008.
+- `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
 
 ## Next Actions
 
-1. Commit TASK-007 progress completion.
-2. Merge `feat/task-007-command-registry-command-bus` back to `master`.
-3. Continue to TASK-008 from latest `master`.
+1. Spawn pre-test guidance agents for TASK-008.
+2. Record parent decisions.
+3. Delegate failing acceptance tests to a `test_writer`.

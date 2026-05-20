@@ -30,7 +30,7 @@ Status markers:
 - [x] TASK-005: Add in-memory Event Store
 - [x] TASK-006: Add Filter Store and Query AST baseline
 - [x] TASK-007: Add Command Registry and Command Bus
-- [ ] TASK-008: Add View Registry and Slot Registry
+- [~] TASK-008: Add View Registry and Slot Registry
 - [ ] TASK-009: Add Transaction Manager and Core Runtime composition
 
 ## Milestone M2: Native persistence boundary
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-20 11:28 CST - TASK-008 started
+
+- Branch: `feat/task-008-view-slot-registry`.
+- Task: Add View Registry and Slot Registry.
+- Scope: implement Core-level view and slot contribution registries with registration, discovery, ordering, duplicate handling, and unregister behavior without rendering UI or business plugin views.
+- Agent orchestration: parent thread remains orchestration-only; planner/docs/test/implementation/review work is delegated to agents and summarized in `docs/implementation/agent-communication/TASK-008-view-slot-registry.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and a desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-20 11:26 CST - TASK-007 completed
 
