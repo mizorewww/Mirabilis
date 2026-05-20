@@ -2,8 +2,16 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import type { Mock } from "vitest";
+
+const { tauriInvokeMock } = vi.hoisted(() => ({
+  tauriInvokeMock: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: tauriInvokeMock,
+}));
 
 import {
   NATIVE_BRIDGE_COMMANDS,
@@ -60,15 +68,52 @@ type NativeInvokeMock = Mock<
   ) => Promise<unknown>
 > &
   NativeInvoke;
-type ExpectedNativeBridgeCommands = Readonly<{
-  dbExecute: string;
-  dbTransaction: string;
-  shortcutsRegister: string;
-  shortcutsUnregister: string;
-  notificationsNotify: string;
-  filesImportMarkdown: string;
-  filesExportMarkdown: string;
-}>;
+const EXPECTED_NATIVE_BRIDGE_COMMANDS = {
+  dbExecute: "db_execute",
+  dbTransaction: "db_transaction",
+  shortcutsRegister: "shortcuts_register",
+  shortcutsUnregister: "shortcuts_unregister",
+  notificationsNotify: "notifications_notify",
+  filesImportMarkdown: "files_import_markdown",
+  filesExportMarkdown: "files_export_markdown",
+} as const;
+type ExpectedNativeBridgeCommands = Readonly<
+  typeof EXPECTED_NATIVE_BRIDGE_COMMANDS
+>;
+type ExpectedNativeBridgeCommand =
+  ExpectedNativeBridgeCommands[keyof ExpectedNativeBridgeCommands];
+type WidenedNativeBridgeCommandLeak =
+  string extends NativeBridgeCommand
+    ? "native-command-widened-to-string"
+    : never;
+type GreetNativeBridgeCommandLeak =
+  "greet" extends NativeBridgeCommand ? "unexpected-greet-command" : never;
+type ExpectedDbPayloadValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ExpectedDbPayloadValue[]
+  | { [key: string]: ExpectedDbPayloadValue };
+type ExpectedOperationPayload = {
+  page: {
+    id: string;
+    title: string;
+    tags: string[];
+    archived: boolean | null;
+  };
+};
+type ExpectedDbQuery = {
+  operation: string;
+  payload?: DbValue;
+};
+type SqlShapedDbQueryLeak = Extract<keyof DbQuery, "sql" | "params">;
+type DbValueJsonPayloadLeak =
+  ExpectedOperationPayload extends DbValue
+    ? never
+    : "db-value-does-not-accept-json-object-payloads";
+type DbValueFunctionPayloadLeak =
+  (() => void) extends DbValue ? "db-value-accepts-function-payloads" : never;
 type ExpectedNativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
@@ -108,6 +153,10 @@ type PluginContextNativeLeak =
   | Extract<keyof PluginContextFromPluginApi, ForbiddenPluginContextNativeKey>;
 
 describe("NativeBridge TypeScript boundary", () => {
+  beforeEach(() => {
+    tauriInvokeMock.mockReset();
+  });
+
   it("exports the public NativeBridge API from Core entrypoints", () => {
     expect(NativeBridgeError).toEqual(expect.any(Function));
     expect(CoreNativeBridgeError).toBe(NativeBridgeError);
@@ -116,15 +165,12 @@ describe("NativeBridge TypeScript boundary", () => {
     expect(createTauriNativeBridge).toEqual(expect.any(Function));
     expect(createCoreTauriNativeBridge).toBe(createTauriNativeBridge);
     expect(CORE_NATIVE_BRIDGE_COMMANDS).toBe(NATIVE_BRIDGE_COMMANDS);
-    expect(Object.keys(NATIVE_BRIDGE_COMMANDS).sort()).toStrictEqual([
-      "dbExecute",
-      "dbTransaction",
-      "shortcutsRegister",
-      "shortcutsUnregister",
-      "notificationsNotify",
-      "filesImportMarkdown",
-      "filesExportMarkdown",
-    ].sort());
+    expect(NATIVE_BRIDGE_COMMANDS).toStrictEqual(
+      EXPECTED_NATIVE_BRIDGE_COMMANDS,
+    );
+    expect(Object.keys(NATIVE_BRIDGE_COMMANDS).sort()).toStrictEqual(
+      Object.keys(EXPECTED_NATIVE_BRIDGE_COMMANDS).sort(),
+    );
     expect(new Set(Object.values(NATIVE_BRIDGE_COMMANDS)).size).toBe(7);
     expect(Object.values(NATIVE_BRIDGE_COMMANDS)).not.toContain("greet");
 
@@ -141,8 +187,32 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<NotificationInputFromCore>().toEqualTypeOf<
       NotificationInput
     >();
-    expectTypeOf<typeof NATIVE_BRIDGE_COMMANDS>().toMatchObjectType<
+    expectTypeOf<typeof NATIVE_BRIDGE_COMMANDS>().toEqualTypeOf<
       ExpectedNativeBridgeCommands
+    >();
+    expectTypeOf<typeof NATIVE_BRIDGE_COMMANDS.dbExecute>().toEqualTypeOf<
+      "db_execute"
+    >();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.dbTransaction
+    >().toEqualTypeOf<"db_transaction">();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.shortcutsRegister
+    >().toEqualTypeOf<"shortcuts_register">();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.shortcutsUnregister
+    >().toEqualTypeOf<"shortcuts_unregister">();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.notificationsNotify
+    >().toEqualTypeOf<"notifications_notify">();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.filesImportMarkdown
+    >().toEqualTypeOf<"files_import_markdown">();
+    expectTypeOf<
+      typeof NATIVE_BRIDGE_COMMANDS.filesExportMarkdown
+    >().toEqualTypeOf<"files_export_markdown">();
+    expectTypeOf<NativeBridgeCommand>().toEqualTypeOf<
+      ExpectedNativeBridgeCommand
     >();
     expectTypeOf<NativeBridgeCommand>().toEqualTypeOf<
       (typeof NATIVE_BRIDGE_COMMANDS)[keyof typeof NATIVE_BRIDGE_COMMANDS]
@@ -162,16 +232,20 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<NativeBridgeErrorCode>().toEqualTypeOf<
       "NATIVE_COMMAND_FAILED" | "NATIVE_RESPONSE_INVALID"
     >();
-    expectTypeOf<DbValue>().toEqualTypeOf<string | number | boolean | null>();
-    expectTypeOf<DbQuery>().toEqualTypeOf<{
-      sql: string;
-      params?: readonly DbValue[];
-    }>();
+    expectTypeOf<ExpectedOperationPayload>().toMatchTypeOf<
+      ExpectedDbPayloadValue
+    >();
+    expectTypeOf<DbQuery>().toEqualTypeOf<ExpectedDbQuery>();
     expectTypeOf<NotificationInput>().toEqualTypeOf<{
       title: string;
       body?: string;
     }>();
     expectTypeOf<NativeBridge>().toEqualTypeOf<ExpectedNativeBridge>();
+    expectNoTypeLeak<WidenedNativeBridgeCommandLeak>();
+    expectNoTypeLeak<GreetNativeBridgeCommandLeak>();
+    expectNoTypeLeak<SqlShapedDbQueryLeak>();
+    expectNoTypeLeak<DbValueJsonPayloadLeak>();
+    expectNoTypeLeak<DbValueFunctionPayloadLeak>();
     expectNoTypeLeak<NativeBridgeSurfaceLeak>();
   });
 
@@ -198,9 +272,7 @@ describe("NativeBridge TypeScript boundary", () => {
     const executeRows = [{ id: "page-1", title: "Roadmap" }];
     const executeInvoke = createResolvedInvoke(executeRows);
     const executeBridge = createNativeBridge({ invoke: executeInvoke });
-    const query = dbQuery("select id, title from core_pages where id = ?", [
-      "page-1",
-    ]);
+    const query = dbQuery("core.pages.getById", { pageId: "page-1" });
 
     const executeResult = executeBridge.db.execute<
       Array<{ id: string; title: string }>
@@ -218,14 +290,12 @@ describe("NativeBridge TypeScript boundary", () => {
     const transactionInvoke = createResolvedInvoke(transactionResult);
     const transactionBridge = createNativeBridge({ invoke: transactionInvoke });
     const queries = [
-      dbQuery("insert into core_pages (id, title) values (?, ?)", [
-        "page-1",
-        "Roadmap",
-      ]),
-      dbQuery("insert into core_pages (id, title) values (?, ?)", [
-        "page-2",
-        "Inbox",
-      ]),
+      dbQuery("core.pages.create", {
+        page: { id: "page-1", title: "Roadmap" },
+      }),
+      dbQuery("core.pages.create", {
+        page: { id: "page-2", title: "Inbox" },
+      }),
     ] satisfies DbQuery[];
 
     const transactionPromise =
@@ -317,34 +387,53 @@ describe("NativeBridge TypeScript boundary", () => {
     });
   });
 
+  it("delegates the production Tauri adapter to mocked invoke with exact command and DTO", async () => {
+    tauriInvokeMock.mockResolvedValueOnce(undefined);
+
+    const input = {
+      title: "Import complete",
+      body: "Imported 1 page",
+    } satisfies NotificationInput;
+
+    await expect(
+      createTauriNativeBridge().notifications.notify(input),
+    ).resolves.toBeUndefined();
+
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(tauriInvokeMock).toHaveBeenCalledWith("notifications_notify", {
+      input,
+    });
+  });
+
   it.each([
     {
-      label: "typed native error object",
+      label: "object .message rejection",
       raw: {
-        code: "NATIVE_COMMAND_FAILED" satisfies NativeBridgeErrorCode,
-        message: "Native command rejected",
+        code: "SQLITE_CONSTRAINT",
+        message:
+          "failed SQL select * from core_pages where token = 'secret-token'",
       },
-      expectedMessage: "Native command rejected",
+      forbiddenMessageFragments: ["select *", "secret-token"],
     },
     {
       label: "string rejection",
-      raw: "Native command rejected",
-      expectedMessage: "Native command rejected",
+      raw: "failed to read /Users/alice/private/page.md",
+      forbiddenMessageFragments: ["/Users/alice/private/page.md"],
     },
     {
       label: "JavaScript Error rejection",
-      raw: new Error("Native command rejected"),
-      expectedMessage: "Native command rejected",
+      raw: new Error("backend token=secret-token rejected command"),
+      forbiddenMessageFragments: ["secret-token"],
     },
     {
       label: "null rejection",
       raw: null,
-      expectedMessage: "Native command failed",
+      forbiddenMessageFragments: [],
     },
     {
       label: "unknown object rejection",
       raw: { reason: "opaque backend object" },
-      expectedMessage: "Native command failed",
+      forbiddenMessageFragments: ["opaque backend object"],
     },
   ])("normalizes rejected invoker values from $label", async (caseItem) => {
     const bridge = createNativeBridge({
@@ -352,12 +441,33 @@ describe("NativeBridge TypeScript boundary", () => {
     });
 
     await expectNativeBridgeError(
-      bridge.db.execute(dbQuery("select 1")),
+      bridge.db.execute(dbQuery("core.pages.list", { limit: 1 })),
       caseItem.raw,
       {
         code: "NATIVE_COMMAND_FAILED",
         command: NATIVE_BRIDGE_COMMANDS.dbExecute,
-        message: caseItem.expectedMessage,
+        message: "Native command failed",
+        forbiddenMessageFragments: caseItem.forbiddenMessageFragments,
+      },
+    );
+  });
+
+  it("normalizes rejected non-database invocations without leaking native details", async () => {
+    const rawError = new Error(
+      "notification token secret-token failed for /Users/alice/Inbox.md",
+    );
+    const bridge = createNativeBridge({
+      invoke: createRejectedInvoke(rawError),
+    });
+
+    await expectNativeBridgeError(
+      bridge.notifications.notify({ title: "Import complete" }),
+      rawError,
+      {
+        code: "NATIVE_COMMAND_FAILED",
+        command: NATIVE_BRIDGE_COMMANDS.notificationsNotify,
+        message: "Native command failed",
+        forbiddenMessageFragments: ["secret-token", "/Users/alice/Inbox.md"],
       },
     );
   });
@@ -423,8 +533,13 @@ describe("NativeBridge TypeScript boundary", () => {
   });
 });
 
-function dbQuery(sql: string, params?: readonly DbValue[]): DbQuery {
-  return params === undefined ? { sql } : { sql, params };
+function dbQuery(
+  operation: string,
+  payload?: ExpectedDbPayloadValue,
+): DbQuery {
+  return (payload === undefined
+    ? { operation }
+    : { operation, payload }) as unknown as DbQuery;
 }
 
 function createResolvedInvoke(response?: unknown): NativeInvokeMock {
@@ -455,6 +570,7 @@ async function expectNativeBridgeError(
     code: NativeBridgeErrorCode;
     command: NativeBridgeCommand;
     message: string;
+    forbiddenMessageFragments?: readonly string[];
   },
 ): Promise<void> {
   try {
@@ -469,6 +585,9 @@ async function expectNativeBridgeError(
       command: expected.command,
       message: expected.message,
     });
+    for (const fragment of expected.forbiddenMessageFragments ?? []) {
+      expect((error as Error).message).not.toContain(fragment);
+    }
   }
 }
 
@@ -499,6 +618,7 @@ async function listProductionSourceFiles(directory: string): Promise<string[]> {
 }
 
 function findRawNativeBoundaryReferences(contents: string): string[] {
+  const hasRootTauriImport = /from\s+["']@tauri-apps\/api["']/.test(contents);
   const hasTauriCoreImport = /from\s+["']@tauri-apps\/api\/core["']/.test(
     contents,
   );
@@ -506,12 +626,13 @@ function findRawNativeBoundaryReferences(contents: string): string[] {
     contents,
   );
   const violations = [
+    [hasRootTauriImport, "root-tauri-import"],
     [hasTauriCoreImport, "tauri-core-import"],
     [hasLegacyTauriImport, "legacy-tauri-import"],
     [/\b__TAURI__\b/, "window-tauri-handle"],
   ] as const;
   const rawInvokeCall =
-    (hasTauriCoreImport || hasLegacyTauriImport) &&
+    (hasRootTauriImport || hasTauriCoreImport || hasLegacyTauriImport) &&
     /\binvoke\s*(?:<[^>]+>)?\(/.test(contents);
 
   const foundViolations: string[] = violations
