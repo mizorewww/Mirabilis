@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: review round in progress.
-- Active agents: Jason (`pr_explorer`), Herschel (`reviewer`), Singer (`security_reviewer`), Godel (`deprecation_auditor`), Pasteur (`test_quality_reviewer`), and Peirce (`docs_researcher`).
-- Next parent step: wait for review round, then fix any P0/P1/P2 findings.
+- Status: review round 1 completed; review-fix TDD handoff next.
+- Active agents: none.
+- Next parent step: delegate P1/P2 review-fix tests to `test_writer`, then delegate implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -127,7 +127,7 @@
 
 ### Review Round 1
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Jason (`pr_explorer`, `019e4601-240b-7aa3-a6d4-7e5d4d39500a`).
   - Herschel (`reviewer`, `019e4601-5951-7b31-8fb9-e0dc85baef02`).
@@ -137,6 +137,19 @@
   - Peirce (`docs_researcher`, `019e4602-209c-7bd2-8252-0a77c23b0f39`).
 - Assignment:
   - Read-only review of TASK-011 diff against `master`, with focus on Plugin Host lifecycle correctness, security boundaries, API/deprecation risk, test quality, and docs drift.
+- Outcomes:
+  - Jason mapped the diff and highlighted risks around batch-load rollback, lifecycle contributions outside `register`, deactivate/re-activate semantics, dependency cascades, and missing tests.
+  - Herschel found one P1 correctness issue: captured plugin contexts can register commands/views/slots after deactivate or uninstall because late registrations are not tracked in `record.contributions`.
+  - Herschel also found P2 issues for dependency deactivate/uninstall cascades, installed-but-unregistered dependencies satisfying later dependents, and duplicate dependency declarations downgrading required dependencies to optional.
+  - Singer found two P1 security/boundary issues: captured contexts can register untracked capabilities after lifecycle exit, and metadata/event/filter facades are not owner-scoped, allowing cross-plugin read/delete/update and filter ownership hijacking.
+  - Godel found one P2 public API issue: lifecycle methods expose `Promise<unknown>` even though they return `PluginHostRecord` shapes.
+  - Pasteur found P2 test gaps for explicit staged `install(plugin)` / `register(plugin)` methods, transaction-scoped plugin facades, and typed failure behavior for activate/deactivate/uninstall hooks.
+  - Peirce found one P2 docs drift in `docs/architecture/03-plugin-api-and-host.md` for the stale Plugin Host constructor/method sketch and one P3 live-status wording issue about dependent ordering.
+- Parent decision:
+  - Fix all P1/P2 findings before final gate.
+  - Delegate red tests first for stale captured contexts, owner-scoped store facades including transaction facades, dependency cascade/validation gaps, duplicate dependency normalization, explicit staged install/register API, lifecycle hook failure behavior, and typed host return surfaces.
+  - Delegate production fixes to `implementer` after the red signal.
+  - Delegate docs cleanup after production behavior is settled.
 
 ## Parent Decisions
 
@@ -147,4 +160,4 @@
 
 ## Next Action
 
-Wait for review round, then fix any P0/P1/P2 findings.
+Delegate review-fix tests for the P1/P2 findings.

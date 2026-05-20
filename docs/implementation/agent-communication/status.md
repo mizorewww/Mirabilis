@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:29 CST.
+Last updated: 2026-05-20 23:37 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-20 23:29 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 review round in progress.
+- Current phase: TASK-011 review findings recorded; review-fix TDD handoff next.
 
 ## Active Agents
 
-- Jason (`pr_explorer`, `019e4601-240b-7aa3-a6d4-7e5d4d39500a`) is mapping changed surfaces.
-- Herschel (`reviewer`, `019e4601-5951-7b31-8fb9-e0dc85baef02`) is reviewing correctness/API behavior.
-- Singer (`security_reviewer`, `019e4601-91cc-7b72-b634-0d22b8e76e7b`) is reviewing security/boundary behavior.
-- Godel (`deprecation_auditor`, `019e4601-cceb-7171-93d3-ff348d5eb477`) is reviewing API/deprecation risks.
-- Pasteur (`test_quality_reviewer`, `019e4602-07f7-7053-a45c-2f44e5761296`) is reviewing test quality.
-- Peirce (`docs_researcher`, `019e4602-209c-7bd2-8252-0a77c23b0f39`) is reviewing docs/current-guidance drift.
+- No active review agents. TASK-011 review round 1 completed.
+- Next agent handoff: `test_writer` for P1/P2 review-fix red tests.
 
 ## Recent Agent Outcomes
 
+- TASK-011 review round 1 completed. Jason (`pr_explorer`) mapped the changed surfaces to `src/core/plugin-host/`, Core exports, lifecycle tests, and agent docs; Jason highlighted batch-load rollback, untracked non-register lifecycle contributions, deactivate/re-activate semantics, dependency cascades, and missing coverage risks.
+- Herschel (`reviewer`) found one P1 correctness issue: captured plugin contexts can register commands/views/slots after deactivate or uninstall because only the initial register tracker is copied into `record.contributions`. Herschel also found P2 issues for dependency deactivate/uninstall cascades, dependency satisfaction by installed-but-unregistered records, and duplicate dependency declarations downgrading required dependencies to optional.
+- Singer (`security_reviewer`) found two P1 boundary issues: captured plugin contexts stay live after lifecycle exit and can register untracked capabilities, and metadata/event/filter store facades are not owner-scoped, allowing cross-plugin read/delete/update and filter ownership hijacking.
+- Godel (`deprecation_auditor`) found one P2 public API issue: `PluginHostInstance` lifecycle methods expose `Promise<unknown>` instead of public `PluginHostRecord` shapes.
+- Pasteur (`test_quality_reviewer`) found P2 test gaps for explicit `install(plugin)` / `register(plugin)` methods, transaction-scoped plugin facades, and typed failure behavior for activate/deactivate/uninstall hooks.
+- Peirce (`docs_researcher`) found one P2 docs drift in `docs/architecture/03-plugin-api-and-host.md`, where the Plugin Host sketch still shows the older constructor and method shape, plus one P3 live-status sentence saying deactivate/uninstall run dependents before dependencies even though current implementation does not.
+- Parent decision: block final gate until the P1/P2 findings are fixed through TDD. Delegate tests first for stale captured contexts, owner-scoped store facades including transaction facades, dependency lifecycle/dependency-validation gaps, duplicate dependency normalization, explicit install/register API, lifecycle hook failure behavior, and typed host return surfaces. Then delegate implementation and docs cleanup separately.
 - TASK-011 review round agents spawned after Hegel's green implementation.
 - Hegel (`implementer`) completed and was closed after implementing Plugin Host production code in `src/core/plugin-host/` and Core exports.
 - Hegel's implementation commit: `766ba86 Hegel(implementation)(Implement Plugin Host lifecycle): add plugin host runtime`.
