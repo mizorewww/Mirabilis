@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:24 CST.
+Last updated: 2026-05-21 00:25 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 00:24 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final narrow re-review completed; ultra-narrow review-fix TDD next.
+- Current phase: TASK-011 ultra-narrow review-fix TDD in progress.
 
 ## Active Agents
 
-- No active agents. Next handoff: `test_writer` for final batch-install rollback red test and dependency hook non-call assertions.
+- Lorentz (`test_writer`, `019e4634-f4ad-7fb3-88ea-c41bd17010a3`) is adding final red tests in `src/test/plugin-host-lifecycle.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Lorentz (`test_writer`) was spawned for the final ultra-narrow TASK-011 red tests: batch install rollback/retry and dependency hook non-call assertions.
 - Final TASK-011 narrow re-review completed. Aristotle (`reviewer`) found one remaining P1 correctness issue: `loadBuiltInPlugins()` removes only the currently failing install record, leaving earlier installed records from the failed batch and causing retry to fail with `PLUGIN_DUPLICATE_ID`.
 - Anscombe (`security_reviewer`) found no P0/P1/P2 plugin-boundary findings and confirmed stale context revocation, owner spoof rejection, install-failure record removal for explicit/current failing paths, and no native/Tauri/fs/dynamic import/IPC/SQLite scope creep.
 - Huygens (`test_quality_reviewer`) found one P2 test-strength issue: dependency rejection tests should assert blocked deactivate/uninstall hooks were not called.

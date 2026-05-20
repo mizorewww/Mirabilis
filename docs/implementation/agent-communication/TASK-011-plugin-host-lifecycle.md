@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final narrow re-review completed; ultra-narrow review-fix TDD next.
-- Active agents: none.
-- Next parent step: delegate final red tests for batch install rollback and dependency hook non-call assertions.
+- Status: ultra-narrow review-fix TDD in progress.
+- Active agents: Lorentz (`test_writer`, `019e4634-f4ad-7fb3-88ea-c41bd17010a3`).
+- Next parent step: wait for Lorentz, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -321,6 +321,18 @@
   - Delegate production rollback fix after the expected red signal.
   - Delegate docs cleanup after production behavior is settled.
 
+### Ultra-Narrow Review-Fix TDD
+
+- Status: in progress.
+- Agent:
+  - Lorentz (`test_writer`, `019e4634-f4ad-7fb3-88ea-c41bd17010a3`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add a red test for batch `loadBuiltInPlugins()` rollback when a later install hook fails after earlier records were installed, including successful retry behavior.
+  - Strengthen dependency rejection tests to assert blocked dependency lifecycle hooks are not called.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or other tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -330,4 +342,4 @@
 
 ## Next Action
 
-Delegate final red tests for batch install rollback and dependency hook non-call assertions.
+Wait for Lorentz, then validate and commit the final red tests.
