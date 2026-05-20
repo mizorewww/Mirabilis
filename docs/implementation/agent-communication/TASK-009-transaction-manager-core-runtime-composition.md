@@ -42,9 +42,10 @@
 
 ## Current Status
 
-- Status: targeted re-review complete; P1 review-fix selected.
-- Active agents: none.
-- Next agent step: spawn an `implementer` for the P1 non-plain snapshot comparison fix and related coverage follow-up.
+- Status: P1 review-fix test writing active.
+- Active agents:
+  - Chandrasekhar (`test_writer`, `019e4699-91b8-73f3-877d-3761008c25d6`): add failing regression coverage for non-plain snapshot conflicts plus metadata/event/filter conflict and transaction-scoped participant non-discoverability coverage.
+- Next agent step: wait for Chandrasekhar's red-signal tests, then commit them and spawn an `implementer`.
 
 ## Agent Handoffs
 
@@ -273,6 +274,18 @@
   - Add focused regression coverage for non-plain live page body conflicts, metadata/event/filter live-write conflicts, and transaction-scoped store participant non-discoverability.
   - Keep custom non-in-memory store transaction composition as an injected-transaction-manager responsibility for TASK-009.
 
+### Chandrasekhar (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4699-91b8-73f3-877d-3761008c25d6`.
+- Ownership:
+  - `src/test/core-transaction-manager.test.ts`.
+- Assignment:
+  - Add failing regression coverage for Boole's P1: a pending transaction must reject when a live page body update changes nested cloneable non-plain values while timestamps remain stable, and it must preserve the live update.
+  - Add Leibniz's P2 coverage for metadata, event, and filter live-write conflicts during pending transactions.
+  - Add Leibniz's P2 coverage that transaction-scoped stores do not expose participant symbols.
+  - Do not edit production code, docs, config, package files, or lockfiles.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -286,4 +299,4 @@
 
 ## Next Action
 
-Spawn an `implementer` for the targeted P1 review fix and coverage follow-up, then rerun focused transaction/runtime checks.
+Wait for Chandrasekhar's review-fix tests, confirm the red signal, then spawn an `implementer` for the targeted P1 production fix.

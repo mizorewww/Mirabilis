@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:31 CST.
+Last updated: 2026-05-20 18:34 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 18:31 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 targeted P1 review-fix selected.
+- Current phase: TASK-009 P1 review-fix test writing active.
 
 ## Active Agents
 
-- None.
+- Chandrasekhar (`test_writer`, `019e4699-91b8-73f3-877d-3761008c25d6`): add failing regression coverage for Boole's P1 non-plain snapshot conflict plus Leibniz's metadata/event/filter conflict and transaction-scoped participant non-discoverability coverage.
 
 ## Recent Agent Outcomes
 
+- Chandrasekhar (`test_writer`) spawned for TASK-009 targeted review-fix tests, with ownership of `src/test/core-transaction-manager.test.ts`.
 - TASK-009 targeted re-review completed and all agents were closed.
 - Boole (`reviewer`) found one P1 correctness issue: snapshot equality misses cloneable non-plain values such as `Date`, `Set`, and `RegExp` in page bodies when enumerable keys are empty and `updatedAt` does not change; a pending transaction can miss a live page body update and overwrite it at commit.
 - Noether (`security_reviewer`) found no P0/P1/P2 security or boundary findings and confirmed participant WeakMaps, reflection non-discoverability, and pre-replace conflict checks.
@@ -333,10 +334,10 @@ Last updated: 2026-05-20 18:31 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 is in targeted P1 review-fix after targeted re-review.
+- TASK-008 is complete and merged. TASK-009 is writing targeted P1 review-fix tests after targeted re-review.
 
 ## Next Actions
 
-1. Spawn an `implementer` for Boole's P1 non-plain snapshot comparison fix and related coverage.
-2. Run focused transaction/runtime checks after the patch.
-3. Re-review or run final gate once no P0/P1 findings remain.
+1. Wait for Chandrasekhar's review-fix test result.
+2. Confirm and commit the red-signal tests.
+3. Spawn an `implementer` for Boole's P1 non-plain snapshot comparison fix.
