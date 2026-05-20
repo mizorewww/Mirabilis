@@ -26,11 +26,11 @@ export type AppRuntimeInfo = {
 };
 
 type PluginOwnershipKeyReserved = {
-  readonly [key: `plugin${string}`]: never;
+  readonly pluginId?: never;
 };
 
 type SourcePluginOwnershipKeyReserved = {
-  readonly [key: `sourcePlugin${string}`]: never;
+  readonly sourcePluginId?: never;
 };
 
 export type PluginPageStore = {
@@ -108,8 +108,7 @@ export type PluginCommandDescriptor = {
   context?: MetadataJsonValue;
 };
 
-export type PluginCommandListOptions = Record<string, never> &
-  PluginOwnershipKeyReserved;
+export type PluginCommandListOptions = PluginOwnershipKeyReserved;
 
 export type PluginCommandRegistry = {
   register<Input = unknown, Output = unknown>(
@@ -137,7 +136,7 @@ export type PluginViewDescriptor = {
 };
 
 export type PluginViewListOptions =
-  | (Record<string, never> & PluginOwnershipKeyReserved)
+  | PluginOwnershipKeyReserved
   | ({
       type: string;
     } & PluginOwnershipKeyReserved);
@@ -165,7 +164,7 @@ export type PluginSlotDescriptor = {
 };
 
 export type PluginSlotListOptions =
-  | (Record<string, never> & PluginOwnershipKeyReserved)
+  | PluginOwnershipKeyReserved
   | ({
       slot: string;
     } & PluginOwnershipKeyReserved);
