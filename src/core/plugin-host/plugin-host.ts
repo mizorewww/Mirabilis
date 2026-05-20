@@ -181,6 +181,7 @@ type PluginContextScope = {
   active: boolean;
   allowsRuntimeContributionRegistration: boolean;
   registrationTracker: RegisteredContribution[];
+  registrationTrackerRolledBack: boolean;
 };
 
 type SortablePlugin = {
@@ -495,9 +496,15 @@ class PluginHostImpl implements PluginHostInstance {
       await record.plugin.register(this.createPluginContext(scope));
       this.assertLifecycleScopeStillCurrent(record, scope);
     } catch (cause) {
-      this.unregisterTrackedContributions(scope.registrationTracker);
-      record.contributions = [];
-      record.status = "installed";
+      this.rollbackScopeRegistrationTracker(scope);
+
+      if (
+        this.records.get(record.manifest.id) === record &&
+        record.status === "installed"
+      ) {
+        record.contributions = [];
+        record.status = "installed";
+      }
 
       throw new PluginHostError(
         "PLUGIN_LIFECYCLE_FAILED",
@@ -798,10 +805,19 @@ class PluginHostImpl implements PluginHostInstance {
   private revokeLifecycleScopes(record: StoredPluginRecord): void {
     for (const scope of record.lifecycleScopes) {
       scope.active = false;
-      this.unregisterTrackedContributions(scope.registrationTracker);
+      this.rollbackScopeRegistrationTracker(scope);
     }
 
     record.lifecycleScopes.clear();
+  }
+
+  private rollbackScopeRegistrationTracker(scope: PluginContextScope): void {
+    if (scope.registrationTrackerRolledBack) {
+      return;
+    }
+
+    this.unregisterTrackedContributions(scope.registrationTracker);
+    scope.registrationTrackerRolledBack = true;
   }
 
   private assertLifecycleScopeStillCurrent(
@@ -863,6 +879,7 @@ function createPluginContextScope(
     active: true,
     allowsRuntimeContributionRegistration,
     registrationTracker: [],
+    registrationTrackerRolledBack: false,
   };
 }
 
