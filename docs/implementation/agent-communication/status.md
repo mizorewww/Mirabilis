@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:04 CST.
+Last updated: 2026-05-20 11:09 CST.
 
 ## Current Task
 
@@ -8,19 +8,16 @@ Last updated: 2026-05-20 11:04 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1 active.
+- Current phase: review round 1 completed; review-fix tests pending.
 
 ## Active Agents
 
-- Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map TASK-007 branch diff and review focus areas.
-- Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): correctness review for Command Registry/Bus.
-- Cicero (`security_reviewer`, `019e4357-0727-7262-aef2-5db1537d0787`): security and boundary review for handler/context/descriptor surfaces.
-- Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): TypeScript/Vitest/deprecation risk audit.
-- Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): acceptance-test quality review.
-- Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): docs consistency and traceability review.
+- None.
 
 ## Recent Agent Outcomes
 
+- Review round 1 completed. Einstein reported no correctness P0/P1/P2/P3. Cicero found two P2 security issues and one P3: raw handler causes are publicly exposed, caller identity/capability facades are needed before Plugin Host/UI exposure, and proxy-specific context tests would be useful. Turing found one P2: `CommandRegistryError.cause` does not match standard `Error.cause` optional/non-enumerable semantics. Epicurus found one P2 test gap around context JSON-compatible invalid values and two P3 test gaps around `get()` handler privacy and `../core/commands` type-barrel coverage. Mencius found one P3 stale live-status section. Lovelace confirmed no native/package/config changes.
+- Selected TASK-007 review fixes: add tests for sanitized/no public raw handler cause, standard `Error.cause` semantics, broader invalid context coverage, `get()` handler privacy, and full `../core/commands` type-barrel exports; then update implementation as needed. Caller identity/capability scoped facades are recorded as a later Plugin Host/UI exposure risk because TASK-007 only creates the Core registry and does not yet pass it to plugins.
 - TASK-007 review agents spawned.
 - Curie (`implementer`) completed and was closed after implementing TASK-007 production code.
 - Curie's implementation commit: `883c1aa Curie(implementation)(Add Command Registry and Command Bus): implement command registry`.
@@ -32,7 +29,7 @@ Last updated: 2026-05-20 11:04 CST.
 - Parent confirmed expected red signal: `bun run typecheck` fails on missing Command Registry exports and `../core/commands`; `bun run test:frontend -- src/test/core-command-registry.test.ts` fails during import resolution for `../core/commands` with no tests executed.
 - Ohm (`test_writer`) was spawned for TASK-007 failing acceptance tests in `src/test/core-command-registry.test.ts`.
 - TASK-007 pre-test guidance completed. Schrodinger planned the Command Registry/Bus API and acceptance tests, Bacon verified current TypeScript/Vitest guidance, and Poincare audited handler exposure, async error wrapping, generic unsoundness, validation, and descriptor clone risks.
-- Parent decisions: expose descriptor metadata without handlers from `get`/`list`/`register`/`unregister`; keep handlers private and executable only through the bus; use `defaultShortcut` as metadata only; treat `context` as inert cloneable descriptor data; use `execute(commandId, input?: unknown): Promise<unknown>` at Core level; wrap sync throws and async rejections as `COMMAND_HANDLER_FAILED` with `cause`.
+- Parent decisions: expose descriptor metadata without handlers from `get`/`list`/`register`/`unregister`; keep handlers private and executable only through the bus; use `defaultShortcut` as metadata only; treat `context` as inert cloneable descriptor data; use `execute(commandId, input?: unknown): Promise<unknown>` at Core level; wrap sync throws and async rejections as `COMMAND_HANDLER_FAILED` without exposing the original thrown value as public `cause`.
 - Pre-test guidance agents spawned for TASK-007.
 - TASK-007 started from latest `master` after TASK-006 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-007.
@@ -193,12 +190,12 @@ Last updated: 2026-05-20 11:04 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-006 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-006.
-- `docs/implementation/agent-communication/TASK-006-filter-store-query-ast.md` holds TASK-006 agent notes and parent decisions.
+- `docs/implementation/progress.md` marks TASK-007 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-007.
+- `docs/implementation/agent-communication/TASK-007-command-registry-command-bus.md` holds TASK-007 agent notes and parent decisions.
 
 ## Next Actions
 
-1. Wait for TASK-007 review agents.
-2. Record review findings.
-3. Fix P0/P1 findings before final gate.
+1. Delegate review-fix tests to a `test_writer`.
+2. Confirm expected red signal if production behavior needs changes.
+3. Delegate review-fix implementation if needed.

@@ -38,14 +38,8 @@
 
 ## Current Status
 
-- Status: review round 1 active.
-- Active agents:
-  - Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map TASK-007 branch diff and review focus areas.
-  - Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): correctness review for Command Registry/Bus.
-  - Cicero (`security_reviewer`, `019e4357-0727-7262-aef2-5db1537d0787`): security and boundary review for handler/context/descriptor surfaces.
-  - Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): TypeScript/Vitest/deprecation risk audit.
-  - Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): acceptance-test quality review.
-  - Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): docs consistency and traceability review.
+- Status: review round 1 completed; review-fix tests pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -92,7 +86,7 @@
 - `list()` returns descriptors in registration order, supports exact `pluginId` filtering, and returns defensive descriptor copies.
 - Handler input is not validated or cloned by Core; plugin handlers may need editor/runtime objects. The handler receives the exact input reference.
 - `execute` snapshots the handler before awaiting it. An in-flight command should complete against the captured handler even if the command is unregistered later.
-- Sync throws and async rejections from handlers must become `COMMAND_HANDLER_FAILED` with the original thrown value retained as `cause`; do not string-coerce hostile thrown values.
+- Sync throws and async rejections from handlers must become `COMMAND_HANDLER_FAILED` without exposing the original thrown value as public `cause`; do not string-coerce hostile thrown values. A later internal logging path may retain raw causes if needed.
 - Use a typed `CommandRegistryError` and error-code union including not found, ID collision, identity/plugin/title/handler/shortcut/context validation, and handler failure.
 
 ## Next Action
@@ -145,7 +139,7 @@ Wait for Curie's implementation output.
 
 ### Review Round 1
 
-- Status: active.
+- Status: completed with P2/P3 findings.
 - Agents:
   - Lovelace (`pr_explorer`, `019e4357-000e-7652-91f6-71d67177c131`): map changed code paths and reviewer focus areas.
   - Einstein (`reviewer`, `019e4357-03b3-7452-9c02-64a950ca2c83`): review correctness and acceptance criteria.
@@ -153,7 +147,21 @@ Wait for Curie's implementation output.
   - Turing (`deprecation_auditor`, `019e4357-0b34-7513-a981-ac57ffadcb71`): audit TypeScript/Vitest/API/deprecation risks.
   - Epicurus (`test_quality_reviewer`, `019e4357-0eeb-7cd0-b333-b09fdef9125e`): review test coverage quality.
   - Mencius (`docs_researcher`, `019e4357-130a-7e62-beab-801d450c4cec`): review local-doc and official-doc traceability.
+- Outcomes:
+  - Lovelace mapped branch diff and confirmed no `src-tauri`, package, lockfile, Cargo, Vite/Vitest/TypeScript/ESLint config, GitHub, `.codex`, or `AGENTS.md` changes.
+  - Einstein found no P0/P1/P2/P3 correctness issues.
+  - Cicero found two P2 security issues and one P3: raw handler failures are exposed as public `cause`; caller identity/capability scoped facades are needed before this service is passed into Plugin Host or UI/plugin contexts; proxy-specific context tests would be useful.
+  - Turing found one P2: `CommandRegistryError.cause` does not match standard `Error.cause` optional/non-enumerable semantics.
+  - Epicurus found one P2 and two P3 test-quality gaps: context invalid-value coverage is too thin; `get()` handler privacy should be asserted explicitly; `../core/commands` type-barrel coverage should include every public command type.
+  - Mencius found one P3 docs issue: live status still had a stale TASK-006 Current Worktree State section.
+- Selected fixes:
+  - Add review-fix tests for sanitized/no public raw handler cause and standard `Error.cause` semantics.
+  - Add broader invalid context coverage for nested `undefined`, non-finite numbers, bigint, symbol, `Date`, sparse arrays, accessors, symbol keys, non-enumerable properties, and proxy traps where practical.
+  - Strengthen `get()` handler privacy assertions and `../core/commands` type-barrel assertions.
+  - Update live status to TASK-007.
+- Deferred risk:
+  - Caller-aware authorization/scoped facades must be added before Plugin Host or UI/plugin contexts receive this service. TASK-007 remains Core-only and does not yet expose the registry to untrusted callers.
 
 ## Next Action
 
-Wait for TASK-007 review agents.
+Delegate review-fix tests to a `test_writer`.
