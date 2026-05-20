@@ -1,14 +1,15 @@
-type NativeBridgeCommands = Readonly<{
-  dbExecute: string;
-  dbTransaction: string;
-  shortcutsRegister: string;
-  shortcutsUnregister: string;
-  notificationsNotify: string;
-  filesImportMarkdown: string;
-  filesExportMarkdown: string;
-}>;
+type NativeBridgeCommandKey =
+  | "dbExecute"
+  | "dbTransaction"
+  | "shortcutsRegister"
+  | "shortcutsUnregister"
+  | "notificationsNotify"
+  | "filesImportMarkdown"
+  | "filesExportMarkdown";
 
-export const NATIVE_BRIDGE_COMMANDS: NativeBridgeCommands = Object.freeze({
+type NativeBridgeCommands = Readonly<Record<NativeBridgeCommandKey, string>>;
+
+export const NATIVE_BRIDGE_COMMANDS = Object.freeze({
   dbExecute: "db_execute",
   dbTransaction: "db_transaction",
   shortcutsRegister: "shortcuts_register",
@@ -16,7 +17,7 @@ export const NATIVE_BRIDGE_COMMANDS: NativeBridgeCommands = Object.freeze({
   notificationsNotify: "notifications_notify",
   filesImportMarkdown: "files_import_markdown",
   filesExportMarkdown: "files_export_markdown",
-});
+} as const satisfies NativeBridgeCommands);
 
 export type NativeBridgeCommand =
   (typeof NATIVE_BRIDGE_COMMANDS)[keyof typeof NATIVE_BRIDGE_COMMANDS];
@@ -41,11 +42,17 @@ export class NativeBridgeError extends Error {
   }
 }
 
-export type DbValue = string | number | boolean | null;
+export type DbValue =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly DbValue[]
+  | { readonly [key: string]: DbValue };
 
 export type DbQuery = {
-  sql: string;
-  params?: readonly DbValue[];
+  operation: string;
+  payload?: DbValue;
 };
 
 export type NotificationInput = {
@@ -163,54 +170,17 @@ async function invokeCommand<Response>(
 ): Promise<Response> {
   try {
     return await invoke<Response>(command, args);
-  } catch (error) {
-    throw normalizeNativeBridgeError(error, command);
+  } catch {
+    throw normalizeNativeBridgeError(command);
   }
 }
 
 function normalizeNativeBridgeError(
-  error: unknown,
   command: NativeBridgeCommand,
 ): NativeBridgeError {
-  if (error instanceof NativeBridgeError) {
-    return error;
-  }
-
   return new NativeBridgeError(
     "NATIVE_COMMAND_FAILED",
     command,
-    readNativeErrorMessage(error),
+    "Native command failed",
   );
-}
-
-function readNativeErrorMessage(error: unknown): string {
-  if (typeof error === "string" && error.length > 0) {
-    return error;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  const objectMessage = readObjectMessage(error);
-
-  if (objectMessage !== undefined && objectMessage.length > 0) {
-    return objectMessage;
-  }
-
-  return "Native command failed";
-}
-
-function readObjectMessage(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null) {
-    return undefined;
-  }
-
-  try {
-    const message = (error as { message?: unknown }).message;
-
-    return typeof message === "string" ? message : undefined;
-  } catch {
-    return undefined;
-  }
 }
