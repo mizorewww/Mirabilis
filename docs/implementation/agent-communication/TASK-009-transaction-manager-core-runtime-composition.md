@@ -42,8 +42,9 @@
 
 ## Current Status
 
-- Status: test writer replacement pending.
-- Active agents: none.
+- Status: replacement failing-test handoff active.
+- Active agents:
+  - Jason (`test_writer`, `019e43f8-fa95-7010-b235-8f1ae56cbe84`): replacement writer for TASK-009 failing runtime composition and transaction manager tests.
 
 ## Agent Handoffs
 
@@ -112,6 +113,18 @@
   - Parent sent one status request after the first wait window and gave Kant a second wait window.
   - Kant produced no final output and no worktree changes, so parent stopped it and will spawn a replacement `test_writer`.
 
+### Jason (`test_writer`)
+
+- Status: active.
+- Agent id: `019e43f8-fa95-7010-b235-8f1ae56cbe84`.
+- Ownership:
+  - `src/test/core-runtime-composition.test.ts`.
+  - `src/test/core-transaction-manager.test.ts`.
+- Assignment:
+  - Replacement failing-test writer for TASK-009.
+  - Add only tests for runtime/services exports, documented runtime aliases and identity links, command execution through runtime, successful transaction commit, read-your-writes, delayed live visibility while an async transaction is pending, sync throw rollback, async rejection rollback, validation-error rollback, and defensive clone behavior.
+  - Do not edit production code, docs, config, lockfiles, or existing tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -125,4 +138,4 @@
 
 ## Next Action
 
-Spawn a replacement `test_writer`, run focused red checks after it returns, then commit the tests if the red signal is expected.
+Wait for Jason's failing-test patch, run focused red checks, then commit the tests if the red signal is expected.
