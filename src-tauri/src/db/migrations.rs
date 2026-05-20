@@ -1,6 +1,6 @@
 use rusqlite::{params, OptionalExtension};
 
-use super::{Database, DbResult};
+use super::{Database, DbError, DbResult};
 
 pub const LATEST_SCHEMA_VERSION: i64 = 1;
 
@@ -16,9 +16,18 @@ pub struct AppliedMigration {
 }
 
 pub fn apply_migrations(database: &Database) -> DbResult<()> {
+    let current_version = schema_version(database)?;
+    if current_version > LATEST_SCHEMA_VERSION {
+        return Err(DbError::FutureSchemaVersion {
+            current_version,
+            latest_supported_version: LATEST_SCHEMA_VERSION,
+        });
+    }
+
     database
         .connection()
         .execute_batch(CORE_SCHEMA_LEDGER_SQL)?;
+    validate_migration_001(database)?;
     database
         .connection()
         .execute_batch(CORE_SCHEMA_MIGRATION_SQL)?;
@@ -31,6 +40,7 @@ pub fn apply_migrations(database: &Database) -> DbResult<()> {
             MIGRATION_001_CHECKSUM
         ],
     )?;
+    validate_migration_001(database)?;
     database
         .connection()
         .pragma_update(None, "user_version", LATEST_SCHEMA_VERSION)?;
@@ -61,6 +71,35 @@ pub fn schema_version(database: &Database) -> DbResult<i64> {
         .query_row("PRAGMA user_version", [], |row| row.get(0))
         .optional()?
         .map_or(Ok(0), Ok)
+}
+
+fn validate_migration_001(database: &Database) -> DbResult<()> {
+    let row = database
+        .connection()
+        .query_row(
+            "SELECT name, checksum
+             FROM core_schema_migrations
+             WHERE version = ?1",
+            params![LATEST_SCHEMA_VERSION],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+        )
+        .optional()?;
+
+    let Some((actual_name, actual_checksum)) = row else {
+        return Ok(());
+    };
+
+    if actual_name != MIGRATION_001_NAME || actual_checksum != MIGRATION_001_CHECKSUM {
+        return Err(DbError::MigrationDrift {
+            version: LATEST_SCHEMA_VERSION,
+            expected_name: MIGRATION_001_NAME,
+            expected_checksum: MIGRATION_001_CHECKSUM,
+            actual_name,
+            actual_checksum,
+        });
+    }
+
+    Ok(())
 }
 
 const CORE_SCHEMA_LEDGER_SQL: &str = r#"
@@ -171,7 +210,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_core_views_plugin_view_name
 
 CREATE TABLE IF NOT EXISTS core_plugin_indexes (
   id TEXT PRIMARY KEY,
-  plugin_id TEXT NOT NULL,
+  plugin_id TEXT NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
   index_name TEXT NOT NULL,
   table_name TEXT NOT NULL,
   created_at TEXT NOT NULL,

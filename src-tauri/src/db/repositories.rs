@@ -112,14 +112,10 @@ impl<'db> MetadataRepository<'db> {
             "INSERT INTO core_metadata
              (id, page_id, namespace, key, value_json, value_type, source_plugin_id, created_at, updated_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
-             ON CONFLICT(id) DO UPDATE SET
-               page_id = excluded.page_id,
-               namespace = excluded.namespace,
-               key = excluded.key,
+             ON CONFLICT(page_id, namespace, key) DO UPDATE SET
                value_json = excluded.value_json,
                value_type = excluded.value_type,
                source_plugin_id = excluded.source_plugin_id,
-               created_at = excluded.created_at,
                updated_at = excluded.updated_at",
             params![
                 input.id.as_str(),
@@ -151,6 +147,28 @@ impl<'db> MetadataRepository<'db> {
         row.map(MetadataRow::into_record).transpose()
     }
 
+    pub fn get_by_logical_key(
+        &self,
+        page_id: &str,
+        namespace: &str,
+        key: &str,
+    ) -> DbResult<Option<MetadataRecord>> {
+        let row = self
+            .database
+            .connection()
+            .query_row(
+                "SELECT id, page_id, namespace, key, value_json, value_type, source_plugin_id, created_at, updated_at
+                 FROM core_metadata
+                 WHERE page_id = ?1
+                   AND namespace = ?2
+                   AND key = ?3",
+                params![page_id, namespace, key],
+                metadata_row,
+            )
+            .optional()?;
+        row.map(MetadataRow::into_record).transpose()
+    }
+
     pub fn list_for_page(&self, page_id: &str) -> DbResult<Vec<MetadataRecord>> {
         let mut statement = self.database.connection().prepare(
             "SELECT id, page_id, namespace, key, value_json, value_type, source_plugin_id, created_at, updated_at
@@ -166,6 +184,17 @@ impl<'db> MetadataRepository<'db> {
         self.database
             .connection()
             .execute("DELETE FROM core_metadata WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    pub fn delete_by_logical_key(&self, page_id: &str, namespace: &str, key: &str) -> DbResult<()> {
+        self.database.connection().execute(
+            "DELETE FROM core_metadata
+             WHERE page_id = ?1
+               AND namespace = ?2
+               AND key = ?3",
+            params![page_id, namespace, key],
+        )?;
         Ok(())
     }
 }
@@ -254,7 +283,6 @@ impl<'db> FilterRepository<'db> {
                group_json = excluded.group_json,
                view_type = excluded.view_type,
                source_plugin_id = excluded.source_plugin_id,
-               created_at = excluded.created_at,
                updated_at = excluded.updated_at",
             params![
                 input.id.as_str(),
@@ -331,7 +359,6 @@ impl<'db> PluginRepository<'db> {
                enabled = excluded.enabled,
                manifest_json = excluded.manifest_json,
                settings_json = excluded.settings_json,
-               installed_at = excluded.installed_at,
                updated_at = excluded.updated_at",
             params![
                 input.id.as_str(),
