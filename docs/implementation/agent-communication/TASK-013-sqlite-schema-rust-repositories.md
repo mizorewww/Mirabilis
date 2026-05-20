@@ -40,9 +40,9 @@
 
 ## Current Status
 
-- Status: second frontend boundary-test narrow re-review complete; local gate next.
+- Status: local gate passed; completion progress update in flight.
 - Active agents: none.
-- Next parent step: run the TASK-013 local gate.
+- Next parent step: commit the completion progress update, merge to `master`, and push.
 
 ## Agent Handoffs
 
@@ -294,6 +294,15 @@
   - Descartes the 2nd (`security_reviewer`) found no P0/P1/P2. It confirmed the change is test-only and TASK-014 can still narrow operations safely within the `operation` plus optional JSON-compatible `payload` shape.
   - Focused checks run by agents passed: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, and `git diff --check 3fc4902^ 3fc4902 -- src/test/native-bridge.test.ts`.
   - Residual handoff risk: TASK-014 still needs Rust-side operation allowlisting, payload validation, typed/redacted IPC errors, and reviewed Tauri capability scope before exposing persistence through IPC.
+
+### Local Gate
+
+- Status: passed.
+- Checks:
+  - `bun run check:quick` passed with 14 frontend test files and 247 tests, Rust fmt, clippy, and full Rust tests.
+  - `bun run build` passed.
+- Decision:
+  - `bun run check:full` was not run because TASK-013 is private Rust repository persistence and does not expose Tauri IPC, permissions/capabilities, filesystem/app-runtime persistence wiring, packaging, or release behavior.
 
 ### Review Round 1
 
