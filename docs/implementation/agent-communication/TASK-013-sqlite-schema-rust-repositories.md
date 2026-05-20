@@ -40,9 +40,10 @@
 
 ## Current Status
 
-- Status: final re-review complete; one frontend boundary-test P2 follow-up pending.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for a test-only NativeBridge boundary follow-up, then run focused checks.
+- Status: frontend boundary-test P2 follow-up delegated.
+- Active agents:
+  - Singer the 2nd (`test_writer`, id `019e471f-5825-7bd3-b094-d63c6292351f`).
+- Next parent step: wait for Singer the 2nd, then run focused checks.
 
 ## Agent Handoffs
 
@@ -228,9 +229,9 @@
 
 ### Frontend Boundary-Test Follow-Up
 
-- Status: pending agent handoff.
-- Planned agent:
-  - `test_writer` for a narrow test-only update in `src/test/native-bridge.test.ts`.
+- Status: running.
+- Agent:
+  - Singer the 2nd (`test_writer`, id `019e471f-5825-7bd3-b094-d63c6292351f`).
 - Assignment:
   - Relax the NativeBridge `DbQuery` type assertion so future TASK-014 operation narrowing is legal.
   - Preserve the stable assertions that `DbQuery` has no raw `sql` / `params` keys, accepts JSON-compatible payload values, rejects function payloads, and remains the `NativeBridge.db.execute` / `transaction` query type.
