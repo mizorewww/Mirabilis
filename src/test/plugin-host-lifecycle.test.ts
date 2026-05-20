@@ -1074,6 +1074,255 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
+  it("keeps fresh retry contributions when a stale pending register settles after concurrent uninstall", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstRegisterContributed = createDeferred<void>();
+    const releaseStaleRegister = createDeferred<void>();
+    const pluginId = "stale-uninstall-retry";
+    let registerAttempts = 0;
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        registerAttempts += 1;
+        registerRuntimeContributions(ctx, pluginId);
+
+        if (registerAttempts === 1) {
+          firstRegisterContributed.resolve();
+          await releaseStaleRegister.promise;
+        }
+      },
+    });
+
+    await host.install(plugin);
+
+    const staleRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    await firstRegisterContributed.promise;
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    await host.uninstall(pluginId);
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+
+    const retryRecord = await host.register(plugin);
+
+    expect(retryRecord).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expect(registerAttempts).toBe(2);
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    releaseStaleRegister.resolve();
+
+    const staleRegisterResult = await staleRegisterOutcome;
+    const recordAfterStaleSettled = host.getPlugin(pluginId);
+    const idsAfterStaleSettled = registryIds(runtime);
+
+    expect(staleRegisterResult.status).toBe("rejected");
+
+    if (staleRegisterResult.status === "rejected") {
+      expectPluginHostError(
+        staleRegisterResult.error,
+        "PLUGIN_LIFECYCLE_FAILED",
+        {
+          pluginId,
+          phase: "register",
+        },
+      );
+    }
+
+    expect({
+      record: recordAfterStaleSettled,
+      registryIds: idsAfterStaleSettled,
+    }).toMatchObject({
+      record: {
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      },
+      registryIds: runtimeContributionIds(pluginId),
+    });
+  });
+
+  it("keeps fresh retry contributions and status when a stale pending register settles after concurrent deactivate", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstRegisterContributed = createDeferred<void>();
+    const releaseStaleRegister = createDeferred<void>();
+    const pluginId = "stale-deactivate-retry";
+    let registerAttempts = 0;
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        registerAttempts += 1;
+        registerRuntimeContributions(ctx, pluginId);
+
+        if (registerAttempts === 1) {
+          firstRegisterContributed.resolve();
+          await releaseStaleRegister.promise;
+        }
+      },
+    });
+
+    await host.install(plugin);
+
+    const staleRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    await firstRegisterContributed.promise;
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    await host.deactivate(pluginId);
+    expect(host.getPlugin(pluginId)).toMatchObject({
+      enabled: false,
+      status: "installed",
+    });
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: [],
+      views: [],
+      slots: [],
+    });
+
+    const retryRecord = await host.register(plugin);
+
+    expect(retryRecord).toMatchObject({
+      id: pluginId,
+      enabled: false,
+      status: "registered",
+    });
+    expect(registerAttempts).toBe(2);
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    releaseStaleRegister.resolve();
+
+    const staleRegisterResult = await staleRegisterOutcome;
+    const recordAfterStaleSettled = host.getPlugin(pluginId);
+    const idsAfterStaleSettled = registryIds(runtime);
+
+    expect(staleRegisterResult.status).toBe("rejected");
+
+    if (staleRegisterResult.status === "rejected") {
+      expectPluginHostError(
+        staleRegisterResult.error,
+        "PLUGIN_LIFECYCLE_FAILED",
+        {
+          pluginId,
+          phase: "register",
+        },
+      );
+    }
+
+    expect({
+      record: recordAfterStaleSettled,
+      registryIds: idsAfterStaleSettled,
+    }).toMatchObject({
+      record: {
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      },
+      registryIds: runtimeContributionIds(pluginId),
+    });
+  });
+
+  it("keeps successful concurrent register contributions tracked when another register fails", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const firstRegisterContributed = createDeferred<void>();
+    const releaseFirstRegister = createDeferred<void>();
+    const firstRegisterFinished = createDeferred<void>();
+    const secondRegisterCause = new Error("second concurrent register failed");
+    const pluginId = "concurrent-register-failure";
+    let registerAttempts = 0;
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        registerAttempts += 1;
+
+        if (registerAttempts === 1) {
+          registerRuntimeContributions(ctx, pluginId);
+          firstRegisterContributed.resolve();
+          await releaseFirstRegister.promise;
+          return;
+        }
+
+        await firstRegisterFinished.promise;
+        throw secondRegisterCause;
+      },
+    });
+
+    await host.install(plugin);
+
+    const firstRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    await firstRegisterContributed.promise;
+    expectRegisteredRuntimeContributions(runtime, pluginId);
+
+    const secondRegisterOutcome = capturePromiseOutcome(host.register(plugin));
+
+    releaseFirstRegister.resolve();
+
+    const firstRegisterResult = await firstRegisterOutcome;
+
+    expect(firstRegisterResult.status).toBe("resolved");
+
+    if (firstRegisterResult.status === "resolved") {
+      expect(firstRegisterResult.value).toMatchObject({
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      });
+    }
+
+    firstRegisterFinished.resolve();
+
+    const secondRegisterResult = await secondRegisterOutcome;
+    const recordBeforeUninstall = host.getPlugin(pluginId);
+    const idsBeforeUninstall = registryIds(runtime);
+
+    await host.uninstall(pluginId);
+
+    expect(secondRegisterResult.status).toBe("rejected");
+
+    if (secondRegisterResult.status === "rejected") {
+      expectPluginHostError(
+        secondRegisterResult.error,
+        "PLUGIN_LIFECYCLE_FAILED",
+        {
+          pluginId,
+          phase: "register",
+          cause: secondRegisterCause,
+        },
+      );
+    }
+
+    expect({
+      recordBeforeUninstall,
+      idsBeforeUninstall,
+      idsAfterUninstall: registryIds(runtime),
+    }).toMatchObject({
+      recordBeforeUninstall: {
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      },
+      idsBeforeUninstall: runtimeContributionIds(pluginId),
+      idsAfterUninstall: {
+        commands: [],
+        views: [],
+        slots: [],
+      },
+    });
+  });
+
   it("scopes plugin-facing metadata, event, and filter facades to the owning plugin", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
@@ -2405,6 +2654,33 @@ function registryIds(runtime: CoreRuntime) {
   };
 }
 
+function runtimeContributionIds(pluginId: string) {
+  return {
+    commands: [`${pluginId}.command`],
+    views: [`${pluginId}.view`],
+    slots: [`${pluginId}.slot`],
+  };
+}
+
+function expectRegisteredRuntimeContributions(
+  runtime: CoreRuntime,
+  pluginId: string,
+) {
+  expect(registryIds(runtime)).toStrictEqual(runtimeContributionIds(pluginId));
+  expect(runtime.registries.commands.get(`${pluginId}.command`)).toMatchObject({
+    id: `${pluginId}.command`,
+    pluginId,
+  });
+  expect(runtime.registries.views.get(`${pluginId}.view`)).toMatchObject({
+    id: `${pluginId}.view`,
+    pluginId,
+  });
+  expect(runtime.registries.slots.get(`${pluginId}.slot`)).toMatchObject({
+    id: `${pluginId}.slot`,
+    pluginId,
+  });
+}
+
 function runtimeDataSnapshot(runtime: CoreRuntime) {
   return {
     pages: runtime.pages.list({ includeArchived: true }),
@@ -2427,6 +2703,24 @@ function createDeferred<T>(): {
   });
 
   return { promise, resolve, reject };
+}
+
+function capturePromiseOutcome<Value>(
+  promise: Promise<Value>,
+): Promise<
+  | {
+      status: "resolved";
+      value: Value;
+    }
+  | {
+      status: "rejected";
+      error: unknown;
+    }
+> {
+  return promise.then(
+    (value) => ({ status: "resolved", value }),
+    (error) => ({ status: "rejected", error }),
+  );
 }
 
 function emptyDocument(): StructuredMarkdownDocument {
