@@ -39,9 +39,10 @@
 
 ## Current Status
 
-- Status: fresh-record batch race production fix handoff.
-- Active agents: none.
-- Next parent step: delegate implementation, then validate green checks.
+- Status: fresh-record batch race production fix in progress.
+- Active agents:
+  - Raman (`implementer`, `019e469e-7b82-7563-bd88-646b98cf57cd`).
+- Next parent step: wait for Raman, then validate green checks.
 
 ## Agent Handoffs
 
@@ -769,6 +770,17 @@
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 45 tests with 43 passing and 2 failing in the expected fresh-record batch race cases.
   - `git diff --check` passed.
 
+### Fresh-Record Batch Race Implementation
+
+- Status: in progress.
+- Agent:
+  - Raman (`implementer`, `019e469e-7b82-7563-bd88-646b98cf57cd`).
+- Ownership:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Assignment:
+  - Fix stale batch rollback so it preserves fresh same-id records and their tracked contributions.
+  - Fix batch loading so reaching a concurrently registered same-id plugin cannot overwrite the live record or lose contribution tracking.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -778,4 +790,4 @@
 
 ## Next Action
 
-Delegate the production fix for Kuhn's red tests.
+Wait for Raman, then validate and commit the fresh-record batch race production fix.
