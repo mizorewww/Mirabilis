@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: pending transaction fix green; final micro re-review next.
-- Active agents: none.
-- Next parent step: run a final micro re-review of the pending transaction fix, then local gate if clear.
+- Status: final micro re-review in progress.
+- Active agents: Bohr (`reviewer`) and Linnaeus (`security_reviewer`).
+- Next parent step: wait for final micro re-review, then local gate if clear.
 
 ## Agent Handoffs
 
@@ -446,6 +446,15 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Micro Re-Review
+
+- Status: in progress.
+- Agents:
+  - Bohr (`reviewer`, `019e4650-6f87-7592-be02-2d314a284d89`).
+  - Linnaeus (`security_reviewer`, `019e4650-7e37-7b21-a147-8088f8a4d34a`).
+- Assignment:
+  - Read-only micro re-review of the pending/unawaited transaction fix before final local gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -455,4 +464,4 @@
 
 ## Next Action
 
-Run final micro re-review of the pending transaction fix.
+Wait for final micro re-review, then run local gate if clear.
