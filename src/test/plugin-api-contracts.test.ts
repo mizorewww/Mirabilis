@@ -12,13 +12,17 @@ import type {
   MarkdownSyntaxContribution,
   MetadataFieldContribution,
   MobileToolbarContribution,
+  PluginCommandDescriptor,
   PluginCommandRegistry,
+  PluginCommandListOptions,
   PluginContext,
   PluginContributions,
   PluginCommandDefinition,
   PluginDependency,
   PluginDependencyReference,
   PluginEventStore,
+  PluginFilterCondition,
+  PluginFilterQuery,
   PluginFilterStore,
   PluginInstallContext,
   PluginLifecycleResult,
@@ -26,14 +30,18 @@ import type {
   PluginMetadataStore,
   PluginPageStore,
   PluginPermission,
+  PluginSlotDescriptor,
   PluginSlotContribution,
   PluginSlotDefinition,
+  PluginSlotListOptions,
   PluginSlotRegistry,
   PluginTransaction,
   PluginTransactionHandler,
   PluginTransactionManager,
   PluginUninstallContext,
+  PluginViewDescriptor,
   PluginViewDefinition,
+  PluginViewListOptions,
   PluginViewRegistry,
   SettingsPanelContribution,
   ViewContribution,
@@ -53,7 +61,9 @@ import type {
   MetadataFieldContribution as MetadataFieldContributionFromCore,
   MetadataStore,
   MobileToolbarContribution as MobileToolbarContributionFromCore,
+  PluginCommandDescriptor as PluginCommandDescriptorFromCore,
   PluginCommandRegistry as PluginCommandRegistryFromCore,
+  PluginCommandListOptions as PluginCommandListOptionsFromCore,
   PluginCommandDefinition as PluginCommandDefinitionFromCore,
   PluginContext as PluginContextFromCore,
   PluginContributions as PluginContributionsFromCore,
@@ -65,14 +75,20 @@ import type {
   MetadataJsonValue,
   MetadataValueType,
   PluginPermission as PluginPermissionFromCore,
+  PluginFilterCondition as PluginFilterConditionFromCore,
+  PluginFilterQuery as PluginFilterQueryFromCore,
+  PluginSlotDescriptor as PluginSlotDescriptorFromCore,
   PluginSlotContribution as PluginSlotContributionFromCore,
   PluginSlotDefinition as PluginSlotDefinitionFromCore,
+  PluginSlotListOptions as PluginSlotListOptionsFromCore,
   PluginSlotRegistry as PluginSlotRegistryFromCore,
   PluginTransaction as PluginTransactionFromCore,
   PluginTransactionHandler as PluginTransactionHandlerFromCore,
   PluginTransactionManager as PluginTransactionManagerFromCore,
   PluginUninstallContext as PluginUninstallContextFromCore,
+  PluginViewDescriptor as PluginViewDescriptorFromCore,
   PluginViewDefinition as PluginViewDefinitionFromCore,
+  PluginViewListOptions as PluginViewListOptionsFromCore,
   PluginViewRegistry as PluginViewRegistryFromCore,
   PageStore,
   SettingsPanelContribution as SettingsPanelContributionFromCore,
@@ -91,6 +107,8 @@ type KeyLeak<
   Key extends PropertyKey,
   Label extends string,
 > = Extract<keyof Surface, Key> extends never ? never : Label;
+type AssignableLeak<Candidate, Surface, Label extends string> =
+  Candidate extends Surface ? Label : never;
 type FunctionAssignableLeak<Value, Label extends string> = (() => boolean) extends
   NonNullable<Value>
   ? Label
@@ -158,18 +176,78 @@ type CallerSuppliedSourcePluginIdKey =
   | Extract<keyof PluginFilterSaveInput, "sourcePluginId">
   | Extract<keyof PluginFilterUpdateInput, "sourcePluginId">
   | Extract<keyof PluginFilterListOptions, "sourcePluginId">;
+type CallerSourcePluginIdMetadataSetVariable = {
+  pageId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdEventAppendVariable = {
+  pageId: string;
+  namespace: string;
+  type: string;
+  payload: MetadataJsonValue;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdFilterSaveVariable = {
+  name: string;
+  query: PluginFilterQuery;
+  viewType: string;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdFilterUpdateVariable = {
+  viewType: string;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdFilterListVariable = {
+  viewType: string;
+  sourcePluginId: string;
+};
+type CallerSourcePluginIdMetadataSetLeak = AssignableLeak<
+  CallerSourcePluginIdMetadataSetVariable,
+  PluginMetadataSetInput,
+  "metadata.set.sourcePluginId.variable"
+>;
+type CallerSourcePluginIdEventAppendLeak = AssignableLeak<
+  CallerSourcePluginIdEventAppendVariable,
+  PluginEventAppendInput,
+  "events.append.sourcePluginId.variable"
+>;
+type CallerSourcePluginIdFilterSaveLeak = AssignableLeak<
+  CallerSourcePluginIdFilterSaveVariable,
+  PluginFilterSaveInput,
+  "filters.save.sourcePluginId.variable"
+>;
+type CallerSourcePluginIdFilterUpdateLeak = AssignableLeak<
+  CallerSourcePluginIdFilterUpdateVariable,
+  PluginFilterUpdateInput,
+  "filters.update.sourcePluginId.variable"
+>;
+type CallerSourcePluginIdFilterListLeak = AssignableLeak<
+  CallerSourcePluginIdFilterListVariable,
+  PluginFilterListOptions,
+  "filters.list.sourcePluginId.variable"
+>;
+type CallerSuppliedSourcePluginIdAssignableLeak =
+  | CallerSourcePluginIdMetadataSetLeak
+  | CallerSourcePluginIdEventAppendLeak
+  | CallerSourcePluginIdFilterSaveLeak
+  | CallerSourcePluginIdFilterUpdateLeak
+  | CallerSourcePluginIdFilterListLeak;
 type PluginCommandRegisterInput = Parameters<
   PluginCommandRegistry["register"]
 >[0];
 type PluginViewRegisterInput = Parameters<PluginViewRegistry["register"]>[0];
 type PluginSlotRegisterInput = Parameters<PluginSlotRegistry["register"]>[0];
-type PluginCommandListOptions = NonNullable<
+type PluginCommandRegistryListOptions = NonNullable<
   Parameters<PluginCommandRegistry["list"]>[0]
 >;
-type PluginViewListOptions = NonNullable<
+type PluginViewRegistryListOptions = NonNullable<
   Parameters<PluginViewRegistry["list"]>[0]
 >;
-type PluginSlotListOptions = NonNullable<
+type PluginSlotRegistryListOptions = NonNullable<
   Parameters<PluginSlotRegistry["list"]>[0]
 >;
 type CallerSuppliedRegistryPluginIdKey =
@@ -180,19 +258,81 @@ type CallerSuppliedRegistryPluginIdKey =
     >
   | KeyLeak<PluginViewRegisterInput, "pluginId", "views.register.pluginId">
   | KeyLeak<PluginSlotRegisterInput, "pluginId", "slots.register.pluginId">
-  | KeyLeak<PluginCommandListOptions, "pluginId", "commands.list.pluginId">
-  | KeyLeak<PluginViewListOptions, "pluginId", "views.list.pluginId">
-  | KeyLeak<PluginSlotListOptions, "pluginId", "slots.list.pluginId">;
+  | KeyLeak<
+      PluginCommandRegistryListOptions,
+      "pluginId",
+      "commands.list.pluginId"
+    >
+  | KeyLeak<PluginViewRegistryListOptions, "pluginId", "views.list.pluginId">
+  | KeyLeak<PluginSlotRegistryListOptions, "pluginId", "slots.list.pluginId">;
+type CallerPluginIdCommandDefinitionVariable = {
+  id: string;
+  pluginId: string;
+  title: string;
+  handler(input: unknown): unknown;
+};
+type CallerPluginIdViewDefinitionVariable = {
+  id: string;
+  pluginId: string;
+  type: string;
+  title: string;
+  accepts: MetadataJsonValue;
+  component(): null;
+};
+type CallerPluginIdSlotDefinitionVariable = {
+  id: string;
+  pluginId: string;
+  slot: string;
+  component(): null;
+};
+type CallerPluginIdCommandListVariable = {
+  pluginId: string;
+};
+type CallerPluginIdViewListVariable = {
+  type: string;
+  pluginId: string;
+};
+type CallerPluginIdSlotListVariable = {
+  slot: string;
+  pluginId: string;
+};
+type CallerPluginIdCommandDefinitionLeak = AssignableLeak<
+  CallerPluginIdCommandDefinitionVariable,
+  PluginCommandRegisterInput,
+  "commands.register.pluginId.variable"
+>;
+type CallerPluginIdViewDefinitionLeak = AssignableLeak<
+  CallerPluginIdViewDefinitionVariable,
+  PluginViewRegisterInput,
+  "views.register.pluginId.variable"
+>;
+type CallerPluginIdSlotDefinitionLeak = AssignableLeak<
+  CallerPluginIdSlotDefinitionVariable,
+  PluginSlotRegisterInput,
+  "slots.register.pluginId.variable"
+>;
+type CallerPluginIdCommandListLeak = AssignableLeak<
+  CallerPluginIdCommandListVariable,
+  PluginCommandRegistryListOptions,
+  "commands.list.pluginId.variable"
+>;
+type CallerPluginIdViewListLeak = AssignableLeak<
+  CallerPluginIdViewListVariable,
+  PluginViewRegistryListOptions,
+  "views.list.pluginId.variable"
+>;
+type CallerPluginIdSlotListLeak = AssignableLeak<
+  CallerPluginIdSlotListVariable,
+  PluginSlotRegistryListOptions,
+  "slots.list.pluginId.variable"
+>;
 type CallerSuppliedRegistryPluginIdAssignableLeak =
-  | ({ pluginId: string } extends PluginCommandListOptions
-      ? "commands.list.pluginId"
-      : never)
-  | ({ pluginId: string } extends PluginViewListOptions
-      ? "views.list.pluginId"
-      : never)
-  | ({ pluginId: string } extends PluginSlotListOptions
-      ? "slots.list.pluginId"
-      : never);
+  | CallerPluginIdCommandDefinitionLeak
+  | CallerPluginIdViewDefinitionLeak
+  | CallerPluginIdSlotDefinitionLeak
+  | CallerPluginIdCommandListLeak
+  | CallerPluginIdViewListLeak
+  | CallerPluginIdSlotListLeak;
 type PluginViewRegisterResult = ReturnType<PluginViewRegistry["register"]>;
 type PluginViewGetResult = ReturnType<PluginViewRegistry["get"]>;
 type PluginViewListResult = ArrayElement<ReturnType<PluginViewRegistry["list"]>>;
@@ -252,10 +392,15 @@ type PluginApiBoundaryLeak =
   | ManifestExecutableDescriptorKey
   | SlotExecutableConditionLeak
   | CallerSuppliedSourcePluginIdKey
+  | CallerSuppliedSourcePluginIdAssignableLeak
   | CallerSuppliedRegistryPluginIdKey
   | CallerSuppliedRegistryPluginIdAssignableLeak
   | PluginContributionJsonCompatibilityLeak
   | PluginRegistryExecutableReturnLeak;
+
+function expectNoTypeLeak<Leak extends never>(): void {
+  void (undefined as unknown as Leak);
+}
 
 describe("Plugin API contracts", () => {
   it("provides a public plugin-api module and re-exports contracts from Core", () => {
@@ -285,6 +430,12 @@ describe("Plugin API contracts", () => {
     expectTypeOf<FilterContributionFromCore>().toEqualTypeOf<
       FilterContribution
     >();
+    expectTypeOf<PluginFilterConditionFromCore>().toEqualTypeOf<
+      PluginFilterCondition
+    >();
+    expectTypeOf<PluginFilterQueryFromCore>().toEqualTypeOf<
+      PluginFilterQuery
+    >();
     expectTypeOf<ViewContributionFromCore>().toEqualTypeOf<ViewContribution>();
     expectTypeOf<PluginSlotContributionFromCore>().toEqualTypeOf<
       PluginSlotContribution
@@ -313,16 +464,34 @@ describe("Plugin API contracts", () => {
     expectTypeOf<PluginCommandRegistryFromCore>().toEqualTypeOf<
       PluginCommandRegistry
     >();
+    expectTypeOf<PluginCommandDescriptorFromCore>().toEqualTypeOf<
+      PluginCommandDescriptor
+    >();
+    expectTypeOf<PluginCommandListOptionsFromCore>().toEqualTypeOf<
+      PluginCommandListOptions
+    >();
     expectTypeOf<
       PluginCommandDefinitionFromCore<{ pageId: string }, string>
     >().toEqualTypeOf<PluginCommandDefinition<{ pageId: string }, string>>();
     expectTypeOf<PluginViewRegistryFromCore>().toEqualTypeOf<
       PluginViewRegistry
     >();
+    expectTypeOf<PluginViewDescriptorFromCore>().toEqualTypeOf<
+      PluginViewDescriptor
+    >();
+    expectTypeOf<PluginViewListOptionsFromCore>().toEqualTypeOf<
+      PluginViewListOptions
+    >();
     expectTypeOf<PluginViewDefinitionFromCore<{ pageId: string }>>()
       .toEqualTypeOf<PluginViewDefinition<{ pageId: string }>>();
     expectTypeOf<PluginSlotRegistryFromCore>().toEqualTypeOf<
       PluginSlotRegistry
+    >();
+    expectTypeOf<PluginSlotDescriptorFromCore>().toEqualTypeOf<
+      PluginSlotDescriptor
+    >();
+    expectTypeOf<PluginSlotListOptionsFromCore>().toEqualTypeOf<
+      PluginSlotListOptions
     >();
     expectTypeOf<PluginSlotDefinitionFromCore<{ pageId: string }>>()
       .toEqualTypeOf<PluginSlotDefinition<{ pageId: string }>>();
@@ -336,6 +505,15 @@ describe("Plugin API contracts", () => {
     >();
     expectTypeOf<PluginLifecycleResultFromCore>().toEqualTypeOf<
       PluginLifecycleResult
+    >();
+    expectTypeOf<PluginCommandRegistryListOptions>().toEqualTypeOf<
+      PluginCommandListOptions
+    >();
+    expectTypeOf<PluginViewRegistryListOptions>().toEqualTypeOf<
+      PluginViewListOptions
+    >();
+    expectTypeOf<PluginSlotRegistryListOptions>().toEqualTypeOf<
+      PluginSlotListOptions
     >();
   });
 
@@ -744,8 +922,7 @@ describe("Plugin API contracts", () => {
     expect(viewListOptions.type).toBe("example.view");
     expect(slotListOptions.slot).toBe("example.workspace.panel");
 
-    expectTypeOf<PluginRegistryExecutableReturnLeak>().toBeNever();
-    expectTypeOf<CallerSuppliedRegistryPluginIdAssignableLeak>().toBeNever();
+    expectNoTypeLeak<PluginRegistryExecutableReturnLeak>();
 
     ({
       id: "example.command.bad-owner",
@@ -778,6 +955,23 @@ describe("Plugin API contracts", () => {
     } satisfies PluginSlotDefinition);
   });
 
+  it("rejects caller-supplied plugin ids from plugin registry variables", () => {
+    expectNoTypeLeak<CallerPluginIdCommandDefinitionLeak>();
+    expectNoTypeLeak<CallerPluginIdViewDefinitionLeak>();
+    expectNoTypeLeak<CallerPluginIdSlotDefinitionLeak>();
+    expectNoTypeLeak<CallerPluginIdCommandListLeak>();
+    expectNoTypeLeak<CallerPluginIdViewListLeak>();
+    expectNoTypeLeak<CallerPluginIdSlotListLeak>();
+  });
+
+  it("rejects caller-supplied source plugin ids from plugin store variables", () => {
+    expectNoTypeLeak<CallerSourcePluginIdMetadataSetLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdEventAppendLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdFilterSaveLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdFilterUpdateLeak>();
+    expectNoTypeLeak<CallerSourcePluginIdFilterListLeak>();
+  });
+
   it("keeps PluginContext scoped to plugin-facing facades and away from raw runtime handles", () => {
     expectTypeOf<PluginContext["pluginId"]>().toEqualTypeOf<string>();
     expectTypeOf<PluginContext["app"]>().toEqualTypeOf<AppRuntimeInfo>();
@@ -798,6 +992,6 @@ describe("Plugin API contracts", () => {
   });
 
   it("keeps plugin-facing boundaries scoped, inert, and caller-bound", () => {
-    expectTypeOf<PluginApiBoundaryLeak>().toBeNever();
+    expectNoTypeLeak<PluginApiBoundaryLeak>();
   });
 });
