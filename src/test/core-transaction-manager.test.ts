@@ -933,16 +933,40 @@ function binaryValueBytes(
   const value = page.body.content[0]!.attrs?.binary;
 
   if (kind === "ArrayBuffer") {
-    expect(value).toBeInstanceOf(ArrayBuffer);
+    const buffer = expectArrayBufferClone(value);
 
-    return [...new Uint8Array(value as ArrayBuffer)];
+    return [...new Uint8Array(buffer)];
   }
 
-  expect(value).toBeInstanceOf(DataView);
-
-  const view = value as DataView;
+  const view = expectDataViewClone(value);
 
   return [...new Uint8Array(view.buffer, view.byteOffset, view.byteLength)];
+}
+
+function expectArrayBufferClone(value: unknown): ArrayBuffer {
+  expect(value).not.toBeNull();
+  expect(typeof value).toBe("object");
+  expect(Object.prototype.toString.call(value)).toBe("[object ArrayBuffer]");
+
+  const buffer = value as ArrayBuffer;
+  expect(buffer.byteLength).toBe(4);
+
+  return buffer;
+}
+
+function expectDataViewClone(value: unknown): DataView {
+  expect(value).not.toBeNull();
+  expect(typeof value).toBe("object");
+  expect(ArrayBuffer.isView(value)).toBe(true);
+  expect(Object.prototype.toString.call(value)).toBe("[object DataView]");
+
+  const view = value as DataView;
+  expect(Object.prototype.toString.call(view.buffer)).toBe(
+    "[object ArrayBuffer]",
+  );
+  expect(view.byteLength).toBe(4);
+
+  return view;
 }
 
 function nonPlainValues(page: MarkdownPage): {
