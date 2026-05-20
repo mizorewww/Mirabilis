@@ -19,6 +19,8 @@ use tempfile::TempDir;
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
+const SQL_INJECTION_TEXT: &str = "x'); DROP TABLE core_pages; --";
+
 #[test]
 fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> TestResult {
     let db_file = TempDatabase::new()?;
@@ -221,6 +223,13 @@ fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> Te
         &["plugin_id", "index_name"],
         true,
     )?;
+    assert_foreign_key(
+        &raw,
+        "core_plugin_indexes",
+        "plugin_id",
+        "core_plugins",
+        "id",
+    )?;
 
     assert_eq!(
         raw.query_row(
@@ -229,6 +238,61 @@ fn sqlite_migrations_are_repeatable_versioned_and_create_expected_schema() -> Te
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
         )?,
         (1, "001_core_schema".to_string())
+    );
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_migrations_reject_ledger_drift() -> TestResult {
+    let db_file = migrated_temp_database()?;
+
+    {
+        let raw = Connection::open(db_file.path())?;
+        raw.execute(
+            "UPDATE core_schema_migrations
+             SET name = '001_core_schema_renamed',
+                 checksum = 'wrong-checksum'
+             WHERE version = 1",
+            [],
+        )?;
+    }
+
+    let database = Database::open(db_file.path())?;
+    let result = apply_migrations(&database);
+
+    assert!(
+        result.is_err(),
+        "migration version 1 with a changed name/checksum must not be accepted"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_migrations_reject_future_user_version_without_downgrading() -> TestResult {
+    let db_file = TempDatabase::new()?;
+    let future_version = LATEST_SCHEMA_VERSION + 1;
+
+    {
+        let raw = Connection::open(db_file.path())?;
+        raw.pragma_update(None, "user_version", future_version)?;
+    }
+
+    {
+        let database = Database::open(db_file.path())?;
+        let result = apply_migrations(&database);
+        assert!(
+            result.is_err(),
+            "a database from a newer schema version must not be migrated by an older binary"
+        );
+    }
+
+    let raw = Connection::open(db_file.path())?;
+    assert_eq!(
+        pragma_user_version(&raw)?,
+        future_version,
+        "failed future-version migrations must not downgrade PRAGMA user_version"
     );
 
     Ok(())
@@ -314,7 +378,7 @@ fn sqlite_metadata_repository_upserts_deletes_json_and_orders_lists() -> TestRes
         page_id: s("page-a"),
         namespace: s("plugin.timer"),
         key: s("duration"),
-        value: json!({"minutes": 25, "source": "x'); DROP TABLE core_pages; --"}),
+        value: json!({"minutes": 25, "source": SQL_INJECTION_TEXT}),
         value_type: s("object"),
         source_plugin_id: s("plugin.timer"),
         created_at: s("2026-05-21T00:00:02Z"),
@@ -351,6 +415,13 @@ fn sqlite_metadata_repository_upserts_deletes_json_and_orders_lists() -> TestRes
         json!(null)
     );
     assert_eq!(
+        metadata
+            .get("meta-b")?
+            .expect("metadata with injection-shaped value should exist")
+            .value,
+        json!({"minutes": 25, "source": SQL_INJECTION_TEXT})
+    );
+    assert_eq!(
         ids(metadata.list_for_page("page-a")?),
         vec!["meta-a", "meta-b"]
     );
@@ -358,6 +429,70 @@ fn sqlite_metadata_repository_upserts_deletes_json_and_orders_lists() -> TestRes
     metadata.delete("meta-b")?;
     assert!(metadata.get("meta-b")?.is_none());
     assert_table_queryable(db_file.path(), "core_metadata")?;
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_metadata_repository_uses_page_namespace_key_as_identity() -> TestResult {
+    let db_file = migrated_temp_database()?;
+    let database = Database::open(db_file.path())?;
+    apply_migrations(&database)?;
+    seed_page(&database, "page-a")?;
+    let metadata = MetadataRepository::new(&database);
+
+    metadata.upsert(UpsertMetadata {
+        id: s("meta-original"),
+        page_id: s("page-a"),
+        namespace: s("plugin.core"),
+        key: s("frontmatter"),
+        value: json!({"title": "Original"}),
+        value_type: s("object"),
+        source_plugin_id: s("plugin.core"),
+        created_at: s("2026-05-21T00:00:01Z"),
+        updated_at: s("2026-05-21T00:00:01Z"),
+    })?;
+
+    metadata.upsert(UpsertMetadata {
+        id: s("meta-replacement"),
+        page_id: s("page-a"),
+        namespace: s("plugin.core"),
+        key: s("frontmatter"),
+        value: json!({"title": "Updated", "literal": SQL_INJECTION_TEXT}),
+        value_type: s("object"),
+        source_plugin_id: s("plugin.core"),
+        created_at: s("2026-05-21T00:00:09Z"),
+        updated_at: s("2026-05-21T00:00:02Z"),
+    })?;
+
+    let record = metadata
+        .get_by_logical_key("page-a", "plugin.core", "frontmatter")?
+        .expect("metadata should be fetched by page_id/namespace/key");
+    assert_eq!(record.id, "meta-original");
+    assert_eq!(record.page_id, "page-a");
+    assert_eq!(record.namespace, "plugin.core");
+    assert_eq!(record.key, "frontmatter");
+    assert_eq!(
+        record.value,
+        json!({"title": "Updated", "literal": SQL_INJECTION_TEXT})
+    );
+    assert_eq!(record.source_plugin_id, "plugin.core");
+    assert_eq!(record.created_at, "2026-05-21T00:00:01Z");
+    assert_eq!(record.updated_at, "2026-05-21T00:00:02Z");
+    assert!(metadata.get("meta-replacement")?.is_none());
+    assert_eq!(
+        ids(metadata.list_for_page("page-a")?),
+        vec!["meta-original"]
+    );
+
+    metadata.delete_by_logical_key("page-a", "plugin.core", "frontmatter")?;
+    assert!(
+        metadata
+            .get_by_logical_key("page-a", "plugin.core", "frontmatter")?
+            .is_none(),
+        "delete_by_logical_key should remove the logical metadata record"
+    );
+    assert!(metadata.get("meta-original")?.is_none());
 
     Ok(())
 }
@@ -375,7 +510,7 @@ fn sqlite_events_repository_appends_reads_json_and_orders_lists() -> TestResult 
         page_id: Some(s("page-a")),
         namespace: s("plugin.timer"),
         event_type: s("stop"),
-        payload: json!({"reason": "x'); DROP TABLE core_pages; --", "elapsed": 1500}),
+        payload: json!({"reason": SQL_INJECTION_TEXT, "elapsed": 1500}),
         source_plugin_id: s("plugin.timer"),
         created_at: s("2026-05-21T00:00:02Z"),
     })?;
@@ -392,6 +527,13 @@ fn sqlite_events_repository_appends_reads_json_and_orders_lists() -> TestResult 
     assert_eq!(
         events.get("event-a")?.expect("event should exist").payload,
         rich_json()
+    );
+    assert_eq!(
+        events
+            .get("event-b")?
+            .expect("event with injection-shaped payload should exist")
+            .payload,
+        json!({"reason": SQL_INJECTION_TEXT, "elapsed": 1500})
     );
     assert_eq!(
         ids(events.list(EventListOptions {
@@ -416,7 +558,7 @@ fn sqlite_filters_repository_cruds_optional_json_nulls_and_orders_lists() -> Tes
     filters.upsert(UpsertFilter {
         id: s("filter-b"),
         name: s("Timer filter"),
-        query: json!({"op": "eq", "field": "status", "value": "x'); DROP TABLE core_pages; --"}),
+        query: json!({"op": "eq", "field": "status", "value": SQL_INJECTION_TEXT}),
         sort: Some(json!(null)),
         group: None,
         view_type: s("list"),
@@ -437,6 +579,10 @@ fn sqlite_filters_repository_cruds_optional_json_nulls_and_orders_lists() -> Tes
     })?;
 
     let filter_b = filters.get("filter-b")?.expect("filter-b should exist");
+    assert_eq!(
+        filter_b.query,
+        json!({"op": "eq", "field": "status", "value": SQL_INJECTION_TEXT})
+    );
     assert_eq!(filter_b.sort, Some(json!(null)));
     assert_eq!(filter_b.group, None);
     assert_eq!(
@@ -480,7 +626,7 @@ fn sqlite_plugins_repository_cruds_settings_nulls_enabled_state_and_orders_lists
         name: s("Timer"),
         version: s("1.0.0"),
         enabled: true,
-        manifest: json!({"name": "Timer", "commands": ["start", "x'); DROP TABLE core_pages; --"]}),
+        manifest: json!({"name": "Timer", "commands": ["start", SQL_INJECTION_TEXT]}),
         settings: Some(json!(null)),
         installed_at: s("2026-05-21T00:00:02Z"),
         updated_at: s("2026-05-21T00:00:02Z"),
@@ -504,6 +650,13 @@ fn sqlite_plugins_repository_cruds_settings_nulls_enabled_state_and_orders_lists
         Some(json!(null))
     );
     assert_eq!(
+        plugins
+            .get("plugin-b")?
+            .expect("plugin-b should exist")
+            .manifest,
+        json!({"name": "Timer", "commands": ["start", SQL_INJECTION_TEXT]})
+    );
+    assert_eq!(
         raw_optional_text(
             db_file.path(),
             "SELECT settings_json FROM core_plugins WHERE id = 'plugin-b'"
@@ -518,7 +671,32 @@ fn sqlite_plugins_repository_cruds_settings_nulls_enabled_state_and_orders_lists
         None
     );
 
-    plugins.set_enabled("plugin-b", false, "2026-05-21T00:00:03Z")?;
+    plugins.upsert(UpsertPlugin {
+        id: s("plugin-b"),
+        name: s("Timer Updated"),
+        version: s("1.1.0"),
+        enabled: true,
+        manifest: json!({"name": "Timer Updated", "literal": SQL_INJECTION_TEXT}),
+        settings: Some(json!({"mode": "compact", "literal": SQL_INJECTION_TEXT})),
+        installed_at: s("2026-05-21T00:00:09Z"),
+        updated_at: s("2026-05-21T00:00:04Z"),
+    })?;
+    let updated_plugin = plugins
+        .get("plugin-b")?
+        .expect("plugin upsert should replace existing plugin fields");
+    assert_eq!(updated_plugin.name, "Timer Updated");
+    assert_eq!(updated_plugin.version, "1.1.0");
+    assert!(updated_plugin.enabled);
+    assert_eq!(
+        updated_plugin.manifest,
+        json!({"name": "Timer Updated", "literal": SQL_INJECTION_TEXT})
+    );
+    assert_eq!(
+        updated_plugin.settings,
+        Some(json!({"mode": "compact", "literal": SQL_INJECTION_TEXT}))
+    );
+
+    plugins.set_enabled("plugin-b", false, "2026-05-21T00:00:05Z")?;
     assert!(
         !plugins
             .get("plugin-b")?
@@ -530,6 +708,108 @@ fn sqlite_plugins_repository_cruds_settings_nulls_enabled_state_and_orders_lists
     plugins.delete("plugin-a")?;
     assert!(plugins.get("plugin-a")?.is_none());
     assert_table_queryable(db_file.path(), "core_plugins")?;
+
+    Ok(())
+}
+
+#[test]
+fn sqlite_upserts_preserve_creation_timestamps_when_replacing_records() -> TestResult {
+    let db_file = migrated_temp_database()?;
+    let database = Database::open(db_file.path())?;
+    apply_migrations(&database)?;
+    seed_page(&database, "page-a")?;
+
+    let metadata = MetadataRepository::new(&database);
+    metadata.upsert(UpsertMetadata {
+        id: s("meta-a"),
+        page_id: s("page-a"),
+        namespace: s("plugin.core"),
+        key: s("frontmatter"),
+        value: json!({"title": "Original"}),
+        value_type: s("object"),
+        source_plugin_id: s("plugin.core"),
+        created_at: s("2026-05-21T00:00:01Z"),
+        updated_at: s("2026-05-21T00:00:01Z"),
+    })?;
+    metadata.upsert(UpsertMetadata {
+        id: s("meta-a"),
+        page_id: s("page-a"),
+        namespace: s("plugin.core"),
+        key: s("frontmatter"),
+        value: json!({"title": "Updated"}),
+        value_type: s("object"),
+        source_plugin_id: s("plugin.core"),
+        created_at: s("2026-05-21T00:00:09Z"),
+        updated_at: s("2026-05-21T00:00:02Z"),
+    })?;
+
+    let filters = FilterRepository::new(&database);
+    filters.upsert(UpsertFilter {
+        id: s("filter-a"),
+        name: s("Open"),
+        query: json!({"status": "open"}),
+        sort: None,
+        group: None,
+        view_type: s("list"),
+        source_plugin_id: Some(s("plugin.core")),
+        created_at: s("2026-05-21T00:00:03Z"),
+        updated_at: s("2026-05-21T00:00:03Z"),
+    })?;
+    filters.upsert(UpsertFilter {
+        id: s("filter-a"),
+        name: s("Open updated"),
+        query: json!({"status": "open", "literal": SQL_INJECTION_TEXT}),
+        sort: Some(json!([{"field": "updatedAt"}])),
+        group: None,
+        view_type: s("board"),
+        source_plugin_id: Some(s("plugin.core")),
+        created_at: s("2026-05-21T00:00:09Z"),
+        updated_at: s("2026-05-21T00:00:04Z"),
+    })?;
+
+    let plugins = PluginRepository::new(&database);
+    plugins.upsert(UpsertPlugin {
+        id: s("plugin-a"),
+        name: s("Core"),
+        version: s("1.0.0"),
+        enabled: true,
+        manifest: json!({"name": "Core"}),
+        settings: None,
+        installed_at: s("2026-05-21T00:00:05Z"),
+        updated_at: s("2026-05-21T00:00:05Z"),
+    })?;
+    plugins.upsert(UpsertPlugin {
+        id: s("plugin-a"),
+        name: s("Core updated"),
+        version: s("1.1.0"),
+        enabled: false,
+        manifest: json!({"name": "Core updated"}),
+        settings: Some(json!({"literal": SQL_INJECTION_TEXT})),
+        installed_at: s("2026-05-21T00:00:09Z"),
+        updated_at: s("2026-05-21T00:00:06Z"),
+    })?;
+
+    let metadata_record = metadata.get("meta-a")?.expect("metadata should exist");
+    assert_eq!(metadata_record.created_at, "2026-05-21T00:00:01Z");
+    assert_eq!(metadata_record.updated_at, "2026-05-21T00:00:02Z");
+    assert_eq!(metadata_record.value, json!({"title": "Updated"}));
+
+    let filter_record = filters.get("filter-a")?.expect("filter should exist");
+    assert_eq!(filter_record.created_at, "2026-05-21T00:00:03Z");
+    assert_eq!(filter_record.updated_at, "2026-05-21T00:00:04Z");
+    assert_eq!(
+        filter_record.query,
+        json!({"status": "open", "literal": SQL_INJECTION_TEXT})
+    );
+
+    let plugin_record = plugins.get("plugin-a")?.expect("plugin should exist");
+    assert_eq!(plugin_record.installed_at, "2026-05-21T00:00:05Z");
+    assert_eq!(plugin_record.updated_at, "2026-05-21T00:00:06Z");
+    assert_eq!(plugin_record.name, "Core updated");
+    assert_eq!(
+        plugin_record.settings,
+        Some(json!({"literal": SQL_INJECTION_TEXT}))
+    );
 
     Ok(())
 }
@@ -565,6 +845,35 @@ fn sqlite_command_descriptors_repository_cruds_json_and_orders_lists() -> TestRe
             .expect("command-a should exist")
             .context,
         rich_json()
+    );
+    let command_b = commands
+        .get("command-b")?
+        .expect("command with injection-shaped shortcut should exist");
+    assert_eq!(
+        command_b.shortcut,
+        Some("Cmd+Shift+X'); DROP TABLE core_pages; --".to_string())
+    );
+    assert_eq!(
+        command_b.context,
+        json!({"scope": ["page", null], "enabled": true})
+    );
+
+    commands.upsert(UpsertCommandDescriptor {
+        id: s("command-b"),
+        plugin_id: s("plugin-a"),
+        command_id: s("timer.stop"),
+        title: s("Stop timer now"),
+        shortcut: Some(s("Cmd+Alt+S")),
+        context: json!({"scope": ["active-page"], "literal": SQL_INJECTION_TEXT}),
+    })?;
+    let updated_command = commands
+        .get("command-b")?
+        .expect("command upsert should replace descriptor fields");
+    assert_eq!(updated_command.title, "Stop timer now");
+    assert_eq!(updated_command.shortcut, Some("Cmd+Alt+S".to_string()));
+    assert_eq!(
+        updated_command.context,
+        json!({"scope": ["active-page"], "literal": SQL_INJECTION_TEXT})
     );
     assert_eq!(ids(commands.list()?), vec!["command-a", "command-b"]);
 
@@ -604,6 +913,30 @@ fn sqlite_view_descriptors_repository_cruds_json_and_orders_lists() -> TestResul
             .expect("view-a should exist")
             .accepted_data_shape,
         rich_json()
+    );
+    let view_b = views
+        .get("view-b")?
+        .expect("view with injection-shaped name should exist");
+    assert_eq!(view_b.name, "Timer x'); DROP TABLE core_pages; --");
+    assert_eq!(
+        view_b.accepted_data_shape,
+        json!({"type": "timer", "optional": null, "fields": ["id", "elapsed"]})
+    );
+
+    views.upsert(UpsertViewDescriptor {
+        id: s("view-b"),
+        plugin_id: s("plugin-a"),
+        view_type: s("timer.detail"),
+        name: s("Timer Detail Updated"),
+        accepted_data_shape: json!({"type": "timer", "literal": SQL_INJECTION_TEXT}),
+    })?;
+    let updated_view = views
+        .get("view-b")?
+        .expect("view upsert should replace descriptor fields");
+    assert_eq!(updated_view.name, "Timer Detail Updated");
+    assert_eq!(
+        updated_view.accepted_data_shape,
+        json!({"type": "timer", "literal": SQL_INJECTION_TEXT})
     );
     assert_eq!(ids(views.list()?), vec!["view-a", "view-b"]);
 
@@ -963,6 +1296,35 @@ fn assert_index_covering(
         "expected {table} to have {}index covering prefix {expected_columns:?}",
         if require_unique { "unique " } else { "" }
     );
+}
+
+fn assert_foreign_key(
+    connection: &Connection,
+    table: &str,
+    from_column: &str,
+    target_table: &str,
+    target_column: &str,
+) -> TestResult {
+    let mut statement = connection.prepare(&format!("PRAGMA foreign_key_list({table})"))?;
+    let rows = statement.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(2)?,
+            row.get::<_, String>(3)?,
+            row.get::<_, String>(4)?,
+        ))
+    })?;
+    let foreign_keys = rows.collect::<rusqlite::Result<Vec<_>>>()?;
+
+    assert!(
+        foreign_keys.iter().any(|(actual_table, actual_from, actual_to)| {
+            actual_table == target_table
+                && actual_from == from_column
+                && actual_to == target_column
+        }),
+        "expected {table}.{from_column} to reference {target_table}({target_column}); actual foreign keys: {foreign_keys:?}"
+    );
+
+    Ok(())
 }
 
 fn raw_optional_text(path: &Path, sql: &str) -> TestResult<Option<String>> {
