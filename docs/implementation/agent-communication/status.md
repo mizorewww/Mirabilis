@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:03 CST.
+Last updated: 2026-05-21 04:08 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 04:03 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review agents running.
+- Current phase: review round complete; review-fix handoff next.
 
 ## Active Agents
 
-- Hegel the 2nd (`pr_explorer`, id `019e46fc-11a0-7343-b2c5-958d220f1555`) - read-only diff mapping and review hotspot exploration.
-- Galileo the 2nd (`reviewer`, id `019e46fc-1544-7351-85af-7a431baf116b`) - read-only correctness review.
-- Hooke the 2nd (`deprecation_auditor`, id `019e46fc-1a26-71c3-bdbb-988291c6afa3`) - read-only API/deprecation/dependency audit.
-- Faraday the 2nd (`security_reviewer`, id `019e46fc-1e27-71a0-8bce-8427a15550d4`) - read-only security and boundary review.
-- Plato the 2nd (`docs_researcher`, id `019e46fc-22f3-7673-a6fa-fac76e86f729`) - read-only docs/current-guidance review.
-- Heisenberg the 2nd (`test_quality_reviewer`, id `019e46fc-264e-7a83-9b6b-87a9f5d01f1e`) - read-only test-quality review.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -39,7 +34,17 @@ Last updated: 2026-05-21 04:03 CST.
 - Delivered: `mirabilis_lib::db` with `Database`, `DbError`, versioned migration helpers, typed DTOs/records, and table-specific repositories for pages, metadata, events, filters, plugins, command descriptors, and view descriptors. The migration creates Core schema version `1` / `001_core_schema` for pages, metadata, events, filters, plugins, commands, views, and neutral `core_plugin_indexes`. `rusqlite` moved to production dependencies and `tempfile` remains test-only.
 - Parent repeated focused green checks after James the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - TASK-013 review round agents were spawned. `doc_writer` was deferred because the agent thread limit was reached; parent will spawn it after a review slot is available if docs gaps remain or need dedicated review.
-- Parent next step: wait for read-only review outcomes, record findings/decisions, then delegate fixes for any P0/P1 findings.
+- Faraday the 2nd (`security_reviewer`) completed and was closed with no P0/P1/P2 findings. Residual risks: TASK-014 must constrain DB path selection away from caller-supplied filesystem paths and must map `DbError` to redacted IPC DTOs instead of exposing debug/source internals.
+- Wegener the 2nd (`doc_writer`) was spawned for the deferred read-only documentation gap review.
+- TASK-013 review round 1 completed and all agents were closed.
+- Hegel the 2nd (`pr_explorer`) found no scope creep and mapped hotspots: `core_plugin_indexes` is schema-only, list APIs cannot distinguish no-filter from NULL filters, logical-key upserts may conflict, and migration drift is not verified.
+- Galileo the 2nd (`reviewer`) found one P1 correctness issue: `MetadataRepository::upsert` conflicts on `id` even though Core metadata identity is `(page_id, namespace, key)`, so setting the same metadata key with a new generated id fails instead of replacing the record. Galileo also found P2 issues for migration checksum/version drift and upserts overwriting `created_at` / `installed_at`.
+- Hooke the 2nd (`deprecation_auditor`) found no P0/P1 API/deprecation findings and one P2 migration-integrity finding: migration ledger rows are not checksum/name validated and migration steps are not transactional. Hooke verified current `rusqlite 0.39` usage and no `tauri-plugin-sql` / `sqlx` / raw frontend SQL route.
+- Plato the 2nd (`docs_researcher`) found no P0/P1 docs/current-guidance findings and P2 docs/schema gaps: architecture docs omit `core_commands`, `core_views`, and neutral `core_plugin_indexes`; `core_plugin_indexes.plugin_id` ownership is not documented/enforced; `trusted_schema` hardening is not documented.
+- Heisenberg the 2nd (`test_quality_reviewer`) found one P1 test-quality issue: `sqlite_boundary.rs` permanently bans DB IPC/capability changes, which would block TASK-014. Heisenberg also found P2 test gaps for injection literal assertions, update/upsert observable assertions, over-specific index/ledger assertions, and brittle `DbQuery` string parsing.
+- Wegener the 2nd (`doc_writer`) recommended P1 architecture docs sync for the implemented Rust schema/repositories, `core_commands`, `core_views`, `core_plugin_indexes`, migration ledger, private `rusqlite` layer, and TASK-013 out-of-scope IPC/capability/frontend wiring.
+- Parent decisions: fix the P1 boundary-test issue and P1 metadata logical-key upsert through delegated TDD. Include adjacent P2 fixes in the same review-fix loop for migration checksum/version drift, creation/install timestamp preservation, stronger injection/upsert assertions, and `core_plugin_indexes` ownership FK. Delegate architecture/testing docs sync before merge. Defer `trusted_schema`, app DB path ownership, WAL/busy timeout, and NULL-specific list filters to TASK-014/bootstrap unless a later reviewer escalates them.
+- Parent next step: commit review findings, then delegate review-fix tests and docs sync to agents.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.

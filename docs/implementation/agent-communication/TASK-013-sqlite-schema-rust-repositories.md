@@ -40,15 +40,10 @@
 
 ## Current Status
 
-- Status: review agents running.
+- Status: review round complete; review-fix handoff next.
 - Active agents:
-  - Hegel the 2nd (`pr_explorer`, id `019e46fc-11a0-7343-b2c5-958d220f1555`).
-  - Galileo the 2nd (`reviewer`, id `019e46fc-1544-7351-85af-7a431baf116b`).
-  - Hooke the 2nd (`deprecation_auditor`, id `019e46fc-1a26-71c3-bdbb-988291c6afa3`).
-  - Faraday the 2nd (`security_reviewer`, id `019e46fc-1e27-71a0-8bce-8427a15550d4`).
-  - Plato the 2nd (`docs_researcher`, id `019e46fc-22f3-7673-a6fa-fac76e86f729`).
-  - Heisenberg the 2nd (`test_quality_reviewer`, id `019e46fc-264e-7a83-9b6b-87a9f5d01f1e`).
-- Next parent step: wait for read-only review outcomes, record findings/decisions, then delegate fixes for any P0/P1 findings.
+  - None.
+- Next parent step: commit review findings, then delegate review-fix tests and docs sync to agents.
 
 ## Agent Handoffs
 
@@ -145,7 +140,7 @@
 
 ### Review Round 1
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Hegel the 2nd (`pr_explorer`) for changed-surface and hotspot mapping.
   - Galileo the 2nd (`reviewer`) for correctness.
@@ -153,8 +148,34 @@
   - Faraday the 2nd (`security_reviewer`) for persistence boundary/security.
   - Plato the 2nd (`docs_researcher`) for current docs and local docs drift.
   - Heisenberg the 2nd (`test_quality_reviewer`) for test quality.
+  - Wegener the 2nd (`doc_writer`) for documentation gaps.
 - Deferred:
-  - `doc_writer` could not be spawned initially because the agent thread limit was reached. Parent will spawn a docs-focused reviewer later if needed.
+  - `doc_writer` could not be spawned initially because the agent thread limit was reached. Parent spawned Wegener the 2nd after Faraday the 2nd completed.
 - Assignment:
   - Stay read-only and do not edit files.
   - Review commits `3092b67` and `ef3583c` against TASK-013 acceptance, local docs, and current official/primary guidance.
+- Partial outcome:
+  - Faraday the 2nd (`security_reviewer`) found no P0/P1/P2 security or boundary issues. It confirmed the DB layer remains Rust-only, repository SQL is table-specific/static with bound values, migrations use fixed SQL, `core_plugin_indexes` is an inert registry baseline, `DbError` display is redacted, corrupt JSON becomes typed `InvalidJson`, and temp DB tests stay in `tempfile` paths. Residual TASK-014 handoff risks: constrain DB path selection and avoid exposing `DbError` debug/source details through IPC.
+- Final outcomes:
+  - Hegel the 2nd (`pr_explorer`) found no scope creep. Hotspots: `core_plugin_indexes` is schema-only, list option APIs cannot distinguish no-filter from NULL filters, logical-key upserts may conflict, migration ledger drift is not verified, and CRUD is intentionally partial for events/plugin index baseline.
+  - Galileo the 2nd (`reviewer`) found one P1 correctness issue: `MetadataRepository::upsert` conflicts on `id` while Core metadata identity is `(page_id, namespace, key)`. A second set with a new id for the same key fails instead of replacing the metadata. Galileo also found P2 issues for migration checksum/version drift and upserts overwriting `created_at` / `installed_at`.
+  - Hooke the 2nd (`deprecation_auditor`) found no P0/P1 API/deprecation issues and one P2 migration-integrity issue: migration ledger rows are not checksum/name validated and migration steps are not transactional. It verified current `rusqlite 0.39` usage and no `tauri-plugin-sql`, `sqlx`, SQL capability permission, or raw frontend SQL route.
+  - Plato the 2nd (`docs_researcher`) found no P0/P1 docs/current-guidance issues. P2 gaps: architecture schema omits `core_commands`, `core_views`, and `core_plugin_indexes`; `core_plugin_indexes.plugin_id` ownership is not documented/enforced; `trusted_schema` hardening is not documented.
+  - Heisenberg the 2nd (`test_quality_reviewer`) found one P1 test-quality issue: `sqlite_boundary.rs` encodes TASK-013's temporary no-IPC/no-capability state as a long-lived invariant that would block TASK-014. P2 test gaps include missing literal round-trip assertions for injection strings, weak update/upsert observable assertions, over-specific index/ledger assertions, and brittle `DbQuery` string parsing.
+  - Wegener the 2nd (`doc_writer`) recommended P1 architecture docs sync for implemented schema/repositories, `core_commands`, `core_views`, `core_plugin_indexes`, migration ledger, private `rusqlite` layer, and explicit TASK-013 out-of-scope IPC/capability/frontend wiring. Wegener also recommended P2 development/testing docs updates.
+
+#### Parent Decisions After Review Round 1
+
+- Fix P1s before merge:
+  - Adjust `sqlite_boundary.rs` so stable no-frontend-raw-SQL / no `tauri-plugin-sql` guards remain, but TASK-014 can legally add reviewed DB IPC/capability changes.
+  - Add red tests and implementation for metadata logical-key behavior by `(page_id, namespace, key)`.
+- Include targeted P2s in the review-fix loop:
+  - Add tests/implementation for migration checksum/name and future-version drift detection.
+  - Preserve creation/install timestamps on metadata/filter/plugin upsert updates.
+  - Strengthen injection literal and update/upsert observable assertions.
+  - Add `core_plugin_indexes.plugin_id` ownership FK unless the implementer reports a concrete migration/design blocker.
+- Delegate docs sync before merge:
+  - Update architecture docs for `core_schema_migrations`, `core_commands`, `core_views`, neutral `core_plugin_indexes`, private Rust `rusqlite` repositories, migration ledger/user_version, and TASK-013 out-of-scope boundaries.
+  - Update development/testing docs only if the docs agent can do it without broadening beyond TASK-013.
+- Defer to TASK-014/bootstrap unless escalated by re-review:
+  - `PRAGMA trusted_schema = OFF`, app DB path ownership, WAL/busy timeout, and list APIs that distinguish no-filter from SQL NULL filters.
