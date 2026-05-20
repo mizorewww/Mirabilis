@@ -39,9 +39,13 @@
 
 ## Current Status
 
-- Status: final batch rollback re-review handoff.
-- Active agents: none.
-- Next parent step: spawn final focused read-only re-review, then run the local gate if no P0/P1 findings remain.
+- Status: final batch rollback focused re-review in progress.
+- Active agents:
+  - Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`).
+  - Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`).
+  - Nietzsche (`test_quality_reviewer`, `019e4696-1598-73c1-b752-26f00174fdcc`).
+  - Leibniz (`docs_researcher`, `019e4696-1966-7cf0-a4e0-7dae62f35d93`).
+- Next parent step: wait for final focused re-review, then handle findings or run the local gate.
 
 ## Agent Handoffs
 
@@ -728,6 +732,18 @@
   - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 43 tests.
   - `git diff --check` passed.
 
+### Final Batch Rollback Focused Re-Review
+
+- Status: in progress.
+- Agents:
+  - Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`).
+  - Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`).
+  - Nietzsche (`test_quality_reviewer`, `019e4696-1598-73c1-b752-26f00174fdcc`).
+  - Leibniz (`docs_researcher`, `019e4696-1966-7cf0-a4e0-7dae62f35d93`).
+- Assignment:
+  - Read-only focused re-review after Franklin/Halley's green commits.
+  - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -737,4 +753,4 @@
 
 ## Next Action
 
-Spawn final focused read-only re-review after Franklin/Halley's green commits.
+Wait for final focused re-review, then handle findings or run the local gate.

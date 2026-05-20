@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:10 CST.
+Last updated: 2026-05-21 02:11 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-21 02:10 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final batch rollback re-review handoff.
+- Current phase: TASK-011 final batch rollback focused re-review in progress.
 
 ## Active Agents
 
-- No active agents. Next handoff: final focused read-only re-review after Franklin/Halley green commits.
+- Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`) is reviewing correctness after Franklin/Halley's green commits.
+- Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`) is reviewing security/boundary behavior after Franklin/Halley's green commits.
+- Nietzsche (`test_quality_reviewer`, `019e4696-1598-73c1-b752-26f00174fdcc`) is reviewing test quality.
+- Leibniz (`docs_researcher`, `019e4696-1966-7cf0-a4e0-7dae62f35d93`) is reviewing docs/status drift.
 
 ## Recent Agent Outcomes
 
+- Final batch rollback focused read-only re-review agents spawned after Franklin/Halley's green commits.
 - Halley (`implementer`) completed the revised production fix and was closed after removing source-inspection from the implementation.
 - Halley's review-fix commit: `b52772a Halley(review-fix)(Implement Plugin Host lifecycle): guard batch rollback races`.
 - Franklin (`test_writer`) completed and was closed after aligning the stale concurrent register test with accepted single-flight semantics.
