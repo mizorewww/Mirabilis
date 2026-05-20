@@ -103,11 +103,16 @@ type ExpectedOperationPayload = {
     archived: boolean | null;
   };
 };
-type ExpectedDbQuery = {
-  operation: string;
-  payload?: DbValue;
-};
 type SqlShapedDbQueryLeak = Extract<keyof DbQuery, "sql" | "params">;
+type DbQueryOperationShapeLeak = DbQuery extends { operation: string }
+  ? never
+  : "db-query-operation-is-not-a-string-operation-key";
+type DbQueryPayloadKeyLeak = "payload" extends keyof DbQuery
+  ? never
+  : "db-query-payload-key-is-missing";
+type DbQueryPayloadShapeLeak = DbQuery["payload"] extends DbValue | undefined
+  ? never
+  : "db-query-payload-is-not-json-compatible";
 type DbValueJsonPayloadLeak =
   ExpectedOperationPayload extends DbValue
     ? never
@@ -235,7 +240,10 @@ describe("NativeBridge TypeScript boundary", () => {
     expectTypeOf<ExpectedOperationPayload>().toMatchTypeOf<
       ExpectedDbPayloadValue
     >();
-    expectTypeOf<DbQuery>().toEqualTypeOf<ExpectedDbQuery>();
+    expectTypeOf<DbQuery>().toMatchTypeOf<{
+      operation: string;
+      payload?: DbValue;
+    }>();
     expectTypeOf<NotificationInput>().toEqualTypeOf<{
       title: string;
       body?: string;
@@ -244,6 +252,9 @@ describe("NativeBridge TypeScript boundary", () => {
     expectNoTypeLeak<WidenedNativeBridgeCommandLeak>();
     expectNoTypeLeak<GreetNativeBridgeCommandLeak>();
     expectNoTypeLeak<SqlShapedDbQueryLeak>();
+    expectNoTypeLeak<DbQueryOperationShapeLeak>();
+    expectNoTypeLeak<DbQueryPayloadKeyLeak>();
+    expectNoTypeLeak<DbQueryPayloadShapeLeak>();
     expectNoTypeLeak<DbValueJsonPayloadLeak>();
     expectNoTypeLeak<DbValueFunctionPayloadLeak>();
     expectNoTypeLeak<NativeBridgeSurfaceLeak>();
