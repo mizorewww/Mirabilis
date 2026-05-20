@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review-fix red tests committed; implementation handoff next.
+- Status: review-fix implementation in progress.
 - Active agents:
-  - None.
-- Next parent step: spawn an `implementer` for the review-fix production changes.
+  - Darwin the 2nd (`implementer`, `019e46d8-7847-76e3-9b77-fc9d392a47e7`).
+- Next parent step: wait for Darwin the 2nd, run focused green checks, and commit the review-fix implementation if it stays within scope.
 
 ## Agent Handoffs
 
@@ -247,3 +247,18 @@
   - `bun run typecheck` failed only on command literal widening, SQL-shaped `DbQuery`, and `DbValue` JSON object payload support.
   - `bun run lint` passed.
   - `git diff --check` passed.
+
+### Review-Fix Implementation
+
+- Status: running.
+- Agent:
+  - Darwin the 2nd (`implementer`, `019e46d8-7847-76e3-9b77-fc9d392a47e7`).
+- Ownership:
+  - `src/core/native/native-bridge.ts`.
+  - `src/core/native/index.ts` / `src/core/index.ts` only if required for exports.
+- Assignment:
+  - Preserve exact command literal values so `NativeBridgeCommand` is not `string`.
+  - Replace SQL-shaped `DbQuery` with an operation/payload DTO and JSON-compatible `DbValue`.
+  - Make public command-failure messages stable and safe without leaking raw SQL, filesystem paths, tokens, or backend messages.
+  - Preserve command/code on `NativeBridgeError` and keep adapter delegation behavior intact.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, Plugin API/Plugin Host, or unrelated files.
