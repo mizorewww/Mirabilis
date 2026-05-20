@@ -42,9 +42,8 @@
 
 ## Current Status
 
-- Status: implementation active.
-- Active agents:
-  - Plato (`implementer`, `019e4402-9dde-7a12-96c1-c3f3219cb8c2`): implement minimum Core runtime composition and in-memory Transaction Manager production code to pass TASK-009 tests.
+- Status: implementation green; review handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -146,7 +145,7 @@
 
 ### Plato (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4402-9dde-7a12-96c1-c3f3219cb8c2`.
 - Ownership:
   - `src/core/runtime/app-runtime.ts`.
@@ -162,6 +161,24 @@
   - Compose command, view, and slot registries by reference and do not include registries in rollback.
   - Preserve existing store validation, defensive copies, insertion order, typed errors, and clone-failure behavior.
   - Do not touch tests, docs, config, Tauri/Rust, package files, or UI unless a production API impossibility is found.
+- Commit:
+  - `642c25d Plato(implementation)(Add Transaction Manager and Core Runtime composition): implement runtime transactions`.
+- Files changed:
+  - `src/core/index.ts`.
+  - `src/core/runtime/app-runtime.ts`.
+  - `src/core/runtime/index.ts`.
+  - `src/core/services/index.ts`.
+  - `src/core/services/transaction-manager.ts`.
+  - `src/core/stores/page-store.ts`.
+  - `src/core/stores/metadata-store.ts`.
+  - `src/core/stores/event-store.ts`.
+  - `src/core/stores/filter-store.ts`.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 10 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `bun run test:frontend -- src/test/core-page-store.test.ts src/test/core-metadata-store.test.ts src/test/core-event-store.test.ts src/test/core-filter-store.test.ts src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` passed with 122 tests.
 
 ## Parent Decisions
 
@@ -176,4 +193,4 @@
 
 ## Next Action
 
-Wait for Plato's implementation patch, run focused checks, then commit implementation if checks pass.
+Record TASK-009 review handoff, spawn focused review agents, then fix any P0/P1 findings before final gate.
