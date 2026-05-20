@@ -37,14 +37,15 @@
 
 ## Current Status
 
-- Status: red tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: implementation in progress.
+- Active agents:
+  - Planck the 2nd (`implementer`) for minimum production code to pass TASK-015 bootstrap/provider/App Shell tests.
 - Completed agents:
   - Huygens the 2nd (`planner`): read-only scope and implementation plan completed.
   - Parfit the 2nd (`security_reviewer`): read-only security boundary review completed.
   - Goodall the 2nd (`docs_researcher`): read-only current-docs guidance completed.
   - Feynman the 2nd (`deprecation_auditor`): read-only API/deprecation risk audit completed.
-- Next parent step: spawn `implementer` for the minimum production code needed to pass the focused TASK-015 tests.
+- Next parent step: wait for Planck the 2nd, run focused green checks, and commit implementation if it passes.
 
 ## Agent Handoffs
 
@@ -187,3 +188,17 @@
 - Validation before commit: `git diff --cached --check` passed.
 - Test commit: `75e3bc7 Ramanujan the 2nd(test)(Build app bootstrap and runtime provider): add bootstrap provider acceptance tests`.
 - Parent decision: failures are expected and suitable for implementation handoff.
+
+### Planck the 2nd (`implementer`) Handoff
+
+- Status: in progress.
+- Ownership: minimum production implementation for bootstrap/provider/App Shell behavior.
+- Allowed write scope:
+  - `src/bootstrap/**`.
+  - `src/providers/**`.
+  - `src/App.tsx` and `src/App.css`.
+  - `src/main.tsx` only if needed for clean provider/bootstrap wiring.
+  - Narrow export/index files only if needed.
+- Explicit restrictions: no test edits, no docs edits, no Tauri config/capability changes, no Rust edits, no package/Cargo dependency changes, no NativeBridge internals, no DB IPC contract changes, no plugin-host/command-registry/core rewrites, and no commits.
+- Required focused command before handoff completion:
+  - `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`.
