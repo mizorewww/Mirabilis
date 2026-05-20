@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: acceptance test writing active.
-- Active agents:
-  - Ohm (`test_writer`, `019e434b-8cf4-7f73-9970-16430e686965`): write failing TASK-007 Command Registry/Bus acceptance tests.
+- Status: acceptance tests red; implementation handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -96,11 +95,20 @@ Wait for Ohm's TASK-007 acceptance tests.
 
 ### Ohm (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e434b-8cf4-7f73-9970-16430e686965`.
 - Ownership:
   - `src/test/core-command-registry.test.ts` only unless unavoidable test-only support is needed.
+- Commit:
+  - `65e8727 Ohm(test)(Add Command Registry and Command Bus): add command registry acceptance tests`.
 - Assignment:
   - Add failing acceptance tests for public exports, command type shape, registration/listing, descriptor defensive copies, bus execution, duplicate rejection, unregister behavior, handler failure wrapping, runtime validation, inert context metadata, and in-flight handler snapshot behavior.
   - Keep examples business-neutral and avoid task/timer/habit/calendar/AI examples.
   - Do not edit production code, docs, or exports.
+- Parent confirmed expected red signal:
+  - `bun run typecheck` fails on missing `CommandRegistryError`, `createInMemoryCommandRegistry`, command types, and `../core/commands`.
+  - `bun run test:frontend -- src/test/core-command-registry.test.ts` fails during import resolution for `../core/commands`, so no tests execute until production files are added.
+
+## Next Action
+
+Delegate minimum production implementation to an `implementer`.
