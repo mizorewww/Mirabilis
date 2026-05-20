@@ -37,15 +37,14 @@
 
 ## Current Status
 
-- Status: implementation in progress.
-- Active agents:
-  - Planck the 2nd (`implementer`) for minimum production code to pass TASK-015 bootstrap/provider/App Shell tests.
+- Status: implementation committed; review handoff pending.
+- Active agents: none.
 - Completed agents:
   - Huygens the 2nd (`planner`): read-only scope and implementation plan completed.
   - Parfit the 2nd (`security_reviewer`): read-only security boundary review completed.
   - Goodall the 2nd (`docs_researcher`): read-only current-docs guidance completed.
   - Feynman the 2nd (`deprecation_auditor`): read-only API/deprecation risk audit completed.
-- Next parent step: wait for Planck the 2nd, run focused green checks, and commit implementation if it passes.
+- Next parent step: spawn focused review agents for correctness, security, API/deprecation, docs/current-guidance, test quality, and changed-surface mapping.
 
 ## Agent Handoffs
 
@@ -191,14 +190,24 @@
 
 ### Planck the 2nd (`implementer`) Handoff
 
-- Status: in progress.
+- Status: completed and closed.
 - Ownership: minimum production implementation for bootstrap/provider/App Shell behavior.
-- Allowed write scope:
+- Files changed:
   - `src/bootstrap/**`.
   - `src/providers/**`.
-  - `src/App.tsx` and `src/App.css`.
-  - `src/main.tsx` only if needed for clean provider/bootstrap wiring.
-  - Narrow export/index files only if needed.
-- Explicit restrictions: no test edits, no docs edits, no Tauri config/capability changes, no Rust edits, no package/Cargo dependency changes, no NativeBridge internals, no DB IPC contract changes, no plugin-host/command-registry/core rewrites, and no commits.
-- Required focused command before handoff completion:
+  - `src/App.tsx`.
+  - `src/App.css`.
+- Delivered:
+  - Injectable `createAppRuntime()` with documented initialization order.
+  - Honest in-memory storage facade marker; no persistence adapter or Tauri permission expansion.
+  - Explicit empty production `BUILT_IN_PLUGINS` list, with tests able to inject fake plugins.
+  - `RuntimeProvider` and `useRuntime()` with single-flight initialization for React StrictMode.
+  - Neutral Mirabilis App Shell and generic startup failure alert without raw error details.
+- Parent repeated green checks:
   - `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `bun run build`.
+  - `git diff --check`.
+- Implementation commit: `96d229e Planck the 2nd(implementation)(Build app bootstrap and runtime provider): implement runtime bootstrap provider`.
+- Remaining known gaps: runtime persistence is not wired yet, and production built-in plugin list is intentionally empty until later plugin tasks.
