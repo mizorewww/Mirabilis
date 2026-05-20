@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: pre-test guidance completed; TDD tests next.
-- Active agents: none.
-- Next parent step: spawn `test_writer` for red lifecycle tests.
+- Status: TDD tests in progress.
+- Active agent: Averroes (`test_writer`).
+- Next parent step: wait for Averroes, validate red signal, and commit tests if correct.
 
 ## Agent Handoffs
 
@@ -80,6 +80,17 @@
   - Vitest expect, testing types, v4 `expectTypeOf`, and current type assertion guidance.
   - TypeScript type-only imports/exports, utility/module guidance, and React 19 testing/deprecation notes.
 
+### TDD Tests
+
+- Status: in progress.
+- Agent:
+  - Averroes (`test_writer`, `019e45e0-f1df-7b61-b1d8-19b4a6208abb`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add focused red Vitest tests for public Plugin Host exports, explicit built-in list loading, install/register/activate/deactivate/uninstall/get behavior, deterministic dependency order and errors, scoped plugin-facing facades, runtime ownership injection, spoof rejection, failed register rollback, and raw-handle absence.
+  - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri, or existing tests.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -89,4 +100,4 @@
 
 ## Next Action
 
-Spawn `test_writer` for red lifecycle tests.
+Wait for Averroes, validate red signal, and commit tests if correct.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 23:02 CST.
+Last updated: 2026-05-20 23:05 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 23:02 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 pre-test guidance completed; TDD tests next.
+- Current phase: TASK-011 TDD tests in progress.
 
 ## Active Agents
 
-- None. Next step is spawning `test_writer` for TASK-011 red lifecycle tests.
+- Averroes (`test_writer`, `019e45e0-f1df-7b61-b1d8-19b4a6208abb`) owns TASK-011 red lifecycle tests in `src/test/plugin-host-lifecycle.test.ts`.
 
 ## Recent Agent Outcomes
 
+- Averroes (`test_writer`) was spawned for TASK-011 red tests covering public exports, explicit built-in list loading, lifecycle order, dependency errors, plugin-facing facades, ownership injection, scoped reads, spoof rejection, register rollback, and raw-handle absence.
 - TASK-011 pre-test guidance completed and all agents were closed.
 - Darwin (`planner`) recommended `src/core/plugin-host/plugin-host.ts`, `src/core/plugin-host/index.ts`, Core barrel exports, no runtime composition wiring yet, explicit built-in list loading, deterministic dependency sorting, `PluginHostError`, registry rollback, and runtime-flow-compatible `activateAll`.
 - Hume (`docs_researcher`) verified current Obsidian, Tauri, Vitest, and TypeScript docs; confirmed Tauri native plugins and Obsidian plugin APIs are inspiration only, and recommended async Vitest rejection assertions.
