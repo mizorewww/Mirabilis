@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final narrow re-review in progress.
-- Active agents: Aristotle (`reviewer`), Anscombe (`security_reviewer`), Huygens (`test_quality_reviewer`), and Hooke (`docs_researcher`).
-- Next parent step: wait for final narrow re-review, then run final local gate if no P0/P1/P2 findings remain.
+- Status: final narrow re-review completed; ultra-narrow review-fix TDD next.
+- Active agents: none.
+- Next parent step: delegate final red tests for batch install rollback and dependency hook non-call assertions.
 
 ## Agent Handoffs
 
@@ -303,7 +303,7 @@
 
 ### Final Narrow Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Aristotle (`reviewer`, `019e4630-8930-7802-bce8-404b37d826fe`).
   - Anscombe (`security_reviewer`, `019e4630-9fc1-7911-8302-a63591273ef7`).
@@ -311,6 +311,15 @@
   - Hooke (`docs_researcher`, `019e4630-abcc-7860-9ee2-38ace68b0396`).
 - Assignment:
   - Read-only final narrow re-review of stale context revocation, failed-install cleanup, test strength, and docs/status alignment.
+- Outcomes:
+  - Aristotle found one remaining P1 correctness issue: `loadBuiltInPlugins()` deletes only the currently failing install record, leaving earlier installed records from the same failed batch and making retry fail as a duplicate.
+  - Anscombe found no P0/P1/P2 security findings and confirmed stale context revocation, ownership spoof rejection, install-failure record cleanup for explicit/current failing paths, and no native/Tauri/fs/dynamic import/IPC/SQLite scope creep.
+  - Huygens found one P2 test-strength issue: dependency rejection tests should assert blocked dependency deactivate/uninstall hooks were not called.
+  - Hooke found P2 docs/status drift: final Next Actions and current status text needed updating, and architecture docs should mention failed-install cleanup/retry plus stale context page/store/transaction revocation.
+- Parent decision:
+  - Delegate final red tests for batch install rollback/retry and dependency hook non-call assertions.
+  - Delegate production rollback fix after the expected red signal.
+  - Delegate docs cleanup after production behavior is settled.
 
 ## Parent Decisions
 
@@ -321,4 +330,4 @@
 
 ## Next Action
 
-Wait for final narrow re-review, then run the final local gate if clear.
+Delegate final red tests for batch install rollback and dependency hook non-call assertions.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:21 CST.
+Last updated: 2026-05-21 00:24 CST.
 
 ## Current Task
 
@@ -8,17 +8,19 @@ Last updated: 2026-05-21 00:21 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final narrow re-review in progress.
+- Current phase: TASK-011 final narrow re-review completed; ultra-narrow review-fix TDD next.
 
 ## Active Agents
 
-- Aristotle (`reviewer`, `019e4630-8930-7802-bce8-404b37d826fe`) is re-reviewing final correctness.
-- Anscombe (`security_reviewer`, `019e4630-9fc1-7911-8302-a63591273ef7`) is re-reviewing final plugin-boundary/security behavior.
-- Huygens (`test_quality_reviewer`, `019e4630-a601-7d30-ad72-bb8b5a18e7ad`) is re-reviewing final test quality.
-- Hooke (`docs_researcher`, `019e4630-abcc-7860-9ee2-38ace68b0396`) is re-reviewing final docs/status alignment.
+- No active agents. Next handoff: `test_writer` for final batch-install rollback red test and dependency hook non-call assertions.
 
 ## Recent Agent Outcomes
 
+- Final TASK-011 narrow re-review completed. Aristotle (`reviewer`) found one remaining P1 correctness issue: `loadBuiltInPlugins()` removes only the currently failing install record, leaving earlier installed records from the failed batch and causing retry to fail with `PLUGIN_DUPLICATE_ID`.
+- Anscombe (`security_reviewer`) found no P0/P1/P2 plugin-boundary findings and confirmed stale context revocation, owner spoof rejection, install-failure record removal for explicit/current failing paths, and no native/Tauri/fs/dynamic import/IPC/SQLite scope creep.
+- Huygens (`test_quality_reviewer`) found one P2 test-strength issue: dependency rejection tests should assert blocked deactivate/uninstall hooks were not called.
+- Hooke (`docs_researcher`) found P2 docs/status drift after the final fixes: live Next Actions needed updating, TASK-011 top-level status needed updating, and architecture docs should mention failed-install record cleanup/retry and stale context page/store/transaction revocation.
+- Parent decision: run an ultra-narrow TDD pass for batch install rollback and dependency-hook non-call assertions, then delegate the production fix and docs/status cleanup.
 - Final TASK-011 narrow re-review agents spawned after Maxwell's green implementation.
 - Maxwell (`implementer`) completed and was closed after implementing final TASK-011 review fixes in `src/core/plugin-host/plugin-host.ts`.
 - Maxwell's review-fix commit: `85a3f71 Maxwell(review-fix)(Implement Plugin Host lifecycle): revoke stale plugin contexts`.
@@ -522,6 +524,6 @@ Last updated: 2026-05-21 00:21 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for the remaining TASK-011 P1/P2 review-fix tests.
-2. Commit the expected red tests, then spawn `implementer` for production fixes.
-3. Re-run focused checks and narrow re-review before the final local gate.
+1. Spawn `test_writer` for the final TASK-011 batch-install rollback red test and dependency hook non-call assertions.
+2. Commit the expected red tests, then spawn `implementer` for the production rollback fix.
+3. Update architecture/docs status for the final lifecycle semantics, then run final focused checks and re-review.
