@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:45 CST.
+Last updated: 2026-05-20 19:11 CST.
 
 ## Current Task
 
-- Task: TASK-008 - Add View Registry and Slot Registry.
-- Branch: `feat/task-008-view-slot-registry`.
+- Task: TASK-009 - Add Transaction Manager and Core Runtime composition.
+- Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-008 complete; merge to `master` pending.
+- Current phase: TASK-009 final gate passed; progress completion update active.
 
 ## Active Agents
 
@@ -16,6 +16,85 @@ Last updated: 2026-05-20 13:45 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-009 final local gate passed: `bun run check:quick` passed, including 11 frontend test files and 171 tests, Rust formatting check, Rust clippy with `-D warnings`, and Rust tests; `bun run build` passed with a successful Vite production build.
+- Final binary structured-clone re-review completed and all agents were closed.
+- James (`reviewer`) found no P0/P1/P2 correctness findings and confirmed ArrayBuffer/DataView conflicts, typed-array and non-zero-offset DataView probes, and existing comparator branches.
+- Hegel (`security_reviewer`) found no P0/P1/P2 security or boundary findings and confirmed participant visibility, pre-replace commit safety, and no native/Tauri/IPC/package/filesystem boundary changes.
+- Zeno (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings and confirmed binary conflict tests cover stable timestamps, pending transaction writes, concurrent live writes, commit rejection, and exact byte preservation.
+- Parent decision: no P0/P1/P2 findings remain; proceed to final local gate.
+- Final binary structured-clone re-review agents spawned after `af31b07`, `425a2b4`, and `b39065b`.
+- Galileo (`implementer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused production patch in `src/core/services/transaction-manager.ts`.
+- Parent validated Galileo's patch and found one realm-sensitive ArrayBuffer test assertion failure, then delegated a test-only assertion fix to Faraday.
+- Faraday (`test_writer`) completed and was closed after replacing the realm-sensitive binary test assertions with structured-clone tag and exact-byte checks.
+- Faraday's test-fix commit: `af31b07 Faraday(test-fix)(Add Transaction Manager and Core Runtime composition): make binary conflict assertions realm-safe`.
+- Galileo's adopted production commit: `425a2b4 Galileo(review-fix)(Add Transaction Manager and Core Runtime composition): compare binary transaction snapshots`.
+- Parent repeated green checks after Faraday and Galileo: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 21 tests passing, `git diff --check`, `bun run lint`, and a focused store/runtime regression run with 133 tests passing.
+- Galileo (`implementer`) spawned for binary structured-clone comparator fix, with ownership of `src/core/services/transaction-manager.ts`.
+- Pauli (`test_writer`) completed and was closed after adding binary structured-clone conflict regression tests.
+- Pauli's test commit: `7d6a1fd Pauli(test)(Add Transaction Manager and Core Runtime composition): cover binary transaction conflicts`.
+- Parent confirmed expected red signal: `bun run typecheck` passes; `bun run test:frontend -- src/test/core-transaction-manager.test.ts` runs 17 tests with 15 passing and two failing because `ArrayBuffer` and `DataView` conflict cases currently resolve instead of rejecting; `git diff --check` passes.
+- Pauli (`test_writer`) spawned for binary structured-clone conflict regression coverage, with ownership of `src/test/core-transaction-manager.test.ts`.
+- Narrow TASK-009 P1 re-review completed and all agents were closed.
+- Dalton (`reviewer`) found one remaining P1 correctness issue: `ArrayBuffer`, `DataView`, and similar structured-clone values with internal state but no enumerable keys still fall through to `objectsEqual`, allowing a pending transaction to overwrite live binary page body changes.
+- Aristotle (`security_reviewer`) found the same P1 boundary issue for `ArrayBuffer`/`DataView` and recommended blocking final gate until binary/opaque structured-clone values are rejected or compared explicitly.
+- McClintock (`test_quality_reviewer`) found no P0/P1/P2 test-quality issue in the existing `Date`, `Set`, `RegExp`, metadata/event/filter conflict, or transaction-scoped participant non-discoverability coverage.
+- Parent decision: treat the binary structured-clone issue as the same P1 conflict class as Boole's finding, add red regression coverage for at least `ArrayBuffer` and `DataView`, then delegate the production comparator fix.
+- Narrow TASK-009 P1 re-review agents spawned after Peirce's green review-fix commit.
+- Peirce (`implementer`) completed and was closed after fixing Boole's P1 non-plain snapshot comparison issue.
+- Peirce's review-fix commit: `13ad41d Peirce(review-fix)(Add Transaction Manager and Core Runtime composition): compare non-plain transaction snapshots`.
+- Peirce changed only `src/core/services/transaction-manager.ts`, adding explicit deterministic `Date`, `Set`, and `RegExp` snapshot comparisons before Map, Array, and object comparison fallbacks.
+- Parent repeated green checks after Peirce: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 19 tests passing, `git diff --check`, and the focused store/runtime regression run with 131 tests passing.
+- Peirce (`implementer`) spawned for Boole's P1 production fix, with ownership of `src/core/services/transaction-manager.ts`.
+- Chandrasekhar (`test_writer`) completed and was closed after adding targeted TASK-009 review-fix tests.
+- Chandrasekhar's test commit: `01bf83f Chandrasekhar(test)(Add Transaction Manager and Core Runtime composition): cover non-plain transaction conflicts`.
+- Parent confirmed expected red signal: `bun run typecheck` passes; `bun run test:frontend -- src/test/core-transaction-manager.test.ts` runs 15 tests with 14 passing and one failing because the non-plain page body conflict currently resolves instead of rejecting; `git diff --check` passes.
+- Chandrasekhar (`test_writer`) spawned for TASK-009 targeted review-fix tests, with ownership of `src/test/core-transaction-manager.test.ts`.
+- TASK-009 targeted re-review completed and all agents were closed.
+- Boole (`reviewer`) found one P1 correctness issue: snapshot equality misses cloneable non-plain values such as `Date`, `Set`, and `RegExp` in page bodies when enumerable keys are empty and `updatedAt` does not change; a pending transaction can miss a live page body update and overwrite it at commit.
+- Noether (`security_reviewer`) found no P0/P1/P2 security or boundary findings and confirmed participant WeakMaps, reflection non-discoverability, and pre-replace conflict checks.
+- Leibniz (`test_quality_reviewer`) found no remaining P1 test-quality gaps and recommended P2 coverage for metadata/event/filter live-write conflicts plus transaction-scoped store participant non-discoverability.
+- Parfit (`deprecation_auditor`) found no API/deprecation findings and confirmed `createCoreServices({ transaction })` closes the custom-store composition mismatch for TASK-009.
+- Russell (`docs_researcher`) found no blocking docs/status issue and recommended stable Vitest v4 links in final completion notes where possible.
+- Parent decision: fix Boole's P1 before final gate, strengthen snapshot comparison for supported structured-clone values, and add focused regression coverage for the P1 plus Leibniz's low-cost P2 coverage surfaces.
+- TASK-009 targeted re-review agents spawned after `a86304e` and `e86ed5c`.
+- Goodall (`implementer`) completed and was closed after implementing TASK-009 review fixes.
+- Goodall's review-fix commit: `a86304e Goodall(review-fix)(Add Transaction Manager and Core Runtime composition): harden transaction commits`.
+- Parent repeated green checks after Goodall: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 14 tests passing, `bun run lint`, `git diff --check`, and a focused store/runtime regression run with 126 tests passing.
+- Review-fix test commit: `41db1dd Codex(test)(Add Transaction Manager and Core Runtime composition): add transaction review-fix coverage`.
+- Parent confirmed expected review-fix red signal: `bun run typecheck` fails because `createCoreServices` does not accept injected `transaction`; focused Vitest fails because injected transaction is ignored, pending live-write conflict resolves instead of rejects, and store participant symbols remain discoverable.
+- Goodall (`implementer`) spawned for TASK-009 review-fix production implementation.
+- TASK-009 review round 1 completed and all review agents were closed.
+- Ampere (`pr_explorer`) mapped TASK-009 to Core runtime/services, in-memory store participant changes, tests, and docs, and highlighted lost-update, participant visibility, custom-store transaction mismatch, and missing nested/concurrent coverage risks.
+- Lagrange (`reviewer`) found one P1 correctness issue: a pending transaction can drop live writes made after the transaction snapshot because commit replaces whole live store state. Lagrange also found one P2: rolled-back transactions still advance injected ID/time generators; parent keeps this as a documented non-goal unless later product docs require generator rollback.
+- Descartes (`security_reviewer`) found one P1 boundary issue: transaction participants are discoverable as own symbol properties on exposed store objects. Descartes also found P2 risks around live aliases bypassing transaction isolation and non-fail-atomic sequential replace commits, plus a P3 inherited metadata getter/proxy validation issue.
+- Maxwell (`deprecation_auditor`) found no deprecated API usage, but flagged a public API contract mismatch: `createCoreServices` accepts structural `CoreStores` while default transactions require hidden in-memory participants.
+- Bernoulli (`test_quality_reviewer`) found one P1 test gap for nested/concurrent transaction behavior, plus P2 gaps for stronger post-commit assertions and transaction-path event/filter clone boundaries.
+- Pascal (`docs_researcher`) found one P2 stale `Current Worktree State` block in `status.md`; parent accepts and will update it with the review fixes.
+- Selected review-fix plan: add focused tests for hidden participant non-discoverability, live-write conflict preservation, nested/concurrent transaction rejection, stronger grouped-commit assertions, and event/filter clone boundaries; then refactor participants behind WeakMaps and make commit conflict detection fail before replacing state.
+- TASK-009 review agents spawned.
+- Plato (`implementer`) completed and was closed after implementing TASK-009 production code.
+- Plato's implementation commit: `642c25d Plato(implementation)(Add Transaction Manager and Core Runtime composition): implement runtime transactions`.
+- Parent repeated green checks after Plato: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 10 tests passing, `bun run lint`, `git diff --check`, and a focused store regression run with 122 tests passing.
+- Plato (`implementer`) spawned for TASK-009 production implementation, with ownership of Core runtime/services modules and necessary internal store transaction support.
+- Jason (`test_writer`) was stopped after a status request and a second wait window because it produced no final output and no worktree changes.
+- Parent fallback test commit: `de31382 Codex(test)(Add Transaction Manager and Core Runtime composition): add runtime transaction acceptance tests`.
+- Parent confirmed expected TASK-009 red signal: `bun run typecheck` fails because runtime/services factories, types, and subpaths are not exported; `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` fails because `../core/runtime` is missing and `createCoreStores` is not implemented/exported.
+- Parent took over the TASK-009 failing tests after two `test_writer` agents produced no output. Fallback scope was limited to `src/test/core-runtime-composition.test.ts` and `src/test/core-transaction-manager.test.ts`.
+- Jason (`test_writer`) spawned as Kant's replacement, with the same test-only ownership of `src/test/core-runtime-composition.test.ts` and `src/test/core-transaction-manager.test.ts`.
+- Kant (`test_writer`) was stopped after a status request and a second wait window because it produced no final output and no worktree changes. Parent will replace it with another `test_writer`.
+- Kant (`test_writer`) spawned for TASK-009 failing tests, with ownership of `src/test/core-runtime-composition.test.ts` and `src/test/core-transaction-manager.test.ts`.
+- TASK-009 pre-test guidance completed and all agents were closed.
+- Copernicus (`planner`) recommended a small factory-first Core runtime composition layer: `createCoreStores`, `createCoreRegistries`, `createCoreServices`, and `createInMemoryAppRuntime`, exposing grouped `stores`/`registries`/`services` plus documented aliases `pages`, `metadata`, `events`, `filters`, `commands`, `views`, `slots`, and `transaction`.
+- Copernicus recommended `transaction.run(handler)` with handler access to `{ pages, metadata, events, filters }`, rollback over those four stores only, and no transaction rollback for registries in TASK-009.
+- Sartre (`docs_researcher`) verified current Vitest `expectTypeOf`, async rejection assertions, `vi.stubGlobal`, Node `structuredClone`, WHATWG/MDN structured clone limits, and JS `await` rejection semantics relevant to TASK-009.
+- Beauvoir (`deprecation_auditor`) flagged P1 constraints: do not replay public store APIs for rollback, do not mutate live stores and undo, and await async handlers before commit. Parent accepts staged/snapshot state as the required implementation direction.
+- Parent decisions: expose only implemented documented services, do not invent Plugin Host/native bridge/IPC/SQLite/settings/storage/query/event-bus/future registries, keep snapshot/restore internals private, and do not assert ID/clock generator rollback.
+- TASK-009 pre-test guidance agents spawned.
+- TASK-008 merged to `master` and pushed. Merge commit: `ea864e4 Codex(merge)(Add View Registry and Slot Registry): merge task branch`.
+- TASK-009 branch created from latest `master`.
+- TASK-009 started in progress ledger and task communication file.
+- `.codex/agents/*.toml` parsed successfully for TASK-009.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 - Final narrow explicit-unknown re-review completed and all agents were closed.
 - Gibbs (`reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit `RegistryComponent<unknown>` / `ViewDefinition<unknown>` reject arbitrary objects, explicit `SlotCondition<unknown>` remains a function, and unparameterized registry return/storage shapes remain type-correct.
 - Huygens (`test_quality_reviewer`) found no P0/P1/P2/P3 issues and confirmed explicit-unknown tests cover Rawls's P2 without weakening earlier wrong-prop, narrow-condition, or unparameterized-return coverage.
@@ -284,13 +363,13 @@ Last updated: 2026-05-20 13:45 CST.
 
 ## Current Worktree State
 
-- `docs/implementation/progress.md` marks TASK-008 in progress.
-- `docs/implementation/agent-communication/status.md` points to TASK-008.
-- `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
-- Final targeted re-review P2 public explicit-`unknown` type issues are fixed. TASK-008 remains in progress pending final verification and full gate.
+- `docs/implementation/progress.md` marks TASK-009 in progress.
+- `docs/implementation/agent-communication/status.md` points to TASK-009.
+- `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
+- TASK-008 is complete and merged. TASK-009 has no remaining P0/P1/P2 findings, final local gate passed, and progress completion notes are being committed.
 
 ## Next Actions
 
-1. Commit progress completion update.
-2. Merge TASK-008 to `master`.
-3. Continue to TASK-009 from latest `master`.
+1. Commit TASK-009 completion notes.
+2. Merge TASK-009 to `master` and push.
+3. Continue to TASK-010.

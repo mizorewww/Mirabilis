@@ -44,6 +44,27 @@ type EventIdentity = Pick<AppEvent, "namespace" | "type"> & {
   pageId?: string;
 };
 
+type InMemoryEventStoreState = {
+  events: AppEvent[];
+};
+
+export type InMemoryEventStoreTransactionParticipant = {
+  snapshot(): InMemoryEventStoreState;
+  createStoreFromSnapshot(snapshot: InMemoryEventStoreState): EventStore;
+  replaceState(snapshot: InMemoryEventStoreState): void;
+};
+
+const inMemoryEventStoreTransactionParticipants = new WeakMap<
+  EventStore,
+  InMemoryEventStoreTransactionParticipant
+>();
+
+export function getInMemoryEventStoreTransactionParticipant(
+  store: EventStore,
+): InMemoryEventStoreTransactionParticipant | undefined {
+  return inMemoryEventStoreTransactionParticipants.get(store);
+}
+
 type JsonCompatibilityValidationState = {
   seen: WeakSet<object>;
   visitedNodeCount: number;
@@ -57,9 +78,10 @@ export function createInMemoryEventStore(
 ): EventStore {
   const createId = options.createId ?? createDefaultId;
   const now = options.now ?? createCurrentInstant;
-  const events: AppEvent[] = [];
+  const storeOptions: CreateInMemoryEventStoreOptions = { createId, now };
+  let state = createEmptyState();
 
-  return {
+  const store: EventStore = {
     append(input) {
       const identity = normalizeIdentity(input);
       const sourcePluginId = normalizeSourcePluginId(input, identity);
@@ -74,7 +96,7 @@ export function createInMemoryEventStore(
 
       const eventId = createId();
 
-      if (events.some((event) => event.id === eventId)) {
+      if (state.events.some((event) => event.id === eventId)) {
         throw new EventStoreError("EVENT_ID_COLLISION", eventId);
       }
 
@@ -88,7 +110,7 @@ export function createInMemoryEventStore(
       });
       const output = cloneEvent(event);
 
-      events.push(event);
+      state.events.push(event);
 
       return output;
     },
@@ -96,10 +118,55 @@ export function createInMemoryEventStore(
     list(options = {}) {
       const filters = normalizeListOptions(options);
 
-      return events
+      return state.events
         .filter((event) => matchesFilters(event, filters))
         .map((event) => cloneEvent(event));
     },
+  };
+
+  inMemoryEventStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryEventStoreState) {
+      return createInMemoryEventStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryEventStoreState) {
+      state = cloneState(snapshot);
+    },
+  });
+
+  return store;
+}
+
+function createInMemoryEventStoreFromState(
+  options: CreateInMemoryEventStoreOptions,
+  initialState: InMemoryEventStoreState,
+): EventStore {
+  const store = createInMemoryEventStore(options);
+  const participant = getInMemoryEventStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error("Expected in-memory event store transaction participant");
+  }
+
+  participant.replaceState(initialState);
+
+  return store;
+}
+
+function createEmptyState(): InMemoryEventStoreState {
+  return {
+    events: [],
+  };
+}
+
+function cloneState(state: InMemoryEventStoreState): InMemoryEventStoreState {
+  return {
+    events: state.events.map((event) => cloneEvent(event)),
   };
 }
 

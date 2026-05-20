@@ -52,6 +52,12 @@ export {
   createInMemorySlotRegistry,
   createInMemoryViewRegistry,
 } from "./registries";
+export {
+  createCoreRegistries,
+  createCoreServices,
+  createCoreStores,
+} from "./services";
+export { createInMemoryAppRuntime } from "./runtime";
 export type {
   AppendEventInput,
   CreateInMemoryEventStoreOptions,
@@ -76,3 +82,12 @@ export type {
   UpdateFilterInput,
   UpdatePageInput,
 } from "./stores";
+export type {
+  CoreRegistries,
+  CoreServices,
+  CoreStores,
+  CoreTransaction,
+  TransactionHandler,
+  TransactionManager,
+} from "./services";
+export type { CoreRuntime } from "./runtime";

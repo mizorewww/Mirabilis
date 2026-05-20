@@ -63,6 +63,27 @@ export type CreateInMemoryFilterStoreOptions = {
   now?: () => string;
 };
 
+type InMemoryFilterStoreState = {
+  filters: Map<string, FilterDefinition>;
+};
+
+export type InMemoryFilterStoreTransactionParticipant = {
+  snapshot(): InMemoryFilterStoreState;
+  createStoreFromSnapshot(snapshot: InMemoryFilterStoreState): FilterStore;
+  replaceState(snapshot: InMemoryFilterStoreState): void;
+};
+
+const inMemoryFilterStoreTransactionParticipants = new WeakMap<
+  FilterStore,
+  InMemoryFilterStoreTransactionParticipant
+>();
+
+export function getInMemoryFilterStoreTransactionParticipant(
+  store: FilterStore,
+): InMemoryFilterStoreTransactionParticipant | undefined {
+  return inMemoryFilterStoreTransactionParticipants.get(store);
+}
+
 type OptionalPropertyRead =
   | {
       present: false;
@@ -95,14 +116,15 @@ export function createInMemoryFilterStore(
 ): FilterStore {
   const createId = options.createId ?? createDefaultId;
   const now = options.now ?? createCurrentInstant;
-  const filters = new Map<string, FilterDefinition>();
+  const storeOptions: CreateInMemoryFilterStoreOptions = { createId, now };
+  let state = createEmptyState();
 
   function requireFilter(filterId: unknown): {
     filterId: string;
     filter: FilterDefinition;
   } {
     const normalizedFilterId = normalizeFilterId(filterId);
-    const filter = filters.get(normalizedFilterId);
+    const filter = state.filters.get(normalizedFilterId);
 
     if (filter === undefined) {
       throw new FilterStoreError("FILTER_NOT_FOUND", normalizedFilterId);
@@ -111,7 +133,7 @@ export function createInMemoryFilterStore(
     return { filterId: normalizedFilterId, filter };
   }
 
-  return {
+  const store: FilterStore = {
     save(input) {
       const name = readIdentityField(input, "name");
       const viewType = readIdentityField(input, "viewType");
@@ -154,7 +176,7 @@ export function createInMemoryFilterStore(
         : undefined;
       const filterId = createId();
 
-      if (filters.has(filterId)) {
+      if (state.filters.has(filterId)) {
         throw new FilterStoreError("FILTER_ID_COLLISION", filterId);
       }
 
@@ -182,7 +204,7 @@ export function createInMemoryFilterStore(
 
       const output = cloneFilter(filter);
 
-      filters.set(filterId, filter);
+      state.filters.set(filterId, filter);
 
       return output;
     },
@@ -312,7 +334,7 @@ export function createInMemoryFilterStore(
 
       const output = cloneFilter(next);
 
-      filters.set(normalizedFilterId, next);
+      state.filters.set(normalizedFilterId, next);
 
       return output;
     },
@@ -320,7 +342,7 @@ export function createInMemoryFilterStore(
     list(options = {}) {
       const filtersToApply = normalizeListOptions(options);
 
-      return [...filters.values()]
+      return [...state.filters.values()]
         .filter((filter) => matchesFilters(filter, filtersToApply))
         .map((filter) => cloneFilter(filter));
     },
@@ -329,10 +351,60 @@ export function createInMemoryFilterStore(
       const { filterId: normalizedFilterId, filter } = requireFilter(filterId);
       const output = cloneFilter(filter);
 
-      filters.delete(normalizedFilterId);
+      state.filters.delete(normalizedFilterId);
 
       return output;
     },
+  };
+
+  inMemoryFilterStoreTransactionParticipants.set(store, {
+    snapshot() {
+      return cloneState(state);
+    },
+    createStoreFromSnapshot(snapshot: InMemoryFilterStoreState) {
+      return createInMemoryFilterStoreFromState(
+        storeOptions,
+        cloneState(snapshot),
+      );
+    },
+    replaceState(snapshot: InMemoryFilterStoreState) {
+      state = cloneState(snapshot);
+    },
+  });
+
+  return store;
+}
+
+function createInMemoryFilterStoreFromState(
+  options: CreateInMemoryFilterStoreOptions,
+  initialState: InMemoryFilterStoreState,
+): FilterStore {
+  const store = createInMemoryFilterStore(options);
+  const participant = getInMemoryFilterStoreTransactionParticipant(store);
+
+  if (participant === undefined) {
+    throw new Error("Expected in-memory filter store transaction participant");
+  }
+
+  participant.replaceState(initialState);
+
+  return store;
+}
+
+function createEmptyState(): InMemoryFilterStoreState {
+  return {
+    filters: new Map(),
+  };
+}
+
+function cloneState(state: InMemoryFilterStoreState): InMemoryFilterStoreState {
+  return {
+    filters: new Map(
+      [...state.filters].map(([filterId, filter]) => [
+        filterId,
+        cloneFilter(filter),
+      ]),
+    ),
   };
 }
 
