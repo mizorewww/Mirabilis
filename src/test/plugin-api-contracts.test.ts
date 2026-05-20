@@ -107,6 +107,20 @@ type KeyLeak<
   Key extends PropertyKey,
   Label extends string,
 > = Extract<keyof Surface, Key> extends never ? never : Label;
+type BroadStringKeyLeak<
+  Surface,
+  Pattern extends string,
+  Label extends string,
+> = Pattern extends keyof Surface ? Label : never;
+type OwnershipKeyValueLeak<
+  Surface,
+  Key extends PropertyKey,
+  Label extends string,
+> = Key extends keyof Surface
+  ? [NonNullable<Surface[Key]>] extends [never]
+    ? never
+    : Label
+  : never;
 type AssignableLeak<Candidate, Surface, Label extends string> =
   Candidate extends Surface ? Label : never;
 type FunctionAssignableLeak<Value, Label extends string> = (() => boolean) extends
@@ -171,11 +185,57 @@ type PluginFilterListOptions = NonNullable<
   Parameters<PluginContext["filters"]["list"]>[0]
 >;
 type CallerSuppliedSourcePluginIdKey =
-  | Extract<keyof PluginMetadataSetInput, "sourcePluginId">
-  | Extract<keyof PluginEventAppendInput, "sourcePluginId">
-  | Extract<keyof PluginFilterSaveInput, "sourcePluginId">
-  | Extract<keyof PluginFilterUpdateInput, "sourcePluginId">
-  | Extract<keyof PluginFilterListOptions, "sourcePluginId">;
+  | OwnershipKeyValueLeak<
+      PluginMetadataSetInput,
+      "sourcePluginId",
+      "metadata.set.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginEventAppendInput,
+      "sourcePluginId",
+      "events.append.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginFilterSaveInput,
+      "sourcePluginId",
+      "filters.save.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginFilterUpdateInput,
+      "sourcePluginId",
+      "filters.update.sourcePluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginFilterListOptions,
+      "sourcePluginId",
+      "filters.list.sourcePluginId"
+    >;
+type CallerSuppliedSourcePluginIdTemplateKeyLeak =
+  | BroadStringKeyLeak<
+      PluginMetadataSetInput,
+      `sourcePlugin${string}`,
+      "metadata.set.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginEventAppendInput,
+      `sourcePlugin${string}`,
+      "events.append.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginFilterSaveInput,
+      `sourcePlugin${string}`,
+      "filters.save.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginFilterUpdateInput,
+      `sourcePlugin${string}`,
+      "filters.update.sourcePlugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginFilterListOptions,
+      `sourcePlugin${string}`,
+      "filters.list.sourcePlugin-template-key"
+    >;
 type CallerSourcePluginIdMetadataSetVariable = {
   pageId: string;
   namespace: string;
@@ -251,20 +311,67 @@ type PluginSlotRegistryListOptions = NonNullable<
   Parameters<PluginSlotRegistry["list"]>[0]
 >;
 type CallerSuppliedRegistryPluginIdKey =
-  | KeyLeak<
+  | OwnershipKeyValueLeak<
       PluginCommandRegisterInput,
       "pluginId",
       "commands.register.pluginId"
     >
-  | KeyLeak<PluginViewRegisterInput, "pluginId", "views.register.pluginId">
-  | KeyLeak<PluginSlotRegisterInput, "pluginId", "slots.register.pluginId">
-  | KeyLeak<
+  | OwnershipKeyValueLeak<
+      PluginViewRegisterInput,
+      "pluginId",
+      "views.register.pluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginSlotRegisterInput,
+      "pluginId",
+      "slots.register.pluginId"
+    >
+  | OwnershipKeyValueLeak<
       PluginCommandRegistryListOptions,
       "pluginId",
       "commands.list.pluginId"
     >
-  | KeyLeak<PluginViewRegistryListOptions, "pluginId", "views.list.pluginId">
-  | KeyLeak<PluginSlotRegistryListOptions, "pluginId", "slots.list.pluginId">;
+  | OwnershipKeyValueLeak<
+      PluginViewRegistryListOptions,
+      "pluginId",
+      "views.list.pluginId"
+    >
+  | OwnershipKeyValueLeak<
+      PluginSlotRegistryListOptions,
+      "pluginId",
+      "slots.list.pluginId"
+    >;
+type CallerSuppliedRegistryPluginIdTemplateKeyLeak =
+  | BroadStringKeyLeak<
+      PluginCommandRegisterInput,
+      `plugin${string}`,
+      "commands.register.plugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginViewRegisterInput,
+      `plugin${string}`,
+      "views.register.plugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginSlotRegisterInput,
+      `plugin${string}`,
+      "slots.register.plugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginCommandRegistryListOptions,
+      `plugin${string}`,
+      "commands.list.plugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginViewRegistryListOptions,
+      `plugin${string}`,
+      "views.list.plugin-template-key"
+    >
+  | BroadStringKeyLeak<
+      PluginSlotRegistryListOptions,
+      `plugin${string}`,
+      "slots.list.plugin-template-key"
+    >;
 type CallerPluginIdCommandDefinitionVariable = {
   id: string;
   pluginId: string;
@@ -956,6 +1063,7 @@ describe("Plugin API contracts", () => {
   });
 
   it("rejects caller-supplied plugin ids from plugin registry variables", () => {
+    expectNoTypeLeak<CallerSuppliedRegistryPluginIdTemplateKeyLeak>();
     expectNoTypeLeak<CallerPluginIdCommandDefinitionLeak>();
     expectNoTypeLeak<CallerPluginIdViewDefinitionLeak>();
     expectNoTypeLeak<CallerPluginIdSlotDefinitionLeak>();
@@ -965,6 +1073,7 @@ describe("Plugin API contracts", () => {
   });
 
   it("rejects caller-supplied source plugin ids from plugin store variables", () => {
+    expectNoTypeLeak<CallerSuppliedSourcePluginIdTemplateKeyLeak>();
     expectNoTypeLeak<CallerSourcePluginIdMetadataSetLeak>();
     expectNoTypeLeak<CallerSourcePluginIdEventAppendLeak>();
     expectNoTypeLeak<CallerSourcePluginIdFilterSaveLeak>();
