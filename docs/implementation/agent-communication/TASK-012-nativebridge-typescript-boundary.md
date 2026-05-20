@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: red tests in progress.
+- Status: red test refinement in progress.
 - Active agents:
   - Boyle (`test_writer`, `019e46b4-4e48-7dc3-8bb5-535e59efc26d`).
-- Next parent step: wait for Boyle, run focused red checks, and commit the red-test patch if it is test-only and fails for the expected reason.
+- Next parent step: wait for Boyle's test-only refinement, rerun focused red checks, and commit the red-test patch if it fails only for the expected missing NativeBridge/App raw invoke boundary reasons.
 
 ## Agent Handoffs
 
@@ -132,3 +132,9 @@
 - Assignment:
   - Add focused red Vitest tests for NativeBridge public exports, grouped bridge methods, centralized command constants, exact camelCase DTO payloads, generic DB response typing, void methods, error normalization, malformed concrete native responses, production raw Tauri import/call boundary scanning, and absence of NativeBridge/raw native handles from Plugin API/PluginContext.
   - Do not edit production code, docs, config, package files, lockfiles, Rust/Tauri files, `src/App.tsx`, or existing tests.
+- Initial outcome:
+  - Boyle added `src/test/native-bridge.test.ts`.
+  - Parent red check `bun run test:frontend -- src/test/native-bridge.test.ts` failed as expected because Vite cannot resolve `../core/native`.
+  - Parent red check `bun run typecheck` also found test-internal TypeScript errors in a command-key type assertion and raw-invoke violation list typing.
+- Follow-up:
+  - Parent resumed Boyle to fix only `src/test/native-bridge.test.ts` so the red signal is clean before commit.
