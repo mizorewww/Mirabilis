@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: pending transaction implementation in progress.
-- Active agents: Cicero (`implementer`, `019e464c-612f-74a2-bbe7-1d958fb1b394`).
-- Next parent step: wait for Cicero, validate focused green checks, then run final re-review.
+- Status: pending transaction fix green; final micro re-review next.
+- Active agents: none.
+- Next parent step: run a final micro re-review of the pending transaction fix, then local gate if clear.
 
 ## Agent Handoffs
 
@@ -426,7 +426,7 @@
 
 ### Pending Transaction Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Cicero (`implementer`, `019e464c-612f-74a2-bbe7-1d958fb1b394`).
 - Ownership:
@@ -434,6 +434,17 @@
 - Assignment:
   - Ensure plugin transaction liveness is checked after the async transaction handler resolves and before Core commits staged page/metadata/event/filter writes.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
+- Outcome:
+  - Cicero changed `src/core/plugin-host/plugin-host.ts` only.
+  - `ctx.transaction.run(handler)` now checks plugin context liveness after the handler resolves and before the Core transaction manager commits staged writes. If the context is stale, the transaction rejects with typed `PLUGIN_LIFECYCLE_FAILED` and staged page/metadata/event/filter changes roll back.
+- Commit:
+  - `0bd3af3 Cicero(review-fix)(Implement Plugin Host lifecycle): reject stale transaction commits`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 32 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 46 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -444,4 +455,4 @@
 
 ## Next Action
 
-Wait for Cicero, then validate focused green checks and re-review.
+Run final micro re-review of the pending transaction fix.
