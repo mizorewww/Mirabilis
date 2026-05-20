@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 06:33 CST.
+Last updated: 2026-05-21 06:38 CST.
 
 ## Current Task
 
@@ -12,10 +12,7 @@ Last updated: 2026-05-21 06:33 CST.
 
 ## Active Agents
 
-- Huygens the 2nd (`planner`) - TASK-015 read-only pre-test scope and implementation plan.
-- Goodall the 2nd (`docs_researcher`) - TASK-015 read-only current docs guidance.
-- Feynman the 2nd (`deprecation_auditor`) - TASK-015 read-only API/deprecation risk audit.
-- Parfit the 2nd (`security_reviewer`) - TASK-015 read-only security boundary review.
+- None.
 
 ## Recent Agent Outcomes
 
@@ -25,7 +22,12 @@ Last updated: 2026-05-21 06:33 CST.
 - TASK-015 out of scope unless agents find a local-doc requirement: Markdown editor behavior, task/tag/timer/calendar business plugins, filesystem import/export behavior, release packaging, and new Tauri command/capability expansion.
 - `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 - TASK-015 pre-test guidance agents were spawned. All are read-only and must not edit files.
-- Parent next step: wait for TASK-015 pre-test guidance, summarize recommendations, then delegate red tests to `test_writer`.
+- Parfit the 2nd (`security_reviewer`) completed read-only pre-test review. Constraints: no new broad Tauri permissions, no raw NativeBridge/DB/storage/runtime exposure through plugin-reachable provider values, generic redacted startup failure UI only, preserve Command Registry and PluginContext boundaries.
+- Goodall the 2nd (`docs_researcher`) completed read-only current-docs guidance. Recommendations: unit-test bootstrap order with injected factories/spies, test provider/hook via React Testing Library render + consumer, test async startup failure with visible alert semantics, keep raw invoke isolated, and account for React StrictMode if bootstrap uses effects.
+- Huygens the 2nd (`planner`) completed read-only planning. Recommendation: keep TASK-015 as app-level composition, not a Core rewrite; add bootstrap/provider/built-in-plugin-list/App Shell boundary tests first, with likely files under `src/bootstrap`, `src/providers`, `src/plugins` or `src/shell`, `src/App.tsx`, and focused tests under `src/test`.
+- Feynman the 2nd (`deprecation_auditor`) completed read-only API/deprecation audit. P1 guidance: make bootstrap single-flight/idempotent under React StrictMode, do not expose `NativeBridge` or raw Tauri `invoke` through providers, and either implement storage honestly or keep the first bootstrap explicitly in-memory without claiming persistence.
+- Parent decisions for red tests: delegate bootstrap/provider/App Shell boundary tests to `test_writer`; cover initialization order, StrictMode duplicate-start protection, provider/hook availability, generic redacted startup failure UI, no raw bridge/storage/runtime exposure through plugin-reachable surfaces, and no new Tauri capability/config changes.
+- Parent next step: commit pre-test guidance summary, close completed read-only agents, then spawn `test_writer` for failing tests.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
