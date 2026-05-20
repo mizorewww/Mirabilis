@@ -37,7 +37,7 @@ Status markers:
 
 - [x] TASK-010: Define Plugin API contracts
 - [x] TASK-011: Implement Plugin Host lifecycle
-- [ ] TASK-012: Add NativeBridge TypeScript boundary
+- [~] TASK-012: Add NativeBridge TypeScript boundary
 - [ ] TASK-013: Add SQLite schema and Rust repositories
 - [ ] TASK-014: Expose Tauri IPC commands for core persistence
 - [ ] TASK-015: Build app bootstrap and runtime provider
@@ -78,6 +78,14 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 02:37 CST - TASK-012 started
+
+- Branch: `feat/task-012-nativebridge-typescript-boundary`.
+- Task: Add NativeBridge TypeScript boundary.
+- Scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Do not implement Rust commands, SQLite repositories/schema, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, or new Tauri permissions/capabilities in this task.
+- Agent orchestration: parent thread remains orchestration-only; planning, current-doc verification, deprecation/API guidance, security-boundary guidance, TDD tests, implementation, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-012-nativebridge-typescript-boundary.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure, which does not block repository agent work.
 
 ### 2026-05-21 02:33 CST - TASK-011 completed
 

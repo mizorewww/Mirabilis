@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:33 CST.
+Last updated: 2026-05-21 02:37 CST.
 
 ## Current Task
 
-- Task: TASK-011 - Implement Plugin Host lifecycle.
-- Branch: `feat/task-011-plugin-host-lifecycle`.
+- Task: TASK-012 - Add NativeBridge TypeScript boundary.
+- Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 local gate passed; progress update in progress before merge.
+- Current phase: task started; pre-test guidance handoff next.
 
 ## Active Agents
 
@@ -16,6 +16,10 @@ Last updated: 2026-05-21 02:33 CST.
 
 ## Recent Agent Outcomes
 
+- TASK-012 branch `feat/task-012-nativebridge-typescript-boundary` was created from latest `master`.
+- TASK-012 scope: add a typed TypeScript NativeBridge wrapper around Tauri `invoke`, typed request/response DTOs, typed app-error normalization, and boundary-level invoke mocks. Rust commands, SQLite schema/repositories, persistence behavior, app bootstrap/runtime provider wiring, UI persistence flows, filesystem import/export behavior, global shortcuts, notifications, and new Tauri permissions/capabilities are out of scope.
+- `.codex/agents/*.toml` parsed successfully for TASK-012 with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK and the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+- Parent next step: commit TASK-012 start state, then spawn read-only planner, docs/current-guidance, deprecation/API, and security-boundary agents before TDD tests.
 - Gauss (`doc_writer`) completed final docs/status cleanup. The cleanup addressed only Lagrange's P2 architecture/status findings around record-identity batch rollback, same-id duplicate/concurrent handling, pending-register dependents, and single-flight register semantics.
 - Parent final local gate passed after Gauss: `bun run check:quick` and `bun run build`.
 - Gauss (`doc_writer`) was spawned for final docs/status cleanup after final focused re-review. Ownership is limited to `docs/architecture/03-plugin-api-and-host.md`, `docs/implementation/agent-communication/status.md`, and `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.
