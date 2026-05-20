@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 22:25 CST.
+Last updated: 2026-05-20 22:28 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-20 22:25 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 P2 review-fix green; narrow re-review next.
+- Current phase: TASK-010 P2 review-fix narrow re-review in progress.
 
 ## Active Agents
 
-- None. Next step is narrow re-review of the P2 review fixes.
+- Chandrasekhar (`reviewer`, `019e45c7-8031-7ee2-8c15-be98e1d803f0`) is reviewing P2 correctness/API fixes.
+- Descartes (`deprecation_auditor`, `019e45c7-8947-74e1-9bf7-2f155395834a`) is reviewing P2 API/deprecation fixes.
+- Sagan (`test_quality_reviewer`, `019e45c7-a048-7543-a311-8c5b14cc3dd4`) is reviewing P2 test quality.
+- Nash (`docs_researcher`, `019e45c7-a928-7a13-85f3-74a6bcd926e1`) is reviewing P2 docs cleanup.
+- Faraday (`security_reviewer`, `019e45c7-bba5-7300-a2da-28428052d68a`) is reviewing P2 security/boundary impact.
 
 ## Recent Agent Outcomes
 
+- Narrow re-review agents spawned after Epicurus's green P2 Plugin API store facade fix.
 - Epicurus (`implementer`) completed and was closed after implementing the P2 Plugin API store facade fixes.
 - Epicurus's review-fix commit: `47f4cc6 Epicurus(review-fix)(Define Plugin API contracts): harden plugin store facades`.
 - Parent repeated green checks after Epicurus: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` with 14 tests passing; `git diff --check`.

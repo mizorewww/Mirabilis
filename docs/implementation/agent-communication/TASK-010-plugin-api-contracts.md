@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- Status: P2 review-fix green; narrow re-review next.
-- Active agents: none.
-- Next parent step: spawn narrow re-review agents for P2 fixes and docs cleanup.
+- Status: P2 review-fix narrow re-review in progress.
+- Active agents: Chandrasekhar (`reviewer`), Descartes (`deprecation_auditor`), Sagan (`test_quality_reviewer`), Nash (`docs_researcher`), and Faraday (`security_reviewer`).
+- Next parent step: wait for narrow re-review, then either fix remaining P0/P1/P2 findings or run the local gate.
 
 ## Agent Handoffs
 
@@ -439,6 +439,18 @@
   - `47f4cc6 Epicurus(review-fix)(Define Plugin API contracts): harden plugin store facades`.
 - Remaining tradeoff:
   - The template-literal ownership reservation pattern remains because it preserves explicit `undefined` ownership-key rejection under the current TypeScript config.
+
+### P2 Narrow Re-Review
+
+- Status: in progress.
+- Agents:
+  - Chandrasekhar (`reviewer`, `019e45c7-8031-7ee2-8c15-be98e1d803f0`).
+  - Descartes (`deprecation_auditor`, `019e45c7-8947-74e1-9bf7-2f155395834a`).
+  - Sagan (`test_quality_reviewer`, `019e45c7-a048-7543-a311-8c5b14cc3dd4`).
+  - Nash (`docs_researcher`, `019e45c7-a928-7a13-85f3-74a6bcd926e1`).
+  - Faraday (`security_reviewer`, `019e45c7-bba5-7300-a2da-28428052d68a`).
+- Assignment:
+  - Read-only review of Planck's tests, Heisenberg's docs cleanup, and Epicurus's production Plugin API type fixes.
   - Docs `rg` scans found no stale `ctx.metadataFields`, `ctx.algorithms`, `ctx.commands.execute`, plugin-facing `sourcePluginId`, or plugin-facing ownership-key examples outside Core internals and agent communication.
 
 ## Parent Decisions
@@ -450,4 +462,4 @@
 
 ## Next Action
 
-Spawn narrow re-review agents for the P2 fixes and docs cleanup.
+Wait for narrow re-review, then either fix remaining P0/P1/P2 findings or run the local gate.
