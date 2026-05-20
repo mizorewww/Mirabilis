@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:15 CST.
+Last updated: 2026-05-21 00:19 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-21 00:15 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final review-fix implementation in progress.
+- Current phase: TASK-011 final review-fix implementation green; final narrow re-review next.
 
 ## Active Agents
 
-- Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`) is implementing the final lifecycle revocation and failed-install cleanup fixes in `src/core/plugin-host/plugin-host.ts`.
+- No active agents. Next handoff: final narrow re-review.
 
 ## Recent Agent Outcomes
 
+- Maxwell (`implementer`) completed and was closed after implementing final TASK-011 review fixes in `src/core/plugin-host/plugin-host.ts`.
+- Maxwell's review-fix commit: `85a3f71 Maxwell(review-fix)(Implement Plugin Host lifecycle): revoke stale plugin contexts`.
+- Parent repeated green checks after Maxwell: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 30 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 44 tests passing; `bun run lint`; and `git diff --check`.
 - Maxwell (`implementer`) was spawned for the final TASK-011 production review-fix pass. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
 - Lovelace's second review-fix test commit: `fa3a44c Lovelace(test)(Implement Plugin Host lifecycle): cover final lifecycle gaps`.
 - Parent confirmed the expected red signal after Lovelace: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 30 tests with 26 passing and 4 failing around stale context page/store/transaction writes and failed-install record cleanup; `git diff --check` passed.

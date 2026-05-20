@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final review-fix implementation in progress.
-- Active agents: Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`).
-- Next parent step: wait for Maxwell, validate focused green checks, then re-review.
+- Status: final review-fix implementation green; final narrow re-review next.
+- Active agents: none.
+- Next parent step: run final narrow re-review for stale context revocation and failed-install cleanup.
 
 ## Agent Handoffs
 
@@ -279,7 +279,7 @@
 
 ### Final Review-Fix Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Maxwell (`implementer`, `019e462b-7dc1-7e40-903e-b2a95615e058`).
 - Ownership:
@@ -287,6 +287,19 @@
 - Assignment:
   - Implement minimum production fixes for stale context write revocation after lifecycle exit and failed-install record cleanup/retry safety.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
+- Outcome:
+  - Maxwell changed `src/core/plugin-host/plugin-host.ts` only.
+  - Failed explicit `install(plugin)` now removes the host record; later `register(plugin)` retries install before registering.
+  - `loadBuiltInPlugins()` no longer leaves records for failed install hooks or later plugins whose install hooks did not run.
+  - Captured stale lifecycle contexts now reject page, metadata, event, filter, and transaction writes with typed `PLUGIN_LIFECYCLE_FAILED` before mutating Core data.
+- Commit:
+  - `85a3f71 Maxwell(review-fix)(Implement Plugin Host lifecycle): revoke stale plugin contexts`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 30 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 44 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -297,4 +310,4 @@
 
 ## Next Action
 
-Wait for Maxwell, then validate focused green checks and re-review.
+Run final narrow re-review for stale context revocation and failed-install cleanup.
