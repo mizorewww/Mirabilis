@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: review-fix implementation green; docs handoff next.
+- Status: docs contract sync in progress.
 - Active agents:
-  - None.
-- Next parent step: spawn a `doc_writer` to sync the concrete NativeBridge command/DTO/error contract into architecture docs before re-review.
+  - Gibbs the 2nd (`doc_writer`, `019e46dc-8d57-7893-bdcc-da3068052df5`).
+- Next parent step: wait for Gibbs the 2nd, validate docs, and commit the docs patch if in scope.
 
 ## Agent Handoffs
 
@@ -275,3 +275,14 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
   - Raw Tauri scan confirmed the only production `@tauri-apps/api/core` import is `src/core/native/tauri-native-bridge.ts`.
+
+### Docs Contract Sync
+
+- Status: running.
+- Agent:
+  - Gibbs the 2nd (`doc_writer`, `019e46dc-8d57-7893-bdcc-da3068052df5`).
+- Ownership:
+  - Docs only, preferably `docs/architecture/06-filter-native-database.md`; minimal task-index handoff note only if needed.
+- Assignment:
+  - Document the concrete NativeBridge command names, camelCase payload envelopes, operation/payload `DbQuery`, JSON-compatible `DbValue`, `NativeBridgeError` codes, safe public error messages, and no direct UI/plugin Tauri calls.
+  - Do not edit code, tests, config, package files, lockfiles, Rust/Tauri files, or progress/status docs.
