@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:42 CST.
+Last updated: 2026-05-20 11:51 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 11:42 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation active.
+- Current phase: implementation green; review handoff pending.
 
 ## Active Agents
 
-- Linnaeus (`implementer`, `019e437a-2a2f-7c50-974c-e1eed53502f4`): implement the minimum View Registry and Slot Registry production code.
+- None.
 
 ## Recent Agent Outcomes
 
+- Linnaeus (`implementer`) completed and was closed after implementing TASK-008 production code.
+- Linnaeus's implementation commit: `1e03f31 Linnaeus(implementation)(Add View Registry and Slot Registry): implement view and slot registries`.
+- Parent corrected Linnaeus's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
+- Parent repeated green checks after Linnaeus: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 12 tests passing, and `bun run lint`.
 - Linnaeus (`implementer`) was spawned for TASK-008 production implementation.
 - Pasteur (`test_writer`) completed and was closed after adding TASK-008 acceptance tests.
 - Pasteur's test commit: `5dc84cc Pasteur(test)(Add View Registry and Slot Registry): add view and slot registry acceptance tests`.
@@ -219,6 +223,6 @@ Last updated: 2026-05-20 11:42 CST.
 
 ## Next Actions
 
-1. Wait for Linnaeus's implementation output.
-2. Repeat focused validation.
-3. If green, continue to review agents.
+1. Spawn review agents for TASK-008.
+2. Record review findings.
+3. Fix P0/P1 findings before final gate.

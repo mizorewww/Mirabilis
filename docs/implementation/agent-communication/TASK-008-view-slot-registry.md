@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: implementation active.
-- Active agents:
-  - Linnaeus (`implementer`, `019e437a-2a2f-7c50-974c-e1eed53502f4`): implement the minimum View Registry and Slot Registry production code.
+- Status: implementation green; review handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -111,7 +110,7 @@ Wait for Linnaeus's implementation output.
 
 ### Linnaeus (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e437a-2a2f-7c50-974c-e1eed53502f4`.
 - Ownership:
   - `src/core/types/view.ts`.
@@ -121,6 +120,18 @@ Wait for Linnaeus's implementation output.
   - `src/core/registries/slot-registry.ts`.
   - `src/core/registries/index.ts`.
   - `src/core/index.ts`.
+- Commit:
+  - `1e03f31 Linnaeus(implementation)(Add View Registry and Slot Registry): implement view and slot registries`.
 - Assignment:
   - Implement the minimum production View Registry and Slot Registry to pass Pasteur's acceptance tests.
   - Preserve `component` and `when` references, clone only inert metadata, avoid React runtime imports, and keep TASK-008 out of rendering/business/plugin-host/native behavior.
+- Checks run by Linnaeus and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 12 tests passing.
+  - `bun run lint`.
+- Parent note:
+  - Linnaeus initially committed with `Codex(implementation)` in the message. Parent amended the HEAD commit message to use the actual agent nickname and force-with-lease pushed the task branch.
+
+## Next Action
+
+Spawn review agents for TASK-008.
