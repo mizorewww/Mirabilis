@@ -45,9 +45,15 @@
 
 ## Current Status
 
-- Status: implementation green; review agents pending.
-- Active agents: none.
-- Next parent step: spawn review agents.
+- Status: review round running.
+- Active agents:
+  - Helmholtz the 2nd (`pr_explorer`, id `019e474f-7db5-76b3-badd-b54940257148`).
+  - Popper the 2nd (`reviewer`, id `019e474f-81f6-7d33-a5e4-19e78f57dffb`).
+  - Euclid the 2nd (`deprecation_auditor`, id `019e474f-860b-7400-bc0b-7bb87879fd1d`).
+  - Mencius the 2nd (`security_reviewer`, id `019e474f-8abc-7f51-b269-50504c28c1c5`).
+  - Rawls the 2nd (`docs_researcher`, id `019e474f-9017-7f21-bdeb-3ac4a73d5c64`).
+  - Pauli the 2nd (`test_quality_reviewer`, id `019e474f-94f7-7793-be46-287a3e630378`).
+- Next parent step: wait for review agents, then spawn deferred `doc_writer`.
 
 ## Agent Handoffs
 
@@ -134,3 +140,19 @@
   - Commit: `3452616 Laplace the 2nd(implementation)(Expose Tauri IPC commands for core persistence): implement db ipc allowlist`.
   - Delivered TypeScript `DB_PERSISTENCE_OPERATIONS` / `DbPersistenceOperation`, narrowed `DbQuery.operation`, Rust `commands::db` allowlisted dispatch, `DbCommandState` with app-owned `Mutex<Database>`, pure dispatch helpers, Tauri commands `db_execute` / `db_transaction`, removal of scaffold `greet`, explicit app-command permission generation, reviewed capability entries, redacted typed IPC errors, strict DTO validation, and transaction rollback support.
   - Parent repeated focused green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_boundary`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence`, `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+
+### Review Round 1
+
+- Status: running.
+- Agents:
+  - Helmholtz the 2nd (`pr_explorer`) for changed-surface and hotspot mapping.
+  - Popper the 2nd (`reviewer`) for correctness.
+  - Euclid the 2nd (`deprecation_auditor`) for API/deprecation risk.
+  - Mencius the 2nd (`security_reviewer`) for IPC/capability/security boundaries.
+  - Rawls the 2nd (`docs_researcher`) for docs/current-guidance review.
+  - Pauli the 2nd (`test_quality_reviewer`) for test quality.
+- Deferred:
+  - `doc_writer` could not be spawned initially because the agent thread limit was reached. Parent will spawn it after a review slot is available.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review commits `463f23b` and `3452616` against TASK-014 acceptance, local docs, and current official guidance.
