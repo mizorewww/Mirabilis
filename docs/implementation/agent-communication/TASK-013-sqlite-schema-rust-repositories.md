@@ -40,10 +40,15 @@
 
 ## Current Status
 
-- Status: implementation committed; review handoff next.
+- Status: review agents running.
 - Active agents:
-  - None.
-- Next parent step: spawn read-only review agents for correctness, diff mapping, deprecation/API, security/boundary, docs/current guidance, test quality, and documentation needs.
+  - Hegel the 2nd (`pr_explorer`, id `019e46fc-11a0-7343-b2c5-958d220f1555`).
+  - Galileo the 2nd (`reviewer`, id `019e46fc-1544-7351-85af-7a431baf116b`).
+  - Hooke the 2nd (`deprecation_auditor`, id `019e46fc-1a26-71c3-bdbb-988291c6afa3`).
+  - Faraday the 2nd (`security_reviewer`, id `019e46fc-1e27-71a0-8bce-8427a15550d4`).
+  - Plato the 2nd (`docs_researcher`, id `019e46fc-22f3-7673-a6fa-fac76e86f729`).
+  - Heisenberg the 2nd (`test_quality_reviewer`, id `019e46fc-264e-7a83-9b6b-87a9f5d01f1e`).
+- Next parent step: wait for read-only review outcomes, record findings/decisions, then delegate fixes for any P0/P1 findings.
 
 ## Agent Handoffs
 
@@ -137,3 +142,19 @@
   - Delivered schema version `1` / `001_core_schema`, `core_schema_migrations`, `PRAGMA user_version`, and neutral `core_plugin_indexes` baseline table.
   - Parent repeated green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
   - Scope preserved: no IPC commands, Tauri capabilities, frontend wiring, NativeBridge changes, Plugin API changes, `tauri-plugin-sql`, `sqlx`, app data path resolution, or business plugin index tables.
+
+### Review Round 1
+
+- Status: running.
+- Agents:
+  - Hegel the 2nd (`pr_explorer`) for changed-surface and hotspot mapping.
+  - Galileo the 2nd (`reviewer`) for correctness.
+  - Hooke the 2nd (`deprecation_auditor`) for API/deprecation/dependency risks.
+  - Faraday the 2nd (`security_reviewer`) for persistence boundary/security.
+  - Plato the 2nd (`docs_researcher`) for current docs and local docs drift.
+  - Heisenberg the 2nd (`test_quality_reviewer`) for test quality.
+- Deferred:
+  - `doc_writer` could not be spawned initially because the agent thread limit was reached. Parent will spawn a docs-focused reviewer later if needed.
+- Assignment:
+  - Stay read-only and do not edit files.
+  - Review commits `3092b67` and `ef3583c` against TASK-013 acceptance, local docs, and current official/primary guidance.
