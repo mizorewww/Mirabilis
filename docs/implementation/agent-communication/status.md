@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:07 CST.
+Last updated: 2026-05-21 03:14 CST.
 
 ## Current Task
 
@@ -8,19 +8,22 @@ Last updated: 2026-05-21 03:07 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review agents running.
+- Current phase: review-fix test handoff next.
 
 ## Active Agents
 
-- Kant (`pr_explorer`, `019e46c9-69d0-7d23-aedf-e287836824e8`) - TASK-012 diff and scope map.
-- Poincare (`reviewer`, `019e46c9-6da3-7152-96b8-2aa7c753a9dc`) - correctness review.
-- Pascal (`deprecation_auditor`, `019e46c9-71b6-7223-87a1-ac1934875de1`) - API/deprecation review.
-- Confucius (`security_reviewer`, `019e46c9-7735-7632-9cc5-88772026d6f7`) - security/boundary review.
-- Kepler the 2nd (`docs_researcher`, `019e46c9-7b19-7721-aa9c-220423a9247b`) - docs/current-guidance review.
-- Gauss the 2nd (`test_quality_reviewer`, `019e46c9-8010-7a40-b824-262d3523e4f5`) - test-quality review.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-012 review round 1 completed and all agents were closed.
+- Poincare (`reviewer`) found two P1 correctness/boundary issues: `NativeBridgeCommand` widens to `string`, and public `NativeBridgeError.message` forwards raw native messages that may contain SQL, paths, or secrets.
+- Pascal (`deprecation_auditor`) independently found the same P1 command widening issue and otherwise cleared Tauri v2 import/deprecation usage.
+- Confucius (`security_reviewer`) found P1 issues for unredacted native error messages and raw SQL-shaped `DbQuery`, plus P2 concerns about widened command names and broad Core barrel NativeBridge exports.
+- Gauss the 2nd (`test_quality_reviewer`) found one P1 test gap: no test verifies `createTauriNativeBridge()` delegates to Tauri `invoke`. Gauss also found P2 gaps for literal command type assertions, broader error normalization coverage, and raw-native scan fragility.
+- Kant (`pr_explorer`) mapped the diff and flagged the same command-type, raw-error, and root `@tauri-apps/api` scan gaps.
+- Kepler the 2nd (`docs_researcher`) found no P1 docs/current-guidance issues and one P2 docs handoff gap: concrete command constants, DTO envelopes, and `NativeBridgeError` codes should be promoted into architecture or task-index docs before TASK-014.
+- Parent decisions: fix P1/P2 command literal typing, safe error messages, raw SQL-shaped `DbQuery`, Tauri adapter behavior coverage, and root `@tauri-apps/api` scan coverage through another delegated TDD loop. Defer broad Core barrel exposure as an accepted P2 tradeoff for now because Core already uses a public barrel and Plugin API/PluginContext stay native-handle-free; revisit if security re-review escalates it. Add docs contract cleanup after code behavior stabilizes.
 - TASK-012 review agents spawned after Ramanujan's green implementation. All are read-only and must not edit files.
 - Ramanujan (`implementer`) completed and was closed after implementing the TASK-012 NativeBridge boundary.
 - Ramanujan's test-fix commit: `98ac5b2 Ramanujan(test-fix)(Add NativeBridge TypeScript boundary): align native bridge test helper`. Parent split this out because Ramanujan had to adjust a test helper type after implementation exposed a Vitest `Mock<NativeInvoke>` generic erasure issue. The behavior assertions were not weakened.

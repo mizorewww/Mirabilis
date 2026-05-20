@@ -39,15 +39,10 @@
 
 ## Current Status
 
-- Status: review agents running.
+- Status: review round 1 completed; review-fix red-test handoff next.
 - Active agents:
-  - Kant (`pr_explorer`, `019e46c9-69d0-7d23-aedf-e287836824e8`).
-  - Poincare (`reviewer`, `019e46c9-6da3-7152-96b8-2aa7c753a9dc`).
-  - Pascal (`deprecation_auditor`, `019e46c9-71b6-7223-87a1-ac1934875de1`).
-  - Confucius (`security_reviewer`, `019e46c9-7735-7632-9cc5-88772026d6f7`).
-  - Kepler the 2nd (`docs_researcher`, `019e46c9-7b19-7721-aa9c-220423a9247b`).
-  - Gauss the 2nd (`test_quality_reviewer`, `019e46c9-8010-7a40-b824-262d3523e4f5`).
-- Next parent step: wait for review results, summarize findings, and delegate fixes for any P0/P1 findings.
+  - None.
+- Next parent step: spawn a `test_writer` for red tests covering the accepted review findings.
 
 ## Agent Handoffs
 
@@ -190,7 +185,7 @@
 
 ### Review Round 1
 
-- Status: running.
+- Status: completed and closed.
 - Agents:
   - Kant (`pr_explorer`, `019e46c9-69d0-7d23-aedf-e287836824e8`).
   - Poincare (`reviewer`, `019e46c9-6da3-7152-96b8-2aa7c753a9dc`).
@@ -201,3 +196,23 @@
 - Assignment:
   - Read-only review against `master` for diff scope, correctness, API/deprecation risk, security/native boundary, docs/current-guidance drift, and test quality.
   - Report P0/P1/P2 findings with tight file/line references and no code edits.
+- Outcomes:
+  - Kant mapped the diff and found no scope creep into Rust, SQLite, Tauri capabilities/config, dependencies, Plugin API, or Plugin Host. Kant flagged command literal widening, raw error forwarding, and root `@tauri-apps/api` scan coverage as review points.
+  - Poincare found two P1 issues: `NativeBridgeCommand` widens to `string`, and `NativeBridgeError.message` forwards native strings / `Error.message` / object `.message` verbatim.
+  - Pascal independently found the same P1 command widening issue and cleared Tauri v2 import/deprecation usage.
+  - Confucius found P1 issues for unredacted native errors and SQL-shaped `DbQuery`, plus P2 issues for widened command names and broad Core barrel NativeBridge exports.
+  - Kepler the 2nd found no P1 docs/current-guidance issues and one P2 docs handoff gap: concrete command constants, camelCase DTO envelopes, and `NativeBridgeError` codes should be documented for TASK-014.
+  - Gauss the 2nd found one P1 test-quality gap: `createTauriNativeBridge()` is not tested against a mocked `@tauri-apps/api/core` invoke. Gauss also noted P2 gaps for literal command type assertions, broader error normalization coverage, and brittle source scans.
+- Parent decisions:
+  - Fix the command constant type widening with tests first, then implementation.
+  - Change public command-failure messages to a stable safe message and prevent raw native SQL/path/token details from becoming `NativeBridgeError.message`; tests should still ensure raw values are not thrown directly.
+  - Replace SQL-shaped `DbQuery` (`sql` / SQL params) with an allowlist-friendly operation DTO such as `{ operation, payload? }` using JSON-compatible values. This keeps TASK-012 from freezing SQL strings into the frontend contract while leaving concrete Rust allowlists/repositories to TASK-013/TASK-014.
+  - Add a Tauri adapter behavior test that mocks `@tauri-apps/api/core` and verifies `createTauriNativeBridge()` delegates to `invoke` with the exact command and DTO.
+  - Extend raw-native scan coverage to catch root `@tauri-apps/api` imports in production files.
+  - Accept the P2 broad Core barrel NativeBridge export for now because the existing project pattern exposes Core contracts through the Core barrel and Plugin API/PluginContext remain native-handle-free. Revisit if security re-review escalates it.
+  - Defer the P2 architecture/task docs contract sync until code behavior settles after review fixes.
+- Review checks reported by agents:
+  - `bun run test:frontend -- src/test/native-bridge.test.ts` passed with 15 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check master...HEAD` passed.
