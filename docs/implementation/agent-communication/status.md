@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:29 CST.
+Last updated: 2026-05-20 11:34 CST.
 
 ## Current Task
 
@@ -8,16 +8,16 @@ Last updated: 2026-05-20 11:29 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance active.
+- Current phase: pre-test guidance complete.
 
 ## Active Agents
 
-- Hooke (`planner`, `019e436e-7986-7ba2-b8c5-6a2d8fab1838`): TASK-008 API, scope, and TDD plan.
-- Halley (`docs_researcher`, `019e436e-7cc2-7f01-983a-c26bea4748f7`): current TypeScript/React/Vitest guidance for view/slot registry tests.
-- Tesla (`deprecation_auditor`, `019e436e-93cb-7ec0-b695-7e2b1ed98b87`): TASK-008 risk and deprecated-pattern audit.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-008 pre-test guidance completed. Hooke planned the View/Slot Registry API and acceptance tests, Halley verified current TypeScript/React/Vitest guidance, and Tesla audited component-reference cloning, inert `when` handling, duplicate atomicity, slot ordering, React runtime coupling, and business-term leakage risks.
+- Parent decisions: add `src/core/types/view.ts`, `src/core/types/slot.ts`, `src/core/registries/view-registry.ts`, `src/core/registries/slot-registry.ts`, and `src/core/registries/index.ts`; expose them from Core barrels; use type-only React `ComponentType` compatibility; preserve `component` and `when` references by identity; clone only inert JSON metadata such as required `accepts`; slot `when` is sync-only inert metadata and is never executed by the registry; slot order defaults to `0`, must be finite, sorts ascending with stable registration-order ties; duplicate IDs are global per registry; no production constants for documented business view or slot names.
 - Pre-test guidance agents spawned for TASK-008.
 - TASK-008 started from latest `master` after TASK-007 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-008.
@@ -214,6 +214,6 @@ Last updated: 2026-05-20 11:29 CST.
 
 ## Next Actions
 
-1. Wait for TASK-008 pre-test guidance agents.
-2. Record parent decisions.
-3. Delegate failing acceptance tests to a `test_writer`.
+1. Delegate failing acceptance tests to a `test_writer`.
+2. Confirm expected red signal.
+3. Delegate implementation to an `implementer`.
