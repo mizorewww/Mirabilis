@@ -45,15 +45,10 @@
 
 ## Current Status
 
-- Status: post-review-fix read-only re-review running.
+- Status: focused P2 cleanup test agent running.
 - Active agents:
-  - Locke the 2nd (`pr_explorer`, id `019e4764-ea3b-7870-adfc-e0c7f3e6bbd8`).
-  - Nietzsche the 2nd (`reviewer`, id `019e4764-eea6-71a0-b0bb-ebb4410a4072`).
-  - Cicero the 2nd (`security_reviewer`, id `019e4764-f319-7da3-9fa9-cb59b3225790`).
-  - Tesla the 2nd (`deprecation_auditor`, id `019e4764-f76f-75d3-84f3-b31383977d52`).
-  - Anscombe the 2nd (`docs_researcher`, id `019e4764-fbe5-77e0-8417-abd016363223`).
-  - Schrodinger the 2nd (`test_quality_reviewer`, id `019e4764-ff88-7990-8814-1c031d991884`).
-- Next parent step: wait for re-review outcomes and decide follow-up fixes or docs sync.
+  - Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`).
+- Next parent step: wait for Carson the 2nd, run focused red checks, and commit tests if valid.
 
 ## Agent Handoffs
 
@@ -230,7 +225,7 @@
 
 ### Focused Re-Review Round
 
-- Status: running.
+- Status: complete.
 - Agents:
   - Locke the 2nd (`pr_explorer`) for changed-surface and hotspot mapping.
   - Nietzsche the 2nd (`reviewer`) for correctness.
@@ -242,3 +237,27 @@
   - Stay read-only and do not edit files.
   - Review latest TASK-014 state after commits `6662a4c` and `d0efbd8`.
   - Return P0/P1/P2 findings with file/line references, or explicitly say no findings and list residual risks.
+- Outcomes:
+  - Locke the 2nd (`pr_explorer`) found no blocking issues or clear scope creep. Hotspots remain duplicated TypeScript/Rust operation allowlists, the large Rust dispatcher/validator, `Transaction::new_unchecked`, public `commands` module visibility for testability, and docs drift.
+  - Cicero the 2nd (`security_reviewer`) found no P0/P1/P2 security findings. Residual risks: main-window DB command capability rather than per-plugin capability, preexisting `csp: null`, deferred SQLite hardening, and no size/timestamp/normalization quotas.
+  - Tesla the 2nd (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings after checking current rusqlite, Tauri, serde, and tauri-build docs. Residual risk: `Transaction::new_unchecked` is current but less compile-time constrained than `Connection::transaction_with_behavior`.
+  - Schrodinger the 2nd (`test_quality_reviewer`) found no P0/P1 findings and one P2: `ipc_boundary.rs` no longer guards against unrelated command registration during TASK-014.
+  - Anscombe the 2nd (`docs_researcher`) found P1 docs drift blocking merge until fixed: architecture docs still show broad `DbQuery.operation: string`, old transaction return shape, and no durable command/capability documentation for `db_execute` / `db_transaction`, generated ACLs, typed error DTOs, rollback semantics, app-owned DB path, and validation semantics. Anscombe also flagged P2 `Transaction::new_unchecked` guidance.
+  - Nietzsche the 2nd (`reviewer`) found no P0/P1 correctness findings and two P2s: metadata IPC accepts unsupported `valueType` strings `object` / `array` despite Core `MetadataValueType`, and NativeBridge transaction typing is homogeneous-only rather than supporting mixed ordered result arrays/tuples.
+- Parent decisions:
+  - Run a small delegated P2 cleanup TDD loop before docs sync.
+  - Add red tests for metadata valueType parity with Core, mixed transaction result typing, and restored TASK-014 command-scope guard.
+  - Then delegate implementation cleanup.
+  - After behavior stabilizes, delegate `doc_writer` to fix the P1 architecture/capability docs drift before merge.
+
+### Focused P2 Cleanup Test Round
+
+- Status: running.
+- Agent:
+  - Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`).
+- Assignment:
+  - Write tests only.
+  - Do not edit production code or docs.
+  - Cover metadata `valueType` support matching Core (`string`, `number`, `boolean`, `json`, `date`, `null`) and rejection of `object` / `array`.
+  - Cover mixed ordered `db.transaction` result typing while preserving the homogeneous array convenience.
+  - Restore the TASK-014 boundary guard against unrelated command registrations using the parsed-command approach.

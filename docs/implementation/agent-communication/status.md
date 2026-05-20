@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 05:57 CST.
+Last updated: 2026-05-21 06:02 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 05:57 CST.
 - Branch: `feat/task-014-tauri-ipc-core-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: post-review-fix read-only re-review running.
+- Current phase: focused P2 cleanup test agent running.
 
 ## Active Agents
 
-- Locke the 2nd (`pr_explorer`, id `019e4764-ea3b-7870-adfc-e0c7f3e6bbd8`) - changed-surface and hotspot mapping for the review-fix patch.
-- Nietzsche the 2nd (`reviewer`, id `019e4764-eea6-71a0-b0bb-ebb4410a4072`) - correctness re-review for metadata logical-key IPC, missing-target errors, rollback, validation, and NativeBridge typing.
-- Cicero the 2nd (`security_reviewer`, id `019e4764-f319-7da3-9fa9-cb59b3225790`) - IPC/capability/security boundary re-review.
-- Tesla the 2nd (`deprecation_auditor`, id `019e4764-f76f-75d3-84f3-b31383977d52`) - Tauri/rusqlite/serde/TypeScript API re-review.
-- Anscombe the 2nd (`docs_researcher`, id `019e4764-fbe5-77e0-8417-abd016363223`) - docs/current-guidance drift review.
-- Schrodinger the 2nd (`test_quality_reviewer`, id `019e4764-ff88-7990-8814-1c031d991884`) - review-fix test quality review.
+- Carson the 2nd (`test_writer`, id `019e4769-3a95-70e1-992b-e5a40b8d616b`) - focused P2 cleanup tests for metadata valueType parity, mixed transaction result typing, and TASK-014 command-scope guard.
 
 ## Recent Agent Outcomes
 
@@ -50,7 +45,10 @@ Last updated: 2026-05-21 05:57 CST.
 - Aquinas the 2nd's review-fix commit: `d0efbd8 Aquinas the 2nd(review-fix)(Expose Tauri IPC commands for core persistence): enforce ipc validation semantics`.
 - Parent repeated focused green checks after Aquinas the 2nd: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary`, `bun run test:frontend -- src/test/native-bridge.test.ts`, `bun run typecheck`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - Focused read-only re-review agents were spawned for changed-surface mapping, correctness, security, API/deprecation, docs/current-guidance, and test quality.
-- Parent next step: wait for re-review agents, decide whether further delegated fixes or docs sync are needed, and keep local gates green.
+- Focused read-only re-review completed. Locke the 2nd (`pr_explorer`) found no blocking scope creep and mapped hotspots. Cicero the 2nd (`security_reviewer`) found no P0/P1/P2 security findings. Tesla the 2nd (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings. Schrodinger the 2nd (`test_quality_reviewer`) found one P2: TASK-014 boundary tests no longer forbid unrelated command registrations. Anscombe the 2nd (`docs_researcher`) found P1 docs drift: architecture docs do not yet capture the final operation allowlist, transaction result typing, error DTOs, rollback semantics, app-owned DB path, generated app-command ACLs, or capability grants. Nietzsche the 2nd (`reviewer`) found P2s for unsupported metadata `valueType` strings `object` / `array` and homogeneous-only transaction result typing.
+- Parent decisions: run a small delegated P2 cleanup TDD loop for metadata valueType parity, mixed transaction result typing, and restored command-scope guard before docs sync. Defer the P1 docs patch until this behavior stabilizes. Treat `Transaction::new_unchecked` as a residual P2 to either refine in the implementation cleanup or document in the docs patch.
+- Carson the 2nd (`test_writer`) was spawned for focused P2 cleanup tests only.
+- Parent next step: wait for Carson the 2nd, run focused red checks, commit tests if valid, then delegate implementation cleanup.
 - TASK-012 was merged to `master` and pushed. Merge commit: `d030a9f Codex(merge)(Add NativeBridge TypeScript boundary): merge task branch`.
 - TASK-013 branch `feat/task-013-sqlite-schema-rust-repositories` was created from latest `master`.
 - TASK-013 scope: add repeatable/versioned SQLite schema and Rust repository/data-access layer for Core tables, plus temporary-database repository and migration idempotency tests. Tauri IPC commands, capabilities/permissions, NativeBridge operation handling, frontend wiring, app bootstrap/runtime provider, UI persistence flows, and real plugin-owned index lifecycle are out of scope.
