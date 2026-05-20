@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:44 CST.
+Last updated: 2026-05-20 10:45 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 10:44 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance pending.
+- Current phase: pre-test guidance active.
 
 ## Active Agents
 
-- None.
+- Schrodinger (`planner`, `019e4346-6f25-7710-ba44-e7dc2aae5bb0`): TASK-007 API, scope, and TDD plan.
+- Bacon (`docs_researcher`, `019e4346-73ce-7851-b8b0-704b45d106eb`): current TypeScript/Vitest guidance for command API tests.
+- Poincare (`deprecation_auditor`, `019e4346-77cc-7a41-b1a4-be8d337f3f13`): TASK-007 risk and deprecated-pattern audit.
 
 ## Recent Agent Outcomes
 
+- Pre-test guidance agents spawned for TASK-007.
 - TASK-007 started from latest `master` after TASK-006 was merged and pushed.
 - `.codex/agents/*.toml` parsed successfully for TASK-007.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network OK and one desktop-terminal `TERM=dumb` failure; parent treats this as non-blocking for repository agent work.
@@ -181,6 +184,6 @@ Last updated: 2026-05-20 10:44 CST.
 
 ## Next Actions
 
-1. Spawn pre-test guidance agents for TASK-007.
+1. Wait for TASK-007 pre-test guidance agents.
 2. Record parent decisions.
 3. Delegate failing acceptance tests to a `test_writer`.

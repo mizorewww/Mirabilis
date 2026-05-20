@@ -38,11 +38,22 @@
 
 ## Current Status
 
-- Status: pre-test guidance pending.
-- Active agents: none.
+- Status: pre-test guidance active.
+- Active agents:
+  - Schrodinger (`planner`, `019e4346-6f25-7710-ba44-e7dc2aae5bb0`): TASK-007 API, scope, and TDD plan.
+  - Bacon (`docs_researcher`, `019e4346-73ce-7851-b8b0-704b45d106eb`): current TypeScript/Vitest guidance for command API tests.
+  - Poincare (`deprecation_auditor`, `019e4346-77cc-7a41-b1a4-be8d337f3f13`): TASK-007 risk and deprecated-pattern audit.
 
 ## Agent Handoffs
 
+### Pre-test Guidance Round
+
+- Status: active.
+- Agents:
+  - Schrodinger (`planner`, `019e4346-6f25-7710-ba44-e7dc2aae5bb0`): propose focused Core Command Registry/Bus API, validation, error codes, execution semantics, and acceptance tests.
+  - Bacon (`docs_researcher`, `019e4346-73ce-7851-b8b0-704b45d106eb`): verify current official TypeScript and Vitest guidance relevant to generic command definitions, async errors, and type tests.
+  - Poincare (`deprecation_auditor`, `019e4346-77cc-7a41-b1a4-be8d337f3f13`): audit fragile API choices, handler error behavior, context/shortcut validation risks, unregister/list mutation risks, and architecture boundaries.
+
 ## Next Action
 
-Spawn planner, docs researcher, and deprecation auditor for TASK-007 pre-test guidance.
+Wait for TASK-007 pre-test guidance agents.
