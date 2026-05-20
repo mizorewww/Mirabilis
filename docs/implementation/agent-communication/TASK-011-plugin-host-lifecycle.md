@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: batch rollback and dependency-removal race production fix in progress.
+- Status: batch rollback production fix revision in progress.
 - Active agents:
   - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
-- Next parent step: wait for Halley, then validate green checks.
+- Next parent step: wait for Halley revision, then validate green checks.
 
 ## Agent Handoffs
 
@@ -680,7 +680,7 @@
 
 ### Batch Rollback And Dependency-Removal Race Implementation
 
-- Status: in progress.
+- Status: revision in progress.
 - Agent:
   - Halley (`implementer`, `019e468a-9cfb-7b00-b8cb-86428cbd2764`).
 - Ownership:
@@ -689,6 +689,9 @@
   - Fix batch rollback so pending register scopes from deleted earlier batch records are revoked and tentative contributions/stale context capabilities are cleaned up.
   - Block required dependent registration while dependency deactivate/uninstall is already in progress.
   - Make concurrent successful `register(plugin)` calls idempotent and uninstall-cleanable.
+- Parent revision request:
+  - Halley's first implementation passed focused checks, but used `Function.prototype.toString().includes("throw")` to choose concurrent register behavior.
+  - Parent rejected that brittle source-inspection approach and asked Halley to replace it with explicit lifecycle state/concurrency control before commit.
 
 ## Parent Decisions
 
@@ -699,4 +702,4 @@
 
 ## Next Action
 
-Wait for Halley, then validate and commit the batch rollback/dependency-removal production fix.
+Wait for Halley's revised implementation, then validate and commit the batch rollback/dependency-removal production fix.
