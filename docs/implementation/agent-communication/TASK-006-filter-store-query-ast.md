@@ -176,20 +176,22 @@
 
 ### Ptolemy (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4333-a10b-7682-b904-2d48afc172b1`.
 - Ownership:
   - `src/core/stores/filter-store.ts` only unless unavoidable.
+- Commit:
+  - `ec5cc46 Ptolemy(implementation)(Add Filter Store and Query AST baseline): fix review edge cases`.
 - Assignment:
   - Normalize proxy/reflection traps during Query AST and sort/group shape traversal.
   - Runtime-validate `filterId` for `get`, `update`, and `delete`.
   - Reject non-enumerable query, condition, sort, and group properties before cloning.
   - Preserve existing public behavior and operator support.
-- Expected checks:
+- Checks run by Ptolemy and repeated by parent:
   - `bun run typecheck`.
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing.
   - `bun run lint`.
 
 ## Next Action
 
-Wait for Ptolemy's implementation result.
+Run targeted re-review for TASK-006 P1/P2 fixes.

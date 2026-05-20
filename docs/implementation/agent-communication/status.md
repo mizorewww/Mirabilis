@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:25 CST.
+Last updated: 2026-05-20 10:29 CST.
 
 ## Current Task
 
@@ -8,14 +8,17 @@ Last updated: 2026-05-20 10:25 CST.
 - Branch: `feat/task-006-filter-store-query-ast`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation active.
+- Current phase: review-fix implementation committed; targeted re-review pending.
 
 ## Active Agents
 
-- Ptolemy (`implementer`, `019e4333-a10b-7682-b904-2d48afc172b1`): fixing TASK-006 P1/P2 review findings in Filter Store production code.
+- None.
 
 ## Recent Agent Outcomes
 
+- Ptolemy (`implementer`) completed and was closed after fixing TASK-006 P1/P2 review findings.
+- Ptolemy's implementation commit: `ec5cc46 Ptolemy(implementation)(Add Filter Store and Query AST baseline): fix review edge cases`.
+- Parent repeated green checks after Ptolemy: `bun run typecheck`, `bun run test:frontend -- src/test/core-filter-store.test.ts` with 49 tests passing, and `bun run lint`.
 - Ptolemy (`implementer`) was spawned for selected TASK-006 P1/P2 production fixes.
 - Dirac (`test_writer`) completed and was closed after adding review-fix coverage.
 - Dirac's test commit: `a7d7aa0 Dirac(test)(Add Filter Store and Query AST baseline): add review-fix coverage`.
@@ -163,6 +166,6 @@ Last updated: 2026-05-20 10:25 CST.
 
 ## Next Actions
 
-1. Wait for Ptolemy's implementation result.
-2. Repeat focused checks after implementation.
-3. Commit implementation if green.
+1. Commit this review-fix green-signal record.
+2. Run targeted re-review for TASK-006 P1/P2 fixes.
+3. If clear, clean up docs P3 and run final gate.
