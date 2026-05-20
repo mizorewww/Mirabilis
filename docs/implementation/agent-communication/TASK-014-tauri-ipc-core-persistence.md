@@ -45,9 +45,10 @@
 
 ## Current Status
 
-- Status: red tests complete; committing test patch.
-- Active agents: none.
-- Next parent step: commit Bacon the 2nd's test patch, then spawn `implementer`.
+- Status: implementation agent running.
+- Active agents:
+  - Laplace the 2nd (`implementer`, id `019e4746-d5db-7853-9550-075966adc658`).
+- Next parent step: wait for Laplace the 2nd, then run focused green checks.
 
 ## Agent Handoffs
 
@@ -111,3 +112,21 @@
     - `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_boundary` fails because `greet` is still registered, `db_execute` / `db_transaction` are missing, and command exposure is not reviewed in capabilities/docs.
     - `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` fails with `E0433 cannot find commands in mirabilis_lib`.
   - Green checks: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` and `git diff --check`.
+  - Commit: `463f23b Bacon the 2nd(test)(Expose Tauri IPC commands for core persistence): add ipc persistence acceptance tests`.
+
+### Implementation Round
+
+- Status: running.
+- Agent:
+  - Laplace the 2nd (`implementer`, id `019e4746-d5db-7853-9550-075966adc658`).
+- Ownership:
+  - `src/core/native/native-bridge.ts`.
+  - `src/core/native/index.ts`.
+  - `src/core/index.ts`.
+  - `src-tauri/src/lib.rs`.
+  - New Rust command/state modules under `src-tauri/src/commands/**`.
+  - `src-tauri/src/db/database.rs` and/or narrow DB helpers only if required for real transaction rollback.
+  - `src-tauri/build.rs`, `src-tauri/capabilities/default.json`, and related generated/config capability files only if needed for reviewed command exposure.
+  - `src-tauri/Cargo.toml` / `Cargo.lock` only if a production dependency is truly needed.
+- Explicitly out of scope:
+  - Test edits, docs, Plugin API, Plugin Host, UI/runtime provider, app bootstrap React code, filesystem import/export, shortcuts, notifications, business plugins, SQL plugin dependencies, and broad Tauri permissions.
