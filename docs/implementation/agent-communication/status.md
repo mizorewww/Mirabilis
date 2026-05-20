@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:57 CST.
+Last updated: 2026-05-20 20:06 CST.
 
 ## Current Task
 
@@ -8,19 +8,23 @@ Last updated: 2026-05-20 19:57 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 review round 1 active.
+- Current phase: TASK-010 review round 1 completed; review-fix tests next.
 
 ## Active Agents
 
-- Mendel (`pr_explorer`, `019e4699-91c6-73f3-877d-3ee19ddd2d49`): map TASK-010 diff, changed surfaces, and review focus.
-- Hubble (`reviewer`, `019e4699-91c6-73f3-877d-3f0965129602`): correctness and public API review.
-- Hypatia (`security_reviewer`, `019e4699-91c6-73f3-877d-3f41ae9c20d0`): plugin boundary and permission review.
-- Dirac the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-3f7e98ffecd4`): TypeScript/Vitest/API/deprecation review.
-- Maxwell the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-3fc89ddaadcf`): acceptance-test quality review.
-- Gauss the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-400fee5a0a1e`): local-doc and current official-doc review.
+- None. Next step is a `test_writer` review-fix handoff for TASK-010.
 
 ## Recent Agent Outcomes
 
+- TASK-010 review round 1 completed and all review agents were closed.
+- Mendel (`pr_explorer`) mapped the diff to `src/core/plugin-api/`, `src/core/index.ts`, `src/test/plugin-api-contracts.test.ts`, and agent communication docs, and flagged stale live status plus broad schema/permission risks.
+- Hubble (`reviewer`) found one P1 public-contract gap around missing plugin-facing context facades for contribution categories and P2 issues for non-inert `unknown` schema fields plus free-string metadata field value types.
+- Hypatia (`security_reviewer`) found two P1 boundary issues: plugin view/slot facades return raw executable `ViewDefinition`/`SlotContribution` objects, and manifest contribution schema/filter fields allow executable or host values instead of inert data.
+- Dirac the 2nd (`deprecation_auditor`) found one P1 API hazard: plugin registration contracts are derived with `Omit` from runtime registry types, so future runtime-only fields can silently leak into the public Plugin API. Dirac also found P2 inert-schema and helper-export test gaps.
+- Maxwell the 2nd (`test_quality_reviewer`) found one P1 test gap: facade tests do not prove caller-supplied `pluginId` is impossible. Maxwell also found P2 gaps for helper export coverage and executable schema-field coverage.
+- Gauss the 2nd (`docs_researcher`) found no P0/P1 issues and P2 documentation drift in product/architecture docs plus stale live orchestration text.
+- Lorentz the 2nd (`doc_writer`) found required docs updates for canonical `slots`, current contribution buckets, current lifecycle, `src/core/plugin-api` transitional location, richer manifest/dependency/permission sketches, and narrowed plugin-facing `PluginContext`.
+- Parent selected review-fix plan: first add failing type tests for independent plugin-facing registration contracts, no caller-supplied `pluginId`, inert JSON-compatible manifest schema/filter values, `MetadataValueType` metadata field values, and helper exports; then delegate production type fixes and docs cleanup.
 - TASK-010 review round 1 agents spawned. `doc_writer` could not spawn because the agent thread limit was reached; parent will retry a documentation-specific check after a review slot frees if needed.
 - Anscombe (`implementer`) was stopped after a status request and a second wait window because it produced no final message, but it left a focused production patch in `src/core/plugin-api/` and `src/core/index.ts`.
 - Parent validated and adopted Anscombe's production patch after focused checks passed and no forbidden Core business/native/Host runtime surface was found in `src/core/plugin-api/`.
@@ -395,11 +399,12 @@ Last updated: 2026-05-20 19:57 CST.
 
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
-- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
-- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests and Anscombe is implementing the type-only contracts.
+- `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes, review findings, and parent decisions.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests, the implementation patch, and the first review handoff records.
 
 ## Next Actions
 
-1. Wait for Anscombe's Plugin API contract patch.
-2. Run focused tests after implementation.
-3. Commit implementation if checks pass.
+1. Delegate TASK-010 review-fix tests to `test_writer`.
+2. Confirm the focused red signal for the review-fix tests.
+3. Delegate production type-contract fixes to `implementer`.
+4. Patch required docs drift after type fixes are green.

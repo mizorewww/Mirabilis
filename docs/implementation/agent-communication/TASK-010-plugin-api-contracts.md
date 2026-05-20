@@ -42,15 +42,9 @@
 
 ## Current Status
 
-- Status: review round 1 active.
-- Active agents:
-  - Mendel (`pr_explorer`, `019e4699-91c6-73f3-877d-3ee19ddd2d49`): map TASK-010 diff, changed surfaces, and review focus.
-  - Hubble (`reviewer`, `019e4699-91c6-73f3-877d-3f0965129602`): correctness and public API review.
-  - Hypatia (`security_reviewer`, `019e4699-91c6-73f3-877d-3f41ae9c20d0`): plugin boundary and permission review.
-  - Dirac the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-3f7e98ffecd4`): TypeScript/Vitest/API/deprecation review.
-  - Maxwell the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-3fc89ddaadcf`): acceptance-test quality review.
-  - Gauss the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-400fee5a0a1e`): local-doc and current official-doc review.
-- Next agent step: wait for review outputs, then fix any P0/P1 findings before final gate.
+- Status: review round 1 completed; review-fix tests next.
+- Active agents: none.
+- Next agent step: spawn a `test_writer` for review-fix type tests.
 
 ## Agent Handoffs
 
@@ -160,7 +154,7 @@
 
 ### Review Round 1
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Mendel (`pr_explorer`, `019e4699-91c6-73f3-877d-3ee19ddd2d49`).
   - Hubble (`reviewer`, `019e4699-91c6-73f3-877d-3f0965129602`).
@@ -168,11 +162,29 @@
   - Dirac the 2nd (`deprecation_auditor`, `019e4699-91ca-73f3-877d-3f7e98ffecd4`).
   - Maxwell the 2nd (`test_quality_reviewer`, `019e4699-91ca-73f3-877d-3fc89ddaadcf`).
   - Gauss the 2nd (`docs_researcher`, `019e4699-91ca-73f3-877d-400fee5a0a1e`).
+  - Lorentz the 2nd (`doc_writer`, `019e4699-91ca-73f3-877d-4110a797fc04`).
 - Assignment:
   - Review the TASK-010 diff against `master` for changed surfaces, correctness, public API design, security boundaries, deprecation/API risks, docs consistency, and test quality.
   - Stay read-only and return exact file/line findings or explicitly report no blocking issues.
 - Spawn note:
   - `doc_writer` could not spawn because the agent thread limit was reached. Parent will retry a documentation-specific check after a review slot frees if needed.
+- Findings:
+  - Mendel mapped TASK-010 changed surfaces and confirmed focused checks passed, while flagging stale live status, broad permission/schema risks, and future caller-scoping responsibilities.
+  - Hubble found one P1 around missing `PluginContext` contract surfaces for some contribution categories, plus P2 findings for non-inert `unknown` schemas and free-string `MetadataFieldContribution.valueType`.
+  - Hypatia found two P1 boundary issues: `PluginViewRegistry`/`PluginSlotRegistry` return raw executable runtime definitions, and manifest contribution schema/filter fields accept executable or host values.
+  - Dirac the 2nd found one P1 API hazard: `PluginCommandDefinition`, `PluginViewDefinition`, and `PluginSlotDefinition` are derived from runtime types with `Omit`, so future runtime-only fields can leak into plugin-facing API contracts. Dirac also found P2 schema and helper-export test gaps.
+  - Maxwell the 2nd found one P1 test gap: tests do not prove caller-supplied registry `pluginId` is impossible. Maxwell also found P2 gaps for helper exports and executable schema-field coverage.
+  - Gauss the 2nd found no P0/P1 issues and P2 documentation/traceability drift in product/architecture docs and live status.
+  - Lorentz the 2nd found required docs updates for canonical `slots`, current contribution buckets, current lifecycle, `src/core/plugin-api` transitional location, richer manifest sketches, and narrowed plugin-facing `PluginContext`.
+- Parent decisions:
+  - Treat Hypatia's raw executable view/slot facade finding, Dirac's `Omit`-coupled registration contract finding, and Maxwell's caller-supplied `pluginId` test gap as blocking.
+  - Add standalone plugin-facing registration contracts instead of deriving them from runtime `CommandDefinition`, `ViewDefinition`, or `SlotContribution`.
+  - Registration contracts may accept executable handles only as caller-owned registration input; facade `get`/`list` results must be inert plugin-facing descriptors, not runtime definitions with executable components/conditions.
+  - Use JSON-compatible types for manifest schema/filter values so functions, classes, proxies, and native handles do not satisfy manifest contribution descriptors.
+  - Use the existing `MetadataValueType` union for `MetadataFieldContribution.valueType`.
+  - Add type tests for helper exports, no caller-supplied `pluginId`, no executable manifest descriptor values, and plugin-facing registry descriptor shapes.
+  - Keep `settings`, `storage`, `query`, and `eventBus` out of TASK-010 production contracts unless review-fix tests prove they are necessary; record them as future Plugin Host/API surfaces because pre-test parent decisions had deferred them.
+  - Patch product and architecture docs after type fixes are green so docs identify `src/core/plugin-api` as the current transitional contract source and `packages/plugin-api` as a future split.
 
 ## Parent Decisions
 
@@ -183,4 +195,4 @@
 
 ## Next Action
 
-Spawn TASK-010 review agents, then fix any P0/P1 findings before final gate and merge.
+Spawn a review-fix `test_writer`, confirm the focused red signal, then delegate the production type-contract fixes to an `implementer`.
