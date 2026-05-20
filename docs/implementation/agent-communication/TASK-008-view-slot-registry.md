@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: explicit unknown public type fix green; final verification pending.
+- Status: final TASK-008 verification complete; progress update and merge pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -373,6 +373,21 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Final Explicit Unknown Re-review and Gate
+
+- Status: completed and closed.
+- Agents:
+  - Gibbs (`reviewer`, `019e43e7-7883-79a3-afc1-9eba3e0e89e2`): final narrow correctness re-review for explicit-unknown public type fix.
+  - Huygens (`test_quality_reviewer`, `019e43e7-7c4e-76f2-b736-3fb43ff98896`): final narrow test-quality review for explicit-unknown type tests.
+  - Nash (`docs_researcher`, `019e43e7-8b57-7f40-842f-c86ece0c8b33`): final narrow docs/status re-review.
+- Findings:
+  - Gibbs found no P0/P1/P2/P3 issues and confirmed Rawls's explicit-unknown P2 findings are closed.
+  - Huygens found no P0/P1/P2/P3 issues and confirmed the explicit-unknown tests cover arbitrary-object and non-function rejection without weakening earlier coverage.
+  - Nash found one P3 stale task-communication/status issue; parent accepted it and updated this file plus `status.md`.
+- Checks:
+  - `bun run check:quick` passed.
+  - `bun run build` passed.
+
 ## Next Action
 
-Commit this explicit-unknown green summary, run final targeted local verification, then run the TASK-008 final gate if no P0/P1/P2 findings remain.
+Commit this final verification summary, mark TASK-008 complete in `docs/implementation/progress.md`, then merge the task branch to `master`.
