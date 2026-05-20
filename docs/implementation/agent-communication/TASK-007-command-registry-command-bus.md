@@ -225,9 +225,14 @@ Wait for Newton's review-fix implementation.
 
 ## Current Status
 
-- Status: targeted re-review clear; final gate pending.
+- Status: final gate passed; merge pending.
 - Active agents: none.
 
 ## Next Action
 
-Run the final TASK-007 local gate.
+Commit progress completion and merge TASK-007 to `master`.
+
+## Final Gate
+
+- `bun run check:quick` passed.
+- `bun run build` passed.
