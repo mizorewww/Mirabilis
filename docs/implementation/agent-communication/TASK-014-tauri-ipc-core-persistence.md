@@ -45,10 +45,9 @@
 
 ## Current Status
 
-- Status: review-fix test agent running.
-- Active agents:
-  - Zeno the 2nd (`test_writer`, id `019e4755-71fe-7142-9235-7b55e3b80f44`).
-- Next parent step: wait for Zeno the 2nd, then run focused red checks.
+- Status: review-fix implementation handoff.
+- Active agents: none.
+- Next parent step: spawn an `implementer` for the review-fix production patch, then run focused checks until green.
 
 ## Agent Handoffs
 
@@ -175,10 +174,22 @@
 
 ### Review-Fix Test Round
 
-- Status: running.
+- Status: complete.
 - Agent:
   - Zeno the 2nd (`test_writer`, id `019e4755-71fe-7142-9235-7b55e3b80f44`).
 - Assignment:
   - Write failing tests only.
   - Do not edit production implementation.
   - Cover metadata logical-key get/delete, real capability permission/commands.allow parsing, missing-target mutation errors and rollback, representative semantic validation across operations, and frontend transaction array typing.
+- Outcome:
+  - Changed files: `src-tauri/tests/ipc_persistence.rs`, `src-tauri/tests/ipc_boundary.rs`, and `src/test/native-bridge.test.ts`.
+  - Added tests requiring metadata `get` / `delete` payloads to use `{ pageId, namespace, key }`, rejecting row-id-only metadata payloads.
+  - Added missing-target page update/archive, metadata delete, and filter delete error expectations, including transaction rollback when a later missing-target mutation fails.
+  - Added semantic validation coverage for blank identifiers, metadata `valueType` mismatches, malformed filter query/sort/group shapes, and a compact invalid-payload table across all 15 operations.
+  - Strengthened capability tests to parse capability `permissions` and generated TOML `commands.allow` mappings instead of matching command names in description text.
+  - Updated the frontend type contract so `db.transaction<Response>()` must return `Promise<Response[]>`.
+  - Expected red checks:
+    - `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence --test ipc_boundary` passes `ipc_boundary` and fails 7 `ipc_persistence` tests for logical-key metadata, missing-target mutation errors/rollback, metadata value-type validation, blank semantic validation, and malformed filter validation.
+    - `bun run typecheck` fails because `NativeBridge.db.transaction` still types as a single `Promise<Response>`.
+  - Green checks: `bun run test:frontend -- src/test/native-bridge.test.ts`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
+  - Commit: `6662a4c Zeno the 2nd(test)(Expose Tauri IPC commands for core persistence): add review-fix acceptance tests`.
