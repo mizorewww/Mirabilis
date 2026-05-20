@@ -9,6 +9,27 @@ type NativeBridgeCommandKey =
 
 type NativeBridgeCommands = Readonly<Record<NativeBridgeCommandKey, string>>;
 
+type DbPersistenceOperationKey =
+  | "pagesCreate"
+  | "pagesGet"
+  | "pagesList"
+  | "pagesUpdate"
+  | "pagesArchive"
+  | "metadataSet"
+  | "metadataGet"
+  | "metadataListForPage"
+  | "metadataDelete"
+  | "eventsAppend"
+  | "eventsList"
+  | "filtersSave"
+  | "filtersGet"
+  | "filtersList"
+  | "filtersDelete";
+
+type DbPersistenceOperations = Readonly<
+  Record<DbPersistenceOperationKey, string>
+>;
+
 export const NATIVE_BRIDGE_COMMANDS = Object.freeze({
   dbExecute: "db_execute",
   dbTransaction: "db_transaction",
@@ -21,6 +42,27 @@ export const NATIVE_BRIDGE_COMMANDS = Object.freeze({
 
 export type NativeBridgeCommand =
   (typeof NATIVE_BRIDGE_COMMANDS)[keyof typeof NATIVE_BRIDGE_COMMANDS];
+
+export const DB_PERSISTENCE_OPERATIONS = Object.freeze({
+  pagesCreate: "core.pages.create",
+  pagesGet: "core.pages.get",
+  pagesList: "core.pages.list",
+  pagesUpdate: "core.pages.update",
+  pagesArchive: "core.pages.archive",
+  metadataSet: "core.metadata.set",
+  metadataGet: "core.metadata.get",
+  metadataListForPage: "core.metadata.listForPage",
+  metadataDelete: "core.metadata.delete",
+  eventsAppend: "core.events.append",
+  eventsList: "core.events.list",
+  filtersSave: "core.filters.save",
+  filtersGet: "core.filters.get",
+  filtersList: "core.filters.list",
+  filtersDelete: "core.filters.delete",
+} as const satisfies DbPersistenceOperations);
+
+export type DbPersistenceOperation =
+  (typeof DB_PERSISTENCE_OPERATIONS)[keyof typeof DB_PERSISTENCE_OPERATIONS];
 
 export type NativeBridgeErrorCode =
   | "NATIVE_COMMAND_FAILED"
@@ -51,7 +93,7 @@ export type DbValue =
   | { readonly [key: string]: DbValue };
 
 export type DbQuery = {
-  operation: string;
+  operation: DbPersistenceOperation;
   payload?: DbValue;
 };
 

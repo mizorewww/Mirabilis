@@ -25,4 +25,25 @@ impl Database {
     pub(crate) fn connection(&self) -> &Connection {
         &self.connection
     }
+
+    pub(crate) fn transaction<T>(
+        &self,
+        operation: impl FnOnce(&Self) -> DbResult<T>,
+    ) -> DbResult<T> {
+        self.connection.execute_batch("BEGIN IMMEDIATE")?;
+
+        match operation(self) {
+            Ok(value) => {
+                if let Err(source) = self.connection.execute_batch("COMMIT") {
+                    let _ = self.connection.execute_batch("ROLLBACK");
+                    return Err(source.into());
+                }
+                Ok(value)
+            }
+            Err(error) => {
+                let _ = self.connection.execute_batch("ROLLBACK");
+                Err(error)
+            }
+        }
+    }
 }
