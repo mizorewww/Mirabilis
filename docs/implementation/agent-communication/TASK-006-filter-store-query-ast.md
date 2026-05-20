@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: targeted test-quality re-review active.
-- Active agents:
-  - Kuhn (`test_quality_reviewer`, `019e4341-666f-7d80-83a3-49306728a518`): verify Euclid's node-count P2 is closed.
+- Status: reviews clear; final gate pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -52,10 +51,14 @@
   - Cicero the 2nd (`docs_researcher`) checked local docs plus current TypeScript, Vitest, structured clone, and JSON serialization guidance.
   - James the 2nd (`deprecation_auditor`) audited recursive validation, clone, runtime input, and public `FilterOperator` risks.
 - External docs cited:
-  - TypeScript recursive aliases and TS config options.
-  - Vitest `expectTypeOf` and typecheck guidance.
-  - WHATWG structured clone and TC39 `JSON.stringify`.
-  - Vitest globals/migration, Vite migration, TypeScript 5.8 notes, and MDN `structuredClone`.
+  - TypeScript recursive type aliases: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7#more-recursive-type-aliases
+  - TypeScript `satisfies` operator: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html
+  - Vitest `expectTypeOf`: https://vitest.dev/api/expect-typeof
+  - Vitest type testing: https://vitest.dev/guide/testing-types.html
+  - Vitest `test.each`/`it.each`: https://vitest.dev/api/#test-each
+  - WHATWG structured clone algorithm: https://html.spec.whatwg.org/multipage/structured-data.html#structured-cloning
+  - TC39 `JSON.stringify`: https://tc39.es/ecma262/multipage/structured-data.html#sec-json.stringify
+  - Node.js `structuredClone`: https://nodejs.org/docs/latest/api/globals.html#structuredclonevalue-options
 
 ## Parent Decisions
 
@@ -226,13 +229,21 @@
 
 ### Targeted Node-count Re-review
 
-- Status: active.
+- Status: completed and closed.
 - Agent:
   - Kuhn (`test_quality_reviewer`, `019e4341-666f-7d80-83a3-49306728a518`): verify Godel's node-count coverage closes Euclid's P2.
+- Outcome:
+  - No remaining P0/P1/P2/P3 test-quality issues.
+  - Euclid's node-count P2 is closed by the focused wide/shallow payload coverage.
+  - The test asserts typed `FILTER_QUERY_INVALID` errors and verifies rejected `save` and `update` attempts leave stored filters unchanged.
+  - No skipped or focused tests were found in `src/test/core-filter-store.test.ts`.
 - Parent repeated focused green checks after Godel:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing.
+- Checks run by Kuhn:
   - `bun run typecheck`.
   - `bun run test:frontend -- src/test/core-filter-store.test.ts` with 50 tests passing.
 
 ## Next Action
 
-Wait for Kuhn's targeted test-quality re-review.
+Run the final TASK-006 local gate.
