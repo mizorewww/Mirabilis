@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 19:25 CST.
+Last updated: 2026-05-20 19:39 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 19:25 CST.
 - Branch: `feat/task-010-plugin-api-contracts`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-010 failing-test writing active.
+- Current phase: TASK-010 failing tests committed; implementation pending.
 
 ## Active Agents
 
-- Dewey (`test_writer`, `019e4699-91c6-73f3-877d-3d3e0272fd65`): add failing Plugin API contract tests.
+- None.
 
 ## Recent Agent Outcomes
 
+- Dewey (`test_writer`) completed and was closed after creating `src/test/plugin-api-contracts.test.ts`.
+- Harvey (`test_writer`) completed and was closed after refining Dewey's test file to reduce noisy diagnostics while preserving contract coverage.
+- Dewey's test commit: `b083d6c Dewey(test)(Define Plugin API contracts): add plugin API contract tests`.
+- Parent confirmed expected red signal: `bun run typecheck` fails because `../core/plugin-api` does not exist and `../core` lacks Plugin API contract exports; focused Vitest fails because Vite cannot resolve `../core/plugin-api`; `git diff --check` passes.
 - Dewey (`test_writer`) spawned for TASK-010 failing Plugin API contract tests, with ownership of `src/test/plugin-api-contracts.test.ts`.
 - TASK-010 pre-test guidance completed and all agents were closed.
 - Kepler (`planner`) recommended a pure TypeScript contract task with `src/core/plugin-api/` files and public type-only exports from `../core/plugin-api` and `../core`.
@@ -379,10 +383,10 @@ Last updated: 2026-05-20 19:25 CST.
 - `docs/implementation/progress.md` marks TASK-010 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-010.
 - `docs/implementation/agent-communication/TASK-010-plugin-api-contracts.md` holds TASK-010 agent notes and parent decisions.
-- TASK-009 is complete and merged. TASK-010 failing-test writing is active.
+- TASK-009 is complete and merged. TASK-010 has committed red-signal Plugin API contract tests and implementation is pending.
 
 ## Next Actions
 
-1. Wait for Dewey's Plugin API contract tests.
-2. Confirm and commit the red signal.
-3. Spawn `implementer` for Plugin API contracts.
+1. Spawn `implementer` for Plugin API contracts.
+2. Run focused tests after implementation.
+3. Commit implementation if checks pass.

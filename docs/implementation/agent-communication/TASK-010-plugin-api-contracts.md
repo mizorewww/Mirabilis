@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: failing-test writing active.
-- Active agents:
-  - Dewey (`test_writer`, `019e4699-91c6-73f3-877d-3d3e0272fd65`): add failing Plugin API contract tests.
-- Next agent step: wait for Dewey's red-signal tests.
+- Status: failing tests committed; implementation pending.
+- Active agents: none.
+- Next agent step: spawn an `implementer` for Plugin API contracts.
 
 ## Agent Handoffs
 
@@ -92,7 +91,7 @@
 
 ### Dewey (`test_writer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4699-91c6-73f3-877d-3d3e0272fd65`.
 - Ownership:
   - `src/test/plugin-api-contracts.test.ts`.
@@ -101,6 +100,17 @@
   - Cover `PluginManifest`, dependencies, app-domain permissions, all required `PluginContributions` buckets, inert manifest descriptors, `AppPlugin` lifecycle types, and `PluginContext` plugin-facing facade boundaries.
   - Use `expectTypeOf`, `satisfies`, and `@ts-expect-error` negative tests.
   - Do not edit production code, docs, config, package files, lockfiles, or existing tests.
+- Outcome:
+  - Dewey created `src/test/plugin-api-contracts.test.ts`.
+  - Harvey (`test_writer`, `019e4699-91c6-73f3-877d-3da69e61bb46`) then refined the same test file to reduce noisy diagnostics while preserving the same contract coverage.
+- Commit:
+  - `b083d6c Dewey(test)(Define Plugin API contracts): add plugin API contract tests`.
+- Red checks:
+  - `bun run typecheck` fails as expected because `../core/plugin-api` does not exist and `../core` does not export Plugin API contract types.
+  - `bun run test:frontend -- src/test/plugin-api-contracts.test.ts` fails as expected because Vite cannot resolve `../core/plugin-api`.
+  - `git diff --check` passed.
+- Parent decision:
+  - Red signal is accepted. Implementation should add type-only Plugin API contracts, the `../core/plugin-api` subpath, and `../core` re-exports without adding Plugin Host runtime behavior.
 
 ## Parent Decisions
 
@@ -111,4 +121,4 @@
 
 ## Next Action
 
-Wait for Dewey's Plugin API contract tests, confirm the red signal, then spawn an `implementer`.
+Spawn an `implementer` for Plugin API contracts.
