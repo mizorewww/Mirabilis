@@ -290,6 +290,52 @@ describe("in-memory Transaction Manager", () => {
     });
   });
 
+  it.each(["ArrayBuffer", "DataView"] as const)(
+    "rejects commit when a live page body %s changes while timestamps stay stable",
+    async (kind) => {
+      const stableInstant = "2026-05-20T02:46:00.000Z";
+      const runtime = createRuntime({
+        ids: [`page_binary_${kind.toLowerCase()}`],
+        instants: [stableInstant, stableInstant, stableInstant],
+      });
+      const staged = createDeferred<void>();
+      const commit = createDeferred<void>();
+      const initialPage = runtime.pages.create({
+        title: `${kind} body`,
+        body: documentWithBinaryValue(kind, "initial"),
+      });
+
+      const running = runtime.transaction.run(async (tx: CoreTransaction) => {
+        tx.pages.update(initialPage.id, {
+          body: documentWithBinaryValue(kind, "tx"),
+        });
+        staged.resolve();
+
+        await commit.promise;
+
+        return "should not commit";
+      });
+
+      await staged.promise;
+
+      const livePage = runtime.pages.update(initialPage.id, {
+        body: documentWithBinaryValue(kind, "live"),
+      });
+
+      expect(livePage.updatedAt).toBe(initialPage.updatedAt);
+
+      commit.resolve();
+
+      await expect(running).rejects.toThrow(
+        "Core transaction conflict: live page store changed before commit",
+      );
+      expect(binaryValueBytes(runtime.pages.get(initialPage.id), kind))
+        .toStrictEqual(binaryValueBytes(livePage, kind));
+      expect(binaryValueBytes(runtime.pages.get(initialPage.id), kind))
+        .toStrictEqual(binaryBytes("live"));
+    },
+  );
+
   it("rejects commit when metadata changes during a pending transaction and preserves the live write", async () => {
     const runtime = createRuntime({
       ids: ["metadata_conflict"],
@@ -834,6 +880,69 @@ function documentWithNonPlainValues(label: string): StructuredMarkdownDocument {
       },
     ],
   };
+}
+
+type BinaryStructuredCloneKind = "ArrayBuffer" | "DataView";
+type BinaryStructuredCloneLabel = "initial" | "tx" | "live";
+
+function documentWithBinaryValue(
+  kind: BinaryStructuredCloneKind,
+  label: BinaryStructuredCloneLabel,
+): StructuredMarkdownDocument {
+  return {
+    type: "doc",
+    content: [
+      {
+        blockId: `block_binary_${kind}`,
+        type: "paragraph",
+        text: "stable visible text",
+        attrs: {
+          binary: binaryValue(kind, label),
+        },
+      },
+    ],
+  };
+}
+
+function binaryValue(
+  kind: BinaryStructuredCloneKind,
+  label: BinaryStructuredCloneLabel,
+): ArrayBuffer | DataView {
+  const buffer = new ArrayBuffer(4);
+  new Uint8Array(buffer).set(binaryBytes(label));
+
+  return kind === "ArrayBuffer" ? buffer : new DataView(buffer);
+}
+
+function binaryBytes(label: BinaryStructuredCloneLabel): number[] {
+  if (label === "initial") {
+    return [1, 2, 3, 4];
+  }
+
+  if (label === "tx") {
+    return [5, 6, 7, 8];
+  }
+
+  return [9, 10, 11, 12];
+}
+
+function binaryValueBytes(
+  page: MarkdownPage,
+  kind: BinaryStructuredCloneKind,
+): number[] {
+  const value = page.body.content[0]!.attrs?.binary;
+
+  if (kind === "ArrayBuffer") {
+    expect(value).toBeInstanceOf(ArrayBuffer);
+
+    return [...new Uint8Array(value as ArrayBuffer)];
+  }
+
+  expect(value).toBeInstanceOf(DataView);
+
+  const view = value as DataView;
+
+  return [...new Uint8Array(view.buffer, view.byteOffset, view.byteLength)];
 }
 
 function nonPlainValues(page: MarkdownPage): {
