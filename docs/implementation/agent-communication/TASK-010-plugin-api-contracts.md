@@ -42,19 +42,15 @@
 
 ## Current Status
 
-- Status: pre-test guidance active.
-- Active agents:
-  - Kepler (`planner`, `019e4699-91c6-73f3-877d-3badf515c89f`): TASK-010 API/test implementation plan.
-  - Sagan (`docs_researcher`, `019e4699-91c6-73f3-877d-3bc379b980a9`): current official docs and local-doc ambiguity research.
-  - Franklin (`deprecation_auditor`, `019e4699-91c6-73f3-877d-3c00fd953abf`): TypeScript/API/deprecation risk audit.
-  - Feynman (`security_reviewer`, `019e4699-91c6-73f3-877d-3c5c1e780654`): plugin permission/context boundary guidance.
-- Next agent step: wait for pre-test guidance agents.
+- Status: pre-test guidance complete; failing-test handoff pending.
+- Active agents: none.
+- Next agent step: spawn a `test_writer` for Plugin API contract tests.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Kepler (`planner`, `019e4699-91c6-73f3-877d-3badf515c89f`).
   - Sagan (`docs_researcher`, `019e4699-91c6-73f3-877d-3bc379b980a9`).
@@ -63,6 +59,35 @@
 - Assignment:
   - Produce focused Plugin API contract, test, docs, deprecation/API, and security-boundary guidance before TDD tests.
   - Stay read-only and do not edit files.
+- Outcomes:
+  - Kepler recommended a pure TypeScript contract task with a transitional package-like `src/core/plugin-api/` subpath and type-only re-exports from `src/core`.
+  - Recommended files: `src/core/plugin-api/index.ts`, `manifest.ts`, `contributions.ts`, `context.ts`, and `plugin.ts`.
+  - Recommended tests: `src/test/plugin-api-contracts.test.ts` covering public exports from `../core/plugin-api` and `../core`, manifest shape, contribution buckets, inert contribution descriptors, lifecycle hook types, and plugin-facing context facades.
+  - Sagan verified current TypeScript and Vitest docs for type-only imports/exports, `satisfies`, and `expectTypeOf`; Sagan also identified local doc ambiguities around `main`, `slots` vs `viewSlots`, product lifecycle breadth, and future `packages/plugin-api`.
+  - Franklin identified P1 API risks: do not conflate manifest contributions with runtime registrations, do not model Tauri native permission grants as manifest permissions, do not expose `CoreRuntime`/raw aggregates/concrete factories from `PluginContext`, resolve `slots` vs `viewSlots`, and do not reuse the runtime `SlotContribution` name for manifest descriptors.
+  - Feynman identified security boundary guidance: manifest contributions must stay data-only, plugin context must use caller-scoped facades rather than raw global mutation surfaces, transaction context should not expose raw `CoreTransaction`, and settings/storage placeholders must be plugin-scoped.
+- Parent decisions:
+  - Use `src/core/plugin-api/` as the TASK-010 subpath; do not create a real `packages/plugin-api` workspace package yet.
+  - Export Plugin API contracts from both `src/core/plugin-api` and `src/core`.
+  - Canonical contribution key is `slots`; do not add a `viewSlots` alias in TASK-010.
+  - Include optional `main?: string` on `PluginManifest` for product-manifest compatibility, but do not implement loading or path resolution.
+  - Keep `AppPlugin` lifecycle hooks to architecture's narrow set: `install`, `activate`, `register`, `deactivate`, and `uninstall`. Treat `migrate`, `index`, and `render` as future lifecycle concepts outside TASK-010.
+  - Manifest contributions are inert data descriptors. `CommandContribution` must not include `handler`; `ViewContribution` must not include `component`; `PluginSlotContribution` must not include `component` or function `when`.
+  - Use a distinct manifest slot descriptor name such as `PluginSlotContribution`, not the existing runtime `SlotContribution`.
+  - Model permissions as declarative Mirabilis app-domain permission objects, not raw strings, wildcards, file paths, URLs, raw Tauri capability names, or native grants.
+  - `PluginContext` must not be an alias for `CoreRuntime`, `CoreServices`, or raw aggregate groups. It should expose plugin-facing facades that omit global `unregister`, raw `stores`/`registries`/`services`, raw Tauri/native handles, raw `invoke`, raw SQLite, and filesystem access.
+  - Plugin data facades should avoid requiring plugins to pass arbitrary `sourcePluginId`; source ownership is a Plugin Host concern for later tasks.
+  - Runtime manifest validation is deferred unless implementation agents find a type-only impossibility.
+- External docs verified:
+  - TypeScript type-only imports/exports: https://www.typescriptlang.org/docs/handbook/modules/reference#type-only-imports-and-exports
+  - TypeScript 3.8 type-only imports/exports: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export
+  - TypeScript 4.9 `satisfies`: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html
+  - Vitest type testing: https://vitest.dev/guide/testing-types.html
+  - Vitest `expectTypeOf`: https://vitest.dev/api/expect-typeof.html
+  - Obsidian manifest docs, inspiration only: https://docs.obsidian.md/Reference/Manifest
+  - Tauri capabilities: https://v2.tauri.app/security/capabilities/
+  - Tauri runtime authority: https://v2.tauri.app/security/runtime-authority/
+  - React 19 upgrade guide: https://react.dev/blog/2024/04/25/react-19-upgrade-guide
 
 ## Parent Decisions
 
@@ -73,4 +98,4 @@
 
 ## Next Action
 
-Wait for pre-test guidance agents, record outcomes, then spawn a `test_writer`.
+Spawn a `test_writer` for failing Plugin API contract tests.
