@@ -36,7 +36,7 @@ Each small task should go through:
 ```text
 select next unblocked task from progress.md
 mark task [~]
-create feature branch or worktree
+create feature branch
 docs/deprecation research
 test_writer writes failing tests
 commit test red state
@@ -93,12 +93,13 @@ Report only important results: task, branch, commits, checks, progress update, b
 
 Use Codex App Automations for multi-day unattended work. Prefer:
 
-- Execution environment: worktree.
+- Execution environment: local repository checkout on the focused branch.
 - Cadence: hourly or every few hours.
 - Prompt: the automation prompt above.
 - Model: repo default `gpt-5.5`, `xhigh`, Fast mode from `.codex/config.toml`.
+- Worktrees: use only if the user explicitly asks for worktree isolation, and prune them after merge.
 
-Worktree automations are safer for long runs because each run stays isolated from your local working tree.
+When worktree isolation is explicitly requested, keep it temporary and prune it after the task is merged.
 
 ## Stop Conditions
 

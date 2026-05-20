@@ -121,12 +121,12 @@ Agent outputs must not live only in chat. Persist the parts needed for orchestra
 
 `master` is the integration branch for this repository. Treat any prompt that says `main` as `master`.
 
+Use one focused Git branch per task in the repository checkout by default. Do not create sibling `../mirabilis-task-*` worktree directories unless the user explicitly asks for worktree isolation. If a worktree is explicitly used, remove/prune it after merge so Git remains the only durable version-management surface.
+
 ```bash
 git switch master
 git pull
-git worktree add ../mirabilis-task-014 -b feat/task-014-project-creation
-cd ../mirabilis-task-014
-codex
+git switch -c feat/task-014-project-creation
 ```
 
 Branch naming:
@@ -162,7 +162,7 @@ Use `MIRABILIS_AUTO_PUSH_REMOTE=<remote>` to push somewhere other than `origin`.
 
 ## Autonomous Mode
 
-For multi-day development, prefer Codex App Automations with a project worktree. Each run should be durable and restartable:
+For multi-day development, prefer Codex App Automations on a focused project branch. Each run should be durable and restartable:
 
 - Read `AGENTS.md`.
 - Activate `$mirabilis-dev-runner`.
@@ -173,7 +173,7 @@ For multi-day development, prefer Codex App Automations with a project worktree.
 - Mark it `[x]` only after merge to `master`.
 - If blocked, mark `[!]` with a Run Log entry and continue only when the blocker is isolated.
 
-Use a recurring automation rather than one enormous continuous turn. Codex App automations can run in the background, and Git repositories can use worktrees so automation changes stay separate from local edits.
+Use a recurring automation rather than one enormous continuous turn. Use worktree automation only when the user explicitly asks for that isolation; prune it after merge.
 
 ## Task Planning Prompt
 

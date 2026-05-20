@@ -1,21 +1,23 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 00:07 CST.
+Last updated: 2026-05-20 09:51 CST.
 
 ## Current Task
 
 - Task: TASK-006 - Add Filter Store and Query AST baseline.
 - Branch: `feat/task-006-filter-store-query-ast`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-006`.
+- Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing tests active.
+- Current phase: workflow cleanup complete; replacement test handoff pending.
 
 ## Active Agents
 
-- Pauli the 2nd (`test_writer`, `019e40fe-1b68-78d2-92de-17083eb62579`): writing TASK-006 Filter Store acceptance tests.
+- None.
 
 ## Recent Agent Outcomes
 
+- Workflow correction: stale sibling task worktree records were pruned, the main repository checkout was switched to `feat/task-006-filter-store-query-ast`, and docs now require branch-only task work by default unless the user explicitly asks for worktree isolation.
+- Pauli the 2nd (`test_writer`) was assigned to the stale `/home/aac6fef/Developer/mirabilis-task-006` path and could not be reached for interruption after the worktree was gone; parent will replace it and record the replacement reason.
 - Pauli the 2nd (`test_writer`) was spawned for TASK-006 failing Filter Store acceptance tests.
 - TASK-006 pre-test guidance completed. Lovelace the 2nd planned store API/tests, Cicero the 2nd researched TypeScript/Vitest/structured clone guidance, and James the 2nd audited recursive validation and runtime input risks.
 - Pre-test guidance agents spawned for TASK-006.
@@ -146,6 +148,6 @@ Last updated: 2026-05-20 00:07 CST.
 
 ## Next Actions
 
-1. Wait for Pauli the 2nd's test-writing result.
-2. Confirm expected red signal.
-3. Commit tests with Pauli the 2nd as authoring agent in the commit message.
+1. Commit workflow cleanup and Pauli replacement record.
+2. Spawn replacement test writer in `/home/aac6fef/Developer/Mirabilis`.
+3. Confirm expected red signal.

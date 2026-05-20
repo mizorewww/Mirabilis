@@ -5,7 +5,7 @@
 - Task ID: TASK-006.
 - Task name: Add Filter Store and Query AST baseline.
 - Branch: `feat/task-006-filter-store-query-ast`.
-- Worktree: `/home/aac6fef/Developer/mirabilis-task-006`.
+- Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
 
 ## Source Docs
@@ -82,16 +82,22 @@
 
 ### Pauli the 2nd (`test_writer`)
 
-- Status: active.
+- Status: replaced before output.
 - Agent id: `019e40fe-1b68-78d2-92de-17083eb62579`.
 - Ownership:
   - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
 - Assignment:
   - Write failing TASK-006 acceptance tests for public exports, CRUD, update semantics, list filters, Query AST validation, typed errors, and defensive clone boundaries.
   - Do not edit production code.
-- Expected signal:
-  - `bun run typecheck` and/or `bun run test:frontend -- src/test/core-filter-store.test.ts` should fail because Filter Store production exports are not implemented yet.
+- Replacement reason:
+  - Pauli the 2nd was assigned to the stale `/home/aac6fef/Developer/mirabilis-task-006` worktree path. The stale worktree records were pruned and the branch moved back into the main repository checkout at `/home/aac6fef/Developer/Mirabilis`; the agent id was no longer reachable for interruption.
+
+## Workflow Correction
+
+- Default task development now uses one focused Git branch in the main repository checkout.
+- Do not create sibling `../mirabilis-task-*` worktree directories unless the user explicitly asks for worktree isolation.
+- If a worktree is explicitly used, prune/remove it after merge so Git branches and commits remain the only durable version-management surface.
 
 ## Next Action
 
-Wait for Pauli the 2nd's red tests, then commit them.
+Spawn a replacement test writer in `/home/aac6fef/Developer/Mirabilis`, then commit red tests.
