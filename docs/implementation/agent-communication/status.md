@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:54 CST.
+Last updated: 2026-05-20 19:06 CST.
 
 ## Current Task
 
@@ -8,14 +8,20 @@ Last updated: 2026-05-20 18:54 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 binary structured-clone P1 implementation active.
+- Current phase: TASK-009 binary structured-clone P1 green; final narrow re-review pending.
 
 ## Active Agents
 
-- Galileo (`implementer`, `019e4699-91c6-73f3-877d-39b5519d7b34`): fix ArrayBuffer/DataView snapshot comparison.
+- None.
 
 ## Recent Agent Outcomes
 
+- Galileo (`implementer`) was stopped after a status request and a second wait window because it produced no final output, but it left a focused production patch in `src/core/services/transaction-manager.ts`.
+- Parent validated Galileo's patch and found one realm-sensitive ArrayBuffer test assertion failure, then delegated a test-only assertion fix to Faraday.
+- Faraday (`test_writer`) completed and was closed after replacing the realm-sensitive binary test assertions with structured-clone tag and exact-byte checks.
+- Faraday's test-fix commit: `af31b07 Faraday(test-fix)(Add Transaction Manager and Core Runtime composition): make binary conflict assertions realm-safe`.
+- Galileo's adopted production commit: `425a2b4 Galileo(review-fix)(Add Transaction Manager and Core Runtime composition): compare binary transaction snapshots`.
+- Parent repeated green checks after Faraday and Galileo: `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 21 tests passing, `git diff --check`, `bun run lint`, and a focused store/runtime regression run with 133 tests passing.
 - Galileo (`implementer`) spawned for binary structured-clone comparator fix, with ownership of `src/core/services/transaction-manager.ts`.
 - Pauli (`test_writer`) completed and was closed after adding binary structured-clone conflict regression tests.
 - Pauli's test commit: `7d6a1fd Pauli(test)(Add Transaction Manager and Core Runtime composition): cover binary transaction conflicts`.
@@ -353,10 +359,10 @@ Last updated: 2026-05-20 18:54 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has red-signal binary structured-clone conflict tests and Galileo is implementing the production fix.
+- TASK-008 is complete and merged. TASK-009 has a green binary structured-clone P1 fix and is ready for final narrow re-review.
 
 ## Next Actions
 
-1. Wait for Galileo's binary structured-clone production patch.
-2. Run focused transaction/runtime checks after the patch.
-3. Re-review or run final gate once no P0/P1 findings remain.
+1. Spawn final narrow re-review agents for the binary structured-clone comparator fix.
+2. Run final local gate if no P0/P1 findings remain.
+3. Update progress, commit completion notes, merge to `master`, and continue.

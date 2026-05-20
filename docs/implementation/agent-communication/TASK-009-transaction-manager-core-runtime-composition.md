@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: binary structured-clone P1 implementation active.
-- Active agents:
-  - Galileo (`implementer`, `019e4699-91c6-73f3-877d-39b5519d7b34`): fix ArrayBuffer/DataView snapshot comparison.
-- Next agent step: wait for Galileo's production patch and focused checks.
+- Status: binary structured-clone P1 green; final narrow re-review pending.
+- Active agents: none.
+- Next agent step: spawn final narrow re-review agents for binary snapshot comparison.
 
 ## Agent Handoffs
 
@@ -364,7 +363,7 @@
 
 ### Galileo (`implementer`)
 
-- Status: active.
+- Status: stopped after leaving a patch; patch validated and adopted by parent.
 - Agent id: `019e4699-91c6-73f3-877d-39b5519d7b34`.
 - Ownership:
   - `src/core/services/transaction-manager.ts`.
@@ -374,6 +373,32 @@
   - Consider typed-array view support through `ArrayBuffer.isView` if it remains local and deterministic.
   - Preserve existing `Date`, `Map`, `Set`, `RegExp`, Array, and plain-object behavior.
   - Do not edit tests, docs, config, package files, lockfiles, or unrelated store modules.
+- Outcome:
+  - Galileo did not produce a final response after a status request and a second wait window, so parent stopped the agent.
+  - Galileo left a focused production patch in `src/core/services/transaction-manager.ts`.
+  - Parent validated the patch, found one realm-sensitive test assertion failure, delegated that test-only correction to Faraday, then adopted Galileo's production patch.
+- Commit:
+  - `425a2b4 Galileo(review-fix)(Add Transaction Manager and Core Runtime composition): compare binary transaction snapshots`.
+- Files changed:
+  - `src/core/services/transaction-manager.ts`.
+- Checks:
+  - After Faraday's test-fix and Galileo's production patch, parent ran `bun run typecheck`, `bun run test:frontend -- src/test/core-runtime-composition.test.ts src/test/core-transaction-manager.test.ts` with 21 tests passing, `git diff --check`, `bun run lint`, and a focused store/runtime regression run with 133 tests passing.
+
+### Faraday (`test_writer`)
+
+- Status: completed and closed.
+- Agent id: `019e4699-91c6-73f3-877d-3a28def87a04`.
+- Ownership:
+  - `src/test/core-transaction-manager.test.ts`.
+- Assignment:
+  - Fix the binary structured-clone test helper to avoid realm-sensitive `instanceof ArrayBuffer` assertions while still verifying realm-safe tags and exact bytes.
+  - Do not edit Galileo's uncommitted production patch.
+- Commit:
+  - `af31b07 Faraday(test-fix)(Add Transaction Manager and Core Runtime composition): make binary conflict assertions realm-safe`.
+- Checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-transaction-manager.test.ts` passed with 17 tests while Galileo's production patch was present.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -388,4 +413,4 @@
 
 ## Next Action
 
-Wait for Galileo's production patch, then rerun focused transaction/runtime checks.
+Spawn final narrow re-review agents for the binary structured-clone comparator fix, then run the final local gate if no P0/P1 findings remain.
