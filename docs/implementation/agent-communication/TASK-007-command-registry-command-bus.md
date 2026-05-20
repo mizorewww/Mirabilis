@@ -38,9 +38,8 @@
 
 ## Current Status
 
-- Status: implementation active.
-- Active agents:
-  - Curie (`implementer`, `019e4350-fd27-73d1-aeaa-7098934023cf`): implement the minimum Command Registry and Command Bus production code.
+- Status: implementation green; review handoff pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -116,7 +115,7 @@ Wait for Curie's implementation output.
 
 ### Curie (`implementer`)
 
-- Status: active.
+- Status: completed and closed.
 - Agent id: `019e4350-fd27-73d1-aeaa-7098934023cf`.
 - Ownership:
   - `src/core/types/command.ts`.
@@ -124,8 +123,20 @@ Wait for Curie's implementation output.
   - `src/core/commands/command-registry.ts`.
   - `src/core/commands/index.ts`.
   - `src/core/index.ts`.
+- Commit:
+  - `883c1aa Curie(implementation)(Add Command Registry and Command Bus): implement command registry`.
 - Assignment:
   - Implement the minimum production Command Registry and Command Bus to pass Ohm's acceptance tests.
   - Keep handlers private and expose handler-free descriptors.
   - Preserve Core-level `execute(commandId: string, input?: unknown): Promise<unknown>`.
   - Keep TASK-007 out of business commands, UI, shortcuts integration, plugin host lifecycle, IPC, permissions, persistence, and Tauri.
+- Checks run by Curie and repeated by parent:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-command-registry.test.ts` with 10 tests passing.
+  - `bun run lint`.
+- Parent note:
+  - Curie initially committed with `Codex(implementation)` in the message. Parent amended the HEAD commit message to use the actual agent nickname and force-with-lease pushed the task branch.
+
+## Next Action
+
+Spawn review agents for TASK-007.

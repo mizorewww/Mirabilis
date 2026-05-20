@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 10:57 CST.
+Last updated: 2026-05-20 11:02 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-20 10:57 CST.
 - Branch: `feat/task-007-command-registry-command-bus`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation active.
+- Current phase: implementation green; review handoff pending.
 
 ## Active Agents
 
-- Curie (`implementer`, `019e4350-fd27-73d1-aeaa-7098934023cf`): implement the minimum Command Registry and Command Bus production code.
+- None.
 
 ## Recent Agent Outcomes
 
+- Curie (`implementer`) completed and was closed after implementing TASK-007 production code.
+- Curie's implementation commit: `883c1aa Curie(implementation)(Add Command Registry and Command Bus): implement command registry`.
+- Parent corrected Curie's commit message from `Codex(implementation)` to the actual agent nickname and force-with-lease pushed the task branch.
+- Parent repeated green checks after Curie: `bun run typecheck`, `bun run test:frontend -- src/test/core-command-registry.test.ts` with 10 tests passing, and `bun run lint`.
 - Curie (`implementer`) was spawned for TASK-007 production implementation.
 - Ohm (`test_writer`) completed and was closed after adding TASK-007 acceptance tests.
 - Ohm's test commit: `65e8727 Ohm(test)(Add Command Registry and Command Bus): add command registry acceptance tests`.
@@ -189,6 +193,6 @@ Last updated: 2026-05-20 10:57 CST.
 
 ## Next Actions
 
-1. Wait for Curie's implementation output.
-2. Repeat focused validation.
-3. If green, continue to review agents.
+1. Spawn review agents for TASK-007.
+2. Record review findings.
+3. Fix P0/P1 findings before final gate.
