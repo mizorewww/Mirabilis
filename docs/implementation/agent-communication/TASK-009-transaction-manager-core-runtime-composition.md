@@ -42,12 +42,9 @@
 
 ## Current Status
 
-- Status: P1 review-fix narrow re-review active.
-- Active agents:
-  - Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`): narrow correctness re-review for Peirce's snapshot comparison fix.
-  - McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`): narrow test-quality re-review for Chandrasekhar's coverage.
-  - Aristotle (`security_reviewer`, `019e4699-91b8-73f3-877d-3890cbfc7565`): narrow boundary/security re-review for comparator and transaction visibility.
-- Next agent step: wait for narrow targeted re-review.
+- Status: binary structured-clone P1 follow-up selected.
+- Active agents: none.
+- Next agent step: spawn a `test_writer` for ArrayBuffer/DataView conflict regression coverage.
 
 ## Agent Handoffs
 
@@ -322,7 +319,7 @@
 
 ### Narrow P1 Re-review
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`).
   - McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`).
@@ -331,6 +328,19 @@
   - Verify Peirce's `Date`, `Set`, and `RegExp` snapshot comparison fix closes Boole's P1 without regressing transaction behavior.
   - Verify Chandrasekhar's new tests meaningfully cover the P1 and Leibniz's low-cost P2 coverage requests.
   - Check for new P0/P1/P2 boundary or security issues around participant visibility, getter/proxy invocation, and pre-replace conflict safety.
+- Findings:
+  - Dalton found one P1 correctness issue: the comparator still misses structured-clone values with internal state and no enumerable keys outside the explicit `Date`, `Set`, and `RegExp` set. Dalton reproduced a lost update with a page body `ArrayBuffer`.
+  - Aristotle found the same P1 from the boundary/security angle for `ArrayBuffer` and `DataView`, because page body attrs allow `unknown` and the Page Store accepts structured-cloneable values.
+  - McClintock found no P0/P1/P2 test-quality issue in Chandrasekhar's existing coverage for `Date`, `Set`, `RegExp`, metadata/event/filter conflicts, or transaction-scoped participant non-discoverability.
+  - Dalton confirmed Peirce's explicit `Date`, `Set`, and `RegExp` fix preserves existing Map, Array, and plain-object behavior.
+- Checks:
+  - Dalton: `bun run test:frontend -- src/test/core-transaction-manager.test.ts` passed with 15 tests, `bun run typecheck` passed, and a read-only Bun probe reproduced the `ArrayBuffer` lost update.
+  - McClintock: `bun run test:frontend -- src/test/core-transaction-manager.test.ts` passed with 15 tests and `bun run typecheck` passed.
+  - Aristotle: `bun run test:frontend -- src/test/core-transaction-manager.test.ts` passed with 15 tests, `bun run typecheck` passed, and a read-only Bun probe reproduced the `ArrayBuffer` lost update.
+- Parent decisions:
+  - Treat the binary structured-clone issue as the same P1 conflict class as Boole's finding and block final gate until fixed.
+  - Add failing regression coverage for at least `ArrayBuffer` and `DataView` live-write conflicts with stable timestamps.
+  - Prefer explicit deterministic comparison for binary structured-clone values over rejecting supported page body values in TASK-009.
 
 ## Parent Decisions
 
@@ -345,4 +355,4 @@
 
 ## Next Action
 
-Wait for narrow targeted re-review, then run the final local gate if no P0/P1 findings remain.
+Spawn a `test_writer` for binary structured-clone conflict regression coverage, confirm the red signal, then spawn an `implementer`.

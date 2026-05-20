@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 18:44 CST.
+Last updated: 2026-05-20 18:46 CST.
 
 ## Current Task
 
@@ -8,16 +8,19 @@ Last updated: 2026-05-20 18:44 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 P1 review-fix narrow re-review active.
+- Current phase: TASK-009 binary structured-clone P1 follow-up selected.
 
 ## Active Agents
 
-- Dalton (`reviewer`, `019e4699-91b8-73f3-877d-3839ae2932de`): narrow correctness re-review for Peirce's snapshot comparison fix.
-- McClintock (`test_quality_reviewer`, `019e4699-91b8-73f3-877d-3858ba4eefdb`): narrow test-quality re-review for Chandrasekhar's coverage.
-- Aristotle (`security_reviewer`, `019e4699-91b8-73f3-877d-3890cbfc7565`): narrow boundary/security re-review for comparator and transaction visibility.
+- None.
 
 ## Recent Agent Outcomes
 
+- Narrow TASK-009 P1 re-review completed and all agents were closed.
+- Dalton (`reviewer`) found one remaining P1 correctness issue: `ArrayBuffer`, `DataView`, and similar structured-clone values with internal state but no enumerable keys still fall through to `objectsEqual`, allowing a pending transaction to overwrite live binary page body changes.
+- Aristotle (`security_reviewer`) found the same P1 boundary issue for `ArrayBuffer`/`DataView` and recommended blocking final gate until binary/opaque structured-clone values are rejected or compared explicitly.
+- McClintock (`test_quality_reviewer`) found no P0/P1/P2 test-quality issue in the existing `Date`, `Set`, `RegExp`, metadata/event/filter conflict, or transaction-scoped participant non-discoverability coverage.
+- Parent decision: treat the binary structured-clone issue as the same P1 conflict class as Boole's finding, add red regression coverage for at least `ArrayBuffer` and `DataView`, then delegate the production comparator fix.
 - Narrow TASK-009 P1 re-review agents spawned after Peirce's green review-fix commit.
 - Peirce (`implementer`) completed and was closed after fixing Boole's P1 non-plain snapshot comparison issue.
 - Peirce's review-fix commit: `13ad41d Peirce(review-fix)(Add Transaction Manager and Core Runtime composition): compare non-plain transaction snapshots`.
@@ -345,10 +348,10 @@ Last updated: 2026-05-20 18:44 CST.
 - `docs/implementation/progress.md` marks TASK-009 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-009.
 - `docs/implementation/agent-communication/TASK-009-transaction-manager-core-runtime-composition.md` holds TASK-009 agent notes and parent decisions.
-- TASK-008 is complete and merged. TASK-009 has a green P1 review-fix and narrow targeted re-review is active.
+- TASK-008 is complete and merged. TASK-009 needs binary structured-clone conflict tests and production fix before final gate.
 
 ## Next Actions
 
-1. Wait for narrow targeted re-review agents.
-2. Run final local gate if no P0/P1 findings remain.
-3. Update progress, commit completion notes, merge to `master`, and continue.
+1. Spawn a `test_writer` for ArrayBuffer/DataView conflict regression coverage.
+2. Confirm and commit the red-signal tests.
+3. Spawn an `implementer` for the binary structured-clone comparator fix.
