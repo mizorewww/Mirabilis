@@ -45,9 +45,9 @@
 
 ## Current Status
 
-- Status: final local gate.
+- Status: progress update before merge.
 - Active agents: none.
-- Next parent step: run final local gate for TASK-014.
+- Next parent step: update progress ledger and merge to `master`.
 
 ## Agent Handoffs
 
@@ -321,3 +321,22 @@
   - Confirmed the prior P1 docs drift is closed.
   - Verified the final docs cover the NativeBridge DB contract, conditional transaction result typing, 15-operation allowlist, metadata logical-key/valueType rules, redacted Rust IPC error DTOs, validation semantics, transaction rollback semantics, app-owned DB path, generated app-command ACLs, default capability grants, and accepted `Transaction::new_unchecked` rationale.
   - Official docs checked: Tauri commands/errors/camelCase args, Tauri capabilities and command ACLs, Tauri `commands.allow`, `tauri_build::AppManifest::commands`, `tauri::State`, and rusqlite transaction rollback / `new_unchecked`.
+
+### Final Local Gate
+
+- Status: complete with accepted P2 packaging limitation.
+- Checks passed:
+  - `bun run check:quick`.
+  - `bun run build`.
+  - `./node_modules/.bin/tauri build -b deb rpm`, producing local deb/rpm artifacts.
+- `bun run check:full` result:
+  - Passed its `check:quick` portion.
+  - Built the release binary.
+  - Produced deb/rpm artifacts.
+  - Failed only at AppImage bundling in the local Arch environment.
+- AppImage failure details:
+  - Default AppImage build failed because linuxdeploy's bundled `strip` cannot process `.relr.dyn` sections in current system libraries.
+  - `NO_STRIP=true ./node_modules/.bin/tauri build -b appimage -v` bypassed the strip failures but linuxdeploy-plugin-gtk then failed with `cp: cannot stat '/usr/lib/gdk-pixbuf-2.0/2.10.0': No such file or directory`.
+- Release gate assessment:
+  - Volta the 2nd (`release_checker`) found this P2 non-blocking for TASK-014 merge because TASK-014 does not change release packaging/version config, release packaging is explicitly out of scope, deb/rpm bundling passed, and the AppImage failure matches local linuxdeploy/current-distro tooling behavior.
+  - Do not claim `check:full` passed end-to-end. Record the AppImage limitation and leave AppImage validation for TASK-033 or a packaging follow-up using a controlled Linux build image.
