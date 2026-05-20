@@ -42,8 +42,9 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete; test writer handoff pending.
-- Active agents: none.
+- Status: failing-test handoff active.
+- Active agents:
+  - Kant (`test_writer`, `019e43f4-4602-7d40-958d-276cc6031bfc`): write failing TASK-009 runtime composition and transaction manager tests only.
 
 ## Agent Handoffs
 
@@ -97,6 +98,18 @@
   - MDN structured clone algorithm: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
   - MDN `await`: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
 
+### Kant (`test_writer`)
+
+- Status: active.
+- Agent id: `019e43f4-4602-7d40-958d-276cc6031bfc`.
+- Ownership:
+  - `src/test/core-runtime-composition.test.ts`.
+  - `src/test/core-transaction-manager.test.ts`.
+- Assignment:
+  - Write failing tests for TASK-009 public runtime/services exports, runtime service availability by documented names, command execution through `runtime.commands`, successful transaction commit, read-your-writes, delayed live visibility while async transactions are pending, sync throw rollback, async rejection rollback, validation-error rollback, and defensive clone behavior.
+  - Use Vitest runtime tests plus `expectTypeOf` assertions backed by `bun run typecheck`.
+  - Do not edit production code, docs, config, lockfiles, or existing tests unless unavoidable for test-only support.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -110,4 +123,4 @@
 
 ## Next Action
 
-Commit the pre-test guidance summary, then hand off failing tests to `test_writer`.
+Wait for Kant's failing-test patch, run focused red checks, then commit the tests if the red signal is expected.

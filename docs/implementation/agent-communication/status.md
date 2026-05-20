@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:54 CST.
+Last updated: 2026-05-20 13:55 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 13:54 CST.
 - Branch: `feat/task-009-transaction-manager-core-runtime-composition`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-009 pre-test guidance complete; test writer handoff pending.
+- Current phase: TASK-009 failing-test handoff active.
 
 ## Active Agents
 
-- None.
+- Kant (`test_writer`, `019e43f4-4602-7d40-958d-276cc6031bfc`): write failing TASK-009 runtime composition and transaction manager tests only.
 
 ## Recent Agent Outcomes
 
+- Kant (`test_writer`) spawned for TASK-009 failing tests, with ownership of `src/test/core-runtime-composition.test.ts` and `src/test/core-transaction-manager.test.ts`.
 - TASK-009 pre-test guidance completed and all agents were closed.
 - Copernicus (`planner`) recommended a small factory-first Core runtime composition layer: `createCoreStores`, `createCoreRegistries`, `createCoreServices`, and `createInMemoryAppRuntime`, exposing grouped `stores`/`registries`/`services` plus documented aliases `pages`, `metadata`, `events`, `filters`, `commands`, `views`, `slots`, and `transaction`.
 - Copernicus recommended `transaction.run(handler)` with handler access to `{ pages, metadata, events, filters }`, rollback over those four stores only, and no transaction rollback for registries in TASK-009.
@@ -303,6 +304,6 @@ Last updated: 2026-05-20 13:54 CST.
 
 ## Next Actions
 
-1. Commit TASK-009 guidance summary.
-2. Hand off failing tests to `test_writer`.
-3. Run focused red checks after the test writer returns.
+1. Wait for Kant's failing-test patch.
+2. Run focused red checks.
+3. Commit failing tests if the red signal is expected.
