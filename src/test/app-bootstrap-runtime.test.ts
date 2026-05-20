@@ -223,6 +223,64 @@ describe("app bootstrap runtime", () => {
     expect(pluginHost.activateAll).not.toHaveBeenCalled();
   });
 
+  it("rejects when real bootstrap plugin loading fails and skips activation", async () => {
+    const bootstrap = await loadBootstrapModule();
+    const loadFailure = new Error("built-in plugin loading failed");
+    const builtInPlugins = [createPlugin("builtin.load-failure")] as const;
+    const pluginHost = {
+      loadBuiltInPlugins: vi.fn(async () => {
+        throw loadFailure;
+      }),
+      activateAll: vi.fn(async () => []),
+    } satisfies PluginHostLike;
+    let resolvedRuntime: RuntimeLike | undefined;
+
+    await expect(
+      bootstrap
+        .createAppRuntime(
+          createPluginPhaseBootstrapOptions(pluginHost, builtInPlugins),
+        )
+        .then((runtime) => {
+          resolvedRuntime = runtime;
+
+          return runtime;
+        }),
+    ).rejects.toBe(loadFailure);
+
+    expect(pluginHost.loadBuiltInPlugins).toHaveBeenCalledWith(builtInPlugins);
+    expect(pluginHost.activateAll).not.toHaveBeenCalled();
+    expect(resolvedRuntime).toBeUndefined();
+  });
+
+  it("rejects when real bootstrap plugin activation fails and does not report ready", async () => {
+    const bootstrap = await loadBootstrapModule();
+    const activationFailure = new Error("built-in plugin activation failed");
+    const builtInPlugins = [createPlugin("builtin.activation-failure")] as const;
+    const pluginHost = {
+      loadBuiltInPlugins: vi.fn(async () => []),
+      activateAll: vi.fn(async () => {
+        throw activationFailure;
+      }),
+    } satisfies PluginHostLike;
+    let resolvedRuntime: RuntimeLike | undefined;
+
+    await expect(
+      bootstrap
+        .createAppRuntime(
+          createPluginPhaseBootstrapOptions(pluginHost, builtInPlugins),
+        )
+        .then((runtime) => {
+          resolvedRuntime = runtime;
+
+          return runtime;
+        }),
+    ).rejects.toBe(activationFailure);
+
+    expect(pluginHost.loadBuiltInPlugins).toHaveBeenCalledWith(builtInPlugins);
+    expect(pluginHost.activateAll).toHaveBeenCalledTimes(1);
+    expect(resolvedRuntime).toBeUndefined();
+  });
+
   it("gives built-in plugins only the safe PluginContext facade during bootstrap", async () => {
     const bootstrap = await loadBootstrapModule();
     let capturedContext: PluginContext | undefined;
@@ -301,6 +359,35 @@ function createNoopNativeBridge(): UnknownRecord {
       importMarkdown: async () => "",
       exportMarkdown: async () => undefined,
     },
+  };
+}
+
+function createPluginPhaseBootstrapOptions(
+  pluginHost: PluginHostLike,
+  builtInPlugins: readonly AppPlugin[],
+): AppBootstrapOptions {
+  const nativeBridge = mark("nativeBridge");
+  const storage = mark("storageFacade");
+  const stores = mark("stores");
+  const registries = mark("registries");
+  const services = mark("services");
+
+  return {
+    app: testApp,
+    builtInPlugins,
+    createNativeBridge: () => nativeBridge,
+    createStorageFacade: () => storage,
+    createStores: () => stores,
+    createRegistries: () => registries,
+    createServices: () => services,
+    createPluginHost: () => pluginHost,
+    createRuntime: () => ({
+      app: testApp,
+      stores,
+      registries,
+      services,
+      pluginHost,
+    }),
   };
 }
 

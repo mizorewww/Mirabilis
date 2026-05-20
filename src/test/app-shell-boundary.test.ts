@@ -1,6 +1,8 @@
+import { execFile } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
@@ -8,6 +10,7 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
+const execFileAsync = promisify(execFile);
 
 const appShellEntrypoints = [
   "src/App.tsx",
@@ -21,6 +24,18 @@ const tauriBoundaryFiles = [
   "src-tauri/capabilities/default.json",
   "src-tauri/src/lib.rs",
   "src-tauri/src/commands/mod.rs",
+];
+
+const nativeSurfaceEntrypoints = [
+  "src-tauri/Cargo.lock",
+  "src-tauri/Cargo.toml",
+  "src-tauri/build.rs",
+  "src-tauri/capabilities",
+  "src-tauri/permissions",
+  "src-tauri/src/commands",
+  "src-tauri/src/lib.rs",
+  "src-tauri/src/main.rs",
+  "src-tauri/tauri.conf.json",
 ];
 
 const sourceExtensions = new Set([".ts", ".tsx"]);
@@ -60,6 +75,28 @@ describe("App Shell bootstrap boundary", () => {
     expect(violations).toStrictEqual([]);
   });
 
+  it("keeps App Shell imports out of business plugin and Core owner modules", async () => {
+    const appShellFiles = await listExistingSourceFiles(appShellEntrypoints);
+    const violations: string[] = [];
+
+    for (const filePath of appShellFiles) {
+      const contents = await readFile(filePath, "utf8");
+      const moduleSpecifiers = collectStaticModuleSpecifiers(contents);
+
+      for (const moduleSpecifier of moduleSpecifiers) {
+        const forbiddenBoundary = findForbiddenAppShellImport(moduleSpecifier);
+
+        if (forbiddenBoundary !== undefined) {
+          violations.push(
+            `${path.relative(repoRoot, filePath)} -> ${moduleSpecifier}: ${forbiddenBoundary}`,
+          );
+        }
+      }
+    }
+
+    expect(violations).toStrictEqual([]);
+  });
+
   it("does not require new Tauri commands, capabilities, or config for runtime bootstrap", async () => {
     const files = await listExistingFiles(tauriBoundaryFiles);
     const violations: string[] = [];
@@ -76,6 +113,12 @@ describe("App Shell bootstrap boundary", () => {
     }
 
     expect(violations).toStrictEqual([]);
+  });
+
+  it("keeps the complete native command and capability surface unchanged from master", async () => {
+    const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
+
+    expect(changedNativeSurfaceFiles).toStrictEqual([]);
   });
 });
 
@@ -179,6 +222,57 @@ function findBusinessBehaviorPatterns(contents: string): string[] {
     .map(([, description]) => description);
 }
 
+function collectStaticModuleSpecifiers(contents: string): string[] {
+  const specifiers: string[] = [];
+  const importExportPattern =
+    /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
+  const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+
+  for (const match of contents.matchAll(importExportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of contents.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  return [...new Set(specifiers)].sort();
+}
+
+function findForbiddenAppShellImport(moduleSpecifier: string): string | undefined {
+  const normalized = moduleSpecifier.toLowerCase();
+  const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /(?:^|\/)(?:task|tasks|habit|habits|timer|timers|calendar|calendars|editor)(?:$|[-_/])/,
+      "business plugin module",
+    ],
+    [
+      /(?:^|\/)plugins\/(?:task|tasks|habit|habits|timer|timers|calendar|calendars|editor)(?:$|[-_/])/,
+      "business plugin implementation",
+    ],
+    [
+      /(?:^|\/)core\/(?:stores|services|commands|events|metadata|filters|views|slots)(?:$|\/)/,
+      "Core owner module",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenPatterns) {
+    if (pattern.test(normalized)) {
+      return description;
+    }
+  }
+
+  return undefined;
+}
+
 function findBootstrapNativeExpansionPatterns(contents: string): string[] {
   const patterns = new Map<RegExp, string>([
     [
@@ -194,4 +288,34 @@ function findBootstrapNativeExpansionPatterns(contents: string): string[] {
   return [...patterns.entries()]
     .filter(([pattern]) => pattern.test(contents))
     .map(([, description]) => description);
+}
+
+async function listNativeSurfaceChangesFromMaster(): Promise<string[]> {
+  const changedTrackedFiles = await runGitLines([
+    "diff",
+    "--name-only",
+    "master",
+    "--",
+    ...nativeSurfaceEntrypoints,
+  ]);
+  const untrackedFiles = await runGitLines([
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "--",
+    ...nativeSurfaceEntrypoints,
+  ]);
+
+  return [...new Set([...changedTrackedFiles, ...untrackedFiles])].sort();
+}
+
+async function runGitLines(args: readonly string[]): Promise<string[]> {
+  const { stdout } = await execFileAsync("git", args, {
+    cwd: repoRoot,
+  });
+
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 }

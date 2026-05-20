@@ -9,10 +9,17 @@ type RuntimeLike = {
     version: string;
     pluginApiVersion?: string;
   };
+  stores?: unknown;
+  registries?: unknown;
+  services?: unknown;
+  nativeBridge?: unknown;
+  storage?: unknown;
+  invoke?: unknown;
   pluginHost?: {
     loadBuiltInPlugins?: () => Promise<unknown>;
     activateAll?: () => Promise<unknown>;
   };
+  [key: string]: unknown;
 };
 
 type RuntimeProviderProps = {
@@ -50,6 +57,83 @@ describe("runtime provider", () => {
     expect(screen.getByRole("status", { name: "Runtime version" })).toHaveTextContent(
       "provider-ready",
     );
+  });
+
+  it("exposes only a safe public runtime facade through useRuntime", async () => {
+    const { RuntimeProvider, useRuntime } = await loadRuntimeProviderModule();
+    const fullRuntime: RuntimeLike = {
+      app: {
+        version: "safe-public-runtime",
+        pluginApiVersion: "test",
+      },
+      stores: {
+        pages: {
+          put: vi.fn(),
+        },
+      },
+      registries: {
+        commands: {
+          register: vi.fn(),
+          unregister: vi.fn(),
+          execute: vi.fn(),
+        },
+      },
+      services: {
+        commands: {
+          register: vi.fn(),
+          unregister: vi.fn(),
+          execute: vi.fn(),
+        },
+      },
+      pluginHost: {
+        loadBuiltInPlugins: vi.fn(async () => []),
+        activateAll: vi.fn(async () => []),
+      },
+      nativeBridge: {
+        invoke: vi.fn(),
+        db: {
+          execute: vi.fn(),
+        },
+        files: {
+          importMarkdown: vi.fn(),
+        },
+        path: {
+          appDataDir: vi.fn(),
+        },
+      },
+      storage: {
+        sqlite: {},
+      },
+    };
+    let publicRuntime: unknown;
+
+    function PublicConsumer() {
+      publicRuntime = useRuntime();
+      const runtime = publicRuntime as RuntimeLike;
+
+      return (
+        <p role="status" aria-label="Public runtime version">
+          {runtime.app.version}
+        </p>
+      );
+    }
+
+    render(
+      <RuntimeProvider runtime={fullRuntime}>
+        <PublicConsumer />
+      </RuntimeProvider>,
+    );
+
+    expect(
+      screen.getByRole("status", { name: "Public runtime version" }),
+    ).toHaveTextContent("safe-public-runtime");
+    expect(findUnsafePublicRuntimeSurfacePaths(publicRuntime)).toStrictEqual([]);
+    expect(publicRuntime).toStrictEqual({
+      app: {
+        version: "safe-public-runtime",
+        pluginApiVersion: "test",
+      },
+    });
   });
 
   it("throws a clear error when useRuntime is called outside RuntimeProvider", async () => {
@@ -110,6 +194,44 @@ describe("runtime provider", () => {
     expect(pluginHostFactory.mock.results[0]?.value.activateAll).toHaveBeenCalledTimes(
       1,
     );
+  });
+
+  it("retries initialization after a rejected mount with the same initializer", async () => {
+    const { RuntimeProvider, useRuntime } = await loadRuntimeProviderModule();
+    const initializeRuntime = vi
+      .fn<() => Promise<RuntimeLike>>()
+      .mockRejectedValueOnce(new Error("first bootstrap failed"))
+      .mockResolvedValueOnce(createRuntime("retry-ready"));
+
+    function TrustedConsumer() {
+      const runtime = useRuntime() as RuntimeLike;
+
+      return (
+        <p role="status" aria-label="Runtime retry">
+          ready:{runtime.app.version}
+        </p>
+      );
+    }
+
+    const failedRender = render(
+      <RuntimeProvider initializeRuntime={initializeRuntime}>
+        <TrustedConsumer />
+      </RuntimeProvider>,
+    );
+
+    expect(await screen.findByRole("alert")).toBeVisible();
+    failedRender.unmount();
+
+    render(
+      <RuntimeProvider initializeRuntime={initializeRuntime}>
+        <TrustedConsumer />
+      </RuntimeProvider>,
+    );
+
+    expect(await screen.findByRole("status", { name: "Runtime retry" })).toHaveTextContent(
+      "ready:retry-ready",
+    );
+    await waitFor(() => expect(initializeRuntime).toHaveBeenCalledTimes(2));
   });
 });
 
@@ -173,4 +295,68 @@ function createSensitiveBootstrapError(): Error {
   });
 
   return error;
+}
+
+function findUnsafePublicRuntimeSurfacePaths(value: unknown): string[] {
+  return collectUnsafePublicRuntimeSurfacePaths(value, "$", new Set<object>()).sort();
+}
+
+function collectUnsafePublicRuntimeSurfacePaths(
+  value: unknown,
+  currentPath: string,
+  seen: Set<object>,
+): string[] {
+  if (typeof value !== "object" || value === null) {
+    return [];
+  }
+
+  if (seen.has(value)) {
+    return [];
+  }
+
+  seen.add(value);
+
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) => {
+    const childPath = `${currentPath}.${key}`;
+    const keyViolation = isUnsafePublicRuntimeKey(key, currentPath)
+      ? [childPath]
+      : [];
+
+    return [
+      ...keyViolation,
+      ...collectUnsafePublicRuntimeSurfacePaths(child, childPath, seen),
+    ];
+  });
+}
+
+function isUnsafePublicRuntimeKey(key: string, parentPath: string): boolean {
+  const normalized = key.replace(/[-_]/g, "").toLowerCase();
+  const normalizedParent = parentPath.replace(/[-_]/g, "").toLowerCase();
+
+  if (
+    normalized === "stores" ||
+    normalized === "registries" ||
+    normalized === "services" ||
+    normalized === "pluginhost" ||
+    normalized === "nativebridge" ||
+    normalized === "invoke" ||
+    normalized === "tauri" ||
+    normalized === "db" ||
+    normalized === "database" ||
+    normalized === "sqlite" ||
+    normalized === "storage" ||
+    normalized === "filesystem" ||
+    normalized === "files" ||
+    normalized === "fs" ||
+    normalized === "path"
+  ) {
+    return true;
+  }
+
+  return (
+    normalizedParent.endsWith(".commands") &&
+    (normalized === "register" ||
+      normalized === "unregister" ||
+      normalized === "execute")
+  );
 }
