@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:28 CST.
+Last updated: 2026-05-20 13:31 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-20 13:28 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P1/P2 type fix and docs P3 cleanup green; targeted re-review pending.
+- Current phase: final targeted re-review active.
 
 ## Active Agents
 
-- None.
+- Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): final correctness re-review for TASK-008 type soundness and registry behavior.
+- Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): final TypeScript/React/Vitest API compatibility audit.
+- Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): final test-quality review for TASK-008 type/proxy coverage.
+- Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): final docs/traceability review for TASK-008 cleanup.
 
 ## Recent Agent Outcomes
 
+- Final targeted TASK-008 re-review agents spawned after type-fix and docs cleanup.
+- Parent repeated focused green checks after docs cleanup: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, and `bun run lint`.
 - Docs cleanup commit: `051370d Codex(docs)(Add View Registry and Slot Registry): align registry examples`.
 - Parent fixed Kierkegaard's remaining source-doc P3 by adding required `title` fields to view registration examples and required `id` fields to slot contribution examples in `docs/architecture/04-slots-editor-task.md` and `docs/architecture/05-plugin-implementations.md`.
 - Parent fallback production commit: `a7eade7 Codex(review-fix)(Add View Registry and Slot Registry): fix public type soundness`.
@@ -273,6 +278,6 @@ Last updated: 2026-05-20 13:28 CST.
 
 ## Next Actions
 
-1. Commit this docs-cleanup summary.
-2. Run targeted re-review for the type-fix/docs cleanup.
+1. Wait for final targeted TASK-008 re-review agents.
+2. Record findings and parent decisions.
 3. Address any remaining P0/P1/P2 findings before final gate.

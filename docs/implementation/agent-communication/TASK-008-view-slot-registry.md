@@ -38,8 +38,12 @@
 
 ## Current Status
 
-- Status: P1/P2 type fix and docs P3 cleanup green; targeted re-review pending.
-- Active agents: none.
+- Status: final targeted re-review active.
+- Active agents:
+  - Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): final correctness re-review for TASK-008 type soundness and registry behavior.
+  - Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): final TypeScript/React/Vitest API compatibility audit.
+  - Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): final test-quality review for TASK-008 type/proxy coverage.
+  - Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): final docs/traceability review for TASK-008 cleanup.
 
 ## Agent Handoffs
 
@@ -340,4 +344,13 @@
 
 ## Next Action
 
-Commit this docs-cleanup summary, run targeted re-review for the type-fix/docs cleanup, and address any remaining P0/P1/P2 findings before final gate.
+Wait for final targeted TASK-008 re-review agents, record findings, and address any remaining P0/P1/P2 findings before final gate.
+
+### Final Targeted Re-review
+
+- Status: active.
+- Agents:
+  - Rawls (`reviewer`, `019e43dd-1277-74b3-830f-4f58cf24672f`): correctness and acceptance criteria after type soundness fix.
+  - Lorentz (`deprecation_auditor`, `019e43dd-15c8-7470-93b5-6da801dcdfe1`): TypeScript/React/Vitest API compatibility after matcher/type changes.
+  - Wegener (`test_quality_reviewer`, `019e43dd-2bf7-7d93-8bd6-5488f691ec15`): test quality for type/proxy coverage.
+  - Helmholtz (`docs_researcher`, `019e43dd-2fa3-7af1-a725-810e77839164`): communication and architecture docs traceability.
