@@ -39,10 +39,13 @@
 
 ## Current Status
 
-- Status: docs contract sync completed; post-fix re-review handoff next.
+- Status: post-fix re-review agents running.
 - Active agents:
-  - None.
-- Next parent step: spawn narrow read-only re-review agents for the review-fix code/tests/docs.
+  - Aristotle the 2nd (`reviewer`, `019e46de-a734-7800-84ca-985e90bba0a9`).
+  - Hilbert the 2nd (`security_reviewer`, `019e46de-ab1f-7873-9d19-f6fb67cdc038`).
+  - Linnaeus the 2nd (`test_quality_reviewer`, `019e46de-b068-7053-80c0-9b937c142280`).
+  - Hypatia the 2nd (`docs_researcher`, `019e46de-b462-7ab2-a0e5-ab820a8ef475`).
+- Next parent step: wait for re-review, then run local gate if no P0/P1/P2 blockers remain.
 
 ## Agent Handoffs
 
@@ -292,3 +295,15 @@
   - `23ecef6 Gibbs the 2nd(docs)(Add NativeBridge TypeScript boundary): document native bridge IPC contract`.
 - Checks:
   - `git diff --check` passed.
+
+### Post-Fix Re-Review
+
+- Status: running.
+- Agents:
+  - Aristotle the 2nd (`reviewer`, `019e46de-a734-7800-84ca-985e90bba0a9`).
+  - Hilbert the 2nd (`security_reviewer`, `019e46de-ab1f-7873-9d19-f6fb67cdc038`).
+  - Linnaeus the 2nd (`test_quality_reviewer`, `019e46de-b068-7053-80c0-9b937c142280`).
+  - Hypatia the 2nd (`docs_researcher`, `019e46de-b462-7ab2-a0e5-ab820a8ef475`).
+- Assignment:
+  - Read-only narrow re-review of the review-fix code, tests, and docs against the prior findings.
+  - Confirm command literal typing, operation/payload `DbQuery`, JSON-compatible `DbValue`, safe error messages, Tauri adapter delegation test, raw Tauri boundary scans, and architecture docs sync.

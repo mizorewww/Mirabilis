@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 03:30 CST.
+Last updated: 2026-05-21 03:31 CST.
 
 ## Current Task
 
@@ -8,14 +8,18 @@ Last updated: 2026-05-21 03:30 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: post-fix re-review handoff next.
+- Current phase: post-fix re-review agents running.
 
 ## Active Agents
 
-- None.
+- Aristotle the 2nd (`reviewer`, `019e46de-a734-7800-84ca-985e90bba0a9`) - narrow correctness re-review.
+- Hilbert the 2nd (`security_reviewer`, `019e46de-ab1f-7873-9d19-f6fb67cdc038`) - narrow security/boundary re-review.
+- Linnaeus the 2nd (`test_quality_reviewer`, `019e46de-b068-7053-80c0-9b937c142280`) - narrow test-quality re-review.
+- Hypatia the 2nd (`docs_researcher`, `019e46de-b462-7ab2-a0e5-ab820a8ef475`) - narrow docs/current-guidance re-review.
 
 ## Recent Agent Outcomes
 
+- Narrow TASK-012 post-fix re-review agents spawned. All are read-only and focused on the prior review findings and docs sync.
 - Gibbs the 2nd (`doc_writer`) completed and was closed after syncing the NativeBridge IPC contract into `docs/architecture/06-filter-native-database.md`.
 - Gibbs the 2nd's docs commit: `23ecef6 Gibbs the 2nd(docs)(Add NativeBridge TypeScript boundary): document native bridge IPC contract`.
 - Delivered docs: command names, camelCase payload envelopes, operation/payload `DbQuery`, JSON-compatible `DbValue`, `NativeBridgeError` codes, stable redacted command-failure message, and UI/plugin no-direct-Tauri rule for TASK-014 handoff.
