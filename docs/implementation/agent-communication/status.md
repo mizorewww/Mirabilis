@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 01:45 CST.
+Last updated: 2026-05-21 01:51 CST.
 
 ## Current Task
 
@@ -8,17 +8,20 @@ Last updated: 2026-05-21 01:45 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 post-pending-install focused re-review in progress.
+- Current phase: TASK-011 batch rollback and dependency-removal race TDD in progress.
 
 ## Active Agents
 
-- Hubble (`reviewer`, `019e467e-6335-7893-aa1a-3fd9718b7d00`) is reviewing correctness after Noether's fix.
-- Wegener (`security_reviewer`, `019e467e-6700-7442-b4d8-02fec44301d7`) is reviewing security/boundary behavior after Noether's fix.
-- Ampere (`test_quality_reviewer`, `019e467e-6ac8-7a13-93ac-97a8e32f1741`) is reviewing Newton's tests.
-- Archimedes (`docs_researcher`, `019e467e-6ef2-7180-bccc-2e7d2088de47`) is reviewing docs/status drift.
+- Avicenna (`test_writer`, `019e4683-7093-7703-836b-a00a88f93c36`) is adding red tests for batch rollback stale scopes, dependency-removal/register races, and concurrent register idempotency.
 
 ## Recent Agent Outcomes
 
+- Avicenna (`test_writer`) was spawned for red tests covering Hubble/Wegener's latest focused re-review findings. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Focused post-pending-install re-review completed. Wegener (`security_reviewer`) found one P1: `loadBuiltInPlugins()` batch rollback can delete an earlier record while leaving its pending register context active and its tentative contributions/stale context capabilities live.
+- Hubble (`reviewer`) found one P1: dependency `deactivate()` / `uninstall()` can start first and pause in an async hook while a required dependent registers before the dependency is downgraded or deleted. Hubble also found one P2: concurrent successful `register(plugin)` calls can both execute the register hook.
+- Ampere (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings for Newton's tests.
+- Archimedes (`docs_researcher`) found no P0/P1 docs drift, plus P2 status-footer drift and a P2 architecture wording gap around pending-register dependents blocking dependency removal.
+- Parent decision: run another delegated TDD loop for the two P1s and the adjacent concurrent-register P2 before final gate.
 - Focused post-pending-install read-only re-review agents spawned after Noether's green fix.
 - Noether (`implementer`) completed and was closed after fixing concurrent install/register failure cleanup and pending dependent registration dependency removal.
 - Noether's review-fix commit: `c46cfa4 Noether(review-fix)(Implement Plugin Host lifecycle): guard pending install races`.
@@ -587,10 +590,10 @@ Last updated: 2026-05-21 01:45 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, and the stale register cleanup fix. Final post-stale-register review found two P1 lifecycle races now entering TDD.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, stale register cleanup, and pending install/register fixes. Latest focused review found batch rollback stale-scope and dependency-removal/register races now entering TDD.
 
 ## Next Actions
 
-1. Wait for Newton's red tests for concurrent install/register failure cleanup and pending dependent registration dependency removal.
+1. Wait for Avicenna's red tests for batch rollback stale scopes, dependency-removal/register races, and concurrent register idempotency.
 2. Commit the expected red tests, then spawn `implementer` for the minimal production fix.
 3. Re-run focused checks, re-review, and final local gate if clear.

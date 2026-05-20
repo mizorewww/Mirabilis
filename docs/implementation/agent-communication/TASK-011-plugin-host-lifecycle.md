@@ -39,13 +39,10 @@
 
 ## Current Status
 
-- Status: post-pending-install focused re-review in progress.
+- Status: batch rollback and dependency-removal race TDD in progress.
 - Active agents:
-  - Hubble (`reviewer`, `019e467e-6335-7893-aa1a-3fd9718b7d00`).
-  - Wegener (`security_reviewer`, `019e467e-6700-7442-b4d8-02fec44301d7`).
-  - Ampere (`test_quality_reviewer`, `019e467e-6ac8-7a13-93ac-97a8e32f1741`).
-  - Archimedes (`docs_researcher`, `019e467e-6ef2-7180-bccc-2e7d2088de47`).
-- Next parent step: wait for focused re-review, then handle findings or run local gate.
+  - Avicenna (`test_writer`, `019e4683-7093-7703-836b-a00a88f93c36`).
+- Next parent step: wait for Avicenna, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -640,7 +637,7 @@
 
 ### Post-Pending-Install Focused Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Hubble (`reviewer`, `019e467e-6335-7893-aa1a-3fd9718b7d00`).
   - Wegener (`security_reviewer`, `019e467e-6700-7442-b4d8-02fec44301d7`).
@@ -649,6 +646,26 @@
 - Assignment:
   - Read-only focused re-review of Noether's pending install/register and pending dependent dependency-removal fix.
   - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+- Outcomes:
+  - Wegener found one P1 boundary issue: `loadBuiltInPlugins()` batch rollback can delete an earlier record while leaving its pending register context active, with tentative command/view/slot contributions and stale context write capability still live.
+  - Hubble found one P1 correctness issue: dependency `deactivate()` / `uninstall()` can start first and pause in an async hook while a required dependent registers before the dependency is downgraded or deleted.
+  - Hubble also found one P2 lifecycle idempotency issue: concurrent successful `register(plugin)` calls can both execute the register hook and publish duplicate contributions.
+  - Ampere found no P0/P1/P2 test-quality findings for Newton's tests.
+  - Archimedes found no P0/P1 docs drift, plus P2 status-footer drift and P2 architecture wording drift around pending-register dependents blocking dependency removal.
+- Parent decision:
+  - Run another delegated TDD loop for the two P1s and the adjacent concurrent-register P2 before final gate.
+
+### Batch Rollback And Dependency-Removal Race TDD
+
+- Status: in progress.
+- Agent:
+  - Avicenna (`test_writer`, `019e4683-7093-7703-836b-a00a88f93c36`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add deterministic red tests for `loadBuiltInPlugins()` batch rollback revoking pending register scopes and stale contexts from earlier batch records.
+  - Add deterministic red tests for dependency removal already in progress blocking required dependent registration before the dependency is downgraded or deleted.
+  - Add compact red coverage for concurrent successful `register(plugin)` idempotency and uninstall cleanup.
 
 ## Parent Decisions
 
@@ -659,4 +676,4 @@
 
 ## Next Action
 
-Wait for focused re-review, then handle findings or run local gate.
+Wait for Avicenna's red tests, then validate and commit them.
