@@ -37,24 +37,19 @@
 
 ## Current Status
 
-- Status: review-fix implementation committed; focused re-review pending.
+- Status: focused re-review complete; delegated test-strength follow-up pending.
 - Active agents: none.
-- Completed agents:
-  - Jason the 2nd (`pr_explorer`): changed-surface mapping completed.
-  - Carver the 2nd (`reviewer`): correctness review completed.
-  - Mendel the 2nd (`security_reviewer`): security boundary review completed.
-  - Nash the 2nd (`deprecation_auditor`): API/deprecation review completed.
-  - McClintock the 2nd (`test_quality_reviewer`): test-quality review completed.
-  - Pasteur the 2nd (`docs_researcher`): docs/current-guidance review completed.
-  - Hubble the 2nd (`doc_writer`): documentation gap review completed.
-- Completed agents:
-  - Huygens the 2nd (`planner`): read-only scope and implementation plan completed.
-  - Parfit the 2nd (`security_reviewer`): read-only security boundary review completed.
-  - Goodall the 2nd (`docs_researcher`): read-only current-docs guidance completed.
-  - Feynman the 2nd (`deprecation_auditor`): read-only API/deprecation risk audit completed.
-- Deferred agents:
-  - `doc_writer` documentation gap review; initial spawn hit the agent thread limit and should be retried when a review slot frees.
-- Next parent step: wait for review agents, summarize findings, then spawn deferred `doc_writer` if still needed.
+- Current blocker before docs patch: Curie the 2nd found a P1 test-quality gap. Public runtime surface narrowing is only asserted for the direct `runtime` prop path; a new test should cover the production `initializeRuntime` ready branch returning a full unsafe runtime and verify public `useRuntime()` still exposes only `{ app }`.
+- Cleared by focused re-review:
+  - Security: provider boundary, startup error redaction, and native/Tauri surface checks have no P0/P1/P2 findings.
+  - Correctness: RuntimeProvider cache behavior, safe facade, App Shell use, and bootstrap plugin failure propagation have no P0/P1/P2 findings.
+  - Docs/current-guidance: implementation aligns after provider-surface fix, but docs drift remains before merge.
+- Remaining work order:
+  - Delegate the P1 test-strength follow-up.
+  - Run focused checks.
+  - Commit the test-only follow-up.
+  - Delegate final docs patch from Ampere/Hubble/Newton recommendations.
+  - Run local gate and mark TASK-015 complete.
 
 ## Agent Handoffs
 
@@ -350,6 +345,82 @@
   - `git diff --check`.
 - Review-fix implementation commit: `06186bb Euler the 2nd(review-fix)(Build app bootstrap and runtime provider): narrow runtime provider surface`.
 - Remaining known gaps: no persistence wiring was added; production built-in plugin list remains intentionally empty.
+
+### Focused Re-Review Round
+
+- Status: in progress.
+- Active read-only agents:
+  - Sartre the 2nd (`security_reviewer`): confirm provider boundary and no native surface changes.
+  - Banach the 2nd (`reviewer`): confirm RuntimeProvider/cache correctness and bootstrap failure propagation.
+  - Curie the 2nd (`test_quality_reviewer`): confirm tests cover review P1s.
+  - Sagan the 2nd (`deprecation_auditor`): React/API/StrictMode pattern review.
+  - Newton the 2nd (`docs_researcher`): docs/current-guidance alignment.
+  - Ampere the 2nd (`doc_writer`): final docs patch plan.
+
+### Ampere the 2nd (`doc_writer`) Outcome
+
+- Status: completed read-only docs patch plan; no files edited.
+- Required docs patch before merge, assuming focused re-review finds no new P1 code/test blockers:
+  - `docs/architecture/07-runtime-flows.md`: replace illustrative `TauriStorageDriver` / `new AppRuntime` / business built-ins flow with current `createAppRuntime()` order: `createTauriNativeBridge()` -> `{ persistence: "in-memory-core" }` storage facade -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. Document empty TASK-015 built-ins and generic failure UI on plugin load/activation rejection.
+  - `docs/architecture/01-overview-and-monorepo.md`: add current flat-layout note for `src/bootstrap/*`, `src/providers/*`, and `src/App.tsx`; clarify `apps/desktop/...` remains target architecture shape.
+  - `docs/architecture/03-plugin-api-and-host.md`: document TASK-015 runtime-provider boundary, public `useRuntime()` facade `{ app: { version, pluginApiVersion? } }`, private full runtime handles, and no provider exposure of stores/registries/services/pluginHost/NativeBridge/invoke/db/storage/filesystem/path APIs.
+  - `docs/architecture/06-filter-native-database.md`: state TASK-015 initializes NativeBridge during bootstrap but does not call DB IPC or wire Core stores to SQLite persistence; no Tauri commands/capabilities/permissions/filesystem/shortcut/notification/WAL/busy-timeout/trusted-schema changes were added.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`: add App Shell responsibilities for runtime provider, loading state, generic startup failure alert, and public runtime app info; keep business plugin behavior/direct Tauri/persistence/full runtime exposure out.
+  - `docs/testing/strategy.md`: add TASK-015 bootstrap/provider guidance, boundary guidance, and merge check guidance.
+- Merge bookkeeping after docs patch should update `docs/implementation/progress.md` and `docs/implementation/agent-communication/status.md` with final commits, checks, and remaining gaps.
+
+### Sartre the 2nd (`security_reviewer`) Outcome
+
+- Status: completed read-only focused security re-review; no files edited and no tests run.
+- Findings: no P0/P1/P2 security findings.
+- Confirmed `06186bb` closes the provider boundary issue:
+  - `useRuntime()` now returns `PublicRuntime` only with no generic cast escape hatch.
+  - `RuntimeProvider` writes only copied/frozen public runtime objects into context for direct and initialized runtimes.
+  - Public facade contains only `app.version` and optional `app.pluginApiVersion`.
+- Confirmed startup failure leakage is closed: provider catches initialization rejection without rendering/logging raw error, default alert is generic, and tests cover SQL/path/token/plugin text not appearing.
+- Confirmed no TASK-015 native/Tauri surface changes in `src-tauri`, capabilities, config, or Rust command registration.
+
+### Curie the 2nd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only focused test-quality re-review; no files edited.
+- Check run: focused TASK-015 frontend tests passed.
+- P1 finding: public runtime surface coverage is still incomplete. The narrowing assertion covers only the explicit `runtime` prop path; the production `initializeRuntime` ready branch only reads `runtime.app.version` and would not fail if that ready branch exposed the full initialized runtime. Add an initialized-runtime test that returns a full unsafe runtime and asserts public `useRuntime()` exposes only `{ app }`.
+- P2 finding: plugin phase-failure tests are partly mocked. They verify `createAppRuntime()` propagates rejecting `loadBuiltInPlugins` / `activateAll` methods, but do not run actual failing built-in plugin lifecycle hooks through the real `PluginHost`. Existing plugin-host tests cover that lower layer, so this is an integration coverage gap rather than a full miss.
+- Cleared: native-expansion guard is now meaningfully stronger and broad enough for TASK-015, rejected initializer retry/cache clearing is covered, and no skipped/only/todo tests were found.
+
+### Banach the 2nd (`reviewer`) Outcome
+
+- Status: completed read-only focused correctness re-review; no files edited.
+- Checks run: focused TASK-015 frontend tests passed, `bun run typecheck` passed, and `git diff --check master...HEAD` passed.
+- Findings: no P0/P1/P2 correctness findings.
+- Verified:
+  - `RuntimeProvider` clears rejected initializer promises and preserves pending/success single-flight behavior.
+  - Public `useRuntime()` is narrowed to copied/frozen app info only.
+  - App Shell consumes only the safe facade.
+  - Bootstrap propagates `loadBuiltInPlugins` and `activateAll` failures by awaiting both before returning ready runtime.
+
+### Newton the 2nd (`docs_researcher`) Outcome
+
+- Status: completed read-only focused docs/current-guidance re-review; no files edited.
+- Checks run: focused TASK-015 frontend tests passed, `bun run typecheck` passed, `bun run lint` passed, and `git diff --check master...HEAD` passed.
+- Finding: no implementation/test mismatch after the provider-surface fix.
+- Confirmed implementation matches the safer TASK-015 interpretation: `createAppRuntime()` builds full trusted runtime in order, while `useRuntime()` exposes only a frozen public `{ app }` facade to React descendants.
+- Blocking docs drift remains before merge:
+  - `docs/architecture/07-runtime-flows.md` still describes future `TauriStorageDriver` / concrete business built-ins rather than current `createAppRuntime()` with in-memory storage facade and empty built-ins.
+  - `docs/architecture/03-plugin-api-and-host.md` needs the React runtime-provider boundary.
+  - `docs/architecture/01-overview-and-monorepo.md` needs a current flat-layout note for `src/bootstrap/*` and `src/providers/*`.
+  - `docs/architecture/06-filter-native-database.md` needs the TASK-015 NativeBridge initialization/no DB persistence wiring/no permission expansion clarification.
+  - `docs/testing/strategy.md` should add durable TASK-015 checks for plugin phase failures, narrowed provider surface, StrictMode single-flight, rejected-init retry, and diff-based native-surface guards.
+- External docs verified: React 19 `createContext` and `StrictMode`, Testing Library render/async queries, Vitest 4 mocks/migration, Vite 7 support, and Tauri v2 commands/capabilities/mocking.
+
+### Sagan the 2nd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only focused API/deprecation re-review; no files edited.
+- Checks run: focused TASK-015 frontend tests passed, `bun run typecheck` passed, `bun run lint` passed, and `git diff --check master...HEAD` passed.
+- P2 finding: `initializeRuntime` is captured in a ref and the effect has empty deps, so a mounted provider ignores later initializer changes. This preserves StrictMode single-flight but makes the prop effectively mount-only without docs/typing saying so; future retry/workspace-switch flows should account for this.
+- P3 finding: new React 19 code still uses `<RuntimeContext.Provider>` instead of the preferred `<RuntimeContext value={...}>`; current form still works.
+- P3 finding: `PublicRuntime.app` is typed as mutable `AppRuntimeInfo` while provider returns frozen copies. Consider `Readonly<AppRuntimeInfo>` or a dedicated readonly public app-info type later.
+- External docs verified: React `createContext`, `useEffect`, `StrictMode`, React 19 release notes, React `cache`, React Testing Library API, DOM Testing Library async API, and Vitest mock API.
 
 ### Hubble the 2nd (`doc_writer`) Handoff
 

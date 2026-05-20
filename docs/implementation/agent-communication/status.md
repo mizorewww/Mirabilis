@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:17 CST.
+Last updated: 2026-05-21 07:22 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 07:17 CST.
 - Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1.
+- Current phase: focused re-review complete; test-strength follow-up pending.
 
 ## Active Agents
 
@@ -58,7 +58,15 @@ Last updated: 2026-05-21 07:17 CST.
 - Euler the 2nd completed and was closed after narrowing public `useRuntime()` to a copied/frozen app-info facade, keeping full runtime handles internal to provider state, clearing rejected initializer promises from cache, preserving StrictMode single-flight for pending/success, and updating App Shell to use the safe public hook.
 - Parent repeated green checks after Euler the 2nd: focused TASK-015 frontend tests, `bun run typecheck`, `bun run lint`, `bun run build`, and `git diff --check`.
 - Euler the 2nd's review-fix implementation commit: `06186bb Euler the 2nd(review-fix)(Build app bootstrap and runtime provider): narrow runtime provider surface`.
-- Parent next step: commit communication update, then run focused re-review for provider boundary/cache fixes and docs gaps.
+- Review-fix implementation communication update was committed as `1f469ca Codex(progress)(Build app bootstrap and runtime provider): record review fix implementation`.
+- Focused TASK-015 re-review agents were spawned for security, correctness, test quality, API/deprecation, docs/current-guidance, and final docs patch planning.
+- Sartre the 2nd (`security_reviewer`) completed focused re-review with no P0/P1/P2 findings. It confirmed the provider boundary is closed, startup errors remain redacted, and no native/Tauri surface changed.
+- Banach the 2nd (`reviewer`) completed focused correctness re-review with no P0/P1/P2 findings. It verified cache behavior, public facade narrowing, App Shell use, and plugin load/activate failure propagation.
+- Curie the 2nd (`test_quality_reviewer`) completed focused test-quality re-review with one P1 coverage gap: public runtime surface narrowing is asserted only for the direct `runtime` prop path, not the production `initializeRuntime` ready branch. Native-expansion, rejected initializer retry, and skipped/only/todo checks are cleared.
+- Newton the 2nd (`docs_researcher`) completed focused docs/current-guidance re-review with no implementation/test mismatch after the provider fix, but blocking docs drift remains before merge.
+- Sagan the 2nd (`deprecation_auditor`) completed focused API/deprecation re-review with no P0/P1 findings. P2: initializer prop is mount-only due to ref/empty deps; P3: older context provider syntax and mutable `PublicRuntime.app` type.
+- Ampere the 2nd (`doc_writer`) completed final docs patch planning for runtime flow, current layout, runtime-provider boundary, NativeBridge/no-persistence note, App Shell responsibilities, and testing strategy.
+- Parent next step: commit focused re-review summary, then delegate a small test-only follow-up for Curie's P1 before final docs patch.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
