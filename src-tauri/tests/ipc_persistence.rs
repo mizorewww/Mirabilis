@@ -777,9 +777,7 @@ fn metadata_value_type_must_match_core_value_types() -> TestResult {
                 value_type,
             ),
         )
-        .expect(&format!(
-            "{label} should be accepted as a Core metadata value type"
-        ));
+        .unwrap_or_else(|_| panic!("{label} should be accepted as a Core metadata value type"));
 
         assert_eq!(
             dispatch_db_execute(

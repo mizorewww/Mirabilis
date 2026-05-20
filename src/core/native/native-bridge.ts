@@ -97,6 +97,12 @@ export type DbQuery = {
   payload?: DbValue;
 };
 
+type DbTransactionResult<Response> = Response extends readonly unknown[]
+  ? number extends Response["length"]
+    ? Array<Response>
+    : Response
+  : Array<Response>;
+
 export type NotificationInput = {
   title: string;
   body?: string;
@@ -110,7 +116,9 @@ export type NativeInvoke = <Response>(
 export type NativeBridge = {
   db: {
     execute<Response>(query: DbQuery): Promise<Response>;
-    transaction<Response>(queries: DbQuery[]): Promise<Response[]>;
+    transaction<Response>(
+      queries: DbQuery[],
+    ): Promise<DbTransactionResult<Response>>;
   };
   shortcuts: {
     register(shortcut: string, commandId: string): Promise<void>;
@@ -138,7 +146,7 @@ export function createNativeBridge(options: {
         });
       },
       transaction<Response>(queries: DbQuery[]) {
-        return invokeCommand<Response[]>(
+        return invokeCommand<DbTransactionResult<Response>>(
           invoke,
           NATIVE_BRIDGE_COMMANDS.dbTransaction,
           { queries },

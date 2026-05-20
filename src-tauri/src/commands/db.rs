@@ -654,8 +654,6 @@ fn require_metadata_value_type(value: &Value, value_type: &str) -> Result<(), Ip
         "number" => value.is_number(),
         "boolean" => value.is_boolean(),
         "null" => value.is_null(),
-        "object" => value.is_object(),
-        "array" => value.is_array(),
         "json" => value.is_object() || value.is_array(),
         _ => false,
     };
