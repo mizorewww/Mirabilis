@@ -39,9 +39,13 @@
 
 ## Current Status
 
-- Status: post-pending-install fix re-review handoff.
-- Active agents: none.
-- Next parent step: spawn focused read-only re-review, then run local gate if no P0/P1 findings remain.
+- Status: post-pending-install focused re-review in progress.
+- Active agents:
+  - Hubble (`reviewer`, `019e467e-6335-7893-aa1a-3fd9718b7d00`).
+  - Wegener (`security_reviewer`, `019e467e-6700-7442-b4d8-02fec44301d7`).
+  - Ampere (`test_quality_reviewer`, `019e467e-6ac8-7a13-93ac-97a8e32f1741`).
+  - Archimedes (`docs_researcher`, `019e467e-6ef2-7180-bccc-2e7d2088de47`).
+- Next parent step: wait for focused re-review, then handle findings or run local gate.
 
 ## Agent Handoffs
 
@@ -634,6 +638,18 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 
+### Post-Pending-Install Focused Re-Review
+
+- Status: in progress.
+- Agents:
+  - Hubble (`reviewer`, `019e467e-6335-7893-aa1a-3fd9718b7d00`).
+  - Wegener (`security_reviewer`, `019e467e-6700-7442-b4d8-02fec44301d7`).
+  - Ampere (`test_quality_reviewer`, `019e467e-6ac8-7a13-93ac-97a8e32f1741`).
+  - Archimedes (`docs_researcher`, `019e467e-6ef2-7180-bccc-2e7d2088de47`).
+- Assignment:
+  - Read-only focused re-review of Noether's pending install/register and pending dependent dependency-removal fix.
+  - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+
 ## Parent Decisions
 
 - Use the existing repository checkout and branch only; do not create a sibling worktree.
@@ -643,4 +659,4 @@
 
 ## Next Action
 
-Spawn focused read-only re-review after Noether's pending install/register fix.
+Wait for focused re-review, then handle findings or run local gate.
