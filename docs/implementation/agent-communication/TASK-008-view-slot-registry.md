@@ -38,7 +38,7 @@
 
 ## Current Status
 
-- Status: P1/P2 type fix green; docs P3 cleanup pending.
+- Status: P1/P2 type fix and docs P3 cleanup green; targeted re-review pending.
 - Active agents: none.
 
 ## Agent Handoffs
@@ -325,6 +325,19 @@
 - Push note:
   - Auto-push and the first manual push for `a7eade7` failed with an SSH connection close. Parent will retry before merge.
 
+### Docs P3 Cleanup
+
+- Status: completed.
+- Commit:
+  - `051370d Codex(docs)(Add View Registry and Slot Registry): align registry examples`.
+- Scope:
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/05-plugin-implementations.md`.
+- Outcome:
+  - Added required `title` fields to view registration examples.
+  - Added required `id` fields to slot contribution examples.
+  - Communication status stale-next-action issues were already removed during the type-fix orchestration updates.
+
 ## Next Action
 
-Retry pushing the task branch, clean up remaining P3 docs issues from Kierkegaard, and run targeted re-review before final gate.
+Commit this docs-cleanup summary, run targeted re-review for the type-fix/docs cleanup, and address any remaining P0/P1/P2 findings before final gate.

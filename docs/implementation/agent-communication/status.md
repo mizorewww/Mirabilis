@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 13:26 CST.
+Last updated: 2026-05-20 13:28 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-20 13:26 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P1/P2 type fix green; docs P3 cleanup pending.
+- Current phase: P1/P2 type fix and docs P3 cleanup green; targeted re-review pending.
 
 ## Active Agents
 
@@ -16,6 +16,8 @@ Last updated: 2026-05-20 13:26 CST.
 
 ## Recent Agent Outcomes
 
+- Docs cleanup commit: `051370d Codex(docs)(Add View Registry and Slot Registry): align registry examples`.
+- Parent fixed Kierkegaard's remaining source-doc P3 by adding required `title` fields to view registration examples and required `id` fields to slot contribution examples in `docs/architecture/04-slots-editor-task.md` and `docs/architecture/05-plugin-implementations.md`.
 - Parent fallback production commit: `a7eade7 Codex(review-fix)(Add View Registry and Slot Registry): fix public type soundness`.
 - Parent repeated green checks after the public type soundness fix: `bun run typecheck`, `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` with 20 tests passing, `bun run lint`, and `git diff --check`.
 - Auto-push and the first manual push for `a7eade7` failed with an SSH connection close. Branch is locally ahead by 1 and parent will retry push before merge.
@@ -271,6 +273,6 @@ Last updated: 2026-05-20 13:26 CST.
 
 ## Next Actions
 
-1. Retry pushing the task branch so `a7eade7` reaches origin.
-2. Clean up remaining P3 docs issues from Kierkegaard.
-3. Run targeted re-review for the type-fix/docs cleanup before final gate.
+1. Commit this docs-cleanup summary.
+2. Run targeted re-review for the type-fix/docs cleanup.
+3. Address any remaining P0/P1/P2 findings before final gate.
