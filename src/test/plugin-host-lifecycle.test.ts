@@ -1233,19 +1233,19 @@ describe("Plugin Host lifecycle", () => {
     });
   });
 
-  it("keeps successful concurrent register contributions tracked when another register fails", async () => {
+  it("keeps single-flight concurrent register contributions tracked and uninstall-cleanable", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
     const firstRegisterContributed = createDeferred<void>();
     const releaseFirstRegister = createDeferred<void>();
-    const firstRegisterFinished = createDeferred<void>();
-    const secondRegisterCause = new Error("second concurrent register failed");
-    const pluginId = "concurrent-register-failure";
+    const pluginId = "concurrent-register-single-flight";
+    const events: string[] = [];
     let registerAttempts = 0;
     const plugin = createPlugin({
       id: pluginId,
       async register(ctx) {
         registerAttempts += 1;
+        events.push(`${pluginId}.register.${registerAttempts}`);
 
         if (registerAttempts === 1) {
           registerRuntimeContributions(ctx, pluginId);
@@ -1254,8 +1254,7 @@ describe("Plugin Host lifecycle", () => {
           return;
         }
 
-        await firstRegisterFinished.promise;
-        throw secondRegisterCause;
+        throw new Error("concurrent register callers must share one hook");
       },
     });
 
@@ -1264,15 +1263,23 @@ describe("Plugin Host lifecycle", () => {
     const firstRegisterOutcome = capturePromiseOutcome(host.register(plugin));
 
     await firstRegisterContributed.promise;
+    expect(registerAttempts).toBe(1);
+    expect(events).toStrictEqual([`${pluginId}.register.1`]);
     expectRegisteredRuntimeContributions(runtime, pluginId);
 
     const secondRegisterOutcome = capturePromiseOutcome(host.register(plugin));
 
+    expect(registerAttempts).toBe(1);
+    expect(events).toStrictEqual([`${pluginId}.register.1`]);
     releaseFirstRegister.resolve();
 
-    const firstRegisterResult = await firstRegisterOutcome;
+    const [firstRegisterResult, secondRegisterResult] = await Promise.all([
+      firstRegisterOutcome,
+      secondRegisterOutcome,
+    ]);
 
     expect(firstRegisterResult.status).toBe("resolved");
+    expect(secondRegisterResult.status).toBe("resolved");
 
     if (firstRegisterResult.status === "resolved") {
       expect(firstRegisterResult.value).toMatchObject({
@@ -1282,27 +1289,21 @@ describe("Plugin Host lifecycle", () => {
       });
     }
 
-    firstRegisterFinished.resolve();
+    if (secondRegisterResult.status === "resolved") {
+      expect(secondRegisterResult.value).toMatchObject({
+        id: pluginId,
+        enabled: false,
+        status: "registered",
+      });
+    }
 
-    const secondRegisterResult = await secondRegisterOutcome;
+    expect(registerAttempts).toBe(1);
+    expect(events).toStrictEqual([`${pluginId}.register.1`]);
+
     const recordBeforeUninstall = host.getPlugin(pluginId);
     const idsBeforeUninstall = registryIds(runtime);
 
     await host.uninstall(pluginId);
-
-    expect(secondRegisterResult.status).toBe("rejected");
-
-    if (secondRegisterResult.status === "rejected") {
-      expectPluginHostError(
-        secondRegisterResult.error,
-        "PLUGIN_LIFECYCLE_FAILED",
-        {
-          pluginId,
-          phase: "register",
-          cause: secondRegisterCause,
-        },
-      );
-    }
 
     expect({
       recordBeforeUninstall,
