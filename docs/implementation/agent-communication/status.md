@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:53 CST.
+Last updated: 2026-05-21 02:54 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-21 02:53 CST.
 - Branch: `feat/task-012-nativebridge-typescript-boundary`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: red tests committed; implementation handoff next.
+- Current phase: implementation in progress.
 
 ## Active Agents
 
-- None.
+- Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`) - minimum TASK-012 production NativeBridge implementation.
 
 ## Recent Agent Outcomes
 
+- Ramanujan (`implementer`) was spawned for the minimum TASK-012 production implementation. Ownership is limited to `src/core/native/native-bridge.ts`, `src/core/native/tauri-native-bridge.ts`, `src/core/native/index.ts`, `src/core/index.ts`, and `src/App.tsx` only if needed to remove/reroute the existing template raw `invoke` without adding a `greet` NativeBridge API.
 - Boyle (`test_writer`) completed and was closed after adding TASK-012 NativeBridge red tests in `src/test/native-bridge.test.ts`.
 - Boyle's test commit: `9b9b204 Boyle(test)(Add NativeBridge TypeScript boundary): add native bridge boundary tests`.
 - Parent confirmed the expected red signal: `bun run test:frontend -- src/test/native-bridge.test.ts` failed because Vite cannot resolve `../core/native`; `bun run typecheck` failed only on missing `../core/native` and missing Core NativeBridge exports; `bun run lint` and `git diff --check` passed.

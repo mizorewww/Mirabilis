@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: red tests committed; implementation handoff next.
+- Status: implementation in progress.
 - Active agents:
-  - None.
-- Next parent step: spawn an `implementer` for the minimum production NativeBridge code and App raw invoke cleanup needed to pass the focused tests.
+  - Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`).
+- Next parent step: wait for Ramanujan, run focused green checks, and commit the implementation patch if it stays within scope.
 
 ## Agent Handoffs
 
@@ -148,3 +148,19 @@
   - `bun run typecheck` failed only on missing `../core/native` and missing Core NativeBridge exports.
   - `bun run lint` passed.
   - `git diff --check` passed.
+
+### Implementation
+
+- Status: running.
+- Agent:
+  - Ramanujan (`implementer`, `019e46bd-7000-7eb3-b1d3-7a5bf6263565`).
+- Ownership:
+  - `src/core/native/native-bridge.ts`.
+  - `src/core/native/tauri-native-bridge.ts`.
+  - `src/core/native/index.ts`.
+  - `src/core/index.ts`.
+  - `src/App.tsx` only if needed to remove/reroute the existing template raw `invoke` without adding a `greet` NativeBridge API.
+- Assignment:
+  - Implement the minimum production NativeBridge boundary to satisfy Boyle's tests.
+  - Keep direct `@tauri-apps/api/core` import isolated to `src/core/native/tauri-native-bridge.ts`.
+  - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri files, capabilities, `tauri.conf.json`, Plugin API/Plugin Host, or unrelated files.
