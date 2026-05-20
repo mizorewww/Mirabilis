@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: ultra-narrow implementation in progress.
-- Active agents: Sartre (`implementer`, `019e4637-b8e8-7e33-98c7-07a1f93df89a`).
-- Next parent step: wait for Sartre, validate focused green checks, then update docs/status.
+- Status: final docs/status cleanup complete after green batch rollback fix.
+- Active agents: none.
+- Next parent step: run final narrow re-review and local gate.
 
 ## Agent Handoffs
 
@@ -316,10 +316,10 @@
   - Anscombe found no P0/P1/P2 security findings and confirmed stale context revocation, ownership spoof rejection, install-failure record cleanup for explicit/current failing paths, and no native/Tauri/fs/dynamic import/IPC/SQLite scope creep.
   - Huygens found one P2 test-strength issue: dependency rejection tests should assert blocked dependency deactivate/uninstall hooks were not called.
   - Hooke found P2 docs/status drift: final Next Actions and current status text needed updating, and architecture docs should mention failed-install cleanup/retry plus stale context page/store/transaction revocation.
-- Parent decision:
-  - Delegate final red tests for batch install rollback/retry and dependency hook non-call assertions.
-  - Delegate production rollback fix after the expected red signal.
-  - Delegate docs cleanup after production behavior is settled.
+- Parent follow-through:
+  - Lorentz added the final red tests for batch rollback/retry and dependency hook non-call assertions.
+  - Sartre completed the production rollback fix and parent checks are green.
+  - Volta completed the docs/status cleanup for final validation.
 
 ### Ultra-Narrow Review-Fix TDD
 
@@ -345,7 +345,7 @@
 
 ### Ultra-Narrow Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Sartre (`implementer`, `019e4637-b8e8-7e33-98c7-07a1f93df89a`).
 - Ownership:
@@ -353,6 +353,35 @@
 - Assignment:
   - Fix `loadBuiltInPlugins()` so any install-hook failure rolls back all records installed during that batch and allows retry of the same explicit plugin list.
   - Do not edit tests, docs, config, package files, lockfiles, Rust/Tauri, or unrelated Core modules.
+- Outcome:
+  - Sartre changed `src/core/plugin-host/plugin-host.ts` only.
+  - Failed `loadBuiltInPlugins()` install batches now roll back every record created during that batch, including earlier successful installs and the currently failing record, and restore ordering state so retrying the same explicit list installs/registers deterministically.
+- Commit:
+  - `b955cb3 Sartre(review-fix)(Implement Plugin Host lifecycle): rollback failed built-in batches`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 31 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 45 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+
+### Final Docs/Status Cleanup
+
+- Status: completed; parent validation passed.
+- Agent:
+  - Volta (`doc_writer`, `019e463a-6ecd-7c43-929c-eaf7cc1e997c`).
+- Ownership:
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md`.
+- Assignment:
+  - Update architecture docs for failed install cleanup/retry and stale captured context page/store/transaction write revocation.
+  - Update live status and task communication so current phase and next actions reflect the final green implementation.
+- Outcome:
+  - Architecture docs now cover failed explicit install cleanup/retry, failed `loadBuiltInPlugins()` batch rollback/retry, stale captured context write revocation for page/store/transaction operations, and dependency rejection before blocked lifecycle hooks.
+  - Live status and this task log now reflect Lorentz's final red tests, Sartre's green production fix, and final validation as the next phase instead of another test/implementation handoff.
+- Validation:
+  - `git diff --check` passed for the docs/status cleanup.
 
 ## Parent Decisions
 
@@ -363,4 +392,4 @@
 
 ## Next Action
 
-Wait for Sartre, then validate focused green checks.
+Run final narrow re-review and the local gate.

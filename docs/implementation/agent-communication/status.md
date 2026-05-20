@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 00:28 CST.
+Last updated: 2026-05-21 00:32 CST.
 
 ## Current Task
 
@@ -8,14 +8,19 @@ Last updated: 2026-05-21 00:28 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 ultra-narrow implementation in progress.
+- Current phase: TASK-011 final docs/status cleanup complete after green batch rollback fix; ready for final re-review and local gate.
 
 ## Active Agents
 
-- Sartre (`implementer`, `019e4637-b8e8-7e33-98c7-07a1f93df89a`) is fixing batch install rollback in `src/core/plugin-host/plugin-host.ts`.
+- No active specialized agents. Volta's final docs/status cleanup is ready for parent validation.
 
 ## Recent Agent Outcomes
 
+- Volta (`doc_writer`) completed final TASK-011 docs/status cleanup: Plugin Host docs now cover failed install cleanup/retry, batch install rollback, stale context write revocation, and dependency rejection before blocked hooks; live status no longer points to earlier test/implementation handoffs.
+- Volta (`doc_writer`) was spawned for final TASK-011 docs/status cleanup after Sartre's green fix.
+- Sartre (`implementer`) completed and was closed after fixing `loadBuiltInPlugins()` batch rollback in `src/core/plugin-host/plugin-host.ts`.
+- Sartre's review-fix commit: `b955cb3 Sartre(review-fix)(Implement Plugin Host lifecycle): rollback failed built-in batches`.
+- Parent repeated green checks after Sartre: `bun run typecheck`; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` with 31 tests passing; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` with 45 tests passing; `bun run lint`; and `git diff --check`.
 - Sartre (`implementer`) was spawned for the ultra-narrow batch install rollback production fix. Ownership is limited to `src/core/plugin-host/plugin-host.ts`.
 - Lorentz's test commit: `d1482b3 Lorentz(test)(Implement Plugin Host lifecycle): cover batch install rollback`.
 - Parent confirmed the expected red signal after Lorentz: `bun run typecheck` passed; `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` ran 31 tests with 30 passing and one failing in the new batch rollback case; `git diff --check` passed.
@@ -524,10 +529,9 @@ Last updated: 2026-05-21 00:28 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, review-fix tests, review-fix implementation, architecture docs updates, runtime-flow docs updates, and narrow re-review handoff/status commits.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, review-fix tests, review-fix implementation, architecture docs updates, runtime-flow docs updates, Lorentz's final red test commit, and Sartre's green batch rollback fix.
 
 ## Next Actions
 
-1. Spawn `test_writer` for the final TASK-011 batch-install rollback red test and dependency hook non-call assertions.
-2. Commit the expected red tests, then spawn `implementer` for the production rollback fix.
-3. Update architecture/docs status for the final lifecycle semantics, then run final focused checks and re-review.
+1. Run the final TASK-011 narrow re-review and local gate.
+2. If final validation stays green, commit the docs/status cleanup and proceed with TASK-011 closeout from the parent thread.

@@ -194,10 +194,10 @@ type PluginHostInstance = {
 
 生命周期语义：
 
-- `loadBuiltInPlugins(plugins)` 按确定性依赖顺序安装并注册传入列表，但不激活插件；无依赖关系的插件保留输入顺序。
-- `install(plugin)` 只进入 `installed` 状态；`register(plugin)` 会在必要时先 install，并进入 `registered` 状态；`activate(pluginId)` 只允许注册后的插件进入 `active` 状态。
+- `loadBuiltInPlugins(plugins)` 按确定性依赖顺序安装并注册传入列表，但不激活插件；无依赖关系的插件保留输入顺序。批量 install 失败会回滚该批次创建的所有记录，包括此前成功 install 的记录和当前失败记录，并允许用同一显式列表重试。
+- `install(plugin)` 只进入 `installed` 状态；显式 install 失败会移除 host 记录，后续 `register(plugin)` 会重新尝试 install；`register(plugin)` 会在必要时先 install，并进入 `registered` 状态；`activate(pluginId)` 只允许注册后的插件进入 `active` 状态。
 - required dependency 只有在 dependency 插件处于 `registered` 或 `active` 时才被满足；`installed`、注册失败或安装失败的记录不满足后续 required dependency。
-- `deactivate(pluginId)` 和 `uninstall(pluginId)` 不会让已注册或已激活 dependent 失去 required dependency 后继续保持 incoherent 状态；当前实现会在 registered dependent 仍依赖目标插件时拒绝该操作。
+- `deactivate(pluginId)` 和 `uninstall(pluginId)` 不会让已注册或已激活 dependent 失去 required dependency 后继续保持 incoherent 状态；当前实现会在 registered dependent 仍依赖目标插件时抛出 typed dependency error，并在调用被阻止插件的 lifecycle hook 前拒绝该操作。
 - 生命周期 hook 失败会抛出带 `code`、`pluginId`、`phase`、`dependencyId` 或 `cause` 的 typed `PluginHostError`，并保留 safe state：activate/deactivate/uninstall 失败不会清掉仍有效的状态和贡献，register 失败会回滚该次 command/view/slot 注册。
 
 运行时上下文语义：
@@ -206,6 +206,6 @@ type PluginHostInstance = {
 - `ctx.metadata`、`ctx.events`、`ctx.filters` 自动注入 `sourcePluginId`，并将读写限制在当前插件拥有的数据上。
 - `ctx.commands`、`ctx.views`、`ctx.slots` 自动注入 `pluginId`，并将 `get` / `list` 限制在当前插件拥有的 runtime contribution 上。
 - plugin-facing 输入拒绝调用方传入 `pluginId` 或 `sourcePluginId`；绕过 TypeScript 类型的 runtime spoofing 会抛出 `PLUGIN_FACADE_OWNERSHIP_FORBIDDEN` 且不应改变 registry 或 store。
-- 捕获到的 context 在 lifecycle 退出后不能继续注册 command、view 或 slot；runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
+- 捕获到的 context 在 lifecycle 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
 
 ---
