@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: final docs/status cleanup in progress.
+- Status: final docs/status cleanup completed.
 - Active agents:
-  - Gauss (`doc_writer`, `019e46a6-cb46-79d1-95c1-91a200470bbb`).
-- Next parent step: wait for Gauss, validate docs/status cleanup, then run the local gate.
+  - None.
+- Next parent step: run the local gate, then mark progress and merge if clear.
 
 ## Agent Handoffs
 
@@ -814,7 +814,7 @@
 
 ### Final Docs/Status Cleanup
 
-- Status: in progress.
+- Status: completed.
 - Agent:
   - Gauss (`doc_writer`, `019e46a6-cb46-79d1-95c1-91a200470bbb`).
 - Ownership:
@@ -824,6 +824,10 @@
 - Assignment:
   - Document final TASK-011 lifecycle semantics for record-identity batch rollback, same-id duplicate/concurrent handling, single-flight register, and dependency removal/pending-register guards.
   - Update live status and task communication so next action is final local gate, progress mark, and merge.
+- Outcome:
+  - Architecture docs now cover `loadBuiltInPlugins()` same-id live-record re-checks, `PLUGIN_DUPLICATE_ID` rejection instead of overwriting concurrent registrations, record-identity-aware batch rollback, owned pending-scope/tentative-contribution revocation, preservation of newer same-id records and tracked contributions, single-flight concurrent `register(plugin)` semantics, uninstall-cleanable contribution tracking, pending-register dependent removal guards, and dependency removal-phase rejection for new dependents.
+  - Live status and this task log now reflect that the final focused re-review completed with no P0/P1/P2 correctness, security, or test-quality findings; only P2 docs/status findings were addressed by this docs cleanup.
+  - Next action is the final local gate, followed by progress marking and merge if clear.
 
 ## Parent Decisions
 
@@ -834,4 +838,4 @@
 
 ## Next Action
 
-Wait for Gauss's docs/status cleanup, then run the local gate.
+Run the final local gate, then mark TASK-011 progress and merge if clear.

@@ -194,10 +194,12 @@ type PluginHostInstance = {
 
 生命周期语义：
 
-- `loadBuiltInPlugins(plugins)` 按确定性依赖顺序安装并注册传入列表，但不激活插件；无依赖关系的插件保留输入顺序。批量 install 失败会回滚该批次创建的所有记录，包括此前成功 install 的记录和当前失败记录，并允许用同一显式列表重试。
+- `loadBuiltInPlugins(plugins)` 按确定性依赖顺序安装并注册传入列表，但不激活插件；无依赖关系的插件保留输入顺序。批量安装每个插件前会重新检查同 ID live record；如果其他 lifecycle 调用已经安装或注册了同 ID 插件，当前批次会抛出 `PLUGIN_DUPLICATE_ID`，不会覆盖并发产生的记录或贡献追踪。
+- `loadBuiltInPlugins(plugins)` 的批量 rollback 是 record-identity aware 的：只删除当前批次仍拥有的记录，回滚它们的 pending lifecycle scopes 和 tentative command/view/slot contributions；如果同 ID 的更新记录已经替换了旧记录，rollback 会保留更新记录及其已追踪贡献，避免留下 orphaned runtime contributions。批量 install 失败允许用同一显式列表重试。
 - `install(plugin)` 只进入 `installed` 状态；显式 install 失败会移除 host 记录，后续 `register(plugin)` 会重新尝试 install；`register(plugin)` 会在必要时先 install，并进入 `registered` 状态；`activate(pluginId)` 只允许注册后的插件进入 `active` 状态。
-- required dependency 只有在 dependency 插件处于 `registered` 或 `active` 时才被满足；`installed`、注册失败或安装失败的记录不满足后续 required dependency。
-- `deactivate(pluginId)` 和 `uninstall(pluginId)` 不会让已注册或已激活 dependent 失去 required dependency 后继续保持 incoherent 状态；当前实现会在 registered dependent 仍依赖目标插件时抛出 typed dependency error，并在调用被阻止插件的 lifecycle hook 前拒绝该操作。
+- `register(plugin)` 对同 ID 并发调用是 single-flight/idempotent 的：一个 in-flight register hook 运行，其他并发调用共享同一个结果；成功后只追踪一组 runtime contributions，后续 `uninstall(pluginId)` 会清理这组贡献。
+- required dependency 只有在 dependency 插件处于 `registered` 或 `active` 且未进入 `deactivate` / `uninstall` removal phase 时才被满足；`installed`、注册失败、安装失败、或正在移除的记录不满足后续 required dependency。
+- `deactivate(pluginId)` 和 `uninstall(pluginId)` 不会让已注册、已激活或 pending-register dependent 失去 required dependency 后继续保持 incoherent 状态；当前实现会在 dependent 仍依赖目标插件时抛出 typed dependency error，并在调用被阻止插件的 lifecycle hook 前拒绝该操作。
 - 生命周期 hook 失败会抛出带 `code`、`pluginId`、`phase`、`dependencyId` 或 `cause` 的 typed `PluginHostError`，并保留 safe state：activate/deactivate/uninstall 失败不会清掉仍有效的状态和贡献，register 失败会回滚该次 command/view/slot 注册。
 
 运行时上下文语义：
