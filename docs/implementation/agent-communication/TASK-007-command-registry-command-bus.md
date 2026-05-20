@@ -207,14 +207,27 @@ Wait for Newton's review-fix implementation.
   - `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing.
   - `bun run lint`.
 
-## Next Action
-
-Wait for TASK-007 targeted re-review agents.
-
 ### Targeted Re-review Round
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Hilbert (`security_reviewer`, `019e4366-4586-74b0-a83b-1c30b8a645a0`): verify Cicero's handler cause/context findings after review fixes.
   - Mill (`deprecation_auditor`, `019e4366-4838-7621-af87-d4b580bb7576`): verify Turing's `Error.cause` semantics finding after review fixes.
   - Arendt (`test_quality_reviewer`, `019e4366-4b02-74e0-ac9d-2c7d8c474b38`): verify Epicurus's review-fix coverage gaps after Popper's tests.
+- Outcomes:
+  - Hilbert found no remaining P0/P1/P2/P3 security issues. Handler failures no longer preserve raw thrown values as public `cause`, context invalid/proxy coverage is meaningful, no native/package/Tauri surfaces changed, and caller identity/capability scoping is a deferred Plugin Host/UI exposure risk rather than a TASK-007 blocker.
+  - Mill found no remaining P0/P1/P2/P3 deprecation/API issues. `CommandRegistryError` now defines `cause` only for explicit options and does so as non-enumerable; handler failures discard raw thrown values.
+  - Arendt found no remaining P0/P1/P2/P3 test-quality issues. Epicurus's invalid context, `get()` handler privacy, and `../core/commands` type-barrel gaps are closed.
+- Checks run by targeted reviewers:
+  - `bun run typecheck`.
+  - `bun run test:frontend -- src/test/core-command-registry.test.ts` with 11 tests passing.
+  - `bun run lint` by Mill.
+
+## Current Status
+
+- Status: targeted re-review clear; final gate pending.
+- Active agents: none.
+
+## Next Action
+
+Run the final TASK-007 local gate.
