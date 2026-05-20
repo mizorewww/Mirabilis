@@ -39,10 +39,10 @@
 
 ## Current Status
 
-- Status: docs contract sync in progress.
+- Status: docs contract sync completed; post-fix re-review handoff next.
 - Active agents:
-  - Gibbs the 2nd (`doc_writer`, `019e46dc-8d57-7893-bdcc-da3068052df5`).
-- Next parent step: wait for Gibbs the 2nd, validate docs, and commit the docs patch if in scope.
+  - None.
+- Next parent step: spawn narrow read-only re-review agents for the review-fix code/tests/docs.
 
 ## Agent Handoffs
 
@@ -278,7 +278,7 @@
 
 ### Docs Contract Sync
 
-- Status: running.
+- Status: completed and committed.
 - Agent:
   - Gibbs the 2nd (`doc_writer`, `019e46dc-8d57-7893-bdcc-da3068052df5`).
 - Ownership:
@@ -286,3 +286,9 @@
 - Assignment:
   - Document the concrete NativeBridge command names, camelCase payload envelopes, operation/payload `DbQuery`, JSON-compatible `DbValue`, `NativeBridgeError` codes, safe public error messages, and no direct UI/plugin Tauri calls.
   - Do not edit code, tests, config, package files, lockfiles, Rust/Tauri files, or progress/status docs.
+- Outcome:
+  - Updated `docs/architecture/06-filter-native-database.md` with the concrete TASK-012/TASK-014 NativeBridge command names, camelCase payload envelopes, operation/payload `DbQuery`, JSON-compatible `DbValue`, error codes, stable redacted command-failure message, and UI/plugin no-direct-Tauri rule.
+- Commit:
+  - `23ecef6 Gibbs the 2nd(docs)(Add NativeBridge TypeScript boundary): document native bridge IPC contract`.
+- Checks:
+  - `git diff --check` passed.
