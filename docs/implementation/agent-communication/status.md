@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 02:11 CST.
+Last updated: 2026-05-21 02:16 CST.
 
 ## Current Task
 
@@ -8,17 +8,20 @@ Last updated: 2026-05-21 02:11 CST.
 - Branch: `feat/task-011-plugin-host-lifecycle`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-011 final batch rollback focused re-review in progress.
+- Current phase: TASK-011 fresh-record batch race TDD in progress.
 
 ## Active Agents
 
-- Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`) is reviewing correctness after Franklin/Halley's green commits.
-- Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`) is reviewing security/boundary behavior after Franklin/Halley's green commits.
-- Nietzsche (`test_quality_reviewer`, `019e4696-1598-73c1-b752-26f00174fdcc`) is reviewing test quality.
-- Leibniz (`docs_researcher`, `019e4696-1966-7cf0-a4e0-7dae62f35d93`) is reviewing docs/status drift.
+- Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`) is adding red tests for stale batch rollback deleting fresh same-id records and batch load overwriting concurrently registered same-id records.
 
 ## Recent Agent Outcomes
 
+- Kuhn (`test_writer`) was spawned for red tests covering the latest Beauvoir/Pauli batch concurrency P1 findings. Ownership is limited to `src/test/plugin-host-lifecycle.test.ts`.
+- Final batch rollback focused re-review completed. Pauli (`security_reviewer`) found one P1: stale batch rollback can delete a fresh same-id record and leave fresh runtime contributions orphaned.
+- Beauvoir (`reviewer`) found the same stale rollback/fresh record P1 and another P1: batch loading validates duplicates only once before async install work, then can blindly overwrite a concurrently registered same-id record and lose contribution tracking.
+- Nietzsche (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings for Avicenna/Franklin tests.
+- Leibniz (`docs_researcher`) found no P0/P1 docs drift, plus P2 status-footer drift and P2 architecture wording drift around latest lifecycle semantics.
+- Parent decision: run another delegated TDD loop for the two P1 batch concurrency findings before final gate; defer docs P2 cleanup until code behavior stabilizes.
 - Final batch rollback focused read-only re-review agents spawned after Franklin/Halley's green commits.
 - Halley (`implementer`) completed the revised production fix and was closed after removing source-inspection from the implementation.
 - Halley's review-fix commit: `b52772a Halley(review-fix)(Implement Plugin Host lifecycle): guard batch rollback races`.
@@ -606,10 +609,10 @@ Last updated: 2026-05-21 02:11 CST.
 - `docs/implementation/progress.md` marks TASK-011 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-011.
 - `docs/implementation/agent-communication/TASK-011-plugin-host-lifecycle.md` holds TASK-011 agent notes, review findings, and parent decisions.
-- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, stale register cleanup, and pending install/register fixes. Latest focused review found batch rollback stale-scope and dependency-removal/register races now entering TDD.
+- TASK-010 is complete and merged. TASK-011 has committed lifecycle acceptance tests, Plugin Host implementation, multiple review-fix test/implementation passes, architecture docs updates, runtime-flow docs updates, pending transaction/concurrent lifecycle fixes, stale register cleanup, pending install/register fixes, and batch rollback/dependency-removal fixes. Latest focused review found fresh-record batch races now entering TDD.
 
 ## Next Actions
 
-1. Wait for Avicenna's red tests for batch rollback stale scopes, dependency-removal/register races, and concurrent register idempotency.
+1. Wait for Kuhn's red tests for fresh-record batch rollback and concurrent same-id batch load races.
 2. Commit the expected red tests, then spawn `implementer` for the minimal production fix.
 3. Re-run focused checks, re-review, and final local gate if clear.

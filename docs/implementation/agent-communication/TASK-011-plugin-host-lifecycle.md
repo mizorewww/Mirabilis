@@ -39,13 +39,10 @@
 
 ## Current Status
 
-- Status: final batch rollback focused re-review in progress.
+- Status: fresh-record batch race TDD in progress.
 - Active agents:
-  - Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`).
-  - Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`).
-  - Nietzsche (`test_quality_reviewer`, `019e4696-1598-73c1-b752-26f00174fdcc`).
-  - Leibniz (`docs_researcher`, `019e4696-1966-7cf0-a4e0-7dae62f35d93`).
-- Next parent step: wait for final focused re-review, then handle findings or run the local gate.
+  - Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`).
+- Next parent step: wait for Kuhn, validate expected red signal, then delegate implementation.
 
 ## Agent Handoffs
 
@@ -734,7 +731,7 @@
 
 ### Final Batch Rollback Focused Re-Review
 
-- Status: in progress.
+- Status: completed.
 - Agents:
   - Beauvoir (`reviewer`, `019e4695-fa7d-72d1-80c0-2b8ffdb7a9dc`).
   - Pauli (`security_reviewer`, `019e4696-10fd-7d73-8e32-da0e53dbedfc`).
@@ -743,6 +740,25 @@
 - Assignment:
   - Read-only focused re-review after Franklin/Halley's green commits.
   - Check correctness, security boundaries, test quality, and docs/status drift before the local gate.
+- Outcomes:
+  - Pauli found one P1 boundary issue: stale batch rollback can delete a fresh same-id record and leave fresh command/view/slot contributions orphaned.
+  - Beauvoir found the same stale rollback/fresh record P1 and another P1: batch loading validates duplicates only once before async install work, then can blindly overwrite a concurrently registered same-id record and lose contribution tracking.
+  - Nietzsche found no P0/P1/P2 test-quality findings for Avicenna/Franklin tests.
+  - Leibniz found no P0/P1 docs drift, plus P2 status-footer drift and P2 architecture wording drift around latest lifecycle semantics.
+- Parent decision:
+  - Run another delegated TDD loop for the two P1 batch concurrency findings before final gate.
+  - Defer docs P2 cleanup until code behavior stabilizes.
+
+### Fresh-Record Batch Race TDD
+
+- Status: in progress.
+- Agent:
+  - Kuhn (`test_writer`, `019e469a-444f-74c3-8412-dac48f8bcf48`).
+- Ownership:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Assignment:
+  - Add deterministic red tests proving stale batch rollback cannot delete a fresh same-id record or orphan its fresh runtime contributions.
+  - Add deterministic red tests proving batch loading cannot overwrite a concurrently registered same-id record and lose contribution tracking.
 
 ## Parent Decisions
 
@@ -753,4 +769,4 @@
 
 ## Next Action
 
-Wait for final focused re-review, then handle findings or run the local gate.
+Wait for Kuhn's red tests, then validate and commit them.
