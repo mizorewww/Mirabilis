@@ -975,6 +975,105 @@ describe("Plugin Host lifecycle", () => {
     }
   });
 
+  it("rejects concurrent uninstall while register is pending with an unawaited transaction", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const transactionStaged = createDeferred<void>();
+    const releaseTransaction = createDeferred<void>();
+    const releaseRegister = createDeferred<void>();
+    let pendingTransaction: Promise<unknown> | undefined;
+    const pluginId = "concurrent-register-uninstall";
+    const plugin = createPlugin({
+      id: pluginId,
+      async register(ctx) {
+        pendingTransaction = ctx.transaction.run(async (tx) => {
+          const page = tx.pages.create({
+            title: "Concurrent pending transaction page",
+            body: emptyDocument(),
+          });
+
+          tx.metadata.set({
+            pageId: page.id,
+            namespace: pluginId,
+            key: "state",
+            value: "staged",
+            valueType: "string",
+          });
+          tx.events.append({
+            pageId: page.id,
+            namespace: pluginId,
+            type: "staged",
+            payload: { pageId: page.id },
+          });
+          tx.filters.save({
+            name: "Concurrent pending transaction filter",
+            query: {
+              where: [{ field: `${pluginId}.state`, op: "eq", value: "staged" }],
+            },
+            viewType: `${pluginId}.view`,
+          });
+          transactionStaged.resolve();
+
+          await releaseTransaction.promise;
+
+          return "should not commit";
+        });
+
+        await transactionStaged.promise;
+        await releaseRegister.promise;
+      },
+    });
+    const dataBeforeRegister = runtimeDataSnapshot(runtime);
+    const loadOutcome = host.loadBuiltInPlugins([plugin]).then(
+      (records) => ({ status: "resolved" as const, records }),
+      (error) => ({ status: "rejected" as const, error }),
+    );
+
+    await transactionStaged.promise;
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeRegister);
+
+    const transactionOutcome = expectDefined(pendingTransaction).then(
+      (value) => ({ status: "resolved" as const, value }),
+      (error) => ({ status: "rejected" as const, error }),
+    );
+
+    await host.uninstall(pluginId);
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+
+    releaseTransaction.resolve();
+    releaseRegister.resolve();
+
+    const [loadResult, transactionResult] = await Promise.all([
+      loadOutcome,
+      transactionOutcome,
+    ]);
+
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataBeforeRegister);
+    expect(transactionResult.status).toBe("rejected");
+
+    if (transactionResult.status === "rejected") {
+      expectPluginHostError(transactionResult.error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId,
+        phase: "register",
+      });
+    }
+
+    expect(loadResult.status).toBe("rejected");
+
+    if (loadResult.status === "rejected") {
+      expectPluginHostError(loadResult.error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId,
+        phase: "register",
+      });
+    }
+
+    expectPluginHostError(() => host.getPlugin(pluginId), "PLUGIN_NOT_FOUND", {
+      pluginId,
+    });
+  });
+
   it("scopes plugin-facing metadata, event, and filter facades to the owning plugin", async () => {
     const runtime = createInMemoryAppRuntime();
     const host = createHost(runtime);
