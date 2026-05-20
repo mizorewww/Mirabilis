@@ -38,13 +38,8 @@
 
 ## Current Status
 
-- Status: targeted re-review active.
-- Active agents:
-  - Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): targeted correctness re-review for TASK-008 review-fix changes.
-  - Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): targeted security re-review for descriptor reads, component refs, and deferred plugin-facing boundary risk.
-  - Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): targeted TypeScript/React/Vitest API compatibility audit.
-  - Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): targeted test-quality re-review for Socrates and Avicenna coverage.
-  - Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): targeted docs/traceability review for TASK-008 communication and progress state.
+- Status: targeted re-review findings recorded; P1/P2 test-fix pending.
+- Active agents: none.
 
 ## Agent Handoffs
 
@@ -154,10 +149,6 @@
   - Accept descriptor-read hardening and tests that prove registry validation does not trigger Proxy `get` traps for data descriptor properties.
   - Defer caller-bound plugin facades to the later Plugin Host/UI task; TASK-008 raw registries stay Core-internal and are not a plugin-facing security boundary.
 
-## Next Action
-
-Wait for Socrates's review-fix test output, confirm the expected red signal, commit the test patch with Socrates's nickname, then delegate production fixes to an `implementer`.
-
 ### Socrates (`test_writer`)
 
 - Status: completed and closed.
@@ -219,16 +210,29 @@ Wait for Socrates's review-fix test output, confirm the expected red signal, com
   - `bun run test:frontend -- src/test/core-view-slot-registry.test.ts` runs 20 tests with 18 passing and 2 failing.
   - The two failures are the expected `getTrap.mock.calls.length` assertions: view registration reports 8 calls and slot registration reports 6 calls against Locke's current uncommitted production patch.
 
-## Next Action
-
-Wait for targeted TASK-008 re-review agents, record findings, and address any remaining P0/P1/P2 findings before final gate.
-
 ### Targeted Re-review
 
-- Status: active.
+- Status: completed and closed.
 - Agents:
   - Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): correctness and acceptance criteria.
   - Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): descriptor-read, component-ref, and plugin-boundary security.
   - Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): current TypeScript/React/Vitest API compatibility.
   - Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): test-quality review for Socrates and Avicenna coverage.
   - Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): communication docs and progress traceability.
+- Findings:
+  - Singer found one P2 correctness issue: `RegistryComponent<Props>` includes an unparameterized callable fallback, and `SlotCondition` uses a bivariant method extraction, weakening public prop generic safety for future renderers.
+  - Aquinas found one P1 API compatibility issue: `RegistryCallableComponent` lets any function or constructor satisfy any `RegistryComponent<Props>`, allowing wrong-prop components in `ViewDefinition<Props>` and `SlotContribution<Props>`.
+  - Aquinas found one P2 deprecation issue: deprecated Vitest/expect-type `.toMatchTypeOf()` assertions should be replaced with current `.toExtend()` assertions.
+  - Aquinas found one P3 React type hygiene issue: public/test types expose `_payload`/`_init` lazy internals; current installed React types expose lazy/exotic object refs through public `ExoticComponent`/`LazyExoticComponent` shapes instead.
+  - Archimedes found no remaining P0/P1/P2/P3 security issues and confirmed no Tauri, IPC, native permission, filesystem, persistence, or React runtime execution surface was added.
+  - Meitner found no remaining test-quality issues; focused tests and typecheck passed.
+  - Kierkegaard found three P3 docs issues: stale communication next-action text, stale live-status review-fix TDD wording, and architecture examples that omit required TASK-008 `title` or slot `id` fields.
+- Parent decisions:
+  - P1/P2 public type soundness is blocking and must be fixed before final gate.
+  - Add test-only coverage first for wrong-prop component assignability and slot-condition assignability, and replace deprecated `.toMatchTypeOf()` assertions.
+  - Remove public/test dependence on `_payload`/`_init` lazy internals while preserving React-compatible object/exotic component support.
+  - After P1/P2 is green, clean up docs P3 examples and stale status text before final gate.
+
+## Next Action
+
+Commit targeted re-review findings, spawn a `test_writer` for public type soundness and matcher deprecation coverage, then delegate production type fixes after the expected red signal.

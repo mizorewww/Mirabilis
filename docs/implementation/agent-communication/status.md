@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 12:24 CST.
+Last updated: 2026-05-20 12:28 CST.
 
 ## Current Task
 
@@ -8,18 +8,21 @@ Last updated: 2026-05-20 12:24 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: targeted re-review active.
+- Current phase: targeted re-review findings recorded; P1/P2 test-fix pending.
 
 ## Active Agents
 
-- Singer (`reviewer`, `019e43a0-49cf-7031-9f20-58d78a9a4487`): targeted correctness re-review for TASK-008 review-fix changes.
-- Archimedes (`security_reviewer`, `019e43a0-4d00-75c3-9763-6e0eb3d5492b`): targeted security re-review for descriptor reads, component refs, and deferred plugin-facing boundary risk.
-- Aquinas (`deprecation_auditor`, `019e43a0-50cb-7700-aabb-1e8c19a9be84`): targeted TypeScript/React/Vitest API compatibility audit.
-- Meitner (`test_quality_reviewer`, `019e43a0-5578-7631-a2cc-28ceb376abbb`): targeted test-quality re-review for Socrates and Avicenna coverage.
-- Kierkegaard (`docs_researcher`, `019e43a0-5f47-7353-87d3-699ce313aa9f`): targeted docs/traceability review for TASK-008 communication and progress state.
+- None.
 
 ## Recent Agent Outcomes
 
+- TASK-008 targeted re-review completed and all re-review agents were closed.
+- Singer (`reviewer`) found one P2 correctness issue: `RegistryComponent<Props>` currently includes an unparameterized callable fallback and `SlotCondition` uses a bivariant method extraction, weakening explicit public prop generic safety.
+- Aquinas (`deprecation_auditor`) found one P1 API compatibility issue: `RegistryCallableComponent` lets any function or constructor satisfy any `RegistryComponent<Props>`, allowing wrong-prop components in `ViewDefinition<Props>` and `SlotContribution<Props>`. Aquinas also found one P2 deprecated Vitest type matcher issue: `.toMatchTypeOf()` should be replaced with current `.toExtend()` assertions, and one P3 issue where `_payload`/`_init` React lazy internals leak into public/test types.
+- Archimedes (`security_reviewer`) found no remaining P0/P1/P2/P3 security issues and confirmed no Tauri, IPC, native permission, filesystem, persistence, or React runtime execution surface was added.
+- Meitner (`test_quality_reviewer`) found no remaining test-quality issues; focused test and typecheck passed.
+- Kierkegaard (`docs_researcher`) found no P0/P1/P2 docs issues and three P3 issues: stale TASK-008 communication next-action text, stale live-status text saying review-fix TDD is still pending, and architecture examples that omit required TASK-008 `title` or slot `id` fields.
+- Selected TASK-008 follow-up fixes: first add test-only coverage for wrong-prop component and slot-condition assignability plus deprecated matcher replacement; then delegate production type fixes. Docs P3 cleanup follows after P1/P2 is green.
 - Targeted TASK-008 re-review agents spawned after Locke's green review-fix commit.
 - Locke (`implementer`) completed and was closed after implementing TASK-008 review fixes.
 - Locke's review-fix commit: `ffe8561 Locke(review-fix)(Add View Registry and Slot Registry): accept object component refs`.
@@ -248,10 +251,10 @@ Last updated: 2026-05-20 12:24 CST.
 - `docs/implementation/progress.md` marks TASK-008 in progress.
 - `docs/implementation/agent-communication/status.md` points to TASK-008.
 - `docs/implementation/agent-communication/TASK-008-view-slot-registry.md` holds TASK-008 agent notes and parent decisions.
-- Review round 1 found no P0/P1 issues. Accepted P2/P3 fixes are ready for a review-fix TDD pass.
+- Targeted re-review found P1/P2 public type issues that must be fixed before final gate. TASK-008 remains in progress.
 
 ## Next Actions
 
-1. Wait for targeted TASK-008 re-review agents.
-2. Record findings and parent decisions.
-3. Address any remaining P0/P1/P2 findings before final gate.
+1. Commit targeted re-review findings.
+2. Spawn a `test_writer` for TASK-008 public type soundness and matcher-deprecation coverage.
+3. Confirm red signal, then delegate production type fixes to an `implementer`.
