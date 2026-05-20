@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete.
-- Active agents: none.
+- Status: acceptance test writing active.
+- Active agents:
+  - Pasteur (`test_writer`, `019e4373-8e3a-7af0-9700-9b6d89f6b631`): write failing TASK-008 View/Slot Registry acceptance tests.
 
 ## Agent Handoffs
 
@@ -87,4 +88,14 @@
 
 ## Next Action
 
-Delegate failing acceptance tests to a `test_writer`.
+Wait for Pasteur's TASK-008 acceptance tests.
+
+### Pasteur (`test_writer`)
+
+- Status: active.
+- Agent id: `019e4373-8e3a-7af0-9700-9b6d89f6b631`.
+- Ownership:
+  - `src/test/core-view-slot-registry.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Add failing acceptance tests for public exports, view/slot type contracts, registration/listing/unregister behavior, ordering, duplicate handling, component/condition reference identity, defensive metadata copies, JSON-compatible `accepts`, inert `when`, runtime validation, and business-neutral examples.
+  - Do not edit production code, docs, or exports.

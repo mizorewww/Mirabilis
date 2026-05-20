@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-20 11:34 CST.
+Last updated: 2026-05-20 11:35 CST.
 
 ## Current Task
 
@@ -8,14 +8,15 @@ Last updated: 2026-05-20 11:34 CST.
 - Branch: `feat/task-008-view-slot-registry`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance complete.
+- Current phase: acceptance test writing active.
 
 ## Active Agents
 
-- None.
+- Pasteur (`test_writer`, `019e4373-8e3a-7af0-9700-9b6d89f6b631`): write failing TASK-008 View/Slot Registry acceptance tests.
 
 ## Recent Agent Outcomes
 
+- Pasteur (`test_writer`) was spawned for TASK-008 failing acceptance tests in `src/test/core-view-slot-registry.test.ts`.
 - TASK-008 pre-test guidance completed. Hooke planned the View/Slot Registry API and acceptance tests, Halley verified current TypeScript/React/Vitest guidance, and Tesla audited component-reference cloning, inert `when` handling, duplicate atomicity, slot ordering, React runtime coupling, and business-term leakage risks.
 - Parent decisions: add `src/core/types/view.ts`, `src/core/types/slot.ts`, `src/core/registries/view-registry.ts`, `src/core/registries/slot-registry.ts`, and `src/core/registries/index.ts`; expose them from Core barrels; use type-only React `ComponentType` compatibility; preserve `component` and `when` references by identity; clone only inert JSON metadata such as required `accepts`; slot `when` is sync-only inert metadata and is never executed by the registry; slot order defaults to `0`, must be finite, sorts ascending with stable registration-order ties; duplicate IDs are global per registry; no production constants for documented business view or slot names.
 - Pre-test guidance agents spawned for TASK-008.
@@ -214,6 +215,6 @@ Last updated: 2026-05-20 11:34 CST.
 
 ## Next Actions
 
-1. Delegate failing acceptance tests to a `test_writer`.
+1. Wait for Pasteur's TASK-008 acceptance tests.
 2. Confirm expected red signal.
 3. Delegate implementation to an `implementer`.
