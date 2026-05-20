@@ -39,9 +39,9 @@
 
 ## Current Status
 
-- Status: final docs/status cleanup complete after green batch rollback fix.
-- Active agents: none.
-- Next parent step: run final narrow re-review and local gate.
+- Status: final re-review in progress.
+- Active agents: James (`reviewer`), Mencius (`security_reviewer`), Einstein (`test_quality_reviewer`), and Bernoulli (`docs_researcher`).
+- Next parent step: wait for final re-review, then run final local gate if clear.
 
 ## Agent Handoffs
 
@@ -367,7 +367,7 @@
 
 ### Final Docs/Status Cleanup
 
-- Status: completed; parent validation passed.
+- Status: completed and committed.
 - Agent:
   - Volta (`doc_writer`, `019e463a-6ecd-7c43-929c-eaf7cc1e997c`).
 - Ownership:
@@ -380,8 +380,21 @@
 - Outcome:
   - Architecture docs now cover failed explicit install cleanup/retry, failed `loadBuiltInPlugins()` batch rollback/retry, stale captured context write revocation for page/store/transaction operations, and dependency rejection before blocked lifecycle hooks.
   - Live status and this task log now reflect Lorentz's final red tests, Sartre's green production fix, and final validation as the next phase instead of another test/implementation handoff.
+- Commit:
+  - `b68a2af Volta(docs)(Implement Plugin Host lifecycle): document final lifecycle semantics`.
 - Validation:
   - `git diff --check` passed for the docs/status cleanup.
+
+### Final Re-Review
+
+- Status: in progress.
+- Agents:
+  - James (`reviewer`, `019e4640-8d3d-7fa3-aaa0-a25eeeedebbc`).
+  - Mencius (`security_reviewer`, `019e4640-9044-7f62-9180-4461db34d992`).
+  - Einstein (`test_quality_reviewer`, `019e4640-941e-7583-b04b-305119d3d6e6`).
+  - Bernoulli (`docs_researcher`, `019e4640-9850-7dc2-be6d-cbcda623a5c7`).
+- Assignment:
+  - Read-only final re-review of TASK-011 implementation, tests, security boundaries, and docs/status before local gate.
 
 ## Parent Decisions
 
@@ -392,4 +405,4 @@
 
 ## Next Action
 
-Run final narrow re-review and the local gate.
+Wait for final re-review, then run the local gate if clear.
