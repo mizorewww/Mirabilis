@@ -40,10 +40,11 @@
 
 ## Current Status
 
-- Status: review round complete; review-fix handoff next.
+- Status: review-fix tests and docs agents running.
 - Active agents:
-  - None.
-- Next parent step: commit review findings, then delegate review-fix tests and docs sync to agents.
+  - Dalton the 2nd (`test_writer`, id `019e4702-a9e1-73b0-bbf8-10791d21ac54`).
+  - Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`).
+- Next parent step: wait for Dalton and Arendt, review their disjoint patches, run focused checks, then commit tests/docs separately if clean.
 
 ## Agent Handoffs
 
@@ -179,3 +180,28 @@
   - Update development/testing docs only if the docs agent can do it without broadening beyond TASK-013.
 - Defer to TASK-014/bootstrap unless escalated by re-review:
   - `PRAGMA trusted_schema = OFF`, app DB path ownership, WAL/busy timeout, and list APIs that distinguish no-filter from SQL NULL filters.
+
+### Review-Fix Test Round
+
+- Status: running.
+- Agent:
+  - Dalton the 2nd (`test_writer`, id `019e4702-a9e1-73b0-bbf8-10791d21ac54`).
+- Ownership:
+  - `src-tauri/tests/sqlite_repositories.rs`.
+  - `src-tauri/tests/sqlite_boundary.rs`.
+- Assignment:
+  - Remove the long-lived no-DB-IPC/no-capability assertions that would block TASK-014 while preserving stable no-frontend-raw-SQL / no `tauri-plugin-sql` guards.
+  - Add red tests for metadata logical-key behavior by `(page_id, namespace, key)`.
+  - Add targeted tests for migration drift detection, timestamp preservation, injection literal assertions, observable upsert replacement, and `core_plugin_indexes` ownership FK.
+
+### Docs Sync Round
+
+- Status: running.
+- Agent:
+  - Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`).
+- Ownership:
+  - `docs/architecture/06-filter-native-database.md`.
+  - `docs/development/01-data-roadmap-and-mvp.md`.
+  - `docs/testing/strategy.md`.
+- Assignment:
+  - Sync architecture/development/testing docs to TASK-013's private Rust `rusqlite` repository layer, implemented schema, migration ledger/user_version, neutral plugin index baseline, and out-of-scope TASK-014 boundaries.

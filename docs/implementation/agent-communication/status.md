@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 04:08 CST.
+Last updated: 2026-05-21 04:10 CST.
 
 ## Current Task
 
@@ -8,11 +8,12 @@ Last updated: 2026-05-21 04:08 CST.
 - Branch: `feat/task-013-sqlite-schema-rust-repositories`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round complete; review-fix handoff next.
+- Current phase: review-fix tests and docs agents running.
 
 ## Active Agents
 
-- None.
+- Dalton the 2nd (`test_writer`, id `019e4702-a9e1-73b0-bbf8-10791d21ac54`) - review-fix tests for TASK-013 P1/P2 findings.
+- Arendt the 2nd (`doc_writer`, id `019e4702-c094-7e60-8a0a-fcdc4cd7b04f`) - TASK-013 architecture/development/testing docs sync.
 
 ## Recent Agent Outcomes
 
@@ -44,7 +45,9 @@ Last updated: 2026-05-21 04:08 CST.
 - Heisenberg the 2nd (`test_quality_reviewer`) found one P1 test-quality issue: `sqlite_boundary.rs` permanently bans DB IPC/capability changes, which would block TASK-014. Heisenberg also found P2 test gaps for injection literal assertions, update/upsert observable assertions, over-specific index/ledger assertions, and brittle `DbQuery` string parsing.
 - Wegener the 2nd (`doc_writer`) recommended P1 architecture docs sync for the implemented Rust schema/repositories, `core_commands`, `core_views`, `core_plugin_indexes`, migration ledger, private `rusqlite` layer, and TASK-013 out-of-scope IPC/capability/frontend wiring.
 - Parent decisions: fix the P1 boundary-test issue and P1 metadata logical-key upsert through delegated TDD. Include adjacent P2 fixes in the same review-fix loop for migration checksum/version drift, creation/install timestamp preservation, stronger injection/upsert assertions, and `core_plugin_indexes` ownership FK. Delegate architecture/testing docs sync before merge. Defer `trusted_schema`, app DB path ownership, WAL/busy timeout, and NULL-specific list filters to TASK-014/bootstrap unless a later reviewer escalates them.
-- Parent next step: commit review findings, then delegate review-fix tests and docs sync to agents.
+- Dalton the 2nd (`test_writer`) was spawned for review-fix tests. Ownership is limited to `src-tauri/tests/sqlite_repositories.rs` and `src-tauri/tests/sqlite_boundary.rs`.
+- Arendt the 2nd (`doc_writer`) was spawned for TASK-013 docs sync. Ownership is limited to `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`.
+- Parent next step: wait for Dalton and Arendt, review their disjoint patches, run focused checks, then commit tests/docs separately if clean.
 - Parent local gate passed for TASK-012: `bun run check:quick` passed with 14 frontend test files and 247 tests plus Rust fmt, clippy, and tests. `bun run build` passed.
 - Parent is marking TASK-012 complete in `docs/implementation/progress.md` before merging the branch to `master`.
 - TASK-012 post-fix narrow re-review completed and all agents were closed.
