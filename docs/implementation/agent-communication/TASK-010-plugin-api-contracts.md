@@ -42,10 +42,9 @@
 
 ## Current Status
 
-- Status: implementation active.
-- Active agents:
-  - Anscombe (`implementer`, `019e4699-91c6-73f3-877d-3e195c73f349`): implement type-only Plugin API contracts.
-- Next agent step: wait for Anscombe's production patch and checks.
+- Status: implementation green; review handoff next.
+- Active agents: none.
+- Next agent step: spawn TASK-010 review agents for correctness, security, API/deprecation, docs, and test quality.
 
 ## Agent Handoffs
 
@@ -115,7 +114,7 @@
 
 ### Anscombe (`implementer`)
 
-- Status: active.
+- Status: stopped after status request; focused patch validated and adopted.
 - Agent id: `019e4699-91c6-73f3-877d-3e195c73f349`.
 - Ownership:
   - `src/core/plugin-api/`.
@@ -125,6 +124,33 @@
   - Add the minimum type-only Plugin API contracts needed to pass `src/test/plugin-api-contracts.test.ts`.
   - Keep contributions inert and data-only, `slots` canonical, plugin context facades scoped, and native/Tauri/Host/runtime behavior out of TASK-010.
   - Do not edit tests, docs, config, package files, lockfiles, Tauri/Rust, UI, or existing runtime code unless a type-only import/export impossibility is found.
+- Outcome:
+  - Anscombe produced a focused production patch but no final response after a status request and a second wait window, so the parent stopped the agent to protect the checkout.
+  - Parent accepted the patch after focused validation.
+  - Added type-only Plugin API contract modules under `src/core/plugin-api/`: `manifest.ts`, `contributions.ts`, `context.ts`, `plugin.ts`, and `index.ts`.
+  - Re-exported Plugin API contract types from `src/core/index.ts`.
+  - Kept manifest contributions as inert data descriptors and did not add Plugin Host lifecycle, runtime loading, native bridge, Tauri IPC, filesystem, SQLite, UI, or concrete built-in plugin behavior.
+- Commit:
+  - `603c87b Anscombe(implementation)(Define Plugin API contracts): add plugin API type contracts`.
+
+### Raman (`test_writer`)
+
+- Status: completed and closed.
+- Agent id: `019e4699-91c6-73f3-877d-3e8c36a60002`.
+- Ownership:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Assignment:
+  - Stabilize the Plugin API contract type assertions after production types exposed brittle `toMatchObjectType` checks.
+  - Keep the same contract coverage and do not edit production code.
+- Outcome:
+  - Replaced broad object-shape `expectTypeOf(...).toMatchObjectType(...)` checks with explicit property-level `toEqualTypeOf` assertions for manifest, contribution buckets, lifecycle hooks, and plugin context facades.
+  - Preserved negative sentinel checks for raw runtime handles, legacy `viewSlots`, and non-inert contribution descriptors.
+- Commit:
+  - `9ec1dbb Raman(test-fix)(Define Plugin API contracts): stabilize plugin API type assertions`.
+- Green checks after Raman and Anscombe:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts src/test/plugin-api-contracts.test.ts` passed with 7 tests.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -135,4 +161,4 @@
 
 ## Next Action
 
-Wait for Anscombe's production patch, then run focused Plugin API checks.
+Spawn TASK-010 review agents, then fix any P0/P1 findings before final gate and merge.
