@@ -38,8 +38,9 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete.
-- Active agents: none.
+- Status: review-fix test coverage active.
+- Active agents:
+  - Godel (`test_writer`, `019e433d-a86c-7592-837a-c91a6784dd4b`): add focused node-count exhaustion coverage.
 
 ## Agent Handoffs
 
@@ -194,12 +195,28 @@
 
 ### Targeted Re-review Round
 
-- Status: active.
+- Status: completed with one P2 test-quality blocker.
 - Agents:
   - Heisenberg (`security_reviewer`, `019e4338-6a46-7f12-bb58-bed5a8a2c8ca`): verify prior P1/P2 security findings are fixed and no native exposure broadened.
   - Euclid (`test_quality_reviewer`, `019e4338-6d6b-7810-b628-baa4d4582045`): verify prior P2 coverage gaps are addressed.
   - Herschel (`deprecation_auditor`, `019e4338-70e0-7d10-89d9-6e756c0bb2b7`): verify non-enumerable property issue and operator drift guard.
+- Outcomes:
+  - Heisenberg found no remaining security P0/P1/P2/P3, confirmed Boyle's raw proxy/reflection-trap and hostile `filterId` findings are fixed, and confirmed no native/IPC/package exposure broadened.
+  - Herschel found no remaining P0/P1/P2 issues. The non-enumerable property issue is fixed, the operator drift guard is reasonably covered by compile-time and runtime checks, and focused typecheck/test/lint commands passed.
+  - Euclid found one blocking P2 test-quality gap: the suite does not yet include a focused wide/shallow payload that exceeds the `maxJsonValueNodes` budget, asserts a typed error, and proves the store is unchanged.
 
 ## Next Action
 
-Wait for targeted re-review agents.
+Wait for Godel's focused node-count exhaustion coverage output.
+
+### Godel (`test_writer`)
+
+- Status: active.
+- Agent id: `019e433d-a86c-7592-837a-c91a6784dd4b`.
+- Ownership:
+  - `src/test/core-filter-store.test.ts` only unless unavoidable test-only support is needed.
+- Assignment:
+  - Add a focused wide/shallow payload test that exceeds the Filter Store `maxJsonValueNodes` budget.
+  - Assert a typed validation error rather than a raw error.
+  - Prove rejected `save` and `update` attempts do not mutate stored filters.
+  - Do not edit production code or docs.
