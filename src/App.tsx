@@ -1,23 +1,28 @@
-import reactLogo from "./assets/react.svg";
+import { createAppRuntime, type AppRuntime } from "./bootstrap";
+import { RuntimeProvider, useRuntime } from "./providers";
 import "./App.css";
 
-function App() {
-  return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+type AppProps = {
+  initializeRuntime?: () => Promise<object>;
+};
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+function App({ initializeRuntime = createAppRuntime }: AppProps) {
+  return (
+    <RuntimeProvider initializeRuntime={initializeRuntime}>
+      <MirabilisShell />
+    </RuntimeProvider>
+  );
+}
+
+function MirabilisShell() {
+  const runtime = useRuntime<Pick<AppRuntime, "app">>();
+
+  return (
+    <main className="app-shell" aria-labelledby="app-title">
+      <section className="app-shell__panel">
+        <h1 id="app-title">Mirabilis</h1>
+        <p className="app-shell__status">Runtime {runtime.app.version}</p>
+      </section>
     </main>
   );
 }
