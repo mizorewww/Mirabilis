@@ -40,10 +40,10 @@
 
 ## Current Status
 
-- Status: red tests committed; implementation handoff next.
+- Status: implementation agent running.
 - Active agents:
-  - None.
-- Next parent step: commit this red-signal record, then delegate minimum Rust DB production implementation to `implementer`.
+  - James the 2nd (`implementer`, id `019e46f5-1b48-7de0-9a0a-48420cc3740f`).
+- Next parent step: wait for James the 2nd, review the patch, run focused checks, then commit if green.
 
 ## Agent Handoffs
 
@@ -112,3 +112,21 @@
   - Expected red check: `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite` fails because `mirabilis_lib::db` is missing.
   - Green checks: `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test sqlite_boundary sqlite`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, and `git diff --check`.
   - Test-surface assumptions for implementation: public Rust surface under `mirabilis_lib::db`; `DbError::InvalidJson { table, column, record_id, .. }`; migration `001_core_schema`; schema version `1`; migration ledger table `core_schema_migrations`; event repository is append/get/list oriented.
+
+### Implementation Round
+
+- Status: running.
+- Agent:
+  - James the 2nd (`implementer`, id `019e46f5-1b48-7de0-9a0a-48420cc3740f`).
+- Ownership:
+  - Production Rust DB layer under `src-tauri/src/db/`.
+  - `src-tauri/src/lib.rs` only for module exposure if needed.
+  - `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock` only for moving/adding production `rusqlite` dependency and keeping `tempfile` test-only.
+- Explicitly out of scope:
+  - Test edits unless a blocker is reported first.
+  - Frontend files, NativeBridge files, Plugin API files, docs, capabilities, `tauri.conf.json`, package files, app bootstrap/provider wiring, Tauri IPC commands, `invoke_handler` changes, `tauri-plugin-sql`, `sqlx`, and concrete business plugin index tables.
+- Target checks:
+  - `cargo test --manifest-path src-tauri/Cargo.toml --all-features sqlite`.
+  - `cargo fmt --manifest-path src-tauri/Cargo.toml --check`.
+  - `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`.
+  - `git diff --check`.
