@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 07:04 CST.
+Last updated: 2026-05-21 07:10 CST.
 
 ## Current Task
 
@@ -48,7 +48,12 @@ Last updated: 2026-05-21 07:04 CST.
 - Parent decisions after review round 1: delegate a review-fix TDD loop for P1s covering narrowed provider/public runtime surface, real plugin load/activate failure rejection, stronger no-native-expansion guard, and rejected-initializer cache clearing. Include stable initializer identity and App Shell guard strengthening if small.
 - Completed review round 1 agents were closed. Hubble the 2nd (`doc_writer`) was spawned for the deferred read-only documentation gap review.
 - Hubble the 2nd (`doc_writer`) completed documentation gap review. It recommends deferring docs edits until after the P1 provider-surface review-fix, then updating runtime flow, current layout notes, plugin runtime-provider boundary, NativeBridge/bootstrap persistence note, App Shell responsibilities, and testing strategy.
-- Parent next step: commit review summary, then delegate review-fix tests for P1 findings.
+- Review summary was committed as `3b0b8e4 Codex(progress)(Build app bootstrap and runtime provider): summarize review findings`.
+- Socrates the 2nd (`test_writer`) was spawned for review-fix red tests covering narrowed public runtime surface, real plugin phase failures, stronger native-expansion guard, and rejected-initializer cache clearing. Production implementation, docs, Tauri config/capabilities, Rust code, package/Cargo files, and commits are out of scope.
+- Socrates the 2nd completed and was closed after adding review-fix red tests in `src/test/runtime-provider.test.tsx`, `src/test/app-bootstrap-runtime.test.ts`, and `src/test/app-shell-boundary.test.ts`.
+- Parent confirmed the expected review-fix red signal: focused frontend tests fail 2 tests because public `useRuntime()` exposes unsafe runtime paths and failed initialization remains poisoned by cached rejection; the other 15 tests pass. `git diff --cached --check` passed before commit.
+- Socrates the 2nd's review-fix test commit: `49f6554 Socrates the 2nd(test)(Build app bootstrap and runtime provider): cover review findings`.
+- Parent next step: commit communication update, then spawn `implementer` for the review-fix production patch.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

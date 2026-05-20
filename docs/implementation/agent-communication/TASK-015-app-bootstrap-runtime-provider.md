@@ -37,7 +37,7 @@
 
 ## Current Status
 
-- Status: review-fix test handoff pending.
+- Status: review-fix tests committed; implementation handoff pending.
 - Active agents: none.
 - Completed agents:
   - Jason the 2nd (`pr_explorer`): changed-surface mapping completed.
@@ -308,6 +308,26 @@
   - Strengthen App Shell no-business-logic checks beyond simple regex where practical.
   - Consider React 19 context provider syntax if the production fix naturally touches provider rendering.
 - Parent next action: run a delegated review-fix red-test/implementation loop.
+
+### Socrates the 2nd (`test_writer`) Review-Fix Handoff
+
+- Status: completed and closed.
+- Ownership: failing tests for review round P1 findings only.
+- Files changed:
+  - `src/test/runtime-provider.test.tsx`.
+  - `src/test/app-bootstrap-runtime.test.ts`.
+  - `src/test/app-shell-boundary.test.ts`.
+- Red-test coverage:
+  - Public/provider runtime hook surface must not expose full Core runtime internals or command/native handles to descendants.
+  - Real `createAppRuntime()` plugin phase failures: `loadBuiltInPlugins` rejection rejects bootstrap and skips activation; `activateAll` rejection rejects bootstrap and does not report ready.
+  - No-native-expansion guard must be broader than fixed file/regex scans, preferably diff-based against `master` or scanning all relevant Tauri capability/config/Rust command surfaces.
+  - Rejected initialization promise must not permanently poison future mounts with the same initializer.
+- Added P2 coverage: import-boundary check for App Shell business logic.
+- Parent confirmed expected red command:
+  - `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`.
+- Parent red-test result: 2 failures and 15 passes. Failures are expected because public `useRuntime()` still exposes unsafe runtime paths and failed initialization remains poisoned by the cached rejected promise.
+- Validation before commit: `git diff --cached --check` passed.
+- Test commit: `49f6554 Socrates the 2nd(test)(Build app bootstrap and runtime provider): cover review findings`.
 
 ### Hubble the 2nd (`doc_writer`) Handoff
 
