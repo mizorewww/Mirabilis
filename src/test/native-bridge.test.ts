@@ -53,7 +53,13 @@ const tauriNativeBridgeFile = path.join(
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const testFilePattern = /\.(test|spec)\.[cm]?[tj]sx?$/;
 
-type NativeInvokeMock = Mock<NativeInvoke>;
+type NativeInvokeMock = Mock<
+  (
+    command: NativeBridgeCommand,
+    args: Record<string, unknown>,
+  ) => Promise<unknown>
+> &
+  NativeInvoke;
 type ExpectedNativeBridgeCommands = Readonly<{
   dbExecute: string;
   dbTransaction: string;
