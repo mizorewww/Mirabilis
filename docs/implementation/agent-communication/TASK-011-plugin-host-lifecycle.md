@@ -39,10 +39,9 @@
 
 ## Current Status
 
-- Status: fresh-record batch race production fix in progress.
-- Active agents:
-  - Raman (`implementer`, `019e469e-7b82-7563-bd88-646b98cf57cd`).
-- Next parent step: wait for Raman, then validate green checks.
+- Status: final fresh-record batch re-review handoff.
+- Active agents: none.
+- Next parent step: spawn final focused read-only re-review, then run the local gate if no P0/P1 findings remain.
 
 ## Agent Handoffs
 
@@ -772,7 +771,7 @@
 
 ### Fresh-Record Batch Race Implementation
 
-- Status: in progress.
+- Status: completed and committed.
 - Agent:
   - Raman (`implementer`, `019e469e-7b82-7563-bd88-646b98cf57cd`).
 - Ownership:
@@ -780,6 +779,18 @@
 - Assignment:
   - Fix stale batch rollback so it preserves fresh same-id records and their tracked contributions.
   - Fix batch loading so reaching a concurrently registered same-id plugin cannot overwrite the live record or lose contribution tracking.
+- Outcome:
+  - Raman changed `src/core/plugin-host/plugin-host.ts` only.
+  - `loadBuiltInPlugins()` now re-checks for a live same-id record immediately before each batch install and rejects with `PLUGIN_DUPLICATE_ID` instead of overwriting concurrent registrations.
+  - Batch rollback is now record-identity aware: it only deletes stale records it owns, preserves newer same-id records and their tracked contributions, and restores `nextOrder` without moving behind live records.
+- Commit:
+  - `ad169f3 Raman(review-fix)(Implement Plugin Host lifecycle): preserve fresh batch records`.
+- Green checks:
+  - `bun run typecheck` passed.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 45 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 59 tests.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
 
 ## Parent Decisions
 
@@ -790,4 +801,4 @@
 
 ## Next Action
 
-Wait for Raman, then validate and commit the fresh-record batch race production fix.
+Spawn final focused read-only re-review after Raman's green fix.
