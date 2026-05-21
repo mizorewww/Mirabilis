@@ -65,6 +65,122 @@
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK.
 - Non-blocking notes: unrestricted sandbox/network, known `TERM=dumb` terminal failure, and available Codex update.
 
+## Pre-test Guidance
+
+### Ohm the 3rd - Planner
+
+- Status: completed read-only planning; no files edited, staged, committed, or pushed.
+- Recommended TASK-020 scope:
+  - Task Plugin command.
+  - Metadata/event/source-block update.
+  - Narrow Markdown editor checkbox UI beside the existing TASK-019 task-title open flow.
+- Out of scope:
+  - Automatic save-time scanning/indexing.
+  - Filters/views, tag parsing, metadata bar, timer reactions.
+  - Rich editor migration.
+  - Native/Tauri/package/Cargo changes.
+- Recommended contract:
+  - Command ID: `task.toggle-status`.
+  - Input: `{ sourcePageId, sourceBlockId }`.
+  - Output: `{ pageId, status }`, with `status` as `todo | done`.
+  - Metadata: update `task.status`; preserve/write `task.enabled`, `task.sourcePageId`, and `task.sourceBlockId`.
+  - Events: append page-bound `namespace: "task", type: "completed" | "reopened"` with Plugin Host-injected `sourcePluginId: "task"`.
+  - Source Markdown: toggle source block marker between `- [ ] title` and `- [x] title` in the same transaction as metadata and event writes.
+- Recommended TDD:
+  - Plugin/runtime tests for command registration, complete/reopen, binding reuse/recovery, forged/malformed binding rejection, invalid/stale/non-task/fenced/duplicate cases with no mutation, and rollback on event failure.
+  - UI tests for structured-body checkbox rendering, source-only command payload, no navigation on checkbox click, stale delayed toggle guard, and unsafe title inertness.
+
+### Turing the 3rd - Docs Researcher
+
+- Status: completed read-only current-doc/test guidance; no files edited, staged, committed, pushed, or tests run.
+- Recommended contract:
+  - Use `task.toggle-status`; treat `task.toggle_status` and `task.toggle_checkbox` docs as drift to fix later.
+  - Payload: `{ sourcePageId: string; sourceBlockId: string }`.
+  - Result: exact small result such as `{ pageId: string; status: "todo" | "done" }`.
+  - Toggle should resolve/reuse the task page through the existing source relation path, then mutate source Markdown, metadata, and event inside one transaction.
+- Recommended semantics:
+  - Unchecked `- [ ] A` toggles to `- [x] A`, sets `task.status = "done"`, and appends `task.completed`.
+  - Checked `- [x] A` toggles to `- [ ] A`, sets `task.status = "todo"`, and appends `task.reopened`.
+  - Read both `[x]` and `[X]`; write normalized lowercase `[x]`.
+  - Preserve blockId, attrs, indentation up to three spaces, and unsafe title text; replace only the checkbox marker.
+- UI guidance:
+  - Prefer real `<input type="checkbox">` with accessible name from task title.
+  - Query with role and checked state, for example `findByRole("checkbox", { name: "A", checked: false })`.
+  - Assert the UI sends only `{ sourcePageId, sourceBlockId }`.
+  - Add stale async coverage parallel to TASK-019.
+- External docs checked:
+  - React 19 Responding to Events and controlled checkbox input docs.
+  - Testing Library/user-event v14 intro, click convenience API, ByRole checked filter, and async methods.
+  - Vitest async testing and mock function docs.
+
+### Poincare the 4th - Deprecation/API Auditor
+
+- Status: completed read-only API/deprecation guidance; no files edited, staged, committed, or pushed.
+- P0 guidance:
+  - Use only `task.toggle-status`; do not register `task.toggle_status` or `task.toggle_checkbox` aliases.
+  - Use source identity input and never UI-provided `pageId` or `attrs.boundPageId`.
+  - Store events with Core namespace/type split: `namespace: "task", type: "completed" | "reopened"`; do not store `type: "task.completed"`.
+- P1 guidance:
+  - Reuse TASK-018/TASK-019 source relation checks: unique top-level `markdown.line`, not fenced code, not malformed, verified metadata relation before trusting bound attrs.
+  - Keep source Markdown marker, `task.status`, and event append atomic through plugin transaction APIs.
+  - Define status vocabulary as `todo | done`.
+  - UI checkbox must call `commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`, preserve stale-result guards, and hide/disable controls when textarea Markdown no longer matches the structured body snapshot.
+- P2 guidance:
+  - Prefer camelCase event payload fields such as `taskPageId`, `sourcePageId`, `sourceBlockId`, `previousStatus`, and `status`.
+  - Use event `createdAt` as completion/reopen time unless a future product task adds dedicated completed-at metadata.
+  - Keep TASK-020 off native/package surfaces.
+  - Avoid deprecated `react-dom/test-utils`; continue using RTL and `userEvent.setup()`.
+- External docs checked:
+  - Tauri v2 API/migration and permissions docs.
+  - React 19 upgrade/act docs.
+  - Vite 7 docs.
+  - Vitest 4 migration docs.
+  - Testing Library user-event v14 docs.
+
+### Arendt the 4th - Security Reviewer
+
+- Status: completed read-only security guidance; no files edited, staged, committed, or pushed.
+- P0/P1 blockers: none.
+- Required boundaries:
+  - Toggle remains a Task Plugin command, not Core or native logic.
+  - Payload is only `{ sourcePageId, sourceBlockId }`.
+  - Do not accept or trust caller-supplied `taskPageId`, `boundPageId`, `status`, `title`, event type, timestamps, or metadata values.
+  - Re-read and verify current source block at command time.
+  - Never navigate or mutate from `attrs.boundPageId` alone.
+  - Metadata and events must go through plugin/transaction facades so `sourcePluginId` is host-injected and ownership-checked.
+  - Event writes use `namespace: "task"` and fixed `type: "completed" | "reopened"`.
+  - UI checkbox interactions need TASK-019-style stale guards.
+  - Unsafe titles remain inert React text; no `dangerouslySetInnerHTML`, links, or Markdown rendering from task titles.
+  - No Tauri commands, capabilities, permissions, packages, Cargo dependencies, filesystem access, or NativeBridge methods.
+- Required tests:
+  - Owned `task.toggle-status` registration.
+  - Malformed payload and caller-supplied trusted-field rejection.
+  - Complete/reopen metadata and events with `sourcePluginId: "task"`.
+  - Forged/malformed `attrs.boundPageId` cannot choose the task page.
+  - Invalid source cases fail without page/metadata/event mutation.
+  - Transaction rollback keeps source text/status/event together.
+  - UI sends only source identity and ignores stale delayed results.
+  - Unsafe task titles remain inert.
+  - Native/package surface guard remains empty.
+
+## Parent Decisions After Pre-test Guidance
+
+- Canonical command ID: `task.toggle-status`.
+- Do not add aliases for stale docs names `task.toggle_status` or `task.toggle_checkbox`.
+- Command input: `{ sourcePageId, sourceBlockId }`.
+- Command result: `{ pageId, status }`, with `status` as `todo | done`.
+- Completion behavior:
+  - `- [ ] A` -> `- [x] A`.
+  - `task.status = "done"`.
+  - Append `namespace: "task", type: "completed"`.
+- Reopen behavior:
+  - `- [x] A` or `- [X] A` -> `- [ ] A`.
+  - `task.status = "todo"`.
+  - Append `namespace: "task", type: "reopened"`.
+- Event payload should be JSON/camelCase and source-owned: `taskPageId`, `sourcePageId`, `sourceBlockId`, `previousStatus`, and `status`.
+- Source Markdown marker, metadata update, and event append must happen in one plugin transaction.
+- UI checkbox tests must use accessible checkbox semantics and preserve TASK-019 stale guards.
+
 ## Current Next Action
 
-- Spawn pre-test agents for planning, current docs, deprecation/API, and security guidance.
+- Delegate failing tests to `test_writer`.
