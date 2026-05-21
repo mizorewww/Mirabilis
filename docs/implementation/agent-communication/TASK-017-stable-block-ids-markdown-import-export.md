@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: second review-fix implementation complete; final focused re-review pending.
+- Status: final focused re-review found one remaining P1; third review-fix red test pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -65,7 +65,10 @@
   - Parfit the 3rd (`test_quality_reviewer`): focused test-quality re-review completed with no P0/P1 findings and one remaining P2 representation-overfit concern.
   - Banach the 3rd (`test_writer`): second review regression tests completed, verified red, committed, and closed.
   - Zeno the 3rd (`implementer`): second review-fix implementation completed, validated, committed, and closed.
-- Next parent step: record Zeno the 3rd's result and spawn final focused re-review agents.
+  - Pascal the 3rd (`reviewer`): final focused correctness re-review completed with one remaining P1.
+  - Pasteur the 3rd (`security_reviewer`): final focused security re-review completed with no remaining P0/P1/P2 findings.
+  - Halley the 3rd (`test_quality_reviewer`): final focused test-quality re-review completed with no remaining P0/P1/P2 findings.
+- Next parent step: commit final focused re-review finding and delegate third review-fix red test.
 
 ## Agent Handoffs
 
@@ -487,6 +490,41 @@ git diff --check
 ```
 
 - Result: all passed. Focused frontend tests passed with 2 files / 16 tests. Rust IPC page tests passed with 3 tests.
+
+### Final Focused Re-review Round
+
+- Status: completed.
+
+### Pascal the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness re-review; no files edited.
+- P1: similar-line ID-steal case is not fully fixed when the inserted similar line is a longer continuation than the actual edited old line. Repro:
+  - Original: `Daily note`, `Review PR`, `Ship build`.
+  - Edited: `Daily note`, `Review PR with extra backlog details`, `Review PR with notes`, `Ship build`.
+  - Actual: `Review PR with extra backlog details` keeps the old `Review PR` ID; `Review PR with notes` gets a new ID.
+- Rust IPC structured `markdown.text` block rejection appears fixed.
+- Checks run: focused frontend tests, focused Rust IPC page tests, `git diff --check master...HEAD`, and a read-only custom repro.
+
+### Pasteur the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security re-review; no files edited.
+- Finding: no remaining P0/P1/P2 security issues in requested scope.
+- Reviewed Rust IPC body validation/redacted errors, TS validation parity, DB-only native surface, and inert Markdown display path.
+- Checks run: exact Rust IPC invalid body/transaction tests, focused frontend tests, and `git diff --check master...HEAD`.
+
+### Halley the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only test-quality re-review; no files edited.
+- Finding: no remaining P0/P1/P2 test-quality gaps.
+- Confirmed prior P1 tests and runtime overfit cleanup are covered.
+- Checks run: focused frontend tests and full `ipc_persistence` integration test.
+
+## Third Review-Fix Plan
+
+- Required P1 fix:
+  - Add a red test for Pascal the 3rd's longer-similar-inserted-line variant.
+  - Update ID reconciliation so the actual edited old block keeps its ID even when an earlier inserted line has higher continuation length.
+- Docs sync remains after this final correctness loop is clean.
 
 ## Validation
 
