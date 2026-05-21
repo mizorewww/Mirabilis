@@ -1,0 +1,1 @@
+export { MarkdownEditorPlugin } from "./plugin";

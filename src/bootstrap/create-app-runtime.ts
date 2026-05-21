@@ -4,11 +4,14 @@ import {
   createCoreServices,
   createCoreStores,
   createTauriNativeBridge,
+  createMarkdownRuntimeFacade,
   type AppPlugin,
   type AppRuntimeInfo,
   type CoreRegistries,
   type CoreServices,
   type CoreStores,
+  type MarkdownRuntimeFacade,
+  type PluginHostRecord,
 } from "../core";
 
 import { BUILT_IN_PLUGINS } from "./built-in-plugins";
@@ -18,10 +21,12 @@ export type AppPluginHost = {
     plugins: readonly AppPlugin[],
   ): Promise<readonly unknown[]>;
   activateAll(): Promise<readonly unknown[]>;
+  listPlugins?(): readonly PluginHostRecord[];
 };
 
 export type AppRuntime = CoreServices & {
   app: AppRuntimeInfo;
+  markdown: MarkdownRuntimeFacade;
   stores: CoreStores;
   registries: CoreRegistries;
   services: CoreServices;
@@ -158,6 +163,7 @@ function createDefaultRuntime({
 
   return {
     app,
+    markdown: createMarkdownRuntimeFacade(pluginHost),
     stores: stores as CoreStores,
     registries: registries as CoreRegistries,
     services: coreServices,
