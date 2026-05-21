@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:54 CST.
+Last updated: 2026-05-21 16:03 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:54 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: initial implementation validated; focused review is next.
+- Current phase: focused review completed; review-fix tests are next.
 
 ## Active Agents
 
@@ -87,6 +87,12 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Rawls the 4th (`security_reviewer`) completed security guidance. Recommendation: define a conservative tag grammar, reject untrusted/extra command payload fields, verify page existence, mutate through plugin facades/transactions, parse structured Markdown text rather than HTML, keep filters static/plugin-owned, render tags as inert React text, and avoid native/Tauri/package/Cargo changes.
 - Carver the 4th (`test_writer`) added focused TASK-021 acceptance tests in `src/test/tag-plugin-baseline.test.tsx`. Coverage includes built-in plugin registration, manifest descriptors, commands, metadata writes, refresh extraction/normalization, picker add/remove commands, slot UI behavior, filter definition creation, native surface guard, and no task metadata mutation from source-line tags.
 - Wegener the 4th (`implementer`) added the initial TASK-021 production implementation in `src/bootstrap/built-in-plugins.ts` and `src/plugins/tag/*`. It registers the built-in Tag Plugin, descriptors, commands, metadata slot, tag parsing/normalization, metadata writes, and tag-owned filter creation without native/Tauri/package changes.
+- Focused review after commit `bde416d` completed:
+  - Ramanujan the 4th (`pr_explorer`) found P2: tag slot command rejection handling is missing, and `tag.remove-tag` does not write explicit `tag.tags: []` on a missing-tag remove for a never-tagged page.
+  - Carson the 4th (`reviewer`) found P2: `tag.refresh-tags` indexes prefixes of invalid source tokens like `#time:now` and `#https://example.test/tag`; P2: missing-tag remove on a never-tagged page does not persist empty tag metadata; P3: fixed slot input id can duplicate in multi-slot renders.
+  - Popper the 4th (`security_reviewer`) found no P0/P1/P2 security findings.
+  - Nietzsche the 4th (`test_quality_reviewer`) found no P0/P1 blocking gaps, but P2 missing coverage for invalid source-token forms and P2 branch-coupled native-surface guard.
+  - Ptolemy the 4th (`deprecation_auditor`) found no code blockers. It noted docs-only drift in live agent communication status and formal docs still describing Tag Plugin recognition as entirely future after save.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -107,9 +113,9 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit Wegener the 4th's implementation.
-2. Run focused review agents.
-3. Address any P0/P1 findings before docs sync.
+1. Delegate review-fix tests to `test_writer`.
+2. Delegate implementation fixes after expected red signal.
+3. Defer docs-only drift to docs sync after behavior fixes.
 
 ## Completed TASK-020 Agent Outcomes
 

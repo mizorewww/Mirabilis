@@ -246,6 +246,80 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. TASK-021 focused test passed with 1 file / 8 tests. Adjacent plugin/filter/editor coverage passed with 4 files / 116 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Focused Review Round
+
+### Ramanujan the 4th - Changed Surface Explorer
+
+- Status: completed read-only changed-surface exploration after commit `bde416d`.
+- Findings:
+  - P2: the tag slot has no local validation or rejection handling for command failures. Blank submit can call `commands.execute`, command rejection is awaited without `try/catch`, and no visible recovery is shown.
+  - P2: `tag.remove-tag` does not write explicit `tag.tags: []` when removing a missing tag from a never-tagged page, contrary to the parent empty-state contract for touched pages.
+- Other notes:
+  - No native/package/Tauri surface changes.
+  - Focused and adjacent checks passed.
+
+### Carson the 4th - Correctness Reviewer
+
+- Status: completed read-only correctness review after commit `bde416d`.
+- Findings:
+  - P2: `tag.refresh-tags` indexes prefixes of invalid source tokens. `#time:now` becomes `time`, and `#https://example.test/tag` becomes `https`, violating the baseline grammar to ignore colon-containing and URL-like tags.
+  - P2: `tag.remove-tag` does not persist `tag.tags: []` for a missing-tag remove on a page with no existing tag record.
+  - P3: the tag slot uses a fixed input id, so rendering more than one tag slot creates duplicate DOM ids and can break label targeting.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check master...HEAD
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Carson also ran an ad hoc command probe confirming the two P2 gaps.
+
+### Popper the 4th - Security Reviewer
+
+- Status: completed read-only security review after commit `bde416d`.
+- Finding: no P0/P1/P2 security findings.
+- Confirmed exact-key command payload validation, bounded ASCII slug grammar for command inputs, page existence checks before metadata writes, fixed tag metadata namespace/key, fixed tag filter query shape, inert React slot rendering, and no native/package/Tauri surface changes.
+- Remaining risk: pre-existing `tauri.conf.json` `csp: null` remains unchanged.
+
+### Nietzsche the 4th - Test Quality Reviewer
+
+- Status: completed read-only test-quality review after commit `bde416d`.
+- Findings:
+  - No P0/P1 test-quality gaps.
+  - P2: refresh extraction does not cover invalid source-token forms such as `#time:now`, `#产品`, or control-character tags.
+  - P2: the native-surface guard remains branch/environment coupled because it shells out to `git diff master` with a hand-maintained path list.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+```
+
+- Result: passed with 1 file / 8 tests.
+
+### Ptolemy the 4th - API/Deprecation Auditor
+
+- Status: completed read-only API/deprecation audit after commit `bde416d`.
+- Code blockers: none.
+- Docs-only drift:
+  - P2: agent communication status still said the next action was to commit Wegener's implementation even though `bde416d` was already committed and focused review was underway.
+  - P2: `docs/product/04-editor-and-workflows.md` still frames Tag Plugin recognition as future after save; docs should distinguish TASK-021 command-driven `tag.refresh-tags` recognition from future automatic save-time scanning/filter refresh.
+- External docs verified:
+  - React controlled inputs and React 19 test-utils deprecations, Testing Library render/user-event/role queries, Vitest `vi.fn`, Vite 7 migration/support, and Tauri v2 API/capabilities.
+
+## Parent Decisions After Focused Review
+
+- Add review-fix tests before changing implementation.
+- Required P2 tests:
+  - `tag.refresh-tags` must ignore invalid source-token forms rather than indexing valid-looking prefixes, including `#time:now`, `#https://example.test/tag`, non-ASCII tags, and control-character-like tokens.
+  - `tag.remove-tag` must write explicit empty `tag.tags: []` for a touched page even when the removed tag was missing and no tag metadata existed.
+  - The tag slot must handle blank/invalid command failures locally without an unhandled rejection and with visible accessible feedback.
+- Optional P3 cleanup:
+  - Use a unique input id for `TagMetadataSlot` to avoid duplicate DOM ids when multiple slots render.
+- Defer docs-only drift to docs sync after behavior fixes pass focused review.
+
 ## Current Next Action
 
-- Commit Wegener the 4th's implementation, then run focused review agents.
+- Delegate review-fix tests to `test_writer`.
