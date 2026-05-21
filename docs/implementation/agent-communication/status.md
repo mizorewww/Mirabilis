@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:01 CST.
+Last updated: 2026-05-21 22:02 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-21 22:01 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 initial implementation is committed; focused review is pending.
+- Current phase: TASK-023 focused review is running.
 
 ## Active Agents
 
-- None currently. Next step is to spawn focused review agents.
+- Turing (`pr_explorer`) is mapping TASK-023 changed paths and review hotspots.
+- Fermat (`reviewer`) is reviewing correctness and behavior regressions.
+- Russell (`security_reviewer`) is reviewing metadata UI security and boundary risks.
+- Dirac (`deprecation_auditor`) is reviewing API/deprecation and docs handoff needs.
+- Plato (`test_quality_reviewer`) is reviewing TASK-023 test quality.
 
 ## Completed Recent Task
 
@@ -143,7 +147,7 @@ Last updated: 2026-05-21 22:01 CST.
 
 ## Next Actions
 
-1. Spawn focused review agents for Tesla's implementation.
+1. Wait for Turing, Fermat, Russell, Dirac, and Plato.
 2. Fix any P0/P1 findings through delegated agents.
 
 ## Current TASK-021 State

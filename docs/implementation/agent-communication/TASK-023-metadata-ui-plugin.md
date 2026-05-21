@@ -225,4 +225,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn focused review agents for Tesla's TASK-023 implementation.
+- Turing (`pr_explorer`), Fermat (`reviewer`), Russell (`security_reviewer`), Dirac (`deprecation_auditor`), and Plato (`test_quality_reviewer`) are reviewing Tesla's TASK-023 implementation.
