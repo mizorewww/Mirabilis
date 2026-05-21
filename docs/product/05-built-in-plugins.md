@@ -58,7 +58,7 @@ Task Plugin 是一个插件，不是 Core 功能。
 
 ### 16.1 注册能力
 
-TASK-018 当前已经交付的注册能力：
+TASK-018/TASK-019 当前已经交付的注册能力：
 
 ```text
 Markdown Syntax:
@@ -72,6 +72,7 @@ task.sourceBlockId
 
 Commands:
 task.resolve-task-block
+task.open-task-page
 ```
 
 `task` 是内置插件。manifest 暴露 `task.checkbox` markdown syntax descriptor，语法文本为 `- [ ]`；descriptor 只是编辑器扩展 metadata，不会自己创建任务页。`task.resolve-task-block` 是命令级 resolver，payload 为：
@@ -84,6 +85,25 @@ task.resolve-task-block
 ```
 
 resolver 从当前 source block 派生任务标题，创建或复用任务页，并把 source block 复制更新为带 `attrs.boundPageId` 的 block。重复执行同一 `(sourcePageId, sourceBlockId)` 不会创建重复任务页。
+
+TASK-019 新增 `task.open-task-page`。它使用同一个 payload：
+
+```ts
+{
+  sourcePageId: string;
+  sourceBlockId: string;
+}
+```
+
+open command 与 `task.resolve-task-block` 共享 resolver/source relation 行为，但返回值收窄为：
+
+```ts
+{
+  pageId: string;
+}
+```
+
+UI/editor 点击任务标题时只发送 source page/block 身份，并只打开 command 返回的 `pageId`。`attrs.boundPageId` 是经过 Task Plugin 验证或恢复的 source binding 数据；它不是受信任的导航目标。伪造、不匹配或 malformed `boundPageId` 都按未绑定/不可信处理。
 
 后续范围：
 
@@ -99,7 +119,6 @@ task.renamed
 Commands:
 task.insert_task_syntax
 task.toggle_status
-task.open_task_page
 task.set_due
 task.set_estimate
 
@@ -116,7 +135,7 @@ task.list_item
 task.metadata_fields
 ```
 
-`task.due`、`task.scheduled`、`task.estimate`、`task.priority`、完成时间 metadata、checkbox toggle、open-page command、filters、views 和 events 都是后续 Task Plugin 范围，不属于 TASK-018 当前行为；后续新增 task metadata 时应继续使用 camelCase key。
+`task.due`、`task.scheduled`、`task.estimate`、`task.priority`、完成时间 metadata、checkbox toggle、filters、views 和 events 都是后续 Task Plugin 范围，不属于 TASK-019 当前行为；后续新增 task metadata 时应继续使用 camelCase key。`task.open-task-page` 已是当前 kebab-case command ID。
 
 ### 16.2 输入到任务页面的完整流程
 
@@ -136,6 +155,7 @@ Task Plugin 校验 source block 是未完成任务语法 - [ ] ...
 Task Plugin 创建或复用任务对应 Markdown Page
 Task Plugin 写入 task.enabled、task.status、task.sourcePageId、task.sourceBlockId
 Task Plugin 通过 source block attrs.boundPageId 记录 source relation
+TASK-019 可执行 task.open-task-page({ sourcePageId, sourceBlockId }) 并返回 { pageId }
 ```
 
 当前不会因为保存 Markdown Page 自动扫描所有 task block；也不会处理 `#product`、自动刷新 All Tasks / Today / Tag Filter，或注册任务列表渲染项。这些属于后续 Tag、Filter、View 和 editor integration 任务。
@@ -159,11 +179,15 @@ Metadata: task.status 更新
 点击文字：
 
 ```text
-Command: page.open
-Target: 该任务对应 Markdown Page
+Command: task.open-task-page
+Payload: { sourcePageId, sourceBlockId }
+Return: { pageId }
+Target: command 返回的 Markdown Page
 ```
 
-以上点击逻辑是后续范围。TASK-018 只保证已有调用方可通过 command-level resolver 创建/绑定任务页；点击 checkbox、点击文字打开任务页、`- [x]` 识别和状态切换尚未实现。
+点击文字打开任务页是 TASK-019 当前行为。Markdown 编辑器只在 task syntax extension 存在、当前 Markdown 与结构化 body 快照一致时显示 task-title 按钮；loaded `pageId/pageFacade` 模式从 runtime Markdown page facade 携带结构化 `body`，因此重新打开的页面也能显示按钮。若用户在未保存 textarea 中删除或改名任务行，旧按钮会隐藏；若 `task.open-task-page` 的异步结果在页面切换或内容变化后才返回，结果会被忽略。
+
+点击 checkbox、`- [x]` 识别、状态切换、task completed/reopened events、filters 和 task views 尚未实现。
 
 ---
 

@@ -50,7 +50,7 @@ Status markers:
 ## Milestone M4: Task and tag MVP
 
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
-- [ ] TASK-019: Implement task navigation and infinite nesting
+- [x] TASK-019: Implement task navigation and infinite nesting
 - [ ] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
@@ -78,6 +78,28 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 13:55 CST - TASK-019 completed
+
+- Branch: `feat/task-019-task-navigation-infinite-nesting`.
+- Task: Implement task navigation and infinite nesting.
+- Commits: `5194607`, `5bcf023`, `ee39e02`, `1d7219c`, `b251280`, `ecebed7`, `c5ee8f8`, `495e735`, `a2d3b4f`, `c5e5b65`, `9c70943`, `9af7e63`, `22a83b8`, `0a4b5cc`, `652977c`, `cc5ed43`, and `9b9c20b`.
+- Delivered: Task Plugin command `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }`; shared resolver reuse for verified task page creation/opening; explicit task-title click navigation from structured Markdown editor body; loaded `pageId/pageFacade` structured body propagation; infinite nesting through the same source-page/source-block task relation; metadata-only binding recovery; forged or malformed `attrs.boundPageId` rejection/treat-as-absent behavior; stale delayed open guards for page switch and same-page content edits; and unsaved edit invalidation for task-title buttons.
+- Validation: focused TASK-019/TASK-018/editor/runtime checks passed after implementation and review fixes. Final focused re-review checks passed for 6 files / 111 frontend tests, 3 files / 36 frontend tests, 3 files / 29 frontend tests, `bun run typecheck`, `bun run lint`, `cargo test --manifest-path src-tauri/Cargo.toml --test ipc_boundary`, `git diff --check master...HEAD`, native/package/Tauri surface diff, and test skip/only/todo scans. Final local gate `bun run check:quick` passed with 23 frontend test files / 331 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. Final docs stale searches found no `page.open` or `task.open_task_page` in product/architecture/development/testing docs, and remaining `boundPageId` / TASK-019 future-scope hits were source-binding or deferred-scope notes.
+- `check:full`: not run for TASK-019 because the branch did not add Tauri commands, permissions, capabilities, filesystem/native behavior, package or Cargo dependencies, persistence schema behavior, packaging, or release changes. The branch was covered by `check:quick`, `bun run build`, focused frontend/runtime tests, focused Rust IPC boundary regression, docs review, and empty native/package/Tauri surface checks.
+- Review: planning/current-doc guidance, deprecation/API audit, security guidance, TDD tests, implementation, correctness/security/test-quality/deprecation/docs reviews, review-fix TDD loops, final focused re-review, docs sync, and docs re-review were delegated to agents. Final P0/P1/P2 findings were fixed or cleared before completion. The final docs re-review found no P0/P1/P2 blockers and confirmed docs match `task.open-task-page`, verified/recovered source binding, loaded structured body, stale guards, unsaved edit invalidation, and deferred scope.
+- External docs verified by agents: React `useEffect`, `useTransition`, state reset with keys, React test-utils deprecation guidance, Testing Library `user-event`, role and async queries, Vitest jsdom/mocks, Vite 7 Node support, React 19 createRoot/StrictMode/upgrade deprecations, and Tauri v2 invoke/capabilities/migration guidance. Final docs re-review was local docs/behavior consistency only and did not require new external docs.
+- Remaining risk: TASK-019 intentionally keeps automatic save-time scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces deferred. Non-blocking P3: the native-surface shell-out guard in Vitest is branch/git-environment coupled but accepted in this repository because `master` is canonical and the guard passed locally. Markdown Editor still has a narrow interim Task Plugin parsing/command bridge; future plugin contracts may replace it with richer editor action descriptors.
+
+### 2026-05-21 12:48 CST - TASK-019 started
+
+- Branch: `feat/task-019-task-navigation-infinite-nesting`.
+- Task: Implement task navigation and infinite nesting.
+- Scope: build the next Task Plugin/editor UX slice after TASK-018 so clicking task text opens the bound task page, task pages remain normal Markdown pages that can contain more task blocks, nested task blocks can create their own task pages through the same source-page/source-block relationship, and parent/source relationships remain queryable through metadata.
+- Source docs: `docs/implementation/task-index.md#task-019-implement-task-navigation-and-infinite-nesting`, `docs/product/01-vision-and-core.md#任务可无限嵌套的-markdown-first-时间管理系统开发文档`, `docs/product/04-editor-and-workflows.md#113-任务无限嵌套`, and `docs/architecture/07-runtime-flows.md#182-用户点击任务文字`.
+- Initial out of scope until agents narrow otherwise: checkbox toggle and `- [x]`, `task.completed` / `task.reopened` events, All Tasks / Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new Tauri commands/capabilities, filesystem/native import-export, package/Cargo dependencies, and release packaging.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-019-task-navigation-infinite-nesting.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure and update notice. Parent treats the terminal note as non-blocking for repository agent work.
 
 ### 2026-05-21 12:45 CST - TASK-018 completed
 

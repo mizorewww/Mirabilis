@@ -6,6 +6,11 @@ import {
   type ChangeEvent,
 } from "react";
 
+import {
+  exportStructuredDocumentToMarkdown,
+  type BlockNode,
+  type StructuredMarkdownDocument,
+} from "../../../core";
 import type { MarkdownInsertTextResult } from "../commands/insert-text";
 import { BaseMarkdownToolbar } from "./BaseMarkdownToolbar";
 
@@ -13,6 +18,7 @@ type MarkdownEditorDocument = {
   id: string;
   title: string;
   markdown: string;
+  body?: StructuredMarkdownDocument;
 };
 
 type MarkdownCommandBus = {
@@ -31,17 +37,19 @@ type MarkdownExtensionSource = {
   collectEditorExtensions(): readonly unknown[];
 };
 
-type DirectMarkdownPageEditorProps = {
-  page: MarkdownEditorDocument;
+type MarkdownPageEditorBaseProps = {
   commands: MarkdownCommandBus;
   markdownRuntime?: MarkdownExtensionSource;
+  onOpenPage?: (pageId: string) => void;
 };
 
-type LoadedMarkdownPageEditorProps = {
+type DirectMarkdownPageEditorProps = MarkdownPageEditorBaseProps & {
+  page: MarkdownEditorDocument;
+};
+
+type LoadedMarkdownPageEditorProps = MarkdownPageEditorBaseProps & {
   pageId: string;
   pageFacade: MarkdownPageSource;
-  commands: MarkdownCommandBus;
-  markdownRuntime?: MarkdownExtensionSource;
 };
 
 export type MarkdownPageEditorProps =
@@ -50,6 +58,7 @@ export type MarkdownPageEditorProps =
 
 type EditorState = {
   markdown: string;
+  body?: StructuredMarkdownDocument;
   loadedPageId?: string;
   loading: boolean;
   saving: boolean;
@@ -60,6 +69,7 @@ type EditorAction =
       type: "direct-page";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
     }
   | {
       type: "load-started";
@@ -68,6 +78,7 @@ type EditorAction =
       type: "load-succeeded";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
     }
   | {
       type: "edit";
@@ -80,10 +91,14 @@ type EditorAction =
       type: "save-finished";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
       applySavedMarkdown: boolean;
     };
 
 const insertCommandId = "markdown.insert-text";
+const openTaskPageCommandId = "task.open-task-page";
+const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
+const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 
 export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -94,6 +109,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const pageId = readPageId(props);
   const pageFacade = readPageFacade(props);
   const initialMarkdown = readInitialMarkdown(props);
+  const initialBody = readStructuredBody(props);
   const directPageSignatureRef = useRef(
     pageFacade === undefined
       ? createDirectPageSignature(pageId, initialMarkdown)
@@ -107,12 +123,19 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     () =>
       createInitialEditorState({
         initialMarkdown,
+        initialBody,
         pageId,
         loadsFromPageSource: pageFacade !== undefined,
       }),
   );
   const { markdown, loadedPageId } = state;
+  const structuredBody =
+    pageFacade === undefined ? readStructuredBody(props) : state.body;
   const collectedExtensions = extensionSource?.collectEditorExtensions() ?? [];
+  const taskTitleButtons = collectTaskTitleButtons(
+    readCurrentStructuredBody(structuredBody, markdown),
+    collectedExtensions,
+  );
   const canSave =
     pageFacade !== undefined &&
     !state.loading &&
@@ -147,8 +170,9 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       type: "direct-page",
       pageId,
       markdown: initialMarkdown,
+      body: initialBody,
     });
-  }, [initialMarkdown, pageFacade, pageId]);
+  }, [initialBody, initialMarkdown, pageFacade, pageId]);
 
   useEffect(() => {
     if (pageFacade === undefined) {
@@ -171,6 +195,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         type: "load-succeeded",
         pageId,
         markdown: page.markdown,
+        body: page.body,
       });
     });
 
@@ -252,6 +277,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     dispatch({ type: "save-started" });
 
     let completedMarkdown = saveMarkdown;
+    let completedBody: StructuredMarkdownDocument | undefined;
     let applySavedMarkdown = false;
 
     try {
@@ -261,6 +287,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       });
 
       completedMarkdown = savedPage.markdown;
+      completedBody = savedPage.body;
       applySavedMarkdown =
         latestPageIdRef.current === savePageId &&
         contentVersionRef.current === saveVersion;
@@ -269,6 +296,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         type: "save-finished",
         pageId: savePageId,
         markdown: completedMarkdown,
+        body: completedBody,
         applySavedMarkdown,
       });
     }
@@ -280,6 +308,26 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       type: "edit",
       markdown: event.target.value,
     });
+  }
+
+  async function openStructuredTaskPage(sourceBlockId: string) {
+    const openPageId = pageId;
+    const openVersion = contentVersionRef.current;
+    const output = await commands.execute(openTaskPageCommandId, {
+      sourcePageId: openPageId,
+      sourceBlockId,
+    });
+
+    if (
+      latestPageIdRef.current !== openPageId ||
+      contentVersionRef.current !== openVersion
+    ) {
+      return;
+    }
+
+    const openedPageId = readOpenedPageId(output);
+
+    props.onOpenPage?.(openedPageId);
   }
 
   if (pageFacade !== undefined && loadedPageId === undefined && state.loading) {
@@ -303,6 +351,11 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         disabled={editorDisabled}
         onInsertText={insertText}
       />
+      <TaskTitleButtons
+        disabled={editorDisabled}
+        tasks={taskTitleButtons}
+        onOpenTaskPage={openStructuredTaskPage}
+      />
       <button
         type="button"
         disabled={!canSave}
@@ -311,6 +364,37 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         Save
       </button>
     </section>
+  );
+}
+
+function TaskTitleButtons({
+  disabled,
+  tasks,
+  onOpenTaskPage,
+}: {
+  disabled: boolean;
+  tasks: readonly TaskTitleButton[];
+  onOpenTaskPage(sourceBlockId: string): Promise<void>;
+}) {
+  if (tasks.length === 0) {
+    return null;
+  }
+
+  return (
+    <div aria-label="Task titles">
+      {tasks.map((task) => (
+        <button
+          key={`${task.sourceBlockId}:${task.index}`}
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            void onOpenTaskPage(task.sourceBlockId);
+          }}
+        >
+          {task.title}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -328,19 +412,38 @@ function readInitialMarkdown(props: MarkdownPageEditorProps): string {
   return "page" in props ? props.page.markdown : "";
 }
 
+function readStructuredBody(
+  props: MarkdownPageEditorProps,
+): StructuredMarkdownDocument | undefined {
+  return "page" in props ? props.page.body : undefined;
+}
+
 function readExtensionSource(
   props: MarkdownPageEditorProps,
 ): MarkdownExtensionSource | undefined {
   return props.markdownRuntime;
 }
 
+function readCurrentStructuredBody(
+  body: StructuredMarkdownDocument | undefined,
+  markdown: string,
+): StructuredMarkdownDocument | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+
+  return exportStructuredDocumentToMarkdown(body) === markdown ? body : undefined;
+}
+
 function createInitialEditorState(input: {
   initialMarkdown: string;
+  initialBody?: StructuredMarkdownDocument;
   pageId: string;
   loadsFromPageSource: boolean;
 }): EditorState {
   return {
     markdown: input.initialMarkdown,
+    body: input.initialBody,
     loadedPageId: input.loadsFromPageSource ? undefined : input.pageId,
     loading: input.loadsFromPageSource,
     saving: false,
@@ -359,6 +462,7 @@ function editorStateReducer(
     case "direct-page":
       return {
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
@@ -372,6 +476,7 @@ function editorStateReducer(
     case "load-succeeded":
       return {
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
@@ -397,6 +502,7 @@ function editorStateReducer(
       return {
         ...state,
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         saving: false,
       };
@@ -438,4 +544,114 @@ function isMarkdownInsertTextResult(
     "selectionEnd" in value &&
     typeof value.selectionEnd === "number"
   );
+}
+
+type TaskTitleButton = {
+  index: number;
+  sourceBlockId: string;
+  title: string;
+};
+
+function collectTaskTitleButtons(
+  body: StructuredMarkdownDocument | undefined,
+  extensions: readonly unknown[],
+): readonly TaskTitleButton[] {
+  if (body === undefined || !hasUncheckedTaskSyntax(extensions)) {
+    return [];
+  }
+
+  return body.content.flatMap((block, index) => {
+    const title = readTaskTitle(body.content, block, index);
+
+    if (title === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        index,
+        sourceBlockId: block.blockId,
+        title,
+      },
+    ];
+  });
+}
+
+function hasUncheckedTaskSyntax(extensions: readonly unknown[]): boolean {
+  return extensions.some(
+    (extension) =>
+      isRecord(extension) &&
+      typeof extension.syntax === "string" &&
+      extension.syntax.trim() === "- [ ]",
+  );
+}
+
+function readTaskTitle(
+  blocks: readonly BlockNode[],
+  block: BlockNode,
+  index: number,
+): string | undefined {
+  if (block.type !== "markdown.line" || typeof block.text !== "string") {
+    return undefined;
+  }
+
+  if (isInsideFencedCodeBlock(blocks, index)) {
+    return undefined;
+  }
+
+  const match = uncheckedTaskLinePattern.exec(block.text);
+  const title = match?.groups?.title?.trim() ?? "";
+
+  return title.length === 0 ? undefined : title;
+}
+
+function isInsideFencedCodeBlock(
+  blocks: readonly BlockNode[],
+  targetIndex: number,
+): boolean {
+  let activeFence: string | undefined;
+
+  for (let index = 0; index < targetIndex; index += 1) {
+    const block = blocks[index];
+
+    if (block?.type !== "markdown.line" || typeof block.text !== "string") {
+      continue;
+    }
+
+    const fence = matchFenceMarker(block.text);
+
+    if (fence === undefined) {
+      continue;
+    }
+
+    if (activeFence === undefined) {
+      activeFence = fence;
+    } else if (fence[0] === activeFence[0] && fence.length >= activeFence.length) {
+      activeFence = undefined;
+    }
+  }
+
+  return activeFence !== undefined;
+}
+
+function matchFenceMarker(line: string): string | undefined {
+  const match = fenceLinePattern.exec(line);
+
+  return match?.groups?.fence;
+}
+
+function readOpenedPageId(output: unknown): string {
+  if (
+    isRecord(output) &&
+    typeof output.pageId === "string" &&
+    output.pageId.trim().length > 0
+  ) {
+    return output.pageId;
+  }
+
+  throw new Error("Task open command did not return pageId");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
