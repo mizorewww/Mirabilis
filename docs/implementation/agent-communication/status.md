@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:10 CST.
+Last updated: 2026-05-21 20:16 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-21 20:10 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final narrow boundary review is running.
+- Current phase: final narrow boundary review completed; Core architecture-boundary fix is next.
 
 ## Active Agents
 
-- Confucius (`reviewer`) is reviewing final boundary correctness.
-- Lagrange (`security_reviewer`) is reviewing final boundary security.
-- Kepler (`deprecation_auditor`) is checking final API contracts.
-- Banach (`test_quality_reviewer`) is reviewing final boundary tests.
+- None. Final narrow boundary review agents completed and are ready to close.
 
 ## Completed Recent Task
 
@@ -76,6 +73,7 @@ Last updated: 2026-05-21 20:10 CST.
 - Narrow post-second-fix review completed with Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`). P0 findings: none. P1 finding: accessor-backed fixed filter IDs can bypass plugin-facing namespace enforcement and let a non-owner plugin save `task.filter.today`. Accepted P2 finding: non-owner plugins can squat built-in `task` / `tag` metadata identities before the owning plugin writes them. Accepted P3: malformed raw date metadata equality should fail closed if concise to cover. Deferred P3: total node/branch/condition budgets for very wide direct queries.
 - Heisenberg (`test_writer`) added third review-fix regression tests in `src/test/plugin-api-contracts.test.ts` and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 51 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `0ed12aa`.
 - Bernoulli (`implementer`) fixed the third review regressions in `src/core/plugin-host/plugin-host.ts` and `src/core/filter-engine.ts`. It closes accessor-backed fixed filter id namespace bypasses, reserves built-in `task` and `tag` metadata namespaces for owning plugins, and makes raw malformed `date` metadata fail closed. Parent validation passed: third review-fix focused tests 55/55, expanded focused coverage 114/114, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `8cd3994`.
+- Final narrow boundary review completed with Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`). Confucius/Lagrange/Kepler found no P0/P1/P2 in the narrow boundary behavior. Banach found P1: full frontend tests fail on `src/test/core-architecture-boundary.test.ts` because production Core files now contain the forbidden business-plugin term `task` in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. Parent reproduced the focused architecture-boundary red test. Existing red test is sufficient TDD signal for the next implementation fix.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -87,8 +85,8 @@ Last updated: 2026-05-21 20:10 CST.
 
 ## Next Actions
 
-1. Wait for final narrow boundary review agents.
-2. Address any P0/P1 findings and evaluate P2 findings.
+1. Spawn `implementer` to fix the Core architecture-boundary P1.
+2. Re-run architecture-boundary, focused TASK-022, and adjacent validation, then commit implementation.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
 

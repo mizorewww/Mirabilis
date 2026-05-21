@@ -488,6 +488,35 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Third review-fix focused tests passed with 2 files / 55 tests. Expanded focused coverage passed with 4 files / 114 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Final Narrow Boundary Review
+
+- Status: completed on 2026-05-21 20:16 CST by Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`).
+- P0 findings: none.
+- P1 findings:
+  - Banach found full frontend tests fail on the existing Core architecture boundary. `src/test/core-architecture-boundary.test.ts` reports forbidden business-plugin term `task` in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts` after the owner-boundary fixes. Parent reproduced with `bun run test:frontend -- src/test/core-architecture-boundary.test.ts`, which failed with `src/core/filter-engine.ts: task` and `src/core/plugin-host/plugin-host.ts: task`.
+- Cleared findings:
+  - Confucius and Lagrange found the third review-fix boundary behavior correct for the scoped implementation: accessor-backed filter IDs are rejected, built-in metadata namespaces are reserved, generic namespaces remain allowed, malformed date metadata fails closed, and no native/package/Tauri surface was introduced.
+  - Banach found no test-quality issue in Heisenberg's tests.
+- P3/residual findings:
+  - Kepler found fixed filter id owner derivation uses `.filter.` with `indexOf`, which would reject a same-owner plugin id that itself contains `.filter`. Current built-ins are unaffected; later work should either reserve `.filter` out of plugin ids or derive with a safer rule.
+  - Lagrange reiterated accepted residuals: `within` is deferred, and direct executor has depth/cycle guards but no wide-query total node/branch/condition budget.
+- Checks reported by agents:
+  - Third review-fix focused tests passed with 2 files / 55 tests.
+  - Expanded focused coverage passed with 4 files / 114 tests.
+  - Adjacent view/task/tag coverage passed with 4 files / 69 tests.
+  - `bun run typecheck`, `bun run lint`, focused eslint, `git diff --check`, and native/package/Tauri diff guards were reported clean.
+  - Full frontend tests failed only on the Core architecture boundary.
+
+## Parent Decision For Architecture-Boundary Fix
+
+- Existing `src/test/core-architecture-boundary.test.ts` is already the red TDD signal; no additional test writer is needed before implementation.
+- Delegate a focused implementer fix to remove hard-coded business-plugin terms from production Core files.
+- Preferred implementation direction:
+  - Model reserved metadata owner rules as generic data/config, derived from plugin manifests or injected options outside Core, rather than hard-coding built-in plugin names in Core.
+  - Preserve the runtime behavior proven by Heisenberg/Bernoulli tests: reserved built-in metadata namespaces are protected, generic namespaces remain allowed, and filter execution can enforce owner reservations when provided.
+  - If the Core filter executor API needs an explicit owner-reservation input to avoid hidden business knowledge, update tests/helpers only to pass that generic policy; do not weaken behavior assertions.
+- Keep native/Tauri/package/Rust changes, broad plugin namespace policy, `within`, and wide-query budgets out of scope.
+
 ## Current Next Action
 
-- Final narrow boundary review is running with Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`).
+- Spawn an implementer to fix the Core architecture-boundary P1 without weakening the TASK-022 behavior tests.
