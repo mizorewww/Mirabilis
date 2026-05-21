@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:41 CST.
+Last updated: 2026-05-21 20:46 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 20:41 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: manifest-reservation implementation is in progress.
+- Current phase: manifest-reservation implementation is committed; narrow review is pending.
 
 ## Active Agents
 
-- Kuhn (`implementer`) is fixing manifest-derived metadata reservation behavior.
+- None currently. Next step is to spawn narrow review agents for Kuhn's manifest-reservation fix.
 
 ## Completed Recent Task
 
@@ -77,6 +77,7 @@ Last updated: 2026-05-21 20:41 CST.
 - Nietzsche (`implementer`) fixed the Core architecture-boundary P1 in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/plugin-host/plugin-host.ts`, `src/plugins/task/plugin.ts`, and focused tests. It moved owner policy to generic `metadataOwnerReservations`, derives plugin-host metadata reservations from plugin manifests, and adds Task Plugin manifest metadata field contributions for the current task metadata. Parent validation passed: architecture-boundary 1/1, API/filter focused 55/55, expanded focused 114/114, adjacent view/task/tag 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `3b8f0b9`.
 - Final architecture-boundary review completed with Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`). Singer/Hegel/Noether found no P0/P1 behavior blocker. Leibniz found P1 test gap: real `TaskPlugin.manifest.contributes.metadataFields` is not directly asserted. Hegel found P2: manifest-derived metadata reservations are load-order based and not owner-bound, so a plugin can reserve another plugin's namespace by declaring it first. Noether found P2 docs/API handoff needs around explicit `metadataOwnerReservations`, partial/conflicting metadata field semantics, and deferred `within`.
 - Goodall (`test_writer`) added manifest-derived metadata reservation tests in `src/test/task-filters-view-rendering.test.tsx`, `src/test/plugin-api-contracts.test.ts`, and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 2 failures / 66 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `9301698`.
+- Kuhn (`implementer`) fixed Goodall's manifest-reservation regressions in `src/core/plugin-host/plugin-host.ts`. Manifest reservations now require complete metadata field descriptors and are owner-bound to the declaring plugin's own namespace. Parent validation passed: focused manifest tests 68/68, expanded focused coverage 119/119, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `eeda8af`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -88,8 +89,8 @@ Last updated: 2026-05-21 20:41 CST.
 
 ## Next Actions
 
-1. Wait for Kuhn's manifest-reservation implementation.
-2. Re-run focused and adjacent validation, then commit implementation.
+1. Spawn narrow review agents for Kuhn's manifest-reservation fix.
+2. Fix any P0/P1 findings through delegated agents.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
 

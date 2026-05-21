@@ -606,6 +606,31 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 3 files / 68 tests with 2 failed / 66 passed. Failures show current `PluginHost` still lets first foreign manifest declarations reserve `task`/`tag`, and incomplete descriptors still reserve a namespace. `bun run typecheck`, focused eslint, and `git diff --check` passed.
 
+## Manifest-Reservation Implementation
+
+- Status: completed by Kuhn (`implementer`) on 2026-05-21 20:46 CST.
+- Commit: `eeda8af`.
+- Files changed:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Behavior implemented:
+  - Manifest-derived metadata reservations require complete field descriptors with `namespace`, `key`, and valid `valueType`.
+  - A manifest field descriptor only reserves the declaring plugin's own namespace, so load order cannot let another plugin reserve `task`, `tag`, or another foreign namespace.
+  - Generic own-namespace reservations, same-owner writes, and unreserved metadata writes remain allowed.
+  - Core remains business-agnostic; no native/package/Tauri surface changed.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Manifest-reservation focused tests passed with 3 files / 68 tests. Architecture-boundary focused test passed with 1 file / 1 test. Expanded focused coverage passed with 4 files / 119 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Kuhn (`implementer`) is fixing Goodall's manifest-reservation regressions with the minimum production change.
+- Spawn narrow review agents for Kuhn's manifest-reservation fix, then delegate any P0/P1 follow-up before formal docs sync.
