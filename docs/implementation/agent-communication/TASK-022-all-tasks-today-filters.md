@@ -466,4 +466,4 @@ git diff --check
 
 ## Current Next Action
 
-- Spawn third review-fix `implementer` to make Heisenberg's red regressions pass with the minimum production change.
+- Bernoulli (`implementer`) is fixing Heisenberg's red regressions with the minimum production change.
