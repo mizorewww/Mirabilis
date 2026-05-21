@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:09 CST.
+Last updated: 2026-05-21 08:16 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 08:09 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review round 1 in progress.
+- Current phase: review-fix red-test handoff.
 
 ## Active Agents
 
-- Bernoulli the 2nd (`pr_explorer`) - TASK-016 changed-surface mapping.
-- Meitner the 2nd (`reviewer`) - TASK-016 correctness review.
-- Noether the 2nd (`security_reviewer`) - TASK-016 security boundary review.
-- Avicenna the 2nd (`deprecation_auditor`) - TASK-016 API/deprecation review.
-- Lovelace the 3rd (`docs_researcher`) - TASK-016 docs/current-guidance review.
-- Boyle the 3rd (`test_quality_reviewer`) - TASK-016 test quality review.
+- None. Next agent handoff is TASK-016 review-fix red tests.
 
 ## Recent Agent Outcomes
 
@@ -105,7 +100,15 @@ Last updated: 2026-05-21 08:09 CST.
 - Parent repeated green checks after Mill the 2nd: `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`, `bun run typecheck`, `bun run lint`, `git diff --check`, and `git diff --cached --check` before the implementation commit.
 - Mill the 2nd's implementation commit: `5c9819b Mill the 2nd(implementation)(Implement Markdown Editor Plugin shell): implement markdown editor plugin shell`.
 - TASK-016 review round 1 agents were spawned for changed-surface mapping, correctness, security, API/deprecation, docs/current-guidance, and test quality. `doc_writer` documentation gap review was deferred because the agent thread limit was reached; parent will retry after a review slot opens.
-- Parent next step: wait for review agents, then summarize findings and delegate fixes for any P0/P1 items.
+- Bernoulli the 2nd (`pr_explorer`) completed changed-surface mapping. It confirmed no native/Tauri/package/Cargo/capability surface changes and highlighted hotspots around test-local persistence, editor error handling, slot behavior, extension status filtering, and regex-based security tests.
+- Boyle the 3rd (`test_quality_reviewer`) found no P0 but two P1 test gaps: production Core/NativeBridge save/reopen is not proven because the adapter is test-local, and editor startup/render does not prove `runtime.markdown.collectEditorExtensions()` is collected.
+- Noether the 2nd (`security_reviewer`) found no P0/P1. P2 findings: broad command-bus prop boundary, loose markdown/offset validation, and overly broad PluginHost manifest metadata exposure.
+- Meitner the 2nd (`reviewer`) found one P1: production save/reopen through Core/NativeBridge is not implemented. P2 findings: omitted `selectionEnd` corrupts insertions, async load/save stale content risks, and extension contribution spread order can spoof `pluginId`.
+- Avicenna the 2nd (`deprecation_auditor`) found one P1: extension contribution spread order lets JS plugin data override host-owned `pluginId`. P2 findings: extension collection includes installed/deactivated plugins, optional plugin listing silently no-ops, and textarea should use the controlled React pattern.
+- Maxwell the 3rd (`doc_writer`) completed the deferred docs gap review and says docs sync is blocking before merge for public TypeScript runtime/API surface and delivered editor/bootstrap state.
+- Lovelace the 3rd (`docs_researcher`) found the same P1 NativeBridge-backed persistence gap and P2 docs/controlled-textarea guidance.
+- Parent decisions for review fixes: delegate test-first fixes for production narrow Core/NativeBridge page persistence facade, editor runtime extension collection, and trusted extension `pluginId` ownership. Include small P2s where practical: insert selection defaulting, controlled textarea, stale load/save handling, active/registered extension filtering, registered toolbar slot behavior, narrow prop surfaces, and bounded markdown/offset validation. Defer docs sync until review fixes settle behavior.
+- Parent next step: spawn `test_writer` for review-fix red tests.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

@@ -37,14 +37,8 @@
 
 ## Current Status
 
-- Status: review round 1 in progress.
-- Active agents:
-  - Bernoulli the 2nd (`pr_explorer`) for changed-surface mapping.
-  - Meitner the 2nd (`reviewer`) for correctness review.
-  - Noether the 2nd (`security_reviewer`) for security boundary review.
-  - Avicenna the 2nd (`deprecation_auditor`) for API/deprecation review.
-  - Lovelace the 3rd (`docs_researcher`) for docs/current-guidance review.
-  - Boyle the 3rd (`test_quality_reviewer`) for test quality review.
+- Status: review round 1 completed; review-fix red-test handoff pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -52,7 +46,14 @@
   - Confucius the 2nd (`security_reviewer`): security boundary review completed.
   - Ohm the 2nd (`test_writer`): red tests completed, verified red, committed, and closed.
   - Mill the 2nd (`implementer`): production implementation completed, validated, committed, and closed.
-- Next parent step: wait for review agents, then retry the deferred `doc_writer` documentation gap review once a thread slot opens.
+  - Bernoulli the 2nd (`pr_explorer`): changed-surface mapping completed.
+  - Meitner the 2nd (`reviewer`): correctness review completed.
+  - Noether the 2nd (`security_reviewer`): security boundary review completed.
+  - Avicenna the 2nd (`deprecation_auditor`): API/deprecation review completed.
+  - Lovelace the 3rd (`docs_researcher`): docs/current-guidance review completed.
+  - Boyle the 3rd (`test_quality_reviewer`): test quality review completed.
+  - Maxwell the 3rd (`doc_writer`): documentation gap review completed.
+- Next parent step: delegate review-fix red tests to `test_writer`.
 
 ## Agent Handoffs
 
@@ -228,13 +229,52 @@
 
 ### Review Round 1
 
-- Status: in progress.
-- Active agents:
-  - Bernoulli the 2nd (`pr_explorer`): changed-surface mapping.
-  - Meitner the 2nd (`reviewer`): correctness review.
-  - Noether the 2nd (`security_reviewer`): security boundary review.
-  - Avicenna the 2nd (`deprecation_auditor`): API/deprecation review.
-  - Lovelace the 3rd (`docs_researcher`): docs/current-guidance review.
-  - Boyle the 3rd (`test_quality_reviewer`): test quality review.
-- Deferred agent:
-  - `doc_writer` documentation gap review. Spawn attempt hit the current thread limit, so parent will retry after a review slot opens.
+- Status: completed.
+- Bernoulli the 2nd (`pr_explorer`):
+  - No native/Tauri/package/Cargo/capability surface changes.
+  - Hotspots: production persistence only consumes injected `pageFacade`, editor error handling, registered slot behavior, extension collection status filtering, and regex-based security tests.
+- Boyle the 3rd (`test_quality_reviewer`):
+  - P1: current persistence test uses a test-local NativeBridge facade, so it does not prove a production Core/NativeBridge save/reopen path.
+  - P1: runtime extension tests cover the facade, but not the editor collecting extensions during startup/render.
+  - P2: registered mobile toolbar slot behavior is not tested directly.
+  - P2: static security boundary tests should be backed by behavior-level prop-shape tests.
+- Meitner the 2nd (`reviewer`):
+  - P1: production save/reopen through Core/NativeBridge is not implemented; editor only calls caller-supplied `pageFacade`.
+  - P2: `markdown.insert-text` defaults omitted `selectionEnd` to document end instead of `selectionStart`.
+  - P2: async load/save can write stale content or overwrite edits made during an in-flight save.
+  - P2: markdown extension contribution spread order lets a contribution spoof host-owned `pluginId`.
+- Noether the 2nd (`security_reviewer`):
+  - No P0/P1 findings.
+  - P2: editor view prop boundary accepts a generic command bus instead of an insert-only capability.
+  - P2: markdown input/output size and offset validation is too loose for future persistence/rich rendering.
+  - P2: `PluginHost.listPlugins()` exposes broader manifest metadata than extension collection needs.
+- Avicenna the 2nd (`deprecation_auditor`):
+  - P1: markdown extension contribution spread order lets JS plugin data override trusted `pluginId`.
+  - P2: extension collection includes installed/deactivated plugins; filter to active/registered semantics.
+  - P2: `listPlugins` is optional in runtime bootstrap, so extension collection can silently no-op.
+  - P2: textarea is a hybrid controlled/uncontrolled element; React docs recommend `value` plus synchronous `onChange`.
+- Lovelace the 3rd (`docs_researcher`):
+  - P1: NativeBridge-backed persistence is only demonstrated in tests, not as production runtime facade.
+  - P2: textarea should use React controlled textarea pattern.
+  - P2/P3: docs should clarify inert markdown descriptors and baseline toolbar subset.
+- Maxwell the 3rd (`doc_writer`):
+  - Blocking before merge: docs sync needed for public TypeScript runtime/API surface and delivered editor/bootstrap state.
+  - Docs plan covers plugin host API, editor shell architecture, runtime markdown facade, roadmap wording, testing strategy, product status note, and progress/status bookkeeping.
+
+## Parent Decisions For Review Fixes
+
+- Delegate review-fix tests first; parent remains orchestration-only.
+- P1 fixes to cover:
+  - Production narrow Core/NativeBridge page persistence facade, not a test-local adapter only.
+  - Editor wiring that actually collects `runtime.markdown.collectEditorExtensions()` during startup/render through a safe, narrow prop/API.
+  - Trusted extension `pluginId` ownership cannot be spoofed by manifest contribution fields.
+- P2 fixes to include if practical in the same review-fix loop:
+  - `markdown.insert-text` defaults omitted `selectionEnd` to normalized `selectionStart`.
+  - Textarea uses a fully controlled React pattern.
+  - Load/page changes re-enter loading state and save completion does not overwrite newer edits.
+  - Extension collection filters to currently registered/active plugin records and does not silently no-op when plugin listing is unavailable.
+  - Registered mobile toolbar slot behavior is tested directly.
+  - Editor/toolbar prop surfaces expose narrow insert/runtime/persistence capabilities, not broad runtime/native/db/registry handles.
+  - Command/editor markdown text and offsets are bounded/validated.
+- Explicitly keep out of scope: new Tauri commands/capabilities, broad Core store-to-SQLite rewiring, Tiptap/ProseMirror, Task Plugin semantics, tag indexing, page-link navigation, stable block IDs, Markdown import/export, and dependency changes.
+- Docs sync is required before merge, but should wait until review fixes settle the final behavior.
