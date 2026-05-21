@@ -49,6 +49,13 @@
 
 ## Agent Outcomes
 
+### Test Writer Handoff
+
+- Feynman the 3rd (`test_writer`) started TASK-019 TDD work.
+- Ownership: test-only changes; likely `src/test/task-navigation-infinite-nesting.test.tsx` and narrow test helper changes only if necessary.
+- Requested red coverage: command-driven task open/navigation contract, unbound open, verified binding reuse, metadata-only attr-loss recovery, forged bound page rejection, nested page A -> page B flow, invalid/stale/non-task/duplicate source-block failure with no navigation, unsafe title inertness, storage/page-source consistency, and native/package/Tauri surface guard.
+- Constraints: do not edit production implementation files, do not stage or commit, do not weaken existing tests.
+
 ### Pre-test Guidance
 
 - Jason the 3rd (`planner`) completed read-only planning.
