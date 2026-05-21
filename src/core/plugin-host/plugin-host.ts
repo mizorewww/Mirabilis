@@ -219,6 +219,14 @@ const pluginOwnershipPrefix = "pluginId";
 const sourcePluginOwnershipPrefix = "sourcePluginId";
 const filterIdNamespaceMarker = ".filter.";
 const metadataNamespacePattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const metadataValueTypes = new Set([
+  "string",
+  "number",
+  "boolean",
+  "json",
+  "date",
+  "null",
+]);
 
 class PluginHostImpl implements PluginHostInstance {
   private readonly services: CoreServices;
@@ -1080,11 +1088,7 @@ class PluginHostImpl implements PluginHostInstance {
       const fields = record.manifest.contributes?.metadataFields ?? [];
 
       for (const field of fields) {
-        if (
-          field.namespace !== undefined &&
-          metadataNamespacePattern.test(field.namespace) &&
-          !reservations.has(field.namespace)
-        ) {
+        if (metadataFieldCreatesOwnerReservation(field, record.manifest.id)) {
           reservations.set(field.namespace, record.manifest.id);
         }
       }
@@ -1095,6 +1099,25 @@ class PluginHostImpl implements PluginHostInstance {
       sourcePluginId,
     }));
   }
+}
+
+function metadataFieldCreatesOwnerReservation(
+  field: {
+    namespace?: unknown;
+    key?: unknown;
+    valueType?: unknown;
+  },
+  pluginId: string,
+): field is { namespace: string } {
+  return (
+    field.namespace === pluginId &&
+    typeof field.namespace === "string" &&
+    metadataNamespacePattern.test(field.namespace) &&
+    typeof field.key === "string" &&
+    metadataNamespacePattern.test(field.key) &&
+    typeof field.valueType === "string" &&
+    metadataValueTypes.has(field.valueType)
+  );
 }
 
 export const PluginHost: {
