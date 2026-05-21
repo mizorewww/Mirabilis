@@ -633,4 +633,38 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`) are reviewing Kuhn's manifest-reservation fix. Delegate any P0/P1 follow-up before formal docs sync.
+## Narrow Manifest-Reservation Review
+
+- Status: completed on 2026-05-21 20:52 CST by Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`).
+- P0/P1 findings: none.
+- Accepted P2 findings:
+  - Carver found same-batch `loadBuiltInPlugins()` still allows an earlier plugin's `install()` to write metadata in a later plugin's manifest-reserved namespace before the later owner has been staged.
+  - Socrates found malformed manifest `metadataFields` entries such as `null` can still cause untyped lifecycle failures during metadata writes.
+  - Raman found formal docs need to describe the new reservation contract: only complete manifest metadata descriptors where `namespace === manifest.id`, namespace/key are safe metadata segments, and `valueType` is current/valid create reservations.
+- P3/docs handoff:
+  - Socrates noted dotted plugin ids cannot own/reserve same-named metadata namespaces under the current metadata namespace segment rules; docs should state this if intentional.
+  - Raman noted `metadataValueTypes` duplicates the `MetadataValueType` union and is a future typing maintenance risk.
+  - Kant noted no material test-quality gap; the incomplete descriptor coverage is representative of the prior regression.
+- Checks reported by agents:
+  - Focused manifest tests passed with 3 files / 68 tests.
+  - Architecture-boundary test passed with 1 file / 1 test.
+  - `bun run typecheck`, focused eslint, `git diff --check`, and native/package/Tauri diff guard were clean where run.
+  - Socrates found no eval, dynamic function, fetch/network, raw SQL, Tauri API, filesystem/path/shell capability markers, or new command exposure in the touched surface.
+
+## Parent Decision For P2 Manifest Hardening Cycle
+
+- Although no P0/P1 blocker remains, the same-batch reservation and malformed descriptor findings are adjacent to TASK-022's manifest-derived owner-bound reservation work. Parent decision: fix them before formal docs sync rather than carrying them as residual risks.
+- Delegate regression tests to `test_writer` first. Parent thread will not write tests.
+- Required test scope:
+  - A plugin loaded earlier in the same `loadBuiltInPlugins()` batch cannot write metadata in a later plugin's manifest-reserved namespace during `install()`.
+  - The same-batch owner plugin can still write its own manifest-reserved namespace during `install()` or registration as appropriate.
+  - Malformed `metadataFields` entries such as `null`, non-object entries, or non-array `metadataFields` do not create reservations and do not cause untyped lifecycle failures during later metadata writes.
+  - Existing owner-bound reservation behavior, generic own-namespace reservations, unreserved metadata, and incomplete descriptor behavior remain covered.
+- Required implementation scope after red tests:
+  - Stage or derive batch manifest reservations before plugin install-time metadata writes can occur, without hard-coding business plugin names in Core.
+  - Harden metadata field descriptor iteration/validation against malformed non-object/non-array input.
+  - Keep native/Tauri/package/Rust changes, JS filters, `within`, app-shell filter route integration, and wide-query budgets out of scope.
+
+## Current Next Action
+
+- Spawn `test_writer` for the P2 manifest-reservation hardening regressions.
