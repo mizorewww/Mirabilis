@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:20 CST.
+Last updated: 2026-05-21 18:22 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:20 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix implementation delegated to Godel.
+- Current phase: second review-fix implementation committed; docs sync is next.
 
 ## Active Agents
 
-- Godel (`implementer`) is fixing second review-fix regressions in production Tag Plugin code only.
+- None.
 
 ## Completed Recent Task
 
@@ -122,6 +122,9 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Newton (`test_quality_reviewer`) found no P0/P1 gaps. P2: refresh coverage does not prove stale `tag.tags` records are replaced. P2: native-surface guard is still git-environment coupled.
   - Boole (`deprecation_auditor`) found no P0/P1 findings. P2: `TagMetadataSlot` narrows command results to `{ tags }`, ignores returned `pageId`, and should reject/ignore mismatched page results.
   - Erdos (`docs_researcher`) found P1 docs drift: formal docs still frame tag recognition as future/ambiguous and overstate metadata bar/filter UI behavior. It also identified P2 architecture/testing/progress sync needs and P3 metadata-shape documentation.
+- Second review-fix cycle completed:
+  - James (`test_writer`) added regressions for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection. Expected red: focused test ran 15 tests with 2 failures for `K` command input and mismatched slot add result; typecheck, focused eslint, `git diff --check`, and native/package guard passed.
+  - Godel (`implementer`) fixed raw ASCII validation before lowercasing and strict slot command-result `{ pageId, tags }` validation. Parent validation passed: focused test 15/15, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package guard. Commit: `184e669`.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -142,10 +145,9 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Wait for Godel's production fixes and focused validation.
-2. Run parent validation and commit implementation.
-3. Defer native guard portability to test-infrastructure work; keep parent native/package/Tauri diff checks for TASK-021.
-4. Run docs sync after behavior fixes, covering the P1/P2 docs drift from Erdos.
+1. Delegate docs sync to `doc_writer`, covering the P1/P2 docs drift from Erdos.
+2. Run focused docs diff checks after docs sync.
+3. Run final local gate before progress completion and merge.
 
 ## Completed TASK-020 Agent Outcomes
 

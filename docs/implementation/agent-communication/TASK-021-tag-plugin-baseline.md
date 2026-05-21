@@ -393,6 +393,51 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Defer the git-environment-coupled native-surface guard to future test-infrastructure work because it is an existing pattern and broadening it now would exceed TASK-021 product behavior scope.
   - Fix docs drift after behavior fixes, using Erdos's P1/P2 docs map.
 
+## Second Review-fix Test Handoff
+
+- Status: completed by James (`test_writer`) on 2026-05-21 18:19 CST.
+- Commit: `d3819b1`.
+- Files changed:
+  - `src/test/tag-plugin-baseline.test.tsx`.
+- Coverage added:
+  - `tag.refresh-tags` replaces stale `tag.tags` metadata with exactly current source tags, including `[]`.
+  - `TagMetadataSlot` rejects add/remove command results whose returned `pageId` does not match the current page and does not display mismatched returned tags.
+  - Raw non-ASCII `K` is rejected for `tag.add-tag` without metadata mutation, and `#K` is ignored during source extraction.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bunx eslint src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: expected red signal. Focused test file ran 15 tests with 2 failures: `K` command input did not reject, and the slot stamped mismatched returned tags. `bun run typecheck`, focused eslint, `git diff --check`, and native/package guard passed.
+
+## Second Review-fix Implementation Handoff
+
+- Status: completed by Godel (`implementer`) on 2026-05-21 18:22 CST.
+- Commit: `184e669`.
+- Files changed:
+  - `src/plugins/tag/plugin.ts`.
+  - `src/plugins/tag/components/TagMetadataSlot.tsx`.
+- Behavior fixed:
+  - Raw tag input is validated as ASCII slug text before lowercasing, so values like `K` no longer normalize into valid `k` while ordinary ASCII uppercase tags still normalize.
+  - Source tag extraction uses the same raw ASCII validation before case folding.
+  - `TagMetadataSlot` requires command results shaped as `{ pageId, tags }`, rejects mismatched `pageId` results for add/remove, keeps current tags unchanged, and shows accessible feedback.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused test passed with 1 file / 15 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Godel (`implementer`) is fixing second review-fix regressions in production Tag Plugin code only.
+- Delegate docs sync to `doc_writer` using Erdos's docs drift map.
