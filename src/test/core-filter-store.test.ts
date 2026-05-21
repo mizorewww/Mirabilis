@@ -40,6 +40,7 @@ describe("in-memory Filter Store", () => {
       delete(filterId: string): FilterDefinition;
     }>();
     expectTypeOf<SaveFilterInput>().toEqualTypeOf<{
+      id?: string;
       name: string;
       query: FilterQuery;
       sort?: FilterSort[];
@@ -191,6 +192,33 @@ describe("in-memory Filter Store", () => {
       "FILTER_ID_COLLISION",
     );
     expect(store.list()).toStrictEqual([existing]);
+  });
+
+  it("saves a caller-provided fixed filter id as part of the public contract", () => {
+    const store = createStore({
+      ids: ["filter_unused_generated"],
+      instants: [firstInstant],
+    });
+    const filter = store.save(
+      filterInput({
+        id: "filter_review_ready",
+        name: "Ready Reviews",
+        query: eqQuery("metadata.review.state", "ready"),
+        viewType: "review.list",
+        sourcePluginId: "review",
+      }),
+    );
+
+    expect(filter).toMatchObject({
+      id: "filter_review_ready",
+      name: "Ready Reviews",
+      viewType: "review.list",
+      sourcePluginId: "review",
+    });
+    expect(store.get("filter_review_ready")).toStrictEqual(filter);
+    expect(store.list().map((candidate) => candidate.id)).toStrictEqual([
+      "filter_review_ready",
+    ]);
   });
 
   it.each([

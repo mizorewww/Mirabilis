@@ -257,6 +257,7 @@ type ExpectedPluginListEventsOptions = {
   namespace?: string;
 };
 type ExpectedPluginSaveFilterInput = {
+  id?: string;
   name: string;
   query: PluginFilterQuery;
   sort?: FilterSort[];
@@ -1502,6 +1503,7 @@ describe("Plugin API contracts", () => {
       namespace: "example",
     } satisfies PluginListEventsOptions;
     const filterInput = {
+      id: "filter-open-examples",
       name: "Open Examples",
       query: {
         where: [{ field: "metadata.example.status", op: "eq", value: "open" }],
@@ -1526,6 +1528,7 @@ describe("Plugin API contracts", () => {
     expect(metadataListOptions.namespace).toBe("example");
     expect(eventInput.payload).toEqual({ from: "shortcut" });
     expect(eventListOptions.pageId).toBe("page-1");
+    expect(filterInput.id).toBe("filter-open-examples");
     expect(filterInput.query.where[0]?.value).toBe("open");
     expect(filterUpdate.sort).toBeNull();
     expect(filterListOptions.viewType).toBe("example.view");

@@ -26,6 +26,7 @@ type ExecuteFilterQuery = (
 
 const taskPluginId = "task";
 const tagPluginId = "tag";
+const reviewPluginId = "review";
 const fixedCurrentDate = "2026-05-21";
 const relativeTodayValue = {
   kind: "relative-date",
@@ -180,6 +181,105 @@ describe("Core filter query execution", () => {
     ).toStrictEqual([product.id]);
   });
 
+  it("executes generic metadata queries for arbitrary plugin namespaces and excludes forged owners", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const ready = page({ id: "page-ready-review", title: "Ready review" });
+    const forged = page({
+      id: "page-forged-review",
+      title: "Forged review state",
+    });
+    const blocked = page({
+      id: "page-blocked-review",
+      title: "Blocked review",
+    });
+    const query = {
+      where: [
+        { field: "metadata.review.state", op: "eq", value: "ready" },
+      ],
+    } satisfies FilterQuery;
+
+    expect(
+      executeFilterQuery({
+        pages: [ready, forged, blocked],
+        metadata: [
+          reviewMetadata("state", "ready", ready.id, "string", reviewPluginId),
+          reviewMetadata("state", "ready", forged.id, "string", taskPluginId),
+          reviewMetadata(
+            "state",
+            "blocked",
+            blocked.id,
+            "string",
+            reviewPluginId,
+          ),
+        ],
+        query,
+      }).map((result) => result.id),
+    ).toStrictEqual([ready.id]);
+  });
+
+  it("supports gt and lt comparisons for numeric and date metadata while failing closed for wrong value types", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const ready = page({
+      id: "page-high-score-review",
+      title: "High score review",
+    });
+    const tooLow = page({
+      id: "page-low-score-review",
+      title: "Low score review",
+    });
+    const tooLate = page({
+      id: "page-late-review",
+      title: "Late review",
+    });
+    const stringScore = page({
+      id: "page-string-score-review",
+      title: "String score review",
+    });
+    const stringDate = page({
+      id: "page-string-date-review",
+      title: "String date review",
+    });
+    const query = {
+      where: [
+        { field: "metadata.review.score", op: "gt", value: 80 },
+        {
+          field: "metadata.review.reviewedAt",
+          op: "lt",
+          value: "2026-05-22",
+        },
+      ],
+    } satisfies FilterQuery;
+
+    expect(
+      executeFilterQuery({
+        pages: [ready, tooLow, tooLate, stringScore, stringDate],
+        metadata: [
+          reviewMetadata("score", 90, ready.id, "number"),
+          reviewMetadata("reviewedAt", fixedCurrentDate, ready.id, "date"),
+          reviewMetadata("score", 70, tooLow.id, "number"),
+          reviewMetadata("reviewedAt", fixedCurrentDate, tooLow.id, "date"),
+          reviewMetadata("score", 90, tooLate.id, "number"),
+          reviewMetadata("reviewedAt", "2026-05-23", tooLate.id, "date"),
+          reviewMetadata("score", 95, stringScore.id, "string"),
+          reviewMetadata(
+            "reviewedAt",
+            fixedCurrentDate,
+            stringScore.id,
+            "date",
+          ),
+          reviewMetadata("score", 90, stringDate.id, "number"),
+          reviewMetadata(
+            "reviewedAt",
+            fixedCurrentDate,
+            stringDate.id,
+            "string",
+          ),
+        ],
+        query,
+      }).map((result) => result.id),
+    ).toStrictEqual([ready.id]);
+  });
+
   it("resolves a JSON-compatible relative today query value against a fixed current local date", () => {
     const executeFilterQuery = requireExecuteFilterQuery();
     const dueToday = page({ id: "page-due-today", title: "Due today" });
@@ -255,6 +355,38 @@ describe("Core filter query execution", () => {
         currentDate: fixedCurrentDate,
       }).map((result) => result.id),
     ).toStrictEqual([dueToday.id, scheduledToday.id]);
+  });
+
+  it("fails closed when metadata neq relative today compares against wrong-typed date metadata", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const future = page({ id: "page-future-due", title: "Future due" });
+    const today = page({ id: "page-today-due", title: "Today due" });
+    const wrongValueType = page({
+      id: "page-string-future-due",
+      title: "String future due",
+    });
+    const query = {
+      where: [
+        {
+          field: "metadata.task.due",
+          op: "neq",
+          value: relativeTodayValue,
+        },
+      ],
+    } satisfies FilterQuery;
+
+    expect(
+      executeFilterQuery({
+        pages: [future, today, wrongValueType],
+        metadata: [
+          taskMetadata("due", "2026-05-22", future.id, "date"),
+          taskMetadata("due", fixedCurrentDate, today.id, "date"),
+          taskMetadata("due", "2026-05-22", wrongValueType.id, "string"),
+        ],
+        query,
+        currentDate: fixedCurrentDate,
+      }).map((result) => result.id),
+    ).toStrictEqual([future.id]);
   });
 
   it("does not mutate pages, metadata, or query inputs while executing", () => {
@@ -406,6 +538,23 @@ function tagMetadata(tags: readonly string[], pageId: string): MetadataRecord {
     value: [...tags],
     valueType: "json",
     sourcePluginId: tagPluginId,
+  });
+}
+
+function reviewMetadata(
+  key: string,
+  value: unknown,
+  pageId: string,
+  valueType: MetadataValueType,
+  sourcePluginId = reviewPluginId,
+): MetadataRecord {
+  return metadata({
+    pageId,
+    namespace: "review",
+    key,
+    value,
+    valueType,
+    sourcePluginId,
   });
 }
 

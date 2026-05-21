@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import { BUILT_IN_PLUGINS, createAppRuntime, type AppRuntime } from "../bootstrap";
 import * as Core from "../core";
 import {
+  type AppPlugin,
   createCoreStores,
   type CoreStores,
   type DbQuery,
@@ -18,6 +19,7 @@ import {
   type MarkdownPage,
   type MetadataValueType,
   type NativeBridge,
+  type PluginHostRecord,
   type SlotContribution,
   type ViewDefinition,
 } from "../core";
@@ -53,6 +55,12 @@ type FilterEmptyStateProps = {
   filterName: string;
 };
 
+type PluginLifecycleHost = AppRuntime["pluginHost"] & {
+  register(plugin: AppPlugin): Promise<PluginHostRecord>;
+  activate(pluginId: string): Promise<PluginHostRecord>;
+  deactivate(pluginId: string): Promise<PluginHostRecord>;
+};
+
 type CreateRuntimeOptions = {
   pageIds?: readonly string[];
   metadataIds?: readonly string[];
@@ -60,6 +68,9 @@ type CreateRuntimeOptions = {
 };
 
 const taskPluginId = "task";
+const reviewPluginId = "review";
+const allTasksFilterId = "task.filter.all-tasks";
+const todayFilterId = "task.filter.today";
 const taskPageListViewId = "task.page-list";
 const pageListViewType = "page.list";
 const taskEmptyStateSlotId = "task.filter-empty-state";
@@ -168,6 +179,50 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     });
   });
 
+  it("can deactivate, re-register, and reactivate Task Plugin without colliding or duplicating default filters", async () => {
+    const runtime = await createRuntime();
+    const host = getLifecyclePluginHost(runtime);
+    const taskPlugin = getBuiltInTaskPlugin();
+
+    expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
+      allTasksFilterId,
+      todayFilterId,
+    ]);
+
+    await expect(host.deactivate(taskPluginId)).resolves.toMatchObject({
+      id: taskPluginId,
+      enabled: false,
+      status: "installed",
+    });
+    expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
+      allTasksFilterId,
+      todayFilterId,
+    ]);
+
+    await expect(host.register(taskPlugin)).resolves.toMatchObject({
+      id: taskPluginId,
+      enabled: false,
+      status: "registered",
+    });
+    await expect(host.activate(taskPluginId)).resolves.toMatchObject({
+      id: taskPluginId,
+      enabled: true,
+      status: "active",
+    });
+
+    const taskFilters = runtime.filters.list({ sourcePluginId: taskPluginId });
+
+    expect(taskFilters).toHaveLength(2);
+    expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
+      allTasksFilterId,
+      todayFilterId,
+    ]);
+    expect(taskFilters.map((filter) => filter.name).sort()).toStrictEqual([
+      "All Tasks",
+      "Today",
+    ]);
+  });
+
   it("executes All Tasks through the Core filter engine and renders task page titles as inert text", async () => {
     const runtime = await createRuntime({
       pageIds: [
@@ -204,7 +259,8 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     setTaskMetadata(runtime, unsafeHtml, { status: "todo" });
     setTaskMetadata(runtime, unsafeLink, { status: "todo" });
 
-    const results = executeSavedFilter(runtime, "All Tasks");
+    const allTasksFilter = getSavedFilter(runtime, "All Tasks");
+    const results = executeFilter(runtime, allTasksFilter);
 
     expect(results.map((page) => page.title)).toStrictEqual([
       todo.title,
@@ -213,7 +269,7 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
       unsafeLink.title,
     ]);
 
-    renderPageListView(runtime, results);
+    renderSavedFilterResults(runtime, allTasksFilter, results);
 
     expect(screen.getByText(todo.title)).toBeVisible();
     expect(screen.getByText(done.title)).toBeVisible();
@@ -275,14 +331,15 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     });
     setTaskMetadata(runtime, noDate, { status: "todo" });
 
-    const results = executeSavedFilter(runtime, "Today", fixedCurrentDate);
+    const todayFilter = getSavedFilter(runtime, "Today");
+    const results = executeFilter(runtime, todayFilter, fixedCurrentDate);
 
     expect(results.map((page) => page.title)).toStrictEqual([
       dueToday.title,
       scheduledToday.title,
     ]);
 
-    renderPageListView(runtime, results);
+    renderSavedFilterResults(runtime, todayFilter, results);
 
     expect(screen.getByText(dueToday.title)).toBeVisible();
     expect(screen.getByText(scheduledToday.title)).toBeVisible();
@@ -295,15 +352,86 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
 
   it("renders empty filter results through the registered filter.empty_state slot with minimal data props", async () => {
     const runtime = await createRuntime();
-    const emptyResults = executeSavedFilter(runtime, "Today", fixedCurrentDate);
-    const EmptyState = getTaskFilterEmptyStateSlot(runtime);
+    const todayFilter = getSavedFilter(runtime, "Today");
+    const emptyResults = executeFilter(runtime, todayFilter, fixedCurrentDate);
 
     expect(emptyResults).toStrictEqual([]);
 
-    render(<EmptyState filterName="Today" />);
+    renderSavedFilterResults(runtime, todayFilter, emptyResults);
 
     expect(screen.getByRole("status")).toHaveTextContent(/today/iu);
     expect(screen.getByRole("status")).toHaveTextContent(/empty|no|nothing/iu);
+  });
+
+  it("resolves a saved filter's registered view from viewType instead of a hard-coded task view id", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["page-review-ready"],
+      metadataIds: ["metadata-review-state"],
+      filterIds: ["filter-review-ready"],
+    });
+    const ready = createPage(runtime, "Ready review");
+
+    runtime.registries.views.register<PageListViewProps>({
+      id: "review.page-list",
+      pluginId: reviewPluginId,
+      type: "review.list",
+      title: "Review page list",
+      component: ReviewPageListView,
+      accepts: {
+        kind: "filter-results.markdown-pages",
+      },
+    });
+    runtime.metadata.set({
+      pageId: ready.id,
+      namespace: "review",
+      key: "state",
+      value: "ready",
+      valueType: "string",
+      sourcePluginId: reviewPluginId,
+    });
+    const filter = runtime.filters.save({
+      name: "Ready reviews",
+      query: {
+        where: [
+          { field: "metadata.review.state", op: "eq", value: "ready" },
+        ],
+      },
+      viewType: "review.list",
+      sourcePluginId: reviewPluginId,
+    });
+    const results = executeFilter(runtime, filter);
+
+    renderSavedFilterResults(runtime, filter, results);
+
+    expect(screen.getByRole("list", { name: "Review pages" })).toBeVisible();
+    expect(screen.getByText(`review result: ${ready.title}`)).toBeVisible();
+  });
+
+  it("uses generic empty-state copy for empty page.list filters", async () => {
+    const runtime = await createRuntime({
+      filterIds: ["filter-generic-empty"],
+    });
+    const filter = runtime.filters.save({
+      name: "Saved pages",
+      query: {
+        where: [
+          { field: "metadata.review.state", op: "eq", value: "ready" },
+        ],
+      },
+      viewType: pageListViewType,
+      sourcePluginId: reviewPluginId,
+    });
+    const emptyResults = executeFilter(runtime, filter, fixedCurrentDate);
+
+    expect(emptyResults).toStrictEqual([]);
+
+    renderSavedFilterResults(runtime, filter, emptyResults);
+
+    const status = screen.getByRole("status");
+
+    expect(status).toHaveTextContent(/saved pages/iu);
+    expect(status).toHaveTextContent(/empty|no|nothing/iu);
+    expect(status).not.toHaveTextContent(/\btasks?\b/iu);
   });
 
   it("does not require native, Tauri, package, Cargo, permission, or command-surface changes", async () => {
@@ -372,6 +500,16 @@ function createPage(runtime: AppRuntime, title: string): MarkdownPage {
   });
 }
 
+function ReviewPageListView({ pages }: PageListViewProps) {
+  return (
+    <ul aria-label="Review pages">
+      {pages.map((page) => (
+        <li key={page.id}>{`review result: ${page.title}`}</li>
+      ))}
+    </ul>
+  );
+}
+
 function setTaskMetadata(
   runtime: AppRuntime,
   page: MarkdownPage,
@@ -423,12 +561,11 @@ function setTaskMetadata(
   }
 }
 
-function executeSavedFilter(
+function executeFilter(
   runtime: AppRuntime,
-  filterName: "All Tasks" | "Today",
+  filter: FilterDefinition,
   currentDate?: string,
 ): MarkdownPage[] {
-  const filter = getSavedFilter(runtime, filterName);
   const executeFilterQuery = requireExecuteFilterQuery();
 
   return executeFilterQuery({
@@ -454,29 +591,71 @@ function getSavedFilter(
   return filter;
 }
 
-function renderPageListView(
+function renderSavedFilterResults(
   runtime: AppRuntime,
+  filter: FilterDefinition,
   pages: readonly MarkdownPage[],
 ): void {
-  const PageListView = getTaskPageListView(runtime);
+  if (pages.length === 0) {
+    const EmptyState = getFilterEmptyStateSlot(runtime);
+
+    render(<EmptyState filterName={filter.name} />);
+    return;
+  }
+
+  const PageListView = getPageListViewForFilter(runtime, filter);
 
   render(<PageListView pages={pages} />);
 }
 
-function getTaskPageListView(
+function getPageListViewForFilter(
   runtime: AppRuntime,
+  filter: FilterDefinition,
 ): ComponentType<PageListViewProps> {
-  const view = runtime.registries.views.get(taskPageListViewId);
+  const view = runtime.registries.views.list({ type: filter.viewType })[0];
+
+  if (view === undefined) {
+    throw new Error(`Missing view for filter viewType ${filter.viewType}`);
+  }
 
   return (view as ViewDefinition<PageListViewProps>).component;
 }
 
-function getTaskFilterEmptyStateSlot(
+function getFilterEmptyStateSlot(
   runtime: AppRuntime,
 ): ComponentType<FilterEmptyStateProps> {
-  const contribution = runtime.registries.slots.get(taskEmptyStateSlotId);
+  const contribution = runtime.registries.slots.list({
+    slot: filterEmptyStateSlot,
+  })[0];
+
+  if (contribution === undefined) {
+    throw new Error(`Missing ${filterEmptyStateSlot} slot contribution`);
+  }
 
   return (contribution as SlotContribution<FilterEmptyStateProps>).component;
+}
+
+function getTaskDefaultFilterIds(runtime: AppRuntime): string[] {
+  return runtime.filters
+    .list({ sourcePluginId: taskPluginId })
+    .map((filter) => filter.id)
+    .sort();
+}
+
+function getBuiltInTaskPlugin(): AppPlugin {
+  const taskPlugin = BUILT_IN_PLUGINS.find(
+    (plugin) => plugin.manifest.id === taskPluginId,
+  );
+
+  if (taskPlugin === undefined) {
+    throw new Error("Missing built-in Task Plugin");
+  }
+
+  return taskPlugin;
+}
+
+function getLifecyclePluginHost(runtime: AppRuntime): PluginLifecycleHost {
+  return runtime.pluginHost as PluginLifecycleHost;
 }
 
 function readExecuteFilterQuery(): ExecuteFilterQuery | undefined {
