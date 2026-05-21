@@ -1,6 +1,10 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import { CommandRegistryError, createInMemoryCommandRegistry } from "../core";
+import {
+  CommandRegistryError,
+  PluginHostError,
+  createInMemoryCommandRegistry,
+} from "../core";
 import {
   CommandRegistryError as CommandRegistryErrorFromCommands,
   createInMemoryCommandRegistry as createInMemoryCommandRegistryFromCommands,
@@ -464,6 +468,36 @@ describe("in-memory Command Registry and Command Bus", () => {
       () => commands.execute("workspace.spoof-plugin-host-error"),
       "COMMAND_HANDLER_FAILED",
       { hiddenCause: spoofedPluginHostError },
+    );
+  });
+
+  it("redacts constructible PluginHostError instances thrown by non-plugin command handlers", async () => {
+    const commands = createInMemoryCommandRegistry();
+    const directPluginHostError = new PluginHostError(
+      "PLUGIN_LIFECYCLE_FAILED",
+      "direct non-plugin command failure",
+      {
+        pluginId: "task",
+        phase: "command",
+        cause: new Error("raw direct plugin-host cause"),
+      },
+    );
+
+    commands.register(
+      commandDefinition({
+        id: "workspace.direct-plugin-host-error",
+        pluginId: "workspace",
+        title: "Direct plugin host error",
+        handler: () => {
+          throw directPluginHostError;
+        },
+      }),
+    );
+
+    await expectCommandRegistryErrorAsync(
+      () => commands.execute("workspace.direct-plugin-host-error"),
+      "COMMAND_HANDLER_FAILED",
+      { hiddenCause: directPluginHostError },
     );
   });
 
