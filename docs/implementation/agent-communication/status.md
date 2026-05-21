@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:37 CST.
+Last updated: 2026-05-21 08:39 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 08:37 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused re-review handoff.
+- Current phase: focused re-review in progress.
 
 ## Active Agents
 
-- None. Next agent handoff is focused re-review.
+- Arendt the 3rd (`reviewer`) - TASK-016 correctness re-review.
+- Carson the 3rd (`security_reviewer`) - TASK-016 security re-review.
+- Popper the 3rd (`test_quality_reviewer`) - TASK-016 test quality re-review.
+- Noether the 3rd (`deprecation_auditor`) - TASK-016 API/deprecation re-review.
+- Franklin the 3rd (`docs_researcher`) - TASK-016 docs/current-guidance re-review.
+- Confucius the 3rd (`pr_explorer`) - TASK-016 final changed-surface mapping.
 
 ## Recent Agent Outcomes
 
@@ -119,7 +124,8 @@ Last updated: 2026-05-21 08:37 CST.
 - Parent repeated green checks after Poincare/Fermat: focused TASK-016 frontend tests, `bun run typecheck`, `bun run lint`, and `git diff --check`. `git diff --cached --check` passed before the production commit.
 - Poincare the 3rd's test-fix commit: `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.
 - Fermat the 3rd's review-fix implementation commit: `d2b9702 Fermat the 3rd(review-fix)(Implement Markdown Editor Plugin shell): address review findings`.
-- Parent next step: spawn focused re-review agents before documentation sync.
+- TASK-016 focused re-review agents were spawned for correctness, security, test quality, API/deprecation, docs/current-guidance, and final changed-surface mapping.
+- Parent next step: wait for focused re-review agents and decide whether docs sync can proceed.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

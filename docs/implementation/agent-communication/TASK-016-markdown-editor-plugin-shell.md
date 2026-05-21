@@ -37,8 +37,14 @@
 
 ## Current Status
 
-- Status: review-fix implementation completed and committed; focused re-review handoff pending.
-- Active agents: none.
+- Status: focused re-review in progress.
+- Active agents:
+  - Arendt the 3rd (`reviewer`) for correctness re-review.
+  - Carson the 3rd (`security_reviewer`) for security re-review.
+  - Popper the 3rd (`test_quality_reviewer`) for test quality re-review.
+  - Noether the 3rd (`deprecation_auditor`) for API/deprecation re-review.
+  - Franklin the 3rd (`docs_researcher`) for docs/current-guidance re-review.
+  - Confucius the 3rd (`pr_explorer`) for final changed-surface mapping.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -56,7 +62,7 @@
   - Chandrasekhar the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
   - Fermat the 3rd (`implementer`): production review-fix implementation completed, validated, committed, and closed.
   - Poincare the 3rd (`test_writer`): narrow test-lint fix completed, validated, committed, and closed.
-- Next parent step: spawn focused re-review agents.
+- Next parent step: wait for focused re-review agents and decide whether docs sync can proceed.
 
 ## Agent Handoffs
 
@@ -362,3 +368,14 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
 - Commit: `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.
+
+### Focused Re-review
+
+- Status: in progress.
+- Active agents:
+  - Arendt the 3rd (`reviewer`): correctness re-review.
+  - Carson the 3rd (`security_reviewer`): security/boundary re-review.
+  - Popper the 3rd (`test_quality_reviewer`): test quality re-review.
+  - Noether the 3rd (`deprecation_auditor`): API/deprecation re-review.
+  - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review.
+  - Confucius the 3rd (`pr_explorer`): final changed-surface mapping.
