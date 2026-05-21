@@ -37,8 +37,9 @@
 
 ## Current Status
 
-- Status: async-insert red tests completed and committed; implementation handoff pending.
-- Active agents: none.
+- Status: async-insert implementation in progress.
+- Active agents:
+  - Dewey the 3rd (`implementer`) for async-insert race fix.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -63,7 +64,8 @@
   - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review completed.
   - Confucius the 3rd (`pr_explorer`): final changed-surface mapping completed.
   - Ampere the 3rd (`test_writer`): async-insert red test completed, verified red, committed, and closed.
-- Next parent step: spawn `implementer` for the minimum async-insert race fix.
+  - Dewey the 3rd (`implementer`): async-insert race fix in progress.
+- Next parent step: wait for Dewey the 3rd, run focused green checks, and commit implementation if scope and validation match.
 
 ## Agent Handoffs
 
@@ -431,3 +433,22 @@
   - `git diff --check` passed.
   - `git diff --cached --check` passed before commit.
 - Commit: `630cc3a Ampere the 3rd(test)(Implement Markdown Editor Plugin shell): cover async insert race`.
+
+### Dewey the 3rd (`implementer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e4803-9e8e-78b1-ae29-f898e775e60a`.
+- Ownership: minimum production fix for async insert race.
+- Allowed write scope:
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+  - `src/plugins/markdown-editor/commands/insert-text.ts` only if truly needed.
+  - Tiny adjacent production helper only if clearly necessary.
+- Required behavior:
+  - Delayed `markdown.insert-text` results must not overwrite newer content or page changes.
+  - Normal insert behavior and caret restore must remain intact when no newer edit/page change happened.
+- Required checks:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+- Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, generated files, dependencies, or commits.
