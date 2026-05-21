@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:46 CST.
+Last updated: 2026-05-21 20:47 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 20:46 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: manifest-reservation implementation is committed; narrow review is pending.
+- Current phase: narrow review of the manifest-reservation implementation is running.
 
 ## Active Agents
 
-- None currently. Next step is to spawn narrow review agents for Kuhn's manifest-reservation fix.
+- Carver (`reviewer`) is reviewing correctness for Kuhn's manifest-reservation fix.
+- Socrates (`security_reviewer`) is reviewing metadata ownership/security boundaries for the fix.
+- Raman (`deprecation_auditor`) is reviewing API/deprecation and docs handoff implications for the fix.
+- Kant (`test_quality_reviewer`) is reviewing Goodall's regression coverage and Kuhn's fix validation.
 
 ## Completed Recent Task
 
@@ -89,7 +92,7 @@ Last updated: 2026-05-21 20:46 CST.
 
 ## Next Actions
 
-1. Spawn narrow review agents for Kuhn's manifest-reservation fix.
+1. Wait for Carver, Socrates, Raman, and Kant.
 2. Fix any P0/P1 findings through delegated agents.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.

@@ -633,4 +633,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn narrow review agents for Kuhn's manifest-reservation fix, then delegate any P0/P1 follow-up before formal docs sync.
+- Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`) are reviewing Kuhn's manifest-reservation fix. Delegate any P0/P1 follow-up before formal docs sync.
