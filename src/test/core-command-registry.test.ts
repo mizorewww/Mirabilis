@@ -439,6 +439,34 @@ describe("in-memory Command Registry and Command Bus", () => {
     ]);
   });
 
+  it("redacts PluginHostError-shaped plain objects thrown by non-plugin command handlers", async () => {
+    const commands = createInMemoryCommandRegistry();
+    const spoofedPluginHostError = {
+      name: "PluginHostError",
+      code: "PLUGIN_COMMAND_FAILED",
+      pluginId: "task",
+      phase: "command",
+      cause: new Error("raw spoofed plugin-host cause"),
+    };
+
+    commands.register(
+      commandDefinition({
+        id: "workspace.spoof-plugin-host-error",
+        pluginId: "workspace",
+        title: "Spoof plugin host error",
+        handler: () => {
+          throw spoofedPluginHostError;
+        },
+      }),
+    );
+
+    await expectCommandRegistryErrorAsync(
+      () => commands.execute("workspace.spoof-plugin-host-error"),
+      "COMMAND_HANDLER_FAILED",
+      { hiddenCause: spoofedPluginHostError },
+    );
+  });
+
   it("uses standard Error cause visibility for command registry errors", () => {
     const commands = createInMemoryCommandRegistry();
     const existing = commands.register(
