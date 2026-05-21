@@ -166,8 +166,28 @@ function registerTaskFilters(ctx: PluginContext): void {
     viewType: pageListViewType,
   };
 
-  ctx.filters.save(allTasksFilter);
-  ctx.filters.save(todayFilter);
+  upsertTaskDefaultFilter(ctx, allTasksFilter);
+  upsertTaskDefaultFilter(ctx, todayFilter);
+}
+
+function upsertTaskDefaultFilter(
+  ctx: PluginContext,
+  filter: TaskDefaultFilterInput,
+): void {
+  try {
+    ctx.filters.get(filter.id);
+  } catch {
+    ctx.filters.save(filter);
+    return;
+  }
+
+  ctx.filters.update(filter.id, {
+    name: filter.name,
+    query: filter.query,
+    sort: null,
+    group: null,
+    viewType: filter.viewType,
+  });
 }
 
 async function resolveTaskBlock(

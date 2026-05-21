@@ -21,5 +21,5 @@ export function TaskPageListView({ pages }: TaskPageListViewProps) {
 export function TaskFilterEmptyState({
   filterName,
 }: TaskFilterEmptyStateProps) {
-  return <p role="status">{`${filterName} has no task pages.`}</p>;
+  return <p role="status">{`${filterName} has no pages.`}</p>;
 }

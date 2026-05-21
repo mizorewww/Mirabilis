@@ -76,6 +76,7 @@ export type PluginEventStore = {
 };
 
 export type PluginSaveFilterInput = {
+  id?: string;
   name: string;
   query: PluginFilterQuery;
   sort?: FilterSort[];

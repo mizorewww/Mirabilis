@@ -162,11 +162,20 @@ function matchesFilterCondition(
     case "eq":
       return valuesEqual(fieldValue, comparable);
     case "neq":
+      if (
+        comparable.requiresDateMetadata &&
+        !isDateMetadataValue(fieldValue)
+      ) {
+        return false;
+      }
+
       return !valuesEqual(fieldValue, comparable);
     case "includes":
       return valueIncludes(fieldValue, comparable);
     case "gt":
+      return valuesCompare(fieldValue, comparable, "gt");
     case "lt":
+      return valuesCompare(fieldValue, comparable, "lt");
     case "within":
       return false;
     default:
@@ -270,7 +279,66 @@ function valueIncludes(
   return fieldValue.value.some((item) => Object.is(item, expected.value));
 }
 
-function isDateMetadataValue(fieldValue: FieldValue): boolean {
+function valuesCompare(
+  fieldValue: FieldValue,
+  expected: Extract<ComparableValue, { comparable: true }>,
+  operator: "gt" | "lt",
+): boolean {
+  const operands = resolveComparisonOperands(fieldValue, expected);
+
+  if (operands === undefined) {
+    return false;
+  }
+
+  return operator === "gt"
+    ? operands.field > operands.expected
+    : operands.field < operands.expected;
+}
+
+function resolveComparisonOperands(
+  fieldValue: FieldValue,
+  expected: Extract<ComparableValue, { comparable: true }>,
+): { field: number | string; expected: number | string } | undefined {
+  if (expected.requiresDateMetadata) {
+    return isDateMetadataValue(fieldValue) &&
+      typeof expected.value === "string" &&
+      isDateOnlyString(expected.value)
+      ? {
+          field: fieldValue.value,
+          expected: expected.value,
+        }
+      : undefined;
+  }
+
+  if (fieldValue.valueType === "number") {
+    return typeof fieldValue.value === "number" &&
+      Number.isFinite(fieldValue.value) &&
+      typeof expected.value === "number" &&
+      Number.isFinite(expected.value)
+      ? {
+          field: fieldValue.value,
+          expected: expected.value,
+        }
+      : undefined;
+  }
+
+  if (fieldValue.valueType === "date") {
+    return isDateMetadataValue(fieldValue) &&
+      typeof expected.value === "string" &&
+      isDateOnlyString(expected.value)
+      ? {
+          field: fieldValue.value,
+          expected: expected.value,
+        }
+      : undefined;
+  }
+
+  return undefined;
+}
+
+function isDateMetadataValue(
+  fieldValue: FieldValue,
+): fieldValue is FieldValue & { value: string; valueType: "date" } {
   return (
     fieldValue.valueType === "date" &&
     typeof fieldValue.value === "string" &&

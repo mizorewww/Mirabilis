@@ -28,6 +28,7 @@ export class FilterStoreError extends Error {
 }
 
 export type SaveFilterInput = {
+  id?: string;
   name: string;
   query: FilterQuery;
   sort?: FilterSort[];
