@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 13:25 CST.
+Last updated: 2026-05-21 13:31 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 13:25 CST.
 - Branch: `feat/task-019-task-navigation-infinite-nesting`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation committed; focused re-review pending.
+- Current phase: focused re-review complete; second review-fix test handoff pending.
 
 ## Active Agents
 
@@ -31,6 +31,11 @@ Last updated: 2026-05-21 13:25 CST.
   - Bacon the 3rd (`test_quality_reviewer`) found P1 missing loaded/persisted editor path coverage and P2 brittleness in the native-surface regression test shelling out to `git diff master`.
 - Hypatia the 3rd (`test_writer`) added review-fix regression tests for loaded editor task navigation, stale delayed task-open navigation, and malformed `attrs.boundPageId` hardening. Commit: `a2d3b4f`.
 - Kuhn the 3rd (`implementer`) fixed the review regressions by treating malformed `boundPageId` as absent, carrying structured body through the Markdown page runtime facade, rendering task buttons in loaded editor mode, and dropping stale delayed task-open results after page/content changes. Commit: `c5e5b65`.
+- Focused re-review completed:
+  - Anscombe the 3rd (`reviewer`) cleared the prior correctness P1s and found one P2: task buttons remain derived from the last structured body after unsaved textarea edits, so old buttons can remain visible after deleting or renaming a task line.
+  - Leibniz the 3rd (`test_quality_reviewer`) found one P1 test gap: loaded editor regression uses a mocked page facade that already returns `body`, so `createMarkdownPageRuntimeFacade().load()` body propagation is not pinned. P2: stale async coverage covers page switch but not same-page content edit. P3: native-surface shell-out remains brittle but non-blocking in this repo.
+  - Mendel the 3rd (`security_reviewer`) found no security/API regressions after the review fix and verified native/API surface remains empty.
+  - Dirac the 3rd (`docs_researcher`) found remaining docs P1/P2 drift: direct `page.open` / `boundPageId` navigation, stale `task.open_task_page`, click navigation described as future-only, missing loaded structured-body/stale-guard architecture notes, and missing TASK-019 testing guidance.
 
 ## Completed Recent Task
 
@@ -117,6 +122,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit review-fix result summary.
-2. Spawn focused re-review agents for correctness, test quality, security/API, and docs drift.
-3. Fix remaining P0/P1 findings before docs sync/final gate.
+1. Commit focused re-review summary.
+2. Spawn `test_writer` for second review-fix tests covering real runtime facade body propagation and unsaved-edit button invalidation/content-version stale path.
+3. Delegate implementation, then run focused re-review again before docs sync.

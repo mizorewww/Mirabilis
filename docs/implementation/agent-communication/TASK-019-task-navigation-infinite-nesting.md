@@ -172,6 +172,34 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
   - `git diff --check` passed.
   - Native/package/Tauri surface diff from `master` returned no files.
 
+### Focused Re-review After Review-fix
+
+- Status: completed.
+- Agents:
+  - Anscombe the 3rd (`reviewer`): focused correctness re-review.
+  - Leibniz the 3rd (`test_quality_reviewer`): focused test-quality re-review.
+  - Mendel the 3rd (`security_reviewer`): focused security/API re-review.
+  - Dirac the 3rd (`docs_researcher`): focused docs re-review.
+
+#### Focused Re-review Findings
+
+- Prior correctness P1s are cleared: loaded `pageId/pageFacade` mode now propagates structured body into editor state, and delayed task-open results are guarded by page id and content version before `onOpenPage`.
+- P1 test-quality: loaded editor regression mocks `pageFacade.load` to return a document with `body`, so it does not pin the real `createMarkdownPageRuntimeFacade().load()` body propagation. A regression dropping `body` from the runtime facade would leave TASK-019 tests green.
+- P2 correctness: task buttons remain derived from the last structured body after unsaved textarea edits. Deleting or renaming `- [ ] A` in the textarea can leave the old `A` button enabled until save/reload.
+- P2 test-quality: stale async navigation coverage covers page switching, but not the same-page content-edit stale path.
+- P3 test-quality: native-surface shell-out inside Vitest remains brittle but non-blocking because `master` is the documented integration branch and the guard passed locally.
+- Security/API: no remaining security/API blockers. Native/API surface remains empty. Remaining risk is accepted for now: command payload validation is adequate for the in-process command boundary but still accepts extra keys and direct object property reads.
+- Docs P1/P2 remain: formal product/architecture/development/testing docs still need TASK-019 sync for `task.open-task-page`, explicit click/open behavior, loaded structured-body navigation, stale async guard, current/future boundary, and TASK-019 test guidance.
+
+#### Second Review-fix Test Handoff
+
+- Status: pending.
+- Required red coverage:
+  - Runtime facade body propagation: use real `createMarkdownPageRuntimeFacade()` or an existing markdown page persistence helper to prove loaded documents include structured `body` from native DTOs.
+  - Unsaved edit button invalidation: after editing/removing a task line in the textarea, stale task-title buttons should disappear or be disabled so old source blocks are not opened.
+  - Same-page content-edit stale path: if a task open is delayed and the editor content changes before it resolves, the old result must not call `onOpenPage`.
+  - Keep native-surface shell-out unchanged unless a test-only improvement is straightforward.
+
 ### Pre-test Guidance
 
 - Jason the 3rd (`planner`) completed read-only planning.
