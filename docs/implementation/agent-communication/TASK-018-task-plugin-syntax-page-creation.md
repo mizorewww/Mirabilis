@@ -40,8 +40,9 @@
 
 ## Current Status
 
-- Status: focused re-review found one P2; second review-fix TDD handoff pending.
-- Active agents: none.
+- Status: second review-fix red-test agent running.
+- Active agents:
+  - Sagan the 3rd (`test_writer`): second review-fix regression test for spoofed PluginHostError-shaped command causes.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -53,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: commit focused re-review findings, then delegate second review-fix regression test to `test_writer`.
+- Next parent step: wait for Sagan the 3rd's red test, run focused red-test command, and commit if expected.
 
 ## Agent Handoffs
 
@@ -318,6 +319,12 @@ git diff --check
 - P3 non-blocking notes: task resolver negative table still catches and ignores individual resolver failures; native-surface guard remains branch-state/environment coupled via `git diff master`.
 - Coverage assessed as meaningful for relation reuse, forged `boundPageId`, save/import recovery, atomicity, indented code, command-time context, type contract, and command failure cause preservation.
 - Checks run: focused TASK-018 review-fix tests, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri surface diff, and `rg` for skipped tests; all passed.
+
+### Sagan the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: tests only.
+- Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a spoofed plain object shaped like `PluginHostError` as `CommandRegistryError.cause`.
 
 ## Parent Decisions
 

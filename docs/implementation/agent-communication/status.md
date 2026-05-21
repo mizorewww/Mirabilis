@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 12:22 CST.
+Last updated: 2026-05-21 12:24 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 12:22 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused re-review found one P2; second review-fix TDD handoff pending.
+- Current phase: second review-fix red-test agent running.
 
 ## Active Agents
 
-- None.
+- Sagan the 3rd (`test_writer`): second review-fix regression test for spoofed PluginHostError-shaped command causes.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -122,5 +122,5 @@ git diff --check
 
 ## Next Actions
 
-1. Commit focused re-review findings.
-2. Delegate second review-fix regression test to `test_writer`.
+1. Wait for Sagan the 3rd's red test.
+2. Run focused red-test command and commit if expected.
