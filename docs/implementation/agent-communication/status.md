@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:06 CST.
+Last updated: 2026-05-21 21:07 CST.
 
 ## Current Task
 
@@ -8,11 +8,13 @@ Last updated: 2026-05-21 21:06 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P2 manifest-reservation hardening implementation is committed; narrow follow-up review is pending.
+- Current phase: narrow follow-up review for P2 manifest-reservation hardening is running.
 
 ## Active Agents
 
-- None currently. Next step is to spawn narrow follow-up review for Carson's hardening fix.
+- Bohr (`reviewer`) is reviewing Carson's manifest-reservation hardening correctness.
+- Linnaeus (`security_reviewer`) is reviewing Carson's metadata ownership/security boundary changes.
+- Averroes (`test_quality_reviewer`) is reviewing Hilbert's P2 hardening regression tests.
 
 ## Completed Recent Task
 
@@ -92,7 +94,7 @@ Last updated: 2026-05-21 21:06 CST.
 
 ## Next Actions
 
-1. Spawn narrow follow-up review agents for Carson's hardening fix.
+1. Wait for Bohr, Linnaeus, and Averroes.
 2. Fix any P0/P1 findings through delegated agents.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.

@@ -715,4 +715,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn narrow follow-up review agents for Carson's P2 manifest-reservation hardening implementation.
+- Bohr (`reviewer`), Linnaeus (`security_reviewer`), and Averroes (`test_quality_reviewer`) are reviewing Carson's P2 manifest-reservation hardening implementation.
