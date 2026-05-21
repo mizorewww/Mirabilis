@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -58,13 +58,41 @@ type MarkdownCommandBus = {
   execute(commandId: string, input?: unknown): Promise<unknown>;
 };
 
-type TaskNavigableMarkdownPageEditorProps = {
-  page: MarkdownEditorDocument;
+type MarkdownPageFacade = {
+  load(pageId: string): Promise<MarkdownEditorDocument>;
+  save(input: {
+    pageId: string;
+    markdown: string;
+  }): Promise<MarkdownEditorDocument>;
+};
+
+type TaskNavigableMarkdownPageEditorBaseProps = {
   commands: MarkdownCommandBus;
   markdownRuntime?: {
     collectEditorExtensions(): readonly unknown[];
   };
   onOpenPage(pageId: string): void;
+};
+
+type DirectTaskNavigableMarkdownPageEditorProps =
+  TaskNavigableMarkdownPageEditorBaseProps & {
+    page: MarkdownEditorDocument;
+  };
+
+type LoadedTaskNavigableMarkdownPageEditorProps =
+  TaskNavigableMarkdownPageEditorBaseProps & {
+    pageId: string;
+    pageFacade: MarkdownPageFacade;
+  };
+
+type TaskNavigableMarkdownPageEditorProps =
+  | DirectTaskNavigableMarkdownPageEditorProps
+  | LoadedTaskNavigableMarkdownPageEditorProps;
+
+type Deferred<Value> = {
+  promise: Promise<Value>;
+  resolve(value: Value): void;
+  reject(reason: unknown): void;
 };
 
 const openTaskPageCommandId = "task.open-task-page";
@@ -277,6 +305,40 @@ describe("Task navigation and infinite nesting", () => {
     });
   });
 
+  it("treats malformed attrs.boundPageId as absent and resolves through the task command contract", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "task-page-a"],
+    });
+    const sourcePage = createSourcePage(runtime, "Malformed binding", [
+      {
+        blockId: "task-block-a",
+        text: "- [ ] A",
+        attrs: { boundPageId: { id: "not-a-page-id" } },
+      },
+    ]);
+
+    await expect(
+      executeOpenTaskPage(runtime, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    ).resolves.toStrictEqual({
+      pageId: "task-page-a",
+    } satisfies OpenTaskPageResult);
+
+    expect(loadOpenedRuntimePage(runtime, "task-page-a").title).toBe("A");
+    expectTaskMetadata(runtime, {
+      taskPageId: "task-page-a",
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+    expectSourceBlockBoundToTaskPage(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      taskPageId: "task-page-a",
+    });
+  });
+
   it("uses the same source relation mechanism for nested task pages", async () => {
     const runtime = await createRuntime({
       pageIds: ["root-page", "task-page-a", "task-page-b"],
@@ -424,6 +486,99 @@ describe("Task navigation and infinite nesting", () => {
     );
     expect(onOpenPage).toHaveBeenCalledWith("resolved-task-page");
     expect(onOpenPage).not.toHaveBeenCalledWith("forged-page-id");
+  });
+
+  it("renders loaded structured task bodies from pageId/pageFacade and opens by source page and block id", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const sourcePage = createSourcePage(runtime, "Persisted source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const loadedDocument = editorDocumentFromRuntimePage(sourcePage);
+    const pageFacade: MarkdownPageFacade = {
+      load: vi.fn(async () => loadedDocument),
+      save: vi.fn(async () => loadedDocument),
+    };
+    const commands: MarkdownCommandBus = {
+      execute: vi.fn(async () => ({ pageId: "resolved-task-page" })),
+    };
+    const onOpenPage = vi.fn();
+
+    renderMarkdownPageEditor(runtime, {
+      pageId: sourcePage.id,
+      pageFacade,
+      commands,
+      onOpenPage,
+      markdownRuntime: runtime.markdown,
+    });
+
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    expect(pageFacade.load).toHaveBeenCalledWith(sourcePage.id);
+    expect(editor).toHaveValue("- [ ] A");
+
+    await user.click(await screen.findByRole("button", { name: "A" }));
+
+    await waitFor(() =>
+      expect(commands.execute).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies OpenTaskPageInput),
+    );
+    expect(onOpenPage).toHaveBeenCalledWith("resolved-task-page");
+  });
+
+  it("does not navigate from a stale delayed task open after the editor switches pages", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const taskOpenCompletion = createDeferred<OpenTaskPageResult>();
+    const sourcePage = createSourcePage(runtime, "Slow source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const nextPage = createSourcePage(runtime, "Next source", [
+      { blockId: "other-block", text: "Different page" },
+    ]);
+    const commands: MarkdownCommandBus = {
+      execute: vi.fn(() => taskOpenCompletion.promise),
+    };
+    const onOpenPage = vi.fn();
+    const Editor = getMarkdownPageEditorComponent(runtime);
+    const { rerender } = render(
+      <Editor
+        page={editorDocumentFromRuntimePage(sourcePage)}
+        commands={commands}
+        onOpenPage={onOpenPage}
+        markdownRuntime={runtime.markdown}
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "A" }));
+    await waitFor(() =>
+      expect(commands.execute).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies OpenTaskPageInput),
+    );
+
+    rerender(
+      <Editor
+        page={editorDocumentFromRuntimePage(nextPage)}
+        commands={commands}
+        onOpenPage={onOpenPage}
+        markdownRuntime={runtime.markdown}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+      "Different page",
+    );
+
+    await act(async () => {
+      taskOpenCompletion.resolve({ pageId: "stale-task-page" });
+      await taskOpenCompletion.promise;
+      await Promise.resolve();
+    });
+
+    expect(onOpenPage).not.toHaveBeenCalled();
   });
 
   it("renders unsafe task titles as inert clickable text without HTML, href, or script semantics", async () => {
@@ -817,6 +972,25 @@ function createSequenceFactory(values: readonly string[]): () => string {
     index += 1;
 
     return value;
+  };
+}
+
+function createDeferred<Value>(): Deferred<Value> {
+  let resolve: Deferred<Value>["resolve"] | undefined;
+  let reject: Deferred<Value>["reject"] | undefined;
+  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  if (resolve === undefined || reject === undefined) {
+    throw new Error("Failed to create deferred promise");
+  }
+
+  return {
+    promise,
+    resolve,
+    reject,
   };
 }
 
