@@ -372,7 +372,7 @@ describe("Markdown page persistence", () => {
     saveCompletion.resolve(createEditorDocument("page-save-race", "Draft"));
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /save/i })).not.toBeDisabled(),
+      expect(screen.getByRole("button", { name: /save/i })).toBeEnabled(),
     );
     expect(editor).toHaveValue("Draft plus local edit");
   });
