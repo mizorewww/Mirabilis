@@ -193,12 +193,35 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
 
 #### Second Review-fix Test Handoff
 
-- Status: pending.
+- Status: completed, committed, and closed.
+- Agent: Huygens the 3rd (`test_writer`).
+- Files changed:
+  - `src/test/task-navigation-infinite-nesting.test.tsx`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+- Commit: `22a83b8` (`Huygens the 3rd(test)(Implement task navigation and infinite nesting): cover runtime body and edit invalidation`).
 - Required red coverage:
   - Runtime facade body propagation: use real `createMarkdownPageRuntimeFacade()` or an existing markdown page persistence helper to prove loaded documents include structured `body` from native DTOs.
   - Unsaved edit button invalidation: after editing/removing a task line in the textarea, stale task-title buttons should disappear or be disabled so old source blocks are not opened.
   - Same-page content-edit stale path: if a task open is delayed and the editor content changes before it resolves, the old result must not call `onOpenPage`.
   - Keep native-surface shell-out unchanged unless a test-only improvement is straightforward.
+- Result: real runtime facade body propagation and same-page content-edit stale navigation tests passed against current implementation; unsaved edit invalidation produced the expected red failure. Parent verification: `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx` failed with 1 failed / 21 passed tests; `bun run typecheck` and `git diff --check` passed.
+
+#### Second Review-fix Implementation Handoff
+
+- Status: completed, committed, and closed.
+- Agent: Wegener the 3rd (`implementer`).
+- Files changed:
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Commit: `0a4b5cc` (`Wegener the 3rd(review-fix)(Implement task navigation and infinite nesting): invalidate stale task buttons`).
+- Summary: task-title buttons render only while current textarea Markdown still matches the structured body snapshot they were derived from; unsaved edits that remove or rename source tasks hide stale task buttons while loaded body propagation and async stale guards remain intact.
+- Validation:
+  - `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx` passed with 2 files / 22 tests.
+  - `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts` passed with 2 files / 28 tests.
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts` passed with 3 files / 66 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri surface diff from `master` returned no files.
 
 ### Pre-test Guidance
 

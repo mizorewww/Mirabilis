@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 13:31 CST.
+Last updated: 2026-05-21 13:38 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 13:31 CST.
 - Branch: `feat/task-019-task-navigation-infinite-nesting`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused re-review complete; second review-fix test handoff pending.
+- Current phase: second review-fix implementation committed; final focused re-review pending.
 
 ## Active Agents
 
@@ -36,6 +36,8 @@ Last updated: 2026-05-21 13:31 CST.
   - Leibniz the 3rd (`test_quality_reviewer`) found one P1 test gap: loaded editor regression uses a mocked page facade that already returns `body`, so `createMarkdownPageRuntimeFacade().load()` body propagation is not pinned. P2: stale async coverage covers page switch but not same-page content edit. P3: native-surface shell-out remains brittle but non-blocking in this repo.
   - Mendel the 3rd (`security_reviewer`) found no security/API regressions after the review fix and verified native/API surface remains empty.
   - Dirac the 3rd (`docs_researcher`) found remaining docs P1/P2 drift: direct `page.open` / `boundPageId` navigation, stale `task.open_task_page`, click navigation described as future-only, missing loaded structured-body/stale-guard architecture notes, and missing TASK-019 testing guidance.
+- Huygens the 3rd (`test_writer`) added second review-fix coverage for real runtime Markdown facade body propagation, unsaved-edit task-button invalidation, and same-page content-edit stale navigation. Commit: `22a83b8`.
+- Wegener the 3rd (`implementer`) invalidated stale task-title buttons after unsaved edits by rendering buttons only while current textarea Markdown matches the structured body snapshot. Commit: `0a4b5cc`.
 
 ## Completed Recent Task
 
@@ -109,6 +111,28 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all passed or clean. TASK-019/TASK-018 set passed with 2 files / 26 tests. Editor persistence and Plugin Host regression set passed with 3 files / 65 tests. Typecheck, lint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Second review-fix red tests after Huygens the 3rd:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 2 files ran with 1 failed / 21 passed tests. The failure showed stale `A` task-title button remained enabled after unsaved textarea edits removed the source task line. Typecheck and `git diff --check` passed.
+- Second review-fix checks after Wegener the 3rd:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Test groups passed with 2 files / 22 tests, 2 files / 28 tests, and 3 files / 66 tests. Typecheck, lint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
 ## Source Docs Read By Parent
 
@@ -122,6 +146,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit focused re-review summary.
-2. Spawn `test_writer` for second review-fix tests covering real runtime facade body propagation and unsaved-edit button invalidation/content-version stale path.
-3. Delegate implementation, then run focused re-review again before docs sync.
+1. Commit second review-fix result summary.
+2. Spawn final focused re-review for correctness/test quality/security.
+3. If code/tests clear, delegate docs sync for remaining docs P1/P2 drift.
