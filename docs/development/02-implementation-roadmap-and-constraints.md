@@ -170,7 +170,32 @@ task.resolve-task-block remains unchecked-only
 No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
 ```
 
-点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。保存后自动扫描/索引、All Tasks / Today filters、Task/Tag/Timer UI、rich editor behavior 和 native/package surfaces 仍是后续范围。
+点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。保存后自动扫描/索引、All Tasks / Today filters、完整 Metadata UI、Task/Timer UI、rich editor behavior 和 native/package surfaces 仍是后续范围。
+
+TASK-021 已交付的最小 Tag Plugin baseline：
+
+```text
+Built-in tag plugin in BUILT_IN_PLUGINS
+Plugin id: tag
+Manifest markdown syntax descriptor: tag.hashtag, syntax #tag
+Manifest metadata field descriptor: tag.tags, namespace tag, key tags, valueType json
+Command: tag.refresh-tags
+Command payload: { pageId }
+Command behavior: explicitly scan saved structured markdown.line blocks and replace tag.tags
+Command: tag.add-tag
+Command: tag.remove-tag
+Mutation payload: { pageId, tag }
+Tag metadata: lowercase ASCII slug string[] without #
+Grammar: trim, strip one leading #, raw ASCII slug before lowercasing
+Limits: max 32 chars per tag, max 32 unique tags per page, first-seen order
+Rejected: non-ASCII and values like K instead of Unicode case-folding
+Ignored by source scan: headings, fenced code, escaped hashes, URL-ish invalid tokens, non-ASCII/control-ish tokens
+Slot: tag.page-header-metadata.tags in page.header.metadata, order 300
+Slot behavior: inert tag display plus add/remove controls through commands
+Filter command: tag.create-filter stores metadata.tag.tags includes tag query with viewType page.list
+No save-time scan, background indexer, rich inline token UI, autocomplete, global metadata bar, or filter result rendering
+No new Tauri IPC, permissions, filesystem, package, Cargo, Rust, or native surface
+```
 
 ---
 
@@ -182,7 +207,7 @@ No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
 page.header.metadata slot
 metadata field renderer
 metadata field editor
-tag picker
+full tag picker
 date picker
 estimate editor
 ```
@@ -193,7 +218,7 @@ estimate editor
 todo · #tag · due · estimate · tracked · Start
 ```
 
-全部能由插件贡献并点击编辑。
+全部能由插件贡献并点击编辑。TASK-021 已先交付 Tag Plugin 的窄 `page.header.metadata` slot contribution；Phase 4 / TASK-023 仍负责统一 metadata bar、renderer/editor runtime、完整 picker 和其他插件字段。
 
 ---
 
@@ -474,14 +499,14 @@ TASK-015 App Shell 边界：
 MarkdownEditorPlugin 解析文档
 TaskPlugin 识别 - [ ]
 TaskPlugin 创建任务 Markdown Page
-TagPlugin 识别 #tag
+TagPlugin 通过显式 tag.refresh-tags 识别已保存 #tag
 TimerPlugin 提供 Start
 Metadata UI 显示插件字段
 FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
+这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 只保存 filter definition，不执行或渲染结果。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
 
 当前显式点击导航完成后，用户在任务页继续写：
 

@@ -1,12 +1,106 @@
 # 核心插件实现架构
 
-描述 Timer、Habit、Heatmap、Stats、Chart、ML 和 AI 插件在代码层的目录与注册方式。
+描述 Tag、Timer、Habit、Heatmap、Stats、Chart、ML 和 AI 插件在代码层的目录与注册方式。
 
 TASK-010 当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
 只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；metadata fields、event types、indexers、algorithms、mobile toolbar items 和 settings panels 目前是 manifest contribution descriptor。
 插件调用 plugin-facing APIs 时不传 `pluginId` 或 `sourcePluginId`；Plugin Host 根据当前插件身份注入 ownership。
 
-## 10. Timer Plugin 代码架构
+## 10. Tag Plugin 代码架构
+
+TASK-021 当前实现内置 `TagPlugin`，代码位于 `src/plugins/tag/`，并通过 `BUILT_IN_PLUGINS` 显式加载。它不增加 native/Tauri/package/Cargo/capability surface。
+
+```text
+plugins/tag/
+  plugin.ts
+  components/
+    TagMetadataSlot.tsx
+```
+
+### 10.1 Tag Plugin 注册内容
+
+当前 manifest 和 runtime registration：
+
+```ts
+export const TagPlugin: AppPlugin = {
+  manifest: {
+    id: "tag",
+    contributes: {
+      markdownSyntax: [
+        {
+          id: "tag.hashtag",
+          name: "Hashtag",
+          syntax: "#tag"
+        }
+      ],
+      metadataFields: [
+        {
+          id: "tag.tags",
+          namespace: "tag",
+          key: "tags",
+          valueType: "json"
+        }
+      ]
+    }
+  },
+  register(ctx) {
+    ctx.commands.register({ id: "tag.refresh-tags", handler: refreshTags });
+    ctx.commands.register({ id: "tag.add-tag", handler: addTag });
+    ctx.commands.register({ id: "tag.remove-tag", handler: removeTag });
+    ctx.commands.register({ id: "tag.create-filter", handler: createTagFilter });
+    ctx.slots.register({
+      id: "tag.page-header-metadata.tags",
+      slot: "page.header.metadata",
+      order: 300,
+      component: TagMetadataSlot
+    });
+  }
+};
+```
+
+`tag.hashtag` 和 `tag.tags` 是 manifest descriptors。它们不会创建 rich inline tokens、autocomplete、automatic save-time scanning、indexer 或 filter result rendering。
+
+### 10.2 Tag commands
+
+`tag.refresh-tags({ pageId })` explicitly scans saved top-level `markdown.line` blocks. It ignores headings, fenced code, escaped hashes, URL-ish invalid source tokens, non-ASCII/control-ish tokens, and HTML-like fragments. It replaces `tag.tags` exactly with current source tags, or `[]`.
+
+`tag.add-tag({ pageId, tag })` and `tag.remove-tag({ pageId, tag })` update page-scoped metadata through command-time `PluginContext`. Removing on a touched page writes an explicit empty `[]` when no tags remain.
+
+Tag normalization is deliberately conservative:
+
+```text
+trim input
+strip at most one leading #
+raw input must match ASCII slug before lowercasing
+first char: ASCII letter/digit
+remaining chars: ASCII letter/digit/_/-
+normalized value: lowercase, no #, max 32 chars
+page limit: first 32 unique tags, first-seen order
+```
+
+Non-ASCII values such as `K` are rejected instead of being Unicode case-folded.
+
+### 10.3 Tag metadata slot and filter definition
+
+`TagMetadataSlot` is a narrow `page.header.metadata` contribution. It displays inert tag text and local add/remove controls that execute `tag.add-tag` / `tag.remove-tag` with exact `{ pageId, tag }` payloads. It is not the full Metadata UI Plugin from TASK-023.
+
+`tag.create-filter({ tag })` saves a plugin-owned filter definition:
+
+```json
+{
+  "name": "#tag",
+  "query": {
+    "where": [
+      { "field": "metadata.tag.tags", "op": "includes", "value": "tag" }
+    ]
+  },
+  "viewType": "page.list"
+}
+```
+
+Filter result execution and rendering remain TASK-022+.
+
+## 11. Timer Plugin 代码架构
 
 Timer Plugin 是另一个核心插件。
 
@@ -46,7 +140,7 @@ plugins/timer/
       activeTimerStore.ts
 ```
 
-### 10.1 Timer Plugin 注册内容
+### 11.1 Timer Plugin 注册内容
 
 Timer manifest 声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
 当前 `register(ctx)` 只注册 commands、views 和 slots 这三个 TASK-010 runtime registration facades。
@@ -63,7 +157,7 @@ export const TimerPlugin: AppPlugin = {
 };
 ```
 
-### 10.2 Start Timer
+### 11.2 Start Timer
 
 用户点击页面顶部：
 
@@ -107,7 +201,7 @@ async function startTimer(ctx, { pageId }) {
 }
 ```
 
-### 10.3 Stop Timer
+### 11.3 Stop Timer
 
 Stop 后生成 Time Segment。
 当前 TASK-010 `PluginEventStore` 只暴露 `append` 和 `list`；插件需要通过 `list` 查询事件并在插件内收窄 payload。更专用的 timer event 查询 facade 属于后续接口面。
@@ -160,9 +254,9 @@ Time Segment Note 必须是 Markdown Page。
 
 ---
 
-## 11. Habit / Heatmap 插件架构
+## 12. Habit / Heatmap 插件架构
 
-### 11.1 Habit Plugin
+### 12.1 Habit Plugin
 
 ```text
 plugins/habit/
@@ -210,7 +304,7 @@ export const habitManifest: PluginManifest = {
 };
 ```
 
-### 11.2 Heatmap Plugin
+### 12.2 Heatmap Plugin
 
 Heatmap 是独立 View Plugin。
 
@@ -247,9 +341,9 @@ Heatmap Plugin 不需要知道什么是 habit 或 timer。
 
 ---
 
-## 12. Stats / Chart / ML 插件架构
+## 13. Stats / Chart / ML 插件架构
 
-### 12.1 Stats Plugin
+### 13.1 Stats Plugin
 
 Stats Plugin 负责聚合数据。
 
@@ -292,7 +386,7 @@ export const statsManifest: PluginManifest = {
 };
 ```
 
-### 12.2 Chart Plugin
+### 13.2 Chart Plugin
 
 Chart Plugin 负责图表视图。
 
@@ -320,7 +414,7 @@ ctx.views.register({
 
 Stats 产出数据，Chart 负责渲染。
 
-### 12.3 Machine Learning Plugin
+### 13.3 Machine Learning Plugin
 
 ML Plugin 负责算法。
 
@@ -394,7 +488,7 @@ ctx.slots.register({
 
 ---
 
-## 13. AI Plugin 架构
+## 14. AI Plugin 架构
 
 ```text
 plugins/ai/

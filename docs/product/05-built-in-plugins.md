@@ -4,7 +4,35 @@
 
 ## 15. Tag Plugin
 
-### 15.1 Markdown 输入
+Tag Plugin 是内置插件，manifest id 是 `tag`。TASK-021 当前交付的是显式命令驱动的 tag baseline，不是保存时自动索引、富 inline token UI、autocomplete、全局 metadata bar 或完整 filter result 渲染。
+
+### 15.1 当前注册能力
+
+TASK-021 当前通过 `BUILT_IN_PLUGINS` 注册 `TagPlugin`，manifest 贡献：
+
+```text
+Markdown Syntax:
+tag.hashtag
+syntax: #tag
+
+Metadata Field:
+id: tag.tags
+namespace: tag
+key: tags
+valueType: json
+value: string[]
+```
+
+`tag.tags` 的值是规范化后的 `string[]`，不带 `#`。Tag grammar 是保守 ASCII slug：
+
+- 输入先 `trim`，最多剥掉一个前导 `#`。
+- raw 输入必须先匹配 ASCII slug，再 lower-case；不会先做 Unicode case folding。
+- 第一个字符必须是 ASCII letter/digit；后续只允许 ASCII letter/digit、`_`、`-`。
+- 规范化值全部小写，最长 32 字符。
+- 每页最多保存 32 个唯一 tag，按第一次出现顺序去重。
+- 非 ASCII 和类似 `K` 这类值会被拒绝，而不是 case-fold 成 ASCII。
+
+### 15.2 Markdown 输入
 
 用户写：
 
@@ -12,41 +40,82 @@
 - [ ] 写 Timer Plugin #architecture #timer
 ```
 
-Tag Plugin 识别：
+TASK-021 不在保存时自动扫描正文。调用方必须显式执行：
+
+```ts
+runtime.commands.execute("tag.refresh-tags", { pageId });
+```
+
+`tag.refresh-tags({ pageId })` 扫描已保存的结构化 `markdown.line` blocks，并把该页的 `tag.tags` 精确替换为当前 source tags；没有 source tags 时也写入显式空数组 `[]`。
+
+识别结果：
 
 ```text
 tags = ["architecture", "timer"]
 ```
 
-### 15.2 UI 添加
+扫描会忽略 heading 行、fenced code、escaped hash、非 token 边界的 `foo#bar`、URL-ish / invalid source token、HTML-like fragment 内的 `#tag`、非 ASCII token 和 control-ish token。
 
-用户进入任务页面，在 metadata bar 点击 tag 区。
+### 15.3 UI 添加
 
-打开 tag picker：
+TASK-021 注册 `page.header.metadata` slot contribution：
 
 ```text
-architecture
-timer
-product
-ml
-habit
+id: tag.page-header-metadata.tags
+order: 300
+component: TagMetadataSlot
 ```
 
-选择 `product` 后：
+当前 `TagMetadataSlot` 显示 inert `#tag` 文本 chip，并提供 add/remove 控件。它通过命令更新页面 scoped metadata：
+
+```text
+tag.add-tag({ pageId, tag })
+tag.remove-tag({ pageId, tag })
+```
+
+这不是 TASK-023 的完整 Metadata UI Plugin，也不是全局 metadata bar 或完整 tag picker。长期 tag picker、autocomplete 和统一 metadata field editor 仍属于后续任务。
+
+添加 `product` 后：
 
 ```text
 tags = ["architecture", "timer", "product"]
 ```
 
-Tag Plugin 负责：
+移除已存在或缺失的 tag 都会写入该页的显式 `tag.tags` 值；移除后没有 tag 时保存 `[]`。
+
+### 15.4 Filter 定义
+
+TASK-021 当前提供：
+
+```ts
+runtime.commands.execute("tag.create-filter", { tag: "architecture" });
+```
+
+该命令保存一个 Tag Plugin 拥有的 filter definition：
+
+```json
+{
+  "name": "#architecture",
+  "query": {
+    "where": [
+      {
+        "field": "metadata.tag.tags",
+        "op": "includes",
+        "value": "architecture"
+      }
+    ]
+  },
+  "viewType": "page.list"
+}
+```
+
+Filter result execution 和渲染仍属于 TASK-022+。
+
+长期 Tag Plugin 还会负责：
 
 ```text
-#tag 语法解析
 tag autocomplete
-tag picker
-tag metadata
 tag index
-tag filter
 tag-based stats
 ```
 

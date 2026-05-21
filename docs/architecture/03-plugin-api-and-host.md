@@ -63,6 +63,8 @@ export type PluginContributions = {
 
 TASK-016 增加了一个很窄的 Markdown runtime facade：`runtime.markdown.collectEditorExtensions()` 会从 active plugin manifest 的 `contributes.markdownSyntax` 收集 inert descriptor。它不会执行插件代码，也不是 Tiptap / ProseMirror extension 注册表；返回项的 `pluginId` 由 Plugin Host 的 manifest owner 注入，manifest contribution 自带的同名字段不能覆盖 host-owned identity。
 
+TASK-021 后，`collectEditorExtensions()` 会同样收集内置 Tag Plugin 的 inert `tag.hashtag` descriptor（syntax `#tag`）。该 descriptor 只说明可见 Markdown syntax；它不代表 rich inline token、autocomplete、save-time scan 或 background indexer 已经存在。
+
 ---
 
 ### 5.3 AppPlugin
@@ -147,6 +149,8 @@ Plugin-facing stores 和 registries 的输入不接受调用方传入的 `plugin
 `settings`、`storage`、`query`、`eventBus` 和独立 `packages/plugin-api` 包拆分是后续接口面，不属于 TASK-010 当前 contract。
 
 TASK-018 后，plugin command handler 的运行签名是 `PluginCommandHandler(input, context)`。`register(ctx)` 期间注册 command 时只交出 handler；真正执行 command 时，Plugin Host 会创建一个新的 command-time `PluginContext` 并传给 handler。因此 command handler 可以通过 fresh `context.pages`、`context.metadata`、`context.events`、`context.filters` 或 `context.transaction` 做数据写入，而不需要也不允许闭包复用 register-time `ctx` 做后续 mutation。
+
+TASK-021 的 Tag Plugin command 使用同一 command-time context model：`tag.refresh-tags`、`tag.add-tag` 和 `tag.remove-tag` 通过 plugin-owned metadata facade 写 `tag.tags`；`tag.create-filter` 通过 plugin-owned filter facade 保存 filter definition。调用方不能在 payload 中提供 `pluginId`、`sourcePluginId`、query 或 view override。
 
 command-time `PluginContext` 仍是 plugin-scoped facade：不暴露 NativeBridge、Tauri/raw invoke、SQLite、filesystem、Core stores、Core registries、Core services 或 raw runtime handles。command-time context 允许数据 mutation，但不允许 runtime contribution registration；在 command handler 中调用 `context.commands.register`、`context.views.register` 或 `context.slots.register` 会抛出 typed Plugin Host lifecycle error。command handler 返回或抛错后，该 command-time context 会失效；任何捕获后继续使用的 stale command context 都不能再写入数据或注册贡献。
 

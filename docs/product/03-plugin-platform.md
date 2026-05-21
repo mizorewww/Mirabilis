@@ -90,6 +90,7 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
 - `- [ ]` 是 Task Plugin 注册的 Markdown Syntax；
 
 - `#tag` 可先通过 Tag Plugin 的 Markdown Syntax / Metadata Field 契约接入；Inline Token 是后续扩展；
+  TASK-021 当前已接入内置 `TagPlugin`：manifest id `tag`，Markdown syntax descriptor `tag.hashtag` / `#tag`，metadata field descriptor `tag.tags` / `namespace: "tag"` / `key: "tags"` / `valueType: "json"`。descriptor 本身仍是 inert metadata；正文 tag 刷新由显式 `tag.refresh-tags({ pageId })` command 完成。
 
 - `#habit` 是 Habit Plugin 识别的语义；
 
@@ -219,6 +220,10 @@ available_context
 ```text
 task.insert_task_syntax
 task.toggle-status
+tag.refresh-tags
+tag.add-tag
+tag.remove-tag
+tag.create-filter
 timer.start_timer
 timer.stop_timer
 habit.check_today
@@ -280,6 +285,8 @@ habit.enabled
 timer.total_tracked_time
 ml.predicted_remaining_time
 ```
+
+TASK-021 当前 `tag.tags` 由 Tag Plugin 维护为 `json` metadata field，值是小写、不带 `#` 的 ASCII slug `string[]`，最多 32 个唯一值。Metadata field contribution 只声明字段形状；完整 renderer/editor registry 仍属于后续 Metadata UI 工作。TASK-021 的可见 tag UI 是单独注册到 `page.header.metadata` 的 `TagMetadataSlot` slot contribution。
 
 ### 9.5 Event Registry
 
