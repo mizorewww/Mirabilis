@@ -363,6 +363,36 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. TASK-021 focused test passed with 1 file / 12 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty. Faraday reported no residual risks, and the parent reran the same focused validation successfully.
 
+## Post-fix Focused Review
+
+- Status: completed on 2026-05-21 18:14 CST.
+- Reviewed implementation commit: `f39c1e3`; branch later advanced with docs-only communication commits.
+- Outcomes:
+  - Kierkegaard (`pr_explorer`) found no P0/P1/P2 findings. P3 residuals: slot-local command state can become stale if a future metadata bar refreshes the same page externally, and the native-surface guard remains git-environment coupled.
+  - Dalton (`reviewer`) found no P0/P1/P2/P3 correctness findings. It also ran `bun run build`, which passed.
+  - Poincare (`security_reviewer`) found no P0/P1/P2 security findings. P3: Unicode case-folding can convert raw non-ASCII characters such as `K` to ASCII before validation, which conflicts with the stated raw ASCII-only input intent.
+  - Newton (`test_quality_reviewer`) found no P0/P1 gaps. P2: refresh coverage does not prove stale `tag.tags` records are replaced. P2: native-surface guard is still git-environment coupled.
+  - Boole (`deprecation_auditor`) found no P0/P1 findings. P2: `TagMetadataSlot` narrows command results to `{ tags }`, ignores returned `pageId`, and should reject/ignore mismatched page results.
+  - Erdos (`docs_researcher`) found P1 docs drift: formal docs still frame tag recognition as future/ambiguous and overstate metadata bar/filter UI behavior. It also identified P2 architecture/testing/progress sync needs and P3 metadata-shape documentation.
+- Checks reported by review agents included:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run test:frontend src/test/tag-plugin-baseline.test.tsx
+bun run test:frontend
+bun run typecheck
+bun run lint
+bun run build
+bunx eslint src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+git diff --check master...HEAD
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Parent decision:
+  - Add second review-fix tests for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection.
+  - Defer the git-environment-coupled native-surface guard to future test-infrastructure work because it is an existing pattern and broadening it now would exceed TASK-021 product behavior scope.
+  - Fix docs drift after behavior fixes, using Erdos's P1/P2 docs map.
+
 ## Current Next Action
 
-- Post-fix focused review is running with Kierkegaard (`pr_explorer`), Dalton (`reviewer`), Poincare (`security_reviewer`), Newton (`test_quality_reviewer`), Boole (`deprecation_auditor`), and Erdos (`docs_researcher`).
+- Delegate second review-fix tests to `test_writer`.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:08 CST.
+Last updated: 2026-05-21 18:14 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 18:08 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: post-fix focused review is running.
+- Current phase: post-fix review completed; second review-fix tests are next.
 
 ## Active Agents
 
-- Kierkegaard (`pr_explorer`) is mapping the post-fix changed surface.
-- Dalton (`reviewer`) is reviewing correctness.
-- Poincare (`security_reviewer`) is reviewing security boundaries.
-- Newton (`test_quality_reviewer`) is reviewing test quality.
-- Boole (`deprecation_auditor`) is checking API/deprecation/docs drift.
-- Erdos (`docs_researcher`) is mapping docs semantics drift for later docs sync.
+- None.
 
 ## Completed Recent Task
 
@@ -120,6 +115,13 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Ptolemy the 4th (`deprecation_auditor`) found no code blockers. It noted docs-only drift in live agent communication status and formal docs still describing Tag Plugin recognition as entirely future after save.
 - Hypatia the 4th (`test_writer`) added review-fix regression tests for invalid source-token extraction, explicit empty metadata on missing-tag remove, accessible local slot feedback on add failures, and distinct input label associations across multiple slot instances.
 - Faraday (`implementer`) fixed the review-fix regressions in `src/plugins/tag/plugin.ts` and `src/plugins/tag/components/TagMetadataSlot.tsx`. It ignores invalid full source tokens, always persists touched empty tag metadata on remove, catches slot command failures, shows accessible tag feedback, and uses unique input ids. Commit: `f39c1e3`.
+- Post-fix focused review after commit `f39c1e3` completed:
+  - Kierkegaard (`pr_explorer`) found no P0/P1/P2 findings. P3 residuals: slot-local command state can become stale if a future metadata bar refreshes the same page externally, and the native-surface guard remains git-environment coupled.
+  - Dalton (`reviewer`) found no P0/P1/P2/P3 correctness findings and confirmed the TASK-021 command, metadata, filter, slot, and native-surface contracts.
+  - Poincare (`security_reviewer`) found no P0/P1/P2 security findings. P3: Unicode case-folding can convert raw non-ASCII characters such as `K` to ASCII before validation, which conflicts with the stated raw ASCII-only input intent.
+  - Newton (`test_quality_reviewer`) found no P0/P1 gaps. P2: refresh coverage does not prove stale `tag.tags` records are replaced. P2: native-surface guard is still git-environment coupled.
+  - Boole (`deprecation_auditor`) found no P0/P1 findings. P2: `TagMetadataSlot` narrows command results to `{ tags }`, ignores returned `pageId`, and should reject/ignore mismatched page results.
+  - Erdos (`docs_researcher`) found P1 docs drift: formal docs still frame tag recognition as future/ambiguous and overstate metadata bar/filter UI behavior. It also identified P2 architecture/testing/progress sync needs and P3 metadata-shape documentation.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -140,9 +142,10 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Run post-fix focused review agents.
-2. Fix any P0/P1 findings and evaluate P2 findings.
-3. Defer docs-only drift to docs sync after behavior fixes.
+1. Delegate second review-fix tests for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection.
+2. Delegate implementation fixes after expected red signal.
+3. Defer native guard portability to test-infrastructure work; keep parent native/package/Tauri diff checks for TASK-021.
+4. Run docs sync after behavior fixes, covering the P1/P2 docs drift from Erdos.
 
 ## Completed TASK-020 Agent Outcomes
 
