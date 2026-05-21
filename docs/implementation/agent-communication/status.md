@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:46 CST.
+Last updated: 2026-05-21 08:50 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 08:46 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: async-insert red tests in progress.
+- Current phase: async-insert implementation handoff.
 
 ## Active Agents
 
-- Ampere the 3rd (`test_writer`) - TASK-016 async-insert review-fix red tests.
+- None. Next agent handoff is async-insert implementation.
 
 ## Recent Agent Outcomes
 
@@ -128,7 +128,10 @@ Last updated: 2026-05-21 08:46 CST.
 - Noether the 3rd (`deprecation_auditor`) found one P1: async toolbar insertion can overwrite newer edits after an awaited command resolves. P2s: redundant imperative textarea value sync, unhandled load/save rejection paths, optional `listPlugins` silent no-op, and cached `updatedAt` reuse.
 - Parent decision: run one narrow delegated TDD loop for the async insert P1, include small adjacent P2 tests if practical, defer broad DTO/size validation and insert-only command prop narrowing to residual risks/docs unless escalated.
 - Ampere the 3rd (`test_writer`) was spawned for async-insert review-fix red tests. Ownership is limited to tests/test helpers; production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependencies, generated files, and commits are out of scope.
-- Parent next step: wait for Ampere the 3rd, confirm expected red failures, and commit test changes.
+- Ampere the 3rd completed and was closed after adding a red async insert regression test in `src/test/markdown-editor-plugin-shell.test.tsx`.
+- Parent confirmed the expected red signal: focused TASK-016 frontend tests fail 1 test because delayed `markdown.insert-text` resolves to stale `#Draft` and overwrites `Draft plus newer edit`; the other 18 tests pass. `bun run typecheck`, `git diff --check`, and `git diff --cached --check` before commit passed.
+- Ampere the 3rd's test commit: `630cc3a Ampere the 3rd(test)(Implement Markdown Editor Plugin shell): cover async insert race`.
+- Parent next step: spawn `implementer` for the minimum async-insert race fix.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
