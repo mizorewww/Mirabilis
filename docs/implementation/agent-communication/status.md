@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:22 CST.
+Last updated: 2026-05-21 18:24 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:22 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix implementation committed; docs sync is next.
+- Current phase: formal docs sync delegated to Copernicus.
 
 ## Active Agents
 
-- None.
+- Copernicus (`doc_writer`) is syncing formal TASK-021 docs only.
 
 ## Completed Recent Task
 
@@ -145,7 +145,7 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Delegate docs sync to `doc_writer`, covering the P1/P2 docs drift from Erdos.
+1. Wait for Copernicus's docs sync output.
 2. Run focused docs diff checks after docs sync.
 3. Run final local gate before progress completion and merge.
 

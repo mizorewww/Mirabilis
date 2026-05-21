@@ -440,4 +440,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate docs sync to `doc_writer` using Erdos's docs drift map.
+- Copernicus (`doc_writer`) is syncing formal TASK-021 docs using Erdos's docs drift map. Parent will update `progress.md` after final validation.
