@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 10:05 CST.
+Last updated: 2026-05-21 10:15 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 10:05 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation running.
+- Current phase: review-fix implementation committed; test-only rustfmt fix pending.
 
 ## Active Agents
 
-- Hooke the 3rd (`implementer`): review-fix implementation for TS reconciliation/validation and Rust IPC body validation.
+- None.
 
 ## Current TASK-017 State
 
@@ -48,6 +48,7 @@ Last updated: 2026-05-21 10:05 CST.
 - Rawls the 3rd (`doc_writer`) identified exact docs to sync after review fixes.
 - Newton the 3rd (`docs_researcher`) completed current guidance for Rust IPC body-validation and TypeScript conversion review fixes.
 - Tesla the 3rd (`test_writer`) added review-fix failing tests for TypeScript reconciliation/validation/runtime fallback and Rust IPC body validation. Commit: `3820fca`.
+- Hooke the 3rd (`implementer`) fixed TypeScript ID reconciliation/validation, strict legacy fallback handling, and Rust IPC structured page body validation. Commit: `618eaae`.
 
 ## Validation Already Reported By Parent
 
@@ -95,6 +96,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Wait for Hooke the 3rd to finish review-fix implementation.
-2. Run focused frontend and Rust IPC tests after implementation.
-3. Commit review-fix implementation if green.
+1. Delegate test-only rustfmt fix for `src-tauri/tests/ipc_persistence.rs`.
+2. Re-run focused frontend/Rust IPC checks and format gate.
+3. Continue to focused re-review when checks are green.

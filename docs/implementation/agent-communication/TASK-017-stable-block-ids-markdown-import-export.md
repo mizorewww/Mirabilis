@@ -39,9 +39,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation running.
-- Active agents:
-  - Hooke the 3rd (`implementer`): review-fix implementation for TS reconciliation/validation and Rust IPC body validation.
+- Status: review-fix implementation committed; test-only rustfmt fix pending.
+- Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -59,7 +58,8 @@
   - Rawls the 3rd (`doc_writer`): documentation gap review completed.
   - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation and TypeScript conversion review fixes completed.
   - Tesla the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
-- Next parent step: wait for Hooke the 3rd, run focused checks, and commit review-fix implementation if green.
+  - Hooke the 3rd (`implementer`): review-fix implementation completed, focused checks green except test-file rustfmt, committed, and closed.
+- Next parent step: delegate test-only rustfmt fix for `src-tauri/tests/ipc_persistence.rs`.
 
 ## Agent Handoffs
 
@@ -357,22 +357,28 @@ git diff --check
 
 ### Hooke the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: production implementation only.
-- Expected write scope:
+- Files changed:
   - `src/core/markdown/markdown-conversion.ts`.
   - `src/core/runtime/markdown-pages.ts`.
   - `src-tauri/src/commands/db.rs`.
-  - Narrow production helper/module changes only if strictly required.
-- Explicit exclusions: tests, docs, Tauri config/capabilities, package/Cargo files, generated files, dependency manifests, and unrelated Rust/TypeScript code.
-- Required checks:
+- Commit: `618eaae` (`Hooke the 3rd(review-fix)(Add stable block IDs and markdown import/export): harden block IDs and IPC body validation`).
+- Summary:
+  - Replaced unsafe same-length ID reuse with reconciliation that preserves shifted/edited blocks and reserves previous IDs.
+  - Added early max-block rejection, stronger URL/mark validation, and strict legacy `markdown.text` fallback matching.
+  - Added Rust IPC structured page body validation for `core.pages.create/update`.
+- Parent/agent verification:
 
 ```bash
 bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
 cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence page
-cargo fmt --manifest-path src-tauri/Cargo.toml --check
+bun run typecheck
 git diff --check
 ```
+
+- Result: focused frontend tests passed with 15/15 tests. Rust IPC page tests passed with 3/3 tests. `bun run typecheck` passed. `git diff --check` passed.
+- Remaining blocker: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` fails only on formatting in `src-tauri/tests/ipc_persistence.rs` from the review-fix red-test commit. Parent will delegate this test-only formatting fix to `test_writer`.
 
 ## Validation
 
