@@ -217,6 +217,35 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Result: expected red signal. Focused test file ran 8 tests and all 8 failed because the Tag Plugin surfaces are not implemented yet: `tag` is not in `BUILT_IN_PLUGINS`, `tag.hashtag` / `tag.tags` are missing, tag command/slot registrations are empty, `tag.refresh-tags`, `tag.add-tag`, and `tag.create-filter` fail with `COMMAND_NOT_FOUND`, and `tag.page-header-metadata.tags` is missing. `bun run typecheck`, focused eslint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 - Test writer concern: the slot component prop shape is an inferred baseline contract: `{ pageId, tags, commands }`.
 
+## Implementation Handoff
+
+- Status: completed by Wegener the 4th (`implementer`) on 2026-05-21 15:54 CST.
+- Files changed:
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/plugins/tag/plugin.ts`.
+  - `src/plugins/tag/components/TagMetadataSlot.tsx`.
+  - `src/plugins/tag/index.ts`.
+- Summary:
+  - Added built-in `TagPlugin` registration.
+  - Added `tag.hashtag` markdown syntax descriptor and `tag.tags` metadata field descriptor.
+  - Registered `tag.refresh-tags`, `tag.add-tag`, `tag.remove-tag`, and `tag.create-filter`.
+  - Implemented conservative tag normalization/extraction and `tag.tags` metadata writes through plugin facades/transactions.
+  - Implemented `tag.page-header-metadata.tags` slot component with inert tag rendering and add/remove controls.
+  - Implemented tag-owned filter creation with `metadata.tag.tags includes <tag>` and `viewType: "page.list"`.
+  - Kept native/Tauri/package/Cargo surfaces unchanged.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 8 tests. Adjacent plugin/filter/editor coverage passed with 4 files / 116 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Commit Carver the 4th's failing acceptance tests, then delegate implementation to `implementer`.
+- Commit Wegener the 4th's implementation, then run focused review agents.

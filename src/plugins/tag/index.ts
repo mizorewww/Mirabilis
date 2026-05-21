@@ -1,0 +1,1 @@
+export { TagPlugin } from "./plugin";

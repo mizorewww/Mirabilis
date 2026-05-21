@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:45 CST.
+Last updated: 2026-05-21 15:54 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:45 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing acceptance tests written; implementation is next.
+- Current phase: initial implementation validated; focused review is next.
 
 ## Active Agents
 
@@ -66,6 +66,18 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: expected red signal. `tag-plugin-baseline.test.tsx` ran 8 tests and all 8 failed because Tag Plugin surfaces are not implemented yet. `bun run typecheck`, focused eslint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Initial implementation validation after Wegener the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 8 tests. Adjacent plugin/filter/editor coverage passed with 4 files / 116 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
 ## Completed TASK-021 Agent Outcomes
 
@@ -74,6 +86,7 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Descartes the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0/P1 guidance: use plugin id `tag`, syntax id `tag.hashtag`, metadata field id `tag.tags`, `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, kebab-case command IDs, explicit refresh semantics, filter query `metadata.tag.tags includes <tag>`, and slot id `tag.page-header-metadata.tags` on `page.header.metadata` with order `300`.
 - Rawls the 4th (`security_reviewer`) completed security guidance. Recommendation: define a conservative tag grammar, reject untrusted/extra command payload fields, verify page existence, mutate through plugin facades/transactions, parse structured Markdown text rather than HTML, keep filters static/plugin-owned, render tags as inert React text, and avoid native/Tauri/package/Cargo changes.
 - Carver the 4th (`test_writer`) added focused TASK-021 acceptance tests in `src/test/tag-plugin-baseline.test.tsx`. Coverage includes built-in plugin registration, manifest descriptors, commands, metadata writes, refresh extraction/normalization, picker add/remove commands, slot UI behavior, filter definition creation, native surface guard, and no task metadata mutation from source-line tags.
+- Wegener the 4th (`implementer`) added the initial TASK-021 production implementation in `src/bootstrap/built-in-plugins.ts` and `src/plugins/tag/*`. It registers the built-in Tag Plugin, descriptors, commands, metadata slot, tag parsing/normalization, metadata writes, and tag-owned filter creation without native/Tauri/package changes.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -94,9 +107,9 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit Carver the 4th's failing acceptance tests.
-2. Delegate implementation to `implementer`.
-3. Run focused TASK-021 tests after implementation.
+1. Commit Wegener the 4th's implementation.
+2. Run focused review agents.
+3. Address any P0/P1 findings before docs sync.
 
 ## Completed TASK-020 Agent Outcomes
 
