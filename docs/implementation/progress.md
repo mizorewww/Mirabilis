@@ -51,7 +51,7 @@ Status markers:
 
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
 - [x] TASK-019: Implement task navigation and infinite nesting
-- [ ] TASK-020: Implement checkbox toggle and task events
+- [~] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
 
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 13:58 CST - TASK-020 started
+
+- Branch: `feat/task-020-checkbox-toggle-task-events`.
+- Task: Implement checkbox toggle and task events.
+- Scope: build the next Task Plugin slice after TASK-018/TASK-019 so clicking a task checkbox toggles task status, status changes update task metadata, completion writes a `task.completed` event, and reopen/uncheck behavior is explicitly defined and tested.
+- Source docs: `docs/implementation/task-index.md#task-020-implement-checkbox-toggle-and-task-events`, `docs/product/05-built-in-plugins.md#163-点击逻辑`, `docs/development/02-implementation-roadmap-and-constraints.md#204-所有跨插件协作走-event--metadata--query`, `docs/architecture/07-runtime-flows.md#181-用户输入任务`, and `docs/architecture/04-slots-editor-task.md#9-task-plugin-代码架构`.
+- Initial out of scope until agents narrow otherwise: automatic editor-save scanning/indexing, All Tasks / Today filters, Tag Plugin parsing, metadata UI, Timer/Calendar behavior, rich editor migration, new Tauri commands/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, and release work.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-020-checkbox-toggle-task-events.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus non-blocking unrestricted sandbox/network notes, the known desktop-terminal `TERM=dumb` failure, and an available Codex update. Parent treats the terminal note as non-blocking for repository agent work.
 
 ### 2026-05-21 13:55 CST - TASK-019 completed
 
