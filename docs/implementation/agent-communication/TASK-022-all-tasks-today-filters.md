@@ -608,4 +608,4 @@ git diff --check
 
 ## Current Next Action
 
-- Spawn `implementer` to make Goodall's manifest-reservation regressions pass with the minimum production change.
+- Kuhn (`implementer`) is fixing Goodall's manifest-reservation regressions with the minimum production change.
