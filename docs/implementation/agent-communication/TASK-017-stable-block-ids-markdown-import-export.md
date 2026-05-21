@@ -39,8 +39,9 @@
 
 ## Current Status
 
-- Status: review-fix red tests pending.
-- Active agents: none.
+- Status: review-fix red tests running.
+- Active agents:
+  - Tesla the 3rd (`test_writer`): review-fix failing tests for TS reconciliation/runtime fallback and Rust IPC body validation.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -57,7 +58,7 @@
   - Bohr the 3rd (`test_quality_reviewer`): test quality review completed with P1/P2 findings.
   - Rawls the 3rd (`doc_writer`): documentation gap review completed.
   - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation and TypeScript conversion review fixes completed.
-- Next parent step: commit Newton the 3rd's guidance, then delegate review-fix red tests.
+- Next parent step: wait for Tesla the 3rd, run focused red checks, then commit review-fix tests.
 
 ## Agent Handoffs
 
@@ -328,6 +329,22 @@ git diff --check
   - Mirror TS schema and use constants aligned with TS defaults where practical: max block count `20_000`, max depth `100`.
   - Replace raw same-length index reuse in `markdown-conversion.ts`; reserve all previous IDs so new blocks cannot reuse deleted IDs.
 - External docs consulted: Tauri v2 commands/error handling, Tauri capabilities, Serde container attributes, `serde_json::Value`, `serde_json::from_value`, and Cargo integration test layout.
+
+### Tesla the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: review-fix tests and test helpers only.
+- Expected write scope:
+  - `src/test/markdown-import-export.test.ts`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+  - `src-tauri/tests/ipc_persistence.rs`.
+  - Narrow test helper changes in those files only.
+- Explicit exclusions: production TypeScript, Rust commands, docs, Tauri config/capabilities, package/Cargo files, generated files, and dependencies.
+- Required coverage:
+  - Same-length delete+insert ID stability.
+  - Combined insertion plus edited existing block ID retention.
+  - Rust IPC `core.pages.create/update` body validation with redacted `INVALID_REQUEST`.
+  - Deleted-ID generator collision, early max-block rejection, stricter attr URL and marks validation, malformed legacy fallback rejection, and invalid-body transaction rollback if practical.
 
 ## Validation
 

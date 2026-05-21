@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:56 CST.
+Last updated: 2026-05-21 09:57 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:56 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix red tests pending.
+- Current phase: review-fix red tests running.
 
 ## Active Agents
 
-- None.
+- Tesla the 3rd (`test_writer`): review-fix failing tests for TS reconciliation/runtime fallback and Rust IPC body validation.
 
 ## Current TASK-017 State
 
@@ -94,6 +94,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit Newton the 3rd's guidance.
-2. Delegate review-fix red tests.
-3. Delegate review-fix implementation.
+1. Wait for Tesla the 3rd to finish review-fix red tests.
+2. Run focused red checks.
+3. Commit review-fix tests, then delegate implementation.
