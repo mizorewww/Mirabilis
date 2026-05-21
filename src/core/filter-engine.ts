@@ -376,7 +376,10 @@ function storedValueMatchesDeclaredType(fieldValue: FieldValue): boolean {
     case "json":
       return typeof fieldValue.value === "object" && fieldValue.value !== null;
     case "date":
-      return typeof fieldValue.value === "string";
+      return (
+        typeof fieldValue.value === "string" &&
+        isDateOnlyString(fieldValue.value)
+      );
     case "null":
       return fieldValue.value === null;
     default:

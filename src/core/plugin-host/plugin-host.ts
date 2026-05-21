@@ -199,9 +199,22 @@ type SortablePlugin = {
   dependencies: NormalizedDependency[];
 };
 
+type PluginInputProperty =
+  | {
+      present: false;
+    }
+  | {
+      present: true;
+      value: unknown;
+    };
+
 const pluginOwnershipPrefix = "pluginId";
 const sourcePluginOwnershipPrefix = "sourcePluginId";
 const filterIdNamespaceMarker = ".filter.";
+const builtInMetadataOwners = new Map([
+  ["task", "task"],
+  ["tag", "tag"],
+]);
 
 class PluginHostImpl implements PluginHostInstance {
   private readonly services: CoreServices;
@@ -1176,12 +1189,11 @@ function createPluginMetadataStore(
     set(input: PluginSetMetadataInput) {
       assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
-      assertMetadataWriteAllowed(pluginId, metadata, input);
+      const metadataInput = preparePluginMetadataSetInput(input, pluginId);
 
-      return metadata.set({
-        ...input,
-        sourcePluginId: pluginId,
-      });
+      assertMetadataWriteAllowed(pluginId, metadata, metadataInput);
+
+      return metadata.set(metadataInput);
     },
 
     get: (pageId, namespace, key) =>
@@ -1213,8 +1225,18 @@ function createPluginMetadataStore(
 function assertMetadataWriteAllowed(
   pluginId: string,
   metadata: MetadataStore,
-  input: PluginSetMetadataInput,
+  input: Parameters<MetadataStore["set"]>[0],
 ): void {
+  const requiredOwner = builtInMetadataOwners.get(input.namespace);
+
+  if (requiredOwner !== undefined && requiredOwner !== pluginId) {
+    throw new PluginHostError(
+      "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+      `Plugin ${pluginId} cannot write ${input.namespace} metadata`,
+      { pluginId },
+    );
+  }
+
   const existingRecord = findMetadataRecord(
     metadata,
     input.pageId,
@@ -1300,12 +1322,11 @@ function createPluginFilterStore(
     save(input: PluginSaveFilterInput) {
       assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
-      assertFilterIdNamespaceAllowed(input, pluginId);
+      const filterInput = preparePluginFilterSaveInput(input, pluginId);
 
-      return filters.save({
-        ...input,
-        sourcePluginId: pluginId,
-      });
+      assertFilterIdNamespaceAllowed(filterInput.id, pluginId);
+
+      return filters.save(filterInput);
     },
 
     get: (filterId) => requireOwnedFilter(pluginId, filters, filterId),
@@ -1339,27 +1360,9 @@ function createPluginFilterStore(
 }
 
 function assertFilterIdNamespaceAllowed(
-  input: PluginSaveFilterInput,
+  filterId: unknown,
   pluginId: string,
 ): void {
-  let idDescriptor: PropertyDescriptor | undefined;
-
-  try {
-    idDescriptor = Object.getOwnPropertyDescriptor(input, "id");
-  } catch (cause) {
-    throw new PluginHostError(
-      "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
-      `Plugin ${pluginId} filter id must be inspectable`,
-      { pluginId, cause },
-    );
-  }
-
-  if (idDescriptor === undefined || !("value" in idDescriptor)) {
-    return;
-  }
-
-  const filterId = idDescriptor.value;
-
   if (typeof filterId !== "string") {
     return;
   }
@@ -1381,6 +1384,96 @@ function assertFilterIdNamespaceAllowed(
     `Plugin ${pluginId} cannot save filter id ${filterId}`,
     { pluginId },
   );
+}
+
+function preparePluginMetadataSetInput(
+  input: PluginSetMetadataInput,
+  pluginId: string,
+): Parameters<MetadataStore["set"]>[0] {
+  const metadataInput = {
+    pageId: readPluginDataPropertyValue(input, "pageId", pluginId),
+    namespace: readPluginDataPropertyValue(input, "namespace", pluginId),
+    key: readPluginDataPropertyValue(input, "key", pluginId),
+    value: readPluginDataPropertyValue(input, "value", pluginId),
+    valueType: readPluginDataPropertyValue(input, "valueType", pluginId),
+    sourcePluginId: pluginId,
+  };
+
+  return metadataInput as Parameters<MetadataStore["set"]>[0];
+}
+
+function preparePluginFilterSaveInput(
+  input: PluginSaveFilterInput,
+  pluginId: string,
+): Parameters<FilterStore["save"]>[0] {
+  const filterInput: Record<string, unknown> = {
+    name: readPluginDataPropertyValue(input, "name", pluginId),
+    query: readPluginDataPropertyValue(input, "query", pluginId),
+    viewType: readPluginDataPropertyValue(input, "viewType", pluginId),
+    sourcePluginId: pluginId,
+  };
+  const optionalFields = ["id", "sort", "group"] as const;
+
+  for (const field of optionalFields) {
+    const property = readPluginDataProperty(input, field, pluginId);
+
+    if (property.present) {
+      filterInput[field] = property.value;
+    }
+  }
+
+  return filterInput as Parameters<FilterStore["save"]>[0];
+}
+
+function readPluginDataPropertyValue(
+  input: object,
+  propertyName: string,
+  pluginId: string,
+): unknown {
+  const property = readPluginDataProperty(input, propertyName, pluginId);
+
+  if (!property.present) {
+    return undefined;
+  }
+
+  return property.value;
+}
+
+function readPluginDataProperty(
+  input: object,
+  propertyName: string,
+  pluginId: string,
+): PluginInputProperty {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(input, propertyName);
+
+    if (descriptor === undefined) {
+      return { present: false };
+    }
+
+    if (!("value" in descriptor)) {
+      throw new PluginHostError(
+        "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        `Plugin ${pluginId} input ${propertyName} must be plain data`,
+        { pluginId },
+      );
+    }
+
+    return {
+      present: true,
+      value: descriptor.value,
+    };
+  } catch (error) {
+    if (error instanceof PluginHostError) {
+      throw error;
+    }
+
+    throw new PluginHostError(
+      "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+      `Plugin ${pluginId} input ${propertyName} must be inspectable`,
+      { pluginId, cause: error },
+    );
+  }
 }
 
 function requireOwnedFilter(
