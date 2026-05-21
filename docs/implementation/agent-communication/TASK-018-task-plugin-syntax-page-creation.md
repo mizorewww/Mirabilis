@@ -40,8 +40,9 @@
 
 ## Current Status
 
-- Status: review findings recorded; review-fix TDD handoff pending.
-- Active agents: none.
+- Status: review-fix red-test agent running.
+- Active agents:
+  - Boole the 3rd (`test_writer`): review-fix failing tests for TASK-018 review findings.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -50,7 +51,7 @@
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
   - Review round 1 agents completed and reported findings.
-- Next parent step: commit review findings record, then delegate review-fix failing tests to `test_writer`.
+- Next parent step: wait for Boole the 3rd's review-fix red tests, run focused red-test command, and commit the tests.
 
 ## Agent Handoffs
 
@@ -226,6 +227,21 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Recommendation: docs sync is blocking before merge because branch behavior and public plugin API semantics changed.
 - Docs to update after review fixes: `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and final progress/agent-communication docs.
 - Not required: Tauri IPC/capability/permission/Rust docs, because native surface is unchanged.
+
+### Boole the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: tests only.
+- Review-fix test targets:
+  - Duplicate top-level `blockId` source safety.
+  - Unverified `attrs.boundPageId` safety and verified relation reuse.
+  - Metadata-only relation reuse and source binding restoration.
+  - Markdown save/import durability for safe `boundPageId`.
+  - Indented-code task-looking lines.
+  - Plugin command failure cause/context preservation.
+  - Public `PluginCommandHandler` API contract coverage.
+  - Command-time PluginContext hardening where practical.
+  - Resolver atomicity if a clean test seam exists.
 
 ## Parent Decisions
 
