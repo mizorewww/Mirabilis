@@ -3,10 +3,16 @@ import type {
   BlockNode,
   MarkdownPage,
   PluginContext,
+  PluginFilterQuery,
+  PluginSaveFilterInput,
   PluginPageStore,
   PluginTransaction,
   StructuredMarkdownDocument,
 } from "../../core";
+import {
+  TaskFilterEmptyState,
+  TaskPageListView,
+} from "./components/TaskFilterViews";
 
 type ResolveTaskBlockInput = {
   sourcePageId: string;
@@ -40,11 +46,54 @@ const taskNamespace = "task";
 const resolveTaskBlockCommandId = "task.resolve-task-block";
 const openTaskPageCommandId = "task.open-task-page";
 const toggleTaskStatusCommandId = "task.toggle-status";
+const allTasksFilterId = "task.filter.all-tasks";
+const todayFilterId = "task.filter.today";
+const taskPageListViewId = "task.page-list";
+const taskFilterEmptyStateSlotId = "task.filter-empty-state";
+const pageListViewType = "page.list";
+const filterEmptyStateSlot = "filter.empty_state";
 const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
 const toggleableTaskLinePattern =
   /^(?<beforeMarker> {0,3}-\s+\[)(?<marker> |x|X)(?<afterMarker>\]\s+)(?<title>.*)$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 const toggleTaskStatusInputKeys = new Set(["sourcePageId", "sourceBlockId"]);
+const relativeTodayValue = {
+  kind: "relative-date",
+  value: "today",
+} as const;
+const allTasksFilterQuery = {
+  where: [{ field: "metadata.task.enabled", op: "eq", value: true }],
+} satisfies PluginFilterQuery;
+const todayFilterQuery = {
+  where: [
+    { field: "metadata.task.enabled", op: "eq", value: true },
+    { field: "metadata.task.status", op: "neq", value: "done" },
+  ],
+  or: [
+    {
+      where: [
+        {
+          field: "metadata.task.scheduled",
+          op: "eq",
+          value: relativeTodayValue,
+        },
+      ],
+    },
+    {
+      where: [
+        {
+          field: "metadata.task.due",
+          op: "eq",
+          value: relativeTodayValue,
+        },
+      ],
+    },
+  ],
+} satisfies PluginFilterQuery;
+
+type TaskDefaultFilterInput = PluginSaveFilterInput & {
+  id: string;
+};
 
 export const TaskPlugin: AppPlugin = {
   manifest: {
@@ -64,6 +113,25 @@ export const TaskPlugin: AppPlugin = {
     },
   },
   register(ctx) {
+    registerTaskFilters(ctx);
+
+    ctx.views.register({
+      id: taskPageListViewId,
+      type: pageListViewType,
+      title: "Task page list",
+      component: TaskPageListView,
+      accepts: {
+        kind: "filter-results.markdown-pages",
+      },
+    });
+
+    ctx.slots.register({
+      id: taskFilterEmptyStateSlotId,
+      slot: filterEmptyStateSlot,
+      order: 100,
+      component: TaskFilterEmptyState,
+    });
+
     ctx.commands.register({
       id: resolveTaskBlockCommandId,
       title: "Resolve task block",
@@ -83,6 +151,24 @@ export const TaskPlugin: AppPlugin = {
     });
   },
 };
+
+function registerTaskFilters(ctx: PluginContext): void {
+  const allTasksFilter: TaskDefaultFilterInput = {
+    id: allTasksFilterId,
+    name: "All Tasks",
+    query: allTasksFilterQuery,
+    viewType: pageListViewType,
+  };
+  const todayFilter: TaskDefaultFilterInput = {
+    id: todayFilterId,
+    name: "Today",
+    query: todayFilterQuery,
+    viewType: pageListViewType,
+  };
+
+  ctx.filters.save(allTasksFilter);
+  ctx.filters.save(todayFilter);
+}
 
 async function resolveTaskBlock(
   input: unknown,
