@@ -39,14 +39,15 @@
 
 ## Current Status
 
-- Status: pre-test guidance complete.
-- Active agents: none.
+- Status: `test_writer` writing failing tests.
+- Active agents:
+  - Euler the 3rd (`test_writer`): TASK-017 failing tests only.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
   - Mill the 3rd (`deprecation_auditor`): API/dependency/deprecation risk audit completed.
   - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review completed.
-- Next parent step: commit parent decisions and delegate failing acceptance tests to `test_writer`.
+- Next parent step: wait for Euler the 3rd, run focused red tests, then commit the failing tests.
 
 ## Agent Handoffs
 
@@ -147,6 +148,22 @@
 ```bash
 bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
 ```
+
+### Euler the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: tests and test helpers only.
+- Expected write scope:
+  - `src/test/markdown-import-export.test.ts`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+  - Narrow test helpers only if needed.
+- Explicit exclusions: production code, docs, Tauri config/capabilities, Rust, package/Cargo files, generated files, and implementation modules.
+- Required coverage:
+  - Markdown import/export round trip and block ID uniqueness.
+  - Stable IDs across edits, insertions, deletions, duplicate visible blocks, blank lines, fenced code, raw HTML, and link-like text.
+  - Structured document validation or rejection surface for malformed docs.
+  - Runtime `markdown.pages.load/save` structured body behavior.
+  - Native-surface guard against file/path bridge usage and new Tauri permission assumptions.
 
 ## Validation
 

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:21 CST.
+Last updated: 2026-05-21 09:23 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:21 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance complete; parent decisions ready for `test_writer`.
+- Current phase: `test_writer` is writing failing acceptance tests.
 
 ## Active Agents
 
-- None.
+- Euler the 3rd (`test_writer`): TASK-017 failing tests only.
 
 ## Current TASK-017 State
 
@@ -56,6 +56,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit pre-test guidance summary.
-2. Delegate failing acceptance tests to `test_writer`.
-3. Run focused tests and confirm the expected red signal.
+1. Wait for Euler the 3rd to finish red tests.
+2. Run focused tests and confirm the expected red signal.
+3. Commit failing tests.
