@@ -197,8 +197,8 @@ Markdown-ish 编辑器
 ```text
 识别 - [ ]
 创建任务对应 Markdown Page
-checkbox 完成
 点击任务文字打开页面
+checkbox 完成/重开
 任务无限嵌套
 All Tasks Filter
 Today Filter

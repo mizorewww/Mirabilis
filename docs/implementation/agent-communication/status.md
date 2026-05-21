@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:14 CST.
+Last updated: 2026-05-21 15:22 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:14 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: real loaded-runtime integration regression is green; docs sync is next.
+- Current phase: TASK-020 formal docs sync is complete; final local gate is next.
 
 ## Active Agents
 
@@ -45,6 +45,7 @@ Last updated: 2026-05-21 15:14 CST.
   - Beauvoir the 4th (`security_reviewer`) found no P0/P1/P2 security issues. It confirmed source-only UI payloads, strict toggle trusted-field rejection, verified source/metadata task resolution, plugin-scoped event writes, inert unsafe titles, and clean native/package/Tauri surface.
   - Mencius the 4th (`deprecation_auditor`) found no P0/P1 code blockers. It raised P1 docs-only drift for stale command names and the `{ pageId }` payload example, plus P2 docs-only drift where product/architecture/testing docs still describe checkbox/events as unimplemented.
 - Zeno the 4th (`test_writer`) added a real loaded-runtime regression in `src/test/task-checkbox-toggle-events.test.tsx`. It covers a loaded `pageId/pageFacade` editor path using real `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`, source Markdown/body update, done metadata, `task.completed` event payload, and the checked checkbox remaining visible. The regression is green on current implementation.
+- Peirce the 4th (`doc_writer`) synced formal TASK-020 docs in product, architecture, development, and testing docs. It replaced stale `task.toggle_status` / `task.toggle_checkbox` names, corrected the toggle payload/result contract, documented checkbox complete/reopen metadata and events, documented unresolved checked open behavior, and removed outdated wording that checkbox/events were unimplemented.
 
 ## Current TASK-020 State
 
@@ -144,9 +145,20 @@ git diff --check
 ```
 
 - Result: all passed or clean. TASK-020 test file passed with 20 tests. Focused TASK-018/019/020 tests passed with 3 files / 48 tests. `bun run typecheck` and `git diff --check` passed.
+- Formal docs sync validation after Peirce the 4th:
+
+```bash
+rg -n "task\\.toggle_status|task\\.toggle_checkbox|toggle-task-checkbox|toggle_status|toggle_checkbox" docs/product docs/architecture docs/development docs/testing
+rg -n "task\\.toggle-status\\(\\{ pageId \\}\\)|task\\.toggle-status.*pageId|toggle-status.*\\{ pageId" docs/product docs/architecture docs/development docs/testing
+rg -n "checkbox toggle/events|checkbox events|task completed/reopened events|点击 checkbox.*尚未实现|checkbox.*尚未实现|- \\[x\\].*尚未实现|task events.*尚未实现" docs/product docs/architecture docs/development docs/testing
+rg -n "task\\.completed|task\\.reopened" docs/product docs/architecture docs/development docs/testing
+git diff --check
+```
+
+- Result: stale command name, unimplemented checkbox/event wording, and dotted event scans were clean. The broad payload scan only matched valid `{ pageId }` return/open-command contexts, not stale `task.toggle-status({ pageId })` examples. `git diff --check` passed.
 
 ## Next Actions
 
-1. Commit Zeno the 4th's loaded-runtime regression coverage.
-2. Delegate docs sync for stale command names, payload example, and implemented checkbox/event behavior.
-3. Run final local gate after docs sync.
+1. Commit Peirce the 4th's formal docs sync.
+2. Run final local gate.
+3. Mark TASK-020 complete, merge to `master`, and continue to the next unblocked task.

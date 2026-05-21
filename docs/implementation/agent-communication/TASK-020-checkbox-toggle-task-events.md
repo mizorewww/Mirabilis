@@ -554,6 +554,38 @@ git diff --check
 - Result: all passed or clean. TASK-020 test file passed with 20 tests. Focused TASK-018/019/020 tests passed with 3 files / 48 tests. `bun run typecheck` and `git diff --check` passed.
 - Parent decision: no implementation fix is needed for Linnaeus the 4th's integration concern; commit this as coverage and continue to docs sync.
 
+## Docs Sync Handoff
+
+- Status: completed by Peirce the 4th (`doc_writer`) on 2026-05-21 15:22 CST.
+- Files changed:
+  - `docs/product/02-core-data-model.md`.
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/01-data-roadmap-and-mvp.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+- Summary:
+  - Replaced stale `task.toggle_status` and `task.toggle_checkbox` names with canonical `task.toggle-status`.
+  - Corrected toggle command payload/result docs to `{ sourcePageId, sourceBlockId }` -> `{ pageId, status }`.
+  - Documented checkbox complete/reopen source marker changes, `task.status` metadata updates, and `namespace: "task", type: "completed" | "reopened"` events.
+  - Documented that `task.open-task-page` can create/bind/open unresolved checked task lines as `done` task pages without writing completion/reopen events, while `task.resolve-task-block` remains unchecked-only.
+  - Removed formal-doc wording that checkbox toggle, checked task syntax, or task events were still unimplemented.
+- Validation:
+
+```bash
+rg -n "task\\.toggle_status|task\\.toggle_checkbox|toggle-task-checkbox|toggle_status|toggle_checkbox" docs/product docs/architecture docs/development docs/testing
+rg -n "task\\.toggle-status\\(\\{ pageId \\}\\)|task\\.toggle-status.*pageId|toggle-status.*\\{ pageId" docs/product docs/architecture docs/development docs/testing
+rg -n "checkbox toggle/events|checkbox events|task completed/reopened events|点击 checkbox.*尚未实现|checkbox.*尚未实现|- \\[x\\].*尚未实现|task events.*尚未实现" docs/product docs/architecture docs/development docs/testing
+rg -n "task\\.completed|task\\.reopened" docs/product docs/architecture docs/development docs/testing
+git diff --check
+```
+
+- Result: stale command name, unimplemented checkbox/event wording, and dotted event scans were clean. The broad payload scan only matched valid `{ pageId }` return/open-command contexts, not stale `task.toggle-status({ pageId })` examples. `git diff --check` passed.
+- Remaining docs risk: historical `docs/implementation/agent-communication/*` entries still record earlier stale names and audit findings by design.
+
 ## Current Next Action
 
-- Commit Zeno the 4th's loaded-runtime regression coverage, then delegate docs sync.
+- Commit Peirce the 4th's formal docs sync, then run the final local gate.

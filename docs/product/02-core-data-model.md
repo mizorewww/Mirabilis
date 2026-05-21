@@ -229,7 +229,7 @@ Command Registry 负责注册命令。
 ```text
 insert-task-syntax
 open-page
-toggle-task-checkbox
+task.toggle-status
 start-timer
 stop-timer
 add-tag

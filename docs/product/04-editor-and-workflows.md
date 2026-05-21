@@ -35,7 +35,7 @@
 ```
 
 产品目标是 Task Plugin 识别两个 task block 并创建对应页面。
-TASK-018 交付的是命令级创建切片：内置 `task` 插件注册 `- [ ]` 语法 descriptor，并在执行 `task.resolve-task-block` command 时创建或复用对应 Markdown Page。TASK-019 已交付显式点击打开切片：编辑器在 task syntax extension 存在且当前 Markdown 与结构化 body 快照一致时，把结构化 `markdown.line` task title 渲染为按钮；点击按钮执行 `task.open-task-page({ sourcePageId, sourceBlockId })`，并只打开 command 返回的 `{ pageId }`。当前编辑器保存还不会自动扫描页面或自动调用 resolver。
+TASK-018 交付的是命令级创建切片：内置 `task` 插件注册 `- [ ]` 语法 descriptor，并在执行 `task.resolve-task-block` command 时创建或复用对应 Markdown Page。TASK-019 已交付显式点击打开切片：编辑器在 task syntax extension 存在且当前 Markdown 与结构化 body 快照一致时，把结构化 `markdown.line` task title 渲染为按钮；点击按钮执行 `task.open-task-page({ sourcePageId, sourceBlockId })`，并只打开 command 返回的 `{ pageId }`。TASK-020 已交付同一结构化 body 条件下的 checkbox status toggle。当前编辑器保存还不会自动扫描页面或自动调用 resolver/toggle command。
 
 当 resolver 对这两个 source block 分别执行后，系统创建两个 Markdown Page：
 
@@ -77,9 +77,9 @@ task.sourceBlockId = 对应 block
 
 这些子任务也可以通过同一显式点击机制生成并打开对应页面。
 
-当前 TASK-019 行为是：点击任务文字不会直接信任 `attrs.boundPageId`，而是把 source page/block 身份交给 `task.open-task-page`。Task Plugin 复用 TASK-018 的 resolver/source relation 行为，必要时创建或复用任务页，返回准确的 `{ pageId }`；App Shell/editor callback 只导航到这个返回值。`attrs.boundPageId` 是经过验证或恢复的 source binding 数据，不是受信任的导航目标；伪造、缺失或 malformed `boundPageId` 都会被视为未绑定/不可信。
+当前 TASK-020 行为是：点击任务文字不会直接信任 `attrs.boundPageId`，而是把 source page/block 身份交给 `task.open-task-page`。Task Plugin 复用 source relation 行为，必要时创建或复用任务页，返回准确的 `{ pageId }`；App Shell/editor callback 只导航到这个返回值。点击 checkbox 会调用 `task.toggle-status({ sourcePageId, sourceBlockId })`，将 `- [ ]` 写为 `- [x]`，或将 `- [x]` / `- [X]` 写回 `- [ ]`，同步更新 `task.status` 并写 `namespace: "task", type: "completed" | "reopened"` event。`attrs.boundPageId` 是经过验证或恢复的 source binding 数据，不是受信任的导航目标；伪造、缺失或 malformed `boundPageId` 都会被视为未绑定/不可信。
 
-保存后自动扫描新 task block、自动索引、checkbox toggle/events、All Tasks / Today 过滤视图、Tag/Timer UI 和富编辑器行为仍属于后续任务。
+保存后自动扫描新 task block、自动索引、All Tasks / Today 过滤视图、Tag/Timer UI 和富编辑器行为仍属于后续任务。
 
 ---
 
@@ -166,7 +166,7 @@ D
 
 用户可以一直写，不需要切换到表单模式。
 
-TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。TASK-018 已提供 Task Plugin 的 command-level resolver；TASK-019 已提供结构化 body 上的 task-title 点击打开行为。Tag / Date / Page Link 等语义识别，以及 task 的保存时自动扫描、checkbox 状态、过滤视图和富编辑器行为，仍由后续插件或编辑器任务接管。
+TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。TASK-018 已提供 Task Plugin 的 command-level resolver；TASK-019 已提供结构化 body 上的 task-title 点击打开行为；TASK-020 已提供结构化 body 上的 checkbox status toggle。Tag / Date / Page Link 等语义识别，以及 task 的保存时自动扫描、过滤视图和富编辑器行为，仍由后续插件或编辑器任务接管。
 
 ### 12.2 UI 只辅助插入语法
 
@@ -198,7 +198,7 @@ TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
 ```
 
 这些按钮通过 `markdown.insert-text` command bus 插入文本。TASK-017 已交付稳定 block ID 和当前 textarea 支持样例的内部 Markdown import/export。
-`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、完整 CommonMark AST 往返、原生文件系统 Markdown import/export、以及 task/tag/page-link 的语义行为都延后到后续插件或编辑器任务。
+`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、完整 CommonMark AST 往返、原生文件系统 Markdown import/export、以及 tag/page-link 语义行为都延后到后续插件或编辑器任务。
 
 用户点击 `☐`，编辑器插入 `- [ ] `（末尾有空格）：
 
@@ -212,7 +212,7 @@ TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
 - [ ] 写统计图插件
 ```
 
-TASK-018 起，Task Plugin 可以在 command 层接管后续识别：调用 `task.resolve-task-block` 并传入 `{ sourcePageId, sourceBlockId }` 后，resolver 会从当前 source block 派生标题并创建或复用任务页。TASK-019 起，用户点击结构化 task title 时会调用 `task.open-task-page({ sourcePageId, sourceBlockId })`，该 command 返回 `{ pageId }` 供页面打开。编辑器保存本身仍只保存 Markdown 文本，不会自动调用这些 task commands。
+TASK-018 起，Task Plugin 可以在 command 层接管后续识别：调用 `task.resolve-task-block` 并传入 `{ sourcePageId, sourceBlockId }` 后，resolver 会从当前 unchecked source block 派生标题并创建或复用任务页。TASK-019 起，用户点击结构化 task title 时会调用 `task.open-task-page({ sourcePageId, sourceBlockId })`，该 command 返回 `{ pageId }` 供页面打开。TASK-020 起，用户点击结构化 checkbox 时会调用 `task.toggle-status({ sourcePageId, sourceBlockId })`，该 command 返回 `{ pageId, status }` 供编辑器更新可见 Markdown。编辑器保存本身仍只保存 Markdown 文本，不会自动调用这些 task commands。
 
 ---
 
@@ -313,9 +313,10 @@ Markdown Page 保存正文
 TASK-017 结构化保存为带稳定 blockId 的 markdown.line blocks
 TASK-018 在执行 task.resolve-task-block 时为指定 task block 创建或复用 Markdown Page
 TASK-019 在点击结构化 task title 时执行 task.open-task-page 并打开返回的 pageId
+TASK-020 在点击结构化 checkbox 时执行 task.toggle-status 并应用返回的 status
 任务页写入 task.enabled、task.status、task.sourcePageId、task.sourceBlockId
 source block 通过 attrs.boundPageId 绑定到任务页
-后续任务负责自动扫描、All Tasks Filter 更新、checkbox events 和 richer editor UI
+后续任务负责自动扫描、All Tasks Filter 更新和 richer editor UI
 ```
 
 ### 26.2 进入任务页
