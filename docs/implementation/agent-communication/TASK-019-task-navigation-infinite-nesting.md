@@ -223,6 +223,52 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
   - `git diff --check` passed.
   - Native/package/Tauri surface diff from `master` returned no files.
 
+### Final Focused Re-review
+
+- Status: completed.
+- Agents:
+  - Kant the 3rd (`reviewer`): final focused correctness re-review.
+  - Hilbert the 3rd (`test_quality_reviewer`): final focused test-quality re-review.
+  - Beauvoir the 3rd (`security_reviewer`): final focused security/API re-review.
+
+#### Final Focused Re-review Findings
+
+- Kant the 3rd found no P0/P1/P2/P3 correctness findings. Verified:
+  - Real runtime facade load path returns structured body.
+  - Loaded `pageId/pageFacade` editor path renders task navigation from loaded body.
+  - Stale delayed task-open results are guarded for page switches and same-page edits.
+  - Unsaved edits invalidate stale task-title buttons.
+  - Malformed `attrs.boundPageId` is treated as absent.
+  - TASK-018 resolver behavior remains intact through shared `resolveTaskPage`.
+- Hilbert the 3rd found no P0/P1/P2 test-quality findings. Remaining P3/non-blocking: native-surface shell-out inside Vitest is branch/git-environment coupled, but `master` is the documented integration branch and the guard passed locally.
+- Beauvoir the 3rd found no P0/P1/P2 security/API findings. Verified:
+  - Unsafe task titles render as React text, not HTML or links.
+  - UI sends only `{ sourcePageId, sourceBlockId }` and navigates only to validated `{ pageId }`.
+  - Stale navigation and unsaved edit guards are in place.
+  - `useRuntime`, App Shell, NativeBridge, package, Cargo, Tauri config/capability/permission surfaces remain unchanged.
+
+#### Final Focused Re-review Checks
+
+- `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-command-registry.test.ts` passed with 6 files / 111 tests.
+- `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-plugin-syntax-page-creation.test.ts` passed with 3 files / 36 tests.
+- `bun run test:frontend -- src/test/app-shell-boundary.test.ts src/test/native-bridge.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 29 tests.
+- `bun run typecheck` passed.
+- `bun run lint` passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml --test ipc_boundary` passed.
+- `git diff --check master...HEAD` passed.
+- Native/package/Tauri surface diff from `master` returned no files.
+- No `.skip`, `.only`, or `.todo` tests were found under `src/test`.
+
+### Docs Sync Handoff
+
+- Status: pending.
+- Required docs sync:
+  - Replace direct `page.open` / direct `attrs.boundPageId` navigation descriptions with TASK-019's command-driven contract: task-title click -> `task.open-task-page({ sourcePageId, sourceBlockId })` -> `{ pageId }` -> shell/editor callback opens returned page id.
+  - Move explicit task-title click/open navigation out of future-only wording while keeping automatic save-time scanning/indexing, checkbox events, filters/views, Tag/Timer UI, and rich editor work as future.
+  - Document `task.open-task-page` as an implemented current Task Plugin command; remove stale `task.open_task_page`.
+  - Document loaded `pageId/pageFacade` editor mode carrying structured body, task-title buttons derived from structured body, stale delayed open results being ignored after page/content changes, and unsaved edits invalidating stale task buttons.
+  - Add TASK-019 testing guidance for command payload/return contract, verified/metadata-only/malformed/forged bindings, nested A -> B flow, loaded editor path, stale guards, unsafe title inertness, and native/package/Tauri surface guard.
+
 ### Pre-test Guidance
 
 - Jason the 3rd (`planner`) completed read-only planning.
