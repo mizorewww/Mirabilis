@@ -731,6 +731,28 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Add a small test-only regression for transaction-scoped metadata writes under same-batch manifest reservations before formal docs sync. No production implementation is expected unless the test exposes a red behavior gap.
 
+## Transaction-Path Reservation Coverage
+
+- Status: completed by Huygens (`test_writer`) on 2026-05-21 21:16 CST.
+- Commit: `e3d77fe`.
+- Files changed:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Coverage added:
+  - Earlier same-batch `install` and `register` transaction writes using `tx.metadata.set` are rejected when targeting a later plugin's manifest-reserved namespace.
+  - Same-batch manifest owner can still write its own reserved namespace through a transaction.
+  - No `.skip` / `.only` was added.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bunx eslint src/test/plugin-api-contracts.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: all passed. Plugin API coverage passed with 1 file / 29 tests. Plugin API + lifecycle + architecture coverage passed with 3 files / 77 tests. `bun run typecheck`, focused eslint, and `git diff --check` passed. Behavior was already green, so no production follow-up was needed.
+
 ## Current Next Action
 
-- Huygens (`test_writer`) is adding transaction-scoped same-batch manifest reservation coverage.
+- Spawn `doc_writer` for TASK-022 formal docs sync.
