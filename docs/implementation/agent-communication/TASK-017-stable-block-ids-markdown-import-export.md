@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: code/test review clean; documentation sync pending.
+- Status: documentation sync completed; final parent gates/commit pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -71,7 +71,8 @@
   - Hume the 3rd (`test_writer`): long similar-line regression test completed, verified red, committed, and closed.
   - McClintock the 3rd (`implementer`): anchor-based reconciliation fix completed, validated, committed, and closed.
   - Lorentz the 3rd (`reviewer`): final narrow correctness re-review completed with no remaining P0/P1/P2 findings.
-- Next parent step: commit final re-review result and delegate docs sync.
+  - TASK-017 documentation sync agent: product, architecture, development, testing, and status documentation updated for final TASK-017 behavior.
+- Next parent step: run final gates and commit documentation/status sync.
 
 ## Agent Handoffs
 
@@ -589,6 +590,38 @@ git diff --check master...HEAD
   - `docs/development/02-implementation-roadmap-and-constraints.md`.
   - `docs/testing/strategy.md`.
 - Include final review-fix behavior: TypeScript conversion helpers, line-oriented `markdown.line` blocks, stable ID reconciliation, Rust IPC body validation, strict legacy fallback, inert Markdown text, no filesystem import/export, and no new Tauri capabilities.
+- Status: completed by the TASK-017 documentation sync agent.
+
+### TASK-017 Documentation Sync Agent Outcome
+
+- Status: completed; no production code, tests, Tauri config, permissions, package/Cargo files, generated files, or dependencies edited.
+- Files changed:
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/architecture/02-core-kernel.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-017-stable-block-ids-markdown-import-export.md`.
+- Documented final behavior:
+  - Public Core helpers: `importMarkdownToStructuredDocument`, `exportStructuredDocumentToMarkdown`, and `validateStructuredMarkdownDocument`.
+  - Interim line-oriented `markdown.line` body format with one stable nonblank `blockId` per line, including blank lines.
+  - Export preserving visible Markdown text for tested textarea-supported samples.
+  - Stable ID reconciliation across edits, insert/delete, duplicate text, deleted-ID collisions, and similar inserted lines using previous document context.
+  - `runtime.markdown.pages.load` structured-body export to editor Markdown and exact legacy `markdown.text` load-only fallback.
+  - `runtime.markdown.pages.save` editor-Markdown import to structured bodies through `core.pages.get` / `core.pages.update` only.
+  - Rust IPC `core.pages.create/update` structured-body validation with redacted `INVALID_REQUEST`.
+  - Inert textarea handling for raw HTML/javascript-like text, `attrs` / `marks` executable-value rejection, no new Tauri command/capability/filesystem/native import-export surface, and deferred follow-up scope.
+- Checks run:
+
+```bash
+git diff --check
+rg -n "stable block IDs?[, ].*deferred|stable block ID.*延后|稳定 block ID.*延后|Stable block ID$|^Markdown import/export$|content: \[\{ type: \"markdown\.text\", text: markdown \}\]" docs/product/04-editor-and-workflows.md docs/architecture/02-core-kernel.md docs/architecture/04-slots-editor-task.md docs/architecture/07-runtime-flows.md docs/development/02-implementation-roadmap-and-constraints.md docs/testing/strategy.md
+rg -n "markdown\.text|markdown\.line|core\.pages\.get|core\.pages\.update|INVALID_REQUEST|Tauri commands|capabilities|filesystem|CommonMark|Tiptap|ProseMirror|attrs|marks" docs/product/04-editor-and-workflows.md docs/architecture/02-core-kernel.md docs/architecture/04-slots-editor-task.md docs/architecture/07-runtime-flows.md docs/development/02-implementation-roadmap-and-constraints.md docs/testing/strategy.md
+```
+
+- Result: `git diff --check` passed. Stale-wording search found no old stable-ID-deferred wording or old `markdown.text` save-wrapper snippet. Review search showed expected TASK-017 contract mentions and deferred native/rich-editor scope.
 
 ## Validation
 

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 10:54 CST.
+Last updated: 2026-05-21 10:59 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 10:54 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: code/test review clean; documentation sync pending.
+- Current phase: documentation sync completed; final parent gates/commit pending.
 
 ## Active Agents
 
@@ -63,6 +63,7 @@ Last updated: 2026-05-21 10:54 CST.
 - Hume the 3rd (`test_writer`) added the long similar-line regression test. Commit: `18f0f04`.
 - McClintock the 3rd (`implementer`) anchored fuzzy reconciliation to the next retained block so the edited old block keeps its ID. Commit: `61ee5f8`.
 - Lorentz the 3rd (`reviewer`) completed final narrow correctness re-review with no remaining P0/P1/P2 findings.
+- TASK-017 documentation sync agent updated product, architecture, development, testing, and live status docs for the final TASK-017 behavior: public Core Markdown conversion helpers, line-oriented `markdown.line` bodies, stable ID reconciliation, runtime load/export and save/import behavior, strict legacy `markdown.text` load fallback, Rust IPC body validation, inert Markdown text, and deferred follow-up scope.
 
 ## Validation Already Reported By Parent
 
@@ -108,8 +109,17 @@ PY
 codex --strict-config doctor --summary --ascii
 ```
 
+- Documentation sync checks:
+
+```bash
+git diff --check
+rg -n "stable block IDs?[, ].*deferred|stable block ID.*延后|稳定 block ID.*延后|Stable block ID$|^Markdown import/export$|content: \[\{ type: \"markdown\.text\", text: markdown \}\]" docs/product/04-editor-and-workflows.md docs/architecture/02-core-kernel.md docs/architecture/04-slots-editor-task.md docs/architecture/07-runtime-flows.md docs/development/02-implementation-roadmap-and-constraints.md docs/testing/strategy.md
+rg -n "markdown\.text|markdown\.line|core\.pages\.get|core\.pages\.update|INVALID_REQUEST|Tauri commands|capabilities|filesystem|CommonMark|Tiptap|ProseMirror|attrs|marks" docs/product/04-editor-and-workflows.md docs/architecture/02-core-kernel.md docs/architecture/04-slots-editor-task.md docs/architecture/07-runtime-flows.md docs/development/02-implementation-roadmap-and-constraints.md docs/testing/strategy.md
+```
+
+- Result: `git diff --check` passed. The stale-wording search found no old stable-ID-deferred wording or old `markdown.text` save-wrapper snippet; the review search showed the expected TASK-017 contract and deferred native/rich-editor scope.
+
 ## Next Actions
 
-1. Commit final correctness re-review result.
-2. Delegate TASK-017 docs sync to `doc_writer`.
-3. Run final gates after docs sync.
+1. Run final gates after docs sync.
+2. Commit the TASK-017 documentation/status sync.

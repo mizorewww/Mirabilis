@@ -152,6 +152,31 @@ bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test
 
 Run `bun run typecheck`, `bun run lint`, and `git diff --check` with the focused tests. Escalate to `bun run check:full` only if a later edit changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior; TASK-016 uses existing DB IPC allowlisted operations and adds no new native commands or permissions.
 
+## TASK-017 Stable Block IDs and Markdown Import/Export Guidance
+
+TASK-017 tests cover internal textarea Markdown `<-> StructuredMarkdownDocument` conversion and the narrow persistence path:
+
+- Public Core helpers are exported and tested: `importMarkdownToStructuredDocument`, `exportStructuredDocumentToMarkdown`, and `validateStructuredMarkdownDocument`.
+- Import creates interim line-oriented `markdown.line` blocks, one block per Markdown line including blank lines, each with a unique nonblank `blockId`.
+- Export preserves visible Markdown text for the tested textarea-supported samples, including headings, paragraphs, lists, checkbox syntax text, tags, page links, fenced code, raw HTML text, and `javascript:`-like link text as inert text.
+- ID reconciliation uses the previous structured document and keeps stable IDs across ordinary edits, insertions, deletions, duplicate visible text, deleted-ID generator collisions, and similar inserted lines before edited old lines.
+- `runtime.markdown.pages.load()` exports structured stored bodies to editor Markdown and keeps only the exact TASK-016 one-node `markdown.text` load fallback.
+- `runtime.markdown.pages.save()` imports editor Markdown into structured bodies and uses only allowlisted `core.pages.get` / `core.pages.update`; new saves do not write `markdown.text`.
+- Rust IPC validation for `core.pages.create` / `core.pages.update` rejects malformed structured bodies with redacted `INVALID_REQUEST`, including non-`doc` roots, missing/non-array content, missing/blank/duplicate `blockId`, excessive depth/count, structured `markdown.text`, invalid text/content, malformed `attrs` / `marks`, event-handler-like keys, and executable URL-like values.
+- Native-surface guards should continue proving no new Tauri commands, capabilities, permissions, package/Cargo dependencies, filesystem import/export behavior, raw Tauri invoke usage, file/path DTOs, or HTML rendering sinks were added for TASK-017.
+
+TASK-017 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Escalate to `bun run check:full` for future work that changes Tauri commands/capabilities, filesystem/native import-export, app-runtime persistence wiring, packaging, release behavior, or broader IPC contracts beyond the TASK-017 body validation now covered by focused Rust IPC tests.
+
 ## Merge Gate
 
 Before merging to `master`:

@@ -30,8 +30,17 @@ export interface MarkdownPage {
 }
 ```
 
-`body` 推荐存 Tiptap / ProseMirror JSON。
-导入导出时再转 Markdown。
+TASK-017 当前的 `body` 是过渡期的结构化 Markdown 文档，不是 Tiptap / ProseMirror JSON。Core 暴露三个公共 helper：
+
+```ts
+importMarkdownToStructuredDocument(markdown, options);
+exportStructuredDocumentToMarkdown(document);
+validateStructuredMarkdownDocument(document, options);
+```
+
+`importMarkdownToStructuredDocument()` 以 line-oriented 方式导入 Markdown：输入里的每一行都会成为一个 `markdown.line` block，包括空行。每个 block 都有非空、稳定的 `blockId`。`exportStructuredDocumentToMarkdown()` 把这些 blocks 按行导回编辑器 Markdown；TASK-017 的测试覆盖当前 textarea 支持样例的可见 Markdown 文本保持不变。`validateStructuredMarkdownDocument()` 在 Core 边界检查 `doc` root、array content、唯一非空 `blockId`、深度/数量限制，以及 `attrs` / `marks` 里的 executable-like 值。
+
+后续 rich editor 可以把这个结构迁移或适配到 Tiptap / ProseMirror schema，但 TASK-017 没有引入 rich editor、CommonMark AST round-tripping 或原生文件系统导入导出。
 
 页面中的内容可以长这样：
 
@@ -55,6 +64,17 @@ type StructuredMarkdownDocument = {
 ```
 
 每个 block 必须有稳定 `blockId`。
+当前 TASK-017 导入后的顶层 block 形状是：
+
+```ts
+{
+  blockId: "block_...",
+  type: "markdown.line",
+  text: "原始 Markdown 行"
+}
+```
+
+空行也会保留为 `text: ""` 的 `markdown.line` block。编辑时，导入器会结合上一版文档保留既有 block ID，覆盖普通编辑、插入、删除、重复文本、deleted-ID collision 和相似插入行场景。
 
 ---
 
