@@ -583,4 +583,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn a focused `test_writer` for manifest-derived metadata reservation coverage, then validate and commit the expected red signal.
+- Goodall (`test_writer`) is adding manifest-derived metadata reservation regression tests. Parent will validate the expected red signal before committing the tests.
