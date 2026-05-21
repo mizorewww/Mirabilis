@@ -39,8 +39,9 @@
 
 ## Current Status
 
-- Status: review-fix tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: review-fix implementation running.
+- Active agents:
+  - Hooke the 3rd (`implementer`): review-fix implementation for TS reconciliation/validation and Rust IPC body validation.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -58,7 +59,7 @@
   - Rawls the 3rd (`doc_writer`): documentation gap review completed.
   - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation and TypeScript conversion review fixes completed.
   - Tesla the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
-- Next parent step: record red signal and delegate review-fix implementation.
+- Next parent step: wait for Hooke the 3rd, run focused checks, and commit review-fix implementation if green.
 
 ## Agent Handoffs
 
@@ -353,6 +354,25 @@ git diff --check
 ```
 
 - Result: expected red signals. Frontend focused tests: 2 failed files, 5 failed / 10 passed. Rust IPC page tests: 3 run, 2 failed / 1 passed. `git diff --check` passed.
+
+### Hooke the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: production implementation only.
+- Expected write scope:
+  - `src/core/markdown/markdown-conversion.ts`.
+  - `src/core/runtime/markdown-pages.ts`.
+  - `src-tauri/src/commands/db.rs`.
+  - Narrow production helper/module changes only if strictly required.
+- Explicit exclusions: tests, docs, Tauri config/capabilities, package/Cargo files, generated files, dependency manifests, and unrelated Rust/TypeScript code.
+- Required checks:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence page
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+git diff --check
+```
 
 ## Validation
 
