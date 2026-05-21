@@ -123,7 +123,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
 
   void collectedExtensions;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     latestPageIdRef.current = pageId;
   }, [pageId]);
 
@@ -205,16 +205,32 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
 
   async function insertText(text: string) {
     const textarea = areaRef.current;
-    const selectionStart = textarea?.selectionStart ?? markdown.length;
+    const insertPageId = pageId;
+    const insertMarkdown = markdown;
+    const insertVersion = contentVersionRef.current;
+    const selectionStart = textarea?.selectionStart ?? insertMarkdown.length;
     const selectionEnd = textarea?.selectionEnd ?? selectionStart;
     const output = await commands.execute(insertCommandId, {
-      pageId,
-      markdown,
+      pageId: insertPageId,
+      markdown: insertMarkdown,
       text,
       selectionStart,
       selectionEnd,
     });
-    const next = readInsertTextResult(output, markdown, text, selectionStart);
+
+    if (
+      latestPageIdRef.current !== insertPageId ||
+      contentVersionRef.current !== insertVersion
+    ) {
+      return;
+    }
+
+    const next = readInsertTextResult(
+      output,
+      insertMarkdown,
+      text,
+      selectionStart,
+    );
 
     nextCaretRef.current = next;
     contentVersionRef.current += 1;
