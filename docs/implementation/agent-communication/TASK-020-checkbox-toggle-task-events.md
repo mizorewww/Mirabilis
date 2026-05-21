@@ -431,6 +431,31 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 3 files / 47 tests with 3 failed / 44 passed. Failures were duplicated visible task title text, repeated pending toggle dispatching twice, and `task.open-task-page` rejecting unresolved checked source with `Completed task source block is not resolved`. `bun run typecheck` passed. `git diff --check` passed.
 
+## Second Review-fix Implementation Result
+
+- Status: completed by Euler the 4th (`implementer`) on 2026-05-21 14:59 CST.
+- Files changed:
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+  - `src/plugins/task/plugin.ts`.
+- Summary:
+  - Keeps the visible task title as the open-page affordance.
+  - Keeps the checkbox a real accessible checkbox by labelling it from the title button without duplicating visible title text.
+  - Suppresses repeated checkbox dispatches while a toggle for the same source block is pending.
+  - Allows `task.open-task-page` to create, bind, and open unresolved checked task lines as done task pages without writing completion or reopen events.
+  - Leaves `task.resolve-task-block` unchanged as unchecked-only behavior.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused TASK-018/019/020 tests passed with 3 files / 47 tests. Expanded frontend coverage passed with 6 files / 113 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Delegate second review-fix implementation to `implementer`.
+- Commit Euler the 4th's validated second review-fix implementation, then run focused review agents before docs sync.

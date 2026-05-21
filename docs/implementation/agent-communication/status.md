@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:55 CST.
+Last updated: 2026-05-21 14:59 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:55 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix regressions committed; behavior fix implementation is next.
+- Current phase: second review-fix implementation validated; focused review and docs sync are next.
 
 ## Active Agents
 
@@ -37,6 +37,7 @@ Last updated: 2026-05-21 14:55 CST.
   - Archimedes the 4th (`security_reviewer`) found no P0/P1/P2 security findings. P3: existing `task.resolve-task-block` / `task.open-task-page` input readers still allow extra fields, but they are ignored and not trusted.
   - Planck the 4th (`deprecation_auditor`) found P1 docs drift for stale command aliases/payloads, P2 checked-task open behavior under-specification, and P2 broader docs still saying checkbox toggle/events are unimplemented.
 - Newton the 4th (`test_writer`) added second review-fix regressions for task title/open affordance separation, pending toggle suppression, unresolved checked-task open, and `task.resolve-task-block` remaining unchecked-only. Commit: `2134c16`.
+- Euler the 4th (`implementer`) completed the second review-fix implementation in `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx` and `src/plugins/task/plugin.ts`. It keeps the visible task title as the open button, labels the checkbox through that button without duplicating title text, suppresses repeated checkbox dispatch while a source block toggle is pending, and lets `task.open-task-page` create/bind/open unresolved checked task lines as done task pages without completion/reopen events.
 
 ## Current TASK-020 State
 
@@ -107,9 +108,21 @@ git diff --cached --check
 ```
 
 - Result: expected red signal. `task-checkbox-toggle-events.test.tsx` ran 11 tests with 8 failed / 3 passed. Failures were the expected missing `task.toggle-status` command (`COMMAND_NOT_FOUND`) and missing accessible checkbox UI (`Unable to find role="checkbox"`). `bun run typecheck` passed. `git diff --cached --check` passed before the test commit.
+- Second review-fix implementation validation after Euler the 4th:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused TASK-018/019/020 tests passed with 3 files / 47 tests. Expanded frontend coverage passed with 6 files / 113 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
 ## Next Actions
 
-1. Delegate second review-fix implementation to `implementer`.
-2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
-3. Commit behavior fix if focused checks pass.
+1. Commit Euler the 4th's validated second review-fix implementation.
+2. Run focused review agents for correctness, security, API/deprecation, and test quality.
+3. Delegate docs sync after behavior review is clean.

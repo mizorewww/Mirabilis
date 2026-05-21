@@ -216,10 +216,6 @@ function openResolvedTaskPage(
       return existingTaskPage;
     }
 
-    if (parsedTaskLine.previousStatus === "done") {
-      throw new Error("Completed task source block is not resolved");
-    }
-
     const taskPage = findOrCreateTaskPage(tx, {
       ...payload,
       sourceBlock: sourceBlockMatch.block,
