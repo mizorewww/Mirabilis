@@ -4,11 +4,11 @@ Last updated: 2026-05-21 18:35 CST.
 
 ## Current Task
 
-- Task: TASK-021 - Implement Tag Plugin baseline.
-- Branch: `feat/task-021-tag-plugin-baseline`.
+- Task: TASK-022 - Implement All Tasks and Today filters.
+- Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final local gate passed; progress completion update is being committed.
+- Current phase: task started; pre-test guidance is next.
 
 ## Active Agents
 
@@ -16,8 +16,59 @@ Last updated: 2026-05-21 18:35 CST.
 
 ## Completed Recent Task
 
+- TASK-021 - Implement Tag Plugin baseline was completed on branch `feat/task-021-tag-plugin-baseline`, validated with focused Tag Plugin checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `b5389cd`.
 - TASK-020 - Implement checkbox toggle and task events was completed on branch `feat/task-020-checkbox-toggle-task-events`, validated with focused frontend/runtime/docs checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `c42fa5f`.
 - TASK-019 - Implement task navigation and infinite nesting was completed on branch `feat/task-019-task-navigation-infinite-nesting`, validated with focused frontend/runtime/security/docs checks, final `bun run check:quick`, `bun run build`, and merge-tree `bun run check:quick`, then merged to `master` in commit `7a2ce72`.
+
+## Current TASK-022 State
+
+- TASK-022 follows TASK-006, TASK-018, and TASK-021 and owns the first Filter/View slice:
+  - All Tasks filter lists task-enabled pages.
+  - Today filter uses documented metadata/date semantics.
+  - Filters render through the registered view system.
+  - Empty states are provided through slots.
+- Initial parent interpretation:
+  - Keep Filter behavior on generic query/view/slot primitives and plugin-owned contributions.
+  - Use current Task Plugin metadata where possible; agents must define whether Today can be implemented with existing `task.status` / source metadata or needs a narrow due/scheduled metadata contract.
+  - Keep automatic save-time scanning/indexing, native/Tauri/package changes, broad persistence/schema changes, release packaging, global metadata UI, and Timer/Calendar/Stats aggregation out of scope unless agents identify an acceptance dependency.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking update/sandbox notes.
+
+## Parent Decisions At TASK-022 Start
+
+- Start from `master` after TASK-021 merge commit `b5389cd`.
+- Use branch `feat/task-022-all-tasks-today-filters`.
+- Delegate planning/current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync to agents.
+- The parent thread must not write TASK-022 tests or production implementation unless a delegated role fails or is explicitly cancelled and the fallback is recorded.
+
+## Source Docs Read By Parent For TASK-022
+
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`.
+- `docs/implementation/progress.md`.
+- `docs/implementation/task-index.md#task-022-implement-all-tasks-and-today-filters`.
+- `docs/development/01-data-roadmap-and-mvp.md#phase-3task-plugin`.
+- `docs/product/05-built-in-plugins.md#23-filter-plugin`.
+- `docs/architecture/02-core-kernel.md#44-filter-store`.
+- `docs/architecture/06-filter-native-database.md#14-filter-engine-设计`.
+- Related Task/Tag references in `docs/product/05-built-in-plugins.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+
+## TASK-022 Validation Log
+
+- `.codex/agents/*.toml` parsed successfully with 11 files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+
+## Completed TASK-022 Agent Outcomes
+
+- None yet.
+
+## Parent Decisions After TASK-022 Start
+
+- None yet.
+
+## Next Actions
+
+1. Delegate pre-test planning/current-doc guidance, API/deprecation audit, and security guidance.
+2. Select the canonical TASK-022 filter/view contracts from agent guidance.
+3. Delegate `test_writer` for failing acceptance tests.
 
 ## Current TASK-021 State
 

@@ -53,7 +53,7 @@ Status markers:
 - [x] TASK-019: Implement task navigation and infinite nesting
 - [x] TASK-020: Implement checkbox toggle and task events
 - [x] TASK-021: Implement Tag Plugin baseline
-- [ ] TASK-022: Implement All Tasks and Today filters
+- [~] TASK-022: Implement All Tasks and Today filters
 
 ## Milestone M5: Metadata and timer loop
 
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 18:35 CST - TASK-022 started
+
+- Branch: `feat/task-022-all-tasks-today-filters`.
+- Task: Implement All Tasks and Today filters.
+- Scope: implement the next Task/Filter/View slice after TASK-018/TASK-021 so All Tasks lists task-enabled pages, Today uses documented metadata/date semantics, filters render through the registered view system, and empty states are provided through slots.
+- Source docs: `docs/implementation/task-index.md#task-022-implement-all-tasks-and-today-filters`, `docs/development/01-data-roadmap-and-mvp.md#phase-3task-plugin`, `docs/product/05-built-in-plugins.md#23-filter-plugin`, `docs/architecture/02-core-kernel.md#44-filter-store`, `docs/architecture/06-filter-native-database.md#14-filter-engine-设计`, and related Task/Tag runtime-flow docs.
+- Initial out of scope until agents narrow otherwise: automatic save-time scanning/indexing, new task metadata fields beyond current `task.enabled` / `task.status` / source relation unless required for Today semantics, global Metadata UI, Tag picker/autocomplete, Timer/Calendar/Stats aggregation, native/Tauri/package changes, broad persistence/schema changes, release packaging, and any Core business behavior beyond generic filter/view/slot primitives.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-022-all-tasks-today-filters.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus non-blocking unrestricted sandbox/network notes, the known desktop-terminal `TERM=dumb` failure, and an available Codex update. Parent treats the terminal note as non-blocking for repository agent work.
 
 ### 2026-05-21 18:35 CST - TASK-021 completed
 
