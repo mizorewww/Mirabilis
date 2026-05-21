@@ -189,4 +189,4 @@ git diff --cached --check
 
 ## Current Next Action
 
-- Spawn `implementer` for the minimum production implementation.
+- Tesla (`implementer`) is implementing the minimum Metadata UI Plugin / metadata bar behavior for Lovelace's tests.

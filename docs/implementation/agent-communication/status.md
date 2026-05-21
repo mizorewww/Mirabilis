@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:51 CST.
+Last updated: 2026-05-21 21:53 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 21:51 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 acceptance tests are committed; implementation is pending.
+- Current phase: TASK-023 implementation is in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate implementation.
+- Tesla (`implementer`) is implementing the minimum Metadata UI Plugin / metadata bar behavior for Lovelace's tests.
 
 ## Completed Recent Task
 
@@ -142,7 +142,7 @@ Last updated: 2026-05-21 21:51 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for the minimum production implementation.
+1. Wait for Tesla's implementation.
 2. Validate focused TASK-023 checks after implementation.
 
 ## Current TASK-021 State
