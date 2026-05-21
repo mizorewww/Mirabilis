@@ -54,6 +54,7 @@ export type MarkdownPageEditorProps =
 
 type EditorState = {
   markdown: string;
+  body?: StructuredMarkdownDocument;
   loadedPageId?: string;
   loading: boolean;
   saving: boolean;
@@ -64,6 +65,7 @@ type EditorAction =
       type: "direct-page";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
     }
   | {
       type: "load-started";
@@ -72,6 +74,7 @@ type EditorAction =
       type: "load-succeeded";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
     }
   | {
       type: "edit";
@@ -84,6 +87,7 @@ type EditorAction =
       type: "save-finished";
       pageId: string;
       markdown: string;
+      body?: StructuredMarkdownDocument;
       applySavedMarkdown: boolean;
     };
 
@@ -101,6 +105,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const pageId = readPageId(props);
   const pageFacade = readPageFacade(props);
   const initialMarkdown = readInitialMarkdown(props);
+  const initialBody = readStructuredBody(props);
   const directPageSignatureRef = useRef(
     pageFacade === undefined
       ? createDirectPageSignature(pageId, initialMarkdown)
@@ -114,14 +119,17 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     () =>
       createInitialEditorState({
         initialMarkdown,
+        initialBody,
         pageId,
         loadsFromPageSource: pageFacade !== undefined,
       }),
   );
   const { markdown, loadedPageId } = state;
+  const structuredBody =
+    pageFacade === undefined ? readStructuredBody(props) : state.body;
   const collectedExtensions = extensionSource?.collectEditorExtensions() ?? [];
   const taskTitleButtons = collectTaskTitleButtons(
-    readStructuredBody(props),
+    structuredBody,
     collectedExtensions,
   );
   const canSave =
@@ -158,8 +166,9 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       type: "direct-page",
       pageId,
       markdown: initialMarkdown,
+      body: initialBody,
     });
-  }, [initialMarkdown, pageFacade, pageId]);
+  }, [initialBody, initialMarkdown, pageFacade, pageId]);
 
   useEffect(() => {
     if (pageFacade === undefined) {
@@ -182,6 +191,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         type: "load-succeeded",
         pageId,
         markdown: page.markdown,
+        body: page.body,
       });
     });
 
@@ -263,6 +273,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     dispatch({ type: "save-started" });
 
     let completedMarkdown = saveMarkdown;
+    let completedBody: StructuredMarkdownDocument | undefined;
     let applySavedMarkdown = false;
 
     try {
@@ -272,6 +283,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       });
 
       completedMarkdown = savedPage.markdown;
+      completedBody = savedPage.body;
       applySavedMarkdown =
         latestPageIdRef.current === savePageId &&
         contentVersionRef.current === saveVersion;
@@ -280,6 +292,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         type: "save-finished",
         pageId: savePageId,
         markdown: completedMarkdown,
+        body: completedBody,
         applySavedMarkdown,
       });
     }
@@ -294,10 +307,20 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   }
 
   async function openStructuredTaskPage(sourceBlockId: string) {
+    const openPageId = pageId;
+    const openVersion = contentVersionRef.current;
     const output = await commands.execute(openTaskPageCommandId, {
-      sourcePageId: pageId,
+      sourcePageId: openPageId,
       sourceBlockId,
     });
+
+    if (
+      latestPageIdRef.current !== openPageId ||
+      contentVersionRef.current !== openVersion
+    ) {
+      return;
+    }
+
     const openedPageId = readOpenedPageId(output);
 
     props.onOpenPage?.(openedPageId);
@@ -399,11 +422,13 @@ function readExtensionSource(
 
 function createInitialEditorState(input: {
   initialMarkdown: string;
+  initialBody?: StructuredMarkdownDocument;
   pageId: string;
   loadsFromPageSource: boolean;
 }): EditorState {
   return {
     markdown: input.initialMarkdown,
+    body: input.initialBody,
     loadedPageId: input.loadsFromPageSource ? undefined : input.pageId,
     loading: input.loadsFromPageSource,
     saving: false,
@@ -422,6 +447,7 @@ function editorStateReducer(
     case "direct-page":
       return {
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
@@ -435,6 +461,7 @@ function editorStateReducer(
     case "load-succeeded":
       return {
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
@@ -460,6 +487,7 @@ function editorStateReducer(
       return {
         ...state,
         markdown: action.markdown,
+        body: action.body,
         loadedPageId: action.pageId,
         saving: false,
       };

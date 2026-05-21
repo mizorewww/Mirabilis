@@ -275,7 +275,7 @@ function findVerifiedBoundTaskPage(
   }
 
   if (typeof boundPageId !== "string" || boundPageId.trim().length === 0) {
-    throw new Error("Task source block has an invalid boundPageId");
+    return undefined;
   }
 
   if (!hasTaskSourceRelation(tx, boundPageId, input)) {

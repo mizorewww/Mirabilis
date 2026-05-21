@@ -14,6 +14,7 @@ export type MarkdownEditorDocument = {
   id: string;
   title: string;
   markdown: string;
+  body?: StructuredMarkdownDocument;
 };
 
 export type MarkdownPageRuntimeFacade = {
@@ -214,9 +215,12 @@ function hasExactKeys(
 function toEditorDocument(
   page: CachedNativeMarkdownPage,
 ): MarkdownEditorDocument {
+  const body = readStructuredBody(page.body);
+
   return {
     id: page.id,
     title: page.title,
     markdown: page.markdown,
+    ...(body === undefined ? {} : { body }),
   };
 }
