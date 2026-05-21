@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: focused re-review complete; second review-fix red tests pending.
+- Status: second review-fix tests committed; implementation handoff pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -63,7 +63,8 @@
   - Lagrange the 3rd (`reviewer`): focused correctness re-review completed with two remaining P1 findings.
   - Laplace the 3rd (`security_reviewer`): focused security re-review completed with no P0/P1 findings and one P2 aligned with Lagrange's Rust validator finding.
   - Parfit the 3rd (`test_quality_reviewer`): focused test-quality re-review completed with no P0/P1 findings and one remaining P2 representation-overfit concern.
-- Next parent step: commit focused re-review findings and delegate second review-fix red tests.
+  - Banach the 3rd (`test_writer`): second review regression tests completed, verified red, committed, and closed.
+- Next parent step: record red signal and delegate second review-fix implementation.
 
 ## Agent Handoffs
 
@@ -437,6 +438,29 @@ git diff --check
 - P2 cleanup to include if practical:
   - Loosen runtime persistence tests away from one-line-per-block assertions and toward export/recursive ID behavior.
 - Docs sync remains after code/test re-review is clean.
+
+### Banach the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: second review-fix tests and test helpers only.
+- Files changed:
+  - `src/test/markdown-import-export.test.ts`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+  - `src-tauri/tests/ipc_persistence.rs`.
+- Coverage added:
+  - Similar inserted line before edited old line must not steal the old block ID.
+  - Rust IPC must reject structured blocks with `type: "markdown.text"` and `blockId`.
+  - Runtime persistence tests now assert export/recursive ID behavior instead of direct one-line-per-block text arrays where possible.
+- Commit: `fd4fdc1` (`Banach the 3rd(test)(Add stable block IDs and markdown import/export): add second review regression tests`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence page
+git diff --check
+```
+
+- Result: expected red signals. Frontend focused tests: 1 failed / 15 passed. Rust IPC page tests: 1 failed / 2 passed. `git diff --check` passed.
 
 ## Validation
 
