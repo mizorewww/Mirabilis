@@ -214,4 +214,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run focused review agents.
+- Focused review is running with Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`).

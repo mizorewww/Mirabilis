@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:03 CST.
+Last updated: 2026-05-21 19:05 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 19:03 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation committed; focused review is next.
+- Current phase: focused review is running.
 
 ## Active Agents
 
-- None.
+- Maxwell (`pr_explorer`) is mapping the changed surface.
+- Hubble (`reviewer`) is reviewing correctness.
+- Gibbs (`security_reviewer`) is reviewing security boundaries.
+- Schrodinger (`deprecation_auditor`) is checking API/deprecation risks.
+- Planck (`test_quality_reviewer`) is reviewing test quality.
+- Epicurus (`docs_researcher`) is mapping docs drift.
 
 ## Completed Recent Task
 
@@ -75,7 +80,7 @@ Last updated: 2026-05-21 19:03 CST.
 
 ## Next Actions
 
-1. Run focused review agents.
+1. Wait for focused review agents.
 2. Fix P0/P1 findings and evaluate P2 findings.
 3. Run docs sync after behavior review clears.
 
