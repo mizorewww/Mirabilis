@@ -716,6 +716,16 @@ class PluginHostImpl implements PluginHostInstance {
       this.assertLifecycleScopeStillCurrent(record, scope);
 
       return result;
+    } catch (cause) {
+      throw new PluginHostError(
+        "PLUGIN_LIFECYCLE_FAILED",
+        `Plugin ${pluginId} command failed`,
+        {
+          pluginId,
+          phase: "command",
+          cause,
+        },
+      );
     } finally {
       scope.active = false;
       record.lifecycleScopes.delete(scope);

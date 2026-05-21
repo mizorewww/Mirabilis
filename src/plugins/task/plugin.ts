@@ -20,7 +20,7 @@ type SourceBlockMatch = {
 
 const taskNamespace = "task";
 const resolveTaskBlockCommandId = "task.resolve-task-block";
-const uncheckedTaskLinePattern = /^\s*-\s+\[\s\]\s+(?<title>.*)$/u;
+const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 
 export const TaskPlugin: AppPlugin = {
@@ -64,13 +64,13 @@ async function resolveTaskBlock(
     const title = parseTaskTitle(sourcePage.body.content, sourceBlockMatch);
     const existingTaskPage =
       findTaskPageForSource(tx, payload) ??
-      findBoundTaskPage(tx, sourceBlockMatch.block);
+      findVerifiedBoundTaskPage(tx, sourceBlockMatch.block, payload);
 
     if (existingTaskPage !== undefined) {
       bindSourceBlockToTaskPage(
         tx.pages,
         sourcePage,
-        payload.sourceBlockId,
+        sourceBlockMatch,
         existingTaskPage.id,
       );
 
@@ -90,7 +90,7 @@ async function resolveTaskBlock(
     bindSourceBlockToTaskPage(
       tx.pages,
       sourcePage,
-      payload.sourceBlockId,
+      sourceBlockMatch,
       taskPage.id,
     );
 
@@ -124,24 +124,25 @@ function findTopLevelSourceBlock(
   sourcePage: MarkdownPage,
   sourceBlockId: string,
 ): SourceBlockMatch {
-  const index = sourcePage.body.content.findIndex(
-    (block) => block.blockId === sourceBlockId,
-  );
+  const matches = sourcePage.body.content
+    .map((block, index) => ({ block, index }))
+    .filter((match) => match.block.blockId === sourceBlockId);
 
-  if (index < 0) {
+  if (matches.length === 0) {
     throw new Error("Task source block was not found");
   }
 
-  const block = sourcePage.body.content[index];
+  if (matches.length > 1) {
+    throw new Error("Task source blockId is ambiguous");
+  }
 
-  if (block === undefined) {
+  const match = matches[0];
+
+  if (match === undefined) {
     throw new Error("Task source block was not found");
   }
 
-  return {
-    block,
-    index,
-  };
+  return match;
 }
 
 function parseTaskTitle(
@@ -232,9 +233,10 @@ function findTaskPageForSource(
   return undefined;
 }
 
-function findBoundTaskPage(
+function findVerifiedBoundTaskPage(
   tx: PluginTransaction,
   sourceBlock: BlockNode,
+  input: ResolveTaskBlockInput,
 ): MarkdownPage | undefined {
   const boundPageId = sourceBlock.attrs?.boundPageId;
 
@@ -246,7 +248,31 @@ function findBoundTaskPage(
     throw new Error("Task source block has an invalid boundPageId");
   }
 
+  if (!hasTaskSourceRelation(tx, boundPageId, input)) {
+    return undefined;
+  }
+
   return tx.pages.get(boundPageId);
+}
+
+function hasTaskSourceRelation(
+  tx: PluginTransaction,
+  taskPageId: string,
+  input: ResolveTaskBlockInput,
+): boolean {
+  const taskMetadata = tx.metadata.list({
+    pageId: taskPageId,
+    namespace: taskNamespace,
+  });
+  const hasSourcePageId = taskMetadata.some(
+    (record) => record.key === "sourcePageId" && record.value === input.sourcePageId,
+  );
+  const hasSourceBlockId = taskMetadata.some(
+    (record) =>
+      record.key === "sourceBlockId" && record.value === input.sourceBlockId,
+  );
+
+  return hasSourcePageId && hasSourceBlockId;
 }
 
 function writeTaskMetadata(
@@ -290,12 +316,12 @@ function writeTaskMetadata(
 function bindSourceBlockToTaskPage(
   pages: PluginPageStore,
   sourcePage: MarkdownPage,
-  sourceBlockId: string,
+  sourceBlock: SourceBlockMatch,
   taskPageId: string,
 ): void {
   let changed = false;
-  const content = sourcePage.body.content.map((block) => {
-    if (block.blockId !== sourceBlockId) {
+  const content = sourcePage.body.content.map((block, index) => {
+    if (index !== sourceBlock.index) {
       return block;
     }
 

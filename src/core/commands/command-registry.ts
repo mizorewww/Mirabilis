@@ -137,14 +137,39 @@ export function createInMemoryCommandRegistry(): CommandService {
 
       try {
         return await handler(input);
-      } catch {
+      } catch (cause) {
         throw new CommandRegistryError(
           "COMMAND_HANDLER_FAILED",
           normalizedCommandId,
+          createHandlerFailureErrorOptions(cause),
         );
       }
     },
   };
+}
+
+function createHandlerFailureErrorOptions(
+  cause: unknown,
+): { cause?: unknown } {
+  if (isPluginHostError(cause)) {
+    return { cause };
+  }
+
+  return {};
+}
+
+function isPluginHostError(cause: unknown): boolean {
+  return (
+    isRecord(cause) &&
+    cause.name === "PluginHostError" &&
+    typeof cause.code === "string" &&
+    typeof cause.pluginId === "string" &&
+    typeof cause.phase === "string"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function createDescriptor<Input, Output>(
