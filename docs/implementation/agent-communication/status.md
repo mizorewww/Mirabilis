@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:43 CST.
+Last updated: 2026-05-21 09:44 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 09:43 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation and test-only typecheck fix complete; review handoff pending.
+- Current phase: review agents running.
 
 ## Active Agents
 
-- None.
+- Nietzsche the 3rd (`pr_explorer`): changed-surface mapping.
+- Russell the 3rd (`reviewer`): correctness review.
+- Goodall the 3rd (`security_reviewer`): security review.
+- Helmholtz the 3rd (`deprecation_auditor`): API/deprecation review.
+- Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review.
+- Bohr the 3rd (`test_quality_reviewer`): test quality review.
 
 ## Current TASK-017 State
 
@@ -85,6 +90,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit review handoff.
-2. Spawn review agents for changed-surface mapping, correctness, security, API/deprecation, docs/current-guidance, test quality, and docs sync recommendations.
+1. Wait for active review agents.
+2. Spawn the pending doc-writer review after an agent slot opens.
 3. Fix any P0/P1 findings before final gate.

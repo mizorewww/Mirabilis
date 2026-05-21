@@ -39,8 +39,14 @@
 
 ## Current Status
 
-- Status: implementation and test-only typecheck fix complete; review handoff pending.
-- Active agents: none.
+- Status: review agents running.
+- Active agents:
+  - Nietzsche the 3rd (`pr_explorer`): changed-surface mapping.
+  - Russell the 3rd (`reviewer`): correctness review.
+  - Goodall the 3rd (`security_reviewer`): security review.
+  - Helmholtz the 3rd (`deprecation_auditor`): API/deprecation review.
+  - Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review.
+  - Bohr the 3rd (`test_quality_reviewer`): test quality review.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -49,7 +55,7 @@
   - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
   - Erdos the 3rd (`implementer`): production implementation completed, focused tests green, committed, and closed.
   - Averroes the 3rd (`test_writer`): test-only typecheck fix completed, validated, committed, and closed.
-- Next parent step: commit review handoff and spawn review agents.
+- Next parent step: wait for active review agents; spawn the pending doc-writer review after an agent slot opens.
 
 ## Agent Handoffs
 
@@ -219,6 +225,19 @@ git diff --check
 ```
 
 - Result: all passed.
+
+### Review Round 1
+
+- Status: running.
+- Active agents:
+  - Nietzsche the 3rd (`pr_explorer`): read-only changed-surface mapping.
+  - Russell the 3rd (`reviewer`): read-only correctness review.
+  - Goodall the 3rd (`security_reviewer`): read-only security review.
+  - Helmholtz the 3rd (`deprecation_auditor`): read-only API/deprecation review.
+  - Schrodinger the 3rd (`docs_researcher`): read-only docs/current-guidance review.
+  - Bohr the 3rd (`test_quality_reviewer`): read-only test quality review.
+- Pending due to current agent thread limit:
+  - `doc_writer`: read-only documentation gap review. Parent will spawn it after an agent slot opens.
 
 ## Validation
 
