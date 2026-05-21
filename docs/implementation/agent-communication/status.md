@@ -1,18 +1,18 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:30 CST.
+Last updated: 2026-05-21 21:32 CST.
 
 ## Current Task
 
-- Task: TASK-022 - Implement All Tasks and Today filters.
-- Branch: `feat/task-022-all-tasks-today-filters`.
+- Task: TASK-023 - Implement Metadata UI Plugin.
+- Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-022 merged to `master`; final progress push is pending.
+- Current phase: TASK-023 orchestration start is being recorded.
 
 ## Active Agents
 
-- None currently. Next step is final branch validation.
+- None currently. Next step is to delegate TASK-023 planning/current-doc/security/API guidance.
 
 ## Completed Recent Task
 
@@ -20,6 +20,42 @@ Last updated: 2026-05-21 21:30 CST.
 - TASK-021 - Implement Tag Plugin baseline was completed on branch `feat/task-021-tag-plugin-baseline`, validated with focused Tag Plugin checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `b5389cd`.
 - TASK-020 - Implement checkbox toggle and task events was completed on branch `feat/task-020-checkbox-toggle-task-events`, validated with focused frontend/runtime/docs checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `c42fa5f`.
 - TASK-019 - Implement task navigation and infinite nesting was completed on branch `feat/task-019-task-navigation-infinite-nesting`, validated with focused frontend/runtime/security/docs checks, final `bun run check:quick`, `bun run build`, and merge-tree `bun run check:quick`, then merged to `master` in commit `7a2ce72`.
+
+## Current TASK-023 State
+
+- TASK-023 follows TASK-021 and TASK-022 and owns the first unified Metadata UI slice:
+  - `page.header.metadata` slot renders plugin-contributed metadata fields.
+  - Task, Tag, and Timer placeholder fields can contribute display/edit components.
+  - Field editors update metadata through command/service boundaries.
+  - Metadata UI remains plugin-driven.
+- Initial parent interpretation:
+  - Build on existing manifest metadata field descriptors, slot registry, plugin-facing metadata/command facades, Task Plugin fields, and Tag Plugin slot behavior.
+  - Keep renderer/editor runtime generic and plugin-driven; do not move task/tag/timer business behavior into Core.
+  - Keep native/Tauri/package changes, persistence/schema rewiring, broad rich-editor migration, save-time scanning/indexing, Timer runtime behavior beyond placeholder field contribution, Calendar/Habit/Stats/ML behavior, and release packaging out of scope unless agents identify an acceptance dependency.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking update/sandbox notes.
+
+## Parent Decisions At TASK-023 Start
+
+- Start from `master` after TASK-022 final progress commit `5ab2471`.
+- Use branch `feat/task-023-metadata-ui-plugin`.
+- Delegate planning/current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync to agents.
+- The parent thread must not write TASK-023 tests or production implementation unless a delegated role fails or is explicitly cancelled and the fallback is recorded.
+
+## Source Docs Read By Parent For TASK-023
+
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`.
+- `docs/implementation/progress.md`.
+- `docs/implementation/task-index.md#task-023-implement-metadata-ui-plugin`.
+- `docs/product/04-editor-and-workflows.md#14-metadata-图形化展示`.
+- `docs/development/02-implementation-roadmap-and-constraints.md#phase-4metadata-ui`.
+- `docs/development/01-data-roadmap-and-mvp.md#phase-4metadata-ui-plugin`.
+- `docs/product/03-plugin-platform.md#94-metadata-registry`.
+- Related `page.header.metadata` slot references in `docs/product/06-view-slots.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/05-plugin-implementations.md`, and existing TASK-021/TASK-022 docs.
+
+## TASK-023 Validation Log
+
+- `.codex/agents/*.toml` parsed successfully with 11 files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
 
 ## Current TASK-022 State
 
@@ -98,8 +134,8 @@ Last updated: 2026-05-21 21:30 CST.
 
 ## Next Actions
 
-1. Commit and push final TASK-022 merge-result progress records on `master`.
-2. Continue autonomous roadmap work with TASK-023.
+1. Commit TASK-023 start records.
+2. Spawn TASK-023 planner/current-doc/security/API guidance agents.
 
 ## Current TASK-021 State
 

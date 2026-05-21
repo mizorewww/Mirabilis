@@ -57,7 +57,7 @@ Status markers:
 
 ## Milestone M5: Metadata and timer loop
 
-- [ ] TASK-023: Implement Metadata UI Plugin
+- [~] TASK-023: Implement Metadata UI Plugin
 - [ ] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
 - [ ] TASK-025: Implement Time Segment and Time Segment Note
 
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 21:32 CST - TASK-023 started
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Scope: implement the next plugin-driven metadata UI slice so `page.header.metadata` can render plugin-contributed metadata fields, Task/Tag/Timer placeholder fields can contribute display/edit components, editors update metadata through command/service boundaries, and the metadata UI remains plugin-driven.
+- Source docs: `docs/implementation/task-index.md#task-023-implement-metadata-ui-plugin`, `docs/product/04-editor-and-workflows.md#14-metadata-图形化展示`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-4metadata-ui`, `docs/development/01-data-roadmap-and-mvp.md#phase-4metadata-ui-plugin`, `docs/product/03-plugin-platform.md#94-metadata-registry`, and `docs/product/06-view-slots.md#252-页面插槽`.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package changes, persistence/schema rewiring, broad rich-editor migration, save-time scanning/indexing, Timer runtime behavior beyond placeholder field contribution, Calendar/Habit/Stats/ML behavior, release packaging, and Core business behavior beyond generic plugin metadata UI/slot primitives.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus non-blocking unrestricted sandbox/network notes, the known desktop-terminal `TERM=dumb` failure, and an available Codex update.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-023-metadata-ui-plugin.md`.
 
 ### 2026-05-21 21:26 CST - TASK-022 docs sync completed
 
