@@ -835,6 +835,47 @@ describe("Core filter query execution", () => {
     ).toStrictEqual([legitimate.id]);
   });
 
+  it("uses metadataOwnerReservations as the explicit generic metadata ownership switch", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const forgedBuiltIn = page({
+      id: "page-forged-built-in-metadata",
+      title: "Forged built-in metadata",
+    });
+    const query = {
+      where: [
+        { field: "metadata.task.enabled", op: "eq", value: true },
+      ],
+    } satisfies FilterQuery;
+    const forgedMetadata = [
+      taskMetadata(
+        "enabled",
+        true,
+        forgedBuiltIn.id,
+        "boolean",
+        reviewPluginId,
+      ),
+    ];
+
+    expect(
+      executeFilterQuery({
+        pages: [forgedBuiltIn],
+        metadata: forgedMetadata,
+        query,
+        metadataOwnerReservations: [],
+      }).map((result) => result.id),
+    ).toStrictEqual([forgedBuiltIn.id]);
+    expect(
+      executeFilterQuery({
+        pages: [forgedBuiltIn],
+        metadata: forgedMetadata,
+        query,
+        metadataOwnerReservations: [
+          { namespace: "task", sourcePluginId: "task" },
+        ],
+      }),
+    ).toStrictEqual([]);
+  });
+
   it.each([
     "__proto__",
     "constructor",

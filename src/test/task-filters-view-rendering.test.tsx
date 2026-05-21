@@ -191,6 +191,47 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     });
   });
 
+  it("declares current Task Plugin metadata fields in the real manifest", () => {
+    const taskPlugin = getBuiltInTaskPlugin();
+    const metadataFields =
+      taskPlugin.manifest.contributes?.metadataFields ?? [];
+
+    expect(metadataFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          valueType: "boolean",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "status",
+          valueType: "string",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "sourcePageId",
+          valueType: "string",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "sourceBlockId",
+          valueType: "string",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "scheduled",
+          valueType: "date",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "due",
+          valueType: "date",
+        }),
+      ]),
+    );
+  });
+
   it("can deactivate, re-register, and reactivate Task Plugin without colliding or duplicating default filters", async () => {
     const runtime = await createRuntime();
     const host = getLifecyclePluginHost(runtime);
