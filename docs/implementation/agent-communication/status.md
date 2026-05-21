@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:41 CST.
+Last updated: 2026-05-21 21:43 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 21:41 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 pre-test guidance is complete; acceptance tests are pending.
+- Current phase: TASK-023 acceptance tests are in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate failing acceptance tests.
+- Lovelace (`test_writer`) is adding failing TASK-023 acceptance tests.
 
 ## Completed Recent Task
 
@@ -141,8 +141,8 @@ Last updated: 2026-05-21 21:41 CST.
 
 ## Next Actions
 
-1. Commit pre-test guidance records.
-2. Spawn `test_writer` for TASK-023 acceptance tests.
+1. Wait for Lovelace's acceptance tests.
+2. Validate expected red signal and commit tests.
 
 ## Current TASK-021 State
 

@@ -162,4 +162,4 @@
 
 ## Current Next Action
 
-- Spawn `test_writer` for TASK-023 failing acceptance tests.
+- Lovelace (`test_writer`) is adding failing TASK-023 acceptance tests.
