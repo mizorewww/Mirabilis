@@ -395,4 +395,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate second review-fix tests to `test_writer`.
+- James (`test_writer`) is adding second review-fix regression tests for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection.
