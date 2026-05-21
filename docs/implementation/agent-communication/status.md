@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 11:41 CST.
+Last updated: 2026-05-21 11:43 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 11:41 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation committed; review handoff pending.
+- Current phase: review agents running.
 
 ## Active Agents
 
-- None.
+- Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
+- Ramanujan the 3rd (`reviewer`): read-only correctness review.
+- Einstein the 3rd (`security_reviewer`): read-only security/boundary review.
+- Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
+- Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
+- Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -87,5 +92,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit implementation result record.
-2. Spawn review agents.
+1. Wait for review agents.
+2. Spawn `doc_writer` when a thread slot is available.
+3. Persist review findings and fix any P0/P1 findings before merge.

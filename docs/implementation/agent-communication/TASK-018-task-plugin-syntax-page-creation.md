@@ -40,8 +40,14 @@
 
 ## Current Status
 
-- Status: implementation committed; review handoff pending.
-- Active agents: none.
+- Status: review agents running.
+- Active agents:
+  - Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
+  - Ramanujan the 3rd (`reviewer`): read-only correctness review.
+  - Einstein the 3rd (`security_reviewer`): read-only security/boundary review.
+  - Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
+  - Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
+  - Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -49,7 +55,7 @@
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
-- Next parent step: commit implementation result record, then spawn review agents.
+- Next parent step: wait for review agents, spawn `doc_writer` when a thread slot is available, persist findings, and fix any P0/P1 findings before merge.
 
 ## Agent Handoffs
 
@@ -148,6 +154,18 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all checks passed. Focused TASK-018 tests passed with 1 file / 8 tests. Plugin Host/Markdown runtime/bootstrap regression tests passed with 3 files / 55 tests. Native/package/Tauri surface diff was empty.
+
+### Review Round 1
+
+- Status: running.
+- Agents:
+  - Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
+  - Ramanujan the 3rd (`reviewer`): read-only correctness review.
+  - Einstein the 3rd (`security_reviewer`): read-only security/boundary review.
+  - Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
+  - Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
+  - Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
+  - `doc_writer`: pending until a thread slot is available.
 
 ## Parent Decisions
 
