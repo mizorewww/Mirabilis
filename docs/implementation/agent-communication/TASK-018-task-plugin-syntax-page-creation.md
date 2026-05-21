@@ -40,8 +40,9 @@
 
 ## Current Status
 
-- Status: second review-fix implementation committed; final focused re-review pending.
-- Active agents: none.
+- Status: final narrow re-review agent running.
+- Active agents:
+  - Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -53,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: commit second review-fix implementation result record, then run final focused re-review for command failure redaction.
+- Next parent step: wait for Nash the 3rd's final narrow re-review; if clear, delegate blocking docs sync.
 
 ## Agent Handoffs
 
@@ -355,6 +356,12 @@ git diff --check
 ```
 
 - Result: all passed. Core command registry + Plugin Host lifecycle tests passed with 2 files / 59 tests.
+
+### Final Narrow Re-review
+
+- Status: running.
+- Agent:
+  - Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
 
 ## Parent Decisions
 
