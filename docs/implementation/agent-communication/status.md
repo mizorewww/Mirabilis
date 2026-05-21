@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:53 CST.
+Last updated: 2026-05-21 20:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 20:53 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P2 manifest-reservation hardening regression tests are in progress.
+- Current phase: P2 manifest-reservation hardening implementation is in progress.
 
 ## Active Agents
 
-- Hilbert (`test_writer`) is adding P2 hardening regression tests for same-batch manifest reservations and malformed metadata field descriptors.
+- Carson (`implementer`) is fixing Hilbert's same-batch manifest reservation and malformed descriptor regressions.
 
 ## Completed Recent Task
 
@@ -79,6 +79,7 @@ Last updated: 2026-05-21 20:53 CST.
 - Goodall (`test_writer`) added manifest-derived metadata reservation tests in `src/test/task-filters-view-rendering.test.tsx`, `src/test/plugin-api-contracts.test.ts`, and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 2 failures / 66 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `9301698`.
 - Kuhn (`implementer`) fixed Goodall's manifest-reservation regressions in `src/core/plugin-host/plugin-host.ts`. Manifest reservations now require complete metadata field descriptors and are owner-bound to the declaring plugin's own namespace. Parent validation passed: focused manifest tests 68/68, expanded focused coverage 119/119, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `eeda8af`.
 - Narrow manifest-reservation review completed with Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`). P0/P1 findings: none. Accepted P2 follow-up: malformed `metadataFields` entries such as `null` should not cause untyped lifecycle failures, and same-batch `loadBuiltInPlugins()` should stage manifest reservations before any plugin install can write another plugin's reserved namespace. Docs sync must describe the new manifest reservation contract and low-level `metadataOwnerReservations` caller responsibility. Accepted P3/docs handoff: dotted plugin ids cannot reserve same-named metadata namespaces under the current metadata namespace segment rules, and the duplicated `metadataValueTypes` list is a future typing maintenance risk.
+- Hilbert (`test_writer`) added P2 manifest-reservation hardening tests in `src/test/plugin-api-contracts.test.ts`. Parent red validation matched the expected signal: focused manifest tests had 2 failures / 69 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `1d6369d`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -90,8 +91,8 @@ Last updated: 2026-05-21 20:53 CST.
 
 ## Next Actions
 
-1. Wait for Hilbert's regression tests.
-2. Validate the expected red signal, commit tests, then spawn `implementer`.
+1. Wait for Carson's implementation.
+2. Validate focused and adjacent checks, then commit implementation.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
 

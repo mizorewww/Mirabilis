@@ -665,6 +665,28 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Harden metadata field descriptor iteration/validation against malformed non-object/non-array input.
   - Keep native/Tauri/package/Rust changes, JS filters, `within`, app-shell filter route integration, and wide-query budgets out of scope.
 
+## P2 Manifest Hardening Regression Tests
+
+- Status: completed by Hilbert (`test_writer`) on 2026-05-21 20:56 CST.
+- Commit: `1d6369d`.
+- Files changed:
+  - `src/test/plugin-api-contracts.test.ts`.
+- Coverage added:
+  - An earlier same-batch `install()` hook cannot claim a later plugin's manifest-reserved metadata namespace.
+  - A later owner plugin can still write its own manifest-reserved namespace during `install()`.
+  - Malformed `metadataFields` entries such as `null`, non-object values, and incomplete entries, plus non-array `metadataFields`, do not reserve namespaces or break later metadata writes.
+  - Existing reservation, unreserved metadata, and incomplete descriptor tests remain intact.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts
+bun run typecheck
+bunx eslint src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused manifest tests ran 3 files / 71 tests with 2 failed / 69 passed. Failures were the earlier same-batch write failing later under owner plugin lifecycle instead of rejecting the earlier plugin write, and malformed descriptor handling throwing `Cannot read properties of null (reading 'namespace')`. `bun run typecheck`, focused eslint, and `git diff --check` passed.
+
 ## Current Next Action
 
-- Hilbert (`test_writer`) is adding P2 manifest-reservation hardening regression tests.
+- Carson (`implementer`) is fixing Hilbert's P2 manifest-reservation hardening regressions.
