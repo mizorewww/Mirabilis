@@ -40,15 +40,15 @@
 
 ## Current Status
 
-- Status: TDD red-test agent running.
-- Active agents:
-  - Harvey the 3rd (`test_writer`): TASK-018 failing tests only; owns focused Vitest tests and test helpers if needed.
+- Status: red tests committed; implementation handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
   - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
-- Next parent step: wait for Harvey the 3rd's failing tests, run the focused red-test command, and commit the red tests.
+  - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
+- Next parent step: commit red-test result record, then delegate implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -100,15 +100,26 @@
 
 ### Harvey the 3rd (`test_writer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: tests only.
-- Suggested file: `src/test/task-plugin-syntax-page-creation.test.ts`.
-- Required red-test focus:
+- File changed:
+  - `src/test/task-plugin-syntax-page-creation.test.ts`.
+- Commit: `dc2453f` (`Harvey the 3rd(test)(Implement Task Plugin syntax and task page creation): add task plugin acceptance tests`).
+- Coverage added:
   - Task Plugin registration and task syntax recognition for `- [ ] A` in a `markdown.line` block with stable `blockId`.
   - A registered Task Plugin resolver command executable through the runtime command bus without stale register-time `PluginContext` mutation.
   - Task page creation, camelCase task metadata writes, and source block `attrs.boundPageId` binding.
   - Duplicate prevention by `(sourcePageId, sourceBlockId)`, including same `blockId` on different source pages creating distinct pages.
   - Negative cases for invalid payloads, stale/non-task blocks, malformed task lines, and inert HTML / `javascript:`-like titles where practical.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal from the focused test command. 1 file failed, 5 tests failed, 3 tests passed. Main failures: missing built-in `task` plugin, missing task checkbox syntax contribution, and missing `task.resolve-task-block` command (`COMMAND_NOT_FOUND`). `bun run typecheck` and `git diff --check` passed.
 
 ## Parent Decisions
 
