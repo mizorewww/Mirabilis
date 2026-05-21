@@ -729,6 +729,10 @@ fn validate_page_block(
         return Err(IpcError::invalid_request());
     }
 
+    if object.get("type").and_then(Value::as_str) == Some("markdown.text") {
+        return Err(IpcError::invalid_request());
+    }
+
     if object.get("text").is_some_and(|value| !value.is_string()) {
         return Err(IpcError::invalid_request());
     }

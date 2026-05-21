@@ -230,8 +230,8 @@ function retainEditedBlockIds(input: {
       continue;
     }
 
-    let bestLineIndex: number | undefined;
-    let bestScore = 0;
+    let bestCandidate: BlockMatchCandidate | undefined;
+    const previousMarkdown = blockToMarkdown(previousBlock);
 
     const candidateLineEnd = Math.min(
       input.lineEnd,
@@ -247,31 +247,67 @@ function retainEditedBlockIds(input: {
         continue;
       }
 
-      const score = blockSimilarityScore(
-        blockToMarkdown(previousBlock),
+      const candidate = blockMatchCandidate(
+        previousMarkdown,
         input.lines[lineIndex] ?? "",
+        lineIndex,
       );
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestLineIndex = lineIndex;
+      if (
+        bestCandidate === undefined ||
+        compareBlockMatchCandidates(candidate, bestCandidate) > 0
+      ) {
+        bestCandidate = candidate;
       }
 
-      if (score === 1) {
+      if (candidate.score === 1) {
         break;
       }
     }
 
-    if (bestLineIndex === undefined || bestScore < 0.5) {
+    if (bestCandidate === undefined || bestCandidate.score < 0.5) {
       continue;
     }
 
-    retainPreviousBlockId(bestLineIndex, previousBlock, {
+    retainPreviousBlockId(bestCandidate.lineIndex, previousBlock, {
       assignedBlockIds: input.assignedBlockIds,
       assignedPreviousBlockIds: input.assignedPreviousBlockIds,
     });
-    nextLineIndex = bestLineIndex + 1;
+    nextLineIndex = bestCandidate.lineIndex + 1;
   }
+}
+
+type BlockMatchCandidate = {
+  lineIndex: number;
+  score: number;
+  continuationScore: number;
+};
+
+function blockMatchCandidate(
+  previousLine: string,
+  nextLine: string,
+  lineIndex: number,
+): BlockMatchCandidate {
+  return {
+    lineIndex,
+    score: blockSimilarityScore(previousLine, nextLine),
+    continuationScore: blockContinuationScore(previousLine, nextLine),
+  };
+}
+
+function compareBlockMatchCandidates(
+  candidate: BlockMatchCandidate,
+  currentBest: BlockMatchCandidate,
+): number {
+  if (candidate.score !== currentBest.score) {
+    return candidate.score - currentBest.score;
+  }
+
+  if (candidate.continuationScore !== currentBest.continuationScore) {
+    return candidate.continuationScore - currentBest.continuationScore;
+  }
+
+  return currentBest.lineIndex - candidate.lineIndex;
 }
 
 function blockSimilarityScore(previousLine: string, nextLine: string): number {
@@ -313,6 +349,29 @@ function blockSimilarityScore(previousLine: string, nextLine: string): number {
   ).length;
 
   return sharedTokenCount / Math.max(previousTokens.length, nextTokens.length);
+}
+
+function blockContinuationScore(previousLine: string, nextLine: string): number {
+  const previous = previousLine.trim().toLocaleLowerCase();
+  const next = nextLine.trim().toLocaleLowerCase();
+
+  if (
+    previous.length === 0 ||
+    next.length <= previous.length ||
+    !next.startsWith(previous)
+  ) {
+    return 0;
+  }
+
+  const suffix = next.slice(previous.length);
+
+  if (!/^[^\p{L}\p{N}_]/u.test(suffix)) {
+    return 0;
+  }
+
+  const suffixTokenCount = tokenizeForSimilarity(suffix).length;
+
+  return suffixTokenCount + Math.min(suffix.length, 1_000) / 1_000;
 }
 
 function tokenizeForSimilarity(value: string): string[] {

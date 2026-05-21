@@ -1,3 +1,5 @@
+import type { StructuredMarkdownDocument } from "../types";
+
 type NativeBridgeCommandKey =
   | "dbExecute"
   | "dbTransaction"
@@ -89,6 +91,7 @@ export type DbValue =
   | number
   | boolean
   | null
+  | StructuredMarkdownDocument
   | readonly DbValue[]
   | { readonly [key: string]: DbValue };
 
