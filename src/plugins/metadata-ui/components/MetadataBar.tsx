@@ -3,6 +3,7 @@ import { createElement, type ReactNode } from "react";
 import type {
   MetadataFieldContribution,
   MetadataRecord,
+  MetadataValueType,
   PluginHostRecord,
   SlotContribution,
   SlotRegistry,
@@ -34,12 +35,18 @@ export type TrustedMetadataField = {
   id: string;
   namespace: string;
   key: string;
-  valueType: MetadataFieldContribution["valueType"];
+  valueType: MetadataValueType;
   name?: string;
   description?: string;
 };
 
 const pageHeaderMetadataSlot = "page.header.metadata";
+const unsafeMetadataSegments = new Set([
+  "__proto__",
+  "constructor",
+  "prototype",
+]);
+const metadataSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
 const metadataValueTypes = new Set([
   "string",
   "number",
@@ -61,30 +68,32 @@ export function MetadataBar({
 
   return (
     <section aria-label="Page metadata">
-      {contributions.map((contribution) =>
-        renderContribution({
-          activePlugins,
-          commands,
-          contribution,
-          metadata,
-          pageId,
-        }),
-      )}
+      {activePlugins === null
+        ? null
+        : contributions.map((contribution) =>
+            renderContribution({
+              activePlugins,
+              commands,
+              contribution,
+              metadata,
+              pageId,
+            }),
+          )}
     </section>
   );
 }
 
 function renderContribution(input: {
-  activePlugins: ReadonlyMap<string, PluginHostRecord> | null;
+  activePlugins: ReadonlyMap<string, PluginHostRecord>;
   commands: MetadataBarCommandExecutor;
   contribution: SlotContribution;
   metadata: readonly MetadataRecord[];
   pageId: string;
 }): ReactNode {
   const { activePlugins, commands, contribution, metadata, pageId } = input;
-  const activePlugin = activePlugins?.get(contribution.pluginId);
+  const activePlugin = activePlugins.get(contribution.pluginId);
 
-  if (activePlugins !== null && activePlugin === undefined) {
+  if (activePlugin === undefined) {
     return null;
   }
 
@@ -95,12 +104,16 @@ function renderContribution(input: {
     pageId,
     pluginId: contribution.pluginId,
   });
+  const scopedCommands = createScopedCommandExecutor(
+    commands,
+    contribution.pluginId,
+  );
   const props: MetadataFieldSlotProps = {
     pageId,
     pluginId: contribution.pluginId,
     fields,
     values,
-    commands,
+    commands: scopedCommands,
   };
 
   if (typeof contribution.when === "function" && !contribution.when(props)) {
@@ -143,10 +156,15 @@ function collectTrustedFields(
     return [];
   }
 
-  const fields = activePlugin?.manifest.contributes?.metadataFields ?? [];
+  const fields = activePlugin.manifest.contributes?.metadataFields;
+
+  if (!Array.isArray(fields)) {
+    return [];
+  }
+
   const trustedFields: TrustedMetadataField[] = [];
 
-  for (const field of fields) {
+  for (const field of fields as readonly unknown[]) {
     if (!isTrustedMetadataField(field, activePlugin.id)) {
       continue;
     }
@@ -173,16 +191,19 @@ function collectTrustedValues(input: {
   pluginId: string;
 }): Readonly<Record<string, unknown>> {
   const { fields, metadata, pageId, pluginId } = input;
-  const trustedFieldIds = new Set(
-    fields.map((field) => createMetadataFieldIdentity(field)),
+  const trustedFields = new Map(
+    fields.map((field) => [createMetadataFieldIdentity(field), field]),
   );
-  const values: Record<string, unknown> = {};
+  const values = Object.create(null) as Record<string, unknown>;
 
   for (const record of metadata) {
+    const trustedField = trustedFields.get(createMetadataFieldIdentity(record));
+
     if (
       record.pageId !== pageId ||
       record.sourcePluginId !== pluginId ||
-      !trustedFieldIds.has(createMetadataFieldIdentity(record))
+      trustedField === undefined ||
+      record.valueType !== trustedField.valueType
     ) {
       continue;
     }
@@ -194,21 +215,72 @@ function collectTrustedValues(input: {
 }
 
 function isTrustedMetadataField(
-  field: MetadataFieldContribution,
+  field: unknown,
   pluginId: string,
-): field is MetadataFieldContribution & {
+): field is Required<
+  Pick<MetadataFieldContribution, "id" | "namespace" | "key" | "valueType">
+> &
+  MetadataFieldContribution & {
   namespace: string;
   key: string;
-  valueType: NonNullable<MetadataFieldContribution["valueType"]>;
+  valueType: MetadataValueType;
 } {
+  if (typeof field !== "object" || field === null || Array.isArray(field)) {
+    return false;
+  }
+
+  const descriptor = field as {
+    id?: unknown;
+    namespace?: unknown;
+    key?: unknown;
+    name?: unknown;
+    description?: unknown;
+    valueType?: unknown;
+  };
+
   return (
-    typeof field.namespace === "string" &&
-    field.namespace === pluginId &&
-    typeof field.key === "string" &&
-    field.key.trim().length > 0 &&
-    typeof field.valueType === "string" &&
-    metadataValueTypes.has(field.valueType)
+    typeof descriptor.id === "string" &&
+    descriptor.id.trim().length > 0 &&
+    typeof descriptor.namespace === "string" &&
+    descriptor.namespace === pluginId &&
+    isSafeMetadataSegment(descriptor.namespace) &&
+    typeof descriptor.key === "string" &&
+    isSafeMetadataSegment(descriptor.key) &&
+    typeof descriptor.valueType === "string" &&
+    isMetadataValueType(descriptor.valueType) &&
+    (descriptor.name === undefined || typeof descriptor.name === "string") &&
+    (descriptor.description === undefined ||
+      typeof descriptor.description === "string")
   );
+}
+
+function isSafeMetadataSegment(value: string): boolean {
+  return metadataSegmentPattern.test(value) && !unsafeMetadataSegments.has(value);
+}
+
+function isMetadataValueType(value: string): value is MetadataValueType {
+  return metadataValueTypes.has(value);
+}
+
+function createScopedCommandExecutor(
+  commands: MetadataBarCommandExecutor,
+  pluginId: string,
+): MetadataBarCommandExecutor {
+  return {
+    execute(commandId, input) {
+      if (!commandBelongsToPlugin(commandId, pluginId)) {
+        return Promise.reject(
+          new Error(`Metadata field cannot execute command ${commandId}`),
+        );
+      }
+
+      return commands.execute(commandId, input);
+    },
+  };
+}
+
+function commandBelongsToPlugin(commandId: string, pluginId: string): boolean {
+  return commandId === pluginId || commandId.startsWith(`${pluginId}.`);
 }
 
 function createMetadataFieldIdentity(input: {
