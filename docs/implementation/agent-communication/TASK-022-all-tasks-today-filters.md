@@ -517,6 +517,38 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - If the Core filter executor API needs an explicit owner-reservation input to avoid hidden business knowledge, update tests/helpers only to pass that generic policy; do not weaken behavior assertions.
 - Keep native/Tauri/package/Rust changes, broad plugin namespace policy, `within`, and wide-query budgets out of scope.
 
+## Architecture-Boundary Implementation
+
+- Status: completed by Nietzsche (`implementer`) on 2026-05-21 20:25 CST.
+- Commit: `3b8f0b9`.
+- Files changed:
+  - `src/core/filter-engine.ts`.
+  - `src/core/index.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/plugins/task/plugin.ts`.
+  - `src/test/core-filter-engine.test.ts`.
+  - `src/test/plugin-api-contracts.test.ts`.
+  - `src/test/task-filters-view-rendering.test.tsx`.
+- Design choice:
+  - `executeFilterQuery` now accepts generic `metadataOwnerReservations` instead of hard-coded built-in owner knowledge.
+  - `PluginHost` derives reserved metadata namespace ownership from loaded plugin manifest `metadataFields`.
+  - `TaskPlugin` declares its owned task metadata fields in its manifest, including current filter date fields.
+  - Focused tests pass a generic owner-reservation policy when asserting built-in metadata trust behavior.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/core-filter-engine.test.ts
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run test:frontend -- src/test/core-view-slot-registry.test.ts src/test/task-plugin-syntax-page-creation.test.ts src/test/task-checkbox-toggle-events.test.tsx src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Architecture-boundary focused test passed with 1 file / 1 test. API/filter focused tests passed with 2 files / 55 tests. Expanded focused coverage passed with 4 files / 114 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Nietzsche (`implementer`) is fixing the Core architecture-boundary P1 without weakening the TASK-022 behavior tests.
+- Run a final narrow review for the architecture-boundary fix, then proceed to formal docs sync.

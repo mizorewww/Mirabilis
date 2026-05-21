@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:17 CST.
+Last updated: 2026-05-21 20:25 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 20:17 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: Core architecture-boundary fix is in progress.
+- Current phase: Core architecture-boundary fix committed; final architecture review is next.
 
 ## Active Agents
 
-- Nietzsche (`implementer`) is fixing the Core architecture-boundary P1.
+- None. Nietzsche (`implementer`) completed the Core architecture-boundary fix.
 
 ## Completed Recent Task
 
@@ -74,6 +74,7 @@ Last updated: 2026-05-21 20:17 CST.
 - Heisenberg (`test_writer`) added third review-fix regression tests in `src/test/plugin-api-contracts.test.ts` and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 51 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `0ed12aa`.
 - Bernoulli (`implementer`) fixed the third review regressions in `src/core/plugin-host/plugin-host.ts` and `src/core/filter-engine.ts`. It closes accessor-backed fixed filter id namespace bypasses, reserves built-in `task` and `tag` metadata namespaces for owning plugins, and makes raw malformed `date` metadata fail closed. Parent validation passed: third review-fix focused tests 55/55, expanded focused coverage 114/114, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `8cd3994`.
 - Final narrow boundary review completed with Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`). Confucius/Lagrange/Kepler found no P0/P1/P2 in the narrow boundary behavior. Banach found P1: full frontend tests fail on `src/test/core-architecture-boundary.test.ts` because production Core files now contain the forbidden business-plugin term `task` in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. Parent reproduced the focused architecture-boundary red test. Existing red test is sufficient TDD signal for the next implementation fix.
+- Nietzsche (`implementer`) fixed the Core architecture-boundary P1 in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/plugin-host/plugin-host.ts`, `src/plugins/task/plugin.ts`, and focused tests. It moved owner policy to generic `metadataOwnerReservations`, derives plugin-host metadata reservations from plugin manifests, and adds Task Plugin manifest metadata field contributions for the current task metadata. Parent validation passed: architecture-boundary 1/1, API/filter focused 55/55, expanded focused 114/114, adjacent view/task/tag 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `3b8f0b9`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -85,8 +86,8 @@ Last updated: 2026-05-21 20:17 CST.
 
 ## Next Actions
 
-1. Wait for Nietzsche's architecture-boundary implementation.
-2. Re-run architecture-boundary, focused TASK-022, and adjacent validation, then commit implementation.
+1. Spawn final narrow review agents for the architecture-boundary fix.
+2. Address any P0/P1 findings and evaluate P2 findings.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
 
