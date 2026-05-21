@@ -87,8 +87,9 @@ Add newest entries at the top.
 - Delivered behavior recorded: All Tasks fixed id `task.filter.all-tasks`, name `All Tasks`, `viewType: "page.list"`, query `metadata.task.enabled eq true`, done-task inclusion, archived-page exclusion; Today fixed id `task.filter.today`, enabled/not-done query plus scheduled/due relative today date matching with `valueType: "date"` and local `YYYY-MM-DD` values.
 - Deferred scope recorded: automatic save-time scanning/indexing, date picker, `@date` parser, `task.set_due` / `task.set-due`, Overdue/Done filters, JS filters, global saved-filter navigation, production app-shell filter route, Event/plugin-index `within` execution, wide-query total node/branch budgets, native/Tauri/package/Rust changes, persistence rewiring, and release packaging.
 - Docs checks: stale scans over product/architecture/development/implementation/testing docs found no remaining `task.list`, `TASK-022+`, or future-only filter execution/rendering drift; remaining `within` and due-command hits are intentional deferred-scope notes. `git diff --check` passed. `bun run typecheck` passed.
+- Final branch gate: `bun run check:quick` passed with 27 frontend test files / 426 tests, Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed.
 - Remaining docs risk: the request summary mentioned page-field predicate support, but current source/tests show metadata field-path predicates plus archived-page exclusion rather than general page-field conditions. Formal docs were kept aligned to the implemented/tested subset instead of documenting unsupported page-field predicates.
-- Commit/push: none by docs writer per parent request.
+- Commit/push: branch commits through final docs sync and progress records were pushed to `origin/feat/task-022-all-tasks-today-filters`.
 
 ### 2026-05-21 18:35 CST - TASK-022 started
 
