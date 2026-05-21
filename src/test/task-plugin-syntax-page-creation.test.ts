@@ -6,7 +6,11 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
 import { BUILT_IN_PLUGINS, createAppRuntime, type AppRuntime } from "../bootstrap";
-import type {
+import {
+  createCoreStores,
+  exportStructuredDocumentToMarkdown,
+  importMarkdownToStructuredDocument,
+  type CoreStores,
   BlockNode,
   DbQuery,
   MarkdownPage,
@@ -31,6 +35,10 @@ type SourceLine = {
 type ResolveTaskBlockInput = {
   sourcePageId: string;
   sourceBlockId: string;
+};
+
+type CreateRuntimeOptions = {
+  pageIds?: readonly string[];
 };
 
 const resolveTaskBlockCommandId = "task.resolve-task-block";
@@ -157,6 +165,29 @@ describe("Task Plugin syntax and task page creation", () => {
     });
   });
 
+  it("rejects duplicate top-level source blockIds without mutating an unvalidated duplicate", async () => {
+    const runtime = await createRuntime();
+    const sourcePage = createSourcePage(runtime, "Ambiguous duplicate source", [
+      { blockId: "duplicate-task-block", text: "- [ ] Valid task" },
+      {
+        blockId: "duplicate-task-block",
+        text: "Plain text with the same block id",
+        attrs: { preserved: true },
+      },
+    ]);
+    const before = snapshotPageAndMetadataState(runtime);
+
+    const error = await captureOptionalAsyncError(() =>
+      executeResolveTaskBlock(runtime, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "duplicate-task-block",
+      }),
+    );
+
+    expect.soft(error).toBeInstanceOf(Error);
+    expect(snapshotPageAndMetadataState(runtime)).toStrictEqual(before);
+  });
+
   it("uses the full sourcePageId/sourceBlockId pair so equal blockIds on different pages create distinct task pages", async () => {
     const runtime = await createRuntime();
     const firstSourcePage = createSourcePage(runtime, "First source", [
@@ -198,6 +229,153 @@ describe("Task Plugin syntax and task page creation", () => {
       taskPageId: secondTaskPage.id,
       sourcePageId: secondSourcePage.id,
       sourceBlockId: "shared-task-block",
+    });
+  });
+
+  it("does not trust an existing boundPageId unless task metadata verifies the same source relation", async () => {
+    const runtime = await createRuntime();
+    const unrelatedPage = runtime.pages.create({
+      title: "Unrelated note",
+      body: structuredDocument([{ blockId: "unrelated-body", text: "" }]),
+    });
+    const sourcePage = createSourcePage(runtime, "Forged task binding", [
+      {
+        blockId: "task-block-a",
+        text: "- [ ] A",
+        attrs: { boundPageId: unrelatedPage.id },
+      },
+    ]);
+
+    const resolvedPage = (await executeResolveTaskBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    })) as MarkdownPage;
+
+    expect(resolvedPage.id).not.toBe(unrelatedPage.id);
+    expect(resolvedPage.title).toBe("A");
+    const taskPage = expectSingleTaskPageForSource(
+      runtime,
+      sourcePage.id,
+      "task-block-a",
+    );
+    expect(taskPage.id).toBe(resolvedPage.id);
+    expectTaskMetadata(runtime, {
+      taskPageId: taskPage.id,
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+    expectSourceBlockBoundToTaskPage(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      taskPageId: taskPage.id,
+    });
+    expect(runtime.pages.get(unrelatedPage.id).title).toBe("Unrelated note");
+  });
+
+  it("reuses metadata-only task relations and restores the source block binding", async () => {
+    const runtime = await createRuntime();
+    const sourcePage = createSourcePage(runtime, "Metadata-only relation", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const existingTaskPage = createTaskPageWithMetadata(runtime, {
+      title: "A",
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+
+    const resolvedPage = (await executeResolveTaskBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    })) as MarkdownPage;
+
+    expect(resolvedPage.id).toBe(existingTaskPage.id);
+    expect(runtime.pages.list().filter((page) => page.title === "A"))
+      .toHaveLength(1);
+    expectSourceBlockBoundToTaskPage(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      taskPageId: existingTaskPage.id,
+    });
+  });
+
+  it("reuses verified pre-existing boundPageId relations without duplicate page creation", async () => {
+    const runtime = await createRuntime();
+    const existingTaskPage = runtime.pages.create({
+      title: "A",
+      body: structuredDocument([{ blockId: "task-body", text: "" }]),
+    });
+    const sourcePage = createSourcePage(runtime, "Verified binding", [
+      {
+        blockId: "task-block-a",
+        text: "- [ ] A",
+        attrs: { boundPageId: existingTaskPage.id },
+      },
+    ]);
+    writeTaskMetadataDirectly(runtime, {
+      taskPageId: existingTaskPage.id,
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+    const pagesBefore = runtime.pages.list({ includeArchived: true });
+
+    const resolvedPage = (await executeResolveTaskBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    })) as MarkdownPage;
+
+    expect(resolvedPage.id).toBe(existingTaskPage.id);
+    expect(runtime.pages.list({ includeArchived: true })).toHaveLength(
+      pagesBefore.length,
+    );
+    expectSingleTaskPageForSource(runtime, sourcePage.id, "task-block-a");
+    expectSourceBlockBoundToTaskPage(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      taskPageId: existingTaskPage.id,
+    });
+  });
+
+  it("recovers source binding from task metadata after visible Markdown save/import drops block attrs", async () => {
+    const runtime = await createRuntime();
+    const sourcePage = createSourcePage(runtime, "Save durability", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+
+    await executeResolveTaskBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+    const taskPage = expectSingleTaskPageForSource(
+      runtime,
+      sourcePage.id,
+      "task-block-a",
+    );
+    const boundSourcePage = runtime.pages.get(sourcePage.id);
+    const savedVisibleMarkdown =
+      exportStructuredDocumentToMarkdown(boundSourcePage.body);
+    const savedStructuredBody = importMarkdownToStructuredDocument(
+      savedVisibleMarkdown,
+      {
+        previousDocument: boundSourcePage.body,
+      },
+    );
+
+    runtime.pages.update(sourcePage.id, {
+      body: savedStructuredBody,
+    });
+
+    await executeResolveTaskBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+
+    expect(runtime.pages.list().filter((page) => page.title === "A"))
+      .toHaveLength(1);
+    expectSingleTaskPageForSource(runtime, sourcePage.id, "task-block-a");
+    expectSourceBlockBoundToTaskPage(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      taskPageId: taskPage.id,
     });
   });
 
@@ -277,6 +455,27 @@ describe("Task Plugin syntax and task page creation", () => {
           sourceBlockId: "malformed-task",
         }),
       },
+      {
+        name: "CommonMark indented code task-looking line",
+        lines: [
+          {
+            blockId: "indented-code-task",
+            text: "    - [ ] Not a real task",
+          },
+        ],
+        payload: (sourcePageId) => ({
+          sourcePageId,
+          sourceBlockId: "indented-code-task",
+        }),
+      },
+      {
+        name: "tab-indented task-looking line",
+        lines: [{ blockId: "tab-code-task", text: "\t- [ ] Not a real task" }],
+        payload: (sourcePageId) => ({
+          sourcePageId,
+          sourceBlockId: "tab-code-task",
+        }),
+      },
     ];
 
     for (const invalidCase of invalidCases) {
@@ -317,6 +516,37 @@ describe("Task Plugin syntax and task page creation", () => {
     expect(snapshotPageAndMetadataState(runtime)).toStrictEqual(before);
   });
 
+  it("rolls back task page and metadata writes when relation metadata binding fails", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "task-page"],
+    });
+    const sourcePage = createSourcePage(runtime, "Rollback source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+
+    runtime.metadata.set({
+      pageId: "task-page",
+      namespace: "task",
+      key: "sourceBlockId",
+      value: "conflicting-owner",
+      valueType: "string",
+      sourcePluginId: "other",
+    });
+    const before = snapshotPageAndMetadataState(runtime);
+
+    await expect(
+      executeResolveTaskBlock(runtime, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    ).rejects.toThrow();
+
+    expect(snapshotPageAndMetadataState(runtime)).toStrictEqual(before);
+    expect(runtime.pages.list().map((page) => page.id)).not.toContain(
+      "task-page",
+    );
+  });
+
   it("does not require new package, Cargo, Tauri command, capability, permission, or native command surface changes", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
@@ -324,9 +554,26 @@ describe("Task Plugin syntax and task page creation", () => {
   });
 });
 
-async function createRuntime(): Promise<AppRuntime> {
+async function createRuntime(
+  options: CreateRuntimeOptions = {},
+): Promise<AppRuntime> {
+  const createPageId =
+    options.pageIds === undefined
+      ? undefined
+      : createSequenceFactory(options.pageIds);
+
   return createAppRuntime({
     createNativeBridge: () => createNoopNativeBridge(),
+    ...(createPageId === undefined
+      ? {}
+      : {
+          createStores: (): CoreStores =>
+            createCoreStores({
+              pages: {
+                createId: createPageId,
+              },
+            }),
+        }),
   });
 }
 
@@ -443,6 +690,70 @@ function expectTaskMetadata(
   );
 }
 
+function createTaskPageWithMetadata(
+  runtime: AppRuntime,
+  input: {
+    title: string;
+    sourcePageId: string;
+    sourceBlockId: string;
+  },
+): MarkdownPage {
+  const taskPage = runtime.pages.create({
+    title: input.title,
+    body: structuredDocument([{ blockId: `${input.sourceBlockId}-body`, text: "" }]),
+  });
+
+  writeTaskMetadataDirectly(runtime, {
+    taskPageId: taskPage.id,
+    sourcePageId: input.sourcePageId,
+    sourceBlockId: input.sourceBlockId,
+  });
+
+  return taskPage;
+}
+
+function writeTaskMetadataDirectly(
+  runtime: AppRuntime,
+  input: {
+    taskPageId: string;
+    sourcePageId: string;
+    sourceBlockId: string;
+  },
+): void {
+  runtime.metadata.set({
+    pageId: input.taskPageId,
+    namespace: "task",
+    key: "enabled",
+    value: true,
+    valueType: "boolean",
+    sourcePluginId: "task",
+  });
+  runtime.metadata.set({
+    pageId: input.taskPageId,
+    namespace: "task",
+    key: "status",
+    value: "todo",
+    valueType: "string",
+    sourcePluginId: "task",
+  });
+  runtime.metadata.set({
+    pageId: input.taskPageId,
+    namespace: "task",
+    key: "sourcePageId",
+    value: input.sourcePageId,
+    valueType: "string",
+    sourcePluginId: "task",
+  });
+  runtime.metadata.set({
+    pageId: input.taskPageId,
+    namespace: "task",
+    key: "sourceBlockId",
+    value: input.sourceBlockId,
+    valueType: "string",
+    sourcePluginId: "task",
+  });
+}
+
 function expectTaskMetadataRecord(
   key: string,
   value: unknown,
@@ -495,6 +806,34 @@ function snapshotPageAndMetadataState(runtime: AppRuntime): {
   return {
     pages: runtime.pages.list({ includeArchived: true }),
     metadata: runtime.metadata.list(),
+  };
+}
+
+async function captureOptionalAsyncError(
+  action: () => Promise<unknown>,
+): Promise<unknown | undefined> {
+  try {
+    await action();
+  } catch (error) {
+    return error;
+  }
+
+  return undefined;
+}
+
+function createSequenceFactory(values: readonly string[]): () => string {
+  let index = 0;
+
+  return () => {
+    const value = values[index];
+
+    if (value === undefined) {
+      throw new Error("No test page id remains");
+    }
+
+    index += 1;
+
+    return value;
   };
 }
 

@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 /* eslint-disable @typescript-eslint/no-explicit-any -- TASK-011 verifies runtime spoof rejection after compile-time ownership reservations are bypassed. */
 
 import {
+  CommandRegistryError,
   PluginHost,
   PluginHostError,
   createInMemoryAppRuntime,
@@ -819,6 +820,145 @@ describe("Plugin Host lifecycle", () => {
     expect(ctx.commands).not.toHaveProperty("unregister");
     expect(ctx.views).not.toHaveProperty("unregister");
     expect(ctx.slots).not.toHaveProperty("unregister");
+  });
+
+  it("uses command-time plugin contexts only for command execution", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    let capturedCommandContext: PluginContext | undefined;
+    let commandPageId = "";
+    let runtimeRegistrationErrors: unknown[] = [];
+    const plugin = createPlugin({
+      id: "command-scope",
+      register(ctx) {
+        ctx.commands.register({
+          id: "command-scope.run",
+          title: "Run command scope",
+          handler: (_input, commandContext) => {
+            capturedCommandContext = commandContext;
+            runtimeRegistrationErrors = tryLateRuntimeRegistrations(
+              commandContext,
+              "command-scope-late",
+            );
+            const page = commandContext.pages.create({
+              title: "Command-created page",
+              body: emptyDocument(),
+            });
+
+            commandPageId = page.id;
+            commandContext.metadata.set({
+              pageId: page.id,
+              namespace: "command-scope",
+              key: "state",
+              value: "created during command",
+              valueType: "string",
+            });
+
+            return { pageId: page.id };
+          },
+        });
+      },
+    });
+
+    await host.loadBuiltInPlugins([plugin]);
+
+    const output = await runtime.commands.execute("command-scope.run");
+
+    expect(output).toStrictEqual({ pageId: commandPageId });
+    expect(runtimeRegistrationErrors).toHaveLength(3);
+    for (const error of runtimeRegistrationErrors) {
+      expectPluginHostError(error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId: "command-scope",
+        phase: "command",
+      });
+    }
+    expect(registryIds(runtime)).toStrictEqual({
+      commands: ["command-scope.run"],
+      views: [],
+      slots: [],
+    });
+
+    const contextAfterCompletion = expectDefined(capturedCommandContext);
+    const dataAfterCommand = runtimeDataSnapshot(runtime);
+    const staleErrors = await collectContextWriteErrors([
+      () =>
+        contextAfterCompletion.pages.create({
+          title: "Late command page",
+          body: emptyDocument(),
+        }),
+      () =>
+        contextAfterCompletion.metadata.set({
+          pageId: commandPageId,
+          namespace: "command-scope",
+          key: "late-state",
+          value: "late",
+          valueType: "string",
+        }),
+      () =>
+        contextAfterCompletion.transaction.run((tx) => {
+          tx.pages.create({
+            title: "Late command transaction page",
+            body: emptyDocument(),
+          });
+
+          return "late";
+        }),
+    ]);
+
+    expect(staleErrors).toHaveLength(3);
+    for (const error of staleErrors) {
+      expectPluginHostError(error, "PLUGIN_LIFECYCLE_FAILED", {
+        pluginId: "command-scope",
+        phase: "command",
+      });
+    }
+    expect(runtimeDataSnapshot(runtime)).toStrictEqual(dataAfterCommand);
+  });
+
+  it("preserves plugin command failure context behind command registry failures", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    const cause = new Error("plugin command failed");
+    const plugin = createPlugin({
+      id: "failing-command",
+      register(ctx) {
+        ctx.commands.register({
+          id: "failing-command.run",
+          title: "Run failing command",
+          handler() {
+            throw cause;
+          },
+        });
+      },
+    });
+
+    await host.loadBuiltInPlugins([plugin]);
+
+    const error = await captureOptionalAsyncError(async () => {
+      await runtime.commands.execute("failing-command.run");
+    });
+
+    expect(error).toBeInstanceOf(CommandRegistryError);
+
+    const registryError = error as CommandRegistryError & Error;
+
+    expect(registryError.name).toBe("CommandRegistryError");
+    expect(registryError.code).toBe("COMMAND_HANDLER_FAILED");
+    expect(registryError.cause).toBeInstanceOf(PluginHostError);
+    expectPluginHostError(
+      registryError.cause,
+      "PLUGIN_LIFECYCLE_FAILED",
+      {
+        pluginId: "failing-command",
+        phase: "command",
+        cause,
+      },
+    );
+    expect(Object.keys(registryError)).not.toContain("cause");
+    expect(Object.getOwnPropertyDescriptor(registryError, "cause"))
+      .toMatchObject({
+        enumerable: false,
+      });
   });
 
   it("does not allow captured register contexts to add surviving contributions after deactivate or uninstall", async () => {
@@ -2837,6 +2977,24 @@ function expectLateRuntimeRegistrationErrors(
       phase: "register",
     });
   }
+}
+
+async function collectContextWriteErrors(
+  attempts: ReadonlyArray<() => unknown | Promise<unknown>>,
+): Promise<unknown[]> {
+  const errors: unknown[] = [];
+
+  for (const attempt of attempts) {
+    const error = await captureOptionalAsyncError(async () => {
+      await attempt();
+    });
+
+    if (error !== undefined) {
+      errors.push(error);
+    }
+  }
+
+  return errors;
 }
 
 async function createCapturedWritableContext(pluginId: string) {

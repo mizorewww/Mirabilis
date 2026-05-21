@@ -14,6 +14,7 @@ import type {
   MobileToolbarContribution,
   PluginCommandDescriptor,
   PluginCommandRegistry,
+  PluginCommandHandler,
   PluginCommandListOptions,
   PluginContext,
   PluginContributions,
@@ -73,6 +74,7 @@ import type {
   PluginAppendEventInput as PluginAppendEventInputFromCore,
   PluginCommandDescriptor as PluginCommandDescriptorFromCore,
   PluginCommandRegistry as PluginCommandRegistryFromCore,
+  PluginCommandHandler as PluginCommandHandlerFromCore,
   PluginCommandListOptions as PluginCommandListOptionsFromCore,
   PluginCommandDefinition as PluginCommandDefinitionFromCore,
   PluginContext as PluginContextFromCore,
@@ -907,6 +909,9 @@ describe("Plugin API contracts", () => {
     expectTypeOf<PluginCommandDescriptorFromCore>().toEqualTypeOf<
       PluginCommandDescriptor
     >();
+    expectTypeOf<
+      PluginCommandHandlerFromCore<{ pageId: string }, string>
+    >().toEqualTypeOf<PluginCommandHandler<{ pageId: string }, string>>();
     expectTypeOf<PluginCommandListOptionsFromCore>().toEqualTypeOf<
       PluginCommandListOptions
     >();
@@ -976,6 +981,53 @@ describe("Plugin API contracts", () => {
     expectTypeOf<PluginSlotRegistryListOptions>().toEqualTypeOf<
       PluginSlotListOptions
     >();
+  });
+
+  it("allows plugin command handlers to receive input plus command-time context while keeping one-argument handlers source-compatible", () => {
+    type CommandInput = {
+      pageId: string;
+    };
+    type CommandOutput = {
+      pageId: string;
+    };
+
+    const contextAwareHandler = ((
+      input: CommandInput,
+      context: PluginContext,
+    ) => {
+      context.metadata.set({
+        pageId: input.pageId,
+        namespace: "example",
+        key: "lastRun",
+        value: true,
+        valueType: "boolean",
+      });
+
+      return { pageId: input.pageId };
+    }) satisfies PluginCommandHandler<CommandInput, CommandOutput>;
+    const oneArgumentHandler = ((input: CommandInput) =>
+      input.pageId) satisfies PluginCommandHandler<CommandInput, string>;
+    const contextAwareDefinition = {
+      id: "example.context-aware-command",
+      title: "Context aware command",
+      handler: contextAwareHandler,
+    } satisfies PluginCommandDefinition<CommandInput, CommandOutput>;
+    const oneArgumentDefinition = {
+      id: "example.one-argument-command",
+      title: "One argument command",
+      handler: oneArgumentHandler,
+    } satisfies PluginCommandDefinition<CommandInput, string>;
+
+    expectTypeOf<Parameters<PluginCommandHandler<CommandInput, CommandOutput>>>()
+      .toEqualTypeOf<[CommandInput, PluginContext]>();
+    expectTypeOf<typeof contextAwareHandler>().toExtend<
+      PluginCommandHandler<CommandInput, CommandOutput>
+    >();
+    expectTypeOf<typeof oneArgumentHandler>().toExtend<
+      PluginCommandHandler<CommandInput, string>
+    >();
+    expect(contextAwareDefinition.handler).toBe(contextAwareHandler);
+    expect(oneArgumentDefinition.handler).toBe(oneArgumentHandler);
   });
 
   it("defines manifests with optional entrypoints, readonly dependencies, and app-domain permissions", () => {
