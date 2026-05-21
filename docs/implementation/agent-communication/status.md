@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:52 CST.
+Last updated: 2026-05-21 20:53 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 20:52 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: P2 manifest-reservation hardening test cycle is pending.
+- Current phase: P2 manifest-reservation hardening regression tests are in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate P2 hardening regression tests.
+- Hilbert (`test_writer`) is adding P2 hardening regression tests for same-batch manifest reservations and malformed metadata field descriptors.
 
 ## Completed Recent Task
 
@@ -90,7 +90,7 @@ Last updated: 2026-05-21 20:52 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for the accepted P2 manifest-reservation hardening regressions.
+1. Wait for Hilbert's regression tests.
 2. Validate the expected red signal, commit tests, then spawn `implementer`.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.

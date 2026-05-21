@@ -667,4 +667,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn `test_writer` for the P2 manifest-reservation hardening regressions.
+- Hilbert (`test_writer`) is adding P2 manifest-reservation hardening regression tests.
