@@ -1779,6 +1779,43 @@ describe("Plugin API contracts", () => {
     expect(runtime.services.metadata.list()).toStrictEqual([]);
   });
 
+  it.each(["install", "register"] as const)(
+    "prevents earlier same-batch %s transactions from claiming later manifest-reserved metadata namespaces",
+    async (phase) => {
+      const { runtime, host } = createPluginApiTestHost();
+
+      await expect(
+        host.loadBuiltInPlugins([
+          metadataWritingTransactionPlugin({
+            pluginId: "review",
+            namespace: "task",
+            key: "enabled",
+            value: true,
+            valueType: "boolean",
+            phase,
+          }),
+          metadataFieldDeclaringPlugin({
+            pluginId: "task",
+            namespace: "task",
+            key: "enabled",
+            valueType: "boolean",
+          }),
+        ]),
+      ).rejects.toMatchObject({
+        name: "PluginHostError",
+        code: "PLUGIN_LIFECYCLE_FAILED",
+        pluginId: "review",
+        phase,
+        cause: expect.objectContaining({
+          name: "PluginHostError",
+          code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+          pluginId: "review",
+        }),
+      });
+      expect(runtime.services.metadata.list()).toStrictEqual([]);
+    },
+  );
+
   it("allows a later same-batch manifest owner to write its own reserved metadata during install", async () => {
     const { runtime, host } = createPluginApiTestHost();
 
@@ -1797,6 +1834,47 @@ describe("Plugin API contracts", () => {
           key: "enabled",
           value: true,
           valueType: "boolean",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "review",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+      ]),
+    );
+  });
+
+  it("allows same-batch manifest owners to write reserved metadata through transactions", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataWritingTransactionPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+          phase: "install",
+        }),
+        metadataDeclaringAndWritingTransactionPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+          phase: "install",
         }),
       ]),
     ).resolves.toHaveLength(2);
@@ -2250,6 +2328,7 @@ type MetadataFieldDeclarationInput = Pick<
 > & {
   id?: string;
 };
+type MetadataTransactionPhase = "install" | "register";
 
 function metadataSavingPlugin(
   input: MetadataSavingPluginInput,
@@ -2294,6 +2373,36 @@ function metadataInstallingPlugin(
     },
     register() {},
   };
+}
+
+function metadataWritingTransactionPlugin(
+  input: MetadataSavingPluginInput & { phase: MetadataTransactionPhase },
+): AppPlugin {
+  const writeMetadata = (ctx: PluginContext) =>
+    ctx.transaction.run((tx) => {
+      tx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    });
+  const plugin: AppPlugin = {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register: input.phase === "register" ? writeMetadata : () => {},
+  };
+
+  if (input.phase === "install") {
+    plugin.install = writeMetadata;
+  }
+
+  return plugin;
 }
 
 function metadataFieldDeclaringPlugin(
@@ -2399,6 +2508,29 @@ function metadataDeclaringAndInstallingPlugin(
       });
     },
     register() {},
+  };
+}
+
+function metadataDeclaringAndWritingTransactionPlugin(
+  input: MetadataSavingPluginInput & { phase: MetadataTransactionPhase },
+): AppPlugin {
+  const plugin = metadataWritingTransactionPlugin(input);
+
+  return {
+    ...plugin,
+    manifest: {
+      ...plugin.manifest,
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
   };
 }
 
