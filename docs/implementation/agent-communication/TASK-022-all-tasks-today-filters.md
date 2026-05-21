@@ -441,6 +441,29 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Reserve built-in metadata namespaces required by TASK-022's trust boundary.
   - Keep native/Tauri/package/Rust changes, broad plugin namespace policy, `within`, JS filters, and wide-query execution budgets out of scope.
 
+## Third Review-Fix Regression Tests
+
+- Status: completed by Heisenberg (`test_writer`) on 2026-05-21 20:03 CST.
+- Commit: `0ed12aa`.
+- Files changed:
+  - `src/test/plugin-api-contracts.test.ts`.
+  - `src/test/core-filter-engine.test.ts`.
+- Coverage added:
+  - Accessor-backed fixed filter IDs cannot let a non-owner plugin persist `task.filter.today`.
+  - Built-in `task` and `tag` metadata identities are reserved for their owning plugins even before those identities exist.
+  - Same-owner built-in metadata writes and generic non-built-in metadata namespaces remain allowed.
+  - Malformed raw `valueType: "date"` metadata fails closed for `eq` and `neq`.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/core-filter-engine.test.ts
+bun run typecheck
+bunx eslint src/test/plugin-api-contracts.test.ts src/test/core-filter-engine.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 2 files / 55 tests with 4 failed / 51 passed. Failures were accessor-backed fixed filter id accepted, non-owner built-in metadata first write accepted, and malformed raw date `eq`/`neq` matching. `bun run typecheck`, focused eslint, and `git diff --check` passed.
+
 ## Current Next Action
 
-- Heisenberg (`test_writer`) is adding third review-fix regressions for the remaining P1/P2 plugin-host boundary findings. Parent will validate the expected red signal before committing the tests.
+- Spawn third review-fix `implementer` to make Heisenberg's red regressions pass with the minimum production change.

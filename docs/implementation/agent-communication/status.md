@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:59 CST.
+Last updated: 2026-05-21 20:03 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:59 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: third review-fix regression tests are being written.
+- Current phase: third review-fix regression tests are committed; implementation fix is next.
 
 ## Active Agents
 
-- Heisenberg (`test_writer`) is adding third review-fix regression tests for plugin-host boundary findings.
+- None. Heisenberg (`test_writer`) completed third review-fix regression tests.
 
 ## Completed Recent Task
 
@@ -71,6 +71,7 @@ Last updated: 2026-05-21 19:59 CST.
 - Ptolemy (`test_writer`) added second review-fix regression tests in `src/test/core-filter-engine.test.ts`, `src/test/plugin-api-contracts.test.ts`, and `src/test/task-filters-view-rendering.test.tsx`. Parent red validation matched the expected signal: focused tests had 10 failures / 100 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `abbd9ff`; the auto-push initially timed out over SSH, then parent retried `git push` successfully.
 - Einstein (`implementer`) fixed the second review regressions in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. It added direct query traversal guards, operator/value-shape validation, metadata value-shape validation, generic metadata owner handling with built-in Task/Tag owner boundaries, and plugin-facing fixed filter id namespace enforcement. Parent validation passed: second review-fix focused tests 110/110, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `2b61886`.
 - Narrow post-second-fix review completed with Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`). P0 findings: none. P1 finding: accessor-backed fixed filter IDs can bypass plugin-facing namespace enforcement and let a non-owner plugin save `task.filter.today`. Accepted P2 finding: non-owner plugins can squat built-in `task` / `tag` metadata identities before the owning plugin writes them. Accepted P3: malformed raw date metadata equality should fail closed if concise to cover. Deferred P3: total node/branch/condition budgets for very wide direct queries.
+- Heisenberg (`test_writer`) added third review-fix regression tests in `src/test/plugin-api-contracts.test.ts` and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 51 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `0ed12aa`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -82,11 +83,10 @@ Last updated: 2026-05-21 19:59 CST.
 
 ## Next Actions
 
-1. Wait for Heisenberg's third review-fix regression tests.
-2. Validate expected red focused tests, then commit the test patch.
-3. Spawn `implementer` for the minimum code fix.
-4. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
-5. Run final branch gates before marking TASK-022 complete.
+1. Spawn `implementer` for the minimum third review-fix code change.
+2. Re-run focused and adjacent validation, then commit implementation.
+3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
+4. Run final branch gates before marking TASK-022 complete.
 
 ## Current TASK-021 State
 
