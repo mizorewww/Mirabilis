@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:39 CST.
+Last updated: 2026-05-21 08:45 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 08:39 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused re-review in progress.
+- Current phase: async-insert review-fix red-test handoff.
 
 ## Active Agents
 
-- Arendt the 3rd (`reviewer`) - TASK-016 correctness re-review.
-- Carson the 3rd (`security_reviewer`) - TASK-016 security re-review.
-- Popper the 3rd (`test_quality_reviewer`) - TASK-016 test quality re-review.
-- Noether the 3rd (`deprecation_auditor`) - TASK-016 API/deprecation re-review.
-- Franklin the 3rd (`docs_researcher`) - TASK-016 docs/current-guidance re-review.
-- Confucius the 3rd (`pr_explorer`) - TASK-016 final changed-surface mapping.
+- None. Next agent handoff is async-insert review-fix red tests.
 
 ## Recent Agent Outcomes
 
@@ -125,7 +120,14 @@ Last updated: 2026-05-21 08:39 CST.
 - Poincare the 3rd's test-fix commit: `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.
 - Fermat the 3rd's review-fix implementation commit: `d2b9702 Fermat the 3rd(review-fix)(Implement Markdown Editor Plugin shell): address review findings`.
 - TASK-016 focused re-review agents were spawned for correctness, security, test quality, API/deprecation, docs/current-guidance, and final changed-surface mapping.
-- Parent next step: wait for focused re-review agents and decide whether docs sync can proceed.
+- Confucius the 3rd (`pr_explorer`) completed final changed-surface mapping. It confirmed no native/package/Tauri surface changes, focused TASK-016 checks passed, and remaining work is docs sync plus final local gate.
+- Carson the 3rd (`security_reviewer`) found no P0/P1. P2 residual risks: page DTO/body validation and size bounds, and a generic command-bus prop boundary.
+- Arendt the 3rd (`reviewer`) found no P0/P1. P2: custom plugin hosts without `listPlugins` can silently disable extension collection.
+- Popper the 3rd (`test_quality_reviewer`) found no P0/P1. P2: strengthen stale page-switch and editor extension collection tests later if needed.
+- Franklin the 3rd (`docs_researcher`) found no P0/P1 implementation-doc mismatch and says TASK-016 can proceed to docs sync after remaining P1 is fixed. P2 docs sync remains required.
+- Noether the 3rd (`deprecation_auditor`) found one P1: async toolbar insertion can overwrite newer edits after an awaited command resolves. P2s: redundant imperative textarea value sync, unhandled load/save rejection paths, optional `listPlugins` silent no-op, and cached `updatedAt` reuse.
+- Parent decision: run one narrow delegated TDD loop for the async insert P1, include small adjacent P2 tests if practical, defer broad DTO/size validation and insert-only command prop narrowing to residual risks/docs unless escalated.
+- Parent next step: spawn `test_writer` for async-insert review-fix red tests.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.

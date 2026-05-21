@@ -37,14 +37,8 @@
 
 ## Current Status
 
-- Status: focused re-review in progress.
-- Active agents:
-  - Arendt the 3rd (`reviewer`) for correctness re-review.
-  - Carson the 3rd (`security_reviewer`) for security re-review.
-  - Popper the 3rd (`test_quality_reviewer`) for test quality re-review.
-  - Noether the 3rd (`deprecation_auditor`) for API/deprecation re-review.
-  - Franklin the 3rd (`docs_researcher`) for docs/current-guidance re-review.
-  - Confucius the 3rd (`pr_explorer`) for final changed-surface mapping.
+- Status: focused re-review completed; async-insert red-test handoff pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -62,7 +56,13 @@
   - Chandrasekhar the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
   - Fermat the 3rd (`implementer`): production review-fix implementation completed, validated, committed, and closed.
   - Poincare the 3rd (`test_writer`): narrow test-lint fix completed, validated, committed, and closed.
-- Next parent step: wait for focused re-review agents and decide whether docs sync can proceed.
+  - Arendt the 3rd (`reviewer`): correctness re-review completed.
+  - Carson the 3rd (`security_reviewer`): security re-review completed.
+  - Popper the 3rd (`test_quality_reviewer`): test quality re-review completed.
+  - Noether the 3rd (`deprecation_auditor`): API/deprecation re-review completed.
+  - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review completed.
+  - Confucius the 3rd (`pr_explorer`): final changed-surface mapping completed.
+- Next parent step: delegate async-insert P1 red test to `test_writer`.
 
 ## Agent Handoffs
 
@@ -371,11 +371,40 @@
 
 ### Focused Re-review
 
-- Status: in progress.
-- Active agents:
-  - Arendt the 3rd (`reviewer`): correctness re-review.
-  - Carson the 3rd (`security_reviewer`): security/boundary re-review.
-  - Popper the 3rd (`test_quality_reviewer`): test quality re-review.
-  - Noether the 3rd (`deprecation_auditor`): API/deprecation re-review.
-  - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review.
-  - Confucius the 3rd (`pr_explorer`): final changed-surface mapping.
+- Status: completed.
+- Confucius the 3rd (`pr_explorer`):
+  - No native/package/Tauri surface changes.
+  - Focused TASK-016 tests, typecheck, lint, and diff check passed.
+  - Remaining work before merge: docs sync, status cleanup for stale lower-section text, and final local gate.
+- Carson the 3rd (`security_reviewer`):
+  - No P0/P1 findings.
+  - P2: page persistence facade needs stronger DTO/body validation and size bounds before richer rendering or broader persistence.
+  - P2: editor still receives a generic command bus instead of an insert-only command capability.
+- Arendt the 3rd (`reviewer`):
+  - No P0/P1 findings.
+  - P2: extension collection can still silently no-op when a custom plugin host omits `listPlugins`.
+- Popper the 3rd (`test_quality_reviewer`):
+  - No P0/P1 findings.
+  - P2: page-switch stale-save test should assert Save is disabled or `save` is not called while the next page is still loading.
+  - P2: editor extension collection test is useful but brittle due to exact call count and test-local runtime prop.
+- Franklin the 3rd (`docs_researcher`):
+  - No P0/P1 implementation-doc mismatch; TASK-016 can proceed to docs sync once the remaining P1 is fixed.
+  - P2 docs sync needed for bootstrap/runtime docs, markdown runtime facade, baseline toolbar subset, and final gate rationale.
+- Noether the 3rd (`deprecation_auditor`):
+  - P1: async toolbar insertion can overwrite newer edits because `insertText` captures markdown/selection, awaits `commands.execute`, then dispatches the stale result without checking page/content version.
+  - P2: controlled textarea still has redundant imperative `textarea.value/defaultValue` sync.
+  - P2: load/save rejection paths are unhandled.
+  - P2: custom plugin hosts without `listPlugins` can silently disable extension collection.
+  - P2: NativeBridge page update DTO reuses cached `updatedAt`; generate a fresh timestamp per save.
+
+## Parent Decisions For Async Insert Review Fix
+
+- Run one narrow delegated TDD loop for Noether the 3rd's P1 before docs sync.
+- Red test must cover slow `markdown.insert-text`/toolbar insertion resolving after the user has made a newer edit or page switch, and must prove stale command output does not overwrite newer content.
+- Include practical P2 test coverage only if it stays small and local:
+  - Remove or guard against imperative textarea value sync.
+  - Load/save rejection handling should not leave the editor stuck or create unhandled promise behavior.
+  - Fresh `updatedAt` per NativeBridge-backed save.
+  - Stronger stale page-switch assertion that Save is disabled or `save` is not called while the next page is loading.
+- Defer broad DTO validation/size bounds and full insert-only command capability to documented residual risks unless a focused agent escalates them.
+- Docs sync remains required before merge after this P1 is fixed.
