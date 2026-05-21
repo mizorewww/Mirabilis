@@ -551,4 +551,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run a final narrow review for the architecture-boundary fix, then proceed to formal docs sync.
+- Final architecture-boundary review is running with Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`).

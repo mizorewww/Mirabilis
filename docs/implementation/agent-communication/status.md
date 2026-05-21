@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:25 CST.
+Last updated: 2026-05-21 20:26 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 20:25 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: Core architecture-boundary fix committed; final architecture review is next.
+- Current phase: final architecture-boundary review is running.
 
 ## Active Agents
 
-- None. Nietzsche (`implementer`) completed the Core architecture-boundary fix.
+- Singer (`reviewer`) is reviewing architecture-boundary correctness.
+- Hegel (`security_reviewer`) is reviewing architecture-boundary security.
+- Noether (`deprecation_auditor`) is checking architecture-boundary API contracts.
+- Leibniz (`test_quality_reviewer`) is reviewing architecture-boundary tests.
 
 ## Completed Recent Task
 
@@ -86,7 +89,7 @@ Last updated: 2026-05-21 20:25 CST.
 
 ## Next Actions
 
-1. Spawn final narrow review agents for the architecture-boundary fix.
+1. Wait for final architecture-boundary review agents.
 2. Address any P0/P1 findings and evaluate P2 findings.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
