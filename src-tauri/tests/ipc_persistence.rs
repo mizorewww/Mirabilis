@@ -403,7 +403,9 @@ fn page_create_and_update_reject_malformed_structured_bodies_with_redacted_inval
             database.state(),
             create_page_request_with_body(&page_id, label, body.clone()),
         )
-        .expect_err(&format!("page create should reject malformed body: {label}"));
+        .expect_err(&format!(
+            "page create should reject malformed body: {label}"
+        ));
         assert_redacted_invalid_request(&create_error, &forbidden_fragments)?;
         assert_eq!(
             dispatch_db_execute(
@@ -421,7 +423,9 @@ fn page_create_and_update_reject_malformed_structured_bodies_with_redacted_inval
             database.state(),
             update_page_request_with_body("valid-body-page", "Valid body", body),
         )
-        .expect_err(&format!("page update should reject malformed body: {label}"));
+        .expect_err(&format!(
+            "page update should reject malformed body: {label}"
+        ));
         assert_redacted_invalid_request(&update_error, &forbidden_fragments)?;
         assert_eq!(
             dispatch_db_execute(
@@ -1056,11 +1060,7 @@ fn malformed_page_body_cases() -> Vec<(&'static str, Value, Vec<&'static str>)> 
             json!({"type": "markdown.line", "content": []}),
             vec!["markdown.line"],
         ),
-        (
-            "missing content",
-            json!({"type": "doc"}),
-            vec!["doc"],
-        ),
+        ("missing content", json!({"type": "doc"}), vec!["doc"]),
         (
             "non-array content",
             json!({"type": "doc", "content": {"blockId": "content-object"}}),
@@ -1112,11 +1112,7 @@ fn malformed_page_body_cases() -> Vec<(&'static str, Value, Vec<&'static str>)> 
             }),
             vec!["nested-duplicate-block"],
         ),
-        (
-            "excessive depth",
-            nested_page_body(101),
-            vec!["depth-101"],
-        ),
+        ("excessive depth", nested_page_body(101), vec!["depth-101"]),
         (
             "excessive block count",
             many_block_page_body(20_001),
