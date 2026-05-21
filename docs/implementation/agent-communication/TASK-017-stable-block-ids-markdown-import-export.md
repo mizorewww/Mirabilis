@@ -39,15 +39,15 @@
 
 ## Current Status
 
-- Status: `test_writer` writing failing tests.
-- Active agents:
-  - Euler the 3rd (`test_writer`): TASK-017 failing tests only.
+- Status: failing acceptance tests committed; implementation handoff pending.
+- Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
   - Mill the 3rd (`deprecation_auditor`): API/dependency/deprecation risk audit completed.
   - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review completed.
-- Next parent step: wait for Euler the 3rd, run focused red tests, then commit the failing tests.
+  - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
+- Next parent step: record red signal and delegate implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -151,19 +151,29 @@ bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdo
 
 ### Euler the 3rd (`test_writer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: tests and test helpers only.
-- Expected write scope:
+- Files changed:
   - `src/test/markdown-import-export.test.ts`.
   - `src/test/markdown-page-persistence.test.tsx`.
-  - Narrow test helpers only if needed.
-- Explicit exclusions: production code, docs, Tauri config/capabilities, Rust, package/Cargo files, generated files, and implementation modules.
-- Required coverage:
+- Coverage added:
   - Markdown import/export round trip and block ID uniqueness.
   - Stable IDs across edits, insertions, deletions, duplicate visible blocks, blank lines, fenced code, raw HTML, and link-like text.
   - Structured document validation or rejection surface for malformed docs.
   - Runtime `markdown.pages.load/save` structured body behavior.
   - Native-surface guard against file/path bridge usage and new Tauri permission assumptions.
+- Commit: `27118dc` (`Euler the 3rd(test)(Add stable block IDs and markdown import/export): add markdown block id acceptance tests`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+```
+
+- Result: expected red signal. 2 failed files, 8 failed tests, 3 passed.
+- Main failures:
+  - Missing `importMarkdownToStructuredDocument`, `exportStructuredDocumentToMarkdown`, and `validateStructuredMarkdownDocument` exports.
+  - Current runtime still flattens persisted Markdown into one `markdown.text` node and reads only the first structured line.
+- `git diff --check` passed before commit.
 
 ## Validation
 
@@ -184,6 +194,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Risks And Open Questions
 
-- Need agents to determine whether current `StructuredMarkdownDocument` / `DocumentBlock` shape is sufficient for import/export, or whether a small helper module is needed.
-- Need tests to define how stable block IDs are retained across edits, insertions, deletions, duplicate text, task syntax blocks, and blank lines.
-- Need security guidance for Markdown raw HTML, links, data URLs, body size, depth, and malformed structured document input.
+- Implementer must make the current `StructuredMarkdownDocument` shape sufficient for TASK-017 or report a blocker before broadening scope.
+- Stable-ID reconciliation must handle edits, insertions, deletions, duplicate visible lines, blank lines, fenced code, raw HTML, and link-like text as covered by the red tests.
+- Markdown raw HTML and link-like text must remain inert text. Do not introduce rendering sinks, filesystem permissions, or native file import/export behavior.

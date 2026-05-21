@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:23 CST.
+Last updated: 2026-05-21 09:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:23 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: `test_writer` is writing failing acceptance tests.
+- Current phase: failing acceptance tests committed; implementation handoff pending.
 
 ## Active Agents
 
-- Euler the 3rd (`test_writer`): TASK-017 failing tests only.
+- None.
 
 ## Current TASK-017 State
 
@@ -35,10 +35,19 @@ Last updated: 2026-05-21 09:23 CST.
 - Carver the 3rd (`docs_researcher`) completed current-doc research. Recommendation: treat Markdown import/export as pure string `<-> StructuredMarkdownDocument` conversion; use no new dependency for TASK-017; if full CommonMark AST support is needed later, consider `mdast-util-from-markdown` plus `mdast-util-to-markdown` with known round-trip caveats.
 - Mill the 3rd (`deprecation_auditor`) completed API/deprecation audit. Recommendation: replace the current `markdown.text` flattening facade; avoid `NativeBridge.files.importMarkdown/exportMarkdown`, Tiptap Markdown beta APIs, v1 Tauri imports, raw `invoke()` in React components, and unsanitized Markdown HTML output.
 - Gauss the 3rd (`security_reviewer`) completed security review. Recommendation: keep Markdown inert, do not add filesystem/Tauri permission expansion, validate structured documents and block IDs before persistence, and test duplicate IDs, malformed bodies, input size/depth, and native-surface boundaries.
+- Euler the 3rd (`test_writer`) added failing TASK-017 acceptance tests in `src/test/markdown-import-export.test.ts` and `src/test/markdown-page-persistence.test.tsx`. Commit: `27118dc`.
 
 ## Validation Already Reported By Parent
 
-- TASK-017 has not yet produced tests or implementation.
+- TASK-017 has red acceptance tests committed; production implementation has not started yet.
+- Focused red tests were run after Euler the 3rd's test changes:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+```
+
+- Result: expected red signal. 2 files failed, 8 tests failed, 3 tests passed. Main failures: missing Markdown conversion exports and current runtime still flattens/reads `markdown.text`.
+- `git diff --check` passed before the test commit.
 - Agent/config validation for start:
 
 ```bash
@@ -56,6 +65,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Wait for Euler the 3rd to finish red tests.
-2. Run focused tests and confirm the expected red signal.
-3. Commit failing tests.
+1. Commit red test result record.
+2. Delegate minimum production implementation to `implementer`.
+3. Run focused tests until green after implementer returns.
