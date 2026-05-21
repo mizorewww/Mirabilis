@@ -208,6 +208,73 @@ git diff --cached --check
 - Result: expected red signal. The focused test file ran 11 tests with 8 failed / 3 passed. Failures were missing `task.toggle-status` (`COMMAND_NOT_FOUND`) and missing checkbox UI (`Unable to find role="checkbox"`). `bun run typecheck` passed. `git diff --cached --check` passed.
 - Test writer concern: UI coverage focuses on direct structured editor mode plus stale guards; it does not add separate loaded `pageId/pageFacade` checkbox coverage because TASK-019 already pins the loaded structured-body path.
 
+## Initial Implementation Handoff
+
+- Status: completed by Ampere the 4th (`implementer`) on 2026-05-21 14:22 CST.
+- Files changed:
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Summary:
+  - Registered `task.toggle-status`.
+  - Added source-identity payload validation.
+  - Added complete/reopen status handling, source marker updates, task metadata updates, and `task.completed` / `task.reopened` event writes.
+  - Added editor checkbox controls and stale-result guards.
+- Validation reported by Ampere and rerun by parent:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: focused tests passed with 3 files / 39 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Parent decision: do not commit the implementation yet because focused review found P1/P2 issues that need TDD review-fix coverage first.
+
+## Focused Review Findings
+
+### Avicenna the 4th - Correctness Reviewer
+
+- Status: completed read-only review; no files edited.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+```
+
+- Result: passed with 3 files / 39 tests; typecheck passed.
+- Findings:
+  - P1: successful checkbox toggles make task controls disappear because the editor updates only `markdown`, not the structured `body` snapshot. On the next render, `readCurrentStructuredBody` rejects the old body and `collectStructuredTasks` returns no controls, so the user cannot immediately reopen/uncheck after a successful toggle.
+  - P2: completed task lines lose title-open behavior. The editor only renders the open button for todo tasks, and `task.open-task-page` still accepts only unchecked syntax even though TASK-020 introduces `- [x]` as a valid task state.
+
+### Laplace the 4th - Test Quality Reviewer
+
+- Status: completed read-only review; no files edited.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+```
+
+- Result: passed with 1 file / 11 tests.
+- Findings:
+  - P1: the successful UI toggle test asserts textarea Markdown becomes `- [x] A` but does not assert the checkbox remains rendered and checked afterward.
+  - P1: tests only cover direct `page` props; there is no loaded `pageId/pageFacade` checkbox coverage.
+  - P2: invalid coverage is limited to malformed/untrusted payloads and should add valid-shaped missing source block, duplicate block IDs, non-`markdown.line`, malformed checkbox, empty title, and fenced-code cases.
+  - P2: the native-surface guard shells out to `git diff master` from a frontend test; it is brittle but acceptable as a temporary task-scope guard.
+
+## Parent Decisions After Focused Review
+
+- Add review-fix tests before changing implementation.
+- Required P1 tests:
+  - Successful direct-mode checkbox toggle leaves a checked checkbox rendered so the user can reopen immediately.
+  - Loaded `pageId/pageFacade` mode can load a structured task, toggle it through source-only payload, update Markdown, and leave the checked checkbox visible.
+- Required P2 tests:
+  - Completed task title remains openable through `task.open-task-page`.
+  - Valid-shaped invalid source cases fail without page/metadata/event/source mutation: missing source block, duplicate block IDs, non-`markdown.line`, malformed checkbox line, empty title, and fenced-code task-looking line.
+
 ## Current Next Action
 
-- Delegate implementation to `implementer`.
+- Delegate review-fix regression tests to `test_writer`.

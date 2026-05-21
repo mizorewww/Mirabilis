@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:16 CST.
+Last updated: 2026-05-21 14:25 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:16 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing tests committed; implementation handoff is next.
+- Current phase: initial implementation completed; focused review found P1/P2 follow-up tests needed.
 
 ## Active Agents
 
@@ -25,6 +25,9 @@ Last updated: 2026-05-21 14:16 CST.
 - Poincare the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: select `task.toggle-status` before tests, do not register snake_case or checkbox aliases, use source identity input, and store events as `namespace: "task", type: "completed" | "reopened"` rather than `type: "task.completed"`.
 - Arendt the 4th (`security_reviewer`) completed security guidance. No P0/P1 blockers. Required boundaries: do not trust caller-supplied task page IDs, statuses, event types, titles, timestamps, or `attrs.boundPageId`; verify current source block at command time; keep Plugin Host metadata/event ownership injection; stale UI results must be guarded; unsafe titles remain inert; no native/package/Tauri surface changes.
 - Turing the 4th (`test_writer`) added focused TASK-020 acceptance tests in `src/test/task-checkbox-toggle-events.test.tsx`. Commit: `c9c0c33`.
+- Ampere the 4th (`implementer`) added initial TASK-020 production implementation in `src/plugins/task/plugin.ts` and `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`. Focused checks passed locally, but the parent has not committed the implementation because focused review found P1/P2 follow-up issues.
+- Avicenna the 4th (`reviewer`) found P1: successful checkbox toggles update editor Markdown but not the structured body snapshot, so task controls disappear immediately after toggle. P2: completed task lines lose title-open behavior because UI hides open buttons for done tasks and `task.open-task-page` still accepts only unchecked syntax.
+- Laplace the 4th (`test_quality_reviewer`) found P1 test gaps matching the vanished-controls issue and missing loaded `pageId/pageFacade` checkbox coverage; P2 gaps for valid-shaped invalid source cases. Laplace noted the native-surface guard is brittle but useful as a temporary task-scope guard.
 
 ## Current TASK-020 State
 
@@ -90,6 +93,6 @@ git diff --cached --check
 
 ## Next Actions
 
-1. Delegate implementation to `implementer`.
-2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
-3. Commit implementation if focused checks pass.
+1. Delegate review-fix regression tests to `test_writer`.
+2. Run expected red tests for the P1/P2 gaps.
+3. Delegate review-fix implementation to `implementer`.
