@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:02 CST.
+Last updated: 2026-05-21 18:07 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:02 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation delegated to Faraday.
+- Current phase: review-fix implementation committed; post-fix focused review is next.
 
 ## Active Agents
 
-- Faraday (`implementer`) is fixing TASK-021 review findings in production Tag Plugin code only.
+- None.
 
 ## Completed Recent Task
 
@@ -87,6 +87,17 @@ git diff --check
 ```
 
 - Result: expected red signal. Focused test file ran 12 tests with 4 failed / 8 passed, plus one unhandled rejection. Failures were extra extracted tags `time`, `https`, and `bad`; missing empty `tag.tags` metadata for a no-record remove; no accessible alert/status feedback for invalid add failure; and duplicate label/input association. `bun run typecheck` passed. `git diff --check` passed.
+- Review-fix implementation validation after Faraday:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 12 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty. Commit: `f39c1e3`.
 
 ## Completed TASK-021 Agent Outcomes
 
@@ -103,6 +114,7 @@ git diff --check
   - Nietzsche the 4th (`test_quality_reviewer`) found no P0/P1 blocking gaps, but P2 missing coverage for invalid source-token forms and P2 branch-coupled native-surface guard.
   - Ptolemy the 4th (`deprecation_auditor`) found no code blockers. It noted docs-only drift in live agent communication status and formal docs still describing Tag Plugin recognition as entirely future after save.
 - Hypatia the 4th (`test_writer`) added review-fix regression tests for invalid source-token extraction, explicit empty metadata on missing-tag remove, accessible local slot feedback on add failures, and distinct input label associations across multiple slot instances.
+- Faraday (`implementer`) fixed the review-fix regressions in `src/plugins/tag/plugin.ts` and `src/plugins/tag/components/TagMetadataSlot.tsx`. It ignores invalid full source tokens, always persists touched empty tag metadata on remove, catches slot command failures, shows accessible tag feedback, and uses unique input ids. Commit: `f39c1e3`.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -123,8 +135,8 @@ git diff --check
 
 ## Next Actions
 
-1. Wait for Faraday's implementation output and focused validation.
-2. Run parent validation on Faraday's returned patch.
+1. Run post-fix focused review agents.
+2. Fix any P0/P1 findings and evaluate P2 findings.
 3. Defer docs-only drift to docs sync after behavior fixes.
 
 ## Completed TASK-020 Agent Outcomes

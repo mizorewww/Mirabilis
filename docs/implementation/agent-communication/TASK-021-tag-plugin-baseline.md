@@ -340,6 +340,29 @@ git diff --check
 
 - Result: expected red signal. Focused test file ran 12 tests with 4 failed / 8 passed, plus one unhandled rejection. Failures were extra extracted tags `time`, `https`, and `bad`; missing empty `tag.tags` metadata for a no-record remove; no accessible alert/status feedback for invalid add failure; and duplicate label/input association. `bun run typecheck` passed. `git diff --check` passed.
 
+## Review-fix Implementation Handoff
+
+- Status: completed by Faraday (`implementer`) on 2026-05-21 18:07 CST.
+- Commit: `f39c1e3`.
+- Files changed:
+  - `src/plugins/tag/plugin.ts`.
+  - `src/plugins/tag/components/TagMetadataSlot.tsx`.
+- Behavior fixed:
+  - `tag.refresh-tags` ignores invalid full source tokens like `#time:now`, URL-looking tags, non-ASCII tags, and NUL-containing tokens.
+  - `tag.remove-tag` persists explicit `tag.tags: []` metadata for a missing tag on a page with no prior tag metadata.
+  - `TagMetadataSlot` catches add/remove command failures, handles invalid local add attempts, shows visible accessible tag feedback, and uses distinct input ids.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 12 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty. Faraday reported no residual risks, and the parent reran the same focused validation successfully.
+
 ## Current Next Action
 
-- Faraday (`implementer`) is fixing the review-fix regressions in production Tag Plugin code only. Parent will validate and commit after the agent reports completion.
+- Run post-fix focused review agents, then address any P0/P1 findings before docs sync and final gate.
