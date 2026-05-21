@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: final provenance re-review agent running.
-- Active agents:
-  - Cicero the 3rd (`reviewer`): final provenance re-review after Dalton fix.
+- Status: code review cleared; blocking docs sync pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +53,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Cicero the 3rd's final provenance re-review; if clear, delegate blocking docs sync.
+- Next parent step: commit final provenance re-review result, then delegate blocking docs sync to `doc_writer`.
 
 ## Agent Handoffs
 
@@ -413,9 +412,17 @@ git diff --check
 
 ### Final Provenance Re-review
 
-- Status: running.
+- Status: completed.
 - Agent:
   - Cicero the 3rd (`reviewer`): final provenance re-review after Dalton fix.
+
+### Cicero the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only final provenance re-review; no files edited.
+- No remaining P0/P1/P2 findings.
+- Cleared matrix: normal command plain objects and constructible exported `PluginHostError` instances are redacted; Plugin Host command-execution failures preserve the marked `PluginHostError` cause/context; no command-registry/plugin-host runtime cycle found.
+- Remaining P3: `preserveCommandHandlerFailureCause` is still a named export from `src/core/commands/command-registry.ts`. It is not barrel-exported and current usage is only Plugin Host, but provenance relies on convention against direct-path imports. Consider an import restriction/lint guard later if this should be enforced.
+- Checks run: `bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts`, `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`; all passed. Direct `bun test` attempt failed due known Bun runner incompatibility with Vitest APIs.
 
 ## Parent Decisions
 
