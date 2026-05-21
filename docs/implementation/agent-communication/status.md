@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:35 CST.
+Last updated: 2026-05-21 18:49 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 18:35 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test guidance is next.
+- Current phase: pre-test guidance completed; failing acceptance tests are next.
 
 ## Active Agents
 
@@ -58,17 +58,24 @@ Last updated: 2026-05-21 18:35 CST.
 
 ## Completed TASK-022 Agent Outcomes
 
-- None yet.
+- Volta (`planner`) completed read-only planning. Recommendation: add a business-agnostic filter query executor, Task Plugin-owned All Tasks and Today filters, registered view rendering, and `filter.empty_state` slot. Keep global navigation, native/Tauri changes, save-time scanning, metadata UI, and broad Filter Plugin ownership changes out of scope.
+- Meitner (`docs_researcher`) completed current-doc/test guidance. Recommendation: use registered view/slot paths, keep Today bounded to seeded date metadata with deterministic tests, and use React Testing Library/user-event/Vitest patterns.
+- Mill (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: do not treat `FilterStore.list()` as query execution; preserve `page.list` for TASK-021 tag filter compatibility; keep task semantics out of Core; avoid native/package changes.
+- Darwin (`security_reviewer`) completed security guidance. P0/P1 guidance: no executable JS filters or native exposure, data-only AST interpreter with allowlisted fields, Task Plugin metadata trust boundaries, deterministic date parsing, minimal view/slot props, and inert rendering.
 
 ## Parent Decisions After TASK-022 Start
 
-- None yet.
+- Implement TASK-022 as a generic data-only filter query executor plus Task Plugin-owned default filters, registered `page.list` rendering, and `filter.empty_state` slot.
+- Use `viewType: "page.list"` for TASK-022 task filters to preserve TASK-021 Tag Plugin filter compatibility.
+- All Tasks query: `metadata.task.enabled eq true`; include done tasks; exclude archived pages through the page listing/query execution surface.
+- Today query: task-enabled, not done, and either `metadata.task.scheduled` or `metadata.task.due` equals deterministic current local date. Date metadata uses `valueType: "date"` and `YYYY-MM-DD` strings.
+- Defer date picker, `@date` parsing, `task.set_due`, automatic metadata extraction, Overdue/Done filters, JS filters, global saved-filter navigation, Tag filter UI beyond compatibility, native/Tauri/package/Rust changes, and persistence rewiring.
 
 ## Next Actions
 
-1. Delegate pre-test planning/current-doc guidance, API/deprecation audit, and security guidance.
-2. Select the canonical TASK-022 filter/view contracts from agent guidance.
-3. Delegate `test_writer` for failing acceptance tests.
+1. Commit pre-test guidance and parent decisions.
+2. Delegate `test_writer` for failing TASK-022 acceptance tests.
+3. Confirm red signal before implementation.
 
 ## Current TASK-021 State
 

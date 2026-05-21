@@ -58,6 +58,102 @@
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK.
 - Non-blocking notes: unrestricted sandbox/network, known `TERM=dumb` terminal failure, and available Codex update.
 
+## Pre-test Guidance
+
+### Volta - Planner
+
+- Status: completed read-only planning; no files edited, staged, committed, or pushed.
+- Recommended scope:
+  - Add a business-agnostic filter query executor for Core-owned filter primitives over pages and metadata.
+  - Extend Task Plugin with two task-owned default filters: `All Tasks` and `Today`.
+  - Register a task/page list view through View Registry and render filter results by resolving `filter.viewType` through registered views.
+  - Register an empty-state contribution through Slot Registry using `filter.empty_state`.
+  - Keep global saved-filter navigation, app shell runtime exposure, persistence rewiring, native/Tauri changes, automatic save-time scanning, metadata editors, date picker UI, and tag-filter UI out of scope.
+- Recommended Today semantics:
+  - `task.due` and `task.scheduled` are optional Task Plugin metadata keys.
+  - Date metadata uses `valueType: "date"` and date-only ISO strings `YYYY-MM-DD`.
+  - Today includes task-enabled, non-done pages where `task.scheduled` or `task.due` equals today's local date.
+  - Overdue is separate and out of scope.
+- Risk: local docs are ambiguous around dynamic Today values and `task.list` versus `page.list`; tests should codify the selected contract first.
+
+### Meitner - Docs Researcher
+
+- Status: completed read-only current-doc/test guidance; no files edited, staged, committed, pushed, or tests run.
+- Local constraints:
+  - TASK-022 must satisfy All Tasks, Today, registered view rendering, and slot-provided empty states.
+  - Core owns generic Filter, View Registry, and Slot Registry; task behavior stays in Task Plugin.
+  - Filter Engine is documented as AST-based query execution over Core Store plus plugin indexes, not as `FilterStore.list()`.
+  - Current runtime remains in-memory and should avoid NativeBridge/Tauri/package/Rust surface changes.
+- Today warning:
+  - Product docs mention `task.due`, `task.scheduled`, `task.set_due`, date picker, and task views, but also mark those broader features as future after TASK-020.
+  - Recommended bounded TASK-022 scope: execute Today against already-present seeded date metadata with deterministic tests.
+- External docs verified:
+  - React 19.2 `act`, Testing Library query priority and async methods, user-event v14 setup, Vitest v4 CLI/jsdom, and Vite 7 CLI/config docs.
+
+### Mill - API/Deprecation Auditor
+
+- Status: completed read-only API/deprecation guidance; no files edited, staged, committed, pushed, or tests run.
+- P0 guidance:
+  - Do not treat `FilterStore.list()` as query execution; it only lists saved definitions.
+  - Preserve the Tag Plugin filter contract from TASK-021: `tag.create-filter` stores filters with `viewType: "page.list"`, so TASK-022 should register/render `page.list`.
+  - Keep task semantics out of Core; a Core filter engine may understand generic field paths like `metadata.<namespace>.<key>`.
+  - Do not add Tauri/native/package/Cargo surface.
+- P1 guidance:
+  - Preserve strict Query AST operator semantics: `eq`, `neq`, `gt`, `lt`, `includes`, `exists`, `within`; `exists` has no value and other operators require one.
+  - Date metadata stores JSON strings, not `Date` objects.
+  - Plugin facades inject ownership; do not accept caller-supplied `pluginId` or `sourcePluginId`.
+  - Register views/slots during plugin `register()`, not command time.
+- Recommended IDs:
+  - Default filters: `All Tasks`, `Today`.
+  - View type: `page.list`.
+  - View id/type recommendation: `task.page-list` with `type: "page.list"`.
+  - Empty-state slot: `filter.empty_state`.
+- External docs verified:
+  - React 19 upgrade/test-utils deprecations, Testing Library/user-event v14 role queries, Vitest v4 `vi`, Vite 7 migration, and Tauri v2 capabilities/calling Rust.
+
+### Darwin - Security Reviewer
+
+- Status: completed read-only security guidance; no files edited, staged, committed, pushed, or tests run.
+- P0/P1 boundaries:
+  - No executable/JS filters: no `eval`, `new Function`, dynamic imports, regex-as-query execution, raw SQL, raw Tauri `invoke`, filesystem/path DTOs, new Tauri commands, new capabilities, new package/Cargo dependencies, or network exposure.
+  - Plugin-rendered views/slots must not receive full runtime, Core stores/registries/services, NativeBridge, Tauri APIs, SQLite handles, or filesystem handles.
+  - Filter execution must be a data-only AST interpreter with allowlisted field resolvers. Reject or fail closed for unknown fields and path-injection names such as `__proto__`, `constructor`, or `prototype`.
+  - All Tasks must trust Task Plugin metadata, not page attrs, titles, source block text, or metadata from other plugin owners.
+  - Today date semantics must be deterministic with fixed/injected current date in tests and canonical date strings only.
+  - Task-specific UI belongs in Task Plugin registered views/slots, not Core.
+  - Render untrusted titles/metadata as inert React text only.
+
+## Parent Decisions After Pre-test Guidance
+
+- Implement TASK-022 as:
+  - a generic, data-only filter query executor over current Core pages and metadata;
+  - Task Plugin-owned default filters for `All Tasks` and `Today`;
+  - registered view rendering through a `page.list` view;
+  - empty states through the `filter.empty_state` slot.
+- Canonical filter view contract:
+  - `viewType: "page.list"` for TASK-022 task filters. This preserves TASK-021 Tag Plugin filter compatibility.
+  - Recommended registered view id: `task.page-list`; view `type: "page.list"`; `accepts` should describe filter results over Markdown pages.
+- All Tasks contract:
+  - Task-owned default filter named `All Tasks`.
+  - Query: `{ where: [{ field: "metadata.task.enabled", op: "eq", value: true }] }`.
+  - Includes done tasks; excludes archived pages through the page listing/query execution surface.
+- Today contract:
+  - Task-owned default filter named `Today`.
+  - Query requires `metadata.task.enabled eq true`, `metadata.task.status neq "done"`, and either `metadata.task.scheduled` or `metadata.task.due` equals the current local date.
+  - Current local date must be deterministic/injectable in filter execution tests.
+  - `task.scheduled` and `task.due` use `valueType: "date"` and `YYYY-MM-DD` strings.
+  - No date picker, `@date` parser, `task.set_due`, automatic metadata extraction, `Overdue`, or `Done` filter in TASK-022.
+- Generic filter engine boundaries:
+  - Do not use arbitrary object-path traversal.
+  - Allowlist fields needed for TASK-022 and generic compatibility, especially `metadata.<namespace>.<key>` and basic page fields if needed.
+  - Metadata field resolution must fail closed for unknown fields and should prefer owner-consistent records, e.g. `metadata.task.enabled` resolves Task Plugin-owned metadata.
+  - Query execution must not mutate stores.
+- Rendering boundaries:
+  - Tests should fetch view and slot components from registries to prove registration path.
+  - View/slot props should be minimal data props, not full runtime/store/NativeBridge handles.
+- Defer:
+  - JS filters, cross-plugin Filter Plugin ownership changes, global saved-filter navigation, app-shell route integration, Tag filter UI beyond compatibility, native/Tauri/package/Rust changes, persistence rewiring, broad docs sync, and release packaging.
+
 ## Current Next Action
 
-- Delegate pre-test guidance to planner, docs researcher, deprecation auditor, and security reviewer.
+- Delegate failing acceptance tests to `test_writer`.
