@@ -52,13 +52,15 @@ async function createAppRuntime() {
 }
 ```
 
-TASK-016 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
+TASK-016/TASK-017 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
 
-`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016 没有做 broad Core store-to-SQLite rewiring。
+`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-017 没有做 broad Core store-to-SQLite rewiring。
 
 `BUILT_IN_PLUGINS` 在 TASK-016 后只包含内置 `MarkdownEditorPlugin`。Quick capture、search、task、timer、calendar 等具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
+
+TASK-017 后，`runtime.markdown.pages.load()` 从 `core.pages.get` 读取 body，把结构化 `markdown.line` blocks 导出为 editor Markdown；仅对 TASK-016 旧的 exact one-node `markdown.text` body 做 load-only fallback。`runtime.markdown.pages.save()` 把 editor Markdown 导入为结构化 body 并通过 `core.pages.update` 保存，导入时使用上一版结构化 document 作为上下文来保留稳定 block IDs。新保存不写 legacy `markdown.text` body。
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -83,11 +85,13 @@ TASK-016 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `
 流程：
 
 ```text
-TASK-016 当前：
+TASK-016/TASK-017 当前：
 MarkdownEditorPlugin 渲染受控 textarea
 用户输入的 - [ ]、#tag、[[Page]] 作为普通 Markdown 文本保留
 工具栏按钮通过 markdown.insert-text command 插入 - [ ]、#、[[ ]]
-保存时可通过 runtime.markdown.pages narrow facade 调用 core.pages.update
+保存时通过 runtime.markdown.pages narrow facade 把 editor Markdown 导入为 markdown.line blocks
+runtime.markdown.pages 只调用 core.pages.get / core.pages.update
+每个 markdown.line block 都带稳定 blockId，空行也保留 blockId
 
 后续 Task Plugin 落地后：
 TaskPlugin 识别 - [ ] task text

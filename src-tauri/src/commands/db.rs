@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
 use std::path::Path;
@@ -35,6 +36,9 @@ pub const ALLOWED_DB_OPERATIONS: [&str; 15] = [
     "core.filters.list",
     "core.filters.delete",
 ];
+
+const MAX_MARKDOWN_BODY_BLOCKS: usize = 20_000;
+const MAX_MARKDOWN_BODY_DEPTH: usize = 100;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DbPersistenceOperation {
@@ -464,7 +468,8 @@ struct PageCreatePayload {
 impl ValidatePayload for PageCreatePayload {
     fn validate(&self) -> Result<(), IpcError> {
         require_non_blank(&self.id)?;
-        require_optional_non_blank(self.parent_page_id.as_deref())
+        require_optional_non_blank(self.parent_page_id.as_deref())?;
+        validate_page_body(&self.body)
     }
 }
 
@@ -495,7 +500,8 @@ struct PageUpdatePayload {
 impl ValidatePayload for PageUpdatePayload {
     fn validate(&self) -> Result<(), IpcError> {
         require_non_blank(&self.id)?;
-        require_optional_non_blank(self.parent_page_id.as_deref())
+        require_optional_non_blank(self.parent_page_id.as_deref())?;
+        validate_page_body(&self.body)
     }
 }
 
@@ -663,6 +669,157 @@ fn require_metadata_value_type(value: &Value, value_type: &str) -> Result<(), Ip
     } else {
         Err(IpcError::invalid_request())
     }
+}
+
+struct PageBodyValidationContext {
+    block_ids: HashSet<String>,
+    block_count: usize,
+}
+
+fn validate_page_body(value: &Value) -> Result<(), IpcError> {
+    let object = value.as_object().ok_or_else(IpcError::invalid_request)?;
+
+    if object.get("type").and_then(Value::as_str) != Some("doc") {
+        return Err(IpcError::invalid_request());
+    }
+
+    let content = object
+        .get("content")
+        .and_then(Value::as_array)
+        .ok_or_else(IpcError::invalid_request)?;
+    let mut context = PageBodyValidationContext {
+        block_ids: HashSet::new(),
+        block_count: 0,
+    };
+
+    for block in content {
+        validate_page_block(block, 1, &mut context)?;
+    }
+
+    Ok(())
+}
+
+fn validate_page_block(
+    value: &Value,
+    depth: usize,
+    context: &mut PageBodyValidationContext,
+) -> Result<(), IpcError> {
+    if depth > MAX_MARKDOWN_BODY_DEPTH {
+        return Err(IpcError::invalid_request());
+    }
+
+    let object = value.as_object().ok_or_else(IpcError::invalid_request)?;
+    let block_id = object
+        .get("blockId")
+        .and_then(Value::as_str)
+        .ok_or_else(IpcError::invalid_request)?;
+
+    require_non_blank(block_id)?;
+
+    if !context.block_ids.insert(block_id.to_string()) {
+        return Err(IpcError::invalid_request());
+    }
+
+    context.block_count += 1;
+    if context.block_count > MAX_MARKDOWN_BODY_BLOCKS {
+        return Err(IpcError::invalid_request());
+    }
+
+    if object.get("type").is_some_and(|value| !value.is_string()) {
+        return Err(IpcError::invalid_request());
+    }
+
+    if object.get("type").and_then(Value::as_str) == Some("markdown.text") {
+        return Err(IpcError::invalid_request());
+    }
+
+    if object.get("text").is_some_and(|value| !value.is_string()) {
+        return Err(IpcError::invalid_request());
+    }
+
+    if let Some(attrs) = object.get("attrs") {
+        validate_attrs(attrs)?;
+    }
+
+    if let Some(marks) = object.get("marks") {
+        validate_marks(marks)?;
+    }
+
+    if let Some(content) = object.get("content") {
+        let content = content.as_array().ok_or_else(IpcError::invalid_request)?;
+
+        for child in content {
+            validate_page_block(child, depth + 1, context)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_attrs(value: &Value) -> Result<(), IpcError> {
+    let object = value.as_object().ok_or_else(IpcError::invalid_request)?;
+    validate_non_executable_object(object)
+}
+
+fn validate_marks(value: &Value) -> Result<(), IpcError> {
+    let marks = value.as_array().ok_or_else(IpcError::invalid_request)?;
+
+    for mark in marks {
+        let object = mark.as_object().ok_or_else(IpcError::invalid_request)?;
+
+        if object.get("type").is_some_and(|value| !value.is_string()) {
+            return Err(IpcError::invalid_request());
+        }
+
+        if let Some(attrs) = object.get("attrs") {
+            validate_attrs(attrs)?;
+        }
+
+        validate_non_executable_object(object)?;
+    }
+
+    Ok(())
+}
+
+fn validate_non_executable_object(object: &serde_json::Map<String, Value>) -> Result<(), IpcError> {
+    for (key, value) in object {
+        if key.to_ascii_lowercase().starts_with("on") {
+            return Err(IpcError::invalid_request());
+        }
+
+        if key == "attrs" {
+            validate_attrs(value)?;
+        } else {
+            validate_non_executable_value(value)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_non_executable_value(value: &Value) -> Result<(), IpcError> {
+    match value {
+        Value::String(value) => {
+            if is_executable_url_like(value) {
+                Err(IpcError::invalid_request())
+            } else {
+                Ok(())
+            }
+        }
+        Value::Array(values) => values.iter().try_for_each(validate_non_executable_value),
+        Value::Object(object) => validate_non_executable_object(object),
+        Value::Null | Value::Bool(_) | Value::Number(_) => Ok(()),
+    }
+}
+
+fn is_executable_url_like(value: &str) -> bool {
+    let normalized = value
+        .chars()
+        .filter(|character| !character.is_control() && !character.is_whitespace())
+        .collect::<String>()
+        .to_ascii_lowercase();
+
+    normalized.starts_with("javascript:") || normalized.starts_with("data:")
 }
 
 fn validate_filter_query(value: &Value) -> Result<(), IpcError> {

@@ -136,6 +136,15 @@ export {
   createCoreStores,
 } from "./services";
 export {
+  exportStructuredDocumentToMarkdown,
+  importMarkdownToStructuredDocument,
+  validateStructuredMarkdownDocument,
+} from "./markdown";
+export type {
+  ImportMarkdownToStructuredDocumentOptions,
+  ValidateStructuredMarkdownDocumentOptions,
+} from "./markdown";
+export {
   createInMemoryAppRuntime,
   createMarkdownPageRuntimeFacade,
   createMarkdownRuntimeFacade,

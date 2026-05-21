@@ -159,7 +159,7 @@ D
 
 用户可以一直写，不需要切换到表单模式。
 
-TASK-016 当前只交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体是受控 `<textarea>`，保存的是用户输入的 Markdown 文本。Task / Tag / Date / Page Link 等语义识别仍由后续插件接管。
+TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。Task / Tag / Date / Page Link 等语义识别仍由后续插件接管。
 
 ### 12.2 UI 只辅助插入语法
 
@@ -190,7 +190,8 @@ TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
 [[ ]]  插入 [[ ]]
 ```
 
-这些按钮通过 `markdown.insert-text` command bus 插入文本。`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、稳定 block ID、Markdown import/export、以及 task/tag/page-link 的语义行为都延后到后续插件或编辑器任务。
+这些按钮通过 `markdown.insert-text` command bus 插入文本。TASK-017 已交付稳定 block ID 和当前 textarea 支持样例的内部 Markdown import/export。
+`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、完整 CommonMark AST 往返、原生文件系统 Markdown import/export、以及 task/tag/page-link 的语义行为都延后到后续插件或编辑器任务。
 
 用户点击 `☐`，编辑器插入 `- [ ] `（末尾有空格）：
 

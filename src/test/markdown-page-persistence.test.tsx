@@ -7,7 +7,10 @@ import type { Mock } from "vitest";
 import { createAppRuntime, type AppRuntime } from "../bootstrap";
 import {
   DB_PERSISTENCE_OPERATIONS,
+  exportStructuredDocumentToMarkdown,
+  type BlockNode,
   type DbQuery,
+  type StructuredMarkdownDocument,
 } from "../core";
 
 type MarkdownEditorDocument = {
@@ -53,8 +56,8 @@ type RecordingNativeBridge = {
     notify(input: { title: string; body?: string }): Promise<void>;
   };
   files: {
-    importMarkdown(path: string): Promise<string>;
-    exportMarkdown(pageId: string, path: string): Promise<void>;
+    importMarkdown: Mock<(path: string) => Promise<string>>;
+    exportMarkdown: Mock<(pageId: string, path: string) => Promise<void>>;
   };
 };
 
@@ -69,16 +72,38 @@ type CoreMarkdownPageDto = {
   id: string;
   title: string;
   parentPageId: string | null;
-  body: ReturnType<typeof markdownToNativeBody>;
+  body: CoreMarkdownPageBody;
   createdAt: string;
   updatedAt: string;
   archivedAt?: string | null;
+};
+
+type CoreMarkdownPageBody =
+  | StructuredMarkdownDocument
+  | LegacyMarkdownTextBody;
+
+type LegacyMarkdownTextBody = {
+  type: "doc";
+  content: readonly [
+    {
+      type: "markdown.text";
+      text: string;
+    },
+  ];
 };
 
 type Deferred<Value> = {
   promise: Promise<Value>;
   resolve(value: Value): void;
   reject(reason: unknown): void;
+};
+
+type PageUpdatePayload = {
+  id: string;
+  title: string;
+  parentPageId: string | null;
+  body: StructuredMarkdownDocument;
+  updatedAt: string;
 };
 
 const updatedAt = "2026-01-01T00:00:00.000Z";
@@ -128,18 +153,18 @@ describe("Markdown page persistence", () => {
     await user.click(editor);
     await user.keyboard(toKeyboardLiteral(savedMarkdown));
     await user.click(screen.getByRole("button", { name: /save/i }));
-    await waitFor(() =>
-      expect(nativeBridge.db.execute).toHaveBeenCalledWith({
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-runtime-facade",
-          title: "Inbox",
-          parentPageId: null,
-          body: markdownToNativeBody(savedMarkdown),
-          updatedAt,
-        },
-      } satisfies DbQuery),
-    );
+    await waitFor(() => expect(pageUpdateQueries(nativeBridge)).toHaveLength(1));
+    const [updateQuery] = pageUpdateQueries(nativeBridge);
+    const updatePayload = expectPageUpdatePayload(updateQuery);
+
+    expect(updatePayload).toMatchObject({
+      id: "page-runtime-facade",
+      title: "Inbox",
+      parentPageId: null,
+      updatedAt,
+    });
+    expectStructuredBodyMarkdown(updatePayload.body, savedMarkdown);
+    expectEveryBlockHasUniqueNonblankBlockId(updatePayload.body);
 
     unmount();
 
@@ -152,33 +177,205 @@ describe("Markdown page persistence", () => {
     expect(
       await screen.findByRole("textbox", { name: /markdown/i }),
     ).toHaveValue(savedMarkdown);
-    expect(nativeBridge.db.execute.mock.calls.map(([query]) => query)).toStrictEqual([
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-runtime-facade",
-        },
-      },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-runtime-facade",
-          title: "Inbox",
-          parentPageId: null,
-          body: markdownToNativeBody(savedMarkdown),
-          updatedAt,
-        },
-      },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-runtime-facade",
-        },
-      },
-    ] satisfies DbQuery[]);
+    expect(nativeBridge.db.execute.mock.calls.map(([query]) => query.operation))
+      .toStrictEqual([
+        DB_PERSISTENCE_OPERATIONS.pagesGet,
+        DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+        DB_PERSISTENCE_OPERATIONS.pagesGet,
+      ]);
     expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
       /\bsql\b|\bparams\b|select\s+\*|core_pages|\bpath\b|\bfile\b/i,
     );
+  });
+
+  it("loads structured stored bodies to editor Markdown and keeps the legacy markdown.text fallback", async () => {
+    const structuredMarkdown = [
+      "# Stored heading",
+      "",
+      "Paragraph with #tag and [[Page]]",
+      "- [ ] task syntax remains text",
+    ].join("\n");
+    const structuredPageFacade = await createProductionPageFacade(
+      createRecordingCorePageNativeBridge(
+        createCorePageDto({
+          id: "page-structured-load",
+          title: "Structured",
+          body: structuredBodyFromMarkdown(structuredMarkdown, [
+            "block-heading",
+            "block-blank",
+            "block-paragraph",
+            "block-task",
+          ]),
+        }),
+      ),
+    );
+
+    await expect(
+      structuredPageFacade.load("page-structured-load"),
+    ).resolves.toMatchObject({
+      id: "page-structured-load",
+      title: "Structured",
+      markdown: structuredMarkdown,
+    });
+
+    const legacyMarkdown = [
+      "# Legacy",
+      "",
+      "TASK-016 stored this as one markdown.text node.",
+    ].join("\n");
+    const legacyPageFacade = await createProductionPageFacade(
+      createRecordingCorePageNativeBridge(
+        createCorePageDto({
+          id: "page-legacy-load",
+          title: "Legacy",
+          body: markdownToNativeBody(legacyMarkdown),
+        }),
+      ),
+    );
+
+    await expect(legacyPageFacade.load("page-legacy-load")).resolves.toMatchObject({
+      id: "page-legacy-load",
+      title: "Legacy",
+      markdown: legacyMarkdown,
+    });
+  });
+
+  it("rejects legacy-looking markdown.text bodies unless they match the exact old one-node shape", async () => {
+    const invalidBodies: Array<{
+      label: string;
+      body: unknown;
+    }> = [
+      {
+        label: "legacy node with blockId",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              blockId: "legacy-block",
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with non-string blockId",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              blockId: 123,
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with attrs",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              attrs: {
+                href: "https://example.invalid",
+              },
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with child content",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              content: [],
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with marks",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              marks: [
+                {
+                  type: "bold",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    for (const [index, { label, body }] of invalidBodies.entries()) {
+      const pageId = `page-malformed-legacy-${index}`;
+      const pageFacade = await createProductionPageFacade(
+        createRecordingCorePageNativeBridge(
+          createCorePageDto({
+            id: pageId,
+            title: "Malformed legacy",
+            body: body as CoreMarkdownPageBody,
+          }),
+        ),
+      );
+
+      await expect(pageFacade.load(pageId), label).rejects.toThrow();
+    }
+  });
+
+  it("saves edited Markdown as structured blocks and reuses prior blockIds", async () => {
+    const nativeBridge = createRecordingCorePageNativeBridge(
+      createCorePageDto({
+        id: "page-stable-save",
+        title: "Stable IDs",
+        body: structuredBodyFromMarkdown(["Alpha", "Beta"].join("\n"), [
+          "block-alpha",
+          "block-beta",
+        ]),
+      }),
+    );
+    const pageFacade = await createProductionPageFacade(nativeBridge);
+
+    await expect(pageFacade.load("page-stable-save")).resolves.toMatchObject({
+      markdown: ["Alpha", "Beta"].join("\n"),
+    });
+    await expect(
+      pageFacade.save({
+        pageId: "page-stable-save",
+        markdown: ["Alpha edited", "Beta"].join("\n"),
+      }),
+    ).resolves.toMatchObject({
+      id: "page-stable-save",
+      title: "Stable IDs",
+      markdown: ["Alpha edited", "Beta"].join("\n"),
+    });
+
+    const [updateQuery] = pageUpdateQueries(nativeBridge);
+    const updatePayload = expectPageUpdatePayload(updateQuery);
+
+    expect(exportStructuredDocumentToMarkdown(updatePayload.body)).toBe(
+      ["Alpha edited", "Beta"].join("\n"),
+    );
+    expect(collectBlockIds(updatePayload.body)).toEqual(
+      expect.arrayContaining(["block-alpha", "block-beta"]),
+    );
+    expectEveryBlockHasUniqueNonblankBlockId(updatePayload.body);
+    expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
+      /\bfiles?_import\b|\bfiles?_export\b|\bpath\b|\bfile\b/i,
+    );
+    expect(nativeBridge.files.importMarkdown).not.toHaveBeenCalled();
+    expect(nativeBridge.files.exportMarkdown).not.toHaveBeenCalled();
   });
 
   it("saves through a narrow page facade and reopens the same page with saved Markdown", async () => {
@@ -212,26 +409,18 @@ describe("Markdown page persistence", () => {
     await user.click(editor);
     await user.keyboard(toKeyboardLiteral(savedMarkdown));
     await user.click(screen.getByRole("button", { name: /save/i }));
-    await waitFor(() =>
-      expect(nativeBridge.db.execute).toHaveBeenCalledWith({
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-persisted",
-          title: "Inbox",
-          parentPageId: null,
-          body: {
-            type: "doc",
-            content: [
-              {
-                type: "markdown.text",
-                text: savedMarkdown,
-              },
-            ],
-          },
-          updatedAt,
-        },
-      } satisfies DbQuery),
-    );
+    await waitFor(() => expect(pageUpdateQueries(nativeBridge)).toHaveLength(1));
+    const [updateQuery] = pageUpdateQueries(nativeBridge);
+    const updatePayload = expectPageUpdatePayload(updateQuery);
+
+    expect(updatePayload).toMatchObject({
+      id: "page-persisted",
+      title: "Inbox",
+      parentPageId: null,
+      updatedAt,
+    });
+    expectStructuredBodyMarkdown(updatePayload.body, savedMarkdown);
+    expectEveryBlockHasUniqueNonblankBlockId(updatePayload.body);
 
     unmount();
 
@@ -244,38 +433,24 @@ describe("Markdown page persistence", () => {
     expect(
       await screen.findByRole("textbox", { name: /markdown/i }),
     ).toHaveValue(savedMarkdown);
-    expect(nativeBridge.db.execute.mock.calls.map(([query]) => query)).toStrictEqual([
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-persisted",
-        },
+    const queries = nativeBridge.db.execute.mock.calls.map(([query]) => query);
+    expect(queries.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesGet,
+      DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+      DB_PERSISTENCE_OPERATIONS.pagesGet,
+    ]);
+    expect(queries[0]).toStrictEqual({
+      operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+      payload: {
+        id: "page-persisted",
       },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-persisted",
-          title: "Inbox",
-          parentPageId: null,
-          body: {
-            type: "doc",
-            content: [
-              {
-                type: "markdown.text",
-                text: savedMarkdown,
-              },
-            ],
-          },
-          updatedAt,
-        },
+    } satisfies DbQuery);
+    expect(queries[2]).toStrictEqual({
+      operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+      payload: {
+        id: "page-persisted",
       },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-persisted",
-        },
-      },
-    ] satisfies DbQuery[]);
+    } satisfies DbQuery);
     expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
       /\bsql\b|\bparams\b|select\s+\*|core_pages|\bpath\b|\bfile\b/i,
     );
@@ -418,6 +593,27 @@ function createCommandBus(runtime: AppRuntime): MarkdownCommandBus {
   };
 }
 
+async function createProductionPageFacade(
+  nativeBridge: RecordingNativeBridge,
+): Promise<MarkdownPageFacade> {
+  const runtime = await createAppRuntime({
+    createNativeBridge: () => nativeBridge,
+  });
+  const productionPageFacade = (runtime.markdown as RuntimeMarkdownPageFacade)
+    .pages;
+
+  expect(productionPageFacade).toEqual({
+    load: expect.any(Function),
+    save: expect.any(Function),
+  });
+
+  if (productionPageFacade === undefined) {
+    throw new Error("Production markdown page facade is missing");
+  }
+
+  return productionPageFacade;
+}
+
 function createNativeBackedPageFacade(
   nativeBridge: RecordingNativeBridge,
 ): MarkdownPageFacade {
@@ -437,7 +633,7 @@ function createNativeBackedPageFacade(
           id: input.pageId,
           title: "Inbox",
           parentPageId: null,
-          body: markdownToNativeBody(input.markdown),
+          body: structuredBodyFromMarkdown(input.markdown),
           updatedAt,
         },
       }) as Promise<MarkdownEditorDocument>;
@@ -459,7 +655,7 @@ function createRecordingCorePageNativeBridge(
         id: string;
         title: string;
         parentPageId: string | null;
-        body: ReturnType<typeof markdownToNativeBody>;
+        body: CoreMarkdownPageBody;
         updatedAt: string;
       };
 
@@ -503,12 +699,8 @@ function createRecordingCorePageNativeBridge(
       },
     },
     files: {
-      async importMarkdown() {
-        return "";
-      },
-      async exportMarkdown() {
-        return undefined;
-      },
+      importMarkdown: vi.fn(async () => ""),
+      exportMarkdown: vi.fn(async () => undefined),
     },
   };
 }
@@ -526,13 +718,13 @@ function createRecordingNativeBridge(
       const payload = query.payload as {
         id: string;
         title: string;
-        body: ReturnType<typeof markdownToNativeBody>;
+        body: StructuredMarkdownDocument;
       };
 
       currentPage = {
         id: payload.id,
         title: payload.title,
-        markdown: payload.body.content[0]?.text ?? "",
+        markdown: exportStructuredDocumentToMarkdown(payload.body),
       };
 
       return currentPage;
@@ -566,12 +758,8 @@ function createRecordingNativeBridge(
       },
     },
     files: {
-      async importMarkdown() {
-        return "";
-      },
-      async exportMarkdown() {
-        return undefined;
-      },
+      importMarkdown: vi.fn(async () => ""),
+      exportMarkdown: vi.fn(async () => undefined),
     },
   };
 }
@@ -579,13 +767,14 @@ function createRecordingNativeBridge(
 function createCorePageDto(input: {
   id: string;
   title: string;
-  markdown: string;
+  markdown?: string;
+  body?: CoreMarkdownPageBody;
 }): CoreMarkdownPageDto {
   return {
     id: input.id,
     title: input.title,
     parentPageId: null,
-    body: markdownToNativeBody(input.markdown),
+    body: input.body ?? markdownToNativeBody(input.markdown ?? ""),
     createdAt,
     updatedAt,
   };
@@ -602,7 +791,92 @@ function createEditorDocument(
   };
 }
 
-function markdownToNativeBody(markdown: string) {
+function pageUpdateQueries(nativeBridge: RecordingNativeBridge): DbQuery[] {
+  return nativeBridge.db.execute.mock.calls
+    .map(([query]) => query)
+    .filter((query) => query.operation === DB_PERSISTENCE_OPERATIONS.pagesUpdate);
+}
+
+function expectPageUpdatePayload(query: DbQuery | undefined): PageUpdatePayload {
+  expect(query).toEqual(
+    expect.objectContaining({
+      operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+      payload: expect.objectContaining({
+        id: expect.any(String),
+        title: expect.any(String),
+        body: expect.objectContaining({
+          type: "doc",
+          content: expect.any(Array),
+        }),
+        updatedAt: expect.any(String),
+      }),
+    }),
+  );
+
+  if (query === undefined || query.payload === undefined) {
+    throw new Error("Missing page update query payload");
+  }
+
+  return query.payload as unknown as PageUpdatePayload;
+}
+
+function expectStructuredBodyMarkdown(
+  body: StructuredMarkdownDocument,
+  markdown: string,
+): void {
+  expect(body.type).toBe("doc");
+  expect(Array.isArray(body.content)).toBe(true);
+  expect(body.content).not.toStrictEqual(markdownToNativeBody(markdown).content);
+  expect(exportStructuredDocumentToMarkdown(body)).toBe(markdown);
+}
+
+function expectEveryBlockHasUniqueNonblankBlockId(
+  document: StructuredMarkdownDocument,
+): void {
+  const blockIds = collectBlockIds(document);
+
+  expect(blockIds.length).toBeGreaterThan(0);
+  expect(blockIds.every((blockId) => blockId.trim().length > 0)).toBe(true);
+  expect(new Set(blockIds).size).toBe(blockIds.length);
+}
+
+function collectBlockIds(document: StructuredMarkdownDocument): string[] {
+  return collectBlocks(document).map((block) => block.blockId);
+}
+
+function collectBlocks(document: StructuredMarkdownDocument): BlockNode[] {
+  const blocks: BlockNode[] = [];
+
+  for (const block of document.content) {
+    collectBlock(block, blocks);
+  }
+
+  return blocks;
+}
+
+function collectBlock(block: BlockNode, blocks: BlockNode[]): void {
+  blocks.push(block);
+
+  for (const child of block.content ?? []) {
+    collectBlock(child, blocks);
+  }
+}
+
+function structuredBodyFromMarkdown(
+  markdown: string,
+  blockIds?: readonly string[],
+): StructuredMarkdownDocument {
+  return {
+    type: "doc",
+    content: markdown.split("\n").map((line, index) => ({
+      blockId: blockIds?.[index] ?? `block-${index + 1}`,
+      type: "markdown.line",
+      text: line,
+    })),
+  };
+}
+
+function markdownToNativeBody(markdown: string): LegacyMarkdownTextBody {
   return {
     type: "doc",
     content: [

@@ -48,6 +48,12 @@ const nativeSurfaceEntrypoints = [
   "src-tauri/src/main.rs",
   "src-tauri/tauri.conf.json",
 ];
+const task017AllowedNativeImplementationFiles = new Set([
+  "src-tauri/src/commands/db.rs",
+]);
+const forbiddenTask017AllowedNativeDiffPatterns = new Map<RegExp, string>([
+  [/^\+\s*#\s*\[\s*tauri::command\b/m, "added Tauri command attribute"],
+]);
 
 describe("Markdown runtime extension collection", () => {
   it("collects inert markdown syntax descriptors from loaded plugin manifests", async () => {
@@ -137,7 +143,7 @@ describe("Markdown runtime extension collection", () => {
     expect(runtime.markdown?.collectEditorExtensions()).toStrictEqual([]);
   });
 
-  it("does not require native command, capability, generated permission, Cargo, or package surface changes", async () => {
+  it("does not require native command, capability, generated permission, Cargo, or package surface changes except reviewed TASK-017 DB body validation", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
     expect(changedNativeSurfaceFiles).toStrictEqual([]);
@@ -220,16 +226,59 @@ async function listNativeSurfaceChangesFromMaster(): Promise<string[]> {
     ...nativeSurfaceEntrypoints,
   ]);
 
-  return [...new Set([...changedTrackedFiles, ...untrackedFiles])].sort();
+  const changedFiles = [...new Set([...changedTrackedFiles, ...untrackedFiles])].sort();
+  const disallowedChanges: string[] = [];
+
+  for (const filePath of changedFiles) {
+    if (!task017AllowedNativeImplementationFiles.has(filePath)) {
+      disallowedChanges.push(filePath);
+      continue;
+    }
+
+    const forbiddenAllowedChange =
+      await findForbiddenTask017AllowedNativeChange(filePath);
+
+    if (forbiddenAllowedChange !== undefined) {
+      disallowedChanges.push(`${filePath}: ${forbiddenAllowedChange}`);
+    }
+  }
+
+  return disallowedChanges;
+}
+
+async function findForbiddenTask017AllowedNativeChange(
+  relativePath: string,
+): Promise<string | undefined> {
+  const diff = await runGitOutput([
+    "diff",
+    "--unified=0",
+    "master",
+    "--",
+    relativePath,
+  ]);
+
+  for (const [pattern, description] of forbiddenTask017AllowedNativeDiffPatterns) {
+    if (pattern.test(diff)) {
+      return description;
+    }
+  }
+
+  return undefined;
 }
 
 async function runGitLines(args: readonly string[]): Promise<string[]> {
-  const { stdout } = await execFileAsync("git", args, {
-    cwd: repoRoot,
-  });
+  const stdout = await runGitOutput(args);
 
   return stdout
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+}
+
+async function runGitOutput(args: readonly string[]): Promise<string> {
+  const { stdout } = await execFileAsync("git", args, {
+    cwd: repoRoot,
+  });
+
+  return stdout;
 }

@@ -106,7 +106,7 @@ ML Plugin 可以渲染：
 
 ## 8. Markdown Editor Plugin
 
-Markdown Editor Plugin 是 TASK-016 后的内置插件，manifest id 是 `markdown`。
+Markdown Editor Plugin 是 TASK-016/TASK-017 后的内置插件，manifest id 是 `markdown`。
 
 它负责最小 Markdown 编辑体验，但任务、标签、日期、页面链接和富编辑语义仍由后续插件或编辑器任务负责。
 
@@ -146,7 +146,7 @@ export const MarkdownEditorPlugin: AppPlugin = {
 
 `markdown.page-editor` 是 `type: "page.editor"` 的 view，`markdown.insert-text` 是插入文本 command，`markdown.editor-mobile-toolbar.base` 挂到 `editor.mobile.toolbar` slot。
 
-### 8.2 TASK-016 编辑器 shell
+### 8.2 TASK-016/TASK-017 编辑器 shell
 
 当前编辑器是受控 `<textarea>` shell，不是 Tiptap / ProseMirror / rich editor：
 
@@ -157,8 +157,10 @@ export const MarkdownEditorPlugin: AppPlugin = {
 - `markdown.insert-text` 归一化 selection offset；省略 `selectionEnd` 时使用归一化后的 `selectionStart`，返回新的 `markdown`、`selectionStart` 和 `selectionEnd`。
 - 异步插入会在 await command 前 snapshot page id、当前 markdown、selection 和内容 generation。command 结果回来时，如果 page 或内容 generation 已变化，结果会被丢弃，避免慢 command 覆盖用户后续输入或页面切换。
 - 通过 `pageFacade` 加载页面时，页面切换会进入 loading state 并禁用编辑/保存；save 完成后只有在仍是同一页面且内容 generation 未变化时才应用 saved markdown。
+- TASK-017 保存时把 textarea Markdown 导入为带稳定 `blockId` 的 `markdown.line` blocks；每一行对应一个 block，包括空行。
+- TASK-017 重新打开时把结构化 body 导出回 textarea Markdown。当前测试覆盖的 textarea-supported Markdown 样例会保持可见文本不变。
 
-TASK-016 明确不实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、semantic task/tag/page-link behavior、stable block IDs、Markdown import/export 或 rich editor behavior。
+TASK-017 已实现稳定 block ID 与内部 Markdown import/export。仍未实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、semantic task/tag/page-link behavior、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
 
 ### 8.3 Markdown runtime facade
 
@@ -185,16 +187,24 @@ runtime.markdown.pages.load(pageId);
 runtime.markdown.pages.save({ pageId, markdown });
 ```
 
-它只通过 NativeBridge DB allowlist 调用 `core.pages.get` 和 `core.pages.update` DTO，并把 Markdown 文本包装为当前窄结构：
+它只通过 NativeBridge DB allowlist 调用 `core.pages.get` 和 `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。TASK-017 后的 load/save 规则是：
+
+- `load(pageId)` 调用 `core.pages.get`，如果 body 是结构化 `doc`，先用 `validateStructuredMarkdownDocument()` 校验，再用 `exportStructuredDocumentToMarkdown()` 导出为 textarea Markdown。
+- `load(pageId)` 对 TASK-016 的旧 body 只保留一个 load-only exact fallback：`{ type: "doc", content: [{ type: "markdown.text", text }] }`。带 `blockId`、`attrs`、`marks`、child content 或多个 node 的 `markdown.text` 都不是合法 fallback。
+- `save({ pageId, markdown })` 读取缓存或重新 `core.pages.get`，再用 `importMarkdownToStructuredDocument(markdown, { previousDocument })` 生成结构化 body，最后通过 `core.pages.update` 保存。新保存不会写 `markdown.text`。
 
 ```ts
 {
   type: "doc",
-  content: [{ type: "markdown.text", text: markdown }]
+  content: [
+    { blockId: "block_...", type: "markdown.line", text: "# Heading" },
+    { blockId: "block_...", type: "markdown.line", text: "" },
+    { blockId: "block_...", type: "markdown.line", text: "- [ ] task text" }
+  ]
 }
 ```
 
-这个 facade 不接受 raw SQL、SQL params、filesystem path 或 file DTO。它也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，TASK-016 只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。
+这个 facade 也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，当前只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
 
 后续 Task Plugin 可以提供 task block syntax descriptor，Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。真正的解析、索引、导航和 rich editor adaptation 仍未实现。
 

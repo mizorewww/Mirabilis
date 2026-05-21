@@ -37,7 +37,7 @@ Transaction Manager
 
 ### Phase 2：Markdown Editor Plugin
 
-TASK-016 已交付的实现：
+TASK-016/TASK-017 已交付的实现：
 
 ```text
 Built-in markdown plugin
@@ -49,6 +49,11 @@ Toolbar snippets: - [ ] , #, [[ ]]
 Command-bus insertion
 runtime.markdown.collectEditorExtensions()
 runtime.markdown.pages narrow page facade
+Core helpers: importMarkdownToStructuredDocument / exportStructuredDocumentToMarkdown / validateStructuredMarkdownDocument
+Line-oriented markdown.line structured bodies with stable blockId
+Stable block ID reconciliation across edits, insertions, deletions, duplicate text, deleted-ID collisions, and similar inserted lines
+Legacy markdown.text load-only fallback for exact TASK-016 bodies
+Rust IPC structured body validation for core.pages.create / core.pages.update
 ```
 
 验收：
@@ -65,19 +70,24 @@ runtime.markdown.pages narrow page facade
 
 可以正常输入、保存、重新打开。
 
-当前保存/重新打开只通过 Markdown runtime 的 narrow page facade 走 allowlisted NativeBridge `core.pages.get` / `core.pages.update` DTO。`storage.persistence = "in-memory-core"` 仍然属实，Core stores 没有整体改为 SQLite-backed。
+当前保存/重新打开只通过 Markdown runtime 的 narrow page facade 走 allowlisted NativeBridge `core.pages.get` / `core.pages.update` DTO。`load` 把结构化 body 导出为 editor Markdown；`save` 把 editor Markdown 导入为带稳定 `blockId` 的结构化 body。`storage.persistence = "in-memory-core"` 仍然属实，Core stores 没有整体改为 SQLite-backed。
 
 延后实现：
 
 ```text
 Tiptap / ProseMirror / rich editor
 Semantic task/tag/page-link behavior
+Checkbox events
+Tag indexing
+Page-link navigation
 @date token
 Autocomplete
 Slash menu
-Stable block ID
-Markdown import/export
 Full editor extension adaptation
+Full CommonMark AST round-tripping
+Native filesystem Markdown import/export
+User-facing load/save error UX
+Packaging/release behavior
 ```
 
 ---
