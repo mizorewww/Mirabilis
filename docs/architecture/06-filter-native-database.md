@@ -34,7 +34,48 @@ type FilterCondition = {
 }
 ```
 
-### 14.2 JS Filter
+### 14.2 Current `executeFilterQuery` subset
+
+TASK-022 adds a small Core API:
+
+```ts
+executeFilterQuery({
+  pages,
+  metadata,
+  query,
+  currentDate,
+  metadataOwnerReservations
+});
+```
+
+It is a data-only executor over already-loaded current pages and metadata records. It does not read `FilterStore`, does not mutate stores, does not call plugin code, and excludes archived pages from results.
+
+Current supported condition shape:
+
+```text
+field: metadata.<namespace>.<key>
+op: eq | neq | gt | lt | includes | exists
+branching: and | or
+```
+
+Current fail-closed behavior:
+
+- Unknown fields and unsafe metadata segments fail closed.
+- Malformed query values, accessor-backed or non-data properties, invalid condition shape, cyclic queries, and over-depth query graphs fail closed.
+- Wrong stored `valueType`, malformed stored values, non-finite numbers, invalid date metadata, and relative-date comparisons against non-date metadata fail closed.
+- `within` remains a legal `FilterOperator` / store AST op for saved filters, but this executor does not implement Event/plugin-index semantics yet and returns no matches for `within`.
+
+Relative Today uses:
+
+```json
+{ "kind": "relative-date", "value": "today" }
+```
+
+Date metadata must have `valueType: "date"` and a local `YYYY-MM-DD` string value. Tests inject deterministic `currentDate`; production app-shell filter routing is not wired yet.
+
+Metadata ownership is explicit and business-agnostic. The executor does not hard-code Task or Tag metadata trust rules; callers that need built-in trust boundaries must pass Plugin Host-derived `metadataOwnerReservations`, for example `{ namespace: "task", sourcePluginId: "task" }` and `{ namespace: "tag", sourcePluginId: "tag" }`.
+
+### 14.3 JS Filter
 
 JS Filter 作为 Filter Plugin 的高级能力。
 

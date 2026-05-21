@@ -63,7 +63,7 @@ Markdown Extension Plugin
 Manifest 用来声明插件能给系统贡献什么。
 TASK-010 中，`contributes` 里的能力是 manifest contribution descriptor，不等于已经存在同名 runtime facade。
 当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
-其中只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；`metadataFields`、`eventTypes`、`indexers`、`algorithms`、`mobileToolbarItems`、`settingsPanels` 目前由 manifest 描述，后续 Plugin Host / Plugin Platform 再把它们接成可执行或可渲染运行时能力。
+其中只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；`metadataFields`、`eventTypes`、`indexers`、`algorithms`、`mobileToolbarItems`、`settingsPanels` 目前由 manifest 描述，后续 Plugin Host / Plugin Platform 再把它们接成可执行或可渲染运行时能力。TASK-022 后，Plugin Host 会从 valid `metadataFields` manifest descriptors 派生 metadata owner reservations，用于 plugin-facing metadata writes 和低层 filter execution 的 trust boundary；这不是 metadata field renderer/editor registry。
 
 ---
 
@@ -91,6 +91,8 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
 
 - `#tag` 可先通过 Tag Plugin 的 Markdown Syntax / Metadata Field 契约接入；Inline Token 是后续扩展；
   TASK-021 当前已接入内置 `TagPlugin`：manifest id `tag`，Markdown syntax descriptor `tag.hashtag` / `#tag`，metadata field descriptor `tag.tags` / `namespace: "tag"` / `key: "tags"` / `valueType: "json"`。descriptor 本身仍是 inert metadata；正文 tag 刷新由显式 `tag.refresh-tags({ pageId })` command 完成。
+
+- Task Plugin 当前通过 manifest 声明 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`、`task.scheduled` 和 `task.due` metadata fields。TASK-022 的 All Tasks / Today filters 使用这些 task-owned metadata fields，并通过 canonical `viewType: "page.list"` 渲染。
 
 - `#habit` 是 Habit Plugin 识别的语义；
 
@@ -287,6 +289,16 @@ ml.predicted_remaining_time
 ```
 
 TASK-021 当前 `tag.tags` 由 Tag Plugin 维护为 `json` metadata field，值是小写、不带 `#` 的 ASCII slug `string[]`，最多 32 个唯一值。Metadata field contribution 只声明字段形状；完整 renderer/editor registry 仍属于后续 Metadata UI 工作。TASK-021 的可见 tag UI 是单独注册到 `page.header.metadata` 的 `TagMetadataSlot` slot contribution。
+
+TASK-022 当前 `task.scheduled` 和 `task.due` 是 `valueType: "date"` metadata field，存储 local `YYYY-MM-DD` 字符串。Today filter 使用 relative-date query value `{ kind: "relative-date", value: "today" }` 与这些 date metadata 比较；日期选择器、`@date` parser 和 `task.set_due` / `task.set-due` command 仍是后续范围。
+
+Metadata owner reservation 规则：
+
+- Plugin Host 只从 complete valid `metadataFields` descriptors 派生 reservation。
+- Descriptor 的 `namespace` 必须等于 declaring manifest id，`namespace` / `key` 必须是 metadata-safe segment，`valueType` 必须是有效 metadata value type。
+- malformed、non-array 或 incomplete descriptors 不会 reserve namespace，也不应让 lifecycle 以 untyped failure 退出。
+- `loadBuiltInPlugins()` 会在同一批内置插件 install/register 写入前先 stage valid reservations，包括 transaction-scoped writes。
+- dotted plugin id 不能 reserve 同名 metadata namespace，因为当前 metadata namespace segment 不允许点号。
 
 ### 9.5 Event Registry
 

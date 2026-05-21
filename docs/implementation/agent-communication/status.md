@@ -1,23 +1,104 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:35 CST.
+Last updated: 2026-05-21 21:28 CST.
 
 ## Current Task
 
-- Task: TASK-021 - Implement Tag Plugin baseline.
-- Branch: `feat/task-021-tag-plugin-baseline`.
+- Task: TASK-022 - Implement All Tasks and Today filters.
+- Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final local gate passed; progress completion update is being committed.
+- Current phase: TASK-022 branch gates passed; merge to `master` is pending.
 
 ## Active Agents
 
-- None.
+- None currently. Next step is final branch validation.
 
 ## Completed Recent Task
 
+- TASK-021 - Implement Tag Plugin baseline was completed on branch `feat/task-021-tag-plugin-baseline`, validated with focused Tag Plugin checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `b5389cd`.
 - TASK-020 - Implement checkbox toggle and task events was completed on branch `feat/task-020-checkbox-toggle-task-events`, validated with focused frontend/runtime/docs checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `c42fa5f`.
 - TASK-019 - Implement task navigation and infinite nesting was completed on branch `feat/task-019-task-navigation-infinite-nesting`, validated with focused frontend/runtime/security/docs checks, final `bun run check:quick`, `bun run build`, and merge-tree `bun run check:quick`, then merged to `master` in commit `7a2ce72`.
+
+## Current TASK-022 State
+
+- TASK-022 follows TASK-006, TASK-018, and TASK-021 and owns the first Filter/View slice:
+  - All Tasks filter lists task-enabled pages.
+  - Today filter uses documented metadata/date semantics.
+  - Filters render through the registered view system.
+  - Empty states are provided through slots.
+- Initial parent interpretation:
+  - Keep Filter behavior on generic query/view/slot primitives and plugin-owned contributions.
+  - Use current Task Plugin metadata where possible; agents must define whether Today can be implemented with existing `task.status` / source metadata or needs a narrow due/scheduled metadata contract.
+  - Keep automatic save-time scanning/indexing, native/Tauri/package changes, broad persistence/schema changes, release packaging, global metadata UI, and Timer/Calendar/Stats aggregation out of scope unless agents identify an acceptance dependency.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking update/sandbox notes.
+
+## Parent Decisions At TASK-022 Start
+
+- Start from `master` after TASK-021 merge commit `b5389cd`.
+- Use branch `feat/task-022-all-tasks-today-filters`.
+- Delegate planning/current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync to agents.
+- The parent thread must not write TASK-022 tests or production implementation unless a delegated role fails or is explicitly cancelled and the fallback is recorded.
+
+## Source Docs Read By Parent For TASK-022
+
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`.
+- `docs/implementation/progress.md`.
+- `docs/implementation/task-index.md#task-022-implement-all-tasks-and-today-filters`.
+- `docs/development/01-data-roadmap-and-mvp.md#phase-3task-plugin`.
+- `docs/product/05-built-in-plugins.md#23-filter-plugin`.
+- `docs/architecture/02-core-kernel.md#44-filter-store`.
+- `docs/architecture/06-filter-native-database.md#14-filter-engine-设计`.
+- Related Task/Tag references in `docs/product/05-built-in-plugins.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+
+## TASK-022 Validation Log
+
+- `.codex/agents/*.toml` parsed successfully with 11 files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+
+## Completed TASK-022 Agent Outcomes
+
+- Volta (`planner`) completed read-only planning. Recommendation: add a business-agnostic filter query executor, Task Plugin-owned All Tasks and Today filters, registered view rendering, and `filter.empty_state` slot. Keep global navigation, native/Tauri changes, save-time scanning, metadata UI, and broad Filter Plugin ownership changes out of scope.
+- Meitner (`docs_researcher`) completed current-doc/test guidance. Recommendation: use registered view/slot paths, keep Today bounded to seeded date metadata with deterministic tests, and use React Testing Library/user-event/Vitest patterns.
+- Mill (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: do not treat `FilterStore.list()` as query execution; preserve `page.list` for TASK-021 tag filter compatibility; keep task semantics out of Core; avoid native/package changes.
+- Darwin (`security_reviewer`) completed security guidance. P0/P1 guidance: no executable JS filters or native exposure, data-only AST interpreter with allowlisted fields, Task Plugin metadata trust boundaries, deterministic date parsing, minimal view/slot props, and inert rendering.
+- Wegener (`test_writer`) added failing TASK-022 acceptance tests in `src/test/core-filter-engine.test.ts` and `src/test/task-filters-view-rendering.test.tsx`. Coverage includes public `executeFilterQuery`, generic metadata query execution, owner-consistent metadata, path-injection fail-closed behavior, Tag filter compatibility, relative Today resolution, Task-owned All Tasks/Today filters, registered `page.list` rendering, `filter.empty_state`, inert unsafe titles, and native/package guard.
+- Ramanujan (`implementer`) added the initial TASK-022 production implementation in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/stores/filter-store.ts`, `src/plugins/task/plugin.ts`, and `src/plugins/task/components/TaskFilterViews.tsx`. It implements public `executeFilterQuery`, task-owned All Tasks/Today filters, registered `page.list` view rendering, and `filter.empty_state` slot. Commit: `a9a07e9`.
+- Focused review completed with Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`). P0 findings: none. P1 findings: default Task filter registration is not idempotent after plugin deactivation/re-registration, and formal docs drift from the implemented filter/view/date contract. Accepted P2/P3 follow-up: type fixed filter IDs as public save inputs, broaden generic executor coverage, cover `gt`/`lt`, harden relative-date `neq`, make empty-state copy generic or prop-scoped, and prove view/slot lookup through `viewType` and `filter.empty_state`. Deferred P2/P3: Event/plugin-index `within` execution, git-coupled native guard cleanup, and absence-command assertion brittleness.
+- Hooke (`test_writer`) added review-fix regression tests in `src/test/core-filter-engine.test.ts`, `src/test/task-filters-view-rendering.test.tsx`, `src/test/core-filter-store.test.ts`, and `src/test/plugin-api-contracts.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 90 passes, `bun run typecheck` failed on missing optional fixed filter id types, focused eslint passed, and `git diff --check` passed. Commit: `c765349`.
+- Ampere (`implementer`) fixed the review regressions in `src/core/filter-engine.ts`, `src/core/stores/filter-store.ts`, `src/core/plugin-api/context.ts`, `src/plugins/task/plugin.ts`, and `src/plugins/task/components/TaskFilterViews.tsx`. It made Task default filters idempotent, typed optional fixed filter IDs, implemented the current `gt`/`lt` page/metadata comparison subset, hardened relative-date `neq`, and made empty-state copy generic. Parent validation passed: review-fix focused tests 94/94, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `a9b0579`.
+- Post-fix focused review completed with Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`). P0/P1 findings: none. Accepted P2 follow-up: preserve user-created task-owned filters during default upsert, guard direct `executeFilterQuery` against cyclic/over-deep queries, prevent cross-plugin fixed filter id collisions such as foreign-owned `task.filter.*`, remove the hidden assumption that every metadata `sourcePluginId` equals namespace while preserving built-in Task/Tag trust boundaries, and fail closed for malformed metadata `valueType` on `eq`/`neq`/`includes`. `within` remains deferred to formal docs sync as an explicit current-executor subset caveat.
+- Ptolemy (`test_writer`) added second review-fix regression tests in `src/test/core-filter-engine.test.ts`, `src/test/plugin-api-contracts.test.ts`, and `src/test/task-filters-view-rendering.test.tsx`. Parent red validation matched the expected signal: focused tests had 10 failures / 100 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `abbd9ff`; the auto-push initially timed out over SSH, then parent retried `git push` successfully.
+- Einstein (`implementer`) fixed the second review regressions in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. It added direct query traversal guards, operator/value-shape validation, metadata value-shape validation, generic metadata owner handling with built-in Task/Tag owner boundaries, and plugin-facing fixed filter id namespace enforcement. Parent validation passed: second review-fix focused tests 110/110, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `2b61886`.
+- Narrow post-second-fix review completed with Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`). P0 findings: none. P1 finding: accessor-backed fixed filter IDs can bypass plugin-facing namespace enforcement and let a non-owner plugin save `task.filter.today`. Accepted P2 finding: non-owner plugins can squat built-in `task` / `tag` metadata identities before the owning plugin writes them. Accepted P3: malformed raw date metadata equality should fail closed if concise to cover. Deferred P3: total node/branch/condition budgets for very wide direct queries.
+- Heisenberg (`test_writer`) added third review-fix regression tests in `src/test/plugin-api-contracts.test.ts` and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 51 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `0ed12aa`.
+- Bernoulli (`implementer`) fixed the third review regressions in `src/core/plugin-host/plugin-host.ts` and `src/core/filter-engine.ts`. It closes accessor-backed fixed filter id namespace bypasses, reserves built-in `task` and `tag` metadata namespaces for owning plugins, and makes raw malformed `date` metadata fail closed. Parent validation passed: third review-fix focused tests 55/55, expanded focused coverage 114/114, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `8cd3994`.
+- Final narrow boundary review completed with Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`). Confucius/Lagrange/Kepler found no P0/P1/P2 in the narrow boundary behavior. Banach found P1: full frontend tests fail on `src/test/core-architecture-boundary.test.ts` because production Core files now contain the forbidden business-plugin term `task` in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. Parent reproduced the focused architecture-boundary red test. Existing red test is sufficient TDD signal for the next implementation fix.
+- Nietzsche (`implementer`) fixed the Core architecture-boundary P1 in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/plugin-host/plugin-host.ts`, `src/plugins/task/plugin.ts`, and focused tests. It moved owner policy to generic `metadataOwnerReservations`, derives plugin-host metadata reservations from plugin manifests, and adds Task Plugin manifest metadata field contributions for the current task metadata. Parent validation passed: architecture-boundary 1/1, API/filter focused 55/55, expanded focused 114/114, adjacent view/task/tag 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `3b8f0b9`.
+- Final architecture-boundary review completed with Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`). Singer/Hegel/Noether found no P0/P1 behavior blocker. Leibniz found P1 test gap: real `TaskPlugin.manifest.contributes.metadataFields` is not directly asserted. Hegel found P2: manifest-derived metadata reservations are load-order based and not owner-bound, so a plugin can reserve another plugin's namespace by declaring it first. Noether found P2 docs/API handoff needs around explicit `metadataOwnerReservations`, partial/conflicting metadata field semantics, and deferred `within`.
+- Goodall (`test_writer`) added manifest-derived metadata reservation tests in `src/test/task-filters-view-rendering.test.tsx`, `src/test/plugin-api-contracts.test.ts`, and `src/test/core-filter-engine.test.ts`. Parent red validation matched the expected signal: focused tests had 2 failures / 66 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `9301698`.
+- Kuhn (`implementer`) fixed Goodall's manifest-reservation regressions in `src/core/plugin-host/plugin-host.ts`. Manifest reservations now require complete metadata field descriptors and are owner-bound to the declaring plugin's own namespace. Parent validation passed: focused manifest tests 68/68, expanded focused coverage 119/119, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `eeda8af`.
+- Narrow manifest-reservation review completed with Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`). P0/P1 findings: none. Accepted P2 follow-up: malformed `metadataFields` entries such as `null` should not cause untyped lifecycle failures, and same-batch `loadBuiltInPlugins()` should stage manifest reservations before any plugin install can write another plugin's reserved namespace. Docs sync must describe the new manifest reservation contract and low-level `metadataOwnerReservations` caller responsibility. Accepted P3/docs handoff: dotted plugin ids cannot reserve same-named metadata namespaces under the current metadata namespace segment rules, and the duplicated `metadataValueTypes` list is a future typing maintenance risk.
+- Hilbert (`test_writer`) added P2 manifest-reservation hardening tests in `src/test/plugin-api-contracts.test.ts`. Parent red validation matched the expected signal: focused manifest tests had 2 failures / 69 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `1d6369d`.
+- Carson (`implementer`) fixed the P2 manifest-reservation hardening regressions in `src/core/plugin-host/plugin-host.ts`. `loadBuiltInPlugins()` now derives valid metadata owner reservations for the whole sorted built-in batch before lifecycle writes run, batch reservations are scoped to that batch's lifecycle contexts, and malformed `metadataFields` shapes are ignored unless complete and valid. Parent validation passed: focused manifest tests 71/71, expanded focused coverage 122/122, plugin-host lifecycle 47/47, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `91e0134`.
+- Narrow follow-up review completed with Bohr (`reviewer`), Linnaeus (`security_reviewer`), and Averroes (`test_quality_reviewer`). Bohr and Linnaeus found no P0/P1/P2/P3 behavior/security findings and said TASK-022 can proceed to docs sync. Averroes found one non-blocking P2 test gap: same-batch reservation coverage should also exercise transaction-scoped `tx.metadata.set`, because Carson threads batch reservations into transaction contexts. Parent decision: add this small test-only coverage before docs sync.
+- Huygens (`test_writer`) added transaction-scoped same-batch manifest reservation coverage in `src/test/plugin-api-contracts.test.ts`. Behavior was already green. Parent validation passed: Plugin API 29/29, Plugin API + lifecycle + architecture 77/77, `bun run typecheck`, focused eslint, and `git diff --check`. Commit: `e3d77fe`.
+- Mencius (`doc_writer`) synchronized TASK-022 formal docs across product, architecture, development, implementation, and testing docs. The sync documented delivered `executeFilterQuery`, Task-owned All Tasks / Today filters, `page.list`, `task.page-list`, `filter.empty_state`, date metadata semantics, Tag filter compatibility, metadata owner reservations, and deferred scope. `progress.md` marks TASK-022 complete pending final gate confirmation. Parent validation passed targeted stale scans, `git diff --check`, and `bun run typecheck`. Commit: `e3a4319`.
+- Final TASK-022 branch gates passed: `bun run check:quick` passed with 27 frontend test files / 426 tests, Rust fmt, Rust clippy, and full Rust tests; `bun run build` passed.
+
+## Parent Decisions After TASK-022 Start
+
+- Implement TASK-022 as a generic data-only filter query executor plus Task Plugin-owned default filters, registered `page.list` rendering, and `filter.empty_state` slot.
+- Use `viewType: "page.list"` for TASK-022 task filters to preserve TASK-021 Tag Plugin filter compatibility.
+- All Tasks query: `metadata.task.enabled eq true`; include done tasks; exclude archived pages through the page listing/query execution surface.
+- Today query: task-enabled, not done, and either `metadata.task.scheduled` or `metadata.task.due` equals deterministic current local date. Date metadata uses `valueType: "date"` and `YYYY-MM-DD` strings.
+- Defer date picker, `@date` parsing, `task.set_due`, automatic metadata extraction, Overdue/Done filters, JS filters, global saved-filter navigation, Tag filter UI beyond compatibility, native/Tauri/package/Rust changes, and persistence rewiring.
+
+## Next Actions
+
+1. Commit final gate progress records.
+2. Merge TASK-022 back to `master`.
+3. Run merge-result `bun run check:quick` on `master`.
 
 ## Current TASK-021 State
 

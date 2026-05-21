@@ -28,6 +28,7 @@ export class FilterStoreError extends Error {
 }
 
 export type SaveFilterInput = {
+  id?: string;
   name: string;
   query: FilterQuery;
   sort?: FilterSort[];
@@ -156,6 +157,12 @@ export function createInMemoryFilterStore(
         "FILTER_GROUP_INVALID",
         "filter group must be readable",
       );
+      const filterIdInput = readOptionalProperty(
+        input,
+        "id",
+        "FILTER_IDENTITY_REQUIRED",
+        "filter id must be readable",
+      );
 
       assertFilterQuery(queryInput);
 
@@ -174,7 +181,9 @@ export function createInMemoryFilterStore(
       const group = groupInput.present
         ? (cloneForFilter("filter group", groupInput.value) as FilterGroup)
         : undefined;
-      const filterId = createId();
+      const filterId = filterIdInput.present
+        ? normalizeFilterId(filterIdInput.value)
+        : createId();
 
       if (state.filters.has(filterId)) {
         throw new FilterStoreError("FILTER_ID_COLLISION", filterId);

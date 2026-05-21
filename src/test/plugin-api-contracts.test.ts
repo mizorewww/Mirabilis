@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { PluginHost, createInMemoryAppRuntime } from "../core";
 import * as pluginApiEntrypoint from "../core/plugin-api";
 import type {
   AlgorithmContribution,
@@ -257,6 +258,7 @@ type ExpectedPluginListEventsOptions = {
   namespace?: string;
 };
 type ExpectedPluginSaveFilterInput = {
+  id?: string;
   name: string;
   query: PluginFilterQuery;
   sort?: FilterSort[];
@@ -1502,6 +1504,7 @@ describe("Plugin API contracts", () => {
       namespace: "example",
     } satisfies PluginListEventsOptions;
     const filterInput = {
+      id: "filter-open-examples",
       name: "Open Examples",
       query: {
         where: [{ field: "metadata.example.status", op: "eq", value: "open" }],
@@ -1526,6 +1529,7 @@ describe("Plugin API contracts", () => {
     expect(metadataListOptions.namespace).toBe("example");
     expect(eventInput.payload).toEqual({ from: "shortcut" });
     expect(eventListOptions.pageId).toBe("page-1");
+    expect(filterInput.id).toBe("filter-open-examples");
     expect(filterInput.query.where[0]?.value).toBe("open");
     expect(filterUpdate.sort).toBeNull();
     expect(filterListOptions.viewType).toBe("example.view");
@@ -1552,6 +1556,501 @@ describe("Plugin API contracts", () => {
     expectTypeOf<
       Pick<PluginListFiltersOptions, keyof ExpectedPluginListFiltersOptions>
     >().toEqualTypeOf<ExpectedPluginListFiltersOptions>();
+  });
+
+  it.each(["task.filter.today", "task.filter.custom"] as const)(
+    "prevents plugin-facing fixed filter id %s from claiming another plugin namespace",
+    async (fixedFilterId) => {
+      const { runtime, host } = createPluginApiTestHost();
+
+      await expect(
+        host.loadBuiltInPlugins([
+          filterSavingPlugin("review", fixedFilterId),
+        ]),
+      ).rejects.toMatchObject({
+        name: "PluginHostError",
+        code: "PLUGIN_LIFECYCLE_FAILED",
+        pluginId: "review",
+        phase: "register",
+        cause: expect.objectContaining({
+          name: "PluginHostError",
+          code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+          pluginId: "review",
+        }),
+      });
+      expect(runtime.services.filters.list()).toStrictEqual([]);
+    },
+  );
+
+  it("prevents accessor-backed plugin-facing fixed filter ids from claiming another plugin namespace", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        accessorBackedFilterSavingPlugin("review", "task.filter.today"),
+      ]),
+    ).rejects.toMatchObject({
+      name: "PluginHostError",
+      code: "PLUGIN_LIFECYCLE_FAILED",
+      pluginId: "review",
+      phase: "register",
+      cause: expect.objectContaining({
+        name: "PluginHostError",
+        code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        pluginId: "review",
+      }),
+    });
+    expect(runtime.services.filters.list()).toStrictEqual([]);
+    expect(() => runtime.services.filters.get("task.filter.today")).toThrow();
+  });
+
+  it("allows plugin-facing fixed filter ids inside the current plugin namespace", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+    const records = await host.loadBuiltInPlugins([
+      filterSavingPlugin("task", "task.filter.custom"),
+    ]);
+
+    expect(records).toStrictEqual([
+      expect.objectContaining({
+        id: "task",
+        enabled: false,
+        status: "registered",
+      }),
+    ]);
+    expect(runtime.services.filters.get("task.filter.custom")).toMatchObject({
+      id: "task.filter.custom",
+      name: "task fixed filter",
+      sourcePluginId: "task",
+    });
+  });
+
+  it("reserves built-in task and tag metadata identities for their owning plugins", async () => {
+    await expectBuiltInMetadataWriteRejected({
+      pluginId: "review",
+      namespace: "task",
+      key: "enabled",
+      value: true,
+      valueType: "boolean",
+    });
+    await expectBuiltInMetadataWriteRejected({
+      pluginId: "review",
+      namespace: "tag",
+      key: "tags",
+      value: ["product"],
+      valueType: "json",
+    });
+
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataSavingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+        metadataSavingPlugin({
+          pluginId: "tag",
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          valueType: "json",
+        }),
+        metadataSavingPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(3);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+        expect.objectContaining({
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          sourcePluginId: "tag",
+        }),
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          sourcePluginId: "review",
+        }),
+      ]),
+    );
+  });
+
+  it("binds manifest-derived metadata reservations to namespace owners instead of load order", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataFieldsDeclaringPlugin({
+          pluginId: "review",
+          fields: [
+            {
+              namespace: "task",
+              key: "enabled",
+              valueType: "boolean",
+            },
+            {
+              namespace: "tag",
+              key: "tags",
+              valueType: "json",
+            },
+          ],
+        }),
+        metadataDeclaringAndSavingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+        metadataDeclaringAndSavingPlugin({
+          pluginId: "tag",
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          valueType: "json",
+        }),
+      ]),
+    ).resolves.toHaveLength(3);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+        expect.objectContaining({
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          sourcePluginId: "tag",
+        }),
+      ]),
+    );
+  });
+
+  it("prevents earlier same-batch install hooks from claiming later manifest-reserved metadata namespaces", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataInstallingPlugin({
+          pluginId: "review",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+        metadataDeclaringAndInstallingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+      ]),
+    ).rejects.toMatchObject({
+      name: "PluginHostError",
+      code: "PLUGIN_LIFECYCLE_FAILED",
+      pluginId: "review",
+      phase: "install",
+      cause: expect.objectContaining({
+        name: "PluginHostError",
+        code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        pluginId: "review",
+      }),
+    });
+    expect(runtime.services.metadata.list()).toStrictEqual([]);
+  });
+
+  it.each(["install", "register"] as const)(
+    "prevents earlier same-batch %s transactions from claiming later manifest-reserved metadata namespaces",
+    async (phase) => {
+      const { runtime, host } = createPluginApiTestHost();
+
+      await expect(
+        host.loadBuiltInPlugins([
+          metadataWritingTransactionPlugin({
+            pluginId: "review",
+            namespace: "task",
+            key: "enabled",
+            value: true,
+            valueType: "boolean",
+            phase,
+          }),
+          metadataFieldDeclaringPlugin({
+            pluginId: "task",
+            namespace: "task",
+            key: "enabled",
+            valueType: "boolean",
+          }),
+        ]),
+      ).rejects.toMatchObject({
+        name: "PluginHostError",
+        code: "PLUGIN_LIFECYCLE_FAILED",
+        pluginId: "review",
+        phase,
+        cause: expect.objectContaining({
+          name: "PluginHostError",
+          code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+          pluginId: "review",
+        }),
+      });
+      expect(runtime.services.metadata.list()).toStrictEqual([]);
+    },
+  );
+
+  it("allows a later same-batch manifest owner to write its own reserved metadata during install", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataSavingPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+        metadataDeclaringAndInstallingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "review",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+      ]),
+    );
+  });
+
+  it("allows same-batch manifest owners to write reserved metadata through transactions", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataWritingTransactionPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+          phase: "install",
+        }),
+        metadataDeclaringAndWritingTransactionPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+          phase: "install",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "review",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps complete generic manifest reservations for the owning namespace while allowing unreserved metadata", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataDeclaringAndSavingPlugin({
+          pluginId: "review",
+          namespace: "review",
+          key: "score",
+          value: 92,
+          valueType: "number",
+        }),
+        metadataSavingPlugin({
+          pluginId: "quality",
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "review",
+          key: "score",
+          value: 92,
+          sourcePluginId: "review",
+        }),
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "quality",
+        }),
+      ]),
+    );
+
+    const otherHost = createPluginApiTestHost();
+
+    await expect(
+      otherHost.host.loadBuiltInPlugins([
+        metadataFieldDeclaringPlugin({
+          pluginId: "review",
+          namespace: "review",
+          key: "score",
+          valueType: "number",
+        }),
+        metadataSavingPlugin({
+          pluginId: "quality",
+          namespace: "review",
+          key: "score",
+          value: 92,
+          valueType: "number",
+        }),
+      ]),
+    ).rejects.toMatchObject({
+      name: "PluginHostError",
+      code: "PLUGIN_LIFECYCLE_FAILED",
+      pluginId: "quality",
+      phase: "register",
+      cause: expect.objectContaining({
+        name: "PluginHostError",
+        code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        pluginId: "quality",
+      }),
+    });
+  });
+
+  it("ignores malformed manifest metadataFields shapes without reserving namespaces or breaking later metadata writes", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        malformedMetadataFieldsPlugin({
+          pluginId: "malformed-array-fields",
+          metadataFields: [
+            null,
+            "review",
+            42,
+            {
+              id: "review.incomplete",
+              namespace: "review",
+            },
+          ],
+        }),
+        malformedMetadataFieldsPlugin({
+          pluginId: "malformed-non-array-fields",
+          metadataFields: {
+            id: "quality.status",
+            namespace: "quality",
+            key: "status",
+            valueType: "string",
+          },
+        }),
+        metadataSavingPlugin({
+          pluginId: "quality",
+          namespace: "review",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+        metadataSavingPlugin({
+          pluginId: "inspector",
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(4);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "review",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "quality",
+        }),
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          sourcePluginId: "inspector",
+        }),
+      ]),
+    );
+  });
+
+  it("does not reserve metadata namespaces from incomplete manifest field descriptors", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        incompleteMetadataFieldDeclaringPlugin({
+          pluginId: "review",
+          namespace: "review",
+        }),
+        metadataSavingPlugin({
+          pluginId: "quality",
+          namespace: "review",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual([
+      expect.objectContaining({
+        namespace: "review",
+        key: "status",
+        value: "ready",
+        sourcePluginId: "quality",
+      }),
+    ]);
   });
 
   it("rejects explicit undefined plugin ids from plugin registry inputs", () => {
@@ -1751,3 +2250,358 @@ describe("Plugin API contracts", () => {
     expectNoTypeLeak<PluginApiBoundaryLeak>();
   });
 });
+
+function createPluginApiTestHost() {
+  const runtime = createInMemoryAppRuntime();
+  const host = new PluginHost({
+    services: runtime.services,
+    registries: runtime.registries,
+    app: {
+      version: "test",
+      pluginApiVersion: "test",
+    },
+  });
+
+  return { runtime, host };
+}
+
+function filterSavingPlugin(
+  pluginId: string,
+  fixedFilterId: string,
+): AppPlugin {
+  return {
+    manifest: {
+      id: pluginId,
+      name: `${pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      ctx.filters.save({
+        id: fixedFilterId,
+        name: `${pluginId} fixed filter`,
+        query: { where: [] },
+        viewType: `${pluginId}.list`,
+      });
+    },
+  };
+}
+
+function accessorBackedFilterSavingPlugin(
+  pluginId: string,
+  fixedFilterId: string,
+): AppPlugin {
+  return {
+    manifest: {
+      id: pluginId,
+      name: `${pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      const filterInput = {
+        get id() {
+          return fixedFilterId;
+        },
+        name: `${pluginId} accessor filter`,
+        query: { where: [] },
+        viewType: `${pluginId}.list`,
+      } satisfies PluginSaveFilterInput;
+
+      ctx.filters.save(filterInput);
+    },
+  };
+}
+
+type MetadataSavingPluginInput = {
+  pluginId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+  pageId?: string;
+};
+
+type MetadataFieldDeclarationInput = Pick<
+  MetadataSavingPluginInput,
+  "namespace" | "key" | "valueType"
+> & {
+  id?: string;
+};
+type MetadataTransactionPhase = "install" | "register";
+
+function metadataSavingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+  };
+}
+
+function metadataInstallingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    install(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+    register() {},
+  };
+}
+
+function metadataWritingTransactionPlugin(
+  input: MetadataSavingPluginInput & { phase: MetadataTransactionPhase },
+): AppPlugin {
+  const writeMetadata = (ctx: PluginContext) =>
+    ctx.transaction.run((tx) => {
+      tx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    });
+  const plugin: AppPlugin = {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register: input.phase === "register" ? writeMetadata : () => {},
+  };
+
+  if (input.phase === "install") {
+    plugin.install = writeMetadata;
+  }
+
+  return plugin;
+}
+
+function metadataFieldDeclaringPlugin(
+  input: Pick<
+    MetadataSavingPluginInput,
+    "pluginId" | "namespace" | "key" | "valueType"
+  >,
+): AppPlugin {
+  return metadataFieldsDeclaringPlugin({
+    pluginId: input.pluginId,
+    fields: [
+      {
+        namespace: input.namespace,
+        key: input.key,
+        valueType: input.valueType,
+      },
+    ],
+  });
+}
+
+function metadataFieldsDeclaringPlugin(input: {
+  pluginId: string;
+  fields: readonly MetadataFieldDeclarationInput[];
+}): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: input.fields.map((field) => ({
+          id: field.id ?? `${field.namespace}.${field.key}`,
+          namespace: field.namespace,
+          key: field.key,
+          valueType: field.valueType,
+        })),
+      },
+    },
+    register() {},
+  };
+}
+
+function metadataDeclaringAndSavingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
+    register(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+  };
+}
+
+function metadataDeclaringAndInstallingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
+    install(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+    register() {},
+  };
+}
+
+function metadataDeclaringAndWritingTransactionPlugin(
+  input: MetadataSavingPluginInput & { phase: MetadataTransactionPhase },
+): AppPlugin {
+  const plugin = metadataWritingTransactionPlugin(input);
+
+  return {
+    ...plugin,
+    manifest: {
+      ...plugin.manifest,
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
+  };
+}
+
+function incompleteMetadataFieldDeclaringPlugin(input: {
+  pluginId: string;
+  namespace: string;
+}): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.incomplete`,
+            namespace: input.namespace,
+          },
+        ],
+      },
+    },
+    register() {},
+  };
+}
+
+function malformedMetadataFieldsPlugin(input: {
+  pluginId: string;
+  metadataFields: unknown;
+}): AppPlugin {
+  const manifest = {
+    id: input.pluginId,
+    name: `${input.pluginId} Plugin`,
+    version: "1.0.0",
+    minAppVersion: "0.1.0",
+    contributes: {
+      metadataFields: input.metadataFields,
+    },
+  } as unknown as PluginManifest;
+
+  return {
+    manifest,
+    register() {},
+  };
+}
+
+async function expectBuiltInMetadataWriteRejected(
+  input: MetadataSavingPluginInput,
+): Promise<void> {
+  const { runtime, host } = createPluginApiTestHost();
+
+  await expect(
+    host.loadBuiltInPlugins([
+      metadataFieldDeclaringPlugin({
+        pluginId: input.namespace,
+        namespace: input.namespace,
+        key: input.key,
+        valueType: input.valueType,
+      }),
+      metadataSavingPlugin(input),
+    ]),
+  ).rejects.toMatchObject({
+    name: "PluginHostError",
+    code: "PLUGIN_LIFECYCLE_FAILED",
+    pluginId: input.pluginId,
+    phase: "register",
+    cause: expect.objectContaining({
+      name: "PluginHostError",
+      code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+      pluginId: input.pluginId,
+    }),
+  });
+  expect(runtime.services.metadata.list()).toStrictEqual([]);
+}

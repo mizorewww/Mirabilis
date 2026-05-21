@@ -71,4 +71,20 @@ view.filter.result_item
 view.heatmap.cell
 ```
 
+TASK-022 当前使用的 filter empty-state slot 是：
+
+```text
+filter.empty_state
+```
+
+Task Plugin 注册 `task.filter-empty-state` 到这个 slot，order 为 `100`，文案是 generic page empty state。
+
+当前 canonical filter result view type 是：
+
+```text
+page.list
+```
+
+Task Plugin 注册 view `task.page-list`，type 为 `page.list`，用于 All Tasks / Today，并保留 TASK-021 Tag Plugin saved filters 的兼容性。
+
 ---

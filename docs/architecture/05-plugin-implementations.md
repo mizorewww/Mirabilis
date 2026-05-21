@@ -58,7 +58,7 @@ export const TagPlugin: AppPlugin = {
 };
 ```
 
-`tag.hashtag` 和 `tag.tags` 是 manifest descriptors。它们不会创建 rich inline tokens、autocomplete、automatic save-time scanning、indexer 或 filter result rendering。
+`tag.hashtag` 和 `tag.tags` 是 manifest descriptors。它们不会创建 rich inline tokens、autocomplete、automatic save-time scanning 或 indexer。TASK-022 后，Tag Plugin saved filters that use `viewType: "page.list"` can run through the generic page/metadata executor and registered `page.list` view path; Tag Plugin itself still only saves the filter definition.
 
 ### 10.2 Tag commands
 
@@ -98,7 +98,7 @@ Non-ASCII values such as `K` are rejected instead of being Unicode case-folded
 }
 ```
 
-Filter result execution and rendering remain TASK-022+.
+TASK-022 delivers compatible generic `page.list` execution/rendering for this saved filter shape. `tag.create-filter` still does not own app-shell navigation, automatic refresh, or a tag-specific result renderer.
 
 ## 11. Timer Plugin 代码架构
 

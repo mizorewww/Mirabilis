@@ -141,6 +141,11 @@ export {
   importMarkdownToStructuredDocument,
   validateStructuredMarkdownDocument,
 } from "./markdown";
+export { executeFilterQuery } from "./filter-engine";
+export type {
+  ExecuteFilterQueryInput,
+  MetadataOwnerReservation,
+} from "./filter-engine";
 export type {
   ImportMarkdownToStructuredDocumentOptions,
   ValidateStructuredMarkdownDocumentOptions,

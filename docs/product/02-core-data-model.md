@@ -168,7 +168,8 @@ Filter
 ```text
 name: All Tasks
 query:
-  metadata.task.status exists
+  metadata.task.enabled = true
+view_type: page.list
 ```
 
 ```text
@@ -183,7 +184,7 @@ query:
   events.timer.time_segment_created within 7 days
 ```
 
-Filter 查询 Markdown Page、Metadata 和 Event。
+Filter 查询 Markdown Page、Metadata 和 Event。TASK-022 当前交付的 `executeFilterQuery` 是 data-only current page/metadata executor：它执行 metadata field paths、`eq` / `neq` / `gt` / `lt` / `includes` / `exists`、`and` / `or`，并排除 archived pages。Event/plugin-index 查询、`within` 的 Event 语义、排序/分组、JS filters 和 app-shell route wiring 仍是后续范围。
 
 ---
 
