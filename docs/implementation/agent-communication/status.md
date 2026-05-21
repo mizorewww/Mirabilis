@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:49 CST.
+Last updated: 2026-05-21 18:51 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:49 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance completed; failing acceptance tests are next.
+- Current phase: failing TASK-022 acceptance tests delegated to Wegener.
 
 ## Active Agents
 
-- None.
+- Wegener (`test_writer`) is writing TASK-022 failing acceptance tests only.
 
 ## Completed Recent Task
 
@@ -73,9 +73,9 @@ Last updated: 2026-05-21 18:49 CST.
 
 ## Next Actions
 
-1. Commit pre-test guidance and parent decisions.
-2. Delegate `test_writer` for failing TASK-022 acceptance tests.
-3. Confirm red signal before implementation.
+1. Wait for Wegener's failing TASK-022 acceptance tests.
+2. Confirm expected red signal.
+3. Commit tests, then delegate implementation.
 
 ## Current TASK-021 State
 

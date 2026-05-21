@@ -156,4 +156,4 @@
 
 ## Current Next Action
 
-- Delegate failing acceptance tests to `test_writer`.
+- Wegener (`test_writer`) is writing TASK-022 failing acceptance tests only.
