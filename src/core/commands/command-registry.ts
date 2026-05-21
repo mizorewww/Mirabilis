@@ -6,6 +6,7 @@ import type {
   CommandService,
   ListCommandsOptions,
 } from "../types";
+import { PluginHostError } from "../plugin-host";
 
 class CommandRegistryErrorImpl extends Error {
   readonly code: CommandRegistryErrorCode;
@@ -159,17 +160,7 @@ function createHandlerFailureErrorOptions(
 }
 
 function isPluginHostError(cause: unknown): boolean {
-  return (
-    isRecord(cause) &&
-    cause.name === "PluginHostError" &&
-    typeof cause.code === "string" &&
-    typeof cause.pluginId === "string" &&
-    typeof cause.phase === "string"
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return cause instanceof PluginHostError;
 }
 
 function createDescriptor<Input, Output>(
