@@ -219,6 +219,52 @@ describe("Tag Plugin baseline", () => {
     expectTagMetadata(runtime, emptyPage.id, []);
   });
 
+  it("replaces stale tag metadata with exactly the refreshed source tags", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["stale-refresh-page", "empty-stale-refresh-page"],
+      metadataIds: ["metadata-stale-tags", "metadata-empty-stale-tags"],
+    });
+    const taggedPage = createSourcePage(runtime, "Stale tags", [
+      { blockId: "content", text: "Current source only has #New." },
+    ]);
+    const emptyPage = createSourcePage(runtime, "No current tags", [
+      { blockId: "content", text: "Current source has no tags." },
+    ]);
+
+    runtime.metadata.set({
+      pageId: taggedPage.id,
+      namespace: tagMetadataNamespace,
+      key: tagMetadataKey,
+      value: ["old", "keep"],
+      valueType: "json",
+      sourcePluginId: tagPluginId,
+    });
+    runtime.metadata.set({
+      pageId: emptyPage.id,
+      namespace: tagMetadataNamespace,
+      key: tagMetadataKey,
+      value: ["old", "keep"],
+      valueType: "json",
+      sourcePluginId: tagPluginId,
+    });
+
+    await expect(
+      executeRefreshTags(runtime, { pageId: taggedPage.id }),
+    ).resolves.toStrictEqual({
+      pageId: taggedPage.id,
+      tags: ["new"],
+    });
+    expectTagMetadata(runtime, taggedPage.id, ["new"]);
+
+    await expect(
+      executeRefreshTags(runtime, { pageId: emptyPage.id }),
+    ).resolves.toStrictEqual({
+      pageId: emptyPage.id,
+      tags: [],
+    });
+    expectTagMetadata(runtime, emptyPage.id, []);
+  });
+
   it("caps refreshed page tags at the first 32 unique ASCII slug tokens", async () => {
     const runtime = await createRuntime({
       pageIds: ["many-tags-page"],
@@ -263,6 +309,36 @@ describe("Tag Plugin baseline", () => {
       tags: ["valid", "still_ok"],
     });
     expectTagMetadata(runtime, sourcePage.id, ["valid", "still_ok"]);
+  });
+
+  it("rejects raw non-ASCII tags before Unicode case folding in commands and source extraction", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["unicode-command-page", "unicode-source-page"],
+      metadataIds: ["metadata-unicode-command-tags", "metadata-unicode-source-tags"],
+    });
+    const commandPage = createSourcePage(runtime, "Unicode command tag", [
+      { blockId: "content", text: "No tags yet" },
+    ]);
+    const sourcePage = createSourcePage(runtime, "Unicode source tag", [
+      { blockId: "content", text: "Ignore #K but keep #valid." },
+    ]);
+    const beforeInvalidCommand = snapshotRuntimeState(runtime);
+    const error = await captureOptionalAsyncError(() =>
+      runtime.commands.execute(tagAddCommandId, {
+        pageId: commandPage.id,
+        tag: "K",
+      }),
+    );
+
+    expect(error).toBeDefined();
+    expect(snapshotRuntimeState(runtime)).toStrictEqual(beforeInvalidCommand);
+    await expect(
+      executeRefreshTags(runtime, { pageId: sourcePage.id }),
+    ).resolves.toStrictEqual({
+      pageId: sourcePage.id,
+      tags: ["valid"],
+    });
+    expectTagMetadata(runtime, sourcePage.id, ["valid"]);
   });
 
   it("adds and removes tags through strict page-scoped commands without caller-supplied ownership", async () => {
@@ -472,6 +548,60 @@ describe("Tag Plugin baseline", () => {
     });
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("rejects add and remove command results for a different page without stamping those tags", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const TagMetadataSlot = getTagMetadataSlotComponent(runtime);
+    const addExecute = vi.fn(async (): Promise<unknown> => ({
+      pageId: "other-page",
+      tags: ["mismatched-add"],
+    }));
+    const view = render(
+      <TagMetadataSlot
+        pageId="current-page"
+        tags={["keep"]}
+        commands={{ execute: addExecute }}
+      />,
+    );
+
+    await user.type(
+      screen.getByRole("textbox", { name: /tag/i }),
+      "mismatched-add",
+    );
+    await user.click(screen.getByRole("button", { name: /^add tag$/i }));
+
+    await waitFor(() => expectVisibleTagFeedback());
+    expect(screen.getByText("#keep")).toBeVisible();
+    expect(screen.queryByText("#mismatched-add")).not.toBeInTheDocument();
+    expect(addExecute).toHaveBeenCalledWith(tagAddCommandId, {
+      pageId: "current-page",
+      tag: "mismatched-add",
+    });
+    view.unmount();
+
+    const removeExecute = vi.fn(async (): Promise<unknown> => ({
+      pageId: "other-page",
+      tags: ["mismatched-remove"],
+    }));
+    render(
+      <TagMetadataSlot
+        pageId="current-page"
+        tags={["keep"]}
+        commands={{ execute: removeExecute }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /remove #keep/i }));
+
+    await waitFor(() => expectVisibleTagFeedback());
+    expect(screen.getByText("#keep")).toBeVisible();
+    expect(screen.queryByText("#mismatched-remove")).not.toBeInTheDocument();
+    expect(removeExecute).toHaveBeenCalledWith(tagRemoveCommandId, {
+      pageId: "current-page",
+      tag: "keep",
+    });
   });
 
   it("shows accessible local feedback for blank or invalid add-tag submissions", async () => {
