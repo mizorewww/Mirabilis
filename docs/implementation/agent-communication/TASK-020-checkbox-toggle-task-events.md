@@ -297,6 +297,33 @@ git diff --check
 - Result: expected red signal. The focused test file ran 15 tests with 3 failed / 12 passed. Failures were the checked checkbox disappearing after direct toggle, the checked checkbox disappearing after loaded-mode toggle, and completed task title button missing for `- [x] A`. `bun run typecheck` passed. `git diff --check` passed.
 - Test writer concern: the invalid-source rollback test is green against the current implementation, so it adds regression coverage but does not provide a red signal. The P1 UI regressions and P2 completed-title open regression fail as expected.
 
+## Review-fix Implementation Result
+
+- Status: completed by Hooke the 4th (`implementer`) on 2026-05-21 14:41 CST.
+- Files changed:
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Summary:
+  - Added canonical `task.toggle-status` command.
+  - Added source-only payload validation for toggle.
+  - Added atomic task status toggle behavior: source marker update, task metadata update, and `task.completed` / `task.reopened` event append.
+  - Added accessible task checkbox controls in the editor.
+  - Updated editor state so successful toggles update both Markdown and structured body, keeping controls rendered for immediate reopen.
+  - Kept completed task title buttons openable.
+  - Allowed `task.open-task-page` to open checked task lines only when an existing verified/metadata source relation resolves them; unchecked resolver/page-creation behavior remains unchanged.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused tests passed with 3 files / 43 tests. `bun run typecheck` passed. `bun run lint` passed. `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Remaining concern: none known in the requested TASK-020 scope before focused review.
+
 ## Current Next Action
 
-- Delegate review-fix implementation to `implementer`.
+- Commit TASK-020 production implementation.

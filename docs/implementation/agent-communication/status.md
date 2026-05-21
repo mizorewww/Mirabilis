@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:34 CST.
+Last updated: 2026-05-21 14:41 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:34 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix regressions committed; review-fix implementation is next.
+- Current phase: implementation and review-fix checks passed; production commit is next.
 
 ## Active Agents
 
@@ -29,6 +29,7 @@ Last updated: 2026-05-21 14:34 CST.
 - Avicenna the 4th (`reviewer`) found P1: successful checkbox toggles update editor Markdown but not the structured body snapshot, so task controls disappear immediately after toggle. P2: completed task lines lose title-open behavior because UI hides open buttons for done tasks and `task.open-task-page` still accepts only unchecked syntax.
 - Laplace the 4th (`test_quality_reviewer`) found P1 test gaps matching the vanished-controls issue and missing loaded `pageId/pageFacade` checkbox coverage; P2 gaps for valid-shaped invalid source cases. Laplace noted the native-surface guard is brittle but useful as a temporary task-scope guard.
 - Noether the 4th (`test_writer`) added review-fix regressions in `src/test/task-checkbox-toggle-events.test.tsx`. Commit: `0b7874b`.
+- Hooke the 4th (`implementer`) fixed the review-fix regressions in `src/plugins/task/plugin.ts` and `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
 
 ## Current TASK-020 State
 
@@ -94,6 +95,6 @@ git diff --cached --check
 
 ## Next Actions
 
-1. Delegate review-fix implementation to `implementer`.
-2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
-3. Commit production implementation if focused checks pass.
+1. Commit TASK-020 production implementation.
+2. Spawn focused review agents.
+3. Fix any P0/P1 findings before docs sync.

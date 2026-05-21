@@ -17,16 +17,34 @@ type OpenTaskPageResult = {
   pageId: string;
 };
 
+type ToggleTaskStatusResult = {
+  pageId: string;
+  status: TaskStatus;
+};
+
+type TaskStatus = "todo" | "done";
+
 type SourceBlockMatch = {
   block: BlockNode;
   index: number;
 };
 
+type ParsedTaskLine = {
+  title: string;
+  previousStatus: TaskStatus;
+  nextStatus: TaskStatus;
+  nextText: string;
+};
+
 const taskNamespace = "task";
 const resolveTaskBlockCommandId = "task.resolve-task-block";
 const openTaskPageCommandId = "task.open-task-page";
+const toggleTaskStatusCommandId = "task.toggle-status";
 const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
+const toggleableTaskLinePattern =
+  /^(?<beforeMarker> {0,3}-\s+\[)(?<marker> |x|X)(?<afterMarker>\]\s+)(?<title>.*)$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
+const toggleTaskStatusInputKeys = new Set(["sourcePageId", "sourceBlockId"]);
 
 export const TaskPlugin: AppPlugin = {
   manifest: {
@@ -57,6 +75,12 @@ export const TaskPlugin: AppPlugin = {
       title: "Open task page",
       handler: openTaskPage,
     });
+
+    ctx.commands.register({
+      id: toggleTaskStatusCommandId,
+      title: "Toggle task status",
+      handler: toggleTaskStatus,
+    });
   },
 };
 
@@ -74,11 +98,65 @@ async function openTaskPage(
   ctx: PluginContext,
 ): Promise<OpenTaskPageResult> {
   const payload = readResolveTaskBlockInput(input);
-  const taskPage = await resolveTaskPage(payload, ctx);
+  const taskPage = await openResolvedTaskPage(payload, ctx);
 
   return {
     pageId: taskPage.id,
   };
+}
+
+async function toggleTaskStatus(
+  input: unknown,
+  ctx: PluginContext,
+): Promise<ToggleTaskStatusResult> {
+  const payload = readToggleTaskStatusInput(input);
+
+  return ctx.transaction.run((tx) => {
+    const sourcePage = tx.pages.get(payload.sourcePageId);
+    const sourceBlockMatch = findTopLevelSourceBlock(
+      sourcePage,
+      payload.sourceBlockId,
+    );
+    const parsedTaskLine = parseToggleableTaskLine(
+      sourcePage.body.content,
+      sourceBlockMatch,
+    );
+    const taskPage = findOrCreateTaskPage(tx, {
+      ...payload,
+      sourceBlock: sourceBlockMatch.block,
+      title: parsedTaskLine.title,
+      status: parsedTaskLine.previousStatus,
+    });
+
+    writeTaskMetadata(tx, {
+      taskPageId: taskPage.id,
+      sourcePageId: payload.sourcePageId,
+      sourceBlockId: payload.sourceBlockId,
+      status: parsedTaskLine.nextStatus,
+    });
+    updateSourceBlockTaskState(tx.pages, sourcePage, sourceBlockMatch, {
+      taskPageId: taskPage.id,
+      text: parsedTaskLine.nextText,
+    });
+    tx.events.append({
+      pageId: taskPage.id,
+      namespace: taskNamespace,
+      type:
+        parsedTaskLine.nextStatus === "done" ? "completed" : "reopened",
+      payload: {
+        taskPageId: taskPage.id,
+        sourcePageId: payload.sourcePageId,
+        sourceBlockId: payload.sourceBlockId,
+        previousStatus: parsedTaskLine.previousStatus,
+        status: parsedTaskLine.nextStatus,
+      },
+    });
+
+    return {
+      pageId: taskPage.id,
+      status: parsedTaskLine.nextStatus,
+    };
+  });
 }
 
 function resolveTaskPage(
@@ -92,6 +170,37 @@ function resolveTaskPage(
       payload.sourceBlockId,
     );
     const title = parseTaskTitle(sourcePage.body.content, sourceBlockMatch);
+    const taskPage = findOrCreateTaskPage(tx, {
+      ...payload,
+      sourceBlock: sourceBlockMatch.block,
+      title,
+      status: "todo",
+    });
+    bindSourceBlockToTaskPage(
+      tx.pages,
+      sourcePage,
+      sourceBlockMatch,
+      taskPage.id,
+    );
+
+    return taskPage;
+  });
+}
+
+function openResolvedTaskPage(
+  payload: ResolveTaskBlockInput,
+  ctx: PluginContext,
+): Promise<MarkdownPage> {
+  return ctx.transaction.run((tx) => {
+    const sourcePage = tx.pages.get(payload.sourcePageId);
+    const sourceBlockMatch = findTopLevelSourceBlock(
+      sourcePage,
+      payload.sourceBlockId,
+    );
+    const parsedTaskLine = parseToggleableTaskLine(
+      sourcePage.body.content,
+      sourceBlockMatch,
+    );
     const existingTaskPage =
       findTaskPageForSource(tx, payload) ??
       findVerifiedBoundTaskPage(tx, sourceBlockMatch.block, payload);
@@ -107,15 +216,15 @@ function resolveTaskPage(
       return existingTaskPage;
     }
 
-    const taskPage = tx.pages.create({
-      title,
-      body: createEmptyMarkdownDocument(),
-    });
+    if (parsedTaskLine.previousStatus === "done") {
+      throw new Error("Completed task source block is not resolved");
+    }
 
-    writeTaskMetadata(tx, {
-      taskPageId: taskPage.id,
-      sourcePageId: payload.sourcePageId,
-      sourceBlockId: payload.sourceBlockId,
+    const taskPage = findOrCreateTaskPage(tx, {
+      ...payload,
+      sourceBlock: sourceBlockMatch.block,
+      title: parsedTaskLine.title,
+      status: parsedTaskLine.previousStatus,
     });
     bindSourceBlockToTaskPage(
       tx.pages,
@@ -142,6 +251,34 @@ function readResolveTaskBlockInput(input: unknown): ResolveTaskBlockInput {
 
   if (typeof sourceBlockId !== "string" || sourceBlockId.trim().length === 0) {
     throw new Error("Task resolver input requires sourceBlockId");
+  }
+
+  return {
+    sourcePageId,
+    sourceBlockId,
+  };
+}
+
+function readToggleTaskStatusInput(input: unknown): ResolveTaskBlockInput {
+  if (!isRecord(input)) {
+    throw new Error("Task status toggle input must be an object");
+  }
+
+  for (const key of Object.keys(input)) {
+    if (!toggleTaskStatusInputKeys.has(key)) {
+      throw new Error("Task status toggle input contains untrusted fields");
+    }
+  }
+
+  const sourcePageId = input.sourcePageId;
+  const sourceBlockId = input.sourceBlockId;
+
+  if (typeof sourcePageId !== "string" || sourcePageId.trim().length === 0) {
+    throw new Error("Task status toggle input requires sourcePageId");
+  }
+
+  if (typeof sourceBlockId !== "string" || sourceBlockId.trim().length === 0) {
+    throw new Error("Task status toggle input requires sourceBlockId");
   }
 
   return {
@@ -197,6 +334,43 @@ function parseTaskTitle(
   }
 
   return title;
+}
+
+function parseToggleableTaskLine(
+  blocks: readonly BlockNode[],
+  sourceBlock: SourceBlockMatch,
+): ParsedTaskLine {
+  const block = sourceBlock.block;
+
+  if (block.type !== "markdown.line" || typeof block.text !== "string") {
+    throw new Error("Task source block must be a markdown.line block");
+  }
+
+  if (isInsideFencedCodeBlock(blocks, sourceBlock.index)) {
+    throw new Error("Task-looking lines inside fenced code are inert");
+  }
+
+  const match = toggleableTaskLinePattern.exec(block.text);
+  const title = match?.groups?.title?.trim() ?? "";
+
+  if (match === null || title.length === 0) {
+    throw new Error("Task source block is not a toggleable task line");
+  }
+
+  const marker = match.groups?.marker;
+  const previousStatus: TaskStatus = marker === " " ? "todo" : "done";
+  const nextStatus: TaskStatus = previousStatus === "todo" ? "done" : "todo";
+  const nextMarker = nextStatus === "done" ? "x" : " ";
+  const beforeMarker = match.groups?.beforeMarker ?? "";
+  const afterMarker = match.groups?.afterMarker ?? "";
+  const rawTitle = match.groups?.title ?? "";
+
+  return {
+    title,
+    previousStatus,
+    nextStatus,
+    nextText: `${beforeMarker}${nextMarker}${afterMarker}${rawTitle}`,
+  };
 }
 
 function isInsideFencedCodeBlock(
@@ -285,6 +459,37 @@ function findVerifiedBoundTaskPage(
   return tx.pages.get(boundPageId);
 }
 
+function findOrCreateTaskPage(
+  tx: PluginTransaction,
+  input: ResolveTaskBlockInput & {
+    sourceBlock: BlockNode;
+    title: string;
+    status: TaskStatus;
+  },
+): MarkdownPage {
+  const existingTaskPage =
+    findTaskPageForSource(tx, input) ??
+    findVerifiedBoundTaskPage(tx, input.sourceBlock, input);
+
+  if (existingTaskPage !== undefined) {
+    return existingTaskPage;
+  }
+
+  const taskPage = tx.pages.create({
+    title: input.title,
+    body: createEmptyMarkdownDocument(),
+  });
+
+  writeTaskMetadata(tx, {
+    taskPageId: taskPage.id,
+    sourcePageId: input.sourcePageId,
+    sourceBlockId: input.sourceBlockId,
+    status: input.status,
+  });
+
+  return taskPage;
+}
+
 function hasTaskSourceRelation(
   tx: PluginTransaction,
   taskPageId: string,
@@ -311,6 +516,7 @@ function writeTaskMetadata(
     taskPageId: string;
     sourcePageId: string;
     sourceBlockId: string;
+    status: TaskStatus;
   },
 ): void {
   tx.metadata.set({
@@ -324,7 +530,7 @@ function writeTaskMetadata(
     pageId: input.taskPageId,
     namespace: taskNamespace,
     key: "status",
-    value: "todo",
+    value: input.status,
     valueType: "string",
   });
   tx.metadata.set({
@@ -340,6 +546,38 @@ function writeTaskMetadata(
     key: "sourceBlockId",
     value: input.sourceBlockId,
     valueType: "string",
+  });
+}
+
+function updateSourceBlockTaskState(
+  pages: PluginPageStore,
+  sourcePage: MarkdownPage,
+  sourceBlock: SourceBlockMatch,
+  input: {
+    taskPageId: string;
+    text: string;
+  },
+): void {
+  const content = sourcePage.body.content.map((block, index) => {
+    if (index !== sourceBlock.index) {
+      return block;
+    }
+
+    return {
+      ...block,
+      text: input.text,
+      attrs: {
+        ...block.attrs,
+        boundPageId: input.taskPageId,
+      },
+    };
+  });
+
+  pages.update(sourcePage.id, {
+    body: {
+      ...sourcePage.body,
+      content,
+    },
   });
 }
 
