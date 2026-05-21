@@ -62,6 +62,14 @@ type MarkdownCommandBus = {
   execute(commandId: string, input?: unknown): Promise<unknown>;
 };
 
+type MarkdownPageFacade = {
+  load(pageId: string): Promise<MarkdownEditorDocument>;
+  save(input: {
+    pageId: string;
+    markdown: string;
+  }): Promise<MarkdownEditorDocument>;
+};
+
 type TaskCheckboxMarkdownPageEditorBaseProps = {
   commands: MarkdownCommandBus;
   markdownRuntime?: {
@@ -75,8 +83,15 @@ type DirectTaskCheckboxMarkdownPageEditorProps =
     page: MarkdownEditorDocument;
   };
 
+type LoadedTaskCheckboxMarkdownPageEditorProps =
+  TaskCheckboxMarkdownPageEditorBaseProps & {
+    pageId: string;
+    pageFacade: MarkdownPageFacade;
+  };
+
 type TaskCheckboxMarkdownPageEditorProps =
-  DirectTaskCheckboxMarkdownPageEditorProps;
+  | DirectTaskCheckboxMarkdownPageEditorProps
+  | LoadedTaskCheckboxMarkdownPageEditorProps;
 
 type Deferred<Value> = {
   promise: Promise<Value>;
@@ -377,6 +392,124 @@ describe("Task checkbox toggle and task events", () => {
     }
   });
 
+  it("rejects valid-shaped invalid source blocks without page, metadata, event, or source mutation", async () => {
+    const invalidSources: readonly {
+      name: string;
+      sourceBlockId: string;
+      blocks: readonly BlockNode[];
+    }[] = [
+      {
+        name: "missing source block",
+        sourceBlockId: "missing-task-block",
+        blocks: [
+          {
+            blockId: "other-block",
+            type: "markdown.line",
+            text: "- [ ] A",
+          },
+        ],
+      },
+      {
+        name: "duplicate source block ids",
+        sourceBlockId: "task-block-a",
+        blocks: [
+          {
+            blockId: "task-block-a",
+            type: "markdown.line",
+            text: "- [ ] A",
+          },
+          {
+            blockId: "task-block-a",
+            type: "markdown.line",
+            text: "- [ ] Duplicate",
+          },
+        ],
+      },
+      {
+        name: "non markdown line source block",
+        sourceBlockId: "task-block-a",
+        blocks: [
+          {
+            blockId: "task-block-a",
+            type: "paragraph",
+            text: "- [ ] A",
+          },
+        ],
+      },
+      {
+        name: "malformed checkbox line",
+        sourceBlockId: "task-block-a",
+        blocks: [
+          {
+            blockId: "task-block-a",
+            type: "markdown.line",
+            text: "- [/] A",
+          },
+        ],
+      },
+      {
+        name: "empty task title",
+        sourceBlockId: "task-block-a",
+        blocks: [
+          {
+            blockId: "task-block-a",
+            type: "markdown.line",
+            text: "- [ ]    ",
+          },
+        ],
+      },
+      {
+        name: "fenced code task-looking line",
+        sourceBlockId: "task-block-a",
+        blocks: [
+          {
+            blockId: "fence-open",
+            type: "markdown.line",
+            text: "```",
+          },
+          {
+            blockId: "task-block-a",
+            type: "markdown.line",
+            text: "- [ ] A",
+          },
+          {
+            blockId: "fence-close",
+            type: "markdown.line",
+            text: "```",
+          },
+        ],
+      },
+    ];
+
+    for (const invalidSource of invalidSources) {
+      const runtime = await createRuntime({
+        pageIds: ["source-page", "unexpected-task-page"],
+        eventIds: ["unexpected-event"],
+        eventTimes: ["2026-05-21T06:20:00.000Z"],
+      });
+      const sourcePage = runtime.pages.create({
+        title: invalidSource.name,
+        body: {
+          type: "doc",
+          content: invalidSource.blocks.map((block) => ({ ...block })),
+        },
+      });
+      const before = snapshotPageMetadataEventState(runtime);
+
+      await expect(
+        executeToggleTaskStatus(runtime, {
+          sourcePageId: sourcePage.id,
+          sourceBlockId: invalidSource.sourceBlockId,
+        }),
+        invalidSource.name,
+      ).rejects.toThrow();
+      expect(
+        snapshotPageMetadataEventState(runtime),
+        invalidSource.name,
+      ).toStrictEqual(before);
+    }
+  });
+
   it("rolls back source text, metadata, task page, and event writes when event append fails", async () => {
     const runtime = await createRuntime({
       pageIds: ["source-page", "task-page-a"],
@@ -482,6 +615,172 @@ describe("Task checkbox toggle and task events", () => {
         "- [x] A",
       ),
     );
+  });
+
+  it("keeps a checked checkbox visible after a direct-page toggle so the task can immediately reopen", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const sourcePage = createSourcePage(runtime, "Direct checkbox reopen", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    let nextStatus: ToggleTaskStatusResult["status"] = "done";
+    const execute = vi.fn(async (commandId: string) => {
+      if (commandId !== toggleTaskStatusCommandId) {
+        throw new Error(`Unexpected command ${commandId}`);
+      }
+
+      const status = nextStatus;
+
+      nextStatus = status === "done" ? "todo" : "done";
+
+      return {
+        pageId: "resolved-task-page",
+        status,
+      } satisfies ToggleTaskStatusResult;
+    });
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands: { execute },
+      markdownRuntime: runtime.markdown,
+    });
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "A", checked: false }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+        "- [x] A",
+      ),
+    );
+
+    const checkedCheckbox = await screen.findByRole("checkbox", {
+      name: "A",
+      checked: true,
+    });
+
+    await user.click(checkedCheckbox);
+
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(2));
+    expect(commandPayloadsFor(execute, toggleTaskStatusCommandId)).toStrictEqual([
+      {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      },
+      {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      },
+    ] satisfies ToggleTaskStatusInput[]);
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+        "- [ ] A",
+      ),
+    );
+    expect(
+      await screen.findByRole("checkbox", { name: "A", checked: false }),
+    ).toBeVisible();
+  });
+
+  it("loads structured pageFacade tasks, toggles by source-only payload, and keeps the checked checkbox visible", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const sourcePage = createSourcePage(runtime, "Loaded checkbox source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const loadedDocument = editorDocumentFromRuntimePage(sourcePage);
+    const pageFacade: MarkdownPageFacade = {
+      load: vi.fn(async () => loadedDocument),
+      save: vi.fn(async () => loadedDocument),
+    };
+    const execute = vi.fn(async (commandId: string) => {
+      if (commandId !== toggleTaskStatusCommandId) {
+        throw new Error(`Unexpected command ${commandId}`);
+      }
+
+      return {
+        pageId: "resolved-task-page",
+        status: "done",
+      } satisfies ToggleTaskStatusResult;
+    });
+
+    renderMarkdownPageEditor(runtime, {
+      pageId: sourcePage.id,
+      pageFacade,
+      commands: { execute },
+      markdownRuntime: runtime.markdown,
+    });
+
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    expect(pageFacade.load).toHaveBeenCalledWith(sourcePage.id);
+    expect(editor).toHaveValue("- [ ] A");
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "A", checked: false }),
+    );
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith(toggleTaskStatusCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies ToggleTaskStatusInput),
+    );
+    expect(lastCommandPayloadFor(execute, toggleTaskStatusCommandId)).toStrictEqual({
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    } satisfies ToggleTaskStatusInput);
+    await waitFor(() => expect(editor).toHaveValue("- [x] A"));
+    expect(
+      await screen.findByRole("checkbox", { name: "A", checked: true }),
+    ).toBeVisible();
+    expect(pageFacade.save).not.toHaveBeenCalled();
+  });
+
+  it("opens completed task titles through task.open-task-page using only source identity", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "task-page-a"],
+    });
+    const user = userEvent.setup();
+    const sourcePage = createSourcePage(runtime, "Completed open source", [
+      {
+        blockId: "task-block-a",
+        text: "- [x] A",
+        attrs: { boundPageId: "task-page-a" },
+      },
+    ]);
+    const taskPage = createTaskPageWithMetadata(runtime, {
+      title: "A",
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      status: "done",
+    });
+    const execute = vi.fn((commandId: string, input?: unknown) =>
+      runtime.commands.execute(commandId, input),
+    );
+    const onOpenPage = vi.fn();
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands: { execute },
+      onOpenPage,
+      markdownRuntime: runtime.markdown,
+    });
+
+    await user.click(await screen.findByRole("button", { name: "A" }));
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    );
+    expect(lastCommandPayloadFor(execute, openTaskPageCommandId)).toStrictEqual({
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+    });
+    await waitFor(() => expect(onOpenPage).toHaveBeenCalledWith(taskPage.id));
   });
 
   it("ignores a stale delayed checkbox toggle after the editor switches pages", async () => {
@@ -1030,6 +1329,15 @@ function lastCommandPayloadFor(
   }
 
   return lastCall[1];
+}
+
+function commandPayloadsFor(
+  execute: ReturnType<typeof vi.fn>,
+  commandId: string,
+): unknown[] {
+  return execute.mock.calls
+    .filter((call) => call[0] === commandId)
+    .map((call) => call[1]);
 }
 
 function createSequenceFactory(values: readonly string[]): () => string {
