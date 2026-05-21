@@ -39,16 +39,16 @@
 
 ## Current Status
 
-- Status: `implementer` writing minimum production implementation.
-- Active agents:
-  - Erdos the 3rd (`implementer`): TASK-017 production implementation only.
+- Status: implementation committed; test-only typecheck fix pending.
+- Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
   - Mill the 3rd (`deprecation_auditor`): API/dependency/deprecation risk audit completed.
   - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review completed.
   - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
-- Next parent step: wait for Erdos the 3rd, run focused tests, and commit implementation if green.
+  - Erdos the 3rd (`implementer`): production implementation completed, focused tests green, committed, and closed.
+- Next parent step: delegate TS7053 test-only typecheck fix to `test_writer`.
 
 ## Agent Handoffs
 
@@ -178,20 +178,28 @@ bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdo
 
 ### Erdos the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: production TypeScript implementation only.
-- Expected write scope:
+- Files changed:
   - `src/core/markdown/**`.
   - `src/core/index.ts`.
   - `src/core/runtime/markdown-pages.ts`.
-  - Narrow production type/helper files only if strictly required.
-- Explicit exclusions: tests, docs, Tauri config/capabilities, Rust code, package/Cargo files, generated files, dependency manifests, Tiptap/ProseMirror, filesystem/native import-export, and new Tauri commands/capabilities.
-- Goal: make the focused TASK-017 red tests pass with minimum production code.
-- Focused command:
+- Commit: `22e2753` (`Erdos the 3rd(implementation)(Add stable block IDs and markdown import/export): implement markdown block conversion`).
+- Implementation summary:
+  - Added core Markdown conversion exports for import, export, and validation.
+  - Integrated runtime `markdown.pages.load/save` with structured bodies and previous-document ID reuse.
+  - Preserved legacy TASK-016 `markdown.text` load fallback.
+  - Kept behavior TypeScript-only with no new dependencies, Tauri commands/capabilities, Rust, filesystem import/export, or package changes.
+- Parent verification:
 
 ```bash
 bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+bun run lint
+git diff --check
 ```
+
+- Result: focused tests passed with 2 files / 11 tests. `bun run lint` passed. `git diff --check` passed.
+- `bun run typecheck` still fails in `src/test/markdown-import-export.test.ts:269` with TS7053. This is a test-only typing issue from the red-test helper and is outside the implementer scope.
 
 ## Validation
 
