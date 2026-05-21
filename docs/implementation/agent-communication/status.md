@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:28 CST.
+Last updated: 2026-05-21 22:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 22:28 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 formal docs sync is pending.
+- Current phase: TASK-023 formal docs sync is in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate formal docs sync.
+- Parfit (`doc_writer`) is synchronizing formal TASK-023 product, architecture, development, implementation, and testing docs.
 
 ## Completed Recent Task
 
@@ -147,7 +147,7 @@ Last updated: 2026-05-21 22:28 CST.
 
 ## Next Actions
 
-1. Spawn `doc_writer` for TASK-023 formal docs sync.
+1. Wait for Parfit's formal docs sync.
 2. Validate docs and focused checks, then commit docs.
 
 ## Current TASK-021 State
