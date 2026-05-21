@@ -243,6 +243,28 @@ describe("Tag Plugin baseline", () => {
     expectTagMetadata(runtime, sourcePage.id, uniqueTags.slice(0, 32));
   });
 
+  it("ignores invalid source-token forms instead of indexing their valid-looking prefixes", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["invalid-token-source-page"],
+      metadataIds: ["metadata-invalid-token-tags"],
+    });
+    const sourcePage = createSourcePage(runtime, "Invalid token forms", [
+      {
+        blockId: "invalid-token-forms",
+        text:
+          "Keep #valid and #still_ok, but ignore #time:now, #https://example.test/tag, #产品, and #bad\u0000token.",
+      },
+    ]);
+
+    await expect(
+      executeRefreshTags(runtime, { pageId: sourcePage.id }),
+    ).resolves.toStrictEqual({
+      pageId: sourcePage.id,
+      tags: ["valid", "still_ok"],
+    });
+    expectTagMetadata(runtime, sourcePage.id, ["valid", "still_ok"]);
+  });
+
   it("adds and removes tags through strict page-scoped commands without caller-supplied ownership", async () => {
     const runtime = await createRuntime({
       pageIds: ["tag-picker-page"],
@@ -318,6 +340,31 @@ describe("Tag Plugin baseline", () => {
     }
 
     expect(snapshotRuntimeState(runtime)).toStrictEqual(beforeInvalidCommands);
+  });
+
+  it("persists an explicit empty tag record when removing a missing tag from a page with no tag metadata", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["remove-missing-no-record-page"],
+      metadataIds: ["metadata-remove-missing-empty-tags"],
+    });
+    const page = createSourcePage(runtime, "No tag record", [
+      { blockId: "content", text: "No tag metadata yet" },
+    ]);
+
+    expect(
+      runtime.metadata.list({
+        pageId: page.id,
+        namespace: tagMetadataNamespace,
+        key: tagMetadataKey,
+      }),
+    ).toStrictEqual([]);
+    await expect(
+      executeRemoveTag(runtime, { pageId: page.id, tag: "missing" }),
+    ).resolves.toStrictEqual({
+      pageId: page.id,
+      tags: [],
+    });
+    expectTagMetadata(runtime, page.id, []);
   });
 
   it("rejects adding a 33rd unique tag without changing existing tag metadata", async () => {
@@ -425,6 +472,99 @@ describe("Tag Plugin baseline", () => {
     });
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("shows accessible local feedback for blank or invalid add-tag submissions", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const TagMetadataSlot = getTagMetadataSlotComponent(runtime);
+    const execute = vi.fn(
+      async (commandId: string, input?: unknown): Promise<unknown> => {
+        void input;
+
+        if (commandId === tagAddCommandId) {
+          throw new Error("Tag command rejected the submitted tag");
+        }
+
+        throw new Error(`Unexpected command ${commandId}`);
+      },
+    );
+    render(
+      <TagMetadataSlot
+        pageId="feedback-page"
+        tags={["architecture"]}
+        commands={{ execute }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^add tag$/i }));
+
+    await waitFor(() => expectVisibleTagFeedback());
+    if (execute.mock.calls.length > 0) {
+      expect(execute).toHaveBeenLastCalledWith(tagAddCommandId, {
+        pageId: "feedback-page",
+        tag: "",
+      });
+    }
+
+    execute.mockClear();
+    await user.type(screen.getByRole("textbox", { name: /tag/i }), "two words");
+    await user.click(screen.getByRole("button", { name: /^add tag$/i }));
+
+    await waitFor(() => expectVisibleTagFeedback());
+    if (execute.mock.calls.length > 0) {
+      expect(execute).toHaveBeenLastCalledWith(tagAddCommandId, {
+        pageId: "feedback-page",
+        tag: "two words",
+      });
+    }
+    expect(screen.queryByText("#two words")).not.toBeInTheDocument();
+  });
+
+  it("keeps tag input label associations distinct when multiple metadata slots render", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const TagMetadataSlot = getTagMetadataSlotComponent(runtime);
+    const execute = vi.fn(async (): Promise<unknown> => ({
+      pageId: "unused",
+      tags: [],
+    }));
+    render(
+      <>
+        <TagMetadataSlot
+          pageId="first-page"
+          tags={["architecture"]}
+          commands={{ execute }}
+        />
+        <TagMetadataSlot
+          pageId="second-page"
+          tags={["timer"]}
+          commands={{ execute }}
+        />
+      </>,
+    );
+    const labels = screen.getAllByText("Tag", { selector: "label" });
+    const [firstLabel, secondLabel] = labels as [
+      HTMLLabelElement,
+      HTMLLabelElement,
+    ];
+    const firstInput = firstLabel.control;
+    const secondInput = secondLabel.control;
+
+    expect(labels).toHaveLength(2);
+    if (
+      !(firstInput instanceof HTMLInputElement) ||
+      !(secondInput instanceof HTMLInputElement)
+    ) {
+      throw new Error("Tag labels must be associated with text inputs");
+    }
+    expect(firstInput).not.toBe(secondInput);
+
+    await user.type(firstInput, "product");
+    await user.type(secondInput, "release");
+
+    expect(firstInput).toHaveValue("product");
+    expect(secondInput).toHaveValue("release");
   });
 
   it("creates plugin-owned tag filters with the canonical static metadata query only", async () => {
@@ -720,6 +860,16 @@ function expectTagMetadata(
     valueType: "json",
     sourcePluginId: tagPluginId,
   });
+}
+
+function expectVisibleTagFeedback(): void {
+  const feedback = [
+    ...screen.queryAllByRole("alert"),
+    ...screen.queryAllByRole("status"),
+  ].find((element) => /tag/i.test(element.textContent ?? ""));
+
+  expect(feedback).toBeDefined();
+  expect(feedback).toBeVisible();
 }
 
 function getTagMetadataSlotComponent(

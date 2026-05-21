@@ -320,6 +320,26 @@ bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
   - Use a unique input id for `TagMetadataSlot` to avoid duplicate DOM ids when multiple slots render.
 - Defer docs-only drift to docs sync after behavior fixes pass focused review.
 
+## Review-fix Test Handoff
+
+- Status: completed by Hypatia the 4th (`test_writer`) on 2026-05-21 16:10 CST.
+- Files changed:
+  - `src/test/tag-plugin-baseline.test.tsx`.
+- Coverage added:
+  - `tag.refresh-tags` must ignore invalid source-token forms rather than indexing valid-looking prefixes: `#time:now`, `#https://example.test/tag`, `#产品`, and `#bad\u0000token`.
+  - `tag.remove-tag` must persist explicit `tag.tags: []` when removing a missing tag from a page with no prior tag metadata.
+  - `TagMetadataSlot` must handle blank/invalid add failures locally with accessible feedback instead of unhandled promise rejection.
+  - Multiple `TagMetadataSlot` instances must have distinct usable label/input associations.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. Focused test file ran 12 tests with 4 failed / 8 passed, plus one unhandled rejection. Failures were extra extracted tags `time`, `https`, and `bad`; missing empty `tag.tags` metadata for a no-record remove; no accessible alert/status feedback for invalid add failure; and duplicate label/input association. `bun run typecheck` passed. `git diff --check` passed.
+
 ## Current Next Action
 
-- Delegate review-fix tests to `test_writer`.
+- Commit Hypatia the 4th's review-fix tests, then delegate implementation fixes.

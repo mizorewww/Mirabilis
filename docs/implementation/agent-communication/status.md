@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 16:03 CST.
+Last updated: 2026-05-21 18:01 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 16:03 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused review completed; review-fix tests are next.
+- Current phase: review-fix tests written; implementation fixes are next.
 
 ## Active Agents
 
@@ -78,6 +78,15 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all passed or clean. TASK-021 focused test passed with 1 file / 8 tests. Adjacent plugin/filter/editor coverage passed with 4 files / 116 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Review-fix red tests after Hypatia the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. Focused test file ran 12 tests with 4 failed / 8 passed, plus one unhandled rejection. Failures were extra extracted tags `time`, `https`, and `bad`; missing empty `tag.tags` metadata for a no-record remove; no accessible alert/status feedback for invalid add failure; and duplicate label/input association. `bun run typecheck` passed. `git diff --check` passed.
 
 ## Completed TASK-021 Agent Outcomes
 
@@ -93,6 +102,7 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Popper the 4th (`security_reviewer`) found no P0/P1/P2 security findings.
   - Nietzsche the 4th (`test_quality_reviewer`) found no P0/P1 blocking gaps, but P2 missing coverage for invalid source-token forms and P2 branch-coupled native-surface guard.
   - Ptolemy the 4th (`deprecation_auditor`) found no code blockers. It noted docs-only drift in live agent communication status and formal docs still describing Tag Plugin recognition as entirely future after save.
+- Hypatia the 4th (`test_writer`) added review-fix regression tests for invalid source-token extraction, explicit empty metadata on missing-tag remove, accessible local slot feedback on add failures, and distinct input label associations across multiple slot instances.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -113,8 +123,8 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Delegate review-fix tests to `test_writer`.
-2. Delegate implementation fixes after expected red signal.
+1. Commit Hypatia the 4th's review-fix tests and communication updates.
+2. Delegate implementation fixes to `implementer`.
 3. Defer docs-only drift to docs sync after behavior fixes.
 
 ## Completed TASK-020 Agent Outcomes
