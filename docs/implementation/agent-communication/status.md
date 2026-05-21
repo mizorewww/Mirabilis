@@ -1,69 +1,59 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:10 CST.
+Last updated: 2026-05-21 09:14 CST.
 
 ## Current Task
 
-- Task: TASK-016 - Implement Markdown Editor Plugin shell.
-- Branch: `feat/task-016-markdown-editor-plugin-shell`.
+- Task: TASK-017 - Add stable block IDs and markdown import/export.
+- Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-016 complete; merge to `master` pending.
+- Current phase: task started; pre-test planning and current-doc guidance pending.
 
 ## Active Agents
 
 - None.
 
-## Current TASK-016 State
+## Current TASK-017 State
 
-- Built-in `markdown` plugin is implemented and registered from `BUILT_IN_PLUGINS`.
-- Registered surfaces:
-  - View `markdown.page-editor` with type `page.editor`.
-  - Command `markdown.insert-text`.
-  - Slot contribution `markdown.editor-mobile-toolbar.base` in `editor.mobile.toolbar`.
-- Editor baseline is a controlled textarea shell. It preserves Markdown text and supports toolbar insertion for `- [ ] `, `#`, and `[[ ]]` through the command bus.
-- Async insert results are guarded by page/content snapshots so slow `markdown.insert-text` results do not overwrite newer edits or page switches.
-- `runtime.markdown.collectEditorExtensions()` collects inert `contributes.markdownSyntax` descriptors from active plugin manifests through `PluginHostInstance.listPlugins()`. The host owns the returned `pluginId`; descriptor collection is not executable Tiptap / ProseMirror extension loading.
-- `runtime.markdown.pages` is a narrow NativeBridge page facade for `core.pages.get` and `core.pages.update` DTOs. It does not expose raw SQL/path/file DTOs and does not mean Core stores are globally SQLite-backed. `storage.persistence = "in-memory-core"` remains accurate.
-- Deferred from TASK-016: `@date`, autocomplete, slash menu, semantic task/tag/page-link behavior, stable block IDs, Markdown import/export, rich editor behavior, broad DTO size validation, and new Tauri commands/capabilities.
+- TASK-017 follows TASK-016 and owns the previously deferred stable block ID plus Markdown import/export behavior.
+- Acceptance criteria from `docs/implementation/task-index.md`:
+  - Every structured block has a stable `blockId`.
+  - Markdown import creates structured documents with block IDs.
+  - Markdown export preserves user-visible content.
+  - Editing existing blocks does not unnecessarily replace block IDs.
+- Initial parent interpretation:
+  - Prefer a focused TypeScript core/editor conversion layer unless agents identify a strict need for richer editor dependencies.
+  - Preserve user-visible Markdown text on round trip.
+  - Keep Task Plugin semantics, checkbox events, tag indexing, page-link navigation, `@date`, autocomplete, slash menu, and rich editor behavior out of scope unless agents find a hard acceptance dependency.
+  - Avoid new Tauri commands/capabilities and filesystem permissions unless agents identify a TASK-017-specific requirement.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal note.
 
-## Completed TASK-016 Agent Outcomes
+## Completed TASK-017 Agent Outcomes
 
-- Pre-test guidance completed by planner, docs researcher, deprecation auditor, and security reviewer. Parent selected a smaller textarea shell rather than Tiptap/ProseMirror.
-- Ohm the 2nd (`test_writer`) added initial red tests for registration, visible editor behavior, toolbar insertion, extension collection, persistence, and security/native-surface boundaries. Commit: `a3e515f`.
-- Mill the 2nd (`implementer`) implemented the initial plugin shell and runtime markdown extension collection. Commits: `0107d45`, `5c9819b`.
-- Review round 1 found P1 gaps around production page persistence, editor extension collection during render, and trusted extension `pluginId` ownership.
-- Chandrasekhar the 3rd (`test_writer`) added review-fix red tests. Commit: `a574683`.
-- Fermat the 3rd (`implementer`) added `runtime.markdown.pages`, active-plugin-only extension collection, controlled/page-switch/save-race behavior, and trusted `pluginId` ownership. Commits: `3d36da8`, `d2b9702`.
-- Focused re-review found one P1 async toolbar insertion race.
-- Ampere the 3rd (`test_writer`) added the async insert regression test. Commit: `630cc3a`.
-- Dewey the 3rd (`implementer`) guarded async insert results. Commit: `3204d34`.
-- Async insert re-review found no remaining P0/P1/P2 findings.
-- Meitner the 3rd (`doc_writer`) completed final TASK-016 docs sync and stale status cleanup.
+- None yet. Pre-test guidance agents are the next blocking step.
 
 ## Validation Already Reported By Parent
 
-- Focused TASK-016 frontend tests passed with 19 tests after the async insert fix:
+- TASK-017 has not yet produced tests or implementation.
+- Agent/config validation for start:
 
 ```bash
-bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx
+python - <<'PY'
+import glob, tomllib
+paths = sorted(glob.glob('.codex/agents/*.toml'))
+for path in paths:
+    with open(path, 'rb') as f:
+        tomllib.load(f)
+print(f'parsed {len(paths)} agent toml files')
+PY
+
+codex --strict-config doctor --summary --ascii
 ```
-
-- `bun run typecheck` passed.
-- `bun run lint` passed.
-- `bun run build` passed.
-- `bun run check:quick` passed with 20 frontend test files / 284 tests, Rust fmt, Rust clippy, and full Rust tests.
-- `git diff --check` passed.
-- `check:full` was not run because TASK-016 does not add or modify Tauri commands, capabilities, generated permissions, Rust code, package/Cargo dependencies, filesystem/native behavior, packaging, or release behavior.
-
-## Docs Sync Completed
-
-- Product, architecture, development, testing, and agent-communication docs now describe the final TASK-016 behavior.
-- Scope stayed docs/status-only. Production code, tests, Tauri config/capabilities, Rust code, package/Cargo files, dependencies, generated files, and `docs/implementation/progress.md` were not edited by the docs sync.
-- Docs sync validation run by Meitner the 3rd: `git diff --check` and lightweight docs `rg` checks.
 
 ## Next Actions
 
-1. Commit TASK-016 completion progress/status.
-2. Merge `feat/task-016-markdown-editor-plugin-shell` to `master`.
-3. Push `master`.
+1. Commit TASK-017 start orchestration docs.
+2. Spawn read-only pre-test guidance agents: planner, docs researcher, deprecation auditor, and security reviewer.
+3. Summarize their guidance in this file and the TASK-017 communication file.
+4. Delegate failing acceptance tests to `test_writer`.

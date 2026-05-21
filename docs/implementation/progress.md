@@ -45,7 +45,7 @@ Status markers:
 ## Milestone M3: Editor and plugin runtime
 
 - [x] TASK-016: Implement Markdown Editor Plugin shell
-- [ ] TASK-017: Add stable block IDs and markdown import/export
+- [~] TASK-017: Add stable block IDs and markdown import/export
 
 ## Milestone M4: Task and tag MVP
 
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 09:14 CST - TASK-017 started
+
+- Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
+- Task: Add stable block IDs and markdown import/export.
+- Scope: add stable `blockId` handling for structured Markdown blocks, Markdown import into structured documents with block IDs, Markdown export preserving user-visible content, and block identity stability when existing blocks are edited.
+- Source docs: `docs/architecture/02-core-kernel.md#41-markdown-page-store`, `docs/architecture/04-slots-editor-task.md#92-task-syntax`, and `docs/implementation/task-index.md#task-017-add-stable-block-ids-and-markdown-importexport`.
+- Out of scope until agents narrow otherwise: Tiptap/ProseMirror or rich editor migration, semantic Task/Tag/PageLink behavior, checkbox toggle behavior, `@date`, autocomplete, slash menu, broad filesystem import/export permissions, new Tauri commands/capabilities, sync, packaging, and release behavior.
+- Agent orchestration: parent thread remains orchestration-only. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, docs sync, and final review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-017-stable-block-ids-markdown-import-export.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 09:08 CST - TASK-016 completed
 
