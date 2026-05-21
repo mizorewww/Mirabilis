@@ -52,7 +52,7 @@ Status markers:
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
 - [x] TASK-019: Implement task navigation and infinite nesting
 - [x] TASK-020: Implement checkbox toggle and task events
-- [ ] TASK-021: Implement Tag Plugin baseline
+- [~] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
 
 ## Milestone M5: Metadata and timer loop
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 15:27 CST - TASK-021 started
+
+- Branch: `feat/task-021-tag-plugin-baseline`.
+- Task: Implement Tag Plugin baseline.
+- Scope: implement the first Tag Plugin slice after the Markdown editor and Task Plugin foundation so `#tag` text can be recognized as tag metadata, tags can render in the metadata bar through slot contribution, a tag picker can add/remove tags through commands, and tag filters can query pages by tag.
+- Source docs: `docs/implementation/task-index.md#task-021-implement-tag-plugin-baseline`, `docs/product/05-built-in-plugins.md#15-tag-plugin`, `docs/product/04-editor-and-workflows.md#12-markdown-first-编辑器`, `docs/architecture/04-slots-editor-task.md#metadata-bar-slot`, `docs/product/03-plugin-platform.md#94-metadata-field-registry`, `docs/architecture/06-filter-native-database.md`, and related Tag references found in product/development docs.
+- Initial out of scope until agents narrow otherwise: rich editor autocomplete, page-link/date token behavior, task save-time scanning/indexing, All Tasks / Today task views, Timer/Calendar/Stats tag aggregation, native/Tauri/package changes, broad persistence/schema changes, release packaging, and any Core business behavior beyond existing metadata/filter/view/slot/plugin primitives.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-021-tag-plugin-baseline.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus non-blocking unrestricted sandbox/network notes, the known desktop-terminal `TERM=dumb` failure, and an available Codex update. Parent treats the terminal note as non-blocking for repository agent work.
 
 ### 2026-05-21 15:24 CST - TASK-020 completed
 

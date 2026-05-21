@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:24 CST.
+Last updated: 2026-05-21 15:27 CST.
 
 ## Current Task
 
-- Task: TASK-020 - Implement checkbox toggle and task events.
-- Branch: `feat/task-020-checkbox-toggle-task-events`.
+- Task: TASK-021 - Implement Tag Plugin baseline.
+- Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-020 final local gate passed; completion ledger and merge are next.
+- Current phase: task orchestration started; pre-test planning/current-doc/API/security guidance is next.
 
 ## Active Agents
 
@@ -16,7 +16,45 @@ Last updated: 2026-05-21 15:24 CST.
 
 ## Completed Recent Task
 
+- TASK-020 - Implement checkbox toggle and task events was completed on branch `feat/task-020-checkbox-toggle-task-events`, validated with focused frontend/runtime/docs checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `c42fa5f`.
 - TASK-019 - Implement task navigation and infinite nesting was completed on branch `feat/task-019-task-navigation-infinite-nesting`, validated with focused frontend/runtime/security/docs checks, final `bun run check:quick`, `bun run build`, and merge-tree `bun run check:quick`, then merged to `master` in commit `7a2ce72`.
+
+## Current TASK-021 State
+
+- TASK-021 follows TASK-016 and TASK-008 and owns the Tag Plugin baseline:
+  - `#tag` text is recognized as tag metadata.
+  - Tags render in metadata bar through slot contribution.
+  - Tag picker can add/remove tags through commands.
+  - Tag filters can query pages by tag.
+- Initial parent interpretation:
+  - Keep Tag behavior in a built-in Tag Plugin, not Core business logic.
+  - Use existing metadata/filter/view/slot/plugin primitives where possible.
+  - Preserve Markdown-first behavior: the editor keeps tag text as Markdown text unless agents define a narrow command/indexing slice for TASK-021.
+  - Keep rich editor autocomplete, date/page-link semantics, Timer/Calendar/Stats tag aggregation, native/Tauri/package changes, broad persistence/schema changes, and release packaging out of scope unless agents identify an acceptance dependency.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking update/sandbox notes.
+
+## Parent Decisions At TASK-021 Start
+
+- Start from `master` after TASK-020 merge commit `c42fa5f`.
+- Use branch `feat/task-021-tag-plugin-baseline`.
+- Delegate planning/current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync to agents.
+- The parent thread must not write TASK-021 tests or production implementation unless a delegated role fails or is explicitly cancelled and the fallback is recorded.
+
+## Source Docs Read By Parent For TASK-021
+
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`.
+- `docs/implementation/progress.md`.
+- `docs/implementation/task-index.md#task-021-implement-tag-plugin-baseline`.
+- `docs/product/05-built-in-plugins.md#15-tag-plugin`.
+- `docs/product/04-editor-and-workflows.md#12-markdown-first-编辑器`.
+- `docs/architecture/04-slots-editor-task.md` metadata bar / Tag Plugin notes.
+- `docs/product/03-plugin-platform.md#94-metadata-field-registry`.
+- Related Tag references in `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/development/02-implementation-roadmap-and-constraints.md`.
+
+## TASK-021 Validation Log
+
+- `.codex/agents/*.toml` parsed successfully with 11 files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
 
 ## Completed TASK-020 Agent Outcomes
 
@@ -167,6 +205,6 @@ bun run build
 
 ## Next Actions
 
-1. Commit the TASK-020 completion ledger.
-2. Merge `feat/task-020-checkbox-toggle-task-events` to `master`.
-3. Continue to the next unblocked task.
+1. Commit TASK-021 start orchestration state.
+2. Spawn pre-test planning/current-doc/API/security agents.
+3. Use their guidance to hand off TDD acceptance tests to `test_writer`.
