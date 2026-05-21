@@ -49,7 +49,7 @@ Status markers:
 
 ## Milestone M4: Task and tag MVP
 
-- [ ] TASK-018: Implement Task Plugin syntax and task page creation
+- [x] TASK-018: Implement Task Plugin syntax and task page creation
 - [ ] TASK-019: Implement task navigation and infinite nesting
 - [ ] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
@@ -78,6 +78,28 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 12:45 CST - TASK-018 completed
+
+- Branch: `feat/task-018-task-plugin-syntax-page-creation`.
+- Task: Implement Task Plugin syntax and task page creation.
+- Commits: `3870406`, `4178969`, `8543f04`, `50ee3db`, `dc2453f`, `91abde3`, `1084068`, `399807d`, `250fbf2`, `13be852`, `10c016f`, `334039c`, `4b1001f`, `86cdd2c`, `2149239`, `56931b1`, `bbfb977`, `0f3dee9`, `f156747`, `9a178ac`, `3cd7001`, `caa312c`, `8ecfbbd`, `8c340a4`, `24a2f4b`, `c890775`, `70ef10e`, `8a98a96`, `359eb54`, `04c769d`, `1e03d66`, `5253e96`, `e96b5f8`, `64b085f`, and `5276c79`.
+- Delivered: built-in `TaskPlugin` registration after the Markdown Editor plugin; inert `- [ ]` task syntax descriptor; command-level `task.resolve-task-block` resolver with payload `{ sourcePageId, sourceBlockId }`; top-level unchecked task-line parsing that rejects indented code, fenced code, stale/non-task/malformed payloads, and duplicate source `blockId`s; creation/reuse of empty Markdown task pages; task metadata `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId`; duplicate prevention by `(sourcePageId, sourceBlockId)`; verified `attrs.boundPageId` source binding and metadata-only attr-loss recovery; transaction rollback on binding failures; command-time fresh Plugin Host context for plugin commands with command-time data mutation allowed, runtime contribution registration rejected, stale command contexts invalid after completion, and Plugin Host-marked command failure cause preservation without exposing raw ordinary command causes.
+- Validation: final `bun run check:quick` passed with 22 frontend test files / 316 tests, Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. `git diff --check` passed after final docs fixes. Focused validation earlier passed for TASK-018 acceptance/regression sets, Plugin Host lifecycle, plugin API contract, command registry redaction/provenance, Markdown import/export persistence regressions, typecheck, lint, and native/package/Tauri surface diff.
+- `check:full`: not run for TASK-018 because the branch added no Tauri commands, capability grants, filesystem/native import-export behavior, package or Cargo dependencies, packaging, release behavior, or Rust/native persistence changes. `check:quick`, `bun run build`, focused TypeScript tests, command provenance regressions, and empty native/package/Tauri surface checks cover the delivered TypeScript/plugin/runtime scope.
+- Review: planning/current-doc guidance, deprecation/API audit, security guidance, TDD tests, implementation, correctness/security/test-quality/deprecation/docs reviews, review-fix TDD loops, final provenance re-review, docs sync, and docs re-review were delegated to agents. Final P0/P1/P2 findings were fixed before completion. The final docs re-review caught and fixed stale snake_case future metadata wording and a current/future behavior ambiguity in the development docs.
+- External docs verified by agents: Vitest, Vite/TypeScript project checks, React local context where relevant, and current local Mirabilis plugin/runtime/command/Markdown docs. TASK-018 did not require new Tauri/Rust/filesystem/package external docs because final scope stayed in TypeScript Core/plugin runtime and reused existing surfaces.
+- Remaining risk: TASK-018 intentionally defers automatic editor-save scanning/resolution, task click navigation, full infinite nesting UX, checkbox toggle events, task filters/views, Tag Plugin parsing, metadata UI, rich editor behavior, and any native/Tauri persistence expansion. Remaining non-blocking P3: `preserveCommandHandlerFailureCause` is a named export from `src/core/commands/command-registry.ts`, not barrel-exported, and relies on convention against direct-path imports; a future import-restriction lint guard could harden that boundary.
+
+### 2026-05-21 11:12 CST - TASK-018 started
+
+- Branch: `feat/task-018-task-plugin-syntax-page-creation`.
+- Task: Implement Task Plugin syntax and task page creation.
+- Scope: implement the first Task Plugin slice after TASK-017: recognize `- [ ] A` as task syntax, resolve unbound task blocks into corresponding Markdown Pages, write `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId` metadata, and avoid duplicate task pages for the same source block.
+- Source docs: `docs/implementation/task-index.md#task-018-implement-task-plugin-syntax-and-task-page-creation`, `docs/product/04-editor-and-workflows.md#11-用户核心操作markdown-页面中写任务`, `docs/product/05-built-in-plugins.md#16-task-plugin`, `docs/architecture/04-slots-editor-task.md#9-task-plugin-代码架构`, and `docs/architecture/07-runtime-flows.md#181-用户输入任务`.
+- Out of scope until agents narrow otherwise: clicking task text / navigation, infinite nesting UX beyond the same page-creation mechanism, checkbox toggle events, All Tasks / Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new Tauri commands/capabilities, and filesystem/native import-export.
+- Agent orchestration: parent thread remains orchestration-only. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, docs sync, and final review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-018-task-plugin-syntax-page-creation.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 11:07 CST - TASK-017 completed
 

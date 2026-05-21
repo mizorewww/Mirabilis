@@ -1,0 +1,465 @@
+# TASK-018 Agent Communication - Task Plugin Syntax And Page Creation
+
+## Task
+
+- Task ID: TASK-018.
+- Task name: Implement Task Plugin syntax and task page creation.
+- Branch: `feat/task-018-task-plugin-syntax-page-creation`.
+- Worktree: `/home/aac6fef/Developer/Mirabilis`.
+- Parent role: orchestration only.
+
+## Source Docs
+
+- `docs/implementation/task-index.md#task-018-implement-task-plugin-syntax-and-task-page-creation`.
+- `docs/product/04-editor-and-workflows.md#11-用户核心操作markdown-页面中写任务`.
+- `docs/product/05-built-in-plugins.md#16-task-plugin`.
+- `docs/product/03-plugin-platform.md`.
+- `docs/architecture/04-slots-editor-task.md#9-task-plugin-代码架构`.
+- `docs/architecture/07-runtime-flows.md#181-用户输入任务`.
+- `docs/testing/strategy.md`.
+
+## Acceptance Criteria
+
+- `- [ ] A` is recognized as a task block.
+- A corresponding Markdown Page is created if the block is not yet bound.
+- Created task pages include `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId` metadata.
+- Duplicate task pages are not created for the same source block.
+
+## Initial Parent Interpretation
+
+- TASK-018 should add the first Task Plugin behavior slice after TASK-017 stable block IDs.
+- Task syntax recognition should use existing Markdown document/block IDs as source identity.
+- Page creation and metadata writes should go through existing Core/plugin runtime paths and commands, not raw NativeBridge or new Tauri commands.
+- The parent thread remains orchestration-only; tests, implementation, docs, and review work will be delegated.
+- Out of scope unless agents find a hard acceptance dependency: task text click navigation, infinite nesting UI beyond reusable creation behavior, checkbox toggle events, All Tasks / Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, filesystem/native import-export, package dependencies, and new Tauri permissions/capabilities.
+
+## Agent/Config Checks
+
+- `.codex/agents/*.toml` parsed successfully with 11 agent config files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
+
+## Current Status
+
+- Status: blocking docs sync completed; parent final validation/commit pending.
+- Active agents: none.
+- Completed agents:
+  - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
+  - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
+  - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
+  - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
+  - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
+  - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
+  - Review round 1 agents completed and reported findings.
+  - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
+  - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
+  - Focused re-review agents completed.
+  - Kierkegaard the 3rd (`doc_writer`): blocking TASK-018 docs sync completed.
+- Next parent step: run final branch validation as needed, commit docs sync if clean, and update progress only after final gates/merge readiness.
+
+## Agent Handoffs
+
+### Pre-test Guidance Round
+
+- Status: completed.
+- Agents:
+  - Godel the 3rd (`planner`): read-only TASK-018 scope and TDD plan.
+  - Copernicus the 3rd (`docs_researcher`): read-only current-doc guidance for APIs/tools TASK-018 may touch.
+  - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit.
+  - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance before tests.
+
+### Godel the 3rd (`planner`) Outcome
+
+- Status: completed read-only planning; no files edited and no tests run.
+- Recommendation: keep TASK-018 plugin-owned and command-driven. Do not add task logic to Core, App Shell, or Markdown Editor UI.
+- Recommended metadata keys: namespace `task` with camelCase keys `enabled`, `status`, `sourcePageId`, and `sourceBlockId`.
+- Proposed scope: add `src/plugins/task/**`, register `TaskPlugin` in `BUILT_IN_PLUGINS`, add task syntax recognition and a resolver command, create task pages and metadata through Core/plugin facades, and bind source blocks with `attrs.boundPageId`.
+- TDD guidance: registration/syntax descriptor, structured `markdown.line` task recognition, task page/metadata/source binding in one transaction, and duplicate prevention.
+- Out of scope: task text click navigation, infinite nesting UI, checkbox toggle/events, All Tasks/Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new native surface, and task rename synchronization.
+
+### Copernicus the 3rd (`docs_researcher`) Outcome
+
+- Status: completed read-only current-doc research; no files edited and no tests run.
+- Recommendation: keep TASK-018 in TypeScript/plugin/runtime with focused Vitest tests. No new Tauri commands, capabilities, filesystem permissions, Rust IPC, package dependencies, or raw NativeBridge access are needed.
+- Test guidance: prove `- [ ] A` in a TASK-017 `markdown.line` block is recognized using stable `blockId`; resolving an unbound task creates one task page titled `A`; task metadata is written; source block is bound; repeated resolving does not duplicate pages; and manifest/runtime-extension contribution is visible if TaskPlugin contributes markdown syntax descriptors.
+- Implementation warning: `PluginContext` is lifecycle-scoped and `ctx.commands` has no `execute`; do not register a command handler that mutates through captured register-time `ctx.transaction`.
+- External docs verified: React 19 upgrade and `act`, Vitest 4 migration/mock/expect APIs, Testing Library `user-event` and queries/async APIs, TypeScript 5.8 and 4.9 notes, Vite 7 Node support, and Tauri v2 command/capability/permission docs.
+
+### Planck the 3rd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only API/deprecation audit; no files edited and no tests run.
+- P1 findings:
+  - The docs' command pattern is not directly implementable with current APIs because command handlers receive only input and register-time `PluginContext` scopes are revoked after `register()`.
+  - Runtime persistence is split: Plugin Host uses in-memory Core stores while `runtime.markdown.pages.save()` writes through NativeBridge DB operations. TASK-018 should deliberately stay Core/plugin-runtime focused unless scope changes.
+- P2 findings: `tx.pages.updateBlockAttrs` is a placeholder and not a current API; product docs still show older snake_case source metadata in one place; inert `manifest.contributes.markdownSyntax` descriptors alone do not create pages.
+- Recommended APIs: parse TASK-017 `markdown.line` blocks with stable `blockId`s; write metadata through plugin-facing `metadata.set` so Plugin Host injects `sourcePluginId`; detect duplicates by `sourcePageId + sourceBlockId`; follow the existing built-in plugin pattern.
+- External docs verified: Tauri v2 invoke and permissions, React textarea, Vitest `expectTypeOf`, and Testing Library user-event setup.
+
+### Euclid the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security review; no files edited and no tests run.
+- No P0 findings and no native permissions required.
+- P1 risks:
+  - Do not close over register-time `PluginContext` for `task.resolve-task-block`; lifecycle scopes are revoked after registration.
+  - Keep task creation behind Command Registry while providing a safe execution boundary.
+  - Do not add `task.*` native operations, NativeBridge handles, raw stores, raw registries, filesystem, SQL, or Tauri handles to Task Plugin.
+- Security test guidance: invalid payloads and stale source blocks must not mutate; derive or verify title from the current source block, not caller input alone; page creation, metadata writes, and source block binding must be atomic; duplicate prevention must use `(sourcePageId, sourceBlockId)`; same block IDs on different pages should create distinct task pages; `boundPageId` and existing metadata relations should be reused; code fences and malformed lines should not create tasks; HTML or `javascript:`-like titles remain inert text; native-surface guards stay green.
+
+### Harvey the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: tests only.
+- File changed:
+  - `src/test/task-plugin-syntax-page-creation.test.ts`.
+- Commit: `dc2453f` (`Harvey the 3rd(test)(Implement Task Plugin syntax and task page creation): add task plugin acceptance tests`).
+- Coverage added:
+  - Task Plugin registration and task syntax recognition for `- [ ] A` in a `markdown.line` block with stable `blockId`.
+  - A registered Task Plugin resolver command executable through the runtime command bus without stale register-time `PluginContext` mutation.
+  - Task page creation, camelCase task metadata writes, and source block `attrs.boundPageId` binding.
+  - Duplicate prevention by `(sourcePageId, sourceBlockId)`, including same `blockId` on different source pages creating distinct pages.
+  - Negative cases for invalid payloads, stale/non-task blocks, malformed task lines, and inert HTML / `javascript:`-like titles where practical.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal from the focused test command. 1 file failed, 5 tests failed, 3 tests passed. Main failures: missing built-in `task` plugin, missing task checkbox syntax contribution, and missing `task.resolve-task-block` command (`COMMAND_NOT_FOUND`). `bun run typecheck` and `git diff --check` passed.
+
+### Peirce the 3rd (`implementer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: production implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
+- Files changed:
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/core/index.ts`.
+  - `src/core/plugin-api/context.ts`.
+  - `src/core/plugin-api/index.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/plugins/task/index.ts`.
+  - `src/plugins/task/plugin.ts`.
+- Commit: `399807d` (`Peirce the 3rd(implementation)(Implement Task Plugin syntax and task page creation): add task block resolver`).
+- Summary: added built-in `TaskPlugin` with checkbox markdown syntax contribution and `task.resolve-task-block`; added command-time Plugin Host context so plugin commands mutate through a fresh active plugin scope instead of captured register-time context; resolver validates source `markdown.line`, ignores malformed/non-task/fenced-code lines, creates one task page per `(sourcePageId, sourceBlockId)`, writes task metadata through Plugin Host ownership, and binds the source block with copied `attrs.boundPageId`.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/markdown-runtime-extensions.test.ts src/test/app-bootstrap-runtime.test.ts
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all checks passed. Focused TASK-018 tests passed with 1 file / 8 tests. Plugin Host/Markdown runtime/bootstrap regression tests passed with 3 files / 55 tests. Native/package/Tauri surface diff was empty.
+
+### Review Round 1
+
+- Status: completed.
+- Agents:
+  - Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
+  - Ramanujan the 3rd (`reviewer`): read-only correctness review.
+  - Einstein the 3rd (`security_reviewer`): read-only security/boundary review.
+  - Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
+  - Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
+  - Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
+  - Kepler the 3rd (`doc_writer`): read-only docs sync plan.
+
+### Herschel the 3rd (`pr_explorer`) Outcome
+
+- Status: completed read-only changed-surface map; no files edited.
+- Changed surface: 11 files versus `master`, including `src/plugins/task/**`, built-in plugin registration, Plugin API command handler signature, Plugin Host command-time context support, TASK-018 tests, and orchestration docs.
+- Native/package/Tauri surface: no changed files under `package.json`, `bun.lock`, or `src-tauri/**`.
+- Checks run: `git diff --check master...HEAD` passed and focused TASK-018 tests passed with 1 file / 8 tests.
+- Risk areas flagged for reviewers: public `PluginCommandHandler` API shape, command-time lifecycle interactions, unverified `attrs.boundPageId`, stale metadata/orphaned page handling, intentionally narrow task parsing, and shell-based native-surface test brittleness.
+
+### Ramanujan the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness review; no files edited.
+- No P0/P1 correctness findings.
+- P2 findings:
+  - Source `attrs.boundPageId` binding is dropped by the existing Markdown save/import path because `importMarkdownToStructuredDocument()` preserves block IDs and text but not attrs.
+  - The task syntax matcher accepts indented code lines such as `    - [ ] Not task`.
+- Checks run: focused TASK-018 tests, Plugin Host/Markdown runtime/bootstrap regressions, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, and native/package/Tauri surface diff check; all passed. Manual probes confirmed both findings.
+
+### Einstein the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security review; no files edited.
+- No P0/P1 security findings.
+- P2 findings:
+  - Duplicate top-level `blockId`s can cause binding to update unvalidated blocks because validation finds the first match but binding updates every matching `blockId`.
+  - Existing `attrs.boundPageId` is trusted without verifying task-owned metadata linking back to the same source page/block, so malformed source content can bind a task line to an unrelated page.
+- P3 findings: title length/control-character hardening and direct command-time PluginContext regression coverage.
+- Checks run: `git diff --check master...HEAD`, `bun run typecheck`, focused TASK-018 tests, native/app-shell boundary frontend tests, and Rust IPC/sqlite boundary tests; all relevant checks passed.
+
+### Faraday the 3rd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only API/deprecation review; no files edited.
+- No deprecated React/Vite/Vitest/Tauri/API usage introduced and no native/package surface changes.
+- P2 findings:
+  - Plugin command failures lose their original cause at the new plugin command boundary because `CommandRegistry.execute()` wraps failures as `COMMAND_HANDLER_FAILED` without cause.
+  - The new exported `PluginCommandHandler` type is not locked by public API contract tests/docs.
+- P3 finding: task syntax matcher should reject CommonMark indented code lines with four spaces or a tab.
+- External docs consulted: Vitest `expect.soft`, Vite 7 migration/Node support, Tauri v2 invoke docs, React 19 upgrade guide, and CommonMark indented/fenced code behavior.
+
+### Hubble the 3rd (`docs_researcher`) Outcome
+
+- Status: completed read-only docs/current-guidance review; no files edited.
+- P1 docs drift blocks merge:
+  - Plugin command API docs need command-time `PluginContext` / `PluginCommandHandler(input, context)` coverage.
+  - Product docs still show snake_case task source metadata in places.
+  - Runtime/testing docs still describe built-ins as markdown-only and Task Plugin as future-only.
+- Required docs: `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and final progress/communication docs.
+- External docs verified: none; local docs/code were sufficient.
+
+### Singer the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only test-quality review; no files edited.
+- No P0/P1 test-quality findings.
+- P2 findings:
+  - Duplicate-prevention tests do not isolate metadata-only reuse or pre-existing `attrs.boundPageId` reuse.
+  - Negative cases swallow resolver failures and do not protect command error contract.
+  - Resolver atomicity is not directly covered with a failure after partial writes.
+- P3 finding: native-surface guard is useful but brittle because it shells out to `git diff master`.
+- Checks run: focused TASK-018, Plugin Host lifecycle, transaction manager, Markdown runtime, and app bootstrap tests passed with 5 files / 80 tests.
+
+### Kepler the 3rd (`doc_writer`) Outcome
+
+- Status: completed read-only documentation plan; no files edited.
+- Recommendation: docs sync is blocking before merge because branch behavior and public plugin API semantics changed.
+- Docs to update after review fixes: `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and final progress/agent-communication docs.
+- Not required: Tauri IPC/capability/permission/Rust docs, because native surface is unchanged.
+
+### Boole the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: tests only.
+- Files changed:
+  - `src/test/task-plugin-syntax-page-creation.test.ts`.
+  - `src/test/plugin-host-lifecycle.test.ts`.
+  - `src/test/plugin-api-contracts.test.ts`.
+- Commit: `4b1001f` (`Boole the 3rd(test)(Implement Task Plugin syntax and task page creation): add review-fix regression tests`).
+- Review-fix coverage added:
+  - Duplicate top-level `blockId` source safety.
+  - Unverified `attrs.boundPageId` safety and verified relation reuse.
+  - Metadata-only relation reuse and source binding restoration.
+  - Markdown save/import durability for safe `boundPageId`.
+  - Indented-code task-looking lines.
+  - Plugin command failure cause/context preservation.
+  - Public `PluginCommandHandler` API contract coverage.
+  - Command-time PluginContext hardening where practical.
+  - Resolver atomicity if a clean test seam exists.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 3 files ran, 2 failed, 1 passed; 4 tests failed and 72 passed. Failures covered duplicate top-level `blockId` mutation, unverified `attrs.boundPageId` reuse, CommonMark indented-code task parsing, and missing command failure cause/context preservation. `bun run typecheck` and `git diff --check` passed.
+
+### Curie the 3rd (`implementer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: production review-fix implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
+- Files changed:
+  - `src/core/commands/command-registry.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/plugins/task/plugin.ts`.
+- Commit: `56931b1` (`Curie the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): harden task resolver boundaries`).
+- Summary:
+  - Duplicate source block ID safety.
+  - Verified `attrs.boundPageId` reuse and metadata-only relation recovery.
+  - CommonMark indented-code task rejection.
+  - Plugin command failure cause/context preservation.
+  - Command-time PluginContext hardening and transaction atomicity required by Boole's tests.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-command-registry.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
+
+- Result: all passed. Review-fix regression set passed with 3 files / 76 tests. Core command registry passed with 1 file / 11 tests. Markdown import/export runtime regressions passed with 2 files / 17 tests.
+
+### Focused Re-review Round
+
+- Status: completed.
+- Agents:
+  - Pauli the 3rd (`reviewer`): focused correctness/API re-review after review fixes.
+  - Raman the 3rd (`security_reviewer`): focused security re-review after review fixes.
+  - Volta the 3rd (`test_quality_reviewer`): focused test-quality re-review after review fixes.
+
+### Pauli the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness/API re-review; no files edited.
+- No P0/P1 findings.
+- Remaining P2:
+  - `CommandRegistry` preserves plugin command causes by duck-typing any thrown value with `name`, `code`, `pluginId`, and `phase` as a `PluginHostError`. A non-plugin command can throw a plain object with that shape and bypass the existing raw-cause redaction contract.
+- Cleared items: duplicate top-level block IDs, verified `boundPageId` reuse, metadata-only recovery after Markdown import/export drops attrs, indented-code rejection, command-time context behavior, and transaction rollback.
+- Checks run: focused TASK-018 review-fix tests, core command registry tests, Markdown import/export tests, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, and native/package/Tauri surface diff; all passed.
+
+### Raman the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only focused security re-review; no files edited.
+- No remaining P0/P1/P2 security findings.
+- Cleared items: duplicate `blockId` binding, unverified `attrs.boundPageId`, command-time PluginContext, native/Tauri/package surface.
+- Checks run: `git diff --check master...HEAD`, native/package/Tauri surface diff, `bun run typecheck`, `bun run lint`, and focused TASK-018 review-fix tests; all passed.
+
+### Volta the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only focused test-quality re-review; no files edited.
+- No remaining P0/P1/P2 test-quality gaps.
+- P3 non-blocking notes: task resolver negative table still catches and ignores individual resolver failures; native-surface guard remains branch-state/environment coupled via `git diff master`.
+- Coverage assessed as meaningful for relation reuse, forged `boundPageId`, save/import recovery, atomicity, indented code, command-time context, type contract, and command failure cause preservation.
+- Checks run: focused TASK-018 review-fix tests, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri surface diff, and `rg` for skipped tests; all passed.
+
+### Sagan the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: tests only.
+- Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a spoofed plain object shaped like `PluginHostError` as `CommandRegistryError.cause`.
+- File changed:
+  - `src/test/core-command-registry.test.ts`.
+- Commit: `3cd7001` (`Sagan the 3rd(test)(Implement Task Plugin syntax and task page creation): add spoofed command cause regression`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts
+git diff --check
+```
+
+- Result: expected red signal. 1 test failed, 11 passed. Failure showed a non-plugin command throwing a PluginHostError-shaped plain object still exposed an own `CommandRegistryError.cause`. `git diff --check` passed.
+
+### Darwin the 3rd (`implementer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: minimal production fix only.
+- Target: preserve command failure causes only for genuine PluginHostError instances from plugin command execution, while preserving raw-cause redaction for normal command handlers.
+- File changed:
+  - `src/core/commands/command-registry.ts`.
+- Commit: `8ecfbbd` (`Darwin the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): protect command failure redaction`).
+- Summary: replaced duck-typed PluginHostError shape detection with `cause instanceof PluginHostError`, so normal command handlers cannot spoof Plugin Host failures while genuine plugin command failures still preserve context.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+- Result: all passed. Core command registry + Plugin Host lifecycle tests passed with 2 files / 59 tests.
+
+### Final Narrow Re-review
+
+- Status: completed.
+- Agent:
+  - Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
+
+### Nash the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only final narrow re-review; no files edited.
+- No P0/P1 findings.
+- Remaining P2:
+  - `CommandRegistry` still does not prove a preserved cause came from Plugin Host command execution. It now checks `cause instanceof PluginHostError`, but `PluginHostError` is publicly exported/constructible. A direct/non-plugin command can throw a real `new PluginHostError(...)` and still have that raw cause preserved.
+- Non-issues: no circular/import boundary issue found; typecheck/lint/focused tests pass.
+- Checks run: `bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts`, `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`; all passed. A one-off probe confirmed the remaining P2.
+
+### Heisenberg the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: tests only.
+- Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a real exported `PluginHostError` instance as `CommandRegistryError.cause`.
+- File changed:
+  - `src/test/core-command-registry.test.ts`.
+- Commit: `8a98a96` (`Heisenberg the 3rd(test)(Implement Task Plugin syntax and task page creation): cover direct PluginHostError redaction`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 1 test failed, 12 passed; failure proved normal commands throwing real `PluginHostError` still exposed an own `CommandRegistryError.cause`. `bun run typecheck` and `git diff --check` passed.
+
+### Dalton the 3rd (`implementer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: minimal production fix only.
+- Target: preserve `CommandRegistryError.cause` only for failures marked/proven as coming from Plugin Host command execution, while preserving raw-cause redaction for ordinary command handlers even if they throw a real exported `PluginHostError`.
+- Files changed:
+  - `src/core/commands/command-registry.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+- Commit: `04c769d` (`Dalton the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): mark plugin command failure causes`).
+- Summary: introduced an internal WeakSet marker for preserved command handler failure causes; Plugin Host marks command-execution `PluginHostError`s before throwing, while normal command handlers throwing plain objects or constructible `PluginHostError`s remain redacted.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+- Result: all passed. Core command registry + Plugin Host lifecycle tests passed with 2 files / 60 tests.
+
+### Final Provenance Re-review
+
+- Status: completed.
+- Agent:
+  - Cicero the 3rd (`reviewer`): final provenance re-review after Dalton fix.
+
+### Cicero the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only final provenance re-review; no files edited.
+- No remaining P0/P1/P2 findings.
+- Cleared matrix: normal command plain objects and constructible exported `PluginHostError` instances are redacted; Plugin Host command-execution failures preserve the marked `PluginHostError` cause/context; no command-registry/plugin-host runtime cycle found.
+- Remaining P3: `preserveCommandHandlerFailureCause` is still a named export from `src/core/commands/command-registry.ts`. It is not barrel-exported and current usage is only Plugin Host, but provenance relies on convention against direct-path imports. Consider an import restriction/lint guard later if this should be enforced.
+- Checks run: `bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts`, `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`; all passed. Direct `bun test` attempt failed due known Bun runner incompatibility with Vitest APIs.
+
+### Kierkegaard the 3rd (`doc_writer`) Handoff
+
+- Status: completed.
+- Ownership: documentation sync only.
+- Target docs: `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and live communication docs if useful.
+- Required sync: final TASK-018 behavior, command-time PluginContext, camelCase task metadata, `attrs.boundPageId`, no native surface, deferred future Task Plugin scope, and final command failure provenance behavior.
+- Files changed:
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-018-task-plugin-syntax-page-creation.md`.
+- Summary: synced docs to the command-level TASK-018 slice: built-in `task` plugin, `- [ ]` syntax descriptor, `task.resolve-task-block`, payload `{ sourcePageId, sourceBlockId }`, camelCase task metadata, verified `attrs.boundPageId` source binding, duplicate detection by `(sourcePageId, sourceBlockId)`, command-time fresh `PluginContext`, runtime contribution registration rejected during command execution, stale command contexts invalid after completion, Plugin Host-marked command failure cause preservation, ordinary command failure redaction, unchanged NativeBridge/Tauri/package/Rust surface, and deferred automatic scanning/navigation/filters/views/events.
+- Checks run:
+  - `git diff --check`.
+  - `rg -n "source_page_id|source_block_id|MarkdownEditorPlugin.*only|only contains.*Markdown|Task Plugin.*future-only|updateBlockAttrs|ctx\\.commands\\.execute|task\\.source_page_id|task\\.source_block_id" docs`.
+  - Same stale search scoped to `docs/product docs/architecture docs/development docs/testing`.
+- Result: `git diff --check` passed. Scoped stale search over product/architecture/development/testing docs returned no matches. Broad docs search returned only historical agent-communication notes about old review findings and prior stale-search results.
+
+### Final Docs Re-review Fix
+
+- Status: completed by doc_writer in docs-fix mode; no production files edited, staged, or committed.
+- Final documentation re-review found two P1 docs drifts: future Task Plugin metadata still used snake_case `task.done_at`, and the development final-architecture flow still read like current automatic scanning/navigation/filter/view/nesting behavior.
+- Fix applied: product docs now describe completion timestamp metadata as future behavior without snake_case and require future task metadata keys to remain camelCase; development docs now separate TASK-018's explicit `task.resolve-task-block` resolver behavior from deferred automatic scanning, navigation, filter/view refresh, and infinite nesting UX.
+
+## Parent Decisions
+
+- Select TASK-018 because it is the first unblocked `[ ]` task after TASK-017 completed and merged.
+- Use branch `feat/task-018-task-plugin-syntax-page-creation`.
+- Keep parent orchestration-only per user instruction.
+- Accept camelCase task metadata keys from TASK-018 acceptance and architecture docs.
+- Keep TASK-018 TypeScript/plugin/runtime scoped with no new native surface.
+- Require TDD tests to expose the command execution context gap: final behavior must let a registered Task Plugin command resolve task blocks without mutating through a stale register-time `PluginContext`.
+- Require duplicate prevention by `(sourcePageId, sourceBlockId)` and source block binding through copied block attrs, not a nonexistent `updateBlockAttrs` API.

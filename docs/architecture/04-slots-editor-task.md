@@ -206,13 +206,16 @@ runtime.markdown.pages.save({ pageId, markdown });
 
 这个 facade 也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，当前只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
 
-后续 Task Plugin 可以提供 task block syntax descriptor，Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。真正的解析、索引、导航和 rich editor adaptation 仍未实现。
+TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。
+
+后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、点击导航、filter/view refresh 和 rich editor adaptation 仍未实现。
 
 ---
 
 ## 9. Task Plugin 代码架构
 
 Task Plugin 是最重要的插件之一。
+长期目录可能长这样；TASK-018 当前只实现内置 `TaskPlugin` 的 syntax descriptor 和 resolver command：
 
 ```text
 plugins/task/
@@ -251,20 +254,35 @@ plugins/task/
 
 ### 9.1 Task Plugin 注册内容
 
-Task manifest 声明 markdown syntax、metadata fields、event types、default filters 和 indexers 等 descriptor。
-当前 `register(ctx)` 只注册 TASK-010 已暴露的 runtime facades：commands、views 和 slots。
+TASK-018 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
+
+Task manifest 当前声明：
 
 ```ts
 export const TaskPlugin: AppPlugin = {
-  manifest,
-
+  manifest: {
+    id: "task",
+    contributes: {
+      markdownSyntax: [
+        {
+          id: "task.checkbox",
+          name: "Checkbox task",
+          syntax: "- [ ]"
+        }
+      ]
+    }
+  },
   register(ctx) {
-    registerTaskCommands(ctx);
-    registerTaskViews(ctx);
-    registerTaskSlots(ctx);
+    ctx.commands.register({
+      id: "task.resolve-task-block",
+      title: "Resolve task block",
+      handler: resolveTaskBlock
+    });
   }
 };
 ```
+
+当前没有注册 task view、slot、filter、event type、metadata-field renderer、indexer 或 checkbox toggle command。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动解析正文或创建页面。
 
 ### 9.2 Task Syntax
 
@@ -274,90 +292,72 @@ export const TaskPlugin: AppPlugin = {
 - [ ] 设计 Timer Plugin
 ```
 
-Task Plugin 解析成：
+TASK-017 把保存后的 textarea Markdown 表示为稳定 `blockId` 的 top-level `markdown.line` blocks。TASK-018 resolver 只接受 payload：
 
 ```ts
-type TaskBlock = {
-  blockId: string;
-  type: "task";
-  checked: boolean;
-  text: string;
-  boundPageId?: string;
+type ResolveTaskBlockInput = {
+  sourcePageId: string;
+  sourceBlockId: string;
 };
 ```
 
-如果没有 `boundPageId`，由 app runtime / Command Service 执行命令；TASK-010 的 `PluginCommandRegistry` 不在 `ctx.commands` 上暴露 `execute`：
+由 app runtime / Command Service 执行命令；`ctx.commands` 不暴露 `execute`：
 
 ```ts
 runtime.commands.execute("task.resolve-task-block", {
   sourcePageId,
-  sourceBlockId,
-  title: "设计 Timer Plugin"
+  sourceBlockId
 });
 ```
+
+resolver 读取当前 source page，要求 `sourceBlockId` 在 top-level blocks 中唯一，且对应 block 是 `markdown.line`。任务标题从当前 source block 的文本派生，不接受调用方传入 title。当前识别未完成任务语法：
+
+```text
+0 到 3 个前导空格 + "- " + "[ ]" + 至少一个空白 + 非空标题
+```
+
+四个空格缩进、tab 缩进和 fenced code block 内的 task-looking line 都不是任务语法；`- [x]` 当前也不是 TASK-018 行为。
 
 ### 9.3 创建任务对应页面
 
 ```ts
-async function resolveTaskBlock(ctx, input) {
-  await ctx.transaction.run(async tx => {
-    const taskPage = await tx.pages.create({
-      title: input.title,
-      parentPageId: undefined,
-      body: createEmptyMarkdownDoc()
-    });
+async function resolveTaskBlock(input, context) {
+  return context.transaction.run(tx => {
+    const sourcePage = tx.pages.get(input.sourcePageId);
+    const sourceBlock = findUniqueTopLevelBlock(sourcePage, input.sourceBlockId);
+    const title = parseUncheckedTaskTitle(sourcePage.body.content, sourceBlock);
 
-    await tx.metadata.set({
-      pageId: taskPage.id,
-      namespace: "task",
-      key: "enabled",
-      value: true,
-      valueType: "boolean"
-    });
+    const taskPage =
+      findTaskPageByMetadata(tx, input) ??
+      findVerifiedBoundPage(tx, sourceBlock, input) ??
+      tx.pages.create({
+        title,
+        body: { type: "doc", content: [] }
+      });
 
-    await tx.metadata.set({
-      pageId: taskPage.id,
-      namespace: "task",
-      key: "status",
-      value: "todo",
-      valueType: "string"
-    });
-
-    await tx.metadata.set({
-      pageId: taskPage.id,
-      namespace: "task",
-      key: "sourcePageId",
-      value: input.sourcePageId,
-      valueType: "string"
-    });
-
-    await tx.metadata.set({
-      pageId: taskPage.id,
-      namespace: "task",
-      key: "sourceBlockId",
-      value: input.sourceBlockId,
-      valueType: "string"
-    });
-
-    await tx.pages.updateBlockAttrs(input.sourcePageId, input.sourceBlockId, {
+    ensureTaskMetadata(tx, taskPage.id, input);
+    bindSourceBlockByCopyingPageBody(tx.pages, sourcePage, sourceBlock, {
       boundPageId: taskPage.id
     });
+
+    return taskPage;
   });
 }
 ```
 
-以上 metadata 写入示例按当前 plugin-facing store 形状省略 `sourcePluginId`；Plugin Host 会注入来源插件身份。
-`updateBlockAttrs` 是后续编辑器桥接能力的占位，不属于 TASK-010 当前 `PluginContext`。
-
-开发时可以不照抄这段，但事务边界要保持：
+TASK-018 当前写入 metadata：
 
 ```text
-创建任务页面
-写 task metadata
-绑定 source block
-更新编辑器 block attrs
+task.enabled = true
+task.status = todo
+task.sourcePageId = input.sourcePageId
+task.sourceBlockId = input.sourceBlockId
 ```
 
-这些必须在一个 transaction 中完成。
+这些 metadata 写入通过 plugin-facing `metadata.set` 发生，`sourcePluginId` 由 Plugin Host 注入为 `task`。
+
+重复检测使用 `(sourcePageId, sourceBlockId)` metadata relation。若 source block 已有 `attrs.boundPageId`，resolver 只有在该 bound page 的 `task.sourcePageId` 和 `task.sourceBlockId` 同时验证为同一 source relation 时才复用它；伪造或不匹配的 `boundPageId` 不会被信任。Markdown save/import 当前不保留 block `attrs`，所以 resolver 也能从 metadata-only relation 恢复 source binding。
+
+source binding 当前做法是复制 source page 的结构化 body，仅替换目标 block 的 `attrs.boundPageId`，再通过 `pages.update(sourcePage.id, { body })` 保存。创建任务页、写 task metadata、绑定 source block 必须在一个 transaction 中完成；任一步失败都不应留下部分页面或 metadata。
 
 ---

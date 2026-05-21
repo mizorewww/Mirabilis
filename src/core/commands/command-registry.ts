@@ -59,6 +59,16 @@ type JsonCompatibilityValidationState = {
 
 const maxJsonContextDepth = 1_000;
 const maxJsonContextNodes = 100_000;
+const preservedCommandHandlerFailureCauses = new WeakSet<object>();
+
+/** @internal */
+export function preserveCommandHandlerFailureCause<Cause extends object>(
+  cause: Cause,
+): Cause {
+  preservedCommandHandlerFailureCauses.add(cause);
+
+  return cause;
+}
 
 export function createInMemoryCommandRegistry(): CommandService {
   const commands = new Map<string, StoredCommand>();
@@ -137,14 +147,29 @@ export function createInMemoryCommandRegistry(): CommandService {
 
       try {
         return await handler(input);
-      } catch {
+      } catch (cause) {
         throw new CommandRegistryError(
           "COMMAND_HANDLER_FAILED",
           normalizedCommandId,
+          createHandlerFailureErrorOptions(cause),
         );
       }
     },
   };
+}
+
+function createHandlerFailureErrorOptions(
+  cause: unknown,
+): { cause?: unknown } {
+  if (
+    typeof cause === "object" &&
+    cause !== null &&
+    preservedCommandHandlerFailureCauses.has(cause)
+  ) {
+    return { cause };
+  }
+
+  return {};
 }
 
 function createDescriptor<Input, Output>(

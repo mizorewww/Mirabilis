@@ -87,6 +87,20 @@ export type AppPlugin = {
 ### 5.4 PluginContext
 
 ```ts
+export type PluginCommandHandler<Input = unknown, Output = unknown> = (
+  input: Input,
+  context: PluginContext,
+) => Output | Promise<Output>;
+
+export type PluginCommandDefinition<Input = unknown, Output = unknown> = {
+  id: string;
+  title: string;
+  description?: string;
+  defaultShortcut?: string;
+  context?: MetadataJsonValue;
+  handler: PluginCommandHandler<Input, Output>;
+};
+
 export type PluginCommandRegistry = {
   register<Input = unknown, Output = unknown>(
     definition: PluginCommandDefinition<Input, Output>,
@@ -128,9 +142,13 @@ export type PluginContext = {
 插件不直接操作全局数据库。
 插件通过 `ctx.pages`、`ctx.metadata`、`ctx.events`、`ctx.filters`、`ctx.transaction` 操作 Core 数据。
 插件通过 `PluginCommandRegistry`、`PluginViewRegistry`、`PluginSlotRegistry` 这类 plugin-facing facade 注册能力，并拿到 descriptor；不直接暴露 Core 内部的 `CommandRegistry`、`ViewRegistry`、`SlotRegistry`、`AlgorithmRegistry`。
-`PluginCommandRegistry` 当前只有 `register`、`get` 和 `list`；命令执行属于 app runtime / Command Service，不在 TASK-010 `PluginContext` 中暴露。
+`PluginCommandRegistry` 当前只有 `register`、`get` 和 `list`；`ctx.commands` 没有 `execute`。命令执行属于 app runtime / Command Service，由调用方通过 `runtime.commands.execute(commandId, input)` 进入 Command Registry。
 Plugin-facing stores 和 registries 的输入不接受调用方传入的 `pluginId` 或 `sourcePluginId`，这些 ownership key 由 Plugin Host 按当前插件身份注入。
 `settings`、`storage`、`query`、`eventBus` 和独立 `packages/plugin-api` 包拆分是后续接口面，不属于 TASK-010 当前 contract。
+
+TASK-018 后，plugin command handler 的运行签名是 `PluginCommandHandler(input, context)`。`register(ctx)` 期间注册 command 时只交出 handler；真正执行 command 时，Plugin Host 会创建一个新的 command-time `PluginContext` 并传给 handler。因此 command handler 可以通过 fresh `context.pages`、`context.metadata`、`context.events`、`context.filters` 或 `context.transaction` 做数据写入，而不需要也不允许闭包复用 register-time `ctx` 做后续 mutation。
+
+command-time `PluginContext` 仍是 plugin-scoped facade：不暴露 NativeBridge、Tauri/raw invoke、SQLite、filesystem、Core stores、Core registries、Core services 或 raw runtime handles。command-time context 允许数据 mutation，但不允许 runtime contribution registration；在 command handler 中调用 `context.commands.register`、`context.views.register` 或 `context.slots.register` 会抛出 typed Plugin Host lifecycle error。command handler 返回或抛错后，该 command-time context 会失效；任何捕获后继续使用的 stale command context 都不能再写入数据或注册贡献。
 
 ---
 
@@ -236,10 +254,12 @@ type PluginHostInstance = {
 运行时上下文语义：
 
 - Plugin Host 为每次 lifecycle hook 创建 plugin-scoped `PluginContext`，只暴露 plugin-facing facades，不暴露 Core stores、registries、services、native/Tauri、SQLite、filesystem 或 raw runtime handles。
+- Plugin Host 为每次 plugin command execution 创建 fresh command-time `PluginContext`，并调用 `PluginCommandHandler(input, context)`。command-time context 可以通过 plugin-facing stores 和 `transaction` 写入 Core 数据，但不能注册 command/view/slot 等 runtime contributions。
 - `ctx.metadata`、`ctx.events`、`ctx.filters` 自动注入 `sourcePluginId`，并将读写限制在当前插件拥有的数据上。
 - `ctx.commands`、`ctx.views`、`ctx.slots` 自动注入 `pluginId`，并将 `get` / `list` 限制在当前插件拥有的 runtime contribution 上。
 - plugin-facing 输入拒绝调用方传入 `pluginId` 或 `sourcePluginId`；绕过 TypeScript 类型的 runtime spoofing 会抛出 `PLUGIN_FACADE_OWNERSHIP_FORBIDDEN` 且不应改变 registry 或 store。
-- 捕获到的 context 在 lifecycle 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
-- `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。TASK-016 的 Markdown runtime 只用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。
+- 捕获到的 context 在 lifecycle 或 command execution 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
+- Plugin Host-marked command execution failures preserve their typed `PluginHostError` as `CommandRegistryError.cause`, so callers can inspect plugin id, phase `command`, and original plugin failure. Ordinary command handler failures remain redacted by Command Registry, including plain objects or directly constructed `PluginHostError` instances thrown outside the Plugin Host command wrapper.
+- `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。Markdown runtime 用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；TASK-018 后这包括内置 `markdown` 和 `task` 插件贡献的 inert syntax descriptors。调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。
 
 ---
