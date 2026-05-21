@@ -1,6 +1,5 @@
 import type {
   AppEvent,
-  CommandHandler,
   CreatePageInput,
   FilterDefinition,
   ListPagesOptions,
@@ -110,8 +109,13 @@ export type PluginCommandDefinition<Input = unknown, Output = unknown> = {
   description?: string;
   defaultShortcut?: string;
   context?: MetadataJsonValue;
-  handler: CommandHandler<Input, Output>;
+  handler: PluginCommandHandler<Input, Output>;
 } & PluginOwnershipKeyReserved;
+
+export type PluginCommandHandler<Input = unknown, Output = unknown> = (
+  input: Input,
+  context: PluginContext,
+) => Output | Promise<Output>;
 
 export type PluginCommandDescriptor = {
   id: string;

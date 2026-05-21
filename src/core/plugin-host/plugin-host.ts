@@ -4,6 +4,7 @@ import type {
   PluginAppendEventInput,
   PluginCommandDefinition,
   PluginCommandDescriptor,
+  PluginCommandHandler,
   PluginCommandListOptions,
   PluginCommandRegistry,
   PluginContext,
@@ -175,6 +176,7 @@ type NormalizedDependency = {
 type PluginLifecyclePhase =
   | "install"
   | "register"
+  | "command"
   | "activate"
   | "deactivate"
   | "uninstall";
@@ -666,9 +668,12 @@ class PluginHostImpl implements PluginHostInstance {
         assertCanRegisterRuntimeContribution(scope);
         assertNoOwnershipKeys(definition, pluginId, [pluginOwnershipPrefix]);
 
+        const handler = definition.handler;
         const descriptor = this.registries.commands.register({
           ...definition,
           pluginId,
+          handler: (input: Input) =>
+            this.runPluginCommandHandler(pluginId, handler, input),
         });
 
         scope.registrationTracker.push({
@@ -693,6 +698,28 @@ class PluginHostImpl implements PluginHostInstance {
           .map((descriptor) => toPluginCommandDescriptor(descriptor));
       },
     };
+  }
+
+  private async runPluginCommandHandler<Input, Output>(
+    pluginId: string,
+    handler: PluginCommandHandler<Input, Output>,
+    input: Input,
+  ): Promise<Awaited<Output>> {
+    const record = this.requireRecord(pluginId);
+    const scope = createPluginContextScope(pluginId, "command", false);
+
+    record.lifecycleScopes.add(scope);
+
+    try {
+      const result = await handler(input, this.createPluginContext(scope));
+
+      this.assertLifecycleScopeStillCurrent(record, scope);
+
+      return result;
+    } finally {
+      scope.active = false;
+      record.lifecycleScopes.delete(scope);
+    }
   }
 
   private createPluginViewRegistry(

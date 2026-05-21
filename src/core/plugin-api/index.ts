@@ -19,6 +19,7 @@ export type {
   PluginAppendEventInput,
   PluginCommandDescriptor,
   PluginCommandDefinition,
+  PluginCommandHandler,
   PluginCommandListOptions,
   PluginCommandRegistry,
   PluginContext,
