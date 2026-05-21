@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -42,6 +42,12 @@ type MarkdownInsertTextResult = {
   markdown: string;
   selectionStart: number;
   selectionEnd: number;
+};
+
+type Deferred<Value> = {
+  promise: Promise<Value>;
+  resolve(value: Value): void;
+  reject(reason: unknown): void;
 };
 
 type NativeBridgeTransactionResult<Response> =
@@ -302,6 +308,57 @@ describe("Markdown Editor Plugin shell", () => {
       ),
     );
     expect(editor).toHaveValue("- [ ] #[[ ]]");
+  });
+
+  it("does not let a delayed toolbar insertion overwrite newer editor edits", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const insertCompletion = createDeferred<MarkdownInsertTextResult>();
+    const commandBus: MarkdownCommandBus = {
+      execute: vi.fn(() => insertCompletion.promise),
+    };
+
+    renderMarkdownPageEditor(runtime, {
+      page: createEditorDocument("page-async-insert", "Draft"),
+      commands: commandBus,
+    });
+    const editor = screen.getByRole("textbox", {
+      name: /markdown/i,
+    }) as HTMLTextAreaElement;
+
+    editor.setSelectionRange(0, 0);
+    await user.click(
+      screen.getByRole("button", { name: /insert heading or tag marker/i }),
+    );
+
+    await waitFor(() =>
+      expect(commandBus.execute).toHaveBeenCalledWith(
+        "markdown.insert-text",
+        expect.objectContaining({
+          pageId: "page-async-insert",
+          markdown: "Draft",
+          text: "#",
+          selectionStart: 0,
+          selectionEnd: 0,
+        }),
+      ),
+    );
+
+    await user.clear(editor);
+    await user.type(editor, "Draft plus newer edit");
+    expect(editor).toHaveValue("Draft plus newer edit");
+
+    await act(async () => {
+      insertCompletion.resolve({
+        markdown: "#Draft",
+        selectionStart: 1,
+        selectionEnd: 1,
+      });
+      await insertCompletion.promise;
+      await Promise.resolve();
+    });
+
+    expect(editor).toHaveValue("Draft plus newer edit");
   });
 
   it("renders the registered mobile toolbar slot with only narrow insert behavior", async () => {
@@ -573,4 +630,23 @@ function formatViolations(violations: Map<string, string[]>): string[] {
 
 function toKeyboardLiteral(markdown: string): string {
   return markdown.split("[").join("[[").split("{").join("{{");
+}
+
+function createDeferred<Value>(): Deferred<Value> {
+  let resolve: Deferred<Value>["resolve"] | undefined;
+  let reject: Deferred<Value>["reject"] | undefined;
+  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  if (resolve === undefined || reject === undefined) {
+    throw new Error("Failed to create deferred promise");
+  }
+
+  return {
+    promise,
+    resolve,
+    reject,
+  };
 }
