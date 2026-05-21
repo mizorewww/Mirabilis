@@ -64,4 +64,4 @@
 
 ## Current Next Action
 
-- Spawn planner, docs researcher, deprecation auditor, and security reviewer for TASK-023 pre-test guidance.
+- Boyle (`planner`), Pasteur (`docs_researcher`), Curie (`deprecation_auditor`), and Sartre (`security_reviewer`) are running read-only pre-test guidance.

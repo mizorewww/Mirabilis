@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:32 CST.
+Last updated: 2026-05-21 21:34 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 21:32 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 orchestration start is being recorded.
+- Current phase: TASK-023 pre-test guidance is in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate TASK-023 planning/current-doc/security/API guidance.
+- Boyle (`planner`) is producing TASK-023 implementation planning guidance.
+- Pasteur (`docs_researcher`) is producing current docs and test guidance.
+- Curie (`deprecation_auditor`) is producing API/deprecation guidance.
+- Sartre (`security_reviewer`) is producing metadata UI security and boundary guidance.
 
 ## Completed Recent Task
 
@@ -56,6 +59,10 @@ Last updated: 2026-05-21 21:32 CST.
 
 - `.codex/agents/*.toml` parsed successfully with 11 files.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+
+## TASK-023 Active Agent Outcomes
+
+- Boyle (`planner`), Pasteur (`docs_researcher`), Curie (`deprecation_auditor`), and Sartre (`security_reviewer`) are running read-only pre-test guidance.
 
 ## Current TASK-022 State
 
@@ -134,8 +141,8 @@ Last updated: 2026-05-21 21:32 CST.
 
 ## Next Actions
 
-1. Commit TASK-023 start records.
-2. Spawn TASK-023 planner/current-doc/security/API guidance agents.
+1. Wait for Boyle, Pasteur, Curie, and Sartre.
+2. Summarize pre-test guidance and delegate acceptance tests to `test_writer`.
 
 ## Current TASK-021 State
 
