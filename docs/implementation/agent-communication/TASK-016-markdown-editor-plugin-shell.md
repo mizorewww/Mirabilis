@@ -37,8 +37,14 @@
 
 ## Current Status
 
-- Status: implementation completed and committed; review handoff pending.
-- Active agents: none.
+- Status: review round 1 in progress.
+- Active agents:
+  - Bernoulli the 2nd (`pr_explorer`) for changed-surface mapping.
+  - Meitner the 2nd (`reviewer`) for correctness review.
+  - Noether the 2nd (`security_reviewer`) for security boundary review.
+  - Avicenna the 2nd (`deprecation_auditor`) for API/deprecation review.
+  - Lovelace the 3rd (`docs_researcher`) for docs/current-guidance review.
+  - Boyle the 3rd (`test_quality_reviewer`) for test quality review.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -46,7 +52,7 @@
   - Confucius the 2nd (`security_reviewer`): security boundary review completed.
   - Ohm the 2nd (`test_writer`): red tests completed, verified red, committed, and closed.
   - Mill the 2nd (`implementer`): production implementation completed, validated, committed, and closed.
-- Next parent step: spawn review agents for correctness, security, docs/current-guidance, API/deprecation, test quality, and docs gaps.
+- Next parent step: wait for review agents, then retry the deferred `doc_writer` documentation gap review once a thread slot opens.
 
 ## Agent Handoffs
 
@@ -219,3 +225,16 @@
 - Residual risks:
   - Persistence remains the narrow TASK-016 facade path, not broad Core store-to-SQLite rewiring.
   - No external docs were consulted during implementation; review agents should verify current React/Vitest/Tauri/API guidance where relevant.
+
+### Review Round 1
+
+- Status: in progress.
+- Active agents:
+  - Bernoulli the 2nd (`pr_explorer`): changed-surface mapping.
+  - Meitner the 2nd (`reviewer`): correctness review.
+  - Noether the 2nd (`security_reviewer`): security boundary review.
+  - Avicenna the 2nd (`deprecation_auditor`): API/deprecation review.
+  - Lovelace the 3rd (`docs_researcher`): docs/current-guidance review.
+  - Boyle the 3rd (`test_quality_reviewer`): test quality review.
+- Deferred agent:
+  - `doc_writer` documentation gap review. Spawn attempt hit the current thread limit, so parent will retry after a review slot opens.

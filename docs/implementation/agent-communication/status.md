@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:08 CST.
+Last updated: 2026-05-21 08:09 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 08:08 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review handoff.
+- Current phase: review round 1 in progress.
 
 ## Active Agents
 
-- None. Next agent handoff is TASK-016 review.
+- Bernoulli the 2nd (`pr_explorer`) - TASK-016 changed-surface mapping.
+- Meitner the 2nd (`reviewer`) - TASK-016 correctness review.
+- Noether the 2nd (`security_reviewer`) - TASK-016 security boundary review.
+- Avicenna the 2nd (`deprecation_auditor`) - TASK-016 API/deprecation review.
+- Lovelace the 3rd (`docs_researcher`) - TASK-016 docs/current-guidance review.
+- Boyle the 3rd (`test_quality_reviewer`) - TASK-016 test quality review.
 
 ## Recent Agent Outcomes
 
@@ -99,7 +104,8 @@ Last updated: 2026-05-21 08:08 CST.
 - Parent inspected and accepted the test harness correction because it only escapes keyboard fixture syntax while preserving exact Markdown assertions. It was committed separately as `0107d45 Mill the 2nd(test-fix)(Implement Markdown Editor Plugin shell): escape markdown keyboard fixtures`.
 - Parent repeated green checks after Mill the 2nd: `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`, `bun run typecheck`, `bun run lint`, `git diff --check`, and `git diff --cached --check` before the implementation commit.
 - Mill the 2nd's implementation commit: `5c9819b Mill the 2nd(implementation)(Implement Markdown Editor Plugin shell): implement markdown editor plugin shell`.
-- Parent next step: spawn review agents for correctness, security, docs/current-guidance, API/deprecation, test quality, and docs gaps.
+- TASK-016 review round 1 agents were spawned for changed-surface mapping, correctness, security, API/deprecation, docs/current-guidance, and test quality. `doc_writer` documentation gap review was deferred because the agent thread limit was reached; parent will retry after a review slot opens.
+- Parent next step: wait for review agents, then summarize findings and delegate fixes for any P0/P1 items.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
