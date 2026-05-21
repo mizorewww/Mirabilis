@@ -41,6 +41,10 @@ type ComparableValue =
       requiresDateMetadata: boolean;
     };
 
+type QueryExecutionState = {
+  activeQueries: WeakSet<object>;
+};
+
 const metadataFieldPrefix = "metadata";
 const unsafeFieldSegments = new Set([
   "__proto__",
@@ -49,6 +53,20 @@ const unsafeFieldSegments = new Set([
 ]);
 const metadataFieldSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
 const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/u;
+const maxFilterQueryDepth = 1_000;
+const builtInMetadataOwners = new Map([
+  ["task", "task"],
+  ["tag", "tag"],
+]);
+const supportedFilterOperators = new Set([
+  "eq",
+  "neq",
+  "gt",
+  "lt",
+  "includes",
+  "exists",
+  "within",
+]);
 
 export function executeFilterQuery(
   input: ExecuteFilterQueryInput,
@@ -58,7 +76,14 @@ export function executeFilterQuery(
   return input.pages.filter(
     (page) =>
       page.archivedAt === undefined &&
-      matchesFilterQuery(page, input.metadata, input.query, currentDate),
+      matchesFilterQuery(
+        page,
+        input.metadata,
+        input.query,
+        currentDate,
+        0,
+        { activeQueries: new WeakSet() },
+      ),
   );
 }
 
@@ -67,50 +92,76 @@ function matchesFilterQuery(
   metadata: readonly MetadataRecord[],
   query: unknown,
   currentDate: string,
+  depth: number,
+  state: QueryExecutionState,
 ): boolean {
-  if (!isRecord(query)) {
+  if (!isRecord(query) || depth > maxFilterQueryDepth) {
     return false;
   }
 
-  const where = readDataArrayProperty(query, "where");
-
-  if (where === undefined) {
+  if (state.activeQueries.has(query)) {
     return false;
   }
 
-  const whereMatches = where.every((condition) =>
-    matchesFilterCondition(page, metadata, condition, currentDate),
-  );
+  state.activeQueries.add(query);
 
-  if (!whereMatches) {
-    return false;
-  }
+  try {
+    const where = readDataArrayProperty(query, "where");
 
-  const andBranches = readDataProperty(query, "and");
-
-  if (andBranches.present) {
-    if (
-      !Array.isArray(andBranches.value) ||
-      !andBranches.value.every((branch) =>
-        matchesFilterQuery(page, metadata, branch, currentDate),
-      )
-    ) {
+    if (where === undefined) {
       return false;
     }
+
+    const whereMatches = where.every((condition) =>
+      matchesFilterCondition(page, metadata, condition, currentDate),
+    );
+
+    if (!whereMatches) {
+      return false;
+    }
+
+    const andBranches = readDataProperty(query, "and");
+
+    if (andBranches.present) {
+      if (
+        !Array.isArray(andBranches.value) ||
+        !andBranches.value.every((branch) =>
+          matchesFilterQuery(
+            page,
+            metadata,
+            branch,
+            currentDate,
+            depth + 1,
+            state,
+          ),
+        )
+      ) {
+        return false;
+      }
+    }
+
+    const orBranches = readDataProperty(query, "or");
+
+    if (!orBranches.present) {
+      return true;
+    }
+
+    return (
+      Array.isArray(orBranches.value) &&
+      orBranches.value.some((branch) =>
+        matchesFilterQuery(
+          page,
+          metadata,
+          branch,
+          currentDate,
+          depth + 1,
+          state,
+        ),
+      )
+    );
+  } finally {
+    state.activeQueries.delete(query);
   }
-
-  const orBranches = readDataProperty(query, "or");
-
-  if (!orBranches.present) {
-    return true;
-  }
-
-  return (
-    Array.isArray(orBranches.value) &&
-    orBranches.value.some((branch) =>
-      matchesFilterQuery(page, metadata, branch, currentDate),
-    )
-  );
 }
 
 function matchesFilterCondition(
@@ -130,23 +181,38 @@ function matchesFilterCondition(
     return false;
   }
 
+  if (!isSupportedFilterOperator(op)) {
+    return false;
+  }
+
   const metadataField = parseMetadataField(field);
 
   if (metadataField === undefined) {
     return false;
   }
 
+  const conditionValue = readDataProperty(condition, "value");
+
+  if (op === "exists") {
+    if (conditionValue.present) {
+      return false;
+    }
+  } else if (!conditionValue.present) {
+    return false;
+  }
+
   const fieldValue = resolveMetadataField(page.id, metadata, metadataField);
 
-  if (fieldValue === undefined) {
+  if (
+    fieldValue === undefined ||
+    !storedValueMatchesDeclaredType(fieldValue)
+  ) {
     return false;
   }
 
   if (op === "exists") {
     return true;
   }
-
-  const conditionValue = readDataProperty(condition, "value");
 
   if (!conditionValue.present) {
     return false;
@@ -181,6 +247,10 @@ function matchesFilterCondition(
     default:
       return false;
   }
+}
+
+function isSupportedFilterOperator(value: string): boolean {
+  return supportedFilterOperators.has(value);
 }
 
 function parseMetadataField(field: string): MetadataField | undefined {
@@ -221,7 +291,7 @@ function resolveMetadataField(
       candidate.pageId === pageId &&
       candidate.namespace === field.namespace &&
       candidate.key === field.key &&
-      candidate.sourcePluginId === field.namespace,
+      metadataRecordOwnerIsTrusted(candidate, field),
   );
 
   if (record === undefined) {
@@ -232,6 +302,15 @@ function resolveMetadataField(
     value: record.value,
     valueType: record.valueType,
   };
+}
+
+function metadataRecordOwnerIsTrusted(
+  record: MetadataRecord,
+  field: MetadataField,
+): boolean {
+  const requiredOwner = builtInMetadataOwners.get(field.namespace);
+
+  return requiredOwner === undefined || record.sourcePluginId === requiredOwner;
 }
 
 function resolveComparableValue(
@@ -272,11 +351,37 @@ function valueIncludes(
   fieldValue: FieldValue,
   expected: Extract<ComparableValue, { comparable: true }>,
 ): boolean {
-  if (expected.requiresDateMetadata || !Array.isArray(fieldValue.value)) {
+  if (
+    expected.requiresDateMetadata ||
+    fieldValue.valueType !== "json" ||
+    !Array.isArray(fieldValue.value)
+  ) {
     return false;
   }
 
   return fieldValue.value.some((item) => Object.is(item, expected.value));
+}
+
+function storedValueMatchesDeclaredType(fieldValue: FieldValue): boolean {
+  switch (fieldValue.valueType) {
+    case "string":
+      return typeof fieldValue.value === "string";
+    case "number":
+      return (
+        typeof fieldValue.value === "number" &&
+        Number.isFinite(fieldValue.value)
+      );
+    case "boolean":
+      return typeof fieldValue.value === "boolean";
+    case "json":
+      return typeof fieldValue.value === "object" && fieldValue.value !== null;
+    case "date":
+      return typeof fieldValue.value === "string";
+    case "null":
+      return fieldValue.value === null;
+    default:
+      return false;
+  }
 }
 
 function valuesCompare(

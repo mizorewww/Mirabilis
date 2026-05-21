@@ -201,6 +201,7 @@ type SortablePlugin = {
 
 const pluginOwnershipPrefix = "pluginId";
 const sourcePluginOwnershipPrefix = "sourcePluginId";
+const filterIdNamespaceMarker = ".filter.";
 
 class PluginHostImpl implements PluginHostInstance {
   private readonly services: CoreServices;
@@ -1299,6 +1300,7 @@ function createPluginFilterStore(
     save(input: PluginSaveFilterInput) {
       assertCanMutatePluginData(scope);
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
+      assertFilterIdNamespaceAllowed(input, pluginId);
 
       return filters.save({
         ...input,
@@ -1334,6 +1336,51 @@ function createPluginFilterStore(
       return filters.delete(filterId);
     },
   };
+}
+
+function assertFilterIdNamespaceAllowed(
+  input: PluginSaveFilterInput,
+  pluginId: string,
+): void {
+  let idDescriptor: PropertyDescriptor | undefined;
+
+  try {
+    idDescriptor = Object.getOwnPropertyDescriptor(input, "id");
+  } catch (cause) {
+    throw new PluginHostError(
+      "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+      `Plugin ${pluginId} filter id must be inspectable`,
+      { pluginId, cause },
+    );
+  }
+
+  if (idDescriptor === undefined || !("value" in idDescriptor)) {
+    return;
+  }
+
+  const filterId = idDescriptor.value;
+
+  if (typeof filterId !== "string") {
+    return;
+  }
+
+  const namespaceEnd = filterId.indexOf(filterIdNamespaceMarker);
+
+  if (namespaceEnd <= 0) {
+    return;
+  }
+
+  const claimedPluginId = filterId.slice(0, namespaceEnd);
+
+  if (claimedPluginId === pluginId) {
+    return;
+  }
+
+  throw new PluginHostError(
+    "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+    `Plugin ${pluginId} cannot save filter id ${filterId}`,
+    { pluginId },
+  );
 }
 
 function requireOwnedFilter(
