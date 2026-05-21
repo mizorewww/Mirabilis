@@ -187,6 +187,42 @@ git diff --cached --check
 
 - Result: expected red signal. Focused tests ran 5 files / 120 tests with 8 failed / 112 passed. The 8 failures are all in `src/test/metadata-ui-plugin.test.tsx` because `src/plugins/metadata-ui` does not yet exist. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
 
+## Initial Implementation
+
+- Status: completed by Tesla (`implementer`) on 2026-05-21 22:01 CST.
+- Commit: `38910da`.
+- Files changed:
+  - `src/plugins/metadata-ui/components/MetadataBar.tsx`.
+  - `src/plugins/metadata-ui/index.ts`.
+  - `src/plugins/metadata-ui/plugin.ts`.
+  - `src/plugins/task/components/TaskMetadataSlot.tsx`.
+  - `src/plugins/timer/components/TimerMetadataPlaceholder.tsx`.
+  - `src/plugins/timer/index.ts`.
+  - `src/plugins/timer/plugin.ts`.
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/tag/components/TagMetadataSlot.tsx`.
+- Behavior implemented:
+  - Added built-in `metadata-ui` plugin and exported `MetadataBar`.
+  - `MetadataBar` renders `page.header.metadata` slot contributions in SlotRegistry order.
+  - Field components receive narrow scoped props: `pageId`, owner `pluginId`, trusted owner field descriptors, trusted owner values, and command executor only.
+  - Forged owner metadata is filtered by requiring active plugin manifest ownership plus matching `sourcePluginId`.
+  - Task contributes read-only current metadata UI for `enabled`, `status`, `sourcePageId`, `sourceBlockId`, `scheduled`, and `due`.
+  - Timer contributes an inert placeholder with disabled `Start timer` button and no timer commands.
+  - Tag behavior is preserved and adapted to render through the unified bar, including unsafe attribute hardening.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/core-view-slot-registry.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused TASK-023 tests passed with 5 files / 120 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Tesla (`implementer`) is implementing the minimum Metadata UI Plugin / metadata bar behavior for Lovelace's tests.
+- Spawn focused review agents for Tesla's TASK-023 implementation.
