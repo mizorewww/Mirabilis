@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:16 CST.
+Last updated: 2026-05-21 18:20 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:16 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix tests delegated to James.
+- Current phase: second review-fix implementation delegated to Godel.
 
 ## Active Agents
 
-- James (`test_writer`) is adding second review-fix regression tests only.
+- Godel (`implementer`) is fixing second review-fix regressions in production Tag Plugin code only.
 
 ## Completed Recent Task
 
@@ -142,8 +142,8 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Wait for James's second review-fix tests and expected red signal.
-2. Commit tests, then delegate implementation fixes.
+1. Wait for Godel's production fixes and focused validation.
+2. Run parent validation and commit implementation.
 3. Defer native guard portability to test-infrastructure work; keep parent native/package/Tauri diff checks for TASK-021.
 4. Run docs sync after behavior fixes, covering the P1/P2 docs drift from Erdos.
 

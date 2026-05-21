@@ -395,4 +395,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- James (`test_writer`) is adding second review-fix regression tests for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection.
+- Godel (`implementer`) is fixing second review-fix regressions in production Tag Plugin code only.
