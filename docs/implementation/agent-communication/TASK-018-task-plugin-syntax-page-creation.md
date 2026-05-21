@@ -40,8 +40,9 @@
 
 ## Current Status
 
-- Status: review-fix red tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: review-fix implementation agent running.
+- Active agents:
+  - Curie the 3rd (`implementer`): review-fix implementation for TASK-018 P2/P3 findings.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -51,7 +52,7 @@
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
   - Review round 1 agents completed and reported findings.
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
-- Next parent step: commit review-fix red-test result record, then delegate review-fix implementation to `implementer`.
+- Next parent step: wait for Curie the 3rd's review-fix implementation, run focused checks, and commit if green.
 
 ## Agent Handoffs
 
@@ -256,6 +257,17 @@ git diff --check
 ```
 
 - Result: expected red signal. 3 files ran, 2 failed, 1 passed; 4 tests failed and 72 passed. Failures covered duplicate top-level `blockId` mutation, unverified `attrs.boundPageId` reuse, CommonMark indented-code task parsing, and missing command failure cause/context preservation. `bun run typecheck` and `git diff --check` passed.
+
+### Curie the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: production review-fix implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
+- Fix targets:
+  - Duplicate source block ID safety.
+  - Verified `attrs.boundPageId` reuse and metadata-only relation recovery.
+  - CommonMark indented-code task rejection.
+  - Plugin command failure cause/context preservation.
+  - Command-time PluginContext hardening and transaction atomicity required by Boole's tests.
 
 ## Parent Decisions
 
