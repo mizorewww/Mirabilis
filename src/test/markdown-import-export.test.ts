@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type {
   BlockNode,
@@ -10,6 +10,8 @@ type ImportMarkdownOptions = {
   createBlockId?: () => string;
   previousDocument?: StructuredMarkdownDocument;
   maxInputLength?: number;
+  maxBlockCount?: number;
+  maxDepth?: number;
 };
 
 type ValidateStructuredMarkdownDocumentOptions = {
@@ -120,6 +122,67 @@ describe("Markdown import/export", () => {
     );
 
     expect(topLevelBlockIds(edited)).toStrictEqual(topLevelBlockIds(original));
+  });
+
+  it("does not assign a deleted blockId to a same-length inserted line", () => {
+    const { importMarkdownToStructuredDocument } = getMarkdownConversionApi();
+    const original = importMarkdownToStructuredDocument(
+      ["Alpha", "Beta", "Gamma"].join("\n"),
+      { createBlockId: createBlockIdFactory("same-length") },
+    );
+    const [alphaId, deletedBetaId, gammaId] = topLevelBlockIds(original);
+
+    const replacement = importMarkdownToStructuredDocument(
+      ["Alpha", "Inserted line with unrelated text", "Gamma"].join("\n"),
+      {
+        createBlockId: createBlockIdSequence([
+          deletedBetaId,
+          "same-length-fresh",
+        ]),
+        previousDocument: original,
+      },
+    );
+
+    expect(topLevelBlockIds(replacement)).toStrictEqual([
+      alphaId,
+      "same-length-fresh",
+      gammaId,
+    ]);
+    expect(topLevelBlockIds(replacement)).not.toContain(deletedBetaId);
+  });
+
+  it("preserves an edited existing blockId when another line is inserted", () => {
+    const { importMarkdownToStructuredDocument } = getMarkdownConversionApi();
+    const createBlockId = createBlockIdFactory("combined");
+    const original = importMarkdownToStructuredDocument(
+      ["Daily note", "Review PR", "Ship build"].join("\n"),
+      { createBlockId },
+    );
+    const [dailyId, reviewId, shipId] = topLevelBlockIds(original);
+
+    const editedWithInsertion = importMarkdownToStructuredDocument(
+      [
+        "Daily note",
+        "Inserted reminder",
+        "Review PR with notes",
+        "Ship build",
+      ].join("\n"),
+      {
+        createBlockId,
+        previousDocument: original,
+      },
+    );
+
+    const editedIds = topLevelBlockIds(editedWithInsertion);
+
+    expect(editedIds).toHaveLength(4);
+    expect(editedIds[0]).toBe(dailyId);
+    expect(editedIds[2]).toBe(reviewId);
+    expect(editedIds[3]).toBe(shipId);
+    expect(editedIds[1]).not.toBe(dailyId);
+    expect(editedIds[1]).not.toBe(reviewId);
+    expect(editedIds[1]).not.toBe(shipId);
+    expect(editedIds[1]?.trim()).not.toBe("");
   });
 
   it("preserves unchanged neighbor IDs across insertions and deletions without reusing a deleted ID", () => {
@@ -242,6 +305,76 @@ describe("Markdown import/export", () => {
           ],
         },
       },
+      {
+        label: "data URL attrs",
+        document: {
+          type: "doc",
+          content: [
+            {
+              blockId: "block-1",
+              type: "link",
+              text: "Data URL",
+              attrs: {
+                href: "data:text/html,<script>alert(1)</script>",
+              },
+            },
+          ],
+        },
+      },
+      {
+        label: "control-character javascript attrs",
+        document: {
+          type: "doc",
+          content: [
+            {
+              blockId: "block-1",
+              type: "link",
+              text: "Control URL",
+              attrs: {
+                href: "java\u0000script:alert(1)",
+              },
+            },
+          ],
+        },
+      },
+      {
+        label: "malformed marks",
+        document: {
+          type: "doc",
+          content: [
+            {
+              blockId: "block-1",
+              type: "markdown.line",
+              text: "Malformed marks",
+              marks: {
+                bold: true,
+              },
+            },
+          ],
+        },
+      },
+      {
+        label: "executable mark attrs",
+        document: {
+          type: "doc",
+          content: [
+            {
+              blockId: "block-1",
+              type: "markdown.line",
+              text: "Marked link",
+              marks: [
+                {
+                  type: "link",
+                  attrs: {
+                    href: "javascript:alert(1)",
+                    onClick: "alert(1)",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
     ];
 
     for (const { label, document, options } of malformedCases) {
@@ -257,6 +390,20 @@ describe("Markdown import/export", () => {
         maxInputLength: 10,
       }),
     ).toThrow();
+  });
+
+  it("rejects too many imported blocks before allocating blockIds", () => {
+    const { importMarkdownToStructuredDocument } = getMarkdownConversionApi();
+    let nextId = 1;
+    const createBlockId = vi.fn(() => `block-${nextId++}`);
+
+    expect(() =>
+      importMarkdownToStructuredDocument(["One", "Two"].join("\n"), {
+        createBlockId,
+        maxBlockCount: 1,
+      }),
+    ).toThrow();
+    expect(createBlockId).not.toHaveBeenCalled();
   });
 });
 
@@ -288,6 +435,12 @@ function createBlockIdFactory(prefix: string): () => string {
   let nextId = 1;
 
   return () => `${prefix}-${nextId++}`;
+}
+
+function createBlockIdSequence(ids: readonly string[]): () => string {
+  let nextIndex = 0;
+
+  return () => ids[nextIndex++] ?? `unexpected-block-${nextIndex}`;
 }
 
 function expectEveryStructuredBlockHasAUniqueBlockId(

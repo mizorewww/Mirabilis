@@ -93,7 +93,7 @@ fn db_execute_round_trips_pages_metadata_events_and_filters() -> TestResult {
                     "id": "page-1",
                     "title": "Roadmap updated",
                     "parentPageId": null,
-                    "body": {"blocks": [{"type": "paragraph", "text": "Roadmap updated"}]},
+                    "body": page_body("page-1", "Roadmap updated"),
                     "updatedAt": UPDATED_AT
                 }
             }),
@@ -387,6 +387,59 @@ fn db_execute_rejects_malformed_or_unsafe_requests_with_redacted_typed_errors() 
 }
 
 #[test]
+fn page_create_and_update_reject_malformed_structured_bodies_with_redacted_invalid_request(
+) -> TestResult {
+    let database = TempIpcDatabase::new()?;
+    dispatch_db_execute(
+        database.state(),
+        create_page_request("valid-body-page", "Valid body"),
+    )?;
+
+    for (index, (label, body, forbidden_fragments)) in
+        malformed_page_body_cases().into_iter().enumerate()
+    {
+        let page_id = format!("invalid-body-page-{index}");
+        let create_error = dispatch_db_execute(
+            database.state(),
+            create_page_request_with_body(&page_id, label, body.clone()),
+        )
+        .expect_err(&format!("page create should reject malformed body: {label}"));
+        assert_redacted_invalid_request(&create_error, &forbidden_fragments)?;
+        assert_eq!(
+            dispatch_db_execute(
+                database.state(),
+                json!({
+                    "operation": "core.pages.get",
+                    "payload": {"id": page_id}
+                }),
+            )?,
+            Value::Null,
+            "page create must reject {label} before writing body_json"
+        );
+
+        let update_error = dispatch_db_execute(
+            database.state(),
+            update_page_request_with_body("valid-body-page", "Valid body", body),
+        )
+        .expect_err(&format!("page update should reject malformed body: {label}"));
+        assert_redacted_invalid_request(&update_error, &forbidden_fragments)?;
+        assert_eq!(
+            dispatch_db_execute(
+                database.state(),
+                json!({
+                    "operation": "core.pages.get",
+                    "payload": {"id": "valid-body-page"}
+                }),
+            )?,
+            page_response("valid-body-page", "Valid body", UPDATED_AT, Value::Null),
+            "page update must reject {label} before replacing body_json"
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
 fn db_transaction_returns_ordered_results_and_rolls_back_validation_failures() -> TestResult {
     let database = TempIpcDatabase::new()?;
 
@@ -442,6 +495,47 @@ fn db_transaction_returns_ordered_results_and_rolls_back_validation_failures() -
             json!({
                 "operation": "core.pages.get",
                 "payload": {"id": "tx-rolled-back-validation"}
+            }),
+        )?,
+        Value::Null
+    );
+
+    Ok(())
+}
+
+#[test]
+fn page_transaction_rolls_back_earlier_valid_write_when_later_body_is_invalid() -> TestResult {
+    let database = TempIpcDatabase::new()?;
+
+    let error = dispatch_db_transaction(
+        database.state(),
+        vec![
+            create_page_request("tx-valid-before-invalid-body", "Valid before invalid"),
+            create_page_request_with_body(
+                "tx-invalid-body",
+                "Invalid body",
+                json!({
+                    "type": "doc",
+                    "content": [
+                        {"blockId": "tx-duplicate-block", "type": "markdown.line", "text": "One"},
+                        {"blockId": "tx-duplicate-block", "type": "markdown.line", "text": "Two"}
+                    ]
+                }),
+            ),
+        ],
+    )
+    .expect_err("transaction should reject invalid later page body and roll back earlier writes");
+    assert_redacted_invalid_request(
+        &error,
+        &["tx-valid-before-invalid-body", "tx-duplicate-block"],
+    )?;
+
+    assert_eq!(
+        dispatch_db_execute(
+            database.state(),
+            json!({
+                "operation": "core.pages.get",
+                "payload": {"id": "tx-valid-before-invalid-body"}
             }),
         )?,
         Value::Null
@@ -508,7 +602,7 @@ fn missing_target_mutations_return_typed_redacted_errors() -> TestResult {
                     "id": "missing-page-update",
                     "title": "Missing",
                     "parentPageId": null,
-                    "body": {"blocks": []},
+                    "body": page_body("missing-page-update", "Missing"),
                     "updatedAt": UPDATED_AT
                 }
             }),
@@ -567,7 +661,7 @@ fn transaction_rolls_back_earlier_writes_when_later_missing_target_mutation_fail
                     "id": "missing-page-in-transaction",
                     "title": "Missing",
                     "parentPageId": null,
-                    "body": {"blocks": []},
+                    "body": page_body("missing-page-in-transaction", "Missing"),
                     "updatedAt": UPDATED_AT
                 }
             }),
@@ -629,7 +723,7 @@ fn db_execute_rejects_semantically_invalid_payloads_for_every_operation() -> Tes
                     "id": " ",
                     "title": "Blank id",
                     "parentPageId": null,
-                    "body": {"blocks": []},
+                    "body": page_body("blank-page-id", "Blank id"),
                     "updatedAt": UPDATED_AT
                 }
             }),
@@ -920,16 +1014,223 @@ impl TempIpcDatabase {
 }
 
 fn create_page_request(id: &str, title: &str) -> Value {
+    create_page_request_with_body(id, title, page_body(id, title))
+}
+
+fn create_page_request_with_body(id: &str, title: &str, body: Value) -> Value {
     json!({
         "operation": "core.pages.create",
         "payload": {
             "id": id,
             "title": title,
             "parentPageId": null,
-            "body": {"blocks": [{"type": "paragraph", "text": title}]},
+            "body": body,
             "createdAt": CREATED_AT,
             "updatedAt": UPDATED_AT
         }
+    })
+}
+
+fn update_page_request_with_body(id: &str, title: &str, body: Value) -> Value {
+    json!({
+        "operation": "core.pages.update",
+        "payload": {
+            "id": id,
+            "title": title,
+            "parentPageId": null,
+            "body": body,
+            "updatedAt": UPDATED_AT
+        }
+    })
+}
+
+fn malformed_page_body_cases() -> Vec<(&'static str, Value, Vec<&'static str>)> {
+    vec![
+        (
+            "legacy blocks object",
+            json!({"blocks": [{"type": "paragraph", "text": "legacy body"}]}),
+            vec!["blocks", "legacy body"],
+        ),
+        (
+            "non-doc root",
+            json!({"type": "markdown.line", "content": []}),
+            vec!["markdown.line"],
+        ),
+        (
+            "missing content",
+            json!({"type": "doc"}),
+            vec!["doc"],
+        ),
+        (
+            "non-array content",
+            json!({"type": "doc", "content": {"blockId": "content-object"}}),
+            vec!["content-object"],
+        ),
+        (
+            "non-object block",
+            json!({"type": "doc", "content": ["not a block"]}),
+            vec!["not a block"],
+        ),
+        (
+            "missing blockId",
+            json!({"type": "doc", "content": [{"type": "markdown.line", "text": "Missing"}]}),
+            vec!["Missing"],
+        ),
+        (
+            "blank blockId",
+            json!({"type": "doc", "content": [{"blockId": "  ", "type": "markdown.line", "text": "Blank"}]}),
+            vec!["Blank"],
+        ),
+        (
+            "duplicate blockId",
+            json!({
+                "type": "doc",
+                "content": [
+                    {"blockId": "duplicate-block", "type": "markdown.line", "text": "One"},
+                    {"blockId": "duplicate-block", "type": "markdown.line", "text": "Two"}
+                ]
+            }),
+            vec!["duplicate-block"],
+        ),
+        (
+            "nested duplicate blockId",
+            json!({
+                "type": "doc",
+                "content": [
+                    {
+                        "blockId": "nested-duplicate-block",
+                        "type": "container",
+                        "content": [
+                            {
+                                "blockId": "nested-duplicate-block",
+                                "type": "markdown.line",
+                                "text": "Nested"
+                            }
+                        ]
+                    }
+                ]
+            }),
+            vec!["nested-duplicate-block"],
+        ),
+        (
+            "excessive depth",
+            nested_page_body(101),
+            vec!["depth-101"],
+        ),
+        (
+            "excessive block count",
+            many_block_page_body(20_001),
+            vec!["block-20001"],
+        ),
+        (
+            "invalid type",
+            json!({"type": "doc", "content": [{"blockId": "invalid-type", "type": 42, "text": "Invalid"}]}),
+            vec!["invalid-type"],
+        ),
+        (
+            "invalid text",
+            json!({"type": "doc", "content": [{"blockId": "invalid-text", "type": "markdown.line", "text": 42}]}),
+            vec!["invalid-text"],
+        ),
+        (
+            "invalid content",
+            json!({"type": "doc", "content": [{"blockId": "invalid-content", "type": "container", "content": {}}]}),
+            vec!["invalid-content"],
+        ),
+        (
+            "invalid attrs",
+            json!({"type": "doc", "content": [{"blockId": "invalid-attrs", "type": "markdown.line", "text": "Attrs", "attrs": []}]}),
+            vec!["invalid-attrs"],
+        ),
+        (
+            "event handler attr",
+            json!({"type": "doc", "content": [{"blockId": "onclick-attr", "type": "markdown.line", "text": "Click", "attrs": {"onClick": "alert(1)"}}]}),
+            vec!["onclick-attr", "onClick", "alert(1)"],
+        ),
+        (
+            "javascript attr",
+            json!({"type": "doc", "content": [{"blockId": "javascript-attr", "type": "markdown.line", "text": "Link", "attrs": {"href": "javascript:alert(1)"}}]}),
+            vec!["javascript-attr", "javascript:alert"],
+        ),
+        (
+            "data attr",
+            json!({"type": "doc", "content": [{"blockId": "data-attr", "type": "markdown.line", "text": "Data", "attrs": {"href": "data:text/html,<script>alert(1)</script>"}}]}),
+            vec!["data-attr", "data:text/html"],
+        ),
+        (
+            "normalized javascript attr",
+            json!({"type": "doc", "content": [{"blockId": "normalized-javascript-attr", "type": "markdown.line", "text": "Link", "attrs": {"href": "java\u{0000}script:alert(1)"}}]}),
+            vec!["normalized-javascript-attr", "script:alert"],
+        ),
+        (
+            "malformed marks",
+            json!({"type": "doc", "content": [{"blockId": "malformed-marks", "type": "markdown.line", "text": "Marks", "marks": {"bold": true}}]}),
+            vec!["malformed-marks"],
+        ),
+        (
+            "non-object mark",
+            json!({"type": "doc", "content": [{"blockId": "non-object-mark", "type": "markdown.line", "text": "Marks", "marks": ["bold"]}]}),
+            vec!["non-object-mark"],
+        ),
+        (
+            "executable mark attrs",
+            json!({
+                "type": "doc",
+                "content": [
+                    {
+                        "blockId": "executable-mark",
+                        "type": "markdown.line",
+                        "text": "Marked",
+                        "marks": [
+                            {
+                                "type": "link",
+                                "attrs": {
+                                    "href": "javascript:alert(1)",
+                                    "onClick": "alert(1)"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }),
+            vec!["executable-mark", "javascript:alert", "onClick"],
+        ),
+    ]
+}
+
+fn nested_page_body(depth: usize) -> Value {
+    let mut node = json!({
+        "blockId": format!("depth-{depth}"),
+        "type": "markdown.line",
+        "text": "Leaf"
+    });
+
+    for level in (1..depth).rev() {
+        node = json!({
+            "blockId": format!("depth-{level}"),
+            "type": "container",
+            "content": [node]
+        });
+    }
+
+    json!({
+        "type": "doc",
+        "content": [node]
+    })
+}
+
+fn many_block_page_body(block_count: usize) -> Value {
+    json!({
+        "type": "doc",
+        "content": (1..=block_count)
+            .map(|index| {
+                json!({
+                    "blockId": format!("block-{index}"),
+                    "type": "markdown.line",
+                    "text": format!("Line {index}")
+                })
+            })
+            .collect::<Vec<_>>()
     })
 }
 
@@ -1039,10 +1340,23 @@ fn page_response(id: &str, title: &str, updated_at: &str, archived_at: Value) ->
         "id": id,
         "title": title,
         "parentPageId": null,
-        "body": {"blocks": [{"type": "paragraph", "text": title}]},
+        "body": page_body(id, title),
         "createdAt": CREATED_AT,
         "updatedAt": updated_at,
         "archivedAt": archived_at
+    })
+}
+
+fn page_body(page_id: &str, text: &str) -> Value {
+    json!({
+        "type": "doc",
+        "content": [
+            {
+                "blockId": format!("{page_id}-block-1"),
+                "type": "markdown.line",
+                "text": text
+            }
+        ]
     })
 }
 

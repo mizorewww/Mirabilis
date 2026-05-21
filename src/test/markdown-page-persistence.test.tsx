@@ -239,6 +239,100 @@ describe("Markdown page persistence", () => {
     });
   });
 
+  it("rejects legacy-looking markdown.text bodies unless they match the exact old one-node shape", async () => {
+    const invalidBodies: Array<{
+      label: string;
+      body: unknown;
+    }> = [
+      {
+        label: "legacy node with blockId",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              blockId: "legacy-block",
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with non-string blockId",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              blockId: 123,
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with attrs",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              attrs: {
+                href: "https://example.invalid",
+              },
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with child content",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              content: [],
+            },
+          ],
+        },
+      },
+      {
+        label: "legacy node with marks",
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "markdown.text",
+              text: "Legacy text",
+              marks: [
+                {
+                  type: "bold",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    for (const [index, { label, body }] of invalidBodies.entries()) {
+      const pageId = `page-malformed-legacy-${index}`;
+      const pageFacade = await createProductionPageFacade(
+        createRecordingCorePageNativeBridge(
+          createCorePageDto({
+            id: pageId,
+            title: "Malformed legacy",
+            body: body as CoreMarkdownPageBody,
+          }),
+        ),
+      );
+
+      await expect(pageFacade.load(pageId), label).rejects.toThrow();
+    }
+  });
+
   it("saves edited Markdown as structured blocks and reuses prior blockIds", async () => {
     const nativeBridge = createRecordingCorePageNativeBridge(
       createCorePageDto({
