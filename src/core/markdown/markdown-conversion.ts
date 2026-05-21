@@ -215,6 +215,11 @@ function retainEditedBlockIds(input: {
   assignedPreviousBlockIds: Set<string>;
 }): void {
   let nextLineIndex = input.start;
+  const nextAssignedAnchors = nextAssignedPreviousBlockAnchors({
+    previousBlocks: input.previousBlocks,
+    assignedBlockIds: input.assignedBlockIds,
+    assignedPreviousBlockIds: input.assignedPreviousBlockIds,
+  });
 
   for (
     let previousIndex = input.start;
@@ -237,6 +242,12 @@ function retainEditedBlockIds(input: {
       input.lineEnd,
       nextLineIndex + maxBlockIdReconciliationLookahead - 1,
     );
+    const nextAssignedAnchor = nextAssignedAnchors[previousIndex];
+    const expectedLineIndex =
+      nextAssignedAnchor === undefined
+        ? undefined
+        : nextAssignedAnchor.lineIndex -
+          (nextAssignedAnchor.previousIndex - previousIndex);
 
     for (
       let lineIndex = nextLineIndex;
@@ -251,6 +262,7 @@ function retainEditedBlockIds(input: {
         previousMarkdown,
         input.lines[lineIndex] ?? "",
         lineIndex,
+        expectedLineIndex,
       );
 
       if (
@@ -280,6 +292,7 @@ function retainEditedBlockIds(input: {
 type BlockMatchCandidate = {
   lineIndex: number;
   score: number;
+  anchorDistance: number;
   continuationScore: number;
 };
 
@@ -287,10 +300,15 @@ function blockMatchCandidate(
   previousLine: string,
   nextLine: string,
   lineIndex: number,
+  expectedLineIndex: number | undefined,
 ): BlockMatchCandidate {
   return {
     lineIndex,
     score: blockSimilarityScore(previousLine, nextLine),
+    anchorDistance:
+      expectedLineIndex === undefined
+        ? Number.POSITIVE_INFINITY
+        : Math.abs(lineIndex - expectedLineIndex),
     continuationScore: blockContinuationScore(previousLine, nextLine),
   };
 }
@@ -303,11 +321,73 @@ function compareBlockMatchCandidates(
     return candidate.score - currentBest.score;
   }
 
+  if (candidate.anchorDistance !== currentBest.anchorDistance) {
+    return currentBest.anchorDistance - candidate.anchorDistance;
+  }
+
   if (candidate.continuationScore !== currentBest.continuationScore) {
     return candidate.continuationScore - currentBest.continuationScore;
   }
 
   return currentBest.lineIndex - candidate.lineIndex;
+}
+
+type PreviousBlockAnchor = {
+  previousIndex: number;
+  lineIndex: number;
+};
+
+function nextAssignedPreviousBlockAnchors(input: {
+  previousBlocks: readonly BlockNode[];
+  assignedBlockIds: ReadonlyArray<string | undefined>;
+  assignedPreviousBlockIds: ReadonlySet<string>;
+}): Array<PreviousBlockAnchor | undefined> {
+  const lineIndexByAssignedBlockId = new Map<string, number>();
+
+  for (
+    let lineIndex = 0;
+    lineIndex < input.assignedBlockIds.length;
+    lineIndex += 1
+  ) {
+    const blockId = input.assignedBlockIds[lineIndex];
+
+    if (blockId !== undefined) {
+      lineIndexByAssignedBlockId.set(blockId, lineIndex);
+    }
+  }
+
+  const nextAnchors = new Array<PreviousBlockAnchor | undefined>(
+    input.previousBlocks.length,
+  );
+  let nextAnchor: PreviousBlockAnchor | undefined;
+
+  for (
+    let previousIndex = input.previousBlocks.length - 1;
+    previousIndex >= 0;
+    previousIndex -= 1
+  ) {
+    nextAnchors[previousIndex] = nextAnchor;
+
+    const previousBlock = input.previousBlocks[previousIndex];
+
+    if (
+      previousBlock === undefined ||
+      !input.assignedPreviousBlockIds.has(previousBlock.blockId)
+    ) {
+      continue;
+    }
+
+    const lineIndex = lineIndexByAssignedBlockId.get(previousBlock.blockId);
+
+    if (lineIndex !== undefined) {
+      nextAnchor = {
+        previousIndex,
+        lineIndex,
+      };
+    }
+  }
+
+  return nextAnchors;
 }
 
 function blockSimilarityScore(previousLine: string, nextLine: string): number {
