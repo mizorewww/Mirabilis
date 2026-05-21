@@ -37,7 +37,7 @@
 
 ## Current Status
 
-- Status: docs sync completed; awaiting parent final gate.
+- Status: complete; merge to `master` pending.
 - Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
@@ -66,8 +66,8 @@
   - Dewey the 3rd (`implementer`): async-insert race fix completed, validated, committed, and closed.
   - Sartre the 3rd (`reviewer`): async-insert correctness re-review completed with no findings.
   - Hegel the 3rd (`deprecation_auditor`): async-insert API/deprecation re-review completed with no findings.
-  - Meitner the 3rd (`doc_writer`): final TASK-016 docs sync completed.
-- Next parent step: validate docs diff, run final local gate, and commit docs/progress as appropriate.
+  - Meitner the 3rd (`doc_writer`): final TASK-016 docs sync completed, validated, committed, and closed.
+- Next parent step: commit completion progress, merge to `master`, and push.
 
 ## Agent Handoffs
 
@@ -501,3 +501,15 @@
 - Validation:
   - `git diff --check` passed after the final handoff status update.
   - Lightweight docs `rg` checks verified TASK-016 terms and stale status cleanup.
+- Commit: `71b33f2 Meitner the 3rd(docs)(Implement Markdown Editor Plugin shell): sync markdown editor docs`.
+
+## Final Validation
+
+- Focused TASK-016 frontend tests passed with 3 files and 19 tests:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`.
+- `bun run typecheck` passed.
+- `bun run lint` passed.
+- `bun run build` passed.
+- `bun run check:quick` passed with 20 frontend test files / 284 tests, Rust fmt, Rust clippy, and full Rust tests.
+- `git diff --check` passed.
+- `check:full` was not run because TASK-016 does not add or modify Tauri commands, capabilities, generated permissions, Rust code, package/Cargo dependencies, filesystem/native behavior, packaging, or release behavior.
