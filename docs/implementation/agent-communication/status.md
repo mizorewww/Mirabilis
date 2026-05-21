@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:23 CST.
+Last updated: 2026-05-21 22:24 CST.
 
 ## Current Task
 
@@ -8,11 +8,13 @@ Last updated: 2026-05-21 22:23 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 review-fix implementation is committed; post-fix review is pending.
+- Current phase: TASK-023 post-fix review is running.
 
 ## Active Agents
 
-- None currently. Next step is to spawn narrow post-fix review agents.
+- Bacon (`reviewer`) is reviewing Galileo's MetadataBar boundary fix for correctness.
+- Arendt (`security_reviewer`) is reviewing Galileo's MetadataBar boundary fix for security.
+- Rawls (`test_quality_reviewer`) is reviewing Cicero's regression tests and Galileo's fix.
 
 ## Completed Recent Task
 
@@ -146,7 +148,7 @@ Last updated: 2026-05-21 22:23 CST.
 
 ## Next Actions
 
-1. Spawn narrow post-fix review agents.
+1. Wait for Bacon, Arendt, and Rawls.
 2. Fix any P0/P1 findings through delegated agents.
 
 ## Current TASK-021 State

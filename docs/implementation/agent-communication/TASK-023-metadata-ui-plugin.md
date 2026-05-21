@@ -315,4 +315,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents for Galileo's MetadataBar boundary implementation.
+- Bacon (`reviewer`), Arendt (`security_reviewer`), and Rawls (`test_quality_reviewer`) are reviewing Galileo's MetadataBar boundary implementation.
