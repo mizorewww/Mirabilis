@@ -356,4 +356,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn second review-fix `test_writer` for accepted P2/P3 regression coverage, then validate the expected red signal before committing the tests.
+- Ptolemy (`test_writer`) is adding second review-fix regressions for accepted P2/P3 findings. Parent will validate the expected red signal before committing the tests.

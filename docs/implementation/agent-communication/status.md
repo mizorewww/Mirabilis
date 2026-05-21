@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:36 CST.
+Last updated: 2026-05-21 19:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:36 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: post-fix focused review completed; second review-fix regression tests are next.
+- Current phase: second review-fix regression tests are being written.
 
 ## Active Agents
 
-- None. The post-fix focused review agents completed and are ready to close.
+- Ptolemy (`test_writer`) is adding second review-fix regression tests for the accepted post-fix P2/P3 findings.
 
 ## Completed Recent Task
 
@@ -79,7 +79,7 @@ Last updated: 2026-05-21 19:36 CST.
 
 ## Next Actions
 
-1. Spawn second review-fix `test_writer` for accepted P2/P3 regression coverage.
+1. Wait for Ptolemy's second review-fix regression tests.
 2. Validate expected red focused tests, then commit the test patch.
 3. Spawn `implementer` for the minimum code fix.
 4. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
