@@ -438,6 +438,33 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Focused test passed with 1 file / 15 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Docs Sync Handoff
+
+- Status: completed by Copernicus (`doc_writer`) on 2026-05-21 18:31 CST.
+- Commit: `cee4d4a`.
+- Files changed:
+  - `docs/product/02-core-data-model.md`.
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/05-plugin-implementations.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/implementation/task-index.md`.
+  - `docs/testing/strategy.md`.
+- Docs synced:
+  - Built-in `tag` plugin registration, `tag.hashtag`, `tag.tags`, explicit `tag.refresh-tags`, add/remove commands, `TagMetadataSlot`, `tag.create-filter`, ASCII slug normalization, current non-features, and no native/Tauri/package surface changes.
+  - Differentiated TASK-021 command-driven recognition and slot controls from future save-time indexing, autocomplete, global metadata UI, and filter result rendering.
+- Validation:
+
+```bash
+git diff --check
+```
+
+- Result: passed. No markdown/doc lint script was found in `package.json`, and no markdownlint/remark/textlint config was present.
+
 ## Current Next Action
 
-- Copernicus (`doc_writer`) is syncing formal TASK-021 docs using Erdos's docs drift map. Parent will update `progress.md` after final validation.
+- Run the final branch local gate, then update `progress.md` if it passes.
