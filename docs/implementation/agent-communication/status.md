@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:07 CST.
+Last updated: 2026-05-21 18:08 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-21 18:07 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation committed; post-fix focused review is next.
+- Current phase: post-fix focused review is running.
 
 ## Active Agents
 
-- None.
+- Kierkegaard (`pr_explorer`) is mapping the post-fix changed surface.
+- Dalton (`reviewer`) is reviewing correctness.
+- Poincare (`security_reviewer`) is reviewing security boundaries.
+- Newton (`test_quality_reviewer`) is reviewing test quality.
+- Boole (`deprecation_auditor`) is checking API/deprecation/docs drift.
+- Erdos (`docs_researcher`) is mapping docs semantics drift for later docs sync.
 
 ## Completed Recent Task
 

@@ -365,4 +365,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run post-fix focused review agents, then address any P0/P1 findings before docs sync and final gate.
+- Post-fix focused review is running with Kierkegaard (`pr_explorer`), Dalton (`reviewer`), Poincare (`security_reviewer`), Newton (`test_quality_reviewer`), Boole (`deprecation_auditor`), and Erdos (`docs_researcher`).
