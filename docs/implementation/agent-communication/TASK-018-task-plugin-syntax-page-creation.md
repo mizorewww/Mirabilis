@@ -40,8 +40,11 @@
 
 ## Current Status
 
-- Status: review-fix implementation committed; focused re-review pending.
-- Active agents: none.
+- Status: focused re-review agents running.
+- Active agents:
+  - Pauli the 3rd (`reviewer`): focused correctness/API re-review after review fixes.
+  - Raman the 3rd (`security_reviewer`): focused security re-review after review fixes.
+  - Volta the 3rd (`test_quality_reviewer`): focused test-quality re-review after review fixes.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -52,7 +55,7 @@
   - Review round 1 agents completed and reported findings.
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
-- Next parent step: commit review-fix implementation result record, then spawn focused re-review agents.
+- Next parent step: wait for focused re-review agents; if clear, delegate blocking docs sync.
 
 ## Agent Handoffs
 
@@ -285,6 +288,14 @@ git diff --check
 ```
 
 - Result: all passed. Review-fix regression set passed with 3 files / 76 tests. Core command registry passed with 1 file / 11 tests. Markdown import/export runtime regressions passed with 2 files / 17 tests.
+
+### Focused Re-review Round
+
+- Status: running.
+- Agents:
+  - Pauli the 3rd (`reviewer`): focused correctness/API re-review after review fixes.
+  - Raman the 3rd (`security_reviewer`): focused security re-review after review fixes.
+  - Volta the 3rd (`test_quality_reviewer`): focused test-quality re-review after review fixes.
 
 ## Parent Decisions
 
