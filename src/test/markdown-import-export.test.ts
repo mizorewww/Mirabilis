@@ -185,6 +185,39 @@ describe("Markdown import/export", () => {
     expect(editedIds[1]?.trim()).not.toBe("");
   });
 
+  it("keeps an edited old blockId when a similar new line is inserted before it", () => {
+    const { importMarkdownToStructuredDocument } = getMarkdownConversionApi();
+    const createBlockId = createBlockIdFactory("similar");
+    const original = importMarkdownToStructuredDocument(
+      ["Daily note", "Review PR", "Ship build"].join("\n"),
+      { createBlockId },
+    );
+    const [dailyId, reviewId, shipId] = topLevelBlockIds(original);
+
+    const editedWithSimilarInsertion = importMarkdownToStructuredDocument(
+      [
+        "Daily note",
+        "Review PR backlog",
+        "Review PR with notes",
+        "Ship build",
+      ].join("\n"),
+      {
+        createBlockId,
+        previousDocument: original,
+      },
+    );
+    const editedIds = topLevelBlockIds(editedWithSimilarInsertion);
+
+    expect(editedIds).toHaveLength(4);
+    expect(editedIds[0]).toBe(dailyId);
+    expect(editedIds[2]).toBe(reviewId);
+    expect(editedIds[3]).toBe(shipId);
+    expect(editedIds[1]).not.toBe(dailyId);
+    expect(editedIds[1]).not.toBe(reviewId);
+    expect(editedIds[1]).not.toBe(shipId);
+    expect(editedIds[1]?.trim()).not.toBe("");
+  });
+
   it("preserves unchanged neighbor IDs across insertions and deletions without reusing a deleted ID", () => {
     const {
       importMarkdownToStructuredDocument,

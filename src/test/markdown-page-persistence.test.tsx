@@ -7,6 +7,7 @@ import type { Mock } from "vitest";
 import { createAppRuntime, type AppRuntime } from "../bootstrap";
 import {
   DB_PERSISTENCE_OPERATIONS,
+  exportStructuredDocumentToMarkdown,
   type BlockNode,
   type DbQuery,
   type StructuredMarkdownDocument,
@@ -363,12 +364,12 @@ describe("Markdown page persistence", () => {
     const [updateQuery] = pageUpdateQueries(nativeBridge);
     const updatePayload = expectPageUpdatePayload(updateQuery);
 
-    expect(updatePayload.body.content.map((block) => block.blockId))
-      .toStrictEqual(["block-alpha", "block-beta"]);
-    expect(updatePayload.body.content.map((block) => block.text)).toStrictEqual([
-      "Alpha edited",
-      "Beta",
-    ]);
+    expect(exportStructuredDocumentToMarkdown(updatePayload.body)).toBe(
+      ["Alpha edited", "Beta"].join("\n"),
+    );
+    expect(collectBlockIds(updatePayload.body)).toEqual(
+      expect.arrayContaining(["block-alpha", "block-beta"]),
+    );
     expectEveryBlockHasUniqueNonblankBlockId(updatePayload.body);
     expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
       /\bfiles?_import\b|\bfiles?_export\b|\bpath\b|\bfile\b/i,
@@ -408,26 +409,18 @@ describe("Markdown page persistence", () => {
     await user.click(editor);
     await user.keyboard(toKeyboardLiteral(savedMarkdown));
     await user.click(screen.getByRole("button", { name: /save/i }));
-    await waitFor(() =>
-      expect(nativeBridge.db.execute).toHaveBeenCalledWith({
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-persisted",
-          title: "Inbox",
-          parentPageId: null,
-          body: {
-            type: "doc",
-            content: [
-              {
-                type: "markdown.text",
-                text: savedMarkdown,
-              },
-            ],
-          },
-          updatedAt,
-        },
-      } satisfies DbQuery),
-    );
+    await waitFor(() => expect(pageUpdateQueries(nativeBridge)).toHaveLength(1));
+    const [updateQuery] = pageUpdateQueries(nativeBridge);
+    const updatePayload = expectPageUpdatePayload(updateQuery);
+
+    expect(updatePayload).toMatchObject({
+      id: "page-persisted",
+      title: "Inbox",
+      parentPageId: null,
+      updatedAt,
+    });
+    expectStructuredBodyMarkdown(updatePayload.body, savedMarkdown);
+    expectEveryBlockHasUniqueNonblankBlockId(updatePayload.body);
 
     unmount();
 
@@ -440,38 +433,24 @@ describe("Markdown page persistence", () => {
     expect(
       await screen.findByRole("textbox", { name: /markdown/i }),
     ).toHaveValue(savedMarkdown);
-    expect(nativeBridge.db.execute.mock.calls.map(([query]) => query)).toStrictEqual([
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-persisted",
-        },
+    const queries = nativeBridge.db.execute.mock.calls.map(([query]) => query);
+    expect(queries.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesGet,
+      DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+      DB_PERSISTENCE_OPERATIONS.pagesGet,
+    ]);
+    expect(queries[0]).toStrictEqual({
+      operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+      payload: {
+        id: "page-persisted",
       },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
-        payload: {
-          id: "page-persisted",
-          title: "Inbox",
-          parentPageId: null,
-          body: {
-            type: "doc",
-            content: [
-              {
-                type: "markdown.text",
-                text: savedMarkdown,
-              },
-            ],
-          },
-          updatedAt,
-        },
+    } satisfies DbQuery);
+    expect(queries[2]).toStrictEqual({
+      operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+      payload: {
+        id: "page-persisted",
       },
-      {
-        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
-        payload: {
-          id: "page-persisted",
-        },
-      },
-    ] satisfies DbQuery[]);
+    } satisfies DbQuery);
     expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
       /\bsql\b|\bparams\b|select\s+\*|core_pages|\bpath\b|\bfile\b/i,
     );
@@ -654,7 +633,7 @@ function createNativeBackedPageFacade(
           id: input.pageId,
           title: "Inbox",
           parentPageId: null,
-          body: markdownToNativeBody(input.markdown),
+          body: structuredBodyFromMarkdown(input.markdown),
           updatedAt,
         },
       }) as Promise<MarkdownEditorDocument>;
@@ -739,13 +718,13 @@ function createRecordingNativeBridge(
       const payload = query.payload as {
         id: string;
         title: string;
-        body: ReturnType<typeof markdownToNativeBody>;
+        body: StructuredMarkdownDocument;
       };
 
       currentPage = {
         id: payload.id,
         title: payload.title,
-        markdown: payload.body.content[0]?.text ?? "",
+        markdown: exportStructuredDocumentToMarkdown(payload.body),
       };
 
       return currentPage;
@@ -848,20 +827,21 @@ function expectStructuredBodyMarkdown(
   expect(body.type).toBe("doc");
   expect(Array.isArray(body.content)).toBe(true);
   expect(body.content).not.toStrictEqual(markdownToNativeBody(markdown).content);
-  expect(body.content.map((block) => block.text)).toStrictEqual(
-    markdown.split("\n"),
-  );
+  expect(exportStructuredDocumentToMarkdown(body)).toBe(markdown);
 }
 
 function expectEveryBlockHasUniqueNonblankBlockId(
   document: StructuredMarkdownDocument,
 ): void {
-  const blocks = collectBlocks(document);
-  const blockIds = blocks.map((block) => block.blockId);
+  const blockIds = collectBlockIds(document);
 
-  expect(blocks.length).toBeGreaterThan(0);
+  expect(blockIds.length).toBeGreaterThan(0);
   expect(blockIds.every((blockId) => blockId.trim().length > 0)).toBe(true);
   expect(new Set(blockIds).size).toBe(blockIds.length);
+}
+
+function collectBlockIds(document: StructuredMarkdownDocument): string[] {
+  return collectBlocks(document).map((block) => block.blockId);
 }
 
 function collectBlocks(document: StructuredMarkdownDocument): BlockNode[] {

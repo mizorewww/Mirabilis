@@ -1124,6 +1124,24 @@ fn malformed_page_body_cases() -> Vec<(&'static str, Value, Vec<&'static str>)> 
             vec!["invalid-type"],
         ),
         (
+            "structured markdown.text block with blockId",
+            json!({
+                "type": "doc",
+                "content": [
+                    {
+                        "blockId": "structured-markdown-text",
+                        "type": "markdown.text",
+                        "text": "Structured text must use markdown.line"
+                    }
+                ]
+            }),
+            vec![
+                "structured-markdown-text",
+                "markdown.text",
+                "Structured text must use markdown.line",
+            ],
+        ),
+        (
             "invalid text",
             json!({"type": "doc", "content": [{"blockId": "invalid-text", "type": "markdown.line", "text": 42}]}),
             vec!["invalid-text"],
