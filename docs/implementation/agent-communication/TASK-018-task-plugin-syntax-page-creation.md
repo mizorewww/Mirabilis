@@ -40,14 +40,15 @@
 
 ## Current Status
 
-- Status: pre-test guidance completed; TDD test handoff pending.
-- Active agents: none.
+- Status: TDD red-test agent running.
+- Active agents:
+  - Harvey the 3rd (`test_writer`): TASK-018 failing tests only; owns focused Vitest tests and test helpers if needed.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
   - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
-- Next parent step: commit pre-test guidance and parent decisions, then delegate failing tests to `test_writer`.
+- Next parent step: wait for Harvey the 3rd's failing tests, run the focused red-test command, and commit the red tests.
 
 ## Agent Handoffs
 
@@ -96,6 +97,18 @@
   - Keep task creation behind Command Registry while providing a safe execution boundary.
   - Do not add `task.*` native operations, NativeBridge handles, raw stores, raw registries, filesystem, SQL, or Tauri handles to Task Plugin.
 - Security test guidance: invalid payloads and stale source blocks must not mutate; derive or verify title from the current source block, not caller input alone; page creation, metadata writes, and source block binding must be atomic; duplicate prevention must use `(sourcePageId, sourceBlockId)`; same block IDs on different pages should create distinct task pages; `boundPageId` and existing metadata relations should be reused; code fences and malformed lines should not create tasks; HTML or `javascript:`-like titles remain inert text; native-surface guards stay green.
+
+### Harvey the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: tests only.
+- Suggested file: `src/test/task-plugin-syntax-page-creation.test.ts`.
+- Required red-test focus:
+  - Task Plugin registration and task syntax recognition for `- [ ] A` in a `markdown.line` block with stable `blockId`.
+  - A registered Task Plugin resolver command executable through the runtime command bus without stale register-time `PluginContext` mutation.
+  - Task page creation, camelCase task metadata writes, and source block `attrs.boundPageId` binding.
+  - Duplicate prevention by `(sourcePageId, sourceBlockId)`, including same `blockId` on different source pages creating distinct pages.
+  - Negative cases for invalid payloads, stale/non-task blocks, malformed task lines, and inert HTML / `javascript:`-like titles where practical.
 
 ## Parent Decisions
 

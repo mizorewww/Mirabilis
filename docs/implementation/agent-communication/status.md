@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 11:26 CST.
+Last updated: 2026-05-21 11:28 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 11:26 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance completed; TDD test handoff pending.
+- Current phase: TDD red-test agent running.
 
 ## Active Agents
 
-- None.
+- Harvey the 3rd (`test_writer`): TASK-018 failing tests only; owns focused Vitest tests and test helpers if needed.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -61,5 +61,6 @@ Last updated: 2026-05-21 11:26 CST.
 
 ## Next Actions
 
-1. Commit pre-test guidance and parent decisions.
-2. Delegate failing tests to `test_writer`.
+1. Wait for Harvey the 3rd's failing tests.
+2. Run the focused red-test command and confirm expected failure.
+3. Commit the red tests.
