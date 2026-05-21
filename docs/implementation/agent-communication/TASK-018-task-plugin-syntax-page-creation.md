@@ -40,8 +40,9 @@
 
 ## Current Status
 
-- Status: final narrow re-review found one P2; third review-fix TDD handoff pending.
-- Active agents: none.
+- Status: third review-fix red-test agent running.
+- Active agents:
+  - Heisenberg the 3rd (`test_writer`): third review-fix regression test for real PluginHostError instance thrown by non-plugin commands.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -53,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: commit final narrow re-review finding, then delegate third review-fix regression test to `test_writer`.
+- Next parent step: wait for Heisenberg the 3rd's red test, run focused red-test command, and commit if expected.
 
 ## Agent Handoffs
 
@@ -370,6 +371,12 @@ git diff --check
   - `CommandRegistry` still does not prove a preserved cause came from Plugin Host command execution. It now checks `cause instanceof PluginHostError`, but `PluginHostError` is publicly exported/constructible. A direct/non-plugin command can throw a real `new PluginHostError(...)` and still have that raw cause preserved.
 - Non-issues: no circular/import boundary issue found; typecheck/lint/focused tests pass.
 - Checks run: `bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts`, `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`; all passed. A one-off probe confirmed the remaining P2.
+
+### Heisenberg the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: tests only.
+- Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a real exported `PluginHostError` instance as `CommandRegistryError.cause`.
 
 ## Parent Decisions
 

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 12:35 CST.
+Last updated: 2026-05-21 12:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 12:35 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final narrow re-review found one P2; third review-fix TDD handoff pending.
+- Current phase: third review-fix red-test agent running.
 
 ## Active Agents
 
-- None.
+- Heisenberg the 3rd (`test_writer`): third review-fix regression test for real PluginHostError instance thrown by non-plugin commands.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -143,5 +143,5 @@ git diff --check
 
 ## Next Actions
 
-1. Commit final narrow re-review finding.
-2. Delegate third review-fix regression test to `test_writer`.
+1. Wait for Heisenberg the 3rd's red test.
+2. Run focused red-test command and commit if expected.
