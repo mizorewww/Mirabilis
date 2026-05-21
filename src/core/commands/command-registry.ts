@@ -6,7 +6,6 @@ import type {
   CommandService,
   ListCommandsOptions,
 } from "../types";
-import { PluginHostError } from "../plugin-host";
 
 class CommandRegistryErrorImpl extends Error {
   readonly code: CommandRegistryErrorCode;
@@ -60,6 +59,16 @@ type JsonCompatibilityValidationState = {
 
 const maxJsonContextDepth = 1_000;
 const maxJsonContextNodes = 100_000;
+const preservedCommandHandlerFailureCauses = new WeakSet<object>();
+
+/** @internal */
+export function preserveCommandHandlerFailureCause<Cause extends object>(
+  cause: Cause,
+): Cause {
+  preservedCommandHandlerFailureCauses.add(cause);
+
+  return cause;
+}
 
 export function createInMemoryCommandRegistry(): CommandService {
   const commands = new Map<string, StoredCommand>();
@@ -152,15 +161,15 @@ export function createInMemoryCommandRegistry(): CommandService {
 function createHandlerFailureErrorOptions(
   cause: unknown,
 ): { cause?: unknown } {
-  if (isPluginHostError(cause)) {
+  if (
+    typeof cause === "object" &&
+    cause !== null &&
+    preservedCommandHandlerFailureCauses.has(cause)
+  ) {
     return { cause };
   }
 
   return {};
-}
-
-function isPluginHostError(cause: unknown): boolean {
-  return cause instanceof PluginHostError;
 }
 
 function createDescriptor<Input, Output>(

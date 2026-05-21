@@ -46,6 +46,7 @@ import type {
   SlotContribution,
   ViewDefinition,
 } from "../types";
+import { preserveCommandHandlerFailureCause } from "../commands/command-registry";
 
 export type PluginHostErrorCode =
   | "PLUGIN_DUPLICATE_ID"
@@ -717,14 +718,16 @@ class PluginHostImpl implements PluginHostInstance {
 
       return result;
     } catch (cause) {
-      throw new PluginHostError(
-        "PLUGIN_LIFECYCLE_FAILED",
-        `Plugin ${pluginId} command failed`,
-        {
-          pluginId,
-          phase: "command",
-          cause,
-        },
+      throw preserveCommandHandlerFailureCause(
+        new PluginHostError(
+          "PLUGIN_LIFECYCLE_FAILED",
+          `Plugin ${pluginId} command failed`,
+          {
+            pluginId,
+            phase: "command",
+            cause,
+          },
+        ),
       );
     } finally {
       scope.active = false;
