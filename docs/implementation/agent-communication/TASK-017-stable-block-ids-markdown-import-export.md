@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: review-fix implementation and test formatting complete; focused re-review pending.
+- Status: focused re-review complete; second review-fix red tests pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -60,7 +60,10 @@
   - Tesla the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
   - Hooke the 3rd (`implementer`): review-fix implementation completed, focused checks green except test-file rustfmt, committed, and closed.
   - Aristotle the 3rd (`test_writer`): test-only Rust IPC formatting fix completed, validated, committed, and closed.
-- Next parent step: commit review-fix formatting result and spawn focused re-review agents.
+  - Lagrange the 3rd (`reviewer`): focused correctness re-review completed with two remaining P1 findings.
+  - Laplace the 3rd (`security_reviewer`): focused security re-review completed with no P0/P1 findings and one P2 aligned with Lagrange's Rust validator finding.
+  - Parfit the 3rd (`test_quality_reviewer`): focused test-quality re-review completed with no P0/P1 findings and one remaining P2 representation-overfit concern.
+- Next parent step: commit focused re-review findings and delegate second review-fix red tests.
 
 ## Agent Handoffs
 
@@ -398,6 +401,42 @@ git diff --check
 ```
 
 - Result: all passed.
+
+### Focused Re-review Round
+
+- Status: completed.
+
+### Lagrange the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness re-review; no files edited.
+- P1: Rust IPC validation still accepts structured blocks with `type: "markdown.text"` when they include a `blockId`. TS validation rejects that same body as a malformed legacy node, so `core.pages.create/update` can persist a page that `runtime.markdown.pages.load()` later rejects.
+- P1: combined insert+edit ID retention remains fragile when the inserted line is textually similar to the edited existing block. A new line like `Review PR backlog` can inherit the old `Review PR` ID while `Review PR with notes` receives a new ID.
+- P2: docs sync remains incomplete; docs still describe stable block IDs / Markdown import-export as deferred and show old `markdown.text` save shape.
+- Checks run: focused frontend tests, focused Rust IPC page tests, and `git diff --check master...HEAD`.
+
+### Laplace the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security re-review; no files edited.
+- Finding: no P0/P1 security issues.
+- P2: Rust IPC body validation still accepts structured `markdown.text` blocks with `blockId`, while TS validation rejects them. This is covered as P1 by Lagrange because it can persist bodies the frontend later rejects.
+- No new Tauri commands, capability/filesystem broadening, raw HTML rendering, or raw invoke usage found.
+- Checks run: full `ipc_persistence` integration test, focused frontend tests. A direct `bun test` attempt was invalid because it bypassed Vitest/jsdom setup.
+
+### Parfit the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only test-quality re-review; no files edited.
+- Finding: no P0/P1 test gaps.
+- P2: runtime persistence tests still overfit the current one-line-per-block representation with assertions on `body.content.map((block) => block.text)`. Prefer asserting `exportStructuredDocumentToMarkdown(updatePayload.body)` plus recursive block ID uniqueness/stability.
+- Checks run: focused frontend tests and focused Rust IPC page tests.
+
+## Second Review-Fix Plan
+
+- Required P1 fixes:
+  - Add red tests for similar inserted line plus edited existing block ID retention.
+  - Add Rust IPC red tests rejecting structured `markdown.text` blocks with `blockId` through `core.pages.create/update`.
+- P2 cleanup to include if practical:
+  - Loosen runtime persistence tests away from one-line-per-block assertions and toward export/recursive ID behavior.
+- Docs sync remains after code/test re-review is clean.
 
 ## Validation
 

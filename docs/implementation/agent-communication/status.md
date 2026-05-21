@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 10:19 CST.
+Last updated: 2026-05-21 10:24 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 10:19 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation and test formatting complete; focused re-review pending.
+- Current phase: focused re-review complete; second review-fix red tests pending.
 
 ## Active Agents
 
@@ -50,6 +50,10 @@ Last updated: 2026-05-21 10:19 CST.
 - Tesla the 3rd (`test_writer`) added review-fix failing tests for TypeScript reconciliation/validation/runtime fallback and Rust IPC body validation. Commit: `3820fca`.
 - Hooke the 3rd (`implementer`) fixed TypeScript ID reconciliation/validation, strict legacy fallback handling, and Rust IPC structured page body validation. Commit: `618eaae`.
 - Aristotle the 3rd (`test_writer`) formatted the review-fix Rust IPC tests. Commit: `916b51c`.
+- Focused re-review completed:
+  - Lagrange the 3rd (`reviewer`) found two remaining P1 issues: Rust IPC still accepts structured `markdown.text` blocks with `blockId`, and similar inserted lines can still steal an edited existing block's ID.
+  - Laplace the 3rd (`security_reviewer`) found no P0/P1 security issues, but also noted the Rust `markdown.text` structured-block mismatch as P2.
+  - Parfit the 3rd (`test_quality_reviewer`) found no P0/P1 test gaps; remaining P2 is representation overfit in runtime persistence assertions.
 
 ## Validation Already Reported By Parent
 
@@ -97,6 +101,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit review-fix formatting result.
-2. Spawn focused re-review agents for correctness, security, and test quality.
-3. Fix any remaining P0/P1 findings before docs sync.
+1. Commit focused re-review findings.
+2. Delegate second review-fix red tests for the two P1s and optional P2 test overfit cleanup.
+3. Delegate second review-fix implementation.
