@@ -410,6 +410,27 @@ git diff --check master...HEAD
 - Checked task open: `task.open-task-page` should create/bind/open an unresolved checked task as a normal task page with `task.status = "done"` and no completion/reopen event. `task.resolve-task-block` remains unchecked-only.
 - Docs P1/P2 drift will be handled by a docs sync agent after behavior fixes and focused review pass.
 
+## Second Review-fix Test Handoff
+
+- Status: completed by Newton the 4th (`test_writer`) on 2026-05-21 14:55 CST.
+- Files changed:
+  - `src/test/task-checkbox-toggle-events.test.tsx`.
+- Commit: `2134c16` (`Newton the 4th(test)(Implement checkbox toggle and task events): cover focused interaction regressions`).
+- Coverage added:
+  - Visible task title appears once as the open button; checkbox remains accessible and separate.
+  - Second checkbox click while the first toggle is pending must not dispatch another toggle; UI resolves to checked.
+  - `task.open-task-page` creates/opens unresolved checked task as `task.status = "done"` with no task events.
+  - `task.resolve-task-block` still rejects unresolved checked task lines.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 3 files / 47 tests with 3 failed / 44 passed. Failures were duplicated visible task title text, repeated pending toggle dispatching twice, and `task.open-task-page` rejecting unresolved checked source with `Completed task source block is not resolved`. `bun run typecheck` passed. `git diff --check` passed.
+
 ## Current Next Action
 
-- Delegate review-fix tests for the focused P2 findings.
+- Delegate second review-fix implementation to `implementer`.

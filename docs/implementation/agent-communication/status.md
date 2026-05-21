@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:52 CST.
+Last updated: 2026-05-21 14:55 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:52 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused review completed; P2 behavior fixes and docs sync are pending.
+- Current phase: second review-fix regressions committed; behavior fix implementation is next.
 
 ## Active Agents
 
@@ -36,6 +36,7 @@ Last updated: 2026-05-21 14:52 CST.
   - Franklin the 4th (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings. P3: the native-surface guard shells out to `git diff master`.
   - Archimedes the 4th (`security_reviewer`) found no P0/P1/P2 security findings. P3: existing `task.resolve-task-block` / `task.open-task-page` input readers still allow extra fields, but they are ignored and not trusted.
   - Planck the 4th (`deprecation_auditor`) found P1 docs drift for stale command aliases/payloads, P2 checked-task open behavior under-specification, and P2 broader docs still saying checkbox toggle/events are unimplemented.
+- Newton the 4th (`test_writer`) added second review-fix regressions for task title/open affordance separation, pending toggle suppression, unresolved checked-task open, and `task.resolve-task-block` remaining unchecked-only. Commit: `2134c16`.
 
 ## Current TASK-020 State
 
@@ -109,6 +110,6 @@ git diff --cached --check
 
 ## Next Actions
 
-1. Delegate review-fix tests for the focused P2 behavior findings.
-2. Run expected red tests.
-3. Delegate review-fix implementation.
+1. Delegate second review-fix implementation to `implementer`.
+2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
+3. Commit behavior fix if focused checks pass.
