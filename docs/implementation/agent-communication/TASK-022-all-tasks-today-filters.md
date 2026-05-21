@@ -354,6 +354,34 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Restrict plugin-provided fixed filter IDs enough to prevent cross-plugin fixed-id collisions.
   - Keep `within`, JS filters, native/Tauri/package/Rust changes, global saved-filter navigation, automatic scanning, persistence rewiring, and Event/plugin-index execution out of scope.
 
+## Second Review-Fix Regression Tests
+
+- Status: completed by Ptolemy (`test_writer`) on 2026-05-21 19:43 CST.
+- Commit: `abbd9ff`.
+- Push note: the post-commit auto-push initially failed with an SSH timeout, then parent retried `git push origin feat/task-022-all-tasks-today-filters` successfully.
+- Files changed:
+  - `src/test/core-filter-engine.test.ts`.
+  - `src/test/plugin-api-contracts.test.ts`.
+  - `src/test/task-filters-view-rendering.test.tsx`.
+- Coverage added:
+  - User-created task-owned filters survive Task Plugin default filter re-register/upsert.
+  - Plugin-facing fixed filter IDs cannot claim another plugin namespace such as `task.filter.today` from a non-task plugin, while same-plugin fixed IDs remain allowed.
+  - Direct cyclic or over-deep query objects fail closed without throwing.
+  - Direct executor operator/value shapes align with saved filter expectations for the covered subset.
+  - `eq`, `neq`, and `includes` fail closed for metadata `valueType` / stored value shape mismatches.
+  - Generic metadata execution allows valid namespace/source owner pairs where `sourcePluginId` differs from namespace while preserving built-in Task/Tag owner boundaries.
+  - `gt`/`lt` coverage is broadened for number/date comparisons and wrong query operand types.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bunx eslint src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 4 files / 110 tests with 10 failed / 100 passed. Failures were cross-plugin fixed task filter ids still being accepted, cyclic/deep direct queries not failing closed, malformed direct query/valueType cases matching, and generic metadata owner pairs with non-matching `sourcePluginId` being rejected. `bun run typecheck`, focused eslint, and `git diff --check` passed.
+
 ## Current Next Action
 
-- Ptolemy (`test_writer`) is adding second review-fix regressions for accepted P2/P3 findings. Parent will validate the expected red signal before committing the tests.
+- Spawn second review-fix `implementer` to make Ptolemy's red regressions pass with the minimum production change.
