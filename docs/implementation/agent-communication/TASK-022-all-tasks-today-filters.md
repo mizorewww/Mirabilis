@@ -687,6 +687,32 @@ git diff --check
 
 - Result: expected red signal. Focused manifest tests ran 3 files / 71 tests with 2 failed / 69 passed. Failures were the earlier same-batch write failing later under owner plugin lifecycle instead of rejecting the earlier plugin write, and malformed descriptor handling throwing `Cannot read properties of null (reading 'namespace')`. `bun run typecheck`, focused eslint, and `git diff --check` passed.
 
+## P2 Manifest Hardening Implementation
+
+- Status: completed by Carson (`implementer`) on 2026-05-21 21:06 CST.
+- Commit: `91e0134`.
+- Files changed:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Behavior implemented:
+  - `loadBuiltInPlugins()` derives valid metadata owner reservations for the whole sorted built-in batch before install/register lifecycle writes run.
+  - Batch reservations are scoped to that batch's lifecycle contexts so unrelated plugin work does not inherit them.
+  - Malformed `metadataFields` shapes are ignored unless they are complete valid array descriptors.
+  - No business plugin names were hard-coded in Core.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused manifest tests passed with 3 files / 71 tests. Architecture-boundary focused test passed with 1 file / 1 test. Expanded focused coverage passed with 4 files / 122 tests. Plugin Host lifecycle tests passed with 1 file / 47 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Carson (`implementer`) is fixing Hilbert's P2 manifest-reservation hardening regressions.
+- Spawn narrow follow-up review agents for Carson's P2 manifest-reservation hardening implementation.
