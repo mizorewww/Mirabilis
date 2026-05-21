@@ -189,6 +189,7 @@ type PluginContextScope = {
   phase: PluginLifecyclePhase;
   active: boolean;
   allowsRuntimeContributionRegistration: boolean;
+  metadataOwnerReservations: readonly MetadataOwnerReservation[];
   registrationTracker: RegisteredContribution[];
   registrationTrackerRolledBack: boolean;
 };
@@ -249,6 +250,8 @@ class PluginHostImpl implements PluginHostInstance {
       new Set(this.records.keys()),
       this.getDependencySatisfyingPluginIds(),
     );
+    const batchMetadataOwnerReservations =
+      collectMetadataOwnerReservationsFromPlugins(orderedPlugins);
     const batchStartOrder = this.nextOrder;
     const installedRecords: StoredPluginRecord[] = [];
 
@@ -267,7 +270,7 @@ class PluginHostImpl implements PluginHostInstance {
       const record = this.addInstalledRecord(plugin);
 
       try {
-        await this.installRecord(record);
+        await this.installRecord(record, batchMetadataOwnerReservations);
       } catch (error) {
         this.rollbackInstalledBatchRecords(
           [...installedRecords, record],
@@ -280,7 +283,7 @@ class PluginHostImpl implements PluginHostInstance {
     }
 
     for (const record of installedRecords) {
-      await this.registerInstalledPlugin(record);
+      await this.registerInstalledPlugin(record, batchMetadataOwnerReservations);
     }
 
     return installedRecords.map((record) => this.toPublicRecord(record));
@@ -472,14 +475,22 @@ class PluginHostImpl implements PluginHostInstance {
     return pluginIds;
   }
 
-  private installRecord(record: StoredPluginRecord): Promise<void> {
+  private installRecord(
+    record: StoredPluginRecord,
+    metadataOwnerReservations: readonly MetadataOwnerReservation[] = [],
+  ): Promise<void> {
     if (record.installPromise !== undefined) {
       return record.installPromise;
     }
 
     const installPromise = Promise.resolve()
       .then(() =>
-        this.runLifecycleHook(record, "install", record.plugin.install),
+        this.runLifecycleHook(
+          record,
+          "install",
+          record.plugin.install,
+          metadataOwnerReservations,
+        ),
       )
       .catch((error: unknown) => {
         this.cleanupFailedInstallRecord(record);
@@ -551,6 +562,7 @@ class PluginHostImpl implements PluginHostInstance {
     record: StoredPluginRecord,
     phase: PluginLifecyclePhase,
     hook: ((ctx: PluginContext) => void | Promise<void>) | undefined,
+    metadataOwnerReservations: readonly MetadataOwnerReservation[] = [],
   ): Promise<void> {
     if (hook === undefined) {
       return;
@@ -560,6 +572,7 @@ class PluginHostImpl implements PluginHostInstance {
       record.manifest.id,
       phase,
       false,
+      metadataOwnerReservations,
     );
     record.lifecycleScopes.add(scope);
 
@@ -584,12 +597,16 @@ class PluginHostImpl implements PluginHostInstance {
 
   private async registerInstalledPlugin(
     record: StoredPluginRecord,
+    metadataOwnerReservations: readonly MetadataOwnerReservation[] = [],
   ): Promise<void> {
     if (record.registerPromise !== undefined) {
       return record.registerPromise;
     }
 
-    const registerPromise = this.runRegisterLifecycle(record).finally(() => {
+    const registerPromise = this.runRegisterLifecycle(
+      record,
+      metadataOwnerReservations,
+    ).finally(() => {
       if (record.registerPromise === registerPromise) {
         delete record.registerPromise;
       }
@@ -600,11 +617,15 @@ class PluginHostImpl implements PluginHostInstance {
     return registerPromise;
   }
 
-  private async runRegisterLifecycle(record: StoredPluginRecord): Promise<void> {
+  private async runRegisterLifecycle(
+    record: StoredPluginRecord,
+    metadataOwnerReservations: readonly MetadataOwnerReservation[],
+  ): Promise<void> {
     const scope = createPluginContextScope(
       record.manifest.id,
       "register",
       true,
+      metadataOwnerReservations,
     );
     record.lifecycleScopes.add(scope);
 
@@ -651,7 +672,7 @@ class PluginHostImpl implements PluginHostInstance {
       metadata: createPluginMetadataStore(
         scope,
         this.services.metadata,
-        () => this.getMetadataOwnerReservations(),
+        () => this.getMetadataOwnerReservations(scope.metadataOwnerReservations),
       ),
       events: createPluginEventStore(scope, this.services.events),
       filters: createPluginFilterStore(scope, this.services.filters),
@@ -676,7 +697,10 @@ class PluginHostImpl implements PluginHostInstance {
             createPluginTransaction(
               scope,
               transaction,
-              () => this.getMetadataOwnerReservations(),
+              () =>
+                this.getMetadataOwnerReservations(
+                  scope.metadataOwnerReservations,
+                ),
             ),
           );
 
@@ -1081,17 +1105,21 @@ class PluginHostImpl implements PluginHostInstance {
     };
   }
 
-  private getMetadataOwnerReservations(): readonly MetadataOwnerReservation[] {
+  private getMetadataOwnerReservations(
+    scopedReservations: readonly MetadataOwnerReservation[] = [],
+  ): readonly MetadataOwnerReservation[] {
     const reservations = new Map<string, string>();
 
     for (const record of this.records.values()) {
-      const fields = record.manifest.contributes?.metadataFields ?? [];
+      addMetadataOwnerReservations(
+        reservations,
+        record.manifest,
+        record.manifest.id,
+      );
+    }
 
-      for (const field of fields) {
-        if (metadataFieldCreatesOwnerReservation(field, record.manifest.id)) {
-          reservations.set(field.namespace, record.manifest.id);
-        }
-      }
+    for (const reservation of scopedReservations) {
+      reservations.set(reservation.namespace, reservation.sourcePluginId);
     }
 
     return [...reservations].map(([namespace, sourcePluginId]) => ({
@@ -1101,22 +1129,65 @@ class PluginHostImpl implements PluginHostInstance {
   }
 }
 
+function collectMetadataOwnerReservationsFromPlugins(
+  plugins: readonly AppPlugin[],
+): MetadataOwnerReservation[] {
+  const reservations = new Map<string, string>();
+
+  for (const plugin of plugins) {
+    addMetadataOwnerReservations(
+      reservations,
+      plugin.manifest,
+      plugin.manifest.id,
+    );
+  }
+
+  return [...reservations].map(([namespace, sourcePluginId]) => ({
+    namespace,
+    sourcePluginId,
+  }));
+}
+
+function addMetadataOwnerReservations(
+  reservations: Map<string, string>,
+  manifest: PluginManifest,
+  pluginId: string,
+): void {
+  const fields = manifest.contributes?.metadataFields;
+
+  if (!Array.isArray(fields)) {
+    return;
+  }
+
+  for (const field of fields) {
+    if (metadataFieldCreatesOwnerReservation(field, pluginId)) {
+      reservations.set(field.namespace, pluginId);
+    }
+  }
+}
+
 function metadataFieldCreatesOwnerReservation(
-  field: {
+  field: unknown,
+  pluginId: string,
+): field is { namespace: string } {
+  if (typeof field !== "object" || field === null) {
+    return false;
+  }
+
+  const descriptor = field as {
     namespace?: unknown;
     key?: unknown;
     valueType?: unknown;
-  },
-  pluginId: string,
-): field is { namespace: string } {
+  };
+
   return (
-    field.namespace === pluginId &&
-    typeof field.namespace === "string" &&
-    metadataNamespacePattern.test(field.namespace) &&
-    typeof field.key === "string" &&
-    metadataNamespacePattern.test(field.key) &&
-    typeof field.valueType === "string" &&
-    metadataValueTypes.has(field.valueType)
+    descriptor.namespace === pluginId &&
+    typeof descriptor.namespace === "string" &&
+    metadataNamespacePattern.test(descriptor.namespace) &&
+    typeof descriptor.key === "string" &&
+    metadataNamespacePattern.test(descriptor.key) &&
+    typeof descriptor.valueType === "string" &&
+    metadataValueTypes.has(descriptor.valueType)
   );
 }
 
@@ -1128,12 +1199,14 @@ function createPluginContextScope(
   pluginId: string,
   phase: PluginLifecyclePhase,
   allowsRuntimeContributionRegistration: boolean,
+  metadataOwnerReservations: readonly MetadataOwnerReservation[] = [],
 ): PluginContextScope {
   return {
     pluginId,
     phase,
     active: true,
     allowsRuntimeContributionRegistration,
+    metadataOwnerReservations,
     registrationTracker: [],
     registrationTrackerRolledBack: false,
   };
