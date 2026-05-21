@@ -51,10 +51,38 @@
 
 ### Test Writer Handoff
 
-- Feynman the 3rd (`test_writer`) started TASK-019 TDD work.
+- Status: completed, committed, and closed.
+- Feynman the 3rd (`test_writer`) wrote TASK-019 TDD tests.
 - Ownership: test-only changes; likely `src/test/task-navigation-infinite-nesting.test.tsx` and narrow test helper changes only if necessary.
+- Files changed:
+  - `src/test/task-navigation-infinite-nesting.test.tsx`.
+- Commit: `1d7219c` (`Feynman the 3rd(test)(Implement task navigation and infinite nesting): add navigation acceptance tests`).
 - Requested red coverage: command-driven task open/navigation contract, unbound open, verified binding reuse, metadata-only attr-loss recovery, forged bound page rejection, nested page A -> page B flow, invalid/stale/non-task/duplicate source-block failure with no navigation, unsafe title inertness, storage/page-source consistency, and native/package/Tauri surface guard.
 - Constraints: do not edit production implementation files, do not stage or commit, do not weaken existing tests.
+
+### Red Test Signal
+
+Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx
+bun node_modules/.bin/eslint src/test/task-navigation-infinite-nesting.test.tsx --max-warnings=0
+bun run typecheck
+git diff --check
+```
+
+Result: expected red signal. The focused TASK-019 test command failed with 7 failed / 2 passed tests. Failures showed missing `task.open-task-page` command (`COMMAND_NOT_FOUND`) and missing accessible task-title buttons for `A` and the unsafe title. ESLint for the new file, `bun run typecheck`, and `git diff --check` passed.
+
+### Implementation Handoff
+
+- Status: pending.
+- Target: implement the minimum production behavior needed to satisfy the TASK-019 tests without broad save-time scanning.
+- Expected work:
+  - Add/centralize a task-owned `task.open-task-page` command that validates `{ sourcePageId, sourceBlockId }`, reuses the TASK-018 resolver/source relation behavior, and returns exactly `{ pageId }`.
+  - Expose an accessible task-title click path in the Markdown editor/plugin UI that calls the task open command with stable source page/block identity and invokes a supplied page-open callback with the returned page id.
+  - Keep unsafe titles inert as text.
+  - Keep App Shell generic and avoid exposing full runtime through `useRuntime()`.
+  - Do not touch native/Tauri/package surfaces unless a blocker is recorded first.
 
 ### Pre-test Guidance
 
