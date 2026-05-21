@@ -733,4 +733,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn `test_writer` for transaction-scoped same-batch manifest reservation coverage.
+- Huygens (`test_writer`) is adding transaction-scoped same-batch manifest reservation coverage.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:12 CST.
+Last updated: 2026-05-21 21:13 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 21:12 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: transaction-path reservation coverage test is pending.
+- Current phase: transaction-path reservation coverage test is in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate a small transaction-path reservation coverage test.
+- Huygens (`test_writer`) is adding transaction-scoped same-batch manifest reservation coverage.
 
 ## Completed Recent Task
 
@@ -93,7 +93,7 @@ Last updated: 2026-05-21 21:12 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for transaction-scoped reservation coverage.
+1. Wait for Huygens' transaction-scoped reservation coverage.
 2. Validate and commit the test-only coverage if green.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
