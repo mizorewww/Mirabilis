@@ -37,9 +37,8 @@
 
 ## Current Status
 
-- Status: review-fix red tests in progress.
-- Active agents:
-  - Chandrasekhar the 3rd (`test_writer`) for review-fix red tests.
+- Status: review-fix red tests completed and committed; review-fix implementation handoff pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -54,7 +53,8 @@
   - Lovelace the 3rd (`docs_researcher`): docs/current-guidance review completed.
   - Boyle the 3rd (`test_quality_reviewer`): test quality review completed.
   - Maxwell the 3rd (`doc_writer`): documentation gap review completed.
-- Next parent step: wait for Chandrasekhar the 3rd, confirm expected red failures, and commit test changes.
+  - Chandrasekhar the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
+- Next parent step: spawn `implementer` for the minimum production review-fix patch.
 
 ## Agent Handoffs
 
@@ -282,7 +282,7 @@
 
 ### Chandrasekhar the 3rd (`test_writer`) Handoff
 
-- Status: in progress.
+- Status: completed, committed, and closed.
 - Agent ID: `019e47e4-f287-7cf2-b650-93bbea9ead80`.
 - Ownership: review-fix failing tests and test helpers only.
 - Expected red-test coverage:
@@ -291,3 +291,14 @@
   - Markdown extension collection preserves host-owned `pluginId` even if a manifest contribution carries a rogue `pluginId`.
   - Practical P2s where focused: omitted `selectionEnd`, controlled textarea/page change behavior, stale save protection, active/registered extension filtering, direct registered toolbar slot behavior, and narrow prop/capability boundaries.
 - Restrictions: tests/test helpers only; no production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependency changes, generated files, or commits.
+- Files changed:
+  - `src/test/markdown-editor-plugin-shell.test.tsx`.
+  - `src/test/markdown-runtime-extensions.test.ts`.
+  - `src/test/markdown-page-persistence.test.tsx`.
+- Parent verification:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` failed as expected with 8 failed and 10 passed.
+  - Red failures matched: missing `runtime.markdown.pages`; editor does not collect extensions; omitted `selectionEnd`; page switch/stale save behavior; save response overwrites newer edits; rogue `pluginId`; deactivated plugin extensions.
+  - `bun run typecheck` passed.
+  - `git diff --check` passed.
+  - `git diff --cached --check` passed before commit.
+- Commit: `a574683 Chandrasekhar the 3rd(test)(Implement Markdown Editor Plugin shell): cover review findings`.
