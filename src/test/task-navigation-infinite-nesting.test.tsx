@@ -528,6 +528,46 @@ describe("Task navigation and infinite nesting", () => {
     expect(onOpenPage).toHaveBeenCalledWith("resolved-task-page");
   });
 
+  it("invalidates stale task-title buttons after unsaved edits remove their source task line", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const sourcePage = createSourcePage(runtime, "Editable source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const commands: MarkdownCommandBus = {
+      execute: vi.fn(async () => ({ pageId: "stale-task-page" })),
+    };
+    const onOpenPage = vi.fn();
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands,
+      onOpenPage,
+      markdownRuntime: runtime.markdown,
+    });
+
+    expect(await screen.findByRole("button", { name: "A" })).toBeEnabled();
+
+    const editor = screen.getByRole("textbox", { name: /markdown/i });
+
+    await user.clear(editor);
+    await user.type(editor, "Plain note after edit");
+    await waitFor(() => expect(editor).toHaveValue("Plain note after edit"));
+
+    const staleTaskButton = screen.queryByRole("button", { name: "A" });
+    const staleTaskButtonCanOpen =
+      staleTaskButton !== null && !staleTaskButton.hasAttribute("disabled");
+
+    expect(staleTaskButtonCanOpen).toBe(false);
+
+    if (staleTaskButton !== null) {
+      await user.click(staleTaskButton);
+    }
+
+    expect(commands.execute).not.toHaveBeenCalled();
+    expect(onOpenPage).not.toHaveBeenCalled();
+  });
+
   it("does not navigate from a stale delayed task open after the editor switches pages", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -570,6 +610,50 @@ describe("Task navigation and infinite nesting", () => {
     );
     expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
       "Different page",
+    );
+
+    await act(async () => {
+      taskOpenCompletion.resolve({ pageId: "stale-task-page" });
+      await taskOpenCompletion.promise;
+      await Promise.resolve();
+    });
+
+    expect(onOpenPage).not.toHaveBeenCalled();
+  });
+
+  it("does not navigate from a stale delayed task open after same-page content edits", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const taskOpenCompletion = createDeferred<OpenTaskPageResult>();
+    const sourcePage = createSourcePage(runtime, "Slow same-page source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const commands: MarkdownCommandBus = {
+      execute: vi.fn(() => taskOpenCompletion.promise),
+    };
+    const onOpenPage = vi.fn();
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands,
+      onOpenPage,
+      markdownRuntime: runtime.markdown,
+    });
+
+    await user.click(await screen.findByRole("button", { name: "A" }));
+    await waitFor(() =>
+      expect(commands.execute).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies OpenTaskPageInput),
+    );
+
+    const editor = screen.getByRole("textbox", { name: /markdown/i });
+
+    await user.clear(editor);
+    await user.type(editor, "A changed before navigation resolves");
+    await waitFor(() =>
+      expect(editor).toHaveValue("A changed before navigation resolves"),
     );
 
     await act(async () => {

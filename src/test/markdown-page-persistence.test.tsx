@@ -17,6 +17,7 @@ type MarkdownEditorDocument = {
   id: string;
   title: string;
   markdown: string;
+  body?: StructuredMarkdownDocument;
 };
 
 type MarkdownPageFacade = {
@@ -237,6 +238,32 @@ describe("Markdown page persistence", () => {
       id: "page-legacy-load",
       title: "Legacy",
       markdown: legacyMarkdown,
+    });
+  });
+
+  it("returns structured body from the real runtime page facade load path", async () => {
+    const structuredMarkdown = ["- [ ] A", "Nested task page notes"].join("\n");
+    const structuredBody = structuredBodyFromMarkdown(structuredMarkdown, [
+      "task-block-a",
+      "notes-block",
+    ]);
+    const productionPageFacade = await createProductionPageFacade(
+      createRecordingCorePageNativeBridge(
+        createCorePageDto({
+          id: "page-runtime-structured-body",
+          title: "Structured task source",
+          body: structuredBody,
+        }),
+      ),
+    );
+
+    await expect(
+      productionPageFacade.load("page-runtime-structured-body"),
+    ).resolves.toStrictEqual({
+      id: "page-runtime-structured-body",
+      title: "Structured task source",
+      markdown: structuredMarkdown,
+      body: structuredBody,
     });
   });
 
