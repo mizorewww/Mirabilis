@@ -27,6 +27,7 @@ type ExecuteFilterQuery = (
 const taskPluginId = "task";
 const tagPluginId = "tag";
 const reviewPluginId = "review";
+const profilePluginId = "profile-plugin";
 const fixedCurrentDate = "2026-05-21";
 const relativeTodayValue = {
   kind: "relative-date",
@@ -181,40 +182,123 @@ describe("Core filter query execution", () => {
     ).toStrictEqual([product.id]);
   });
 
-  it("executes generic metadata queries for arbitrary plugin namespaces and excludes forged owners", () => {
+  it("executes generic metadata when source ownership differs from namespace while preserving built-in owner boundaries", () => {
     const executeFilterQuery = requireExecuteFilterQuery();
-    const ready = page({ id: "page-ready-review", title: "Ready review" });
-    const forged = page({
-      id: "page-forged-review",
-      title: "Forged review state",
+    const publicProfile = page({
+      id: "page-public-profile",
+      title: "Public profile",
     });
-    const blocked = page({
-      id: "page-blocked-review",
-      title: "Blocked review",
+    const privateProfile = page({
+      id: "page-private-profile",
+      title: "Private profile",
     });
-    const query = {
+    const taskOwnedProfile = page({
+      id: "page-task-owned-profile",
+      title: "Task-owned profile metadata",
+    });
+    const legitimateTask = page({
+      id: "page-legitimate-task",
+      title: "Legitimate task",
+    });
+    const forgedTask = page({
+      id: "page-forged-task",
+      title: "Forged task metadata",
+    });
+    const legitimateTagged = page({
+      id: "page-legitimate-tagged",
+      title: "Legitimate tagged page",
+    });
+    const forgedTagged = page({
+      id: "page-forged-tagged",
+      title: "Forged tag metadata",
+    });
+    const profileQuery = {
       where: [
-        { field: "metadata.review.state", op: "eq", value: "ready" },
+        {
+          field: "metadata.profile.visibility",
+          op: "eq",
+          value: "public",
+        },
       ],
     } satisfies FilterQuery;
+    const taskQuery = {
+      where: [
+        { field: "metadata.task.enabled", op: "eq", value: true },
+      ],
+    } satisfies FilterQuery;
+    const tagQuery = {
+      where: [
+        {
+          field: "metadata.tag.tags",
+          op: "includes",
+          value: "product",
+        },
+      ],
+    } satisfies FilterQuery;
+    const metadataRecords = [
+      profileMetadata(
+        "visibility",
+        "public",
+        publicProfile.id,
+        "string",
+        profilePluginId,
+      ),
+      profileMetadata(
+        "visibility",
+        "private",
+        privateProfile.id,
+        "string",
+        profilePluginId,
+      ),
+      profileMetadata(
+        "visibility",
+        "public",
+        taskOwnedProfile.id,
+        "string",
+        taskPluginId,
+      ),
+      taskMetadata("enabled", true, legitimateTask.id, "boolean"),
+      taskMetadata("enabled", true, forgedTask.id, "boolean", profilePluginId),
+      tagMetadata(["product"], legitimateTagged.id),
+      metadata({
+        pageId: forgedTagged.id,
+        namespace: "tag",
+        key: "tags",
+        value: ["product"],
+        valueType: "json",
+        sourcePluginId: profilePluginId,
+      }),
+    ];
 
     expect(
       executeFilterQuery({
-        pages: [ready, forged, blocked],
-        metadata: [
-          reviewMetadata("state", "ready", ready.id, "string", reviewPluginId),
-          reviewMetadata("state", "ready", forged.id, "string", taskPluginId),
-          reviewMetadata(
-            "state",
-            "blocked",
-            blocked.id,
-            "string",
-            reviewPluginId,
-          ),
+        pages: [
+          publicProfile,
+          privateProfile,
+          taskOwnedProfile,
+          legitimateTask,
+          forgedTask,
+          legitimateTagged,
+          forgedTagged,
         ],
-        query,
+        metadata: metadataRecords,
+        query: profileQuery,
       }).map((result) => result.id),
-    ).toStrictEqual([ready.id]);
+    ).toStrictEqual([publicProfile.id, taskOwnedProfile.id]);
+    expect(
+      executeFilterQuery({
+        pages: [legitimateTask, forgedTask],
+        metadata: metadataRecords,
+        query: taskQuery,
+      }).map((result) => result.id),
+    ).toStrictEqual([legitimateTask.id]);
+    expect(
+      executeFilterQuery({
+        pages: [legitimateTagged, forgedTagged],
+        metadata: metadataRecords,
+        query: tagQuery,
+      }).map((result) => result.id),
+    ).toStrictEqual([legitimateTagged.id]);
   });
 
   it("supports gt and lt comparisons for numeric and date metadata while failing closed for wrong value types", () => {
@@ -279,6 +363,116 @@ describe("Core filter query execution", () => {
       }).map((result) => result.id),
     ).toStrictEqual([ready.id]);
   });
+
+  it.each([
+    {
+      name: "number gt",
+      key: "score",
+      value: 10,
+      valueType: "number",
+      op: "gt",
+      operand: 9,
+    },
+    {
+      name: "number lt",
+      key: "score",
+      value: 10,
+      valueType: "number",
+      op: "lt",
+      operand: 11,
+    },
+    {
+      name: "date gt",
+      key: "reviewedAt",
+      value: "2026-05-22",
+      valueType: "date",
+      op: "gt",
+      operand: "2026-05-21",
+    },
+    {
+      name: "date lt",
+      key: "reviewedAt",
+      value: "2026-05-20",
+      valueType: "date",
+      op: "lt",
+      operand: "2026-05-21",
+    },
+  ] as const)(
+    "supports the $name comparison path",
+    ({ key, value, valueType, op, operand }) => {
+      const executeFilterQuery = requireExecuteFilterQuery();
+      const matching = page({
+        id: `page-review-${op}-${valueType}`,
+        title: `${op} ${valueType}`,
+      });
+      const query = {
+        where: [
+          {
+            field: `metadata.review.${key}`,
+            op,
+            value: operand,
+          },
+        ],
+      } satisfies FilterQuery;
+
+      expect(
+        executeFilterQuery({
+          pages: [matching],
+          metadata: [
+            reviewMetadata(key, value, matching.id, valueType),
+          ],
+          query,
+        }).map((result) => result.id),
+      ).toStrictEqual([matching.id]);
+    },
+  );
+
+  it.each([
+    {
+      name: "number metadata with string operand",
+      key: "score",
+      value: 10,
+      valueType: "number",
+      op: "gt",
+      operand: "9",
+    },
+    {
+      name: "date metadata with number operand",
+      key: "reviewedAt",
+      value: "2026-05-22",
+      valueType: "date",
+      op: "lt",
+      operand: 20260523,
+    },
+  ] as const)(
+    "fails closed for wrong gt/lt query operand type: $name",
+    ({ key, value, valueType, op, operand }) => {
+      const executeFilterQuery = requireExecuteFilterQuery();
+      const candidate = page({
+        id: `page-wrong-${op}-${valueType}-operand`,
+        title: `Wrong ${op} operand`,
+      });
+      const query = {
+        where: [
+          {
+            field: `metadata.review.${key}`,
+            op,
+            value: operand,
+          },
+        ],
+      } satisfies FilterQuery;
+
+      expect(
+        executeFilterQuery({
+          pages: [candidate],
+          metadata: [
+            reviewMetadata(key, value, candidate.id, valueType),
+          ],
+          query,
+        }),
+      ).toStrictEqual([]);
+    },
+  );
 
   it("resolves a JSON-compatible relative today query value against a fixed current local date", () => {
     const executeFilterQuery = requireExecuteFilterQuery();
@@ -410,6 +604,148 @@ describe("Core filter query execution", () => {
     expect(metadata).toStrictEqual(beforeMetadata);
     expect(query).toStrictEqual(beforeQuery);
   });
+
+  it.each(["and", "or"] as const)(
+    "fails closed without throwing when a direct query %s branch references itself",
+    (branch) => {
+      const executeFilterQuery = requireExecuteFilterQuery();
+      const task = page({ id: `page-cyclic-${branch}`, title: "Cyclic task" });
+      const query: {
+        where: Array<{ field: string; op: "eq"; value: boolean }>;
+        and?: unknown[];
+        or?: unknown[];
+      } = {
+        where: [
+          { field: "metadata.task.enabled", op: "eq", value: true },
+        ],
+      };
+      query[branch] = [query];
+      let results: MarkdownPage[] | undefined;
+
+      expect(() => {
+        results = executeFilterQuery({
+          pages: [task],
+          metadata: [
+            taskMetadata("enabled", true, task.id, "boolean"),
+          ],
+          query: query as unknown as FilterQuery,
+        });
+      }).not.toThrow();
+      expect(results).toStrictEqual([]);
+    },
+  );
+
+  it("fails closed without throwing for over-deep direct query objects", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const task = page({ id: "page-over-deep-query", title: "Deep task" });
+    let results: MarkdownPage[] | undefined;
+
+    expect(() => {
+      results = executeFilterQuery({
+        pages: [task],
+        metadata: [taskMetadata("enabled", true, task.id, "boolean")],
+        query: deeplyNestedQuery(1_500),
+      });
+    }).not.toThrow();
+    expect(results).toStrictEqual([]);
+  });
+
+  it("fails closed for direct query operator/value shapes rejected by saved filters", () => {
+    const executeFilterQuery = requireExecuteFilterQuery();
+    const task = page({ id: "page-invalid-condition-shape", title: "Task" });
+    const metadataRecords = [
+      taskMetadata("enabled", true, task.id, "boolean"),
+      taskMetadata("status", "todo", task.id, "string"),
+      taskMetadata("priority", 3, task.id, "number"),
+      tagMetadata(["product"], task.id),
+    ];
+    const existsWithValue = {
+      where: [
+        {
+          field: "metadata.task.enabled",
+          op: "exists",
+          value: true,
+        },
+      ],
+    } as unknown as FilterQuery;
+
+    expect(
+      executeFilterQuery({
+        pages: [task],
+        metadata: metadataRecords,
+        query: existsWithValue,
+      }),
+    ).toStrictEqual([]);
+
+    for (const op of ["eq", "neq", "gt", "lt", "includes"] as const) {
+      const missingValueQuery = {
+        where: [{ field: "metadata.task.status", op }],
+      } as unknown as FilterQuery;
+
+      expect(
+        executeFilterQuery({
+          pages: [task],
+          metadata: metadataRecords,
+          query: missingValueQuery,
+        }),
+      ).toStrictEqual([]);
+    }
+  });
+
+  it.each([
+    {
+      name: "eq boolean stored as string metadata",
+      field: "metadata.review.flag",
+      value: true,
+      valueType: "string",
+      op: "eq",
+      operand: true,
+    },
+    {
+      name: "neq number stored as string metadata",
+      field: "metadata.review.score",
+      value: 10,
+      valueType: "string",
+      op: "neq",
+      operand: 11,
+    },
+    {
+      name: "includes array stored as string metadata",
+      field: "metadata.review.tags",
+      value: ["product"],
+      valueType: "string",
+      op: "includes",
+      operand: "product",
+    },
+  ] as const)(
+    "fails closed for metadata valueType and stored value shape mismatch: $name",
+    ({ field, value, valueType, op, operand }) => {
+      const executeFilterQuery = requireExecuteFilterQuery();
+      const candidate = page({
+        id: `page-${op}-wrong-value-type`,
+        title: `Wrong ${op} value type`,
+      });
+      const key = field.split(".")[2];
+
+      if (key === undefined) {
+        throw new Error(`Invalid test field ${field}`);
+      }
+
+      const query = {
+        where: [{ field, op, value: operand }],
+      } satisfies FilterQuery;
+
+      expect(
+        executeFilterQuery({
+          pages: [candidate],
+          metadata: [
+            reviewMetadata(key, value, candidate.id, valueType),
+          ],
+          query,
+        }),
+      ).toStrictEqual([]);
+    },
+  );
 
   it("prefers owner-consistent metadata records and ignores forged plugin ownership", () => {
     const executeFilterQuery = requireExecuteFilterQuery();
@@ -558,6 +894,23 @@ function reviewMetadata(
   });
 }
 
+function profileMetadata(
+  key: string,
+  value: unknown,
+  pageId: string,
+  valueType: MetadataValueType,
+  sourcePluginId = profilePluginId,
+): MetadataRecord {
+  return metadata({
+    pageId,
+    namespace: "profile",
+    key,
+    value,
+    valueType,
+    sourcePluginId,
+  });
+}
+
 function metadata(input: {
   pageId: string;
   namespace: string;
@@ -581,4 +934,21 @@ function metadata(input: {
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function deeplyNestedQuery(depth: number): FilterQuery {
+  let query: Record<string, unknown> = {
+    where: [
+      { field: "metadata.task.enabled", op: "eq", value: true },
+    ],
+  };
+
+  for (let index = 0; index < depth; index += 1) {
+    query = {
+      where: [],
+      and: [query],
+    };
+  }
+
+  return query as unknown as FilterQuery;
 }

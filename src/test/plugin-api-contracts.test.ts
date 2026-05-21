@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { PluginHost, createInMemoryAppRuntime } from "../core";
 import * as pluginApiEntrypoint from "../core/plugin-api";
 import type {
   AlgorithmContribution,
@@ -1557,6 +1558,50 @@ describe("Plugin API contracts", () => {
     >().toEqualTypeOf<ExpectedPluginListFiltersOptions>();
   });
 
+  it.each(["task.filter.today", "task.filter.custom"] as const)(
+    "prevents plugin-facing fixed filter id %s from claiming another plugin namespace",
+    async (fixedFilterId) => {
+      const { runtime, host } = createPluginApiTestHost();
+
+      await expect(
+        host.loadBuiltInPlugins([
+          filterSavingPlugin("review", fixedFilterId),
+        ]),
+      ).rejects.toMatchObject({
+        name: "PluginHostError",
+        code: "PLUGIN_LIFECYCLE_FAILED",
+        pluginId: "review",
+        phase: "register",
+        cause: expect.objectContaining({
+          name: "PluginHostError",
+          code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+          pluginId: "review",
+        }),
+      });
+      expect(runtime.services.filters.list()).toStrictEqual([]);
+    },
+  );
+
+  it("allows plugin-facing fixed filter ids inside the current plugin namespace", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+    const records = await host.loadBuiltInPlugins([
+      filterSavingPlugin("task", "task.filter.custom"),
+    ]);
+
+    expect(records).toStrictEqual([
+      expect.objectContaining({
+        id: "task",
+        enabled: false,
+        status: "registered",
+      }),
+    ]);
+    expect(runtime.services.filters.get("task.filter.custom")).toMatchObject({
+      id: "task.filter.custom",
+      name: "task fixed filter",
+      sourcePluginId: "task",
+    });
+  });
+
   it("rejects explicit undefined plugin ids from plugin registry inputs", () => {
     const component = () => null;
     const commandDefinitionWithUndefinedPluginId = {
@@ -1754,3 +1799,39 @@ describe("Plugin API contracts", () => {
     expectNoTypeLeak<PluginApiBoundaryLeak>();
   });
 });
+
+function createPluginApiTestHost() {
+  const runtime = createInMemoryAppRuntime();
+  const host = new PluginHost({
+    services: runtime.services,
+    registries: runtime.registries,
+    app: {
+      version: "test",
+      pluginApiVersion: "test",
+    },
+  });
+
+  return { runtime, host };
+}
+
+function filterSavingPlugin(
+  pluginId: string,
+  fixedFilterId: string,
+): AppPlugin {
+  return {
+    manifest: {
+      id: pluginId,
+      name: `${pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      ctx.filters.save({
+        id: fixedFilterId,
+        name: `${pluginId} fixed filter`,
+        query: { where: [] },
+        viewType: `${pluginId}.list`,
+      });
+    },
+  };
+}

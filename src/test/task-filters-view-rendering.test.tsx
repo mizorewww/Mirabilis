@@ -183,9 +183,25 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     const runtime = await createRuntime();
     const host = getLifecyclePluginHost(runtime);
     const taskPlugin = getBuiltInTaskPlugin();
+    const customTaskFilter = runtime.filters.save({
+      id: "task.filter.custom-focus",
+      name: "Custom Focus",
+      query: {
+        where: [
+          {
+            field: "metadata.task.status",
+            op: "eq",
+            value: "todo",
+          },
+        ],
+      },
+      viewType: pageListViewType,
+      sourcePluginId: taskPluginId,
+    });
 
     expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
       allTasksFilterId,
+      customTaskFilter.id,
       todayFilterId,
     ]);
 
@@ -196,6 +212,7 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
     });
     expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
       allTasksFilterId,
+      customTaskFilter.id,
       todayFilterId,
     ]);
 
@@ -212,15 +229,20 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
 
     const taskFilters = runtime.filters.list({ sourcePluginId: taskPluginId });
 
-    expect(taskFilters).toHaveLength(2);
+    expect(taskFilters).toHaveLength(3);
     expect(getTaskDefaultFilterIds(runtime)).toStrictEqual([
       allTasksFilterId,
+      customTaskFilter.id,
       todayFilterId,
     ]);
     expect(taskFilters.map((filter) => filter.name).sort()).toStrictEqual([
       "All Tasks",
+      "Custom Focus",
       "Today",
     ]);
+    expect(runtime.filters.get(customTaskFilter.id)).toStrictEqual(
+      customTaskFilter,
+    );
   });
 
   it("executes All Tasks through the Core filter engine and renders task page titles as inert text", async () => {
