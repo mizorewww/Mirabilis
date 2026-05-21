@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: third review-fix implementation complete; final correctness re-review pending.
+- Status: code/test review clean; documentation sync pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -70,7 +70,8 @@
   - Halley the 3rd (`test_quality_reviewer`): final focused test-quality re-review completed with no remaining P0/P1/P2 findings.
   - Hume the 3rd (`test_writer`): long similar-line regression test completed, verified red, committed, and closed.
   - McClintock the 3rd (`implementer`): anchor-based reconciliation fix completed, validated, committed, and closed.
-- Next parent step: commit McClintock the 3rd's result and run final correctness re-review.
+  - Lorentz the 3rd (`reviewer`): final narrow correctness re-review completed with no remaining P0/P1/P2 findings.
+- Next parent step: commit final re-review result and delegate docs sync.
 
 ## Agent Handoffs
 
@@ -562,6 +563,32 @@ git diff --check
 ```
 
 - Result: all passed. Focused frontend tests passed with 2 files / 17 tests.
+
+### Lorentz the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only final correctness re-review; no files edited.
+- Finding: no remaining P0/P1/P2 issues in requested scope.
+- Confirmed Pascal the 3rd's regression test exists and passes, adjacent same-length delete+insert and combined edit+insert coverage exists, and reconciliation uses the next retained block as an anchor.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check master...HEAD
+```
+
+- Result: all passed.
+
+## Docs Sync Plan
+
+- Update local docs identified by Schrodinger the 3rd and Rawls the 3rd:
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/architecture/02-core-kernel.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+- Include final review-fix behavior: TypeScript conversion helpers, line-oriented `markdown.line` blocks, stable ID reconciliation, Rust IPC body validation, strict legacy fallback, inert Markdown text, no filesystem import/export, and no new Tauri capabilities.
 
 ## Validation
 
