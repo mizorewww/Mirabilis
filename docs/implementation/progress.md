@@ -45,7 +45,7 @@ Status markers:
 ## Milestone M3: Editor and plugin runtime
 
 - [x] TASK-016: Implement Markdown Editor Plugin shell
-- [~] TASK-017: Add stable block IDs and markdown import/export
+- [x] TASK-017: Add stable block IDs and markdown import/export
 
 ## Milestone M4: Task and tag MVP
 
@@ -78,6 +78,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 11:07 CST - TASK-017 completed
+
+- Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
+- Task: Add stable block IDs and markdown import/export.
+- Commits: `3cbe0f7`, `1b68da1`, `e14eaac`, `2734ba4`, `27118dc`, `02dde98`, `52a9805`, `22e2753`, `1e7aeb1`, `930f703`, `6c5ccaa`, `e24f1d2`, `8dfe8a2`, `981161e`, `0226c61`, `82d511f`, `a06060f`, `3820fca`, `49be8a7`, `afeddb3`, `618eaae`, `3d24885`, `916b51c`, `d434fa9`, `d5705b2`, `fd4fdc1`, `14c429e`, `57a9b73`, `29f6c94`, `5999dbc`, `18f0f04`, `61ee5f8`, `342c2d6`, `12d5d94`, `f3164f5`, and `0fa252c`.
+- Delivered: public Core Markdown conversion helpers for import/export/validation; interim line-oriented `markdown.line` structured bodies with stable nonblank `blockId`s; previous-document reconciliation that preserves block identity across edits, inserts, deletes, duplicates, deleted-ID collisions, and similar-line regressions; runtime `markdown.pages.load/save` conversion through existing `core.pages.get/update`; strict load-only legacy `markdown.text` fallback; Rust IPC validation for structured `core.pages.create/update` bodies before repository writes; and docs synced for product, architecture, development, testing, and agent communication.
+- Validation: focused TASK-017 frontend tests passed with 2 files / 17 tests via `bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx`. Focused Rust IPC page validation passed with 3 tests via `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence page`. `bun run check:quick` passed with 21 frontend test files / 297 tests, Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. `git diff --check` passed.
+- `check:full`: not run for TASK-017 because the branch added no new Tauri commands, capability grants, filesystem/native import-export behavior, package or Cargo dependencies, packaging, or release changes. The TASK-017 Rust IPC body-validation change is covered by focused `ipc_persistence` tests and the `check:quick` Rust fmt/clippy/full-test gate, matching the updated testing strategy.
+- Review: planning, current-docs research, deprecation/API audit, security review, TDD test-writing, implementation, correctness/security/test-quality review, review-fix TDD loops, final focused re-review, and docs sync were delegated to agents. Final correctness, security, and test-quality re-reviews cleared remaining P0/P1/P2 findings.
+- External docs verified by agents: CommonMark, mdast, `mdast-util-from-markdown`, `mdast-util-to-markdown`, micromark, remark, React textarea/useEffect, Testing Library, Vitest v4, Tauri v2 invoke/capabilities/fs/dialog, Serde container attributes, `serde_json::Value`/`from_value`, Cargo integration tests, Marked security guidance, Vite 7 migration, and Tauri v2 release docs.
+- Remaining risk: TASK-017 intentionally keeps a line-oriented interim representation instead of a full CommonMark AST, Tiptap/ProseMirror schema, or rich editor model. Semantic Task/Tag/PageLink parsing, native filesystem import/export, full user-facing load/save error UX, and broader Rust schema hardening remain future tasks. ID reconciliation is heuristic but covered by acceptance and regression cases, including similar-line anchor regressions.
 
 ### 2026-05-21 09:14 CST - TASK-017 started
 

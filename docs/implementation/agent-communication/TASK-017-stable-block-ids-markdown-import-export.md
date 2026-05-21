@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: documentation sync completed; final parent gates/commit pending.
+- Status: TASK-017 complete; progress/status commit and merge to `master` pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -72,7 +72,12 @@
   - McClintock the 3rd (`implementer`): anchor-based reconciliation fix completed, validated, committed, and closed.
   - Lorentz the 3rd (`reviewer`): final narrow correctness re-review completed with no remaining P0/P1/P2 findings.
   - TASK-017 documentation sync agent: product, architecture, development, testing, and status documentation updated for final TASK-017 behavior.
-- Next parent step: run final gates and commit documentation/status sync.
+- Final parent gates:
+  - `bun run check:quick` passed with 21 frontend test files / 297 tests plus Rust fmt, Rust clippy, and full Rust tests.
+  - `bun run build` passed.
+  - `git diff --check` passed.
+  - `check:full` was not run because TASK-017 added no new Tauri commands, capability grants, filesystem/native import-export behavior, package or Cargo dependencies, packaging, or release changes; focused Rust IPC body-validation tests and `check:quick` cover the TASK-017 Rust delta.
+- Next parent step: commit completion progress/status docs, merge to `master`, push, and continue to TASK-018.
 
 ## Agent Handoffs
 

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 10:59 CST.
+Last updated: 2026-05-21 11:07 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 10:59 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: documentation sync completed; final parent gates/commit pending.
+- Current phase: TASK-017 complete; progress/status commit and merge to `master` pending.
 
 ## Active Agents
 
@@ -119,7 +119,15 @@ rg -n "markdown\.text|markdown\.line|core\.pages\.get|core\.pages\.update|INVALI
 
 - Result: `git diff --check` passed. The stale-wording search found no old stable-ID-deferred wording or old `markdown.text` save-wrapper snippet; the review search showed the expected TASK-017 contract and deferred native/rich-editor scope.
 
+## Final Parent Gates
+
+- `bun run check:quick` passed after the documentation sync and reviewed DB-validation surface update. Result: 21 frontend test files / 297 tests passed; Rust fmt, Rust clippy, and full Rust tests passed.
+- `bun run build` passed.
+- `git diff --check` passed.
+- `check:full` was not run for TASK-017 because no new Tauri commands, capability grants, filesystem/native import-export behavior, package or Cargo dependencies, packaging, or release changes were added. The Rust IPC body-validation delta is covered by focused `ipc_persistence` tests and the `check:quick` Rust gate per `docs/testing/strategy.md`.
+
 ## Next Actions
 
-1. Run final gates after docs sync.
-2. Commit the TASK-017 documentation/status sync.
+1. Commit TASK-017 completion progress/status docs.
+2. Merge `feat/task-017-stable-block-ids-markdown-import-export` into `master`.
+3. Push `master`, then start the next unblocked task.
