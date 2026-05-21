@@ -37,7 +37,7 @@
 
 ## Current Status
 
-- Status: async-insert implementation completed and committed; narrow re-review pending.
+- Status: docs sync handoff pending.
 - Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
@@ -64,7 +64,9 @@
   - Confucius the 3rd (`pr_explorer`): final changed-surface mapping completed.
   - Ampere the 3rd (`test_writer`): async-insert red test completed, verified red, committed, and closed.
   - Dewey the 3rd (`implementer`): async-insert race fix completed, validated, committed, and closed.
-- Next parent step: run narrow re-review of the async insert fix.
+  - Sartre the 3rd (`reviewer`): async-insert correctness re-review completed with no findings.
+  - Hegel the 3rd (`deprecation_auditor`): async-insert API/deprecation re-review completed with no findings.
+- Next parent step: delegate final docs sync to `doc_writer`.
 
 ## Agent Handoffs
 
@@ -464,3 +466,16 @@
   - `git diff --check` passed.
   - `git diff --cached --check` passed before commit.
 - Commit: `3204d34 Dewey the 3rd(review-fix)(Implement Markdown Editor Plugin shell): guard async insert results`.
+
+### Async Insert Narrow Re-review
+
+- Status: completed.
+- Sartre the 3rd (`reviewer`):
+  - No P0/P1/P2 findings for the async toolbar insertion fix in `3204d34` or test coverage in `630cc3a`.
+  - Verified stale results are dropped when page/content changed, and fresh insert still applies and restores caret.
+  - Checks: focused TASK-016 frontend tests, `bun run typecheck`, and `git diff --check` passed.
+- Hegel the 3rd (`deprecation_auditor`):
+  - No P0/P1/P2 findings for `3204d34`.
+  - Verified the ref/generation guard is consistent with current React `useRef`, effect race, `useLayoutEffect`, and refs lint guidance.
+  - Checks: focused TASK-016 frontend tests, `bun run typecheck`, and `bun run lint` passed.
+- Parent decision: review blockers are clear. Proceed to docs sync, then final local gate.
