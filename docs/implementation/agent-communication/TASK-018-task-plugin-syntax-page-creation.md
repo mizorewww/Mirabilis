@@ -40,16 +40,16 @@
 
 ## Current Status
 
-- Status: implementation agent running.
-- Active agents:
-  - Peirce the 3rd (`implementer`): production implementation for Task Plugin syntax/page creation.
+- Status: implementation committed; review handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
   - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
-- Next parent step: wait for Peirce the 3rd's implementation, then run focused TASK-018 checks and commit if green.
+  - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
+- Next parent step: commit implementation result record, then spawn review agents.
 
 ## Agent Handoffs
 
@@ -124,10 +124,30 @@ git diff --check
 
 ### Peirce the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: production implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
-- Expected files: likely `src/plugins/task/**`, `src/bootstrap/built-in-plugins.ts`, and a minimal generic command execution context in Core command/plugin-host code if needed.
-- Constraints: no task business logic in Core/App Shell/MarkdownEditor UI; no native/Tauri/Rust/package/capability/filesystem changes; no stale register-time `PluginContext` mutation; no nonexistent `updateBlockAttrs`; no duplicate task pages for `(sourcePageId, sourceBlockId)`.
+- Files changed:
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/core/index.ts`.
+  - `src/core/plugin-api/context.ts`.
+  - `src/core/plugin-api/index.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/plugins/task/index.ts`.
+  - `src/plugins/task/plugin.ts`.
+- Commit: `399807d` (`Peirce the 3rd(implementation)(Implement Task Plugin syntax and task page creation): add task block resolver`).
+- Summary: added built-in `TaskPlugin` with checkbox markdown syntax contribution and `task.resolve-task-block`; added command-time Plugin Host context so plugin commands mutate through a fresh active plugin scope instead of captured register-time context; resolver validates source `markdown.line`, ignores malformed/non-task/fenced-code lines, creates one task page per `(sourcePageId, sourceBlockId)`, writes task metadata through Plugin Host ownership, and binds the source block with copied `attrs.boundPageId`.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/markdown-runtime-extensions.test.ts src/test/app-bootstrap-runtime.test.ts
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all checks passed. Focused TASK-018 tests passed with 1 file / 8 tests. Plugin Host/Markdown runtime/bootstrap regression tests passed with 3 files / 55 tests. Native/package/Tauri surface diff was empty.
 
 ## Parent Decisions
 

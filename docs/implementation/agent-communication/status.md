@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 11:32 CST.
+Last updated: 2026-05-21 11:41 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 11:32 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation agent running.
+- Current phase: implementation committed; review handoff pending.
 
 ## Active Agents
 
-- Peirce the 3rd (`implementer`): production implementation for Task Plugin syntax/page creation.
+- None.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -21,6 +21,7 @@ Last updated: 2026-05-21 11:32 CST.
 - Planck the 3rd (`deprecation_auditor`) completed local API/deprecation audit. Findings: current docs' command pattern is not directly implementable because command handlers receive only input and register-time `PluginContext` scopes are revoked; runtime persistence is split between in-memory Core/plugin stores and NativeBridge Markdown page saves; `updateBlockAttrs` is only a placeholder; use camelCase metadata keys; and inert markdown syntax descriptors alone do not create task pages.
 - Euclid the 3rd (`security_reviewer`) completed pre-test security guidance. Findings: no P0 and no native permissions required; P1 risks are stale `PluginContext` capture, unsafe raw runtime/native handles, missing command execution boundary, partial transactions, duplicate detection by block ID alone, and trusting caller-supplied titles.
 - Harvey the 3rd (`test_writer`) added TASK-018 failing acceptance tests in `src/test/task-plugin-syntax-page-creation.test.ts`. Commit: `dc2453f`.
+- Peirce the 3rd (`implementer`) added the built-in Task Plugin, `task.resolve-task-block`, and generic command-time Plugin Host context support. Commit: `399807d`.
 
 ## Validation Already Reported By Parent
 
@@ -33,6 +34,18 @@ bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
 - Result: expected red signal. 1 file failed, 5 tests failed, 3 tests passed. Main failures: missing built-in `task` plugin, missing task checkbox syntax contribution, and missing `task.resolve-task-block` command (`COMMAND_NOT_FOUND`).
 - `bun run typecheck` passed.
 - `git diff --check` passed.
+- Focused checks after Peirce the 3rd's implementation:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/markdown-runtime-extensions.test.ts src/test/app-bootstrap-runtime.test.ts
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all checks passed. Focused TASK-018 test passed with 1 file / 8 tests. Plugin Host/Markdown runtime/bootstrap regression command passed with 3 files / 55 tests. Native/package/Tauri surface diff was empty.
 
 ## Parent Decisions Before TDD
 
@@ -74,6 +87,5 @@ bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts
 
 ## Next Actions
 
-1. Wait for Peirce the 3rd's implementation.
-2. Run focused TASK-018 tests plus typecheck/lint/diff checks.
-3. Commit implementation if green.
+1. Commit implementation result record.
+2. Spawn review agents.
