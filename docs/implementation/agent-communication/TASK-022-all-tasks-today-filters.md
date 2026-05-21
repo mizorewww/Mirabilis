@@ -549,6 +549,38 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Architecture-boundary focused test passed with 1 file / 1 test. API/filter focused tests passed with 2 files / 55 tests. Expanded focused coverage passed with 4 files / 114 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Final Architecture-Boundary Review
+
+- Status: completed on 2026-05-21 20:32 CST by Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`).
+- P0 findings: none.
+- P1 findings:
+  - Leibniz found a test gap: real `TaskPlugin.manifest.contributes.metadataFields` is not directly asserted, so removing Task Plugin metadata field declarations or omitting `task.due` / `task.scheduled` would not be caught by focused tests.
+- Accepted P2 findings:
+  - Hegel found manifest-derived metadata reservations are currently load-order based and not owner-bound. A plugin loaded before the real owner could declare another namespace in `metadataFields` and reserve it.
+  - Noether found `executeFilterQuery`'s `metadataOwnerReservations` are explicit low-level caller input while the PluginHost-derived reservation policy is private. Parent decision: keep the low-level API explicit for TASK-022 because no production app-shell filter execution route exists yet, but document this clearly in formal docs and strengthen tests around manifest-derived reservations.
+  - Noether found manifest-derived reservation behavior should either test or document partial/conflicting metadata field semantics.
+- P3/residual findings:
+  - Docs still need to describe `metadataFields` as reservation-bearing descriptors, current page/metadata executor subset, deferred `within`, `page.list`, and `filter.empty_state`.
+  - Wide acyclic query budgets remain deferred.
+- Cleared findings:
+  - Singer found no P0/P1/P2/P3 and confirmed no production Core business terms remain.
+  - Hegel found no native/package/Tauri or eval/network/raw SQL surface changes.
+  - Noether found no deprecated touched APIs and verified current React, Testing Library, Vitest, and Tauri docs.
+- Checks reported by agents:
+  - Architecture-boundary + focused TASK-022 tests passed.
+  - `bun run typecheck`, `bun run lint`, focused eslint, `git diff --check`, and native/package/Tauri diff guards were reported clean.
+
+## Parent Decisions For Manifest-Reservation Test Cycle
+
+- Delegate a focused `test_writer` pass before implementation.
+- Required test scope:
+  - Assert real `TaskPlugin.manifest.contributes.metadataFields` includes the current task metadata fields: `task.enabled`, `task.status`, `task.sourcePageId`, `task.sourceBlockId`, `task.scheduled`, and `task.due`, with the expected namespaces, keys, and value types.
+  - Prove manifest-derived metadata reservations are owner-bound, not load-order based. A non-owner plugin must not be able to reserve another plugin's metadata namespace merely by declaring it first in `metadataFields`.
+  - Preserve generic metadata namespaces: a plugin may still declare and write its own namespace, and generic non-built-in metadata remains allowed.
+  - If concise, test how partial metadata field contributions behave for reservations: incomplete descriptors should not reserve a namespace.
+- Expected red signal: current code likely fails the foreign-namespace manifest reservation case; the TaskPlugin manifest assertion may already pass and is still valuable regression coverage.
+- Implementation after red tests should keep Core business-agnostic, avoid native/Tauri/package/Rust changes, and keep `within` / app-shell filter execution routing out of scope.
+
 ## Current Next Action
 
-- Final architecture-boundary review is running with Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`).
+- Spawn a focused `test_writer` for manifest-derived metadata reservation coverage, then validate and commit the expected red signal.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:26 CST.
+Last updated: 2026-05-21 20:32 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-21 20:26 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final architecture-boundary review is running.
+- Current phase: final architecture-boundary review completed; manifest-reservation tests are next.
 
 ## Active Agents
 
-- Singer (`reviewer`) is reviewing architecture-boundary correctness.
-- Hegel (`security_reviewer`) is reviewing architecture-boundary security.
-- Noether (`deprecation_auditor`) is checking architecture-boundary API contracts.
-- Leibniz (`test_quality_reviewer`) is reviewing architecture-boundary tests.
+- None. Final architecture-boundary review agents completed and are ready to close.
 
 ## Completed Recent Task
 
@@ -78,6 +75,7 @@ Last updated: 2026-05-21 20:26 CST.
 - Bernoulli (`implementer`) fixed the third review regressions in `src/core/plugin-host/plugin-host.ts` and `src/core/filter-engine.ts`. It closes accessor-backed fixed filter id namespace bypasses, reserves built-in `task` and `tag` metadata namespaces for owning plugins, and makes raw malformed `date` metadata fail closed. Parent validation passed: third review-fix focused tests 55/55, expanded focused coverage 114/114, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `8cd3994`.
 - Final narrow boundary review completed with Confucius (`reviewer`), Lagrange (`security_reviewer`), Kepler (`deprecation_auditor`), and Banach (`test_quality_reviewer`). Confucius/Lagrange/Kepler found no P0/P1/P2 in the narrow boundary behavior. Banach found P1: full frontend tests fail on `src/test/core-architecture-boundary.test.ts` because production Core files now contain the forbidden business-plugin term `task` in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. Parent reproduced the focused architecture-boundary red test. Existing red test is sufficient TDD signal for the next implementation fix.
 - Nietzsche (`implementer`) fixed the Core architecture-boundary P1 in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/plugin-host/plugin-host.ts`, `src/plugins/task/plugin.ts`, and focused tests. It moved owner policy to generic `metadataOwnerReservations`, derives plugin-host metadata reservations from plugin manifests, and adds Task Plugin manifest metadata field contributions for the current task metadata. Parent validation passed: architecture-boundary 1/1, API/filter focused 55/55, expanded focused 114/114, adjacent view/task/tag 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `3b8f0b9`.
+- Final architecture-boundary review completed with Singer (`reviewer`), Hegel (`security_reviewer`), Noether (`deprecation_auditor`), and Leibniz (`test_quality_reviewer`). Singer/Hegel/Noether found no P0/P1 behavior blocker. Leibniz found P1 test gap: real `TaskPlugin.manifest.contributes.metadataFields` is not directly asserted. Hegel found P2: manifest-derived metadata reservations are load-order based and not owner-bound, so a plugin can reserve another plugin's namespace by declaring it first. Noether found P2 docs/API handoff needs around explicit `metadataOwnerReservations`, partial/conflicting metadata field semantics, and deferred `within`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -89,10 +87,11 @@ Last updated: 2026-05-21 20:26 CST.
 
 ## Next Actions
 
-1. Wait for final architecture-boundary review agents.
-2. Address any P0/P1 findings and evaluate P2 findings.
-3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
-4. Run final branch gates before marking TASK-022 complete.
+1. Spawn focused `test_writer` for manifest-derived metadata reservation coverage.
+2. Validate expected red focused tests, then commit the test patch.
+3. Spawn `implementer` for the minimum code fix.
+4. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
+5. Run final branch gates before marking TASK-022 complete.
 
 ## Current TASK-021 State
 
