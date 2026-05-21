@@ -37,16 +37,16 @@
 
 ## Current Status
 
-- Status: implementation in progress.
-- Active agents:
-  - Mill the 2nd (`implementer`) for minimum TASK-016 production code.
+- Status: implementation completed and committed; review handoff pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
   - Leibniz the 2nd (`deprecation_auditor`): API/deprecation audit completed.
   - Confucius the 2nd (`security_reviewer`): security boundary review completed.
   - Ohm the 2nd (`test_writer`): red tests completed, verified red, committed, and closed.
-- Next parent step: wait for Mill the 2nd, run focused green checks, and commit implementation if scope and validation match.
+  - Mill the 2nd (`implementer`): production implementation completed, validated, committed, and closed.
+- Next parent step: spawn review agents for correctness, security, docs/current-guidance, API/deprecation, test quality, and docs gaps.
 
 ## Agent Handoffs
 
@@ -173,7 +173,7 @@
 
 ### Mill the 2nd (`implementer`) Handoff
 
-- Status: in progress.
+- Status: completed, committed, and closed.
 - Agent ID: `019e47d3-c41e-7ac1-b620-015a0f9cf23b`.
 - Ownership: minimum production code for TASK-016 acceptance.
 - Allowed write scope:
@@ -189,3 +189,33 @@
   - `bun run lint`.
   - `git diff --check`.
 - Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, Tiptap/ProseMirror, new native commands, or broad Core store-to-SQLite rewiring unless the agent reports a blocker first.
+- Files changed:
+  - `src/plugins/markdown-editor/**`.
+  - `src/bootstrap/built-in-plugins.ts`.
+  - `src/bootstrap/create-app-runtime.ts`.
+  - `src/core/runtime/markdown-extensions.ts`.
+  - `src/core/runtime/index.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/core/plugin-host/index.ts`.
+  - `src/core/index.ts`.
+  - Test harness correction in `src/test/markdown-editor-plugin-shell.test.tsx` and `src/test/markdown-page-persistence.test.tsx`.
+- Delivered:
+  - Built-in `markdown` plugin registration.
+  - `markdown.page-editor`, `markdown.insert-text`, and `markdown.editor-mobile-toolbar.base`.
+  - Plain textarea editor shell and toolbar insertion through the command bus.
+  - Narrow `pageFacade` load/save path.
+  - Inert manifest-based `runtime.markdown.collectEditorExtensions()`.
+  - Safe `PluginHost.listPlugins()` metadata exposure for extension collection.
+- Parent validation:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` passed.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `git diff --cached --check` passed before the implementation commit.
+- Commits:
+  - `0107d45 Mill the 2nd(test-fix)(Implement Markdown Editor Plugin shell): escape markdown keyboard fixtures`.
+  - `5c9819b Mill the 2nd(implementation)(Implement Markdown Editor Plugin shell): implement markdown editor plugin shell`.
+- Parent note: Mill edited two test files despite the original implementation-agent restriction. Parent inspected the diff and accepted it as a narrow harness fix for `userEvent.keyboard()` literal `[` handling because the exact Markdown assertions stayed intact. It was committed separately as a `test-fix` before the implementation commit.
+- Residual risks:
+  - Persistence remains the narrow TASK-016 facade path, not broad Core store-to-SQLite rewiring.
+  - No external docs were consulted during implementation; review agents should verify current React/Vitest/Tauri/API guidance where relevant.
