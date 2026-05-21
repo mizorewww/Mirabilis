@@ -384,4 +384,4 @@ git diff --check
 
 ## Current Next Action
 
-- Spawn second review-fix `implementer` to make Ptolemy's red regressions pass with the minimum production change.
+- Einstein (`implementer`) is fixing Ptolemy's red regressions with the minimum production/type change.

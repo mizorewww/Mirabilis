@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:43 CST.
+Last updated: 2026-05-21 19:45 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:43 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix regression tests are committed; implementation fix is next.
+- Current phase: second review-fix implementation is in progress.
 
 ## Active Agents
 
-- None. Ptolemy (`test_writer`) completed second review-fix regression tests.
+- Einstein (`implementer`) is fixing Ptolemy's second review-fix regressions.
 
 ## Completed Recent Task
 
@@ -80,7 +80,7 @@ Last updated: 2026-05-21 19:43 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for the minimum second review-fix code change.
+1. Wait for Einstein's second review-fix implementation.
 2. Re-run focused and adjacent validation, then commit implementation.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
