@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:17 CST.
+Last updated: 2026-05-21 22:19 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 22:17 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 review-fix implementation is pending.
+- Current phase: TASK-023 review-fix implementation is in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate review-fix implementation.
+- Galileo (`implementer`) is fixing MetadataBar command scoping and metadata trust boundaries.
 
 ## Completed Recent Task
 
@@ -145,7 +145,7 @@ Last updated: 2026-05-21 22:17 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for the MetadataBar boundary fixes.
+1. Wait for Galileo's implementation.
 2. Validate focused TASK-023 checks after implementation.
 
 ## Current TASK-021 State

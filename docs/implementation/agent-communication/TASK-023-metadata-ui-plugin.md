@@ -290,4 +290,4 @@ git diff --check
 
 ## Current Next Action
 
-- Spawn `implementer` for the MetadataBar boundary fixes.
+- Galileo (`implementer`) is fixing MetadataBar command scoping and metadata trust boundaries.
