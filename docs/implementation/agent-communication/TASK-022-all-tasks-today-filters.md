@@ -519,4 +519,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn an implementer to fix the Core architecture-boundary P1 without weakening the TASK-022 behavior tests.
+- Nietzsche (`implementer`) is fixing the Core architecture-boundary P1 without weakening the TASK-022 behavior tests.

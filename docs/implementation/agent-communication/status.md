@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 20:16 CST.
+Last updated: 2026-05-21 20:17 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 20:16 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final narrow boundary review completed; Core architecture-boundary fix is next.
+- Current phase: Core architecture-boundary fix is in progress.
 
 ## Active Agents
 
-- None. Final narrow boundary review agents completed and are ready to close.
+- Nietzsche (`implementer`) is fixing the Core architecture-boundary P1.
 
 ## Completed Recent Task
 
@@ -85,7 +85,7 @@ Last updated: 2026-05-21 20:16 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` to fix the Core architecture-boundary P1.
+1. Wait for Nietzsche's architecture-boundary implementation.
 2. Re-run architecture-boundary, focused TASK-022, and adjacent validation, then commit implementation.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
