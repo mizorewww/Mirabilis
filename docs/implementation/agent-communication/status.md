@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 11:13 CST.
+Last updated: 2026-05-21 11:26 CST.
 
 ## Current Task
 
@@ -8,14 +8,26 @@ Last updated: 2026-05-21 11:13 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test planning/current-doc/security/deprecation guidance agents running.
+- Current phase: pre-test guidance completed; TDD test handoff pending.
 
 ## Active Agents
 
-- Godel the 3rd (`planner`): read-only TASK-018 scope and TDD plan.
-- Copernicus the 3rd (`docs_researcher`): read-only current-doc guidance for APIs/tools TASK-018 may touch.
-- Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit.
-- Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance before tests.
+- None.
+
+## Completed TASK-018 Agent Outcomes
+
+- Godel the 3rd (`planner`) completed read-only scope planning. Recommendation: keep TASK-018 plugin-owned and command-driven, use camelCase task metadata keys, avoid Core/App Shell/Markdown Editor task logic, and treat automatic editor-save indexing as follow-up unless scope changes.
+- Copernicus the 3rd (`docs_researcher`) completed current-doc guidance. Recommendation: stay in TypeScript/plugin/runtime, use focused Vitest behavior tests, avoid new Tauri/Rust/NativeBridge/filesystem/package work, and avoid stale captured `PluginContext` mutation.
+- Planck the 3rd (`deprecation_auditor`) completed local API/deprecation audit. Findings: current docs' command pattern is not directly implementable because command handlers receive only input and register-time `PluginContext` scopes are revoked; runtime persistence is split between in-memory Core/plugin stores and NativeBridge Markdown page saves; `updateBlockAttrs` is only a placeholder; use camelCase metadata keys; and inert markdown syntax descriptors alone do not create task pages.
+- Euclid the 3rd (`security_reviewer`) completed pre-test security guidance. Findings: no P0 and no native permissions required; P1 risks are stale `PluginContext` capture, unsafe raw runtime/native handles, missing command execution boundary, partial transactions, duplicate detection by block ID alone, and trusting caller-supplied titles.
+
+## Parent Decisions Before TDD
+
+- TASK-018 uses namespace `task` with keys `enabled`, `status`, `sourcePageId`, and `sourceBlockId`.
+- TASK-018 remains TypeScript/plugin/runtime work against current Core services. Do not add Tauri commands, capabilities, generated permissions, filesystem/native import-export, package/Cargo dependencies, raw NativeBridge access, raw stores, or raw registries.
+- The desired user-facing command path is `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` or an equivalent registered Task Plugin command. Tests should expose that the current input-only command handler lacks a safe fresh plugin execution context, and should require the final behavior to avoid stale register-time `PluginContext` capture.
+- Source block binding should update the source page body by copying the matched block and adding `attrs.boundPageId`; do not depend on nonexistent `updateBlockAttrs`.
+- Duplicate prevention must use the pair `(sourcePageId, sourceBlockId)`, with existing `attrs.boundPageId` and/or existing task metadata relation reused instead of creating another task page.
 
 ## Current TASK-018 State
 
@@ -49,6 +61,5 @@ Last updated: 2026-05-21 11:13 CST.
 
 ## Next Actions
 
-1. Wait for pre-test guidance agents.
-2. Persist agent findings and parent decisions.
-3. Delegate failing tests to `test_writer`.
+1. Commit pre-test guidance and parent decisions.
+2. Delegate failing tests to `test_writer`.

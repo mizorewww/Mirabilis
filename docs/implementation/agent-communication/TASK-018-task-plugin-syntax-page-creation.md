@@ -40,16 +40,69 @@
 
 ## Current Status
 
-- Status: pre-test guidance agents running.
-- Active agents:
+- Status: pre-test guidance completed; TDD test handoff pending.
+- Active agents: none.
+- Completed agents:
+  - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
+  - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
+  - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
+  - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
+- Next parent step: commit pre-test guidance and parent decisions, then delegate failing tests to `test_writer`.
+
+## Agent Handoffs
+
+### Pre-test Guidance Round
+
+- Status: completed.
+- Agents:
   - Godel the 3rd (`planner`): read-only TASK-018 scope and TDD plan.
   - Copernicus the 3rd (`docs_researcher`): read-only current-doc guidance for APIs/tools TASK-018 may touch.
   - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit.
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance before tests.
-- Next parent step: wait for pre-test guidance, persist findings and parent decisions, then delegate failing tests to `test_writer`.
+
+### Godel the 3rd (`planner`) Outcome
+
+- Status: completed read-only planning; no files edited and no tests run.
+- Recommendation: keep TASK-018 plugin-owned and command-driven. Do not add task logic to Core, App Shell, or Markdown Editor UI.
+- Recommended metadata keys: namespace `task` with camelCase keys `enabled`, `status`, `sourcePageId`, and `sourceBlockId`.
+- Proposed scope: add `src/plugins/task/**`, register `TaskPlugin` in `BUILT_IN_PLUGINS`, add task syntax recognition and a resolver command, create task pages and metadata through Core/plugin facades, and bind source blocks with `attrs.boundPageId`.
+- TDD guidance: registration/syntax descriptor, structured `markdown.line` task recognition, task page/metadata/source binding in one transaction, and duplicate prevention.
+- Out of scope: task text click navigation, infinite nesting UI, checkbox toggle/events, All Tasks/Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new native surface, and task rename synchronization.
+
+### Copernicus the 3rd (`docs_researcher`) Outcome
+
+- Status: completed read-only current-doc research; no files edited and no tests run.
+- Recommendation: keep TASK-018 in TypeScript/plugin/runtime with focused Vitest tests. No new Tauri commands, capabilities, filesystem permissions, Rust IPC, package dependencies, or raw NativeBridge access are needed.
+- Test guidance: prove `- [ ] A` in a TASK-017 `markdown.line` block is recognized using stable `blockId`; resolving an unbound task creates one task page titled `A`; task metadata is written; source block is bound; repeated resolving does not duplicate pages; and manifest/runtime-extension contribution is visible if TaskPlugin contributes markdown syntax descriptors.
+- Implementation warning: `PluginContext` is lifecycle-scoped and `ctx.commands` has no `execute`; do not register a command handler that mutates through captured register-time `ctx.transaction`.
+- External docs verified: React 19 upgrade and `act`, Vitest 4 migration/mock/expect APIs, Testing Library `user-event` and queries/async APIs, TypeScript 5.8 and 4.9 notes, Vite 7 Node support, and Tauri v2 command/capability/permission docs.
+
+### Planck the 3rd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only API/deprecation audit; no files edited and no tests run.
+- P1 findings:
+  - The docs' command pattern is not directly implementable with current APIs because command handlers receive only input and register-time `PluginContext` scopes are revoked after `register()`.
+  - Runtime persistence is split: Plugin Host uses in-memory Core stores while `runtime.markdown.pages.save()` writes through NativeBridge DB operations. TASK-018 should deliberately stay Core/plugin-runtime focused unless scope changes.
+- P2 findings: `tx.pages.updateBlockAttrs` is a placeholder and not a current API; product docs still show older snake_case source metadata in one place; inert `manifest.contributes.markdownSyntax` descriptors alone do not create pages.
+- Recommended APIs: parse TASK-017 `markdown.line` blocks with stable `blockId`s; write metadata through plugin-facing `metadata.set` so Plugin Host injects `sourcePluginId`; detect duplicates by `sourcePageId + sourceBlockId`; follow the existing built-in plugin pattern.
+- External docs verified: Tauri v2 invoke and permissions, React textarea, Vitest `expectTypeOf`, and Testing Library user-event setup.
+
+### Euclid the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security review; no files edited and no tests run.
+- No P0 findings and no native permissions required.
+- P1 risks:
+  - Do not close over register-time `PluginContext` for `task.resolve-task-block`; lifecycle scopes are revoked after registration.
+  - Keep task creation behind Command Registry while providing a safe execution boundary.
+  - Do not add `task.*` native operations, NativeBridge handles, raw stores, raw registries, filesystem, SQL, or Tauri handles to Task Plugin.
+- Security test guidance: invalid payloads and stale source blocks must not mutate; derive or verify title from the current source block, not caller input alone; page creation, metadata writes, and source block binding must be atomic; duplicate prevention must use `(sourcePageId, sourceBlockId)`; same block IDs on different pages should create distinct task pages; `boundPageId` and existing metadata relations should be reused; code fences and malformed lines should not create tasks; HTML or `javascript:`-like titles remain inert text; native-surface guards stay green.
 
 ## Parent Decisions
 
 - Select TASK-018 because it is the first unblocked `[ ]` task after TASK-017 completed and merged.
 - Use branch `feat/task-018-task-plugin-syntax-page-creation`.
 - Keep parent orchestration-only per user instruction.
+- Accept camelCase task metadata keys from TASK-018 acceptance and architecture docs.
+- Keep TASK-018 TypeScript/plugin/runtime scoped with no new native surface.
+- Require TDD tests to expose the command execution context gap: final behavior must let a registered Task Plugin command resolve task blocks without mutating through a stale register-time `PluginContext`.
+- Require duplicate prevention by `(sourcePageId, sourceBlockId)` and source block binding through copied block attrs, not a nonexistent `updateBlockAttrs` API.
