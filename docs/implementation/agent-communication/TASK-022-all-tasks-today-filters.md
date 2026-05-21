@@ -212,6 +212,47 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. TASK-022 focused tests passed with 2 files / 22 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Focused Review Handoff
+
+- Status: completed on 2026-05-21 19:12 CST by Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`).
+- P0 findings: none.
+- P1 findings:
+  - Maxwell and Hubble found that Task Plugin default filter registration is not idempotent. `registerTaskFilters()` saves fixed IDs on every register while plugin deactivation leaves saved filters in the Filter Store, so deactivation followed by re-registration fails with `FILTER_ID_COLLISION: task.filter.all-tasks`.
+  - Epicurus found docs drift where formal Filter and Task Plugin docs still conflict with the implemented `page.list`, `metadata.task.enabled eq true`, seeded `task.due` / `task.scheduled`, and default filter/view/slot behavior.
+- P2 findings:
+  - Maxwell and Schrodinger found hidden runtime support for `id` in filter save inputs while `SaveFilterInput` and `PluginSaveFilterInput` omit the public type contract.
+  - Maxwell found the exported `executeFilterQuery` returns empty results for legal `gt`, `lt`, and `within` operators. Parent decision: cover and implement `gt`/`lt` for current page/metadata execution now; keep `within` deferred until Event/plugin-index semantics are documented by the docs sync agent because current local docs only use it for event history such as `events.timer.time_segment_created within 7 days`.
+  - Planck found generic executor coverage is still too task/tag-specific and should include an arbitrary plugin namespace/key plus forged-owner exclusion.
+  - Epicurus found TASK-021/Tag docs, relative Today/date semantics, slot docs, development docs, testing docs, and the TASK-022 task-index entry need synchronization.
+- P3 findings accepted for opportunistic hardening:
+  - Gibbs found `metadata.* neq relative-date(today)` can match wrong-typed metadata because `neq` negates a failed date comparison instead of failing closed.
+  - Hubble found the empty-state copy is task-specific even though the slot is global. Parent decision: make the copy generic or prop-scoped during the review fix.
+  - Planck found rendering tests hard-code `task.page-list` and `task.filter-empty-state`; add a regression proving `filter.viewType` drives view lookup and empty results route through the `filter.empty_state` slot.
+- P3 findings deferred:
+  - Native/package guard tests shell out to `git diff master`; keep as a temporary task-scope guard and list as residual risk.
+  - The `task.set_due` / `task.set-due` absence assertion is scope-coupled; keep unless the review-fix test writer chooses to replace it with a less brittle acceptance assertion.
+- Checks reported by review agents:
+  - Focused TASK-022 tests passed.
+  - Full frontend tests passed in Hubble's review.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guards passed.
+  - Gibbs also ran `cargo fmt --manifest-path src-tauri/Cargo.toml --check` successfully.
+
+## Parent Decisions For Review-Fix Cycle
+
+- Delegate review-fix regression tests to a `test_writer` first. Parent thread will not write tests.
+- Required test scope:
+  - Task Plugin activation, deactivation, and re-activation must not fail or duplicate default filters.
+  - Public `SaveFilterInput` and `PluginSaveFilterInput` must permit optional fixed `id` where runtime behavior supports it.
+  - `executeFilterQuery` must prove generic metadata execution against a non-task/non-tag namespace and reject forged owner metadata.
+  - `executeFilterQuery` must cover `gt` and `lt` for comparable page/metadata values and fail closed for wrong value types.
+  - Relative-date `neq` must fail closed for wrong-typed date metadata.
+  - Registered filter rendering should use a saved filter's `viewType` to resolve a view, and empty results should route through `filter.empty_state`.
+- Required implementation scope after red tests:
+  - Make Task Plugin default filter registration idempotent without deleting user-created filters.
+  - Make optional fixed filter IDs a typed public contract for Core and plugin filter saves, or have the implementer justify a smaller replacement in the task communication file before coding.
+  - Implement only the current page/metadata subset of comparison operators needed by the new tests.
+  - Keep JS filters, native/Tauri/package/Rust changes, global saved-filter navigation, automatic scanning, persistence rewiring, and Event/plugin-index `within` execution out of scope.
+
 ## Current Next Action
 
-- Focused review is running with Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`).
+- Spawn review-fix `test_writer` to add failing regressions for the accepted P1/P2/P3 findings, then validate the expected red signal before committing the tests.

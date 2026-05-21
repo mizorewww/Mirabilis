@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:05 CST.
+Last updated: 2026-05-21 19:12 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 19:05 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused review is running.
+- Current phase: focused review completed; review-fix regression tests are next.
 
 ## Active Agents
 
-- Maxwell (`pr_explorer`) is mapping the changed surface.
-- Hubble (`reviewer`) is reviewing correctness.
-- Gibbs (`security_reviewer`) is reviewing security boundaries.
-- Schrodinger (`deprecation_auditor`) is checking API/deprecation risks.
-- Planck (`test_quality_reviewer`) is reviewing test quality.
-- Epicurus (`docs_researcher`) is mapping docs drift.
+- None. The previous focused review agents completed and are ready to close.
 
 ## Completed Recent Task
 
@@ -69,6 +64,7 @@ Last updated: 2026-05-21 19:05 CST.
 - Darwin (`security_reviewer`) completed security guidance. P0/P1 guidance: no executable JS filters or native exposure, data-only AST interpreter with allowlisted fields, Task Plugin metadata trust boundaries, deterministic date parsing, minimal view/slot props, and inert rendering.
 - Wegener (`test_writer`) added failing TASK-022 acceptance tests in `src/test/core-filter-engine.test.ts` and `src/test/task-filters-view-rendering.test.tsx`. Coverage includes public `executeFilterQuery`, generic metadata query execution, owner-consistent metadata, path-injection fail-closed behavior, Tag filter compatibility, relative Today resolution, Task-owned All Tasks/Today filters, registered `page.list` rendering, `filter.empty_state`, inert unsafe titles, and native/package guard.
 - Ramanujan (`implementer`) added the initial TASK-022 production implementation in `src/core/filter-engine.ts`, `src/core/index.ts`, `src/core/stores/filter-store.ts`, `src/plugins/task/plugin.ts`, and `src/plugins/task/components/TaskFilterViews.tsx`. It implements public `executeFilterQuery`, task-owned All Tasks/Today filters, registered `page.list` view rendering, and `filter.empty_state` slot. Commit: `a9a07e9`.
+- Focused review completed with Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`). P0 findings: none. P1 findings: default Task filter registration is not idempotent after plugin deactivation/re-registration, and formal docs drift from the implemented filter/view/date contract. Accepted P2/P3 follow-up: type fixed filter IDs as public save inputs, broaden generic executor coverage, cover `gt`/`lt`, harden relative-date `neq`, make empty-state copy generic or prop-scoped, and prove view/slot lookup through `viewType` and `filter.empty_state`. Deferred P2/P3: Event/plugin-index `within` execution, git-coupled native guard cleanup, and absence-command assertion brittleness.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -80,9 +76,11 @@ Last updated: 2026-05-21 19:05 CST.
 
 ## Next Actions
 
-1. Wait for focused review agents.
-2. Fix P0/P1 findings and evaluate P2 findings.
-3. Run docs sync after behavior review clears.
+1. Spawn review-fix `test_writer` for accepted P1/P2/P3 regression coverage.
+2. Validate expected red focused tests, then commit the test patch.
+3. Spawn `implementer` for the minimum code fix.
+4. Re-run focused and adjacent validation, then commit implementation.
+5. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 
 ## Current TASK-021 State
 
