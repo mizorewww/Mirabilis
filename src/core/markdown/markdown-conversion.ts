@@ -17,6 +17,7 @@ const defaultMaxInputLength = 1_000_000;
 const defaultMaxBlockCount = 20_000;
 const defaultMaxDepth = 100;
 const maxBlockIdGenerationAttempts = 1_000;
+const maxBlockIdReconciliationLookahead = 128;
 
 let fallbackBlockIdCounter = 0;
 
@@ -42,6 +43,17 @@ export function importMarkdownToStructuredDocument(
     maxBlockCount: options.maxBlockCount,
     maxDepth: options.maxDepth,
   } satisfies ValidateStructuredMarkdownDocumentOptions;
+  const maxBlockCount = readLimit(
+    options.maxBlockCount,
+    defaultMaxBlockCount,
+    "maxBlockCount",
+  );
+  const lines = markdown.split("\n");
+
+  if (lines.length > maxBlockCount) {
+    throw new Error("Structured Markdown document has too many blocks");
+  }
+
   const previousDocument =
     options.previousDocument === undefined
       ? undefined
@@ -50,7 +62,6 @@ export function importMarkdownToStructuredDocument(
           validationOptions,
         );
   const createBlockId = options.createBlockId ?? createOpaqueBlockId;
-  const lines = markdown.split("\n");
   const blockIds = assignBlockIds(lines, previousDocument?.content ?? [], {
     createBlockId,
   });
@@ -120,10 +131,22 @@ function assignBlockIds(
   options: BlockIdAssignmentOptions,
 ): string[] {
   const assignedBlockIds = new Array<string | undefined>(lines.length);
-  const usedBlockIds = new Set<string>();
+  const assignedPreviousBlockIds = new Set<string>();
+  const unavailableBlockIds = new Set(
+    previousBlocks.map((block) => block.blockId),
+  );
 
-  if (previousBlocks.length === lines.length) {
-    return previousBlocks.map((block) => block.blockId);
+  if (previousBlocks.length === 0) {
+    return lines.map(() => {
+      const blockId = createUniqueBlockId(
+        options.createBlockId,
+        unavailableBlockIds,
+      );
+
+      unavailableBlockIds.add(blockId);
+
+      return blockId;
+    });
   }
 
   let start = 0;
@@ -135,7 +158,7 @@ function assignBlockIds(
   ) {
     retainPreviousBlockId(start, previousBlocks[start], {
       assignedBlockIds,
-      usedBlockIds,
+      assignedPreviousBlockIds,
     });
     start += 1;
   }
@@ -150,23 +173,153 @@ function assignBlockIds(
   ) {
     retainPreviousBlockId(lineEnd, previousBlocks[previousEnd], {
       assignedBlockIds,
-      usedBlockIds,
+      assignedPreviousBlockIds,
     });
     previousEnd -= 1;
     lineEnd -= 1;
   }
+
+  retainEditedBlockIds({
+    lines,
+    previousBlocks,
+    start,
+    lineEnd,
+    previousEnd,
+    assignedBlockIds,
+    assignedPreviousBlockIds,
+  });
 
   for (let index = 0; index < lines.length; index += 1) {
     if (assignedBlockIds[index] !== undefined) {
       continue;
     }
 
-    const blockId = createUniqueBlockId(options.createBlockId, usedBlockIds);
+    const blockId = createUniqueBlockId(
+      options.createBlockId,
+      unavailableBlockIds,
+    );
     assignedBlockIds[index] = blockId;
-    usedBlockIds.add(blockId);
+    unavailableBlockIds.add(blockId);
   }
 
   return assignedBlockIds.map((blockId) => blockId ?? "");
+}
+
+function retainEditedBlockIds(input: {
+  lines: readonly string[];
+  previousBlocks: readonly BlockNode[];
+  start: number;
+  lineEnd: number;
+  previousEnd: number;
+  assignedBlockIds: Array<string | undefined>;
+  assignedPreviousBlockIds: Set<string>;
+}): void {
+  let nextLineIndex = input.start;
+
+  for (
+    let previousIndex = input.start;
+    previousIndex <= input.previousEnd;
+    previousIndex += 1
+  ) {
+    const previousBlock = input.previousBlocks[previousIndex];
+
+    if (
+      previousBlock === undefined ||
+      input.assignedPreviousBlockIds.has(previousBlock.blockId)
+    ) {
+      continue;
+    }
+
+    let bestLineIndex: number | undefined;
+    let bestScore = 0;
+
+    const candidateLineEnd = Math.min(
+      input.lineEnd,
+      nextLineIndex + maxBlockIdReconciliationLookahead - 1,
+    );
+
+    for (
+      let lineIndex = nextLineIndex;
+      lineIndex <= candidateLineEnd;
+      lineIndex += 1
+    ) {
+      if (input.assignedBlockIds[lineIndex] !== undefined) {
+        continue;
+      }
+
+      const score = blockSimilarityScore(
+        blockToMarkdown(previousBlock),
+        input.lines[lineIndex] ?? "",
+      );
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestLineIndex = lineIndex;
+      }
+
+      if (score === 1) {
+        break;
+      }
+    }
+
+    if (bestLineIndex === undefined || bestScore < 0.5) {
+      continue;
+    }
+
+    retainPreviousBlockId(bestLineIndex, previousBlock, {
+      assignedBlockIds: input.assignedBlockIds,
+      assignedPreviousBlockIds: input.assignedPreviousBlockIds,
+    });
+    nextLineIndex = bestLineIndex + 1;
+  }
+}
+
+function blockSimilarityScore(previousLine: string, nextLine: string): number {
+  const previous = previousLine.trim().toLocaleLowerCase();
+  const next = nextLine.trim().toLocaleLowerCase();
+
+  if (previous === next) {
+    return 1;
+  }
+
+  if (previous.length === 0 || next.length === 0) {
+    return 0;
+  }
+
+  if (
+    previous.length >= 3 &&
+    (next.startsWith(previous) || next.includes(previous))
+  ) {
+    return 0.9;
+  }
+
+  if (
+    next.length >= 3 &&
+    (previous.startsWith(next) || previous.includes(next))
+  ) {
+    return 0.9;
+  }
+
+  const previousTokens = tokenizeForSimilarity(previous);
+  const nextTokens = tokenizeForSimilarity(next);
+
+  if (previousTokens.length === 0 || nextTokens.length === 0) {
+    return 0;
+  }
+
+  const nextTokenSet = new Set(nextTokens);
+  const sharedTokenCount = previousTokens.filter((token) =>
+    nextTokenSet.has(token),
+  ).length;
+
+  return sharedTokenCount / Math.max(previousTokens.length, nextTokens.length);
+}
+
+function tokenizeForSimilarity(value: string): string[] {
+  return value
+    .split(/[^\p{L}\p{N}_]+/u)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
 }
 
 function retainPreviousBlockId(
@@ -174,15 +327,18 @@ function retainPreviousBlockId(
   block: BlockNode | undefined,
   state: {
     assignedBlockIds: Array<string | undefined>;
-    usedBlockIds: Set<string>;
+    assignedPreviousBlockIds: Set<string>;
   },
 ): void {
-  if (block === undefined || state.usedBlockIds.has(block.blockId)) {
+  if (
+    block === undefined ||
+    state.assignedPreviousBlockIds.has(block.blockId)
+  ) {
     return;
   }
 
   state.assignedBlockIds[index] = block.blockId;
-  state.usedBlockIds.add(block.blockId);
+  state.assignedPreviousBlockIds.add(block.blockId);
 }
 
 function createUniqueBlockId(
@@ -275,12 +431,20 @@ function validateBlock(block: unknown, context: BlockValidationContext): void {
     throw new Error("Structured Markdown block type must be a string");
   }
 
+  if (block.type === "markdown.text") {
+    throw new Error("Legacy Markdown text nodes are not structured blocks");
+  }
+
   if (block.text !== undefined && typeof block.text !== "string") {
     throw new Error("Structured Markdown block text must be a string");
   }
 
   if (block.attrs !== undefined) {
     validateAttrs(block.attrs);
+  }
+
+  if (block.marks !== undefined) {
+    validateMarks(block.marks);
   }
 
   if (block.content !== undefined) {
@@ -302,19 +466,55 @@ function validateAttrs(attrs: unknown): void {
     throw new Error("Structured Markdown block attrs must be an object");
   }
 
-  for (const [key, value] of Object.entries(attrs)) {
-    if (/^on/i.test(key)) {
-      throw new Error("Structured Markdown block attrs cannot be executable");
+  validateNonExecutableObject(attrs, "attrs");
+}
+
+function validateMarks(marks: unknown): void {
+  if (!Array.isArray(marks)) {
+    throw new Error("Structured Markdown block marks must be an array");
+  }
+
+  for (const mark of marks) {
+    if (!isRecord(mark)) {
+      throw new Error("Structured Markdown mark must be an object");
     }
 
-    validateAttrValue(value);
+    if (mark.type !== undefined && typeof mark.type !== "string") {
+      throw new Error("Structured Markdown mark type must be a string");
+    }
+
+    if (mark.attrs !== undefined) {
+      validateAttrs(mark.attrs);
+    }
+
+    validateNonExecutableObject(mark, "marks");
   }
 }
 
-function validateAttrValue(value: unknown): void {
+function validateNonExecutableObject(
+  object: Record<string, unknown>,
+  label: string,
+): void {
+  for (const [key, value] of Object.entries(object)) {
+    if (/^on/i.test(key)) {
+      throw new Error(`Structured Markdown block ${label} cannot be executable`);
+    }
+
+    if (key === "attrs") {
+      validateAttrs(value);
+    } else {
+      validateJsonCompatibleNonExecutableValue(value, label);
+    }
+  }
+}
+
+function validateJsonCompatibleNonExecutableValue(
+  value: unknown,
+  label: string,
+): void {
   if (typeof value === "string") {
-    if (/^\s*javascript\s*:/i.test(value)) {
-      throw new Error("Structured Markdown block attrs cannot be executable");
+    if (isExecutableUrlLike(value)) {
+      throw new Error(`Structured Markdown block ${label} cannot be executable`);
     }
 
     return;
@@ -330,19 +530,30 @@ function validateAttrValue(value: unknown): void {
 
   if (Array.isArray(value)) {
     for (const item of value) {
-      validateAttrValue(item);
+      validateJsonCompatibleNonExecutableValue(item, label);
     }
 
     return;
   }
 
   if (isRecord(value)) {
-    validateAttrs(value);
+    validateNonExecutableObject(value, label);
 
     return;
   }
 
-  throw new Error("Structured Markdown block attrs must be JSON-compatible");
+  throw new Error(`Structured Markdown block ${label} must be JSON-compatible`);
+}
+
+function isExecutableUrlLike(value: string): boolean {
+  const normalizedValue = value
+    .replace(/[\u0000-\u001F\u007F\s]+/gu, "")
+    .toLocaleLowerCase();
+
+  return (
+    normalizedValue.startsWith("javascript:") ||
+    normalizedValue.startsWith("data:")
+  );
 }
 
 function readLimit(

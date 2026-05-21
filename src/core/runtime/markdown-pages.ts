@@ -176,6 +176,10 @@ function isLegacyMarkdownBody(body: unknown): body is LegacyMarkdownBody {
     return false;
   }
 
+  if (!hasExactKeys(body, ["content", "type"])) {
+    return false;
+  }
+
   if (body.content.length !== 1) {
     return false;
   }
@@ -186,12 +190,25 @@ function isLegacyMarkdownBody(body: unknown): body is LegacyMarkdownBody {
     isRecord(node) &&
     node.type === "markdown.text" &&
     typeof node.text === "string" &&
-    typeof node.blockId !== "string"
+    hasExactKeys(node, ["text", "type"])
   );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasExactKeys(
+  value: Record<string, unknown>,
+  expectedKeys: readonly string[],
+): boolean {
+  const actualKeys = Object.keys(value).sort();
+  const sortedExpectedKeys = [...expectedKeys].sort();
+
+  return (
+    actualKeys.length === sortedExpectedKeys.length &&
+    actualKeys.every((key, index) => key === sortedExpectedKeys[index])
+  );
 }
 
 function toEditorDocument(
