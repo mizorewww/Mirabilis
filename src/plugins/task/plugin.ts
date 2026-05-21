@@ -13,6 +13,7 @@ import {
   TaskFilterEmptyState,
   TaskPageListView,
 } from "./components/TaskFilterViews";
+import { TaskMetadataSlot } from "./components/TaskMetadataSlot";
 
 type ResolveTaskBlockInput = {
   sourcePageId: string;
@@ -50,8 +51,10 @@ const allTasksFilterId = "task.filter.all-tasks";
 const todayFilterId = "task.filter.today";
 const taskPageListViewId = "task.page-list";
 const taskFilterEmptyStateSlotId = "task.filter-empty-state";
+const taskMetadataSlotId = "task.page-header-metadata.current-fields";
 const pageListViewType = "page.list";
 const filterEmptyStateSlot = "filter.empty_state";
+const pageHeaderMetadataSlot = "page.header.metadata";
 const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
 const toggleableTaskLinePattern =
   /^(?<beforeMarker> {0,3}-\s+\[)(?<marker> |x|X)(?<afterMarker>\]\s+)(?<title>.*)$/u;
@@ -168,6 +171,13 @@ export const TaskPlugin: AppPlugin = {
       slot: filterEmptyStateSlot,
       order: 100,
       component: TaskFilterEmptyState,
+    });
+
+    ctx.slots.register({
+      id: taskMetadataSlotId,
+      slot: pageHeaderMetadataSlot,
+      order: 100,
+      component: TaskMetadataSlot,
     });
 
     ctx.commands.register({

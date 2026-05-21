@@ -2,7 +2,8 @@ import { useId, useState, type FormEvent } from "react";
 
 export type TagMetadataSlotProps = {
   pageId: string;
-  tags: readonly string[];
+  tags?: readonly string[];
+  values?: Readonly<Record<string, unknown>>;
   commands: {
     execute(commandId: string, input?: unknown): Promise<unknown>;
   };
@@ -26,13 +27,16 @@ const rawTagPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/u;
 export function TagMetadataSlot({
   pageId,
   tags,
+  values,
   commands,
 }: TagMetadataSlotProps) {
   const inputId = useId();
   const [commandTags, setCommandTags] = useState<CommandTags | null>(null);
   const [draftTag, setDraftTag] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-  const visibleTags = commandTags?.pageId === pageId ? commandTags.tags : tags;
+  const initialTags = tags ?? readTagsFromValues(values);
+  const visibleTags =
+    commandTags?.pageId === pageId ? commandTags.tags : initialTags;
 
   async function addTag(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,7 +90,7 @@ export function TagMetadataSlot({
             <span>{`#${tag}`}</span>
             <button
               type="button"
-              aria-label={`Remove #${tag}`}
+              aria-label={createRemoveTagLabel(tag)}
               onClick={() => {
                 void removeTag(tag);
               }}
@@ -146,6 +150,26 @@ function readTagCommandResult(
     pageId: result.pageId,
     tags: result.tags,
   };
+}
+
+function readTagsFromValues(
+  values: Readonly<Record<string, unknown>> | undefined,
+): readonly string[] {
+  const value = values?.tags;
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((tag): tag is string => typeof tag === "string");
+}
+
+function createRemoveTagLabel(tag: string): string {
+  if (/(?:javascript:|data:text\/html|<script\b)/iu.test(tag)) {
+    return "Remove tag";
+  }
+
+  return `Remove #${tag}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
