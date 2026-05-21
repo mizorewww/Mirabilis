@@ -37,8 +37,9 @@
 
 ## Current Status
 
-- Status: docs sync handoff pending.
-- Active agents: none.
+- Status: docs sync in progress.
+- Active agents:
+  - Meitner the 3rd (`doc_writer`) for final TASK-016 docs sync.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -66,7 +67,8 @@
   - Dewey the 3rd (`implementer`): async-insert race fix completed, validated, committed, and closed.
   - Sartre the 3rd (`reviewer`): async-insert correctness re-review completed with no findings.
   - Hegel the 3rd (`deprecation_auditor`): async-insert API/deprecation re-review completed with no findings.
-- Next parent step: delegate final docs sync to `doc_writer`.
+  - Meitner the 3rd (`doc_writer`): final TASK-016 docs sync in progress.
+- Next parent step: wait for Meitner the 3rd, validate docs diff, and commit docs sync.
 
 ## Agent Handoffs
 
@@ -479,3 +481,12 @@
   - Verified the ref/generation guard is consistent with current React `useRef`, effect race, `useLayoutEffect`, and refs lint guidance.
   - Checks: focused TASK-016 frontend tests, `bun run typecheck`, and `bun run lint` passed.
 - Parent decision: review blockers are clear. Proceed to docs sync, then final local gate.
+
+### Meitner the 3rd (`doc_writer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e480c-b999-77d0-9baa-5aa1aa7bec6e`.
+- Ownership: final TASK-016 docs sync and status cleanup only.
+- Expected docs updates:
+  - Markdown Editor Plugin registration, controlled textarea shell, toolbar baseline, async stale-result guard, runtime extension descriptors, runtime page facade, plugin host metadata exposure, testing strategy, deferred rich-editor/plugin semantics, and status cleanup.
+- Restrictions: docs/status files only; no production code, tests, Tauri config/capabilities, Rust code, package/Cargo files, dependencies, generated files, or commits. Parent will mark `progress.md` complete after final gate.
