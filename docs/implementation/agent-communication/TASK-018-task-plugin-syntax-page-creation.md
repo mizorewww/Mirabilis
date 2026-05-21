@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: final narrow re-review agent running.
-- Active agents:
-  - Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
+- Status: final narrow re-review found one P2; third review-fix TDD handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +53,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Nash the 3rd's final narrow re-review; if clear, delegate blocking docs sync.
+- Next parent step: commit final narrow re-review finding, then delegate third review-fix regression test to `test_writer`.
 
 ## Agent Handoffs
 
@@ -359,9 +358,18 @@ git diff --check
 
 ### Final Narrow Re-review
 
-- Status: running.
+- Status: completed.
 - Agent:
   - Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
+
+### Nash the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only final narrow re-review; no files edited.
+- No P0/P1 findings.
+- Remaining P2:
+  - `CommandRegistry` still does not prove a preserved cause came from Plugin Host command execution. It now checks `cause instanceof PluginHostError`, but `PluginHostError` is publicly exported/constructible. A direct/non-plugin command can throw a real `new PluginHostError(...)` and still have that raw cause preserved.
+- Non-issues: no circular/import boundary issue found; typecheck/lint/focused tests pass.
+- Checks run: `bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts`, `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`; all passed. A one-off probe confirmed the remaining P2.
 
 ## Parent Decisions
 

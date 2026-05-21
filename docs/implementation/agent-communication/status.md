@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 12:31 CST.
+Last updated: 2026-05-21 12:35 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 12:31 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final narrow re-review agent running.
+- Current phase: final narrow re-review found one P2; third review-fix TDD handoff pending.
 
 ## Active Agents
 
-- Nash the 3rd (`reviewer`): final narrow re-review for command failure redaction fix.
+- None.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -38,6 +38,7 @@ Last updated: 2026-05-21 12:31 CST.
   - Pauli the 3rd (`reviewer`) found one remaining P2: `CommandRegistry` preserves causes by duck-typing `PluginHostError` shape, allowing a non-plugin command to spoof that shape and bypass raw-cause redaction.
 - Sagan the 3rd (`test_writer`) added a focused red regression for spoofed PluginHostError-shaped command causes. Commit: `3cd7001`.
 - Darwin the 3rd (`implementer`) fixed command failure redaction by preserving causes only for genuine `PluginHostError` instances. Commit: `8ecfbbd`.
+- Nash the 3rd (`reviewer`) completed final narrow re-review and found one remaining P2: direct/non-plugin command handlers can still throw a real exported `PluginHostError` instance and have it preserved as `CommandRegistryError.cause`, so command registry still does not prove the cause came from Plugin Host command execution.
 
 ## Validation Already Reported By Parent
 
@@ -142,5 +143,5 @@ git diff --check
 
 ## Next Actions
 
-1. Wait for Nash the 3rd's final narrow re-review.
-2. If clear, delegate blocking docs sync.
+1. Commit final narrow re-review finding.
+2. Delegate third review-fix regression test to `test_writer`.
