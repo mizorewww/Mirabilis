@@ -208,13 +208,17 @@ type PluginInputProperty =
       value: unknown;
     };
 
+type MetadataOwnerReservation = {
+  namespace: string;
+  sourcePluginId: string;
+};
+
+type MetadataOwnerReservationProvider = () => readonly MetadataOwnerReservation[];
+
 const pluginOwnershipPrefix = "pluginId";
 const sourcePluginOwnershipPrefix = "sourcePluginId";
 const filterIdNamespaceMarker = ".filter.";
-const builtInMetadataOwners = new Map([
-  ["task", "task"],
-  ["tag", "tag"],
-]);
+const metadataNamespacePattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
 
 class PluginHostImpl implements PluginHostInstance {
   private readonly services: CoreServices;
@@ -639,6 +643,7 @@ class PluginHostImpl implements PluginHostInstance {
       metadata: createPluginMetadataStore(
         scope,
         this.services.metadata,
+        () => this.getMetadataOwnerReservations(),
       ),
       events: createPluginEventStore(scope, this.services.events),
       filters: createPluginFilterStore(scope, this.services.filters),
@@ -660,7 +665,11 @@ class PluginHostImpl implements PluginHostInstance {
 
         return this.services.transaction.run(async (transaction) => {
           const result = await handler(
-            createPluginTransaction(scope, transaction),
+            createPluginTransaction(
+              scope,
+              transaction,
+              () => this.getMetadataOwnerReservations(),
+            ),
           );
 
           assertCanMutatePluginData(scope);
@@ -1063,6 +1072,29 @@ class PluginHostImpl implements PluginHostInstance {
       manifest: cloneManifest(record.manifest),
     };
   }
+
+  private getMetadataOwnerReservations(): readonly MetadataOwnerReservation[] {
+    const reservations = new Map<string, string>();
+
+    for (const record of this.records.values()) {
+      const fields = record.manifest.contributes?.metadataFields ?? [];
+
+      for (const field of fields) {
+        if (
+          field.namespace !== undefined &&
+          metadataNamespacePattern.test(field.namespace) &&
+          !reservations.has(field.namespace)
+        ) {
+          reservations.set(field.namespace, record.manifest.id);
+        }
+      }
+    }
+
+    return [...reservations].map(([namespace, sourcePluginId]) => ({
+      namespace,
+      sourcePluginId,
+    }));
+  }
 }
 
 export const PluginHost: {
@@ -1182,6 +1214,7 @@ function createPluginPageStore(
 function createPluginMetadataStore(
   scope: PluginContextScope,
   metadata: MetadataStore,
+  metadataOwnerReservations: MetadataOwnerReservationProvider,
 ): PluginMetadataStore {
   const pluginId = scope.pluginId;
 
@@ -1191,7 +1224,12 @@ function createPluginMetadataStore(
       assertNoOwnershipKeys(input, pluginId, [sourcePluginOwnershipPrefix]);
       const metadataInput = preparePluginMetadataSetInput(input, pluginId);
 
-      assertMetadataWriteAllowed(pluginId, metadata, metadataInput);
+      assertMetadataWriteAllowed(
+        pluginId,
+        metadata,
+        metadataInput,
+        metadataOwnerReservations(),
+      );
 
       return metadata.set(metadataInput);
     },
@@ -1226,8 +1264,12 @@ function assertMetadataWriteAllowed(
   pluginId: string,
   metadata: MetadataStore,
   input: Parameters<MetadataStore["set"]>[0],
+  metadataOwnerReservations: readonly MetadataOwnerReservation[],
 ): void {
-  const requiredOwner = builtInMetadataOwners.get(input.namespace);
+  const requiredOwner = findReservedMetadataOwner(
+    input.namespace,
+    metadataOwnerReservations,
+  );
 
   if (requiredOwner !== undefined && requiredOwner !== pluginId) {
     throw new PluginHostError(
@@ -1254,6 +1296,15 @@ function assertMetadataWriteAllowed(
       { pluginId },
     );
   }
+}
+
+function findReservedMetadataOwner(
+  namespace: string,
+  metadataOwnerReservations: readonly MetadataOwnerReservation[],
+): string | undefined {
+  return metadataOwnerReservations.find(
+    (reservation) => reservation.namespace === namespace,
+  )?.sourcePluginId;
 }
 
 function requireOwnedMetadataRecord(
@@ -1514,13 +1565,18 @@ function createPluginTransaction(
     events: EventStore;
     filters: FilterStore;
   },
+  metadataOwnerReservations: MetadataOwnerReservationProvider,
 ): PluginTransaction {
   const pluginId = scope.pluginId;
 
   return {
     pluginId,
     pages: createPluginPageStore(scope, transaction.pages),
-    metadata: createPluginMetadataStore(scope, transaction.metadata),
+    metadata: createPluginMetadataStore(
+      scope,
+      transaction.metadata,
+      metadataOwnerReservations,
+    ),
     events: createPluginEventStore(scope, transaction.events),
     filters: createPluginFilterStore(scope, transaction.filters),
   };

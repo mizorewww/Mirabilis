@@ -10,6 +10,12 @@ export type ExecuteFilterQueryInput = {
   metadata: readonly MetadataRecord[];
   query: FilterQuery;
   currentDate?: string;
+  metadataOwnerReservations?: readonly MetadataOwnerReservation[];
+};
+
+export type MetadataOwnerReservation = {
+  namespace: string;
+  sourcePluginId: string;
 };
 
 type MetadataField = {
@@ -45,6 +51,8 @@ type QueryExecutionState = {
   activeQueries: WeakSet<object>;
 };
 
+type MetadataOwnerReservations = ReadonlyMap<string, string>;
+
 const metadataFieldPrefix = "metadata";
 const unsafeFieldSegments = new Set([
   "__proto__",
@@ -54,10 +62,6 @@ const unsafeFieldSegments = new Set([
 const metadataFieldSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
 const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/u;
 const maxFilterQueryDepth = 1_000;
-const builtInMetadataOwners = new Map([
-  ["task", "task"],
-  ["tag", "tag"],
-]);
 const supportedFilterOperators = new Set([
   "eq",
   "neq",
@@ -72,6 +76,9 @@ export function executeFilterQuery(
   input: ExecuteFilterQueryInput,
 ): MarkdownPage[] {
   const currentDate = input.currentDate ?? createCurrentLocalDate();
+  const metadataOwnerReservations = normalizeMetadataOwnerReservations(
+    input.metadataOwnerReservations,
+  );
 
   return input.pages.filter(
     (page) =>
@@ -81,6 +88,7 @@ export function executeFilterQuery(
         input.metadata,
         input.query,
         currentDate,
+        metadataOwnerReservations,
         0,
         { activeQueries: new WeakSet() },
       ),
@@ -92,6 +100,7 @@ function matchesFilterQuery(
   metadata: readonly MetadataRecord[],
   query: unknown,
   currentDate: string,
+  metadataOwnerReservations: MetadataOwnerReservations,
   depth: number,
   state: QueryExecutionState,
 ): boolean {
@@ -113,7 +122,13 @@ function matchesFilterQuery(
     }
 
     const whereMatches = where.every((condition) =>
-      matchesFilterCondition(page, metadata, condition, currentDate),
+      matchesFilterCondition(
+        page,
+        metadata,
+        condition,
+        currentDate,
+        metadataOwnerReservations,
+      ),
     );
 
     if (!whereMatches) {
@@ -131,6 +146,7 @@ function matchesFilterQuery(
             metadata,
             branch,
             currentDate,
+            metadataOwnerReservations,
             depth + 1,
             state,
           ),
@@ -154,6 +170,7 @@ function matchesFilterQuery(
           metadata,
           branch,
           currentDate,
+          metadataOwnerReservations,
           depth + 1,
           state,
         ),
@@ -169,6 +186,7 @@ function matchesFilterCondition(
   metadata: readonly MetadataRecord[],
   condition: unknown,
   currentDate: string,
+  metadataOwnerReservations: MetadataOwnerReservations,
 ): boolean {
   if (!isRecord(condition)) {
     return false;
@@ -201,7 +219,12 @@ function matchesFilterCondition(
     return false;
   }
 
-  const fieldValue = resolveMetadataField(page.id, metadata, metadataField);
+  const fieldValue = resolveMetadataField(
+    page.id,
+    metadata,
+    metadataField,
+    metadataOwnerReservations,
+  );
 
   if (
     fieldValue === undefined ||
@@ -285,13 +308,18 @@ function resolveMetadataField(
   pageId: string,
   metadata: readonly MetadataRecord[],
   field: MetadataField,
+  metadataOwnerReservations: MetadataOwnerReservations,
 ): FieldValue | undefined {
   const record = metadata.find(
     (candidate) =>
       candidate.pageId === pageId &&
       candidate.namespace === field.namespace &&
       candidate.key === field.key &&
-      metadataRecordOwnerIsTrusted(candidate, field),
+      metadataRecordOwnerIsTrusted(
+        candidate,
+        field,
+        metadataOwnerReservations,
+      ),
   );
 
   if (record === undefined) {
@@ -307,10 +335,28 @@ function resolveMetadataField(
 function metadataRecordOwnerIsTrusted(
   record: MetadataRecord,
   field: MetadataField,
+  metadataOwnerReservations: MetadataOwnerReservations,
 ): boolean {
-  const requiredOwner = builtInMetadataOwners.get(field.namespace);
+  const requiredOwner = metadataOwnerReservations.get(field.namespace);
 
   return requiredOwner === undefined || record.sourcePluginId === requiredOwner;
+}
+
+function normalizeMetadataOwnerReservations(
+  reservations: readonly MetadataOwnerReservation[] | undefined,
+): MetadataOwnerReservations {
+  const output = new Map<string, string>();
+
+  for (const reservation of reservations ?? []) {
+    if (
+      isSafeMetadataSegment(reservation.namespace) &&
+      typeof reservation.sourcePluginId === "string"
+    ) {
+      output.set(reservation.namespace, reservation.sourcePluginId);
+    }
+  }
+
+  return output;
 }
 
 function resolveComparableValue(

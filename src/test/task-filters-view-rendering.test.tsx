@@ -41,11 +41,17 @@ type ExecuteFilterQueryInput = {
   metadata: ReturnType<AppRuntime["metadata"]["list"]>;
   query: FilterQuery;
   currentDate?: string;
+  metadataOwnerReservations?: readonly MetadataOwnerReservation[];
 };
 
 type ExecuteFilterQuery = (
   input: ExecuteFilterQueryInput,
 ) => MarkdownPage[];
+
+type MetadataOwnerReservation = {
+  namespace: string;
+  sourcePluginId: string;
+};
 
 type PageListViewProps = {
   pages: readonly MarkdownPage[];
@@ -80,6 +86,12 @@ const relativeTodayValue = {
   kind: "relative-date",
   value: "today",
 } as const satisfies RelativeTodayValue;
+const builtInMetadataOwnerReservations = [
+  {
+    namespace: taskPluginId,
+    sourcePluginId: taskPluginId,
+  },
+] as const satisfies readonly MetadataOwnerReservation[];
 const allTasksFilterQuery = {
   where: [{ field: "metadata.task.enabled", op: "eq", value: true }],
 } satisfies FilterQuery;
@@ -695,7 +707,12 @@ function requireExecuteFilterQuery(): ExecuteFilterQuery {
     throw new Error("Core must export executeFilterQuery from ../core");
   }
 
-  return executeFilterQuery;
+  return (input) =>
+    executeFilterQuery({
+      ...input,
+      metadataOwnerReservations:
+        input.metadataOwnerReservations ?? builtInMetadataOwnerReservations,
+    });
 }
 
 function createMetadataIds(count: number): string[] {

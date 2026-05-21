@@ -110,6 +110,44 @@ export const TaskPlugin: AppPlugin = {
           syntax: "- [ ]",
         },
       ],
+      metadataFields: [
+        {
+          id: "task.enabled",
+          namespace: taskNamespace,
+          key: "enabled",
+          valueType: "boolean",
+        },
+        {
+          id: "task.status",
+          namespace: taskNamespace,
+          key: "status",
+          valueType: "string",
+        },
+        {
+          id: "task.sourcePageId",
+          namespace: taskNamespace,
+          key: "sourcePageId",
+          valueType: "string",
+        },
+        {
+          id: "task.sourceBlockId",
+          namespace: taskNamespace,
+          key: "sourceBlockId",
+          valueType: "string",
+        },
+        {
+          id: "task.scheduled",
+          namespace: taskNamespace,
+          key: "scheduled",
+          valueType: "date",
+        },
+        {
+          id: "task.due",
+          namespace: taskNamespace,
+          key: "due",
+          valueType: "date",
+        },
+      ],
     },
   },
   register(ctx) {

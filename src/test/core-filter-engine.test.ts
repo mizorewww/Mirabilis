@@ -18,11 +18,17 @@ type ExecuteFilterQueryInput = {
   metadata: readonly MetadataRecord[];
   query: FilterQuery;
   currentDate?: string;
+  metadataOwnerReservations?: readonly MetadataOwnerReservation[];
 };
 
 type ExecuteFilterQuery = (
   input: ExecuteFilterQueryInput,
 ) => MarkdownPage[];
+
+type MetadataOwnerReservation = {
+  namespace: string;
+  sourcePluginId: string;
+};
 
 const taskPluginId = "task";
 const tagPluginId = "tag";
@@ -34,6 +40,16 @@ const relativeTodayValue = {
   value: "today",
 } as const satisfies RelativeTodayValue;
 const baseInstant = "2026-05-21T08:00:00.000Z";
+const builtInMetadataOwnerReservations = [
+  {
+    namespace: taskPluginId,
+    sourcePluginId: taskPluginId,
+  },
+  {
+    namespace: tagPluginId,
+    sourcePluginId: tagPluginId,
+  },
+] as const satisfies readonly MetadataOwnerReservation[];
 
 describe("Core filter query execution", () => {
   it("exports a small data-only executeFilterQuery API from the public Core entrypoint", () => {
@@ -864,7 +880,12 @@ function requireExecuteFilterQuery(): ExecuteFilterQuery {
     throw new Error("Core must export executeFilterQuery from ../core");
   }
 
-  return executeFilterQuery;
+  return (input) =>
+    executeFilterQuery({
+      ...input,
+      metadataOwnerReservations:
+        input.metadataOwnerReservations ?? builtInMetadataOwnerReservations,
+    });
 }
 
 function page(

@@ -1982,13 +1982,48 @@ function metadataSavingPlugin(
   };
 }
 
+function metadataFieldDeclaringPlugin(
+  input: Pick<
+    MetadataSavingPluginInput,
+    "pluginId" | "namespace" | "key" | "valueType"
+  >,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
+    register() {},
+  };
+}
+
 async function expectBuiltInMetadataWriteRejected(
   input: MetadataSavingPluginInput,
 ): Promise<void> {
   const { runtime, host } = createPluginApiTestHost();
 
   await expect(
-    host.loadBuiltInPlugins([metadataSavingPlugin(input)]),
+    host.loadBuiltInPlugins([
+      metadataFieldDeclaringPlugin({
+        pluginId: input.namespace,
+        namespace: input.namespace,
+        key: input.key,
+        valueType: input.valueType,
+      }),
+      metadataSavingPlugin(input),
+    ]),
   ).rejects.toMatchObject({
     name: "PluginHostError",
     code: "PLUGIN_LIFECYCLE_FAILED",
