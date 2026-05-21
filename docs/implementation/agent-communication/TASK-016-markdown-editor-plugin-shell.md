@@ -37,9 +37,8 @@
 
 ## Current Status
 
-- Status: async-insert implementation in progress.
-- Active agents:
-  - Dewey the 3rd (`implementer`) for async-insert race fix.
+- Status: async-insert implementation completed and committed; narrow re-review pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -64,8 +63,8 @@
   - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review completed.
   - Confucius the 3rd (`pr_explorer`): final changed-surface mapping completed.
   - Ampere the 3rd (`test_writer`): async-insert red test completed, verified red, committed, and closed.
-  - Dewey the 3rd (`implementer`): async-insert race fix in progress.
-- Next parent step: wait for Dewey the 3rd, run focused green checks, and commit implementation if scope and validation match.
+  - Dewey the 3rd (`implementer`): async-insert race fix completed, validated, committed, and closed.
+- Next parent step: run narrow re-review of the async insert fix.
 
 ## Agent Handoffs
 
@@ -436,7 +435,7 @@
 
 ### Dewey the 3rd (`implementer`) Handoff
 
-- Status: in progress.
+- Status: completed, committed, and closed.
 - Agent ID: `019e4803-9e8e-78b1-ae29-f898e775e60a`.
 - Ownership: minimum production fix for async insert race.
 - Allowed write scope:
@@ -452,3 +451,16 @@
   - `bun run lint`.
   - `git diff --check`.
 - Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, generated files, dependencies, or commits.
+- Files changed:
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Delivered:
+  - `insertText` snapshots page id, markdown, selection, and content generation before awaiting `markdown.insert-text`.
+  - Stale command results are dropped if page id or content generation changed before resolution.
+  - Fresh insert results still update content and restore caret.
+- Parent validation:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` passed with 19 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `git diff --cached --check` passed before commit.
+- Commit: `3204d34 Dewey the 3rd(review-fix)(Implement Markdown Editor Plugin shell): guard async insert results`.

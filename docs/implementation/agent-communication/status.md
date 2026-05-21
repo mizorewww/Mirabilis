@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:51 CST.
+Last updated: 2026-05-21 08:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 08:51 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: async-insert implementation in progress.
+- Current phase: async-insert narrow re-review handoff.
 
 ## Active Agents
 
-- Dewey the 3rd (`implementer`) - TASK-016 async-insert race fix.
+- None. Next agent handoff is async-insert narrow re-review.
 
 ## Recent Agent Outcomes
 
@@ -132,7 +132,10 @@ Last updated: 2026-05-21 08:51 CST.
 - Parent confirmed the expected red signal: focused TASK-016 frontend tests fail 1 test because delayed `markdown.insert-text` resolves to stale `#Draft` and overwrites `Draft plus newer edit`; the other 18 tests pass. `bun run typecheck`, `git diff --check`, and `git diff --cached --check` before commit passed.
 - Ampere the 3rd's test commit: `630cc3a Ampere the 3rd(test)(Implement Markdown Editor Plugin shell): cover async insert race`.
 - Dewey the 3rd (`implementer`) was spawned for the minimum async-insert race fix. Ownership is limited to `MarkdownPageEditor.tsx` and adjacent insert helper code if truly needed; tests, docs, native/config/dependency files, and commits are out of scope.
-- Parent next step: wait for Dewey the 3rd, run focused green checks, and commit implementation if scope and validation match.
+- Dewey the 3rd completed and was closed after guarding async insert results in `MarkdownPageEditor.tsx`. The editor now snapshots page id, markdown, selection, and content generation before awaiting `markdown.insert-text`, then drops stale command results if page/content changed before resolution.
+- Parent repeated green checks after Dewey the 3rd: focused TASK-016 frontend tests passed with 19 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`. `git diff --cached --check` passed before commit.
+- Dewey the 3rd's review-fix commit: `3204d34 Dewey the 3rd(review-fix)(Implement Markdown Editor Plugin shell): guard async insert results`.
+- Parent next step: run narrow re-review of the async insert fix before docs sync.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
