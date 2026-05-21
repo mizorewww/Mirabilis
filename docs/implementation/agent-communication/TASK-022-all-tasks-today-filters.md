@@ -443,4 +443,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn third review-fix `test_writer` for the remaining P1/P2 plugin-host boundary regressions, then validate the expected red signal before committing the tests.
+- Heisenberg (`test_writer`) is adding third review-fix regressions for the remaining P1/P2 plugin-host boundary findings. Parent will validate the expected red signal before committing the tests.

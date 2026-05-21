@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:58 CST.
+Last updated: 2026-05-21 19:59 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:58 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: narrow post-second-fix review completed; third review-fix tests are next.
+- Current phase: third review-fix regression tests are being written.
 
 ## Active Agents
 
-- None. The narrow post-second-fix review agents completed and are ready to close.
+- Heisenberg (`test_writer`) is adding third review-fix regression tests for plugin-host boundary findings.
 
 ## Completed Recent Task
 
@@ -82,7 +82,7 @@ Last updated: 2026-05-21 19:58 CST.
 
 ## Next Actions
 
-1. Spawn third review-fix `test_writer` for the remaining plugin-host boundary regressions.
+1. Wait for Heisenberg's third review-fix regression tests.
 2. Validate expected red focused tests, then commit the test patch.
 3. Spawn `implementer` for the minimum code fix.
 4. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
