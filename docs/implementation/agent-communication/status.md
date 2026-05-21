@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:01 CST.
+Last updated: 2026-05-21 18:02 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:01 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix tests written; implementation fixes are next.
+- Current phase: review-fix implementation delegated to Faraday.
 
 ## Active Agents
 
-- None.
+- Faraday (`implementer`) is fixing TASK-021 review findings in production Tag Plugin code only.
 
 ## Completed Recent Task
 
@@ -123,8 +123,8 @@ git diff --check
 
 ## Next Actions
 
-1. Commit Hypatia the 4th's review-fix tests and communication updates.
-2. Delegate implementation fixes to `implementer`.
+1. Wait for Faraday's implementation output and focused validation.
+2. Run parent validation on Faraday's returned patch.
 3. Defer docs-only drift to docs sync after behavior fixes.
 
 ## Completed TASK-020 Agent Outcomes

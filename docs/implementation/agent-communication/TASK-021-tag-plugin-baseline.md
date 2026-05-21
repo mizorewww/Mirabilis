@@ -342,4 +342,4 @@ git diff --check
 
 ## Current Next Action
 
-- Commit Hypatia the 4th's review-fix tests, then delegate implementation fixes.
+- Faraday (`implementer`) is fixing the review-fix regressions in production Tag Plugin code only. Parent will validate and commit after the agent reports completion.
