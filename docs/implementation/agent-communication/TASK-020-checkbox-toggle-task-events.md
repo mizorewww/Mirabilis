@@ -181,6 +181,33 @@
 - Source Markdown marker, metadata update, and event append must happen in one plugin transaction.
 - UI checkbox tests must use accessible checkbox semantics and preserve TASK-019 stale guards.
 
+## Test Writer Handoff
+
+- Status: completed by Turing the 4th (`test_writer`) on 2026-05-21 14:16 CST.
+- Files changed:
+  - `src/test/task-checkbox-toggle-events.test.tsx`.
+- Commit: `c9c0c33` (`Turing the 4th(test)(Implement checkbox toggle and task events): add checkbox toggle acceptance tests`).
+- Coverage added:
+  - Canonical `task.toggle-status` command registration and no stale aliases.
+  - Complete/reopen source marker behavior.
+  - `task.status` metadata update.
+  - `task.completed` and `task.reopened` events.
+  - CamelCase event payload: `taskPageId`, `sourcePageId`, `sourceBlockId`, `previousStatus`, `status`.
+  - Forged `attrs.boundPageId` not trusted.
+  - Atomic rollback when event append fails.
+  - UI checkbox behavior: real accessible checkbox, source-only payload, title-open behavior preserved, stale page-switch/edit guards, unsafe title inertness.
+  - Native/package/Tauri surface guard.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run typecheck
+git diff --cached --check
+```
+
+- Result: expected red signal. The focused test file ran 11 tests with 8 failed / 3 passed. Failures were missing `task.toggle-status` (`COMMAND_NOT_FOUND`) and missing checkbox UI (`Unable to find role="checkbox"`). `bun run typecheck` passed. `git diff --cached --check` passed.
+- Test writer concern: UI coverage focuses on direct structured editor mode plus stale guards; it does not add separate loaded `pageId/pageFacade` checkbox coverage because TASK-019 already pins the loaded structured-body path.
+
 ## Current Next Action
 
-- Delegate failing tests to `test_writer`.
+- Delegate implementation to `implementer`.

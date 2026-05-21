@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:05 CST.
+Last updated: 2026-05-21 14:16 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:05 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test guidance completed; failing tests are next.
+- Current phase: failing tests committed; implementation handoff is next.
 
 ## Active Agents
 
@@ -24,6 +24,7 @@ Last updated: 2026-05-21 14:05 CST.
 - Turing the 3rd (`docs_researcher`) completed current docs and test guidance. Recommendation: use React/Testing Library checkbox semantics with a real `<input type="checkbox">`, query by role/checked state, keep payload source-only, test `task.completed` and `task.reopened`, support reading `[x]` and `[X]` while writing normalized `[x]`, and fix docs drift later for `task.toggle_status` / `task.toggle_checkbox`.
 - Poincare the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: select `task.toggle-status` before tests, do not register snake_case or checkbox aliases, use source identity input, and store events as `namespace: "task", type: "completed" | "reopened"` rather than `type: "task.completed"`.
 - Arendt the 4th (`security_reviewer`) completed security guidance. No P0/P1 blockers. Required boundaries: do not trust caller-supplied task page IDs, statuses, event types, titles, timestamps, or `attrs.boundPageId`; verify current source block at command time; keep Plugin Host metadata/event ownership injection; stale UI results must be guarded; unsafe titles remain inert; no native/package/Tauri surface changes.
+- Turing the 4th (`test_writer`) added focused TASK-020 acceptance tests in `src/test/task-checkbox-toggle-events.test.tsx`. Commit: `c9c0c33`.
 
 ## Current TASK-020 State
 
@@ -77,9 +78,18 @@ Last updated: 2026-05-21 14:05 CST.
 - `.codex/agents/*.toml` parsed successfully with 11 files.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
 - External docs verified by agents: React 19 events and controlled checkbox input docs, Testing Library/user-event v14 intro/click/ByRole checked/async docs, Vitest async and mock docs, Tauri v2 API/migration/permissions docs, Vite 7 guidance, and React 19 act/test-utils deprecation guidance.
+- Focused red tests after Turing the 4th:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run typecheck
+git diff --cached --check
+```
+
+- Result: expected red signal. `task-checkbox-toggle-events.test.tsx` ran 11 tests with 8 failed / 3 passed. Failures were the expected missing `task.toggle-status` command (`COMMAND_NOT_FOUND`) and missing accessible checkbox UI (`Unable to find role="checkbox"`). `bun run typecheck` passed. `git diff --cached --check` passed before the test commit.
 
 ## Next Actions
 
-1. Commit TASK-020 pre-test guidance.
-2. Delegate failing tests to `test_writer`.
-3. Run the focused failing-test command and confirm expected red signal.
+1. Delegate implementation to `implementer`.
+2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
+3. Commit implementation if focused checks pass.
