@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:25 CST.
+Last updated: 2026-05-21 14:34 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:25 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: initial implementation completed; focused review found P1/P2 follow-up tests needed.
+- Current phase: review-fix regressions committed; review-fix implementation is next.
 
 ## Active Agents
 
@@ -28,6 +28,7 @@ Last updated: 2026-05-21 14:25 CST.
 - Ampere the 4th (`implementer`) added initial TASK-020 production implementation in `src/plugins/task/plugin.ts` and `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`. Focused checks passed locally, but the parent has not committed the implementation because focused review found P1/P2 follow-up issues.
 - Avicenna the 4th (`reviewer`) found P1: successful checkbox toggles update editor Markdown but not the structured body snapshot, so task controls disappear immediately after toggle. P2: completed task lines lose title-open behavior because UI hides open buttons for done tasks and `task.open-task-page` still accepts only unchecked syntax.
 - Laplace the 4th (`test_quality_reviewer`) found P1 test gaps matching the vanished-controls issue and missing loaded `pageId/pageFacade` checkbox coverage; P2 gaps for valid-shaped invalid source cases. Laplace noted the native-surface guard is brittle but useful as a temporary task-scope guard.
+- Noether the 4th (`test_writer`) added review-fix regressions in `src/test/task-checkbox-toggle-events.test.tsx`. Commit: `0b7874b`.
 
 ## Current TASK-020 State
 
@@ -93,6 +94,6 @@ git diff --cached --check
 
 ## Next Actions
 
-1. Delegate review-fix regression tests to `test_writer`.
-2. Run expected red tests for the P1/P2 gaps.
-3. Delegate review-fix implementation to `implementer`.
+1. Delegate review-fix implementation to `implementer`.
+2. Run focused TASK-020/TASK-019/TASK-018 tests after implementation.
+3. Commit production implementation if focused checks pass.

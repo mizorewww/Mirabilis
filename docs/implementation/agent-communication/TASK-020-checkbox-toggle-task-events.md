@@ -275,6 +275,28 @@ bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
   - Completed task title remains openable through `task.open-task-page`.
   - Valid-shaped invalid source cases fail without page/metadata/event/source mutation: missing source block, duplicate block IDs, non-`markdown.line`, malformed checkbox line, empty title, and fenced-code task-looking line.
 
+## Review-fix Test Handoff
+
+- Status: completed by Noether the 4th (`test_writer`) on 2026-05-21 14:34 CST.
+- Files changed:
+  - `src/test/task-checkbox-toggle-events.test.tsx`.
+- Commit: `0b7874b` (`Noether the 4th(test)(Implement checkbox toggle and task events): add review-fix regressions`).
+- Coverage added:
+  - Direct-mode toggle keeps a checked checkbox visible and immediately reopenable.
+  - Loaded `pageId/pageFacade` mode loads a structured task, toggles with `{ sourcePageId, sourceBlockId }`, updates Markdown, and keeps the checked checkbox visible.
+  - Completed task title remains openable through `task.open-task-page` with source-only payload.
+  - Valid-shaped invalid source cases reject without page/metadata/event/source mutation: missing block, duplicate block IDs, non-`markdown.line`, malformed checkbox, empty title, fenced-code task-looking line.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. The focused test file ran 15 tests with 3 failed / 12 passed. Failures were the checked checkbox disappearing after direct toggle, the checked checkbox disappearing after loaded-mode toggle, and completed task title button missing for `- [x] A`. `bun run typecheck` passed. `git diff --check` passed.
+- Test writer concern: the invalid-source rollback test is green against the current implementation, so it adds regression coverage but does not provide a red signal. The P1 UI regressions and P2 completed-title open regression fail as expected.
+
 ## Current Next Action
 
-- Delegate review-fix regression tests to `test_writer`.
+- Delegate review-fix implementation to `implementer`.
