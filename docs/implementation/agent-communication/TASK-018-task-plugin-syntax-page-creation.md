@@ -448,6 +448,12 @@ git diff --check
   - Same stale search scoped to `docs/product docs/architecture docs/development docs/testing`.
 - Result: `git diff --check` passed. Scoped stale search over product/architecture/development/testing docs returned no matches. Broad docs search returned only historical agent-communication notes about old review findings and prior stale-search results.
 
+### Final Docs Re-review Fix
+
+- Status: completed by doc_writer in docs-fix mode; no production files edited, staged, or committed.
+- Final documentation re-review found two P1 docs drifts: future Task Plugin metadata still used snake_case `task.done_at`, and the development final-architecture flow still read like current automatic scanning/navigation/filter/view/nesting behavior.
+- Fix applied: product docs now describe completion timestamp metadata as future behavior without snake_case and require future task metadata keys to remain camelCase; development docs now separate TASK-018's explicit `task.resolve-task-block` resolver behavior from deferred automatic scanning, navigation, filter/view refresh, and infinite nesting UX.
+
 ## Parent Decisions
 
 - Select TASK-018 because it is the first unblocked `[ ]` task after TASK-017 completed and merged.

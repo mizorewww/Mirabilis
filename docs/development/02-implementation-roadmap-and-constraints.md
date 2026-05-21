@@ -433,7 +433,7 @@ TASK-015 App Shell 边界：
 - [ ] 任务2
 ```
 
-代码层发生：
+后续完整架构目标中，代码层会发生：
 
 ```text
 MarkdownEditorPlugin 解析文档
@@ -446,13 +446,15 @@ FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-用户点击任务进入页面，继续写：
+这不是 TASK-018 当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。保存后自动扫描、点击导航、Tag/Timer/UI/filter/view 刷新和无限嵌套 UX 都属于后续任务。
+
+后续导航/自动扫描任务完成后，用户点击任务进入页面，继续写：
 
 ```markdown
 - [ ] 子任务
 ```
 
-系统重复同样流程，因此任务可以无限嵌套。
+完整架构会重复同样流程，因此任务可以无限嵌套。
 
 这个架构的中心就是一句话：
 

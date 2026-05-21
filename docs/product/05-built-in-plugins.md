@@ -116,7 +116,7 @@ task.list_item
 task.metadata_fields
 ```
 
-`task.due`、`task.scheduled`、`task.estimate`、`task.priority`、`task.done_at`、checkbox toggle、open-page command、filters、views 和 events 都是后续 Task Plugin 范围，不属于 TASK-018 当前行为。
+`task.due`、`task.scheduled`、`task.estimate`、`task.priority`、完成时间 metadata、checkbox toggle、open-page command、filters、views 和 events 都是后续 Task Plugin 范围，不属于 TASK-018 当前行为；后续新增 task metadata 时应继续使用 camelCase key。
 
 ### 16.2 输入到任务页面的完整流程
 

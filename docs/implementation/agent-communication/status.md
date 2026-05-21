@@ -43,6 +43,7 @@ Last updated: 2026-05-21 12:49 CST.
 - Dalton the 3rd (`implementer`) fixed command failure provenance by marking only Plugin Host command-execution failures for cause preservation. Commit: `04c769d`.
 - Cicero the 3rd (`reviewer`) completed final provenance re-review with no remaining P0/P1/P2 findings. Remaining P3: `preserveCommandHandlerFailureCause` is still a named export from the implementation module, not barrel-exported, and relies on convention against direct-path imports.
 - Kierkegaard the 3rd (`doc_writer`) completed blocking TASK-018 docs sync. Updated product, architecture, development, testing, and live communication docs to describe the delivered command-level Task Plugin resolver, command-time PluginContext behavior, camelCase task metadata, `attrs.boundPageId` binding, unchanged native surface, deferred automatic scanning/navigation/filter/view scope, and command failure provenance behavior.
+- Final docs re-review found two P1 docs drifts after the sync: future metadata still named `task.done_at`, and the development final-architecture flow still read like current automatic scanning/navigation/filter/view/nesting behavior. Doc_writer fixed both in docs-fix mode by removing the snake_case future metadata key and qualifying the flow as future architecture beyond TASK-018's explicit `task.resolve-task-block` resolver behavior.
 
 ## Validation Already Reported By Parent
 
