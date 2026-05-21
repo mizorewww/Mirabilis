@@ -160,6 +160,33 @@
   - Forged metadata owner records are not rendered or edited as trusted owner metadata.
   - No native/Tauri/package/Rust surface changes.
 
+## Acceptance Tests
+
+- Status: completed by Lovelace (`test_writer`) on 2026-05-21 21:51 CST.
+- Commit: `bc30f82`.
+- Files changed:
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - Unified `page.header.metadata` metadata bar ordering, including default order `0`, Tag order `300`, and stable ties.
+  - Tag behavior through the unified bar: inert display, add/remove exact payloads, feedback, wrong-page result rejection, and repeated label associations.
+  - Task current metadata fields only, read-only unless command-owned editing exists.
+  - Timer placeholder plugin-owned and disabled/inert.
+  - Unsafe metadata inert DOM rendering.
+  - Narrow plugin field props without raw runtime/native handles or unrelated plugin metadata.
+  - Forged owner metadata rejection.
+  - Branch native-surface guard.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/core-view-slot-registry.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bunx eslint src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+rg -n "\\.skip\\(|\\.only\\(" src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx
+git diff --cached --check
+```
+
+- Result: expected red signal. Focused tests ran 5 files / 120 tests with 8 failed / 112 passed. The 8 failures are all in `src/test/metadata-ui-plugin.test.tsx` because `src/plugins/metadata-ui` does not yet exist. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
+
 ## Current Next Action
 
-- Lovelace (`test_writer`) is adding failing TASK-023 acceptance tests.
+- Spawn `implementer` for the minimum production implementation.
