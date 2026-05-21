@@ -9,6 +9,7 @@ export type TagMetadataSlotProps = {
 };
 
 type TagCommandResult = {
+  pageId: string;
   tags: string[];
 };
 
@@ -20,6 +21,7 @@ type CommandTags = {
 const addTagCommandId = "tag.add-tag";
 const removeTagCommandId = "tag.remove-tag";
 const tagPattern = /^[a-z0-9][a-z0-9_-]{0,31}$/u;
+const rawTagPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/u;
 
 export function TagMetadataSlot({
   pageId,
@@ -45,10 +47,11 @@ export function TagMetadataSlot({
         pageId,
         tag: draftTag,
       });
+      const commandResult = readTagCommandResult(result, pageId);
 
       setCommandTags({
-        pageId,
-        tags: readTagCommandResult(result).tags,
+        pageId: commandResult.pageId,
+        tags: commandResult.tags,
       });
       setDraftTag("");
       setFeedback(null);
@@ -63,10 +66,11 @@ export function TagMetadataSlot({
         pageId,
         tag,
       });
+      const commandResult = readTagCommandResult(result, pageId);
 
       setCommandTags({
-        pageId,
-        tags: readTagCommandResult(result).tags,
+        pageId: commandResult.pageId,
+        tags: commandResult.tags,
       });
       setFeedback(null);
     } catch {
@@ -110,12 +114,26 @@ function isValidDraftTag(value: string): boolean {
   const trimmed = value.trim();
   const withoutHash = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
 
-  return tagPattern.test(withoutHash.toLowerCase());
+  return (
+    rawTagPattern.test(withoutHash) &&
+    tagPattern.test(withoutHash.toLowerCase())
+  );
 }
 
-function readTagCommandResult(result: unknown): TagCommandResult {
-  if (!isRecord(result) || !Array.isArray(result.tags)) {
+function readTagCommandResult(
+  result: unknown,
+  expectedPageId: string,
+): TagCommandResult {
+  if (
+    !isRecord(result) ||
+    typeof result.pageId !== "string" ||
+    !Array.isArray(result.tags)
+  ) {
     throw new Error("Tag command returned an invalid result");
+  }
+
+  if (result.pageId !== expectedPageId) {
+    throw new Error("Tag command returned tags for a different page");
   }
 
   for (const tag of result.tags) {
@@ -125,6 +143,7 @@ function readTagCommandResult(result: unknown): TagCommandResult {
   }
 
   return {
+    pageId: result.pageId,
     tags: result.tags,
   };
 }

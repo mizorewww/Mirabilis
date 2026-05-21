@@ -44,6 +44,7 @@ const tagMetadataSlotId = "tag.page-header-metadata.tags";
 const pageHeaderMetadataSlot = "page.header.metadata";
 const maxTagsPerPage = 32;
 const tagPattern = /^[a-z0-9][a-z0-9_-]{0,31}$/u;
+const rawTagPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/u;
 const sourceTokenTrailingPunctuationPattern = /[.,;!?)}\]]+$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 const refreshTagsInputKeys = new Set(["pageId"]);
@@ -281,6 +282,11 @@ function normalizeCommandTag(value: unknown): string {
 
   const trimmed = value.trim();
   const withoutHash = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
+
+  if (!rawTagPattern.test(withoutHash)) {
+    throw new Error("Tag command received an invalid tag");
+  }
+
   const normalized = withoutHash.toLowerCase();
 
   if (!tagPattern.test(normalized)) {
@@ -365,6 +371,10 @@ function extractLineTags(line: string): string[] {
     );
 
     if (rawTag.length === 0) {
+      continue;
+    }
+
+    if (!rawTagPattern.test(rawTag)) {
       continue;
     }
 
