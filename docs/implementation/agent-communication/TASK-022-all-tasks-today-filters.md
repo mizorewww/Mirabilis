@@ -255,4 +255,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn review-fix `test_writer` to add failing regressions for the accepted P1/P2/P3 findings, then validate the expected red signal before committing the tests.
+- Hooke (`test_writer`) is adding failing regressions for the accepted P1/P2/P3 findings. Parent will validate the expected red signal before committing the tests.

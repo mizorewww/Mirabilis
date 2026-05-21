@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:12 CST.
+Last updated: 2026-05-21 19:15 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:12 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused review completed; review-fix regression tests are next.
+- Current phase: review-fix regression tests are being written.
 
 ## Active Agents
 
-- None. The previous focused review agents completed and are ready to close.
+- Hooke (`test_writer`) is adding review-fix regression tests for the accepted P1/P2/P3 findings.
 
 ## Completed Recent Task
 
@@ -76,7 +76,7 @@ Last updated: 2026-05-21 19:12 CST.
 
 ## Next Actions
 
-1. Spawn review-fix `test_writer` for accepted P1/P2/P3 regression coverage.
+1. Wait for Hooke's review-fix regression tests.
 2. Validate expected red focused tests, then commit the test patch.
 3. Spawn `implementer` for the minimum code fix.
 4. Re-run focused and adjacent validation, then commit implementation.
