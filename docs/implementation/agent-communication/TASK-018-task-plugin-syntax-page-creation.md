@@ -40,14 +40,8 @@
 
 ## Current Status
 
-- Status: review agents running.
-- Active agents:
-  - Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
-  - Ramanujan the 3rd (`reviewer`): read-only correctness review.
-  - Einstein the 3rd (`security_reviewer`): read-only security/boundary review.
-  - Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
-  - Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
-  - Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
+- Status: review findings recorded; review-fix TDD handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -55,7 +49,8 @@
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
-- Next parent step: wait for review agents, spawn `doc_writer` when a thread slot is available, persist findings, and fix any P0/P1 findings before merge.
+  - Review round 1 agents completed and reported findings.
+- Next parent step: commit review findings record, then delegate review-fix failing tests to `test_writer`.
 
 ## Agent Handoffs
 
@@ -157,7 +152,7 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ### Review Round 1
 
-- Status: running.
+- Status: completed.
 - Agents:
   - Herschel the 3rd (`pr_explorer`): read-only changed-surface map.
   - Ramanujan the 3rd (`reviewer`): read-only correctness review.
@@ -165,7 +160,72 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Faraday the 3rd (`deprecation_auditor`): read-only API/deprecation review.
   - Hubble the 3rd (`docs_researcher`): read-only docs/current-guidance review.
   - Singer the 3rd (`test_quality_reviewer`): read-only test quality review.
-  - `doc_writer`: pending until a thread slot is available.
+  - Kepler the 3rd (`doc_writer`): read-only docs sync plan.
+
+### Herschel the 3rd (`pr_explorer`) Outcome
+
+- Status: completed read-only changed-surface map; no files edited.
+- Changed surface: 11 files versus `master`, including `src/plugins/task/**`, built-in plugin registration, Plugin API command handler signature, Plugin Host command-time context support, TASK-018 tests, and orchestration docs.
+- Native/package/Tauri surface: no changed files under `package.json`, `bun.lock`, or `src-tauri/**`.
+- Checks run: `git diff --check master...HEAD` passed and focused TASK-018 tests passed with 1 file / 8 tests.
+- Risk areas flagged for reviewers: public `PluginCommandHandler` API shape, command-time lifecycle interactions, unverified `attrs.boundPageId`, stale metadata/orphaned page handling, intentionally narrow task parsing, and shell-based native-surface test brittleness.
+
+### Ramanujan the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness review; no files edited.
+- No P0/P1 correctness findings.
+- P2 findings:
+  - Source `attrs.boundPageId` binding is dropped by the existing Markdown save/import path because `importMarkdownToStructuredDocument()` preserves block IDs and text but not attrs.
+  - The task syntax matcher accepts indented code lines such as `    - [ ] Not task`.
+- Checks run: focused TASK-018 tests, Plugin Host/Markdown runtime/bootstrap regressions, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, and native/package/Tauri surface diff check; all passed. Manual probes confirmed both findings.
+
+### Einstein the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security review; no files edited.
+- No P0/P1 security findings.
+- P2 findings:
+  - Duplicate top-level `blockId`s can cause binding to update unvalidated blocks because validation finds the first match but binding updates every matching `blockId`.
+  - Existing `attrs.boundPageId` is trusted without verifying task-owned metadata linking back to the same source page/block, so malformed source content can bind a task line to an unrelated page.
+- P3 findings: title length/control-character hardening and direct command-time PluginContext regression coverage.
+- Checks run: `git diff --check master...HEAD`, `bun run typecheck`, focused TASK-018 tests, native/app-shell boundary frontend tests, and Rust IPC/sqlite boundary tests; all relevant checks passed.
+
+### Faraday the 3rd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only API/deprecation review; no files edited.
+- No deprecated React/Vite/Vitest/Tauri/API usage introduced and no native/package surface changes.
+- P2 findings:
+  - Plugin command failures lose their original cause at the new plugin command boundary because `CommandRegistry.execute()` wraps failures as `COMMAND_HANDLER_FAILED` without cause.
+  - The new exported `PluginCommandHandler` type is not locked by public API contract tests/docs.
+- P3 finding: task syntax matcher should reject CommonMark indented code lines with four spaces or a tab.
+- External docs consulted: Vitest `expect.soft`, Vite 7 migration/Node support, Tauri v2 invoke docs, React 19 upgrade guide, and CommonMark indented/fenced code behavior.
+
+### Hubble the 3rd (`docs_researcher`) Outcome
+
+- Status: completed read-only docs/current-guidance review; no files edited.
+- P1 docs drift blocks merge:
+  - Plugin command API docs need command-time `PluginContext` / `PluginCommandHandler(input, context)` coverage.
+  - Product docs still show snake_case task source metadata in places.
+  - Runtime/testing docs still describe built-ins as markdown-only and Task Plugin as future-only.
+- Required docs: `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and final progress/communication docs.
+- External docs verified: none; local docs/code were sufficient.
+
+### Singer the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only test-quality review; no files edited.
+- No P0/P1 test-quality findings.
+- P2 findings:
+  - Duplicate-prevention tests do not isolate metadata-only reuse or pre-existing `attrs.boundPageId` reuse.
+  - Negative cases swallow resolver failures and do not protect command error contract.
+  - Resolver atomicity is not directly covered with a failure after partial writes.
+- P3 finding: native-surface guard is useful but brittle because it shells out to `git diff master`.
+- Checks run: focused TASK-018, Plugin Host lifecycle, transaction manager, Markdown runtime, and app bootstrap tests passed with 5 files / 80 tests.
+
+### Kepler the 3rd (`doc_writer`) Outcome
+
+- Status: completed read-only documentation plan; no files edited.
+- Recommendation: docs sync is blocking before merge because branch behavior and public plugin API semantics changed.
+- Docs to update after review fixes: `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and final progress/agent-communication docs.
+- Not required: Tauri IPC/capability/permission/Rust docs, because native surface is unchanged.
 
 ## Parent Decisions
 
