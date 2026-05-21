@@ -137,6 +137,7 @@ export {
 } from "./services";
 export {
   createInMemoryAppRuntime,
+  createMarkdownPageRuntimeFacade,
   createMarkdownRuntimeFacade,
 } from "./runtime";
 export type {
@@ -174,5 +175,7 @@ export type {
 export type {
   CollectedMarkdownSyntaxContribution,
   CoreRuntime,
+  MarkdownEditorDocument,
+  MarkdownPageRuntimeFacade,
   MarkdownRuntimeFacade,
 } from "./runtime";

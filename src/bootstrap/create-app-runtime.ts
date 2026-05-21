@@ -3,6 +3,7 @@ import {
   createCoreRegistries,
   createCoreServices,
   createCoreStores,
+  createMarkdownPageRuntimeFacade,
   createTauriNativeBridge,
   createMarkdownRuntimeFacade,
   type AppPlugin,
@@ -11,6 +12,7 @@ import {
   type CoreServices,
   type CoreStores,
   type MarkdownRuntimeFacade,
+  type NativeBridge,
   type PluginHostRecord,
 } from "../core";
 
@@ -60,6 +62,7 @@ export type AppBootstrapOptions<Runtime extends object = AppRuntime> = {
     app: AppRuntimeInfo;
   }) => AppPluginHost;
   createRuntime?: (dependencies: {
+    nativeBridge: unknown;
     stores: unknown;
     registries: unknown;
     services: unknown;
@@ -93,6 +96,7 @@ export async function createAppRuntime<Runtime extends object = AppRuntime>(
   const services = await createServices({ stores, registries, storage });
   const pluginHost = createPluginHost({ services, registries, app });
   const runtime = await createRuntime({
+    nativeBridge,
     stores,
     registries,
     services,
@@ -147,12 +151,14 @@ function createDefaultPluginHost({
 }
 
 function createDefaultRuntime({
+  nativeBridge,
   stores,
   registries,
   services,
   pluginHost,
   app,
 }: {
+  nativeBridge: unknown;
   stores: unknown;
   registries: unknown;
   services: unknown;
@@ -163,7 +169,9 @@ function createDefaultRuntime({
 
   return {
     app,
-    markdown: createMarkdownRuntimeFacade(pluginHost),
+    markdown: createMarkdownRuntimeFacade(pluginHost, {
+      pages: createMarkdownPageRuntimeFacade(nativeBridge as NativeBridge),
+    }),
     stores: stores as CoreStores,
     registries: registries as CoreRegistries,
     services: coreServices,

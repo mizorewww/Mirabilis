@@ -2,6 +2,7 @@ import type {
   MarkdownSyntaxContribution,
   PluginManifest,
 } from "../plugin-api";
+import type { MarkdownPageRuntimeFacade } from "./markdown-pages";
 
 export type CollectedMarkdownSyntaxContribution =
   MarkdownSyntaxContribution & {
@@ -10,22 +11,36 @@ export type CollectedMarkdownSyntaxContribution =
 
 export type MarkdownRuntimeFacade = {
   collectEditorExtensions(): readonly CollectedMarkdownSyntaxContribution[];
+  pages?: MarkdownPageRuntimeFacade;
 };
 
 type MarkdownExtensionManifestProvider = {
   listPlugins?(): readonly {
+    enabled?: boolean;
+    status?: string;
     manifest: Pick<PluginManifest, "id" | "contributes">;
   }[];
 };
 
+type MarkdownRuntimeFacadeOptions = {
+  pages?: MarkdownPageRuntimeFacade;
+};
+
 export function createMarkdownRuntimeFacade(
   provider: MarkdownExtensionManifestProvider,
+  options: MarkdownRuntimeFacadeOptions = {},
 ): MarkdownRuntimeFacade {
-  return {
+  const facade: MarkdownRuntimeFacade = {
     collectEditorExtensions() {
       return collectMarkdownSyntaxContributions(provider);
     },
   };
+
+  if (options.pages !== undefined) {
+    facade.pages = options.pages;
+  }
+
+  return facade;
 }
 
 function collectMarkdownSyntaxContributions(
@@ -34,9 +49,28 @@ function collectMarkdownSyntaxContributions(
   const plugins = provider.listPlugins?.() ?? [];
 
   return plugins.flatMap((plugin) =>
-    (plugin.manifest.contributes?.markdownSyntax ?? []).map((contribution) => ({
-      pluginId: plugin.manifest.id,
-      ...contribution,
-    })),
+    shouldCollectPluginExtensions(plugin)
+      ? (plugin.manifest.contributes?.markdownSyntax ?? []).map(
+          (contribution) => ({
+            ...contribution,
+            pluginId: plugin.manifest.id,
+          }),
+        )
+      : [],
   );
+}
+
+function shouldCollectPluginExtensions(plugin: {
+  enabled?: boolean;
+  status?: string;
+}): boolean {
+  if (plugin.status !== undefined) {
+    return plugin.status === "active";
+  }
+
+  if (plugin.enabled !== undefined) {
+    return plugin.enabled;
+  }
+
+  return true;
 }

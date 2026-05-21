@@ -33,7 +33,9 @@ export function insertMarkdownText(
     markdown.length,
   );
   const selectionEnd = normalizeSelectionOffset(
-    "selectionEnd" in normalizedInput ? normalizedInput.selectionEnd : undefined,
+    "selectionEnd" in normalizedInput
+      ? normalizedInput.selectionEnd
+      : selectionStart,
     markdown.length,
   );
   const start = Math.min(selectionStart, selectionEnd);

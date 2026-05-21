@@ -5,3 +5,8 @@ export type {
   CollectedMarkdownSyntaxContribution,
   MarkdownRuntimeFacade,
 } from "./markdown-extensions";
+export { createMarkdownPageRuntimeFacade } from "./markdown-pages";
+export type {
+  MarkdownEditorDocument,
+  MarkdownPageRuntimeFacade,
+} from "./markdown-pages";
