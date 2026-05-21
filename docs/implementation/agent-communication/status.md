@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 18:51 CST.
+Last updated: 2026-05-21 18:54 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 18:51 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing TASK-022 acceptance tests delegated to Wegener.
+- Current phase: failing acceptance tests committed; implementation is next.
 
 ## Active Agents
 
-- Wegener (`test_writer`) is writing TASK-022 failing acceptance tests only.
+- None.
 
 ## Completed Recent Task
 
@@ -62,6 +62,7 @@ Last updated: 2026-05-21 18:51 CST.
 - Meitner (`docs_researcher`) completed current-doc/test guidance. Recommendation: use registered view/slot paths, keep Today bounded to seeded date metadata with deterministic tests, and use React Testing Library/user-event/Vitest patterns.
 - Mill (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: do not treat `FilterStore.list()` as query execution; preserve `page.list` for TASK-021 tag filter compatibility; keep task semantics out of Core; avoid native/package changes.
 - Darwin (`security_reviewer`) completed security guidance. P0/P1 guidance: no executable JS filters or native exposure, data-only AST interpreter with allowlisted fields, Task Plugin metadata trust boundaries, deterministic date parsing, minimal view/slot props, and inert rendering.
+- Wegener (`test_writer`) added failing TASK-022 acceptance tests in `src/test/core-filter-engine.test.ts` and `src/test/task-filters-view-rendering.test.tsx`. Coverage includes public `executeFilterQuery`, generic metadata query execution, owner-consistent metadata, path-injection fail-closed behavior, Tag filter compatibility, relative Today resolution, Task-owned All Tasks/Today filters, registered `page.list` rendering, `filter.empty_state`, inert unsafe titles, and native/package guard.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -73,9 +74,9 @@ Last updated: 2026-05-21 18:51 CST.
 
 ## Next Actions
 
-1. Wait for Wegener's failing TASK-022 acceptance tests.
-2. Confirm expected red signal.
-3. Commit tests, then delegate implementation.
+1. Delegate implementation to `implementer`.
+2. Run focused tests until green.
+3. Commit implementation after validation.
 
 ## Current TASK-021 State
 

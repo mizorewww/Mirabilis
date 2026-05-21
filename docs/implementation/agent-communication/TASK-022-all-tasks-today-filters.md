@@ -154,6 +154,32 @@
 - Defer:
   - JS filters, cross-plugin Filter Plugin ownership changes, global saved-filter navigation, app-shell route integration, Tag filter UI beyond compatibility, native/Tauri/package/Rust changes, persistence rewiring, broad docs sync, and release packaging.
 
+## Acceptance Test Handoff
+
+- Status: completed by Wegener (`test_writer`) on 2026-05-21 18:54 CST.
+- Commit: `b454680`.
+- Files changed:
+  - `src/test/core-filter-engine.test.ts`.
+  - `src/test/task-filters-view-rendering.test.tsx`.
+- Coverage added:
+  - Public `executeFilterQuery` Core API over pages and metadata, not saved filter definitions.
+  - Generic data-only execution for `eq`, `neq`, `includes`, `exists`, `or`, archived exclusion, stable ordering, no input mutation, owner-consistent metadata, and fail-closed path-injection fields.
+  - TASK-021 tag filter compatibility for `metadata.tag.tags includes "product"`.
+  - Relative today value `{ kind: "relative-date", value: "today" }` resolved with a fixed `currentDate`.
+  - Task-owned `All Tasks` and `Today` filters with `viewType: "page.list"` and canonical query shapes.
+  - Registered `task.page-list` view and `task.filter-empty-state` slot, minimal data props, inert unsafe titles, and native/package/Tauri/Cargo surface guard.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx
+bun run typecheck
+bunx eslint src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx --max-warnings=0
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: expected red signal. Focused tests ran 2 files / 22 tests with 21 failures and 1 pass. Failures were missing `executeFilterQuery` export and missing Task Plugin `All Tasks` / `Today` filters, `page.list` view, and `filter.empty_state` slot. `bun run typecheck`, focused eslint, `git diff --check`, and native/package/Tauri guard passed.
+
 ## Current Next Action
 
-- Wegener (`test_writer`) is writing TASK-022 failing acceptance tests only.
+- Delegate implementation to `implementer`.
