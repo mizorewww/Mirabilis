@@ -39,9 +39,8 @@
 
 ## Current Status
 
-- Status: Rust/IPC review-fix docs guidance running.
-- Active agents:
-  - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation review fix.
+- Status: review-fix red tests pending.
+- Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -57,7 +56,8 @@
   - Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review completed with required docs sync findings.
   - Bohr the 3rd (`test_quality_reviewer`): test quality review completed with P1/P2 findings.
   - Rawls the 3rd (`doc_writer`): documentation gap review completed.
-- Next parent step: wait for Newton the 3rd, then delegate review-fix red tests.
+  - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation and TypeScript conversion review fixes completed.
+- Next parent step: commit Newton the 3rd's guidance, then delegate review-fix red tests.
 
 ## Agent Handoffs
 
@@ -310,12 +310,24 @@ git diff --check
 
 ### Newton the 3rd (`docs_researcher`) Handoff
 
-- Status: running.
+- Status: completed and closed.
 - Ownership: read-only current guidance for Rust/Tauri/Serde review-fix tests and implementation.
 - Scope:
   - Rust IPC `core.pages.create/update` structured body validation.
   - TypeScript Markdown conversion validation/reconciliation test guidance.
   - Current official docs only as needed for Tauri v2 command/error patterns, Serde/serde_json validation, and Rust testing style.
+- Guidance for `test_writer`:
+  - Add Rust IPC tests in `src-tauri/tests/ipc_persistence.rs`.
+  - Update existing page test helpers there to use canonical TASK-017 bodies `{ type: "doc", content: [{ blockId, type: "markdown.line", text }] }`; old `{"blocks": ...}` bodies should become invalid for `core.pages.create/update`.
+  - Add failing cases proving `core.pages.create` and `core.pages.update` reject malformed body with `INVALID_REQUEST`, including non-`doc`, missing/non-array content, non-object blocks, missing/blank/duplicate IDs, excessive depth/block count, invalid `type`/`text`/`content`/`attrs`/`marks`, and executable attrs (`onClick`, `javascript:`, `data:`, normalized URL variants).
+  - Add a transaction test where an earlier valid write plus later invalid body leaves the earlier page absent.
+  - Add TypeScript tests for same-length delete+insert ID retention, combined insertion plus edited block ID retention, deleted-ID reservation on generator collision, early max block-count rejection before ID generation, URL attr rejection, malformed marks, and malformed legacy `markdown.text` fallback rejection.
+- Guidance for `implementer`:
+  - In `src-tauri/src/commands/db.rs`, call a new page-body validator from `PageCreatePayload::validate` and `PageUpdatePayload::validate`.
+  - Return only `IpcError::invalid_request()` for schema failures, without schema/body/block ID/URL/SQL/path/serde details.
+  - Mirror TS schema and use constants aligned with TS defaults where practical: max block count `20_000`, max depth `100`.
+  - Replace raw same-length index reuse in `markdown-conversion.ts`; reserve all previous IDs so new blocks cannot reuse deleted IDs.
+- External docs consulted: Tauri v2 commands/error handling, Tauri capabilities, Serde container attributes, `serde_json::Value`, `serde_json::from_value`, and Cargo integration test layout.
 
 ## Validation
 

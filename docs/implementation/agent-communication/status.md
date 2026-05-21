@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:52 CST.
+Last updated: 2026-05-21 09:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:52 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: Rust/IPC review-fix docs guidance running.
+- Current phase: review-fix red tests pending.
 
 ## Active Agents
 
-- Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation review fix.
+- None.
 
 ## Current TASK-017 State
 
@@ -46,6 +46,7 @@ Last updated: 2026-05-21 09:52 CST.
   - Schrodinger the 3rd (`docs_researcher`) found P1 docs sync required before merge.
   - Bohr the 3rd (`test_quality_reviewer`) found P1 missing combined edit+insert coverage, plus P2 deleted-ID collision and overfit representation concerns.
   - Rawls the 3rd (`doc_writer`) identified exact docs to sync after review fixes.
+- Newton the 3rd (`docs_researcher`) completed current guidance for Rust IPC body-validation and TypeScript conversion review fixes.
 
 ## Validation Already Reported By Parent
 
@@ -93,6 +94,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Wait for Newton the 3rd's current-doc guidance.
+1. Commit Newton the 3rd's guidance.
 2. Delegate review-fix red tests.
 3. Delegate review-fix implementation.
