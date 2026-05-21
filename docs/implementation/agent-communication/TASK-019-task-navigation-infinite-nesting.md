@@ -138,12 +138,39 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
 
 ### Review-fix Test Handoff
 
-- Status: pending.
+- Status: completed, committed, and closed.
+- Agent: Hypatia the 3rd (`test_writer`).
+- Files changed:
+  - `src/test/task-navigation-infinite-nesting.test.tsx`.
+- Commit: `a2d3b4f` (`Hypatia the 3rd(test)(Implement task navigation and infinite nesting): add review-fix regressions`).
 - Required red coverage:
   - Loaded/persisted editor path: render the registered editor with `pageId/pageFacade` or runtime Markdown page facade data containing a structured task body and verify task-title click navigation is available.
   - Stale async navigation guard: delay `task.open-task-page`, change page or content before it resolves, and assert old result does not call `onOpenPage`.
   - Consider adding low-risk hardening coverage for malformed `attrs.boundPageId` as untrusted/absent if test_writer can do so without broadening the loop.
   - Consider replacing or quarantining the brittle native-surface Vitest shell-out if a more stable repo-local boundary assertion is available.
+- Result: added red tests for loaded `pageId/pageFacade` task-title navigation, stale delayed task-open navigation, and malformed `attrs.boundPageId` hardening. Parent verification showed expected red signal with 3 failed / 9 passed tests; `bun run typecheck` and `git diff --check` passed.
+
+### Review-fix Implementation Handoff
+
+- Status: completed, committed, and closed.
+- Agent: Kuhn the 3rd (`implementer`).
+- Files changed:
+  - `src/plugins/task/plugin.ts`.
+  - `src/core/runtime/markdown-pages.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Commit: `c5e5b65` (`Kuhn the 3rd(review-fix)(Implement task navigation and infinite nesting): harden loaded task navigation`).
+- Summary:
+  - Malformed `attrs.boundPageId` is treated as absent/untrusted instead of fatal.
+  - `MarkdownEditorDocument` from the runtime Markdown page facade can carry structured body.
+  - Loaded editor mode stores loaded/saved structured body and renders task-title buttons from it.
+  - Delayed task-open results are ignored when page id or content version changed before resolution.
+- Validation:
+  - `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts` passed with 2 files / 26 tests.
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts` passed with 3 files / 65 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri surface diff from `master` returned no files.
 
 ### Pre-test Guidance
 

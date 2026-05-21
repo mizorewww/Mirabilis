@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 13:27 CST.
+Last updated: 2026-05-21 13:25 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 13:27 CST.
 - Branch: `feat/task-019-task-navigation-infinite-nesting`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review findings recorded; review-fix test handoff pending.
+- Current phase: review-fix implementation committed; focused re-review pending.
 
 ## Active Agents
 
@@ -29,6 +29,8 @@ Last updated: 2026-05-21 13:27 CST.
   - Ptolemy the 3rd (`deprecation_auditor`) found one P1 matching the loaded/persisted editor path gap, plus P2 issues for Markdown Editor hardcoding Task Plugin command/parsing semantics and stale docs/API naming.
   - Bernoulli the 3rd (`docs_researcher`) found P1 docs drift around `page.open` / direct `boundPageId` navigation and TASK-019 click/open behavior still being described as future; P2 testing docs need TASK-019 coverage.
   - Bacon the 3rd (`test_quality_reviewer`) found P1 missing loaded/persisted editor path coverage and P2 brittleness in the native-surface regression test shelling out to `git diff master`.
+- Hypatia the 3rd (`test_writer`) added review-fix regression tests for loaded editor task navigation, stale delayed task-open navigation, and malformed `attrs.boundPageId` hardening. Commit: `a2d3b4f`.
+- Kuhn the 3rd (`implementer`) fixed the review regressions by treating malformed `boundPageId` as absent, carrying structured body through the Markdown page runtime facade, rendering task buttons in loaded editor mode, and dropping stale delayed task-open results after page/content changes. Commit: `c5e5b65`.
 
 ## Completed Recent Task
 
@@ -81,6 +83,27 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all passed or clean. TASK-019/TASK-018 focused set passed with 2 files / 23 tests. Editor persistence and Plugin Host regression set passed with 3 files / 65 tests. Typecheck, lint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Review-fix red tests after Hypatia the 3rd:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 12 tests ran, with 3 failed / 9 passed. Failures covered malformed `attrs.boundPageId` being fatal, loaded `pageId/pageFacade` editor mode missing task-title button `A`, and stale delayed `task.open-task-page` still calling `onOpenPage("stale-task-page")`. Typecheck and `git diff --check` passed.
+- Review-fix checks after Kuhn the 3rd:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-019/TASK-018 set passed with 2 files / 26 tests. Editor persistence and Plugin Host regression set passed with 3 files / 65 tests. Typecheck, lint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
 ## Source Docs Read By Parent
 
@@ -94,6 +117,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit review findings summary.
-2. Spawn `test_writer` for review-fix red tests covering loaded editor mode and stale async task navigation.
-3. Delegate review-fix implementation, then rerun focused checks.
+1. Commit review-fix result summary.
+2. Spawn focused re-review agents for correctness, test quality, security/API, and docs drift.
+3. Fix remaining P0/P1 findings before docs sync/final gate.
