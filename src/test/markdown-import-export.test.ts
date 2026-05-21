@@ -262,11 +262,14 @@ describe("Markdown import/export", () => {
 
 function getMarkdownConversionApi(): MarkdownConversionApi {
   const candidate = core as Partial<MarkdownConversionApi>;
-  const missingExports = [
+  const requiredExports: Array<keyof MarkdownConversionApi> = [
     "importMarkdownToStructuredDocument",
     "exportStructuredDocumentToMarkdown",
     "validateStructuredMarkdownDocument",
-  ].filter((exportName) => typeof candidate[exportName] !== "function");
+  ];
+  const missingExports = requiredExports.filter(
+    (exportName) => typeof candidate[exportName] !== "function",
+  );
 
   expect(missingExports).toStrictEqual([]);
 
