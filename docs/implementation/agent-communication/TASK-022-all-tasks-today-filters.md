@@ -753,6 +753,40 @@ git diff --check
 
 - Result: all passed. Plugin API coverage passed with 1 file / 29 tests. Plugin API + lifecycle + architecture coverage passed with 3 files / 77 tests. `bun run typecheck`, focused eslint, and `git diff --check` passed. Behavior was already green, so no production follow-up was needed.
 
+## Formal Docs Sync
+
+- Status: completed by Mencius (`doc_writer`) on 2026-05-21 21:27 CST.
+- Commit: `e3a4319`.
+- Files changed:
+  - `docs/product/02-core-data-model.md`.
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/product/06-view-slots.md`.
+  - `docs/architecture/02-core-kernel.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/05-plugin-implementations.md`.
+  - `docs/architecture/06-filter-native-database.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/01-data-roadmap-and-mvp.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/implementation/task-index.md`.
+  - `docs/implementation/progress.md`.
+  - `docs/testing/strategy.md`.
+- Docs synced:
+  - TASK-022 delivered `executeFilterQuery`, Task-owned All Tasks / Today filters, `page.list`, `task.page-list`, `filter.empty_state`, date metadata semantics, Tag filter compatibility, metadata owner reservations, and deferred scope.
+  - `progress.md` now marks TASK-022 complete pending final gate confirmation.
+- Parent validation:
+
+```bash
+rg -n "task\\.list|TASK-022\\+|Filter execution remains|filter execution/rendering|future-only|future.*All Tasks|future.*Today|task\\.set_due|task\\.set-due" docs/product docs/architecture docs/development docs/implementation docs/testing
+git diff --check
+bun run typecheck
+```
+
+- Result: stale scan remaining hits were intentional deferred-scope notes or historical agent-communication records. `git diff --check` and `bun run typecheck` passed.
+
 ## Current Next Action
 
-- Mencius (`doc_writer`) is synchronizing formal TASK-022 product, architecture, development, implementation, and testing docs.
+- Run final branch gates for TASK-022.
