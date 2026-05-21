@@ -39,14 +39,8 @@
 
 ## Current Status
 
-- Status: review agents running.
-- Active agents:
-  - Nietzsche the 3rd (`pr_explorer`): changed-surface mapping.
-  - Russell the 3rd (`reviewer`): correctness review.
-  - Goodall the 3rd (`security_reviewer`): security review.
-  - Helmholtz the 3rd (`deprecation_auditor`): API/deprecation review.
-  - Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review.
-  - Bohr the 3rd (`test_quality_reviewer`): test quality review.
+- Status: review findings complete; review-fix planning pending.
+- Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -55,7 +49,14 @@
   - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
   - Erdos the 3rd (`implementer`): production implementation completed, focused tests green, committed, and closed.
   - Averroes the 3rd (`test_writer`): test-only typecheck fix completed, validated, committed, and closed.
-- Next parent step: wait for active review agents; spawn the pending doc-writer review after an agent slot opens.
+  - Nietzsche the 3rd (`pr_explorer`): changed-surface mapping completed.
+  - Russell the 3rd (`reviewer`): correctness review completed with P1/P2 findings.
+  - Goodall the 3rd (`security_reviewer`): security review completed with P1/P2 findings.
+  - Helmholtz the 3rd (`deprecation_auditor`): API/deprecation review completed with no P0/P1/P2 findings.
+  - Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review completed with required docs sync findings.
+  - Bohr the 3rd (`test_quality_reviewer`): test quality review completed with P1/P2 findings.
+  - Rawls the 3rd (`doc_writer`): documentation gap review completed.
+- Next parent step: commit review findings, run current-doc guidance for Rust/IPC validation, then delegate review-fix red tests.
 
 ## Agent Handoffs
 
@@ -228,16 +229,83 @@ git diff --check
 
 ### Review Round 1
 
-- Status: running.
-- Active agents:
-  - Nietzsche the 3rd (`pr_explorer`): read-only changed-surface mapping.
-  - Russell the 3rd (`reviewer`): read-only correctness review.
-  - Goodall the 3rd (`security_reviewer`): read-only security review.
-  - Helmholtz the 3rd (`deprecation_auditor`): read-only API/deprecation review.
-  - Schrodinger the 3rd (`docs_researcher`): read-only docs/current-guidance review.
-  - Bohr the 3rd (`test_quality_reviewer`): read-only test quality review.
-- Pending due to current agent thread limit:
-  - `doc_writer`: read-only documentation gap review. Parent will spawn it after an agent slot opens.
+- Status: completed.
+
+### Nietzsche the 3rd (`pr_explorer`) Outcome
+
+- Status: completed read-only changed-surface mapping; no files edited.
+- Changed surface: 9 files versus `master`, including Core Markdown conversion exports, runtime markdown page integration, two focused test files, and orchestration docs.
+- Runtime/native boundary: no Rust, Tauri capability, permission, package, or Cargo files changed in the original implementation. Runtime still uses only `core.pages.get` and `core.pages.update` through `nativeBridge.db.execute`.
+- Risk focus:
+  - ID reconciliation is line-oriented and position-biased.
+  - `BlockNode.marks` are not validated.
+  - Legacy `markdown.text` fallback matches TASK-016 but should be reviewed for malformed legacy-like bodies.
+  - Rust still accepts page `body` as arbitrary JSON.
+- Checks run: `git diff --check master...HEAD`, `bun run typecheck`, focused TASK-017 tests, and `bun run lint`; all passed.
+
+### Russell the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness review; no files edited.
+- P1: same-length insert/delete edits corrupt block identity because the initial algorithm blindly reused previous IDs by index when line counts matched.
+- P2: shifted edited blocks can get unnecessary new IDs after insert/delete because only exact prefix/suffix lines are retained.
+- P2: legacy `markdown.text` fallback accepts malformed legacy-shaped bodies with invalid extra block data, such as non-string `blockId`.
+- Check run: focused TASK-017 tests passed with 2 files / 11 tests.
+
+### Goodall the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only security review; no files edited.
+- P1: Rust IPC `core.pages.create` and `core.pages.update` still accept `body: serde_json::Value` and validate only page IDs/parent IDs. Main-window callers with allowed `db_execute` can bypass TS limits and persist malformed, oversized, deeply nested, duplicate-ID, or executable-attr bodies. IPC should enforce the same structured document schema and limits before writing `body_json`.
+- P2: `importMarkdownToStructuredDocument()` rejects too many blocks only after splitting, assigning IDs, and constructing block objects; it should reject `lines.length > maxBlockCount` before ID generation/object construction.
+- P2: attr URL validation only rejects strings starting with `javascript:` and should reject `data:` and URL-normalization variants or enforce a strict scheme allowlist.
+- No TASK-017 native file-command, capability, filesystem, or raw HTML rendering broadening found.
+
+### Helmholtz the 3rd (`deprecation_auditor`) Outcome
+
+- Status: completed read-only API/deprecation review; no files edited.
+- Finding: no P0/P1/P2 API or deprecation issues.
+- Confirmed no dependency, lockfile, Cargo, Tauri config, capability, or permission changes in the original implementation.
+- External docs checked: Tauri v2 core invoke/release docs, Vitest `expect`/`vi`, Testing Library user-event setup, and React Testing Library API.
+
+### Schrodinger the 3rd (`docs_researcher`) Outcome
+
+- Status: completed read-only docs/current-guidance review; no files edited.
+- P1: docs sync is needed before merge because local docs still describe stable block IDs and Markdown import/export as deferred or still show the TASK-016 single `markdown.text` save wrapper.
+- Docs to update later: `docs/product/04-editor-and-workflows.md`, `docs/architecture/02-core-kernel.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+- No external docs were needed because the branch adds no new external API/dependency surface.
+
+### Bohr the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only test-quality review; no files edited.
+- P1: missing combined edit-plus-insertion coverage for block ID stability. Existing tests cover same-length edits and unchanged-neighbor insert/delete separately, but not an existing block edited while another block is inserted/deleted.
+- P2: deleted-ID non-reuse assertion is weak because the deterministic ID factory never attempts to return a deleted prior ID.
+- P2: some assertions overfit the one-line-per-block representation instead of observable import/export behavior.
+- Check run: focused TASK-017 tests passed with 2 files / 11 tests.
+
+### Rawls the 3rd (`doc_writer`) Outcome
+
+- Status: completed read-only documentation gap review; no files edited.
+- Recommended docs sync after review fixes:
+  - `docs/product/04-editor-and-workflows.md`: update TASK-016/TASK-017 state and deferred list.
+  - `docs/architecture/02-core-kernel.md`: clarify TASK-017 interim line-oriented `markdown.line` format, not Tiptap/ProseMirror JSON yet.
+  - `docs/architecture/04-slots-editor-task.md`: replace obsolete single `markdown.text` save-shape snippet and note legacy fallback only.
+  - `docs/architecture/07-runtime-flows.md`: document runtime load/export and save/import behavior through `core.pages.get/update`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`: move stable block IDs and internal conversion out of deferred work.
+  - `docs/testing/strategy.md`: add TASK-017 focused tests and security boundaries.
+- Deferred items to keep documented: Task/Tag/PageLink semantics, checkbox events, tag indexing, page-link navigation, `@date`, autocomplete, slash menu, rich editor/Tiptap/ProseMirror adaptation, full CommonMark AST round-tripping, native filesystem Markdown import/export, broader Rust/IPC body schema hardening until fixed, and user-facing load/save error UX.
+- Check run: focused TASK-017 tests passed with 2 files / 11 tests.
+
+## Review-Fix Plan
+
+- P1 fixes required before merge:
+  - Add red tests for same-length insert/delete ID corruption and combined edit+insert ID retention, then update reconciliation.
+  - Add Rust IPC red tests for invalid structured page bodies through `core.pages.create/update`, then enforce validation natively.
+  - Sync docs after code/test review fixes.
+- P2 fixes to include if practical in the same review-fix loop:
+  - Early block-count rejection before ID generation/object construction.
+  - Stronger URL attr validation for `data:` and normalized `javascript:` variants.
+  - Malformed legacy fallback rejection.
+  - Deleted-ID collision coverage.
+  - Avoid adding more representation-overfit tests where observable behavior is enough.
 
 ## Validation
 

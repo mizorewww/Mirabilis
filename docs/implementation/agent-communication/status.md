@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:44 CST.
+Last updated: 2026-05-21 09:50 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-21 09:44 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review agents running.
+- Current phase: review findings complete; review-fix planning pending.
 
 ## Active Agents
 
-- Nietzsche the 3rd (`pr_explorer`): changed-surface mapping.
-- Russell the 3rd (`reviewer`): correctness review.
-- Goodall the 3rd (`security_reviewer`): security review.
-- Helmholtz the 3rd (`deprecation_auditor`): API/deprecation review.
-- Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review.
-- Bohr the 3rd (`test_quality_reviewer`): test quality review.
+- None.
 
 ## Current TASK-017 State
 
@@ -43,6 +38,14 @@ Last updated: 2026-05-21 09:44 CST.
 - Euler the 3rd (`test_writer`) added failing TASK-017 acceptance tests in `src/test/markdown-import-export.test.ts` and `src/test/markdown-page-persistence.test.tsx`. Commit: `27118dc`.
 - Erdos the 3rd (`implementer`) implemented the production Markdown conversion and runtime page integration. Commit: `22e2753`.
 - Averroes the 3rd (`test_writer`) fixed the test helper TS7053 issue without weakening coverage. Commit: `6c5ccaa`.
+- Review round 1 completed:
+  - Nietzsche the 3rd (`pr_explorer`) mapped changed surfaces and highlighted ID reconciliation, marks validation, legacy fallback, and native body validation risk areas.
+  - Russell the 3rd (`reviewer`) found P1 same-length insert/delete block ID corruption, plus P2 shifted edited block ID replacement and malformed legacy fallback acceptance.
+  - Goodall the 3rd (`security_reviewer`) found P1 missing Rust IPC body validation for `core.pages.create/update`, plus P2 early block-count rejection and stricter URL attr validation.
+  - Helmholtz the 3rd (`deprecation_auditor`) found no P0/P1/P2 API or deprecation findings.
+  - Schrodinger the 3rd (`docs_researcher`) found P1 docs sync required before merge.
+  - Bohr the 3rd (`test_quality_reviewer`) found P1 missing combined edit+insert coverage, plus P2 deleted-ID collision and overfit representation concerns.
+  - Rawls the 3rd (`doc_writer`) identified exact docs to sync after review fixes.
 
 ## Validation Already Reported By Parent
 
@@ -90,6 +93,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Wait for active review agents.
-2. Spawn the pending doc-writer review after an agent slot opens.
-3. Fix any P0/P1 findings before final gate.
+1. Commit review findings.
+2. Run current-doc guidance for the Rust/IPC body-validation review fix.
+3. Delegate review-fix red tests, then implementation.
