@@ -40,9 +40,9 @@
 
 ## Current Status
 
-- Status: third review-fix implementation agent running.
+- Status: final provenance re-review agent running.
 - Active agents:
-  - Dalton the 3rd (`implementer`): third review-fix implementation for command failure provenance.
+  - Cicero the 3rd (`reviewer`): final provenance re-review after Dalton fix.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Dalton the 3rd's third review-fix implementation, run focused checks, and commit if green.
+- Next parent step: wait for Cicero the 3rd's final provenance re-review; if clear, delegate blocking docs sync.
 
 ## Agent Handoffs
 
@@ -392,9 +392,30 @@ git diff --check
 
 ### Dalton the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: minimal production fix only.
 - Target: preserve `CommandRegistryError.cause` only for failures marked/proven as coming from Plugin Host command execution, while preserving raw-cause redaction for ordinary command handlers even if they throw a real exported `PluginHostError`.
+- Files changed:
+  - `src/core/commands/command-registry.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+- Commit: `04c769d` (`Dalton the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): mark plugin command failure causes`).
+- Summary: introduced an internal WeakSet marker for preserved command handler failure causes; Plugin Host marks command-execution `PluginHostError`s before throwing, while normal command handlers throwing plain objects or constructible `PluginHostError`s remain redacted.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+- Result: all passed. Core command registry + Plugin Host lifecycle tests passed with 2 files / 60 tests.
+
+### Final Provenance Re-review
+
+- Status: running.
+- Agent:
+  - Cicero the 3rd (`reviewer`): final provenance re-review after Dalton fix.
 
 ## Parent Decisions
 
