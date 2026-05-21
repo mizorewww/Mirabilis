@@ -530,6 +530,30 @@ git diff --check master...0b54251
 - If the regression is red, delegate the fix to an implementer. If it is green, commit the test as coverage and continue.
 - Accept Mencius the 4th's findings as docs-only blockers for task completion, to be handled by a doc writer after the integration coverage decision.
 
+## Loaded-runtime Regression Handoff
+
+- Status: completed by Zeno the 4th (`test_writer`) on 2026-05-21 15:14 CST.
+- Files changed:
+  - `src/test/task-checkbox-toggle-events.test.tsx`.
+- Coverage added:
+  - Loaded `pageId/pageFacade` editor path.
+  - Real `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })` rather than mocked task command output.
+  - Source Markdown/body update to `- [x] A`.
+  - Task metadata update to `task.status = "done"`.
+  - `task.completed` event payload.
+  - Checked checkbox remains visible after the loaded real-command toggle.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: all passed or clean. TASK-020 test file passed with 20 tests. Focused TASK-018/019/020 tests passed with 3 files / 48 tests. `bun run typecheck` and `git diff --check` passed.
+- Parent decision: no implementation fix is needed for Linnaeus the 4th's integration concern; commit this as coverage and continue to docs sync.
+
 ## Current Next Action
 
-- Delegate real loaded-runtime integration regression coverage to `test_writer`.
+- Commit Zeno the 4th's loaded-runtime regression coverage, then delegate docs sync.

@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import { BUILT_IN_PLUGINS, createAppRuntime, type AppRuntime } from "../bootstrap";
 import {
   createCoreStores,
+  DB_PERSISTENCE_OPERATIONS,
   exportStructuredDocumentToMarkdown,
   type AppEvent,
   type BlockNode,
@@ -49,6 +50,7 @@ type CreateRuntimeOptions = {
   pageIds?: readonly string[];
   eventIds?: readonly string[];
   eventTimes?: readonly string[];
+  nativeBridge?: NativeBridge;
 };
 
 type MarkdownEditorDocument = {
@@ -798,6 +800,83 @@ describe("Task checkbox toggle and task events", () => {
     expect(pageFacade.save).not.toHaveBeenCalled();
   });
 
+  it("toggles a loaded runtime pageFacade checkbox through the real task command", async () => {
+    const sourceBody = structuredDocument([
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const nativeBridge = createNativePageLoadBridge({
+      id: "source-page",
+      title: "Loaded real command source",
+      body: sourceBody,
+    });
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "task-page-a"],
+      eventIds: ["event-task-completed"],
+      eventTimes: ["2026-05-21T06:30:00.000Z"],
+      nativeBridge,
+    });
+    const user = userEvent.setup();
+    const sourcePage = runtime.pages.create({
+      title: "Loaded real command source",
+      body: sourceBody,
+    });
+    const pageFacade = expectRuntimePageFacade(runtime);
+    const execute = vi.spyOn(runtime.commands, "execute");
+
+    renderMarkdownPageEditor(runtime, {
+      pageId: sourcePage.id,
+      pageFacade,
+      commands: runtime.commands,
+      markdownRuntime: runtime.markdown,
+    });
+
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    expect(editor).toHaveValue("- [ ] A");
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "A", checked: false }),
+    );
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith(toggleTaskStatusCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies ToggleTaskStatusInput),
+    );
+    expect(execute).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(editor).toHaveValue("- [x] A"));
+    expect(
+      await screen.findByRole("checkbox", { name: "A", checked: true }),
+    ).toBeVisible();
+    expect(
+      exportStructuredDocumentToMarkdown(runtime.pages.get(sourcePage.id).body),
+    ).toBe("- [x] A");
+    expectSourceBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      text: "- [x] A",
+      attrs: { boundPageId: "task-page-a" },
+    });
+    expectTaskMetadata(runtime, {
+      taskPageId: "task-page-a",
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      status: "done",
+    });
+    expectTaskEvent(runtime, {
+      eventId: "event-task-completed",
+      taskPageId: "task-page-a",
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      type: "completed",
+      previousStatus: "todo",
+      status: "done",
+      createdAt: "2026-05-21T06:30:00.000Z",
+    });
+  });
+
   it("ignores repeated checkbox toggles for the same source block while the first toggle is pending", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -1137,7 +1216,7 @@ async function createRuntime(
       : createSequenceFactory(options.eventTimes);
 
   return createAppRuntime({
-    createNativeBridge: () => createNoopNativeBridge(),
+    createNativeBridge: () => options.nativeBridge ?? createNoopNativeBridge(),
     ...(createPageId === undefined &&
     createEventId === undefined &&
     eventNow === undefined
@@ -1557,6 +1636,72 @@ function createDeferred<Value>(): Deferred<Value> {
     resolve,
     reject,
   };
+}
+
+function createNativePageLoadBridge(input: {
+  id: string;
+  title: string;
+  body: StructuredMarkdownDocument;
+}): NativeBridge {
+  return {
+    db: {
+      async execute<Response>(query: DbQuery): Promise<Response> {
+        if (query.operation === DB_PERSISTENCE_OPERATIONS.pagesGet) {
+          return {
+            id: input.id,
+            title: input.title,
+            parentPageId: null,
+            body: input.body,
+          } as Response;
+        }
+
+        return undefined as Response;
+      },
+      async transaction<Response>(
+        _queries: DbQuery[],
+      ): Promise<NativeBridgeTransactionResult<Response>> {
+        void _queries;
+
+        return [] as NativeBridgeTransactionResult<Response>;
+      },
+    },
+    shortcuts: {
+      async register() {
+        return undefined;
+      },
+      async unregister() {
+        return undefined;
+      },
+    },
+    notifications: {
+      async notify() {
+        return undefined;
+      },
+    },
+    files: {
+      async importMarkdown() {
+        return "";
+      },
+      async exportMarkdown() {
+        return undefined;
+      },
+    },
+  };
+}
+
+function expectRuntimePageFacade(runtime: AppRuntime): MarkdownPageFacade {
+  const pageFacade = runtime.markdown.pages;
+
+  expect(pageFacade).toEqual({
+    load: expect.any(Function),
+    save: expect.any(Function),
+  });
+
+  if (pageFacade === undefined) {
+    throw new Error("Runtime markdown page facade is missing");
+  }
+
+  return pageFacade;
 }
 
 function createNoopNativeBridge(): NativeBridge {

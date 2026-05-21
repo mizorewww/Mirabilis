@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:06 CST.
+Last updated: 2026-05-21 15:14 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:06 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: focused review completed; integration regression test coverage is next before docs sync.
+- Current phase: real loaded-runtime integration regression is green; docs sync is next.
 
 ## Active Agents
 
@@ -44,6 +44,7 @@ Last updated: 2026-05-21 15:06 CST.
   - Averroes the 4th (`test_quality_reviewer`) found no P0/P1/P2 test-quality gaps in current focused coverage.
   - Beauvoir the 4th (`security_reviewer`) found no P0/P1/P2 security issues. It confirmed source-only UI payloads, strict toggle trusted-field rejection, verified source/metadata task resolution, plugin-scoped event writes, inert unsafe titles, and clean native/package/Tauri surface.
   - Mencius the 4th (`deprecation_auditor`) found no P0/P1 code blockers. It raised P1 docs-only drift for stale command names and the `{ pageId }` payload example, plus P2 docs-only drift where product/architecture/testing docs still describe checkbox/events as unimplemented.
+- Zeno the 4th (`test_writer`) added a real loaded-runtime regression in `src/test/task-checkbox-toggle-events.test.tsx`. It covers a loaded `pageId/pageFacade` editor path using real `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`, source Markdown/body update, done metadata, `task.completed` event payload, and the checked checkbox remaining visible. The regression is green on current implementation.
 
 ## Current TASK-020 State
 
@@ -133,9 +134,19 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all passed or clean. Focused TASK-018/019/020 tests passed with 3 files / 47 tests. Expanded frontend coverage passed with 6 files / 113 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Real loaded-runtime regression validation after Zeno the 4th:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: all passed or clean. TASK-020 test file passed with 20 tests. Focused TASK-018/019/020 tests passed with 3 files / 48 tests. `bun run typecheck` and `git diff --check` passed.
 
 ## Next Actions
 
-1. Delegate real loaded-runtime integration regression coverage to `test_writer`.
-2. Commit or fix that coverage depending on red/green result.
-3. Delegate docs sync for stale command names, payload example, and implemented checkbox/event behavior.
+1. Commit Zeno the 4th's loaded-runtime regression coverage.
+2. Delegate docs sync for stale command names, payload example, and implemented checkbox/event behavior.
+3. Run final local gate after docs sync.
