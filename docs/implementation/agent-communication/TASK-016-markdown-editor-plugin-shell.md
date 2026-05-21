@@ -37,8 +37,9 @@
 
 ## Current Status
 
-- Status: review round 1 completed; review-fix red-test handoff pending.
-- Active agents: none.
+- Status: review-fix red tests in progress.
+- Active agents:
+  - Chandrasekhar the 3rd (`test_writer`) for review-fix red tests.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -53,7 +54,7 @@
   - Lovelace the 3rd (`docs_researcher`): docs/current-guidance review completed.
   - Boyle the 3rd (`test_quality_reviewer`): test quality review completed.
   - Maxwell the 3rd (`doc_writer`): documentation gap review completed.
-- Next parent step: delegate review-fix red tests to `test_writer`.
+- Next parent step: wait for Chandrasekhar the 3rd, confirm expected red failures, and commit test changes.
 
 ## Agent Handoffs
 
@@ -278,3 +279,15 @@
   - Command/editor markdown text and offsets are bounded/validated.
 - Explicitly keep out of scope: new Tauri commands/capabilities, broad Core store-to-SQLite rewiring, Tiptap/ProseMirror, Task Plugin semantics, tag indexing, page-link navigation, stable block IDs, Markdown import/export, and dependency changes.
 - Docs sync is required before merge, but should wait until review fixes settle the final behavior.
+
+### Chandrasekhar the 3rd (`test_writer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e47e4-f287-7cf2-b650-93bbea9ead80`.
+- Ownership: review-fix failing tests and test helpers only.
+- Expected red-test coverage:
+  - Production narrow Core/NativeBridge page persistence facade exists and is used by the editor/runtime path, not a test-local adapter only.
+  - Editor startup/render actually calls or consumes `runtime.markdown.collectEditorExtensions()` through a safe narrow API.
+  - Markdown extension collection preserves host-owned `pluginId` even if a manifest contribution carries a rogue `pluginId`.
+  - Practical P2s where focused: omitted `selectionEnd`, controlled textarea/page change behavior, stale save protection, active/registered extension filtering, direct registered toolbar slot behavior, and narrow prop/capability boundaries.
+- Restrictions: tests/test helpers only; no production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependency changes, generated files, or commits.

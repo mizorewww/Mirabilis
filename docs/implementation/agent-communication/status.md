@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:16 CST.
+Last updated: 2026-05-21 08:17 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 08:16 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix red-test handoff.
+- Current phase: review-fix red tests in progress.
 
 ## Active Agents
 
-- None. Next agent handoff is TASK-016 review-fix red tests.
+- Chandrasekhar the 3rd (`test_writer`) - TASK-016 review-fix red tests.
 
 ## Recent Agent Outcomes
 
@@ -108,7 +108,8 @@ Last updated: 2026-05-21 08:16 CST.
 - Maxwell the 3rd (`doc_writer`) completed the deferred docs gap review and says docs sync is blocking before merge for public TypeScript runtime/API surface and delivered editor/bootstrap state.
 - Lovelace the 3rd (`docs_researcher`) found the same P1 NativeBridge-backed persistence gap and P2 docs/controlled-textarea guidance.
 - Parent decisions for review fixes: delegate test-first fixes for production narrow Core/NativeBridge page persistence facade, editor runtime extension collection, and trusted extension `pluginId` ownership. Include small P2s where practical: insert selection defaulting, controlled textarea, stale load/save handling, active/registered extension filtering, registered toolbar slot behavior, narrow prop surfaces, and bounded markdown/offset validation. Defer docs sync until review fixes settle behavior.
-- Parent next step: spawn `test_writer` for review-fix red tests.
+- Chandrasekhar the 3rd (`test_writer`) was spawned for TASK-016 review-fix red tests. Ownership is limited to tests/test helpers; production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependencies, generated files, and commits are out of scope.
+- Parent next step: wait for Chandrasekhar the 3rd, confirm expected red failures, and commit test changes.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
