@@ -265,4 +265,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn `test_writer` for TASK-023 review-fix regression tests.
+- Cicero (`test_writer`) is adding review-fix regression tests for MetadataBar trust and command-scoping boundaries.

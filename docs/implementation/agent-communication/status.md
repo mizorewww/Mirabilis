@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:07 CST.
+Last updated: 2026-05-21 22:09 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 22:07 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 review-fix regression tests are pending.
+- Current phase: TASK-023 review-fix regression tests are in progress.
 
 ## Active Agents
 
-- None currently. Next step is to delegate review-fix regression tests.
+- Cicero (`test_writer`) is adding review-fix regression tests for MetadataBar trust and command-scoping boundaries.
 
 ## Completed Recent Task
 
@@ -144,7 +144,7 @@ Last updated: 2026-05-21 22:07 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for review-fix regressions.
+1. Wait for Cicero's review-fix regression tests.
 2. Validate expected red signal and commit tests.
 
 ## Current TASK-021 State
