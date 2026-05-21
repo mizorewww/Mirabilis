@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 21:34 CST.
+Last updated: 2026-05-21 21:41 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-21 21:34 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 pre-test guidance is in progress.
+- Current phase: TASK-023 pre-test guidance is complete; acceptance tests are pending.
 
 ## Active Agents
 
-- Boyle (`planner`) is producing TASK-023 implementation planning guidance.
-- Pasteur (`docs_researcher`) is producing current docs and test guidance.
-- Curie (`deprecation_auditor`) is producing API/deprecation guidance.
-- Sartre (`security_reviewer`) is producing metadata UI security and boundary guidance.
+- None currently. Next step is to delegate failing acceptance tests.
 
 ## Completed Recent Task
 
@@ -62,7 +59,10 @@ Last updated: 2026-05-21 21:34 CST.
 
 ## TASK-023 Active Agent Outcomes
 
-- Boyle (`planner`), Pasteur (`docs_researcher`), Curie (`deprecation_auditor`), and Sartre (`security_reviewer`) are running read-only pre-test guidance.
+- Boyle (`planner`) completed read-only planning. Recommendation: use slots as the executable metadata field runtime, keep manifest `metadataFields` inert, add a narrow Metadata UI Plugin/bar, keep Task/Tag/Timer field UI plugin-owned, and keep Timer runtime/native/rich-editor/indexing work out of scope.
+- Pasteur (`docs_researcher`) completed current docs/test guidance. Recommendation: use React Testing Library/user-event/Vitest patterns, preserve Tag slot behavior, test slot ordering, accessible editing, wrong-page results, inert rendering, and narrow props; avoid React 19 deprecated testing APIs.
+- Curie (`deprecation_auditor`) completed API/deprecation guidance. P0 guidance: do not add executable renderer/editor data to manifest metadata fields, do not invent untested `ctx.metadataFields`, route edits through owner plugin commands/services, and keep business terms out of Core.
+- Sartre (`security_reviewer`) completed security guidance. P0/P1 guidance: no native/package/network/eval/raw SQL surface, no raw runtime/store/native handles to plugin-rendered UI, no universal metadata writer, exact command payloads, forged metadata filtering, inert rendering, and page/field-scoped async result validation.
 
 ## Current TASK-022 State
 
@@ -141,8 +141,8 @@ Last updated: 2026-05-21 21:34 CST.
 
 ## Next Actions
 
-1. Wait for Boyle, Pasteur, Curie, and Sartre.
-2. Summarize pre-test guidance and delegate acceptance tests to `test_writer`.
+1. Commit pre-test guidance records.
+2. Spawn `test_writer` for TASK-023 acceptance tests.
 
 ## Current TASK-021 State
 
