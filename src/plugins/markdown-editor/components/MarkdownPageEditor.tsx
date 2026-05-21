@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useReducer,
   useRef,
+  useState,
   type ChangeEvent,
 } from "react";
 
@@ -83,6 +84,7 @@ type EditorAction =
   | {
       type: "edit";
       markdown: string;
+      body?: StructuredMarkdownDocument;
     }
   | {
       type: "save-started";
@@ -97,7 +99,9 @@ type EditorAction =
 
 const insertCommandId = "markdown.insert-text";
 const openTaskPageCommandId = "task.open-task-page";
-const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
+const toggleTaskStatusCommandId = "task.toggle-status";
+const taskLinePattern =
+  /^(?<beforeMarker> {0,3}-\s+\[)(?<marker> |x|X)(?<afterMarker>\]\s+)(?<title>.*)$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 
 export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
@@ -106,6 +110,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const contentVersionRef = useRef(0);
   const latestPageIdRef = useRef("");
   const loadGenerationRef = useRef(0);
+  const pendingToggleKeysRef = useRef<Set<string>>(new Set());
   const pageId = readPageId(props);
   const pageFacade = readPageFacade(props);
   const initialMarkdown = readInitialMarkdown(props);
@@ -114,6 +119,9 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     pageFacade === undefined
       ? createDirectPageSignature(pageId, initialMarkdown)
       : "",
+  );
+  const directPageBodyRef = useRef(
+    pageFacade === undefined ? initialBody : undefined,
   );
   const commands = props.commands;
   const extensionSource = readExtensionSource(props);
@@ -128,12 +136,18 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         loadsFromPageSource: pageFacade !== undefined,
       }),
   );
+  const [pendingToggleKeys, setPendingToggleKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   const { markdown, loadedPageId } = state;
-  const structuredBody =
-    pageFacade === undefined ? readStructuredBody(props) : state.body;
+  const structuredBody = state.body;
   const collectedExtensions = extensionSource?.collectEditorExtensions() ?? [];
-  const taskTitleButtons = collectTaskTitleButtons(
-    readCurrentStructuredBody(structuredBody, markdown),
+  const currentStructuredBody = readCurrentStructuredBody(
+    structuredBody,
+    markdown,
+  );
+  const structuredTasks = collectStructuredTasks(
+    currentStructuredBody,
     collectedExtensions,
   );
   const canSave =
@@ -160,11 +174,15 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       initialMarkdown,
     );
 
-    if (directPageSignatureRef.current === directPageSignature) {
+    if (
+      directPageSignatureRef.current === directPageSignature &&
+      directPageBodyRef.current === initialBody
+    ) {
       return;
     }
 
     directPageSignatureRef.current = directPageSignature;
+    directPageBodyRef.current = initialBody;
     contentVersionRef.current += 1;
     dispatch({
       type: "direct-page",
@@ -330,6 +348,59 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     props.onOpenPage?.(openedPageId);
   }
 
+  async function toggleStructuredTaskStatus(task: StructuredTask) {
+    if (currentStructuredBody === undefined) {
+      return;
+    }
+
+    const togglePageId = pageId;
+    const pendingToggleKey = createPendingToggleKey(
+      togglePageId,
+      task.sourceBlockId,
+    );
+
+    if (pendingToggleKeysRef.current.has(pendingToggleKey)) {
+      return;
+    }
+
+    pendingToggleKeysRef.current.add(pendingToggleKey);
+    setPendingToggleKeys(new Set(pendingToggleKeysRef.current));
+
+    const toggleVersion = contentVersionRef.current;
+    const toggleBody = currentStructuredBody;
+
+    try {
+      const output = await commands.execute(toggleTaskStatusCommandId, {
+        sourcePageId: togglePageId,
+        sourceBlockId: task.sourceBlockId,
+      });
+
+      if (
+        latestPageIdRef.current !== togglePageId ||
+        contentVersionRef.current !== toggleVersion
+      ) {
+        return;
+      }
+
+      const result = readToggleTaskStatusResult(output);
+      const nextBody = createStructuredBodyWithTaskStatus(
+        toggleBody,
+        task.index,
+        result.status,
+      );
+
+      contentVersionRef.current += 1;
+      dispatch({
+        type: "edit",
+        markdown: exportStructuredDocumentToMarkdown(nextBody),
+        body: nextBody,
+      });
+    } finally {
+      pendingToggleKeysRef.current.delete(pendingToggleKey);
+      setPendingToggleKeys(new Set(pendingToggleKeysRef.current));
+    }
+  }
+
   if (pageFacade !== undefined && loadedPageId === undefined && state.loading) {
     return <section aria-busy="true" aria-label="Markdown editor" />;
   }
@@ -353,8 +424,11 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       />
       <TaskTitleButtons
         disabled={editorDisabled}
-        tasks={taskTitleButtons}
+        pendingToggleKeys={pendingToggleKeys}
+        sourcePageId={pageId}
+        tasks={structuredTasks}
         onOpenTaskPage={openStructuredTaskPage}
+        onToggleTaskStatus={toggleStructuredTaskStatus}
       />
       <button
         type="button"
@@ -369,12 +443,18 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
 
 function TaskTitleButtons({
   disabled,
+  pendingToggleKeys,
+  sourcePageId,
   tasks,
   onOpenTaskPage,
+  onToggleTaskStatus,
 }: {
   disabled: boolean;
-  tasks: readonly TaskTitleButton[];
+  pendingToggleKeys: ReadonlySet<string>;
+  sourcePageId: string;
+  tasks: readonly StructuredTask[];
   onOpenTaskPage(sourceBlockId: string): Promise<void>;
+  onToggleTaskStatus(task: StructuredTask): Promise<void>;
 }) {
   if (tasks.length === 0) {
     return null;
@@ -382,18 +462,44 @@ function TaskTitleButtons({
 
   return (
     <div aria-label="Task titles">
-      {tasks.map((task) => (
-        <button
-          key={`${task.sourceBlockId}:${task.index}`}
-          type="button"
-          disabled={disabled}
-          onClick={() => {
-            void onOpenTaskPage(task.sourceBlockId);
-          }}
-        >
-          {task.title}
-        </button>
-      ))}
+      {tasks.map((task) => {
+        const titleId = createTaskTitleId(
+          sourcePageId,
+          task.sourceBlockId,
+          task.index,
+        );
+        const toggleDisabled =
+          disabled ||
+          pendingToggleKeys.has(
+            createPendingToggleKey(sourcePageId, task.sourceBlockId),
+          );
+
+        return (
+          <div
+            key={`${task.sourceBlockId}:${task.index}`}
+          >
+            <input
+              type="checkbox"
+              aria-labelledby={titleId}
+              checked={task.status === "done"}
+              disabled={toggleDisabled}
+              onChange={() => {
+                void onToggleTaskStatus(task);
+              }}
+            />
+            <button
+              id={titleId}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                void onOpenTaskPage(task.sourceBlockId);
+              }}
+            >
+              {task.title}
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -454,6 +560,27 @@ function createDirectPageSignature(pageId: string, markdown: string): string {
   return `${pageId}\u0000${markdown}`;
 }
 
+function createPendingToggleKey(
+  sourcePageId: string,
+  sourceBlockId: string,
+): string {
+  return `${sourcePageId}\u0000${sourceBlockId}`;
+}
+
+function createTaskTitleId(
+  sourcePageId: string,
+  sourceBlockId: string,
+  index: number,
+): string {
+  return `task-title-${index}-${sanitizeElementIdPart(
+    sourcePageId,
+  )}-${sanitizeElementIdPart(sourceBlockId)}`;
+}
+
+function sanitizeElementIdPart(value: string): string {
+  return value.replace(/[^A-Za-z0-9_-]/gu, "_");
+}
+
 function editorStateReducer(
   state: EditorState,
   action: EditorAction,
@@ -485,6 +612,7 @@ function editorStateReducer(
       return {
         ...state,
         markdown: action.markdown,
+        ...(action.body === undefined ? {} : { body: action.body }),
       };
     case "save-started":
       return {
@@ -546,24 +674,25 @@ function isMarkdownInsertTextResult(
   );
 }
 
-type TaskTitleButton = {
+type StructuredTask = {
   index: number;
   sourceBlockId: string;
   title: string;
+  status: "todo" | "done";
 };
 
-function collectTaskTitleButtons(
+function collectStructuredTasks(
   body: StructuredMarkdownDocument | undefined,
   extensions: readonly unknown[],
-): readonly TaskTitleButton[] {
+): readonly StructuredTask[] {
   if (body === undefined || !hasUncheckedTaskSyntax(extensions)) {
     return [];
   }
 
   return body.content.flatMap((block, index) => {
-    const title = readTaskTitle(body.content, block, index);
+    const task = readStructuredTask(body.content, block, index);
 
-    if (title === undefined) {
+    if (task === undefined) {
       return [];
     }
 
@@ -571,7 +700,8 @@ function collectTaskTitleButtons(
       {
         index,
         sourceBlockId: block.blockId,
-        title,
+        title: task.title,
+        status: task.status,
       },
     ];
   });
@@ -586,11 +716,11 @@ function hasUncheckedTaskSyntax(extensions: readonly unknown[]): boolean {
   );
 }
 
-function readTaskTitle(
+function readStructuredTask(
   blocks: readonly BlockNode[],
   block: BlockNode,
   index: number,
-): string | undefined {
+): Pick<StructuredTask, "title" | "status"> | undefined {
   if (block.type !== "markdown.line" || typeof block.text !== "string") {
     return undefined;
   }
@@ -599,10 +729,56 @@ function readTaskTitle(
     return undefined;
   }
 
-  const match = uncheckedTaskLinePattern.exec(block.text);
+  const match = taskLinePattern.exec(block.text);
   const title = match?.groups?.title?.trim() ?? "";
 
-  return title.length === 0 ? undefined : title;
+  if (match === null || title.length === 0) {
+    return undefined;
+  }
+
+  return {
+    title,
+    status: match.groups?.marker === " " ? "todo" : "done",
+  };
+}
+
+function createStructuredBodyWithTaskStatus(
+  body: StructuredMarkdownDocument,
+  taskIndex: number,
+  status: "todo" | "done",
+): StructuredMarkdownDocument {
+  return {
+    ...body,
+    content: body.content.map((block, index) => {
+      if (index !== taskIndex) {
+        return block;
+      }
+
+      if (block.type !== "markdown.line" || typeof block.text !== "string") {
+        return block;
+      }
+
+      return {
+        ...block,
+        text: replaceTaskMarker(block.text, status),
+      };
+    }),
+  };
+}
+
+function replaceTaskMarker(text: string, status: "todo" | "done"): string {
+  const match = taskLinePattern.exec(text);
+
+  if (match === null) {
+    return text;
+  }
+
+  const beforeMarker = match.groups?.beforeMarker ?? "";
+  const afterMarker = match.groups?.afterMarker ?? "";
+  const title = match.groups?.title ?? "";
+  const marker = status === "done" ? "x" : " ";
+
+  return `${beforeMarker}${marker}${afterMarker}${title}`;
 }
 
 function isInsideFencedCodeBlock(
@@ -650,6 +826,25 @@ function readOpenedPageId(output: unknown): string {
   }
 
   throw new Error("Task open command did not return pageId");
+}
+
+function readToggleTaskStatusResult(output: unknown): {
+  pageId: string;
+  status: "todo" | "done";
+} {
+  if (
+    isRecord(output) &&
+    typeof output.pageId === "string" &&
+    output.pageId.trim().length > 0 &&
+    (output.status === "todo" || output.status === "done")
+  ) {
+    return {
+      pageId: output.pageId,
+      status: output.status,
+    };
+  }
+
+  throw new Error("Task toggle command did not return pageId and status");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

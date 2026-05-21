@@ -204,7 +204,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-019 Task Navigation and Infinite Nesting Guidance
 
-TASK-019 tests cover explicit task-title click/open navigation without adding automatic save-time scanning, checkbox toggle/events, filters/views, rich editor behavior, or native surface:
+TASK-019 tests cover explicit task-title click/open navigation without adding automatic save-time scanning, filters/views, rich editor behavior, or native surface:
 
 - Built-in `task` plugin registers owned command `task.open-task-page`.
 - Open command tests should execute through the real runtime command bus with payload `{ sourcePageId, sourceBlockId }` and assert the return shape is exactly `{ pageId }`.
@@ -229,6 +229,33 @@ git diff --check
 ```
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-019 itself is TypeScript plugin/runtime/editor behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
+
+## TASK-020 Checkbox Toggle and Task Events Guidance
+
+TASK-020 tests cover checkbox-driven task status changes and task events without adding automatic save-time scanning, filters/views, rich editor behavior, or native surface:
+
+- Built-in `task` plugin registers only the canonical command `task.toggle-status`; legacy snake_case or checkbox aliases must not be registered.
+- Toggle command tests should execute through the real runtime command bus with payload `{ sourcePageId, sourceBlockId }` and assert the return shape is exactly `{ pageId, status }`, where `status` is `"todo" | "done"`.
+- Completion coverage should prove an unchecked source task line toggles from `- [ ]` to `- [x]`, writes `task.status = "done"`, preserves source block attrs, binds `attrs.boundPageId`, and appends an event with `namespace: "task"` and `type: "completed"`.
+- Reopen coverage should prove checked source task lines `- [x]` and `- [X]` toggle back to `- [ ]`, write `task.status = "todo"`, and append an event with `namespace: "task"` and `type: "reopened"`.
+- Event payload coverage should include `taskPageId`, `sourcePageId`, `sourceBlockId`, `previousStatus`, and `status`; tests should not expect event `type` to be stored as dotted task event IDs.
+- Negative coverage should prove no mutation for invalid payloads, extra untrusted payload fields, stale source blocks, duplicate top-level block IDs, non-task blocks, malformed checkbox lines, four-space or tab-indented code lines, fenced-code task-looking lines, and unsafe-looking title text that must remain inert data.
+- Editor coverage should use Testing Library user interactions and accessible checkbox role queries. Checkbox clicks must send only `{ sourcePageId, sourceBlockId }`, must not navigate, and must keep task-title open behavior separate.
+- Loaded editor coverage should include the real `pageId/pageFacade` path using `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`, proving source Markdown/body update, metadata update, task event append, and checked checkbox visibility after completion.
+- Stale-toggle coverage should delay `task.toggle-status` and prove old results are ignored after page switches and same-page content edits; repeated clicks for the same source block should be ignored while the first toggle is pending.
+- Open/resolve boundary coverage should prove `task.open-task-page` can create, bind, and open an unresolved checked source task line as a `done` task page without writing completion/reopen events, while `task.resolve-task-block` remains unchecked-only.
+- Native-surface guards should continue proving TASK-020 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+
+TASK-020 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-020 itself is TypeScript plugin/runtime/editor behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
 
 ## Merge Gate
 

@@ -218,7 +218,7 @@ available_context
 
 ```text
 task.insert_task_syntax
-task.toggle_checkbox
+task.toggle-status
 timer.start_timer
 timer.stop_timer
 habit.check_today
@@ -295,7 +295,8 @@ indexing_strategy
 示例：
 
 ```text
-task.completed
+namespace=task, type=completed
+namespace=task, type=reopened
 timer.started
 timer.stopped
 timer.time_segment_created

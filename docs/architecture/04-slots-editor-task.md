@@ -108,7 +108,7 @@ ML Plugin 可以渲染：
 
 Markdown Editor Plugin 是 TASK-016/TASK-017 后的内置插件，manifest id 是 `markdown`。
 
-它负责最小 Markdown 编辑体验。TASK-019 起，编辑器还提供一个窄的 Task Plugin 集成点：当 active markdown syntax extensions 包含 `- [ ]`，且当前 textarea Markdown 仍与结构化 body 快照一致时，结构化 task title 会渲染为按钮并通过 command bus 打开任务页。标签、日期、页面链接、checkbox 状态、过滤视图和富编辑语义仍由后续插件或编辑器任务负责。
+它负责最小 Markdown 编辑体验。TASK-020 起，编辑器还提供一个窄的 Task Plugin 集成点：当 active markdown syntax extensions 包含 `- [ ]`，且当前 textarea Markdown 仍与结构化 body 快照一致时，结构化 task title 会渲染为按钮并通过 command bus 打开任务页，checkbox 会渲染为真实 checkbox 并通过 command bus 切换 source task line 状态。标签、日期、页面链接、过滤视图和富编辑语义仍由后续插件或编辑器任务负责。
 
 ### 8.1 注册内容
 
@@ -163,8 +163,10 @@ export const MarkdownEditorPlugin: AppPlugin = {
 - TASK-019 的 loaded `pageId/pageFacade` 模式会从 runtime Markdown page facade 保存 loaded/saved structured `body`，所以重新打开页面后仍能从结构化 body 渲染 task-title 按钮。
 - TASK-019 的 task-title 按钮只在当前 textarea Markdown 与该 structured body 快照导出的 Markdown 完全一致时显示；未保存编辑删除或改名任务行后，旧 source block 按钮会隐藏。
 - TASK-019 的 task open flow 在 await command 前 snapshot page id 和内容 generation；command 结果回来时，如果 page 或内容 generation 已变化，结果会被丢弃，避免慢 open result 导航到旧页面。
+- TASK-020 在同一 structured-body 条件下渲染 task checkbox。checkbox 调用 `task.toggle-status({ sourcePageId, sourceBlockId })`，读取 `{ pageId, status }`，将 `todo` 显示为 unchecked、`done` 显示为 checked，并在页面切换或内容 generation 变化后丢弃慢 toggle result。
+- TASK-020 对同一 source block 的 pending checkbox toggle 去重；pending 时 checkbox disabled，避免同一 source block 重复提交。
 
-TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation。仍未实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、保存时 task 自动扫描/索引、filters/views、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
+TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation，TASK-020 已实现 checkbox status toggle。仍未实现 `@date`、autocomplete、slash menu、tag indexing、page-link navigation、保存时 task 自动扫描/索引、filters/views、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
 
 ### 8.3 Markdown runtime facade
 
@@ -210,16 +212,16 @@ runtime.markdown.pages.save({ pageId, markdown });
 
 这个 facade 也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，当前只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
 
-TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-019 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 的信号；点击按钮执行 `task.open-task-page`，仍不会在保存时自动扫描全部 task block。
+TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-020 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 和 checkbox 的信号；点击按钮执行 `task.open-task-page`，点击 checkbox 执行 `task.toggle-status`，仍不会在保存时自动扫描全部 task block。
 
-后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh、checkbox toggle/events 和 rich editor adaptation 仍未实现。
+后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh 和 rich editor adaptation 仍未实现。
 
 ---
 
 ## 9. Task Plugin 代码架构
 
 Task Plugin 是最重要的插件之一。
-长期目录可能长这样；TASK-018/TASK-019 当前只实现内置 `TaskPlugin` 的 syntax descriptor、resolver command 和 open command：
+长期目录可能长这样；TASK-018/TASK-020 当前只实现内置 `TaskPlugin` 的 syntax descriptor、resolver command、open command 和 checkbox status toggle command：
 
 ```text
 plugins/task/
@@ -258,7 +260,7 @@ plugins/task/
 
 ### 9.1 Task Plugin 注册内容
 
-TASK-018/TASK-019 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
+TASK-018/TASK-020 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
 
 Task manifest 当前声明：
 
@@ -288,11 +290,17 @@ export const TaskPlugin: AppPlugin = {
       title: "Open task page",
       handler: openTaskPage
     });
+
+    ctx.commands.register({
+      id: "task.toggle-status",
+      title: "Toggle task status",
+      handler: toggleTaskStatus
+    });
   }
 };
 ```
 
-当前没有注册 task view、slot、filter、event type、metadata-field renderer、indexer 或 checkbox toggle command。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动扫描正文或在保存时创建页面。
+当前没有注册 task view、slot、filter、event type、metadata-field renderer 或 indexer。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动扫描正文或在保存时创建页面。
 
 ### 9.2 Task Syntax
 
@@ -326,7 +334,7 @@ resolver 读取当前 source page，要求 `sourceBlockId` 在 top-level blocks 
 0 到 3 个前导空格 + "- " + "[ ]" + 至少一个空白 + 非空标题
 ```
 
-四个空格缩进、tab 缩进和 fenced code block 内的 task-looking line 都不是任务语法；`- [x]` 当前也不是 TASK-019 行为。
+四个空格缩进、tab 缩进和 fenced code block 内的 task-looking line 都不是任务语法。`task.resolve-task-block` 仍只接受 unchecked `- [ ]` source task line；TASK-020 的 `task.open-task-page` 和 `task.toggle-status` 会读取 checked `- [x]` / `- [X]` source task line。
 
 TASK-019 的 open command 输入与 resolver 相同：
 
@@ -346,6 +354,24 @@ type OpenTaskPageResult = {
 ```
 
 UI/editor 不传 title 或 `boundPageId`，也不直接导航到 source block attrs 里的 page id。
+
+TASK-020 的 toggle command 也只接受 source identity：
+
+```ts
+type ToggleTaskStatusInput = {
+  sourcePageId: string;
+  sourceBlockId: string;
+};
+```
+
+它返回：
+
+```ts
+type ToggleTaskStatusResult = {
+  pageId: string;
+  status: "todo" | "done";
+};
+```
 
 ### 9.3 创建任务对应页面
 
@@ -374,11 +400,11 @@ async function resolveTaskBlock(input, context) {
 }
 ```
 
-TASK-018/TASK-019 当前写入 metadata：
+TASK-018/TASK-020 当前写入 metadata：
 
 ```text
 task.enabled = true
-task.status = todo
+task.status = todo | done
 task.sourcePageId = input.sourcePageId
 task.sourceBlockId = input.sourceBlockId
 ```
@@ -388,5 +414,21 @@ task.sourceBlockId = input.sourceBlockId
 重复检测使用 `(sourcePageId, sourceBlockId)` metadata relation。若 source block 已有 `attrs.boundPageId`，resolver 只有在该 bound page 的 `task.sourcePageId` 和 `task.sourceBlockId` 同时验证为同一 source relation 时才复用它；伪造、不匹配或 malformed `boundPageId` 不会被信任，按未绑定处理。Markdown save/import 当前不保留 block `attrs`，所以 resolver 也能从 metadata-only relation 恢复 source binding。
 
 source binding 当前做法是复制 source page 的结构化 body，仅替换目标 block 的 `attrs.boundPageId`，再通过 `pages.update(sourcePage.id, { body })` 保存。创建任务页、写 task metadata、绑定 source block 必须在一个 transaction 中完成；任一步失败都不应留下部分页面或 metadata。
+
+TASK-020 的 checkbox toggle 在同一个 transaction 中创建或复用 source relation task page、更新 source block checkbox marker、写 `task.status`，并 append event：
+
+```text
+- [ ] title -> - [x] title
+  task.status = done
+  event namespace = task
+  event type = completed
+
+- [x] title / - [X] title -> - [ ] title
+  task.status = todo
+  event namespace = task
+  event type = reopened
+```
+
+event payload 包含 `taskPageId`、`sourcePageId`、`sourceBlockId`、`previousStatus` 和 `status`。`task.open-task-page` 可以为 unresolved checked source line 创建、绑定并打开 `done` task page，但这个 open 行为不是状态变化，不写 `completed` 或 `reopened` event。
 
 ---
