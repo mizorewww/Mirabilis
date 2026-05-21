@@ -456,6 +456,80 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Focused TASK-018/019/020 tests passed with 3 files / 47 tests. Expanded frontend coverage passed with 6 files / 113 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Second Focused Review Round
+
+### Linnaeus the 4th - Changed Surface Explorer
+
+- Status: completed read-only changed-surface exploration after commit `0b54251`.
+- Finding:
+  - P2: loaded/native facade integration remains a test coverage gap. Production runtime wires loaded Markdown pages through `createMarkdownPageRuntimeFacade(nativeBridge)`, while Task Plugin commands read/write transaction pages. Current loaded checkbox coverage uses a mocked `execute` result rather than real `runtime.commands.execute("task.toggle-status")`.
+- Other notes:
+  - No native/package/Tauri surface changes.
+  - Docs still contain stale command names and unimplemented checkbox/event wording.
+
+### Socrates the 4th - Correctness Reviewer
+
+- Status: completed read-only correctness review after commit `0b54251`.
+- Finding: no P0/P1/P2 source or test correctness findings.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check 0b54251^ 0b54251
+git diff --check master...HEAD
+```
+
+- Result: all passed or clean; native/package/Tauri surface diff was clean.
+
+### Averroes the 4th - Test Quality Reviewer
+
+- Status: completed read-only test-quality review after commit `0b54251`.
+- Finding: no P0/P1/P2 test-quality gaps in current focused coverage.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+git diff --check master...0b54251
+```
+
+- Result: all passed or clean. Skip/only/todo scan found no focused-test markers. Native/package/Tauri surface diff was empty.
+
+### Beauvoir the 4th - Security Reviewer
+
+- Status: completed read-only security review after commit `0b54251`.
+- Finding: no P0/P1/P2 security findings.
+- Confirmed source-only UI payloads, strict toggle trusted-field rejection, verified source/metadata task resolution, plugin-scoped event writes, inert unsafe titles, and clean native/package/Tauri surface.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+git diff --check master...0b54251
+```
+
+- Result: all passed or clean.
+
+### Mencius the 4th - API/Deprecation Auditor
+
+- Status: completed read-only API/deprecation audit after commit `0b54251`.
+- Findings:
+  - P0/P1 code blockers: none.
+  - P1 docs-only drift: product/plugin docs still mention stale command names `task.toggle_status` and `task.toggle_checkbox`.
+  - P1 docs-only drift: one development example still uses `task.toggle-status` with `{ pageId }` instead of `{ sourcePageId, sourceBlockId }`.
+  - P2 docs-only drift: product/architecture/testing docs still describe checkbox toggle, checked task syntax, and task events as future or unimplemented.
+- External docs verified:
+  - React 19 `act` / test-utils deprecation, RTL API, Testing Library `userEvent.setup()` and `ByRole checked`, Vitest v4 API, Vite 7 Node support, and Tauri v2 capabilities docs.
+
+## Parent Decisions After Second Focused Review
+
+- Accept Linnaeus the 4th's P2 integration risk as actionable before docs sync.
+- Delegate a test writer to add a focused regression for the real loaded editor `pageId/pageFacade + runtime.commands.execute("task.toggle-status")` path, without mocking the task command result.
+- If the regression is red, delegate the fix to an implementer. If it is green, commit the test as coverage and continue.
+- Accept Mencius the 4th's findings as docs-only blockers for task completion, to be handled by a doc writer after the integration coverage decision.
+
 ## Current Next Action
 
-- Commit Euler the 4th's validated second review-fix implementation, then run focused review agents before docs sync.
+- Delegate real loaded-runtime integration regression coverage to `test_writer`.

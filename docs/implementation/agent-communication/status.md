@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:59 CST.
+Last updated: 2026-05-21 15:06 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:59 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix implementation validated; focused review and docs sync are next.
+- Current phase: focused review completed; integration regression test coverage is next before docs sync.
 
 ## Active Agents
 
@@ -38,6 +38,12 @@ Last updated: 2026-05-21 14:59 CST.
   - Planck the 4th (`deprecation_auditor`) found P1 docs drift for stale command aliases/payloads, P2 checked-task open behavior under-specification, and P2 broader docs still saying checkbox toggle/events are unimplemented.
 - Newton the 4th (`test_writer`) added second review-fix regressions for task title/open affordance separation, pending toggle suppression, unresolved checked-task open, and `task.resolve-task-block` remaining unchecked-only. Commit: `2134c16`.
 - Euler the 4th (`implementer`) completed the second review-fix implementation in `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx` and `src/plugins/task/plugin.ts`. It keeps the visible task title as the open button, labels the checkbox through that button without duplicating title text, suppresses repeated checkbox dispatch while a source block toggle is pending, and lets `task.open-task-page` create/bind/open unresolved checked task lines as done task pages without completion/reopen events.
+- Second focused review after commit `0b54251` completed:
+  - Linnaeus the 4th (`pr_explorer`) mapped the changed surface and found no native/package/Tauri surface changes. Linnaeus raised P2 integration risk: loaded/native `pageId/pageFacade + runtime.commands` flow is not covered by a real runtime command test because current loaded checkbox coverage uses a mocked command facade.
+  - Socrates the 4th (`reviewer`) found no P0/P1/P2 correctness findings. Residual risk: formal docs still contain pre-TASK-020 wording.
+  - Averroes the 4th (`test_quality_reviewer`) found no P0/P1/P2 test-quality gaps in current focused coverage.
+  - Beauvoir the 4th (`security_reviewer`) found no P0/P1/P2 security issues. It confirmed source-only UI payloads, strict toggle trusted-field rejection, verified source/metadata task resolution, plugin-scoped event writes, inert unsafe titles, and clean native/package/Tauri surface.
+  - Mencius the 4th (`deprecation_auditor`) found no P0/P1 code blockers. It raised P1 docs-only drift for stale command names and the `{ pageId }` payload example, plus P2 docs-only drift where product/architecture/testing docs still describe checkbox/events as unimplemented.
 
 ## Current TASK-020 State
 
@@ -82,6 +88,13 @@ Last updated: 2026-05-21 14:59 CST.
 - Make `task.open-task-page` handle an unresolved checked source line by creating/binding/opening a task page with `task.status = "done"` and no `task.completed` / `task.reopened` event. Keep `task.resolve-task-block` unchanged as unchecked-only.
 - Defer docs drift fixes to docs sync after behavior fixes pass focused review.
 
+## Parent Decisions After Second Focused Review
+
+- Accept Linnaeus the 4th's P2 integration risk as actionable before docs sync.
+- Delegate a test writer to add a focused regression for the real loaded editor `pageId/pageFacade + runtime.commands.execute("task.toggle-status")` path, without mocking the task command result.
+- If the new regression is red, delegate the fix to an implementer. If it is green, commit the test as coverage and proceed to docs sync.
+- Accept Mencius the 4th's docs findings as docs-only blockers for completion, to be handled by a doc writer after the integration coverage decision.
+
 ## Source Docs Read By Parent
 
 - `.codex/skills/mirabilis-dev-runner/SKILL.md`.
@@ -123,6 +136,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit Euler the 4th's validated second review-fix implementation.
-2. Run focused review agents for correctness, security, API/deprecation, and test quality.
-3. Delegate docs sync after behavior review is clean.
+1. Delegate real loaded-runtime integration regression coverage to `test_writer`.
+2. Commit or fix that coverage depending on red/green result.
+3. Delegate docs sync for stale command names, payload example, and implemented checkbox/event behavior.
