@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 12:08 CST.
+Last updated: 2026-05-21 12:12 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 12:08 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation agent running.
+- Current phase: review-fix implementation committed; focused re-review pending.
 
 ## Active Agents
 
-- Curie the 3rd (`implementer`): review-fix implementation for TASK-018 P2/P3 findings.
+- None.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -31,6 +31,7 @@ Last updated: 2026-05-21 12:08 CST.
   - Singer the 3rd (`test_quality_reviewer`) found no P0/P1 test-quality findings and P2 test gaps around duplicate prevention relation sources, explicit error contract, resolver atomicity, and native-surface guard brittleness.
   - Kepler the 3rd (`doc_writer`) confirmed docs sync is blocking before merge and listed exact docs/sections to update after review fixes.
 - Boole the 3rd (`test_writer`) added review-fix regression tests for TASK-018 review findings. Commit: `4b1001f`.
+- Curie the 3rd (`implementer`) implemented review-fix boundary hardening for duplicate block IDs, verified bound relations, indented code, and plugin command failure causes. Commit: `56931b1`.
 
 ## Validation Already Reported By Parent
 
@@ -64,6 +65,18 @@ git diff --check
 ```
 
 - Result: expected red signal. 3 files ran, 2 failed, 1 passed; 4 tests failed and 72 passed. Failures covered duplicate top-level `blockId` mutation, unverified `attrs.boundPageId` reuse, CommonMark indented-code task parsing, and missing command failure cause/context preservation. `bun run typecheck` and `git diff --check` passed.
+- Review-fix checks after Curie the 3rd:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-command-registry.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
+
+- Result: all passed. Review-fix regression set passed with 3 files / 76 tests. Core command registry passed with 1 file / 11 tests. Markdown import/export runtime regressions passed with 2 files / 17 tests.
 
 ## Parent Decisions Before TDD
 
@@ -105,6 +118,5 @@ git diff --check
 
 ## Next Actions
 
-1. Wait for Curie the 3rd's review-fix implementation.
-2. Run focused review-fix checks.
-3. Commit implementation if green.
+1. Commit review-fix implementation result record.
+2. Spawn focused re-review agents.

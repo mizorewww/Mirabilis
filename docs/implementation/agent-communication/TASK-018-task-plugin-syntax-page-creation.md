@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation agent running.
-- Active agents:
-  - Curie the 3rd (`implementer`): review-fix implementation for TASK-018 P2/P3 findings.
+- Status: review-fix implementation committed; focused re-review pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -52,7 +51,8 @@
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
   - Review round 1 agents completed and reported findings.
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
-- Next parent step: wait for Curie the 3rd's review-fix implementation, run focused checks, and commit if green.
+  - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
+- Next parent step: commit review-fix implementation result record, then spawn focused re-review agents.
 
 ## Agent Handoffs
 
@@ -260,14 +260,31 @@ git diff --check
 
 ### Curie the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: production review-fix implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
-- Fix targets:
+- Files changed:
+  - `src/core/commands/command-registry.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/plugins/task/plugin.ts`.
+- Commit: `56931b1` (`Curie the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): harden task resolver boundaries`).
+- Summary:
   - Duplicate source block ID safety.
   - Verified `attrs.boundPageId` reuse and metadata-only relation recovery.
   - CommonMark indented-code task rejection.
   - Plugin command failure cause/context preservation.
   - Command-time PluginContext hardening and transaction atomicity required by Boole's tests.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-command-registry.test.ts
+bun run typecheck
+bun run lint
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
+
+- Result: all passed. Review-fix regression set passed with 3 files / 76 tests. Core command registry passed with 1 file / 11 tests. Markdown import/export runtime regressions passed with 2 files / 17 tests.
 
 ## Parent Decisions
 
