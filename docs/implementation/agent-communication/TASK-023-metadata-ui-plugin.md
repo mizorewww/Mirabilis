@@ -288,6 +288,31 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 5 files / 126 tests with 5 failed / 121 passed. Failures were foreign command escape, hostless fail-open, malformed descriptor crash, unsafe segment trust, and valueType mismatch trust. `bun run typecheck`, focused eslint, and `git diff --check` passed.
 
+## Review-Fix Implementation
+
+- Status: completed by Galileo (`implementer`) on 2026-05-21 22:23 CST.
+- Commit: `12dc21b`.
+- Files changed:
+  - `src/plugins/metadata-ui/components/MetadataBar.tsx`.
+- Behavior implemented:
+  - `MetadataBar` fails closed when `pluginHost.listPlugins()` ownership data is unavailable.
+  - Slot command execution is scoped to the contributing plugin's command namespace, blocking cross-plugin command execution.
+  - Metadata field descriptors require array/object shape, owner namespace match, safe namespace/key segments, valid `valueType`, and valid optional text fields.
+  - Trusted metadata values use a prototype-safe object and require stored `record.valueType` to match the trusted descriptor.
+  - Existing Tag, Task, Timer, ordering, narrow props, and Core boundary behavior stayed intact.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/core-view-slot-registry.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused TASK-023 tests passed with 5 files / 126 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Galileo (`implementer`) is fixing MetadataBar command scoping and metadata trust boundaries.
+- Spawn narrow post-fix review agents for Galileo's MetadataBar boundary implementation.
