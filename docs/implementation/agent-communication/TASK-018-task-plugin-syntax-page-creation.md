@@ -40,9 +40,9 @@
 
 ## Current Status
 
-- Status: second review-fix red-test agent running.
+- Status: second review-fix implementation agent running.
 - Active agents:
-  - Sagan the 3rd (`test_writer`): second review-fix regression test for spoofed PluginHostError-shaped command causes.
+  - Darwin the 3rd (`implementer`): second review-fix implementation for spoofed command cause redaction.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Sagan the 3rd's red test, run focused red-test command, and commit if expected.
+- Next parent step: wait for Darwin the 3rd's second review-fix implementation, run focused checks, and commit if green.
 
 ## Agent Handoffs
 
@@ -322,9 +322,26 @@ git diff --check
 
 ### Sagan the 3rd (`test_writer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: tests only.
 - Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a spoofed plain object shaped like `PluginHostError` as `CommandRegistryError.cause`.
+- File changed:
+  - `src/test/core-command-registry.test.ts`.
+- Commit: `3cd7001` (`Sagan the 3rd(test)(Implement Task Plugin syntax and task page creation): add spoofed command cause regression`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts
+git diff --check
+```
+
+- Result: expected red signal. 1 test failed, 11 passed. Failure showed a non-plugin command throwing a PluginHostError-shaped plain object still exposed an own `CommandRegistryError.cause`. `git diff --check` passed.
+
+### Darwin the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: minimal production fix only.
+- Target: preserve command failure causes only for genuine PluginHostError instances from plugin command execution, while preserving raw-cause redaction for normal command handlers.
 
 ## Parent Decisions
 

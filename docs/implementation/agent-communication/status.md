@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 12:24 CST.
+Last updated: 2026-05-21 12:26 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 12:24 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix red-test agent running.
+- Current phase: second review-fix implementation agent running.
 
 ## Active Agents
 
-- Sagan the 3rd (`test_writer`): second review-fix regression test for spoofed PluginHostError-shaped command causes.
+- Darwin the 3rd (`implementer`): second review-fix implementation for spoofed command cause redaction.
 
 ## Completed TASK-018 Agent Outcomes
 
@@ -36,6 +36,7 @@ Last updated: 2026-05-21 12:24 CST.
   - Raman the 3rd (`security_reviewer`) found no remaining P0/P1/P2 security findings.
   - Volta the 3rd (`test_quality_reviewer`) found no remaining P0/P1/P2 test-quality gaps; two P3 test style/environment notes remain non-blocking.
   - Pauli the 3rd (`reviewer`) found one remaining P2: `CommandRegistry` preserves causes by duck-typing `PluginHostError` shape, allowing a non-plugin command to spoof that shape and bypass raw-cause redaction.
+- Sagan the 3rd (`test_writer`) added a focused red regression for spoofed PluginHostError-shaped command causes. Commit: `3cd7001`.
 
 ## Validation Already Reported By Parent
 
@@ -81,6 +82,14 @@ git diff --check
 ```
 
 - Result: all passed. Review-fix regression set passed with 3 files / 76 tests. Core command registry passed with 1 file / 11 tests. Markdown import/export runtime regressions passed with 2 files / 17 tests.
+- Second review-fix red test after Sagan the 3rd:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts
+git diff --check
+```
+
+- Result: expected red signal. 1 test failed, 11 passed. Failure showed a non-plugin command throwing a PluginHostError-shaped plain object still exposed an own `CommandRegistryError.cause`. `git diff --check` passed.
 
 ## Parent Decisions Before TDD
 
@@ -122,5 +131,5 @@ git diff --check
 
 ## Next Actions
 
-1. Wait for Sagan the 3rd's red test.
-2. Run focused red-test command and commit if expected.
+1. Wait for Darwin the 3rd's second review-fix implementation.
+2. Run focused checks and commit if green.
