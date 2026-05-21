@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:15 CST.
+Last updated: 2026-05-21 09:21 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-21 09:15 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: read-only pre-test guidance agents running.
+- Current phase: pre-test guidance complete; parent decisions ready for `test_writer`.
 
 ## Active Agents
 
-- James the 3rd (`planner`): read-only TASK-017 scope and plan.
-- Carver the 3rd (`docs_researcher`): read-only current-doc guidance.
-- Mill the 3rd (`deprecation_auditor`): read-only API/deprecation audit.
-- Gauss the 3rd (`security_reviewer`): read-only security boundary review.
+- None.
 
 ## Current TASK-017 State
 
@@ -34,7 +31,10 @@ Last updated: 2026-05-21 09:15 CST.
 
 ## Completed TASK-017 Agent Outcomes
 
-- None yet. Pre-test guidance agents are running.
+- James the 3rd (`planner`) completed read-only scope planning. Recommendation: implement TASK-017 as a focused TypeScript core/editor conversion layer, integrate it with `src/core/runtime/markdown-pages.ts`, preserve the textarea shell, and keep Task Plugin semantics, rich editor migration, Tauri commands/capabilities, filesystem import/export, and package dependency changes out of scope.
+- Carver the 3rd (`docs_researcher`) completed current-doc research. Recommendation: treat Markdown import/export as pure string `<-> StructuredMarkdownDocument` conversion; use no new dependency for TASK-017; if full CommonMark AST support is needed later, consider `mdast-util-from-markdown` plus `mdast-util-to-markdown` with known round-trip caveats.
+- Mill the 3rd (`deprecation_auditor`) completed API/deprecation audit. Recommendation: replace the current `markdown.text` flattening facade; avoid `NativeBridge.files.importMarkdown/exportMarkdown`, Tiptap Markdown beta APIs, v1 Tauri imports, raw `invoke()` in React components, and unsanitized Markdown HTML output.
+- Gauss the 3rd (`security_reviewer`) completed security review. Recommendation: keep Markdown inert, do not add filesystem/Tauri permission expansion, validate structured documents and block IDs before persistence, and test duplicate IDs, malformed bodies, input size/depth, and native-surface boundaries.
 
 ## Validation Already Reported By Parent
 
@@ -56,6 +56,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Wait for read-only pre-test guidance agents.
-2. Summarize their guidance in this file and the TASK-017 communication file.
-3. Delegate failing acceptance tests to `test_writer`.
+1. Commit pre-test guidance summary.
+2. Delegate failing acceptance tests to `test_writer`.
+3. Run focused tests and confirm the expected red signal.
