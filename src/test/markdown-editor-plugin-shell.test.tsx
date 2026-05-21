@@ -156,7 +156,7 @@ describe("Markdown Editor Plugin shell", () => {
 
     expect(editor).toBeInstanceOf(HTMLTextAreaElement);
     await user.click(editor);
-    await user.keyboard(markdown);
+    await user.keyboard(toKeyboardLiteral(markdown));
 
     expect(editor).toHaveValue(markdown);
   });
@@ -419,4 +419,8 @@ function formatViolations(violations: Map<string, string[]>): string[] {
       fileViolations.map((violation) => `${filePath}: ${violation}`),
     )
     .sort();
+}
+
+function toKeyboardLiteral(markdown: string): string {
+  return markdown.split("[").join("[[").split("{").join("{{");
 }

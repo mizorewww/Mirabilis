@@ -93,7 +93,7 @@ describe("Markdown page persistence", () => {
 
     await waitFor(() => expect(editor).toHaveValue(""));
     await user.click(editor);
-    await user.keyboard(savedMarkdown);
+    await user.keyboard(toKeyboardLiteral(savedMarkdown));
     await user.click(screen.getByRole("button", { name: /save/i }));
     await waitFor(() =>
       expect(nativeBridge.db.execute).toHaveBeenCalledWith({
@@ -298,4 +298,8 @@ function markdownToNativeBody(markdown: string) {
       },
     ],
   };
+}
+
+function toKeyboardLiteral(markdown: string): string {
+  return markdown.split("[").join("[[").split("{").join("{{");
 }
