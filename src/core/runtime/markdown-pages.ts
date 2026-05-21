@@ -1,7 +1,14 @@
 import {
   DB_PERSISTENCE_OPERATIONS,
+  type DbValue,
   type NativeBridge,
 } from "../native";
+import {
+  exportStructuredDocumentToMarkdown,
+  importMarkdownToStructuredDocument,
+  validateStructuredMarkdownDocument,
+} from "../markdown";
+import type { StructuredMarkdownDocument } from "../types";
 
 export type MarkdownEditorDocument = {
   id: string;
@@ -17,15 +24,17 @@ export type MarkdownPageRuntimeFacade = {
   }): Promise<MarkdownEditorDocument>;
 };
 
-type NativeMarkdownTextNode = {
+type LegacyMarkdownTextNode = {
   type: "markdown.text";
   text: string;
 };
 
-type NativeMarkdownBody = {
+type LegacyMarkdownBody = {
   type: "doc";
-  content: readonly NativeMarkdownTextNode[];
+  content: readonly LegacyMarkdownTextNode[];
 };
+
+type NativeMarkdownBody = StructuredMarkdownDocument | LegacyMarkdownBody;
 
 type NativeMarkdownPageDto = {
   id: string;
@@ -71,7 +80,9 @@ export function createMarkdownPageRuntimeFacade(
       const cachedPage =
         pageCache.get(input.pageId) ??
         normalizeNativePage(input.pageId, await loadNativePage(input.pageId));
-      const body = markdownToNativeBody(input.markdown);
+      const body = importMarkdownToStructuredDocument(input.markdown, {
+        previousDocument: readStructuredBody(cachedPage.body),
+      });
       const updatedPage = {
         ...cachedPage,
         body,
@@ -84,7 +95,7 @@ export function createMarkdownPageRuntimeFacade(
           id: input.pageId,
           title: cachedPage.title,
           parentPageId: cachedPage.parentPageId,
-          body,
+          body: body as unknown as DbValue,
           updatedAt: cachedPage.updatedAt ?? new Date().toISOString(),
         },
       });
@@ -117,36 +128,70 @@ function normalizeNativePage(
     throw new Error(`Markdown page was not found: ${pageId}`);
   }
 
-  const markdown = readMarkdownFromNativePage(dto);
+  const body = readNativeBody(dto);
+  const markdown = nativeBodyToMarkdown(body);
 
   return {
     id: dto.id,
     title: dto.title,
     parentPageId: dto.parentPageId ?? null,
-    body: dto.body ?? markdownToNativeBody(markdown),
+    body,
     markdown,
     updatedAt: dto.updatedAt,
   };
 }
 
-function readMarkdownFromNativePage(dto: NativeMarkdownPageDto): string {
-  if (typeof dto.markdown === "string") {
-    return dto.markdown;
+function readNativeBody(dto: NativeMarkdownPageDto): NativeMarkdownBody {
+  if (dto.body !== undefined) {
+    if (isLegacyMarkdownBody(dto.body)) {
+      return dto.body;
+    }
+
+    return validateStructuredMarkdownDocument(dto.body);
   }
 
-  return dto.body?.content[0]?.text ?? "";
+  return importMarkdownToStructuredDocument(dto.markdown ?? "");
 }
 
-function markdownToNativeBody(markdown: string): NativeMarkdownBody {
-  return {
-    type: "doc",
-    content: [
-      {
-        type: "markdown.text",
-        text: markdown,
-      },
-    ],
-  };
+function nativeBodyToMarkdown(body: NativeMarkdownBody): string {
+  if (isLegacyMarkdownBody(body)) {
+    return body.content[0]?.text ?? "";
+  }
+
+  return exportStructuredDocumentToMarkdown(body);
+}
+
+function readStructuredBody(
+  body: NativeMarkdownBody,
+): StructuredMarkdownDocument | undefined {
+  if (isLegacyMarkdownBody(body)) {
+    return undefined;
+  }
+
+  return validateStructuredMarkdownDocument(body);
+}
+
+function isLegacyMarkdownBody(body: unknown): body is LegacyMarkdownBody {
+  if (!isRecord(body) || body.type !== "doc" || !Array.isArray(body.content)) {
+    return false;
+  }
+
+  if (body.content.length !== 1) {
+    return false;
+  }
+
+  const [node] = body.content;
+
+  return (
+    isRecord(node) &&
+    node.type === "markdown.text" &&
+    typeof node.text === "string" &&
+    typeof node.blockId !== "string"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function toEditorDocument(
