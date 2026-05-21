@@ -284,4 +284,4 @@ git diff --check
 
 ## Current Next Action
 
-- Spawn review-fix `implementer` to make Hooke's red regressions pass with the minimum production change.
+- Ampere (`implementer`) is fixing Hooke's red regressions with the minimum production/type change.

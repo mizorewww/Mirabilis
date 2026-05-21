@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:23 CST.
+Last updated: 2026-05-21 19:24 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:23 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix regression tests are committed; implementation fix is next.
+- Current phase: review-fix implementation is in progress.
 
 ## Active Agents
 
-- None. Hooke (`test_writer`) completed review-fix regression tests.
+- Ampere (`implementer`) is fixing Hooke's review-fix regressions.
 
 ## Completed Recent Task
 
@@ -77,7 +77,7 @@ Last updated: 2026-05-21 19:23 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for the minimum review-fix code change.
+1. Wait for Ampere's review-fix implementation.
 2. Re-run focused and adjacent validation, then commit implementation.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
