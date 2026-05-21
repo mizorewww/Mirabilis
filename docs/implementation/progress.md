@@ -49,7 +49,7 @@ Status markers:
 
 ## Milestone M4: Task and tag MVP
 
-- [ ] TASK-018: Implement Task Plugin syntax and task page creation
+- [~] TASK-018: Implement Task Plugin syntax and task page creation
 - [ ] TASK-019: Implement task navigation and infinite nesting
 - [ ] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 11:12 CST - TASK-018 started
+
+- Branch: `feat/task-018-task-plugin-syntax-page-creation`.
+- Task: Implement Task Plugin syntax and task page creation.
+- Scope: implement the first Task Plugin slice after TASK-017: recognize `- [ ] A` as task syntax, resolve unbound task blocks into corresponding Markdown Pages, write `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId` metadata, and avoid duplicate task pages for the same source block.
+- Source docs: `docs/implementation/task-index.md#task-018-implement-task-plugin-syntax-and-task-page-creation`, `docs/product/04-editor-and-workflows.md#11-用户核心操作markdown-页面中写任务`, `docs/product/05-built-in-plugins.md#16-task-plugin`, `docs/architecture/04-slots-editor-task.md#9-task-plugin-代码架构`, and `docs/architecture/07-runtime-flows.md#181-用户输入任务`.
+- Out of scope until agents narrow otherwise: clicking task text / navigation, infinite nesting UX beyond the same page-creation mechanism, checkbox toggle events, All Tasks / Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new Tauri commands/capabilities, and filesystem/native import-export.
+- Agent orchestration: parent thread remains orchestration-only. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, docs sync, and final review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-018-task-plugin-syntax-page-creation.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 11:07 CST - TASK-017 completed
 
