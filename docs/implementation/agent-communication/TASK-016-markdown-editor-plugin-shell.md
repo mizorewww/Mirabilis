@@ -37,9 +37,8 @@
 
 ## Current Status
 
-- Status: review-fix implementation in progress.
-- Active agents:
-  - Fermat the 3rd (`implementer`) for production review-fix implementation.
+- Status: review-fix implementation completed and committed; focused re-review handoff pending.
+- Active agents: none.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -55,8 +54,9 @@
   - Boyle the 3rd (`test_quality_reviewer`): test quality review completed.
   - Maxwell the 3rd (`doc_writer`): documentation gap review completed.
   - Chandrasekhar the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
-  - Fermat the 3rd (`implementer`): production review-fix implementation in progress.
-- Next parent step: wait for Fermat the 3rd, run focused green checks, and commit implementation if scope and validation match.
+  - Fermat the 3rd (`implementer`): production review-fix implementation completed, validated, committed, and closed.
+  - Poincare the 3rd (`test_writer`): narrow test-lint fix completed, validated, committed, and closed.
+- Next parent step: spawn focused re-review agents.
 
 ## Agent Handoffs
 
@@ -307,7 +307,7 @@
 
 ### Fermat the 3rd (`implementer`) Handoff
 
-- Status: in progress.
+- Status: completed, committed, and closed.
 - Agent ID: `019e47ea-acb2-7bc1-892d-5f47bd2e6e03`.
 - Ownership: minimum production code to pass the committed review-fix tests.
 - Allowed write scope:
@@ -327,3 +327,38 @@
   - `bun run lint`.
   - `git diff --check`.
 - Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, generated files, Tiptap/ProseMirror, new native commands, or broad Core store-to-SQLite rewiring.
+- Files changed:
+  - `src/bootstrap/create-app-runtime.ts`.
+  - `src/core/index.ts`.
+  - `src/core/runtime/index.ts`.
+  - `src/core/runtime/markdown-extensions.ts`.
+  - `src/core/runtime/markdown-pages.ts`.
+  - `src/plugins/markdown-editor/commands/insert-text.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Delivered:
+  - `runtime.markdown.pages` backed by allowlisted NativeBridge page DTOs.
+  - Active-plugin-only extension collection with host-owned `pluginId`.
+  - Narrow editor `markdownRuntime.collectEditorExtensions()` prop.
+  - Correct omitted `selectionEnd` handling.
+  - Controlled editor value/page-switch/save-race guards.
+- Parent validation:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx` passed.
+  - `bun run typecheck` passed.
+  - `bun run lint` initially failed because the committed review-fix test used `not.toBeDisabled()` instead of `toBeEnabled()`.
+  - Poincare the 3rd fixed that single test matcher; parent then confirmed `bun run lint` passed.
+  - `git diff --check` passed.
+  - `git diff --cached --check` passed before the production commit.
+- Commits:
+  - `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.
+  - `d2b9702 Fermat the 3rd(review-fix)(Implement Markdown Editor Plugin shell): address review findings`.
+
+### Poincare the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Agent ID: `019e47f4-a40a-7833-a835-5bd01a9605b8`.
+- Ownership: narrow lint-only test fix in `src/test/markdown-page-persistence.test.tsx`.
+- Change: replaced `not.toBeDisabled()` with `toBeEnabled()` for the committed review-fix test.
+- Validation:
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+- Commit: `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.

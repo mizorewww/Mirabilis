@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:23 CST.
+Last updated: 2026-05-21 08:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 08:23 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation in progress.
+- Current phase: focused re-review handoff.
 
 ## Active Agents
 
-- Fermat the 3rd (`implementer`) - TASK-016 review-fix implementation.
+- None. Next agent handoff is focused re-review.
 
 ## Recent Agent Outcomes
 
@@ -114,7 +114,12 @@ Last updated: 2026-05-21 08:23 CST.
 - Parent also confirmed `bun run typecheck`, `git diff --check`, and `git diff --cached --check` before commit.
 - Chandrasekhar the 3rd's review-fix test commit: `a574683 Chandrasekhar the 3rd(test)(Implement Markdown Editor Plugin shell): cover review findings`.
 - Fermat the 3rd (`implementer`) was spawned for the minimum production review-fix patch. Ownership is limited to markdown editor plugin production code, runtime markdown facade/page persistence, plugin-host metadata where needed, bootstrap runtime wiring, and required barrel exports. Tests, docs, Tauri config/capabilities, Rust code, package/Cargo files, generated files, new dependencies, and broad Core store-to-SQLite rewiring are out of scope.
-- Parent next step: wait for Fermat the 3rd, run focused green checks, and commit implementation if scope and validation match.
+- Fermat the 3rd completed and was closed after adding `runtime.markdown.pages`, allowlisted NativeBridge page DTO persistence, active-plugin extension filtering, trusted `pluginId` ownership, narrow editor markdown-runtime extension collection, corrected insert selection defaults, and controlled/page-switch/save-race editor behavior.
+- Fermat's validation passed focused TASK-016 frontend tests and typecheck, but full lint failed on one committed test matcher. Poincare the 3rd (`test_writer`) was spawned for a narrow test-lint fix in `src/test/markdown-page-persistence.test.tsx` and replaced `not.toBeDisabled()` with `toBeEnabled()`.
+- Parent repeated green checks after Poincare/Fermat: focused TASK-016 frontend tests, `bun run typecheck`, `bun run lint`, and `git diff --check`. `git diff --cached --check` passed before the production commit.
+- Poincare the 3rd's test-fix commit: `3d36da8 Poincare the 3rd(test-fix)(Implement Markdown Editor Plugin shell): fix review test lint matcher`.
+- Fermat the 3rd's review-fix implementation commit: `d2b9702 Fermat the 3rd(review-fix)(Implement Markdown Editor Plugin shell): address review findings`.
+- Parent next step: spawn focused re-review agents before documentation sync.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
