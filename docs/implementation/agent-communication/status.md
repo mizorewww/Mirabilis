@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:30 CST.
+Last updated: 2026-05-21 09:32 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:30 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: failing acceptance tests committed; implementation handoff pending.
+- Current phase: `implementer` is writing minimum production implementation.
 
 ## Active Agents
 
-- None.
+- Erdos the 3rd (`implementer`): TASK-017 production implementation only.
 
 ## Current TASK-017 State
 
@@ -65,6 +65,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit red test result record.
-2. Delegate minimum production implementation to `implementer`.
-3. Run focused tests until green after implementer returns.
+1. Wait for Erdos the 3rd to finish implementation.
+2. Run focused tests after implementer returns.
+3. Commit implementation if focused tests are green.

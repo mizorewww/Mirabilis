@@ -39,15 +39,16 @@
 
 ## Current Status
 
-- Status: failing acceptance tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: `implementer` writing minimum production implementation.
+- Active agents:
+  - Erdos the 3rd (`implementer`): TASK-017 production implementation only.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
   - Mill the 3rd (`deprecation_auditor`): API/dependency/deprecation risk audit completed.
   - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review completed.
   - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
-- Next parent step: record red signal and delegate implementation to `implementer`.
+- Next parent step: wait for Erdos the 3rd, run focused tests, and commit implementation if green.
 
 ## Agent Handoffs
 
@@ -174,6 +175,23 @@ bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdo
   - Missing `importMarkdownToStructuredDocument`, `exportStructuredDocumentToMarkdown`, and `validateStructuredMarkdownDocument` exports.
   - Current runtime still flattens persisted Markdown into one `markdown.text` node and reads only the first structured line.
 - `git diff --check` passed before commit.
+
+### Erdos the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: production TypeScript implementation only.
+- Expected write scope:
+  - `src/core/markdown/**`.
+  - `src/core/index.ts`.
+  - `src/core/runtime/markdown-pages.ts`.
+  - Narrow production type/helper files only if strictly required.
+- Explicit exclusions: tests, docs, Tauri config/capabilities, Rust code, package/Cargo files, generated files, dependency manifests, Tiptap/ProseMirror, filesystem/native import-export, and new Tauri commands/capabilities.
+- Goal: make the focused TASK-017 red tests pass with minimum production code.
+- Focused command:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+```
 
 ## Validation
 
