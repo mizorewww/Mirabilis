@@ -464,6 +464,30 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 2 files / 55 tests with 4 failed / 51 passed. Failures were accessor-backed fixed filter id accepted, non-owner built-in metadata first write accepted, and malformed raw date `eq`/`neq` matching. `bun run typecheck`, focused eslint, and `git diff --check` passed.
 
+## Third Review-Fix Implementation
+
+- Status: completed by Bernoulli (`implementer`) on 2026-05-21 20:09 CST.
+- Commit: `8cd3994`.
+- Files changed:
+  - `src/core/plugin-host/plugin-host.ts`.
+  - `src/core/filter-engine.ts`.
+- Behavior implemented:
+  - Plugin-facing filter saves validate/copy plain data before store save, closing accessor-backed fixed-id namespace bypasses.
+  - Built-in `task` and `tag` metadata namespaces are reserved for their owning plugins even on first write.
+  - Raw `date` metadata only matches if the stored value is a valid `YYYY-MM-DD` date.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/core-filter-engine.test.ts
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Third review-fix focused tests passed with 2 files / 55 tests. Expanded focused coverage passed with 4 files / 114 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Bernoulli (`implementer`) is fixing Heisenberg's red regressions with the minimum production change.
+- Run final narrow review for the third review-fix boundary code, then proceed to formal docs sync.
