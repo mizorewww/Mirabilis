@@ -50,7 +50,7 @@ Status markers:
 ## Milestone M4: Task and tag MVP
 
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
-- [ ] TASK-019: Implement task navigation and infinite nesting
+- [~] TASK-019: Implement task navigation and infinite nesting
 - [ ] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
@@ -78,6 +78,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 12:48 CST - TASK-019 started
+
+- Branch: `feat/task-019-task-navigation-infinite-nesting`.
+- Task: Implement task navigation and infinite nesting.
+- Scope: build the next Task Plugin/editor UX slice after TASK-018 so clicking task text opens the bound task page, task pages remain normal Markdown pages that can contain more task blocks, nested task blocks can create their own task pages through the same source-page/source-block relationship, and parent/source relationships remain queryable through metadata.
+- Source docs: `docs/implementation/task-index.md#task-019-implement-task-navigation-and-infinite-nesting`, `docs/product/01-vision-and-core.md#任务可无限嵌套的-markdown-first-时间管理系统开发文档`, `docs/product/04-editor-and-workflows.md#113-任务无限嵌套`, and `docs/architecture/07-runtime-flows.md#182-用户点击任务文字`.
+- Initial out of scope until agents narrow otherwise: checkbox toggle and `- [x]`, `task.completed` / `task.reopened` events, All Tasks / Today filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, new Tauri commands/capabilities, filesystem/native import-export, package/Cargo dependencies, and release packaging.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-019-task-navigation-infinite-nesting.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure and update notice. Parent treats the terminal note as non-blocking for repository agent work.
 
 ### 2026-05-21 12:45 CST - TASK-018 completed
 
