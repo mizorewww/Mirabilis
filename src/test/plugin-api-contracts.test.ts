@@ -1745,6 +1745,79 @@ describe("Plugin API contracts", () => {
     );
   });
 
+  it("prevents earlier same-batch install hooks from claiming later manifest-reserved metadata namespaces", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataInstallingPlugin({
+          pluginId: "review",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+        metadataDeclaringAndInstallingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+      ]),
+    ).rejects.toMatchObject({
+      name: "PluginHostError",
+      code: "PLUGIN_LIFECYCLE_FAILED",
+      pluginId: "review",
+      phase: "install",
+      cause: expect.objectContaining({
+        name: "PluginHostError",
+        code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        pluginId: "review",
+      }),
+    });
+    expect(runtime.services.metadata.list()).toStrictEqual([]);
+  });
+
+  it("allows a later same-batch manifest owner to write its own reserved metadata during install", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataSavingPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+        metadataDeclaringAndInstallingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+      ]),
+    ).resolves.toHaveLength(2);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "review",
+        }),
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+      ]),
+    );
+  });
+
   it("keeps complete generic manifest reservations for the owning namespace while allowing unreserved metadata", async () => {
     const { runtime, host } = createPluginApiTestHost();
 
@@ -1812,6 +1885,66 @@ describe("Plugin API contracts", () => {
         pluginId: "quality",
       }),
     });
+  });
+
+  it("ignores malformed manifest metadataFields shapes without reserving namespaces or breaking later metadata writes", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        malformedMetadataFieldsPlugin({
+          pluginId: "malformed-array-fields",
+          metadataFields: [
+            null,
+            "review",
+            42,
+            {
+              id: "review.incomplete",
+              namespace: "review",
+            },
+          ],
+        }),
+        malformedMetadataFieldsPlugin({
+          pluginId: "malformed-non-array-fields",
+          metadataFields: {
+            id: "quality.status",
+            namespace: "quality",
+            key: "status",
+            valueType: "string",
+          },
+        }),
+        metadataSavingPlugin({
+          pluginId: "quality",
+          namespace: "review",
+          key: "status",
+          value: "ready",
+          valueType: "string",
+        }),
+        metadataSavingPlugin({
+          pluginId: "inspector",
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(4);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "review",
+          key: "status",
+          value: "ready",
+          sourcePluginId: "quality",
+        }),
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          sourcePluginId: "inspector",
+        }),
+      ]),
+    );
   });
 
   it("does not reserve metadata namespaces from incomplete manifest field descriptors", async () => {
@@ -2140,6 +2273,29 @@ function metadataSavingPlugin(
   };
 }
 
+function metadataInstallingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    install(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+    register() {},
+  };
+}
+
 function metadataFieldDeclaringPlugin(
   input: Pick<
     MetadataSavingPluginInput,
@@ -2213,6 +2369,39 @@ function metadataDeclaringAndSavingPlugin(
   };
 }
 
+function metadataDeclaringAndInstallingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+      contributes: {
+        metadataFields: [
+          {
+            id: `${input.namespace}.${input.key}`,
+            namespace: input.namespace,
+            key: input.key,
+            valueType: input.valueType,
+          },
+        ],
+      },
+    },
+    install(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+    register() {},
+  };
+}
+
 function incompleteMetadataFieldDeclaringPlugin(input: {
   pluginId: string;
   namespace: string;
@@ -2232,6 +2421,26 @@ function incompleteMetadataFieldDeclaringPlugin(input: {
         ],
       },
     },
+    register() {},
+  };
+}
+
+function malformedMetadataFieldsPlugin(input: {
+  pluginId: string;
+  metadataFields: unknown;
+}): AppPlugin {
+  const manifest = {
+    id: input.pluginId,
+    name: `${input.pluginId} Plugin`,
+    version: "1.0.0",
+    minAppVersion: "0.1.0",
+    contributes: {
+      metadataFields: input.metadataFields,
+    },
+  } as unknown as PluginManifest;
+
+  return {
+    manifest,
     register() {},
   };
 }
