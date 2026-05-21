@@ -37,8 +37,9 @@
 
 ## Current Status
 
-- Status: focused re-review completed; async-insert red-test handoff pending.
-- Active agents: none.
+- Status: async-insert red tests in progress.
+- Active agents:
+  - Ampere the 3rd (`test_writer`) for async-insert review-fix red tests.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -62,7 +63,8 @@
   - Noether the 3rd (`deprecation_auditor`): API/deprecation re-review completed.
   - Franklin the 3rd (`docs_researcher`): docs/current-guidance re-review completed.
   - Confucius the 3rd (`pr_explorer`): final changed-surface mapping completed.
-- Next parent step: delegate async-insert P1 red test to `test_writer`.
+  - Ampere the 3rd (`test_writer`): async-insert review-fix red tests in progress.
+- Next parent step: wait for Ampere the 3rd, confirm expected red failures, and commit test changes.
 
 ## Agent Handoffs
 
@@ -408,3 +410,16 @@
   - Stronger stale page-switch assertion that Save is disabled or `save` is not called while the next page is loading.
 - Defer broad DTO validation/size bounds and full insert-only command capability to documented residual risks unless a focused agent escalates them.
 - Docs sync remains required before merge after this P1 is fixed.
+
+### Ampere the 3rd (`test_writer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e47ff-8a9b-7ea3-a0a1-23d9337757ac`.
+- Ownership: async-insert P1 failing tests and focused test helpers only.
+- Required red-test coverage:
+  - Slow `markdown.insert-text`/toolbar insertion resolves after a newer user edit or page change.
+  - Stale command output must not overwrite newer editor content.
+- Optional small P2 coverage:
+  - Stronger stale page-switch save disabled/no-save assertion.
+  - Fresh `updatedAt` per NativeBridge-backed save.
+- Restrictions: tests/test helpers only; no production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependency changes, generated files, or commits.

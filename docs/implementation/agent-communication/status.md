@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 08:45 CST.
+Last updated: 2026-05-21 08:46 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 08:45 CST.
 - Branch: `feat/task-016-markdown-editor-plugin-shell`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: async-insert review-fix red-test handoff.
+- Current phase: async-insert red tests in progress.
 
 ## Active Agents
 
-- None. Next agent handoff is async-insert review-fix red tests.
+- Ampere the 3rd (`test_writer`) - TASK-016 async-insert review-fix red tests.
 
 ## Recent Agent Outcomes
 
@@ -127,7 +127,8 @@ Last updated: 2026-05-21 08:45 CST.
 - Franklin the 3rd (`docs_researcher`) found no P0/P1 implementation-doc mismatch and says TASK-016 can proceed to docs sync after remaining P1 is fixed. P2 docs sync remains required.
 - Noether the 3rd (`deprecation_auditor`) found one P1: async toolbar insertion can overwrite newer edits after an awaited command resolves. P2s: redundant imperative textarea value sync, unhandled load/save rejection paths, optional `listPlugins` silent no-op, and cached `updatedAt` reuse.
 - Parent decision: run one narrow delegated TDD loop for the async insert P1, include small adjacent P2 tests if practical, defer broad DTO/size validation and insert-only command prop narrowing to residual risks/docs unless escalated.
-- Parent next step: spawn `test_writer` for async-insert review-fix red tests.
+- Ampere the 3rd (`test_writer`) was spawned for async-insert review-fix red tests. Ownership is limited to tests/test helpers; production code, docs, Tauri config/capabilities, Rust code, package/Cargo files, dependencies, generated files, and commits are out of scope.
+- Parent next step: wait for Ampere the 3rd, confirm expected red failures, and commit test changes.
 - TASK-013 was merged to `master` and pushed. Merge commit: `f0589c8 Codex(merge)(Add SQLite schema and Rust repositories): merge task branch`.
 - TASK-014 branch `feat/task-014-tauri-ipc-core-persistence` was created from latest `master`.
 - TASK-014 scope: expose typed Tauri IPC commands for Core persistence operations and wire the frontend NativeBridge to them, using TASK-013 private Rust repositories. Requests must be validated, errors typed/redacted, Tauri capability changes documented and reviewed, and raw SQL kept out of frontend/plugin DTOs.
