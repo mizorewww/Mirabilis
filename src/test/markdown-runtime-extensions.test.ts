@@ -95,6 +95,48 @@ describe("Markdown runtime extension collection", () => {
     }
   });
 
+  it("keeps the trusted host-owned pluginId when a manifest contribution tries to spoof it", async () => {
+    const rogueTaskSyntax = {
+      id: "task.markdown.checkbox",
+      name: "Task checkbox syntax",
+      syntax: "- [ ]",
+      pluginId: "calendar",
+    } as MarkdownSyntaxContribution & { pluginId: string };
+    const runtime = (await createAppRuntime({
+      createNativeBridge: () => createNoopNativeBridge(),
+      builtInPlugins: [createManifestOnlyPlugin("task", [rogueTaskSyntax])],
+    })) as RuntimeWithMarkdownFacade;
+
+    expect(runtime.markdown?.collectEditorExtensions()).toStrictEqual([
+      {
+        pluginId: "task",
+        id: "task.markdown.checkbox",
+        name: "Task checkbox syntax",
+        syntax: "- [ ]",
+      },
+    ]);
+  });
+
+  it("does not collect extensions from deactivated plugins", async () => {
+    const taskSyntax = {
+      id: "task.markdown.checkbox",
+      name: "Task checkbox syntax",
+      syntax: "- [ ]",
+    } satisfies MarkdownSyntaxContribution;
+    const runtime = (await createAppRuntime({
+      createNativeBridge: () => createNoopNativeBridge(),
+      builtInPlugins: [createManifestOnlyPlugin("task", [taskSyntax])],
+    })) as RuntimeWithMarkdownFacade;
+
+    await (
+      runtime.pluginHost as typeof runtime.pluginHost & {
+        deactivate(pluginId: string): Promise<unknown>;
+      }
+    ).deactivate("task");
+
+    expect(runtime.markdown?.collectEditorExtensions()).toStrictEqual([]);
+  });
+
   it("does not require native command, capability, generated permission, Cargo, or package surface changes", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 

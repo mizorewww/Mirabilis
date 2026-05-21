@@ -24,6 +24,10 @@ type MarkdownPageFacade = {
   }): Promise<MarkdownEditorDocument>;
 };
 
+type RuntimeMarkdownPageFacade = AppRuntime["markdown"] & {
+  pages?: MarkdownPageFacade;
+};
+
 type MarkdownCommandBus = {
   execute(commandId: string, input?: unknown): Promise<unknown>;
 };
@@ -61,9 +65,122 @@ type NativeBridgeTransactionResult<Response> =
       : Response
     : Array<Response>;
 
+type CoreMarkdownPageDto = {
+  id: string;
+  title: string;
+  parentPageId: string | null;
+  body: ReturnType<typeof markdownToNativeBody>;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+};
+
+type Deferred<Value> = {
+  promise: Promise<Value>;
+  resolve(value: Value): void;
+  reject(reason: unknown): void;
+};
+
 const updatedAt = "2026-01-01T00:00:00.000Z";
+const createdAt = "2025-12-31T00:00:00.000Z";
 
 describe("Markdown page persistence", () => {
+  it("uses a production runtime page facade that persists through allowlisted NativeBridge page DTOs", async () => {
+    const runtimePage = createCorePageDto({
+      id: "page-runtime-facade",
+      title: "Inbox",
+      markdown: "",
+    });
+    const nativeBridge = createRecordingCorePageNativeBridge(runtimePage);
+    const runtime = await createAppRuntime({
+      createNativeBridge: () => nativeBridge,
+    });
+    const productionPageFacade = (runtime.markdown as RuntimeMarkdownPageFacade)
+      .pages;
+
+    expect.soft(productionPageFacade).toEqual({
+      load: expect.any(Function),
+      save: expect.any(Function),
+    });
+
+    if (productionPageFacade === undefined) {
+      return;
+    }
+
+    const user = userEvent.setup();
+    const savedMarkdown = [
+      "# Runtime facade",
+      "",
+      "Saved through NativeBridge",
+      "- [ ] checked later",
+      "#tag",
+      "[[Reopen]]",
+    ].join("\n");
+
+    const { unmount } = renderPersistedMarkdownEditor(runtime, {
+      pageId: "page-runtime-facade",
+      pageFacade: productionPageFacade,
+      commands: createCommandBus(runtime),
+    });
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    await waitFor(() => expect(editor).toHaveValue(""));
+    await user.click(editor);
+    await user.keyboard(toKeyboardLiteral(savedMarkdown));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+    await waitFor(() =>
+      expect(nativeBridge.db.execute).toHaveBeenCalledWith({
+        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+        payload: {
+          id: "page-runtime-facade",
+          title: "Inbox",
+          parentPageId: null,
+          body: markdownToNativeBody(savedMarkdown),
+          updatedAt,
+        },
+      } satisfies DbQuery),
+    );
+
+    unmount();
+
+    renderPersistedMarkdownEditor(runtime, {
+      pageId: "page-runtime-facade",
+      pageFacade: productionPageFacade,
+      commands: createCommandBus(runtime),
+    });
+
+    expect(
+      await screen.findByRole("textbox", { name: /markdown/i }),
+    ).toHaveValue(savedMarkdown);
+    expect(nativeBridge.db.execute.mock.calls.map(([query]) => query)).toStrictEqual([
+      {
+        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+        payload: {
+          id: "page-runtime-facade",
+        },
+      },
+      {
+        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+        payload: {
+          id: "page-runtime-facade",
+          title: "Inbox",
+          parentPageId: null,
+          body: markdownToNativeBody(savedMarkdown),
+          updatedAt,
+        },
+      },
+      {
+        operation: DB_PERSISTENCE_OPERATIONS.pagesGet,
+        payload: {
+          id: "page-runtime-facade",
+        },
+      },
+    ] satisfies DbQuery[]);
+    expect(JSON.stringify(nativeBridge.db.execute.mock.calls)).not.toMatch(
+      /\bsql\b|\bparams\b|select\s+\*|core_pages|\bpath\b|\bfile\b/i,
+    );
+  });
+
   it("saves through a narrow page facade and reopens the same page with saved Markdown", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -163,20 +280,123 @@ describe("Markdown page persistence", () => {
       /\bsql\b|\bparams\b|select\s+\*|core_pages|\bpath\b|\bfile\b/i,
     );
   });
+
+  it("does not save stale old-page content while a new pageId is loading", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const commandBus = createCommandBus(runtime);
+    const nextPageLoad = createDeferred<MarkdownEditorDocument>();
+    const pageFacade: MarkdownPageFacade = {
+      load: vi.fn((pageId: string) => {
+        if (pageId === "page-a") {
+          return Promise.resolve(createEditorDocument("page-a", "Alpha page"));
+        }
+
+        return nextPageLoad.promise;
+      }),
+      save: vi.fn(async (input) =>
+        createEditorDocument(input.pageId, input.markdown),
+      ),
+    };
+    const Editor = getPersistedMarkdownPageEditorComponent(runtime);
+
+    const { rerender } = render(
+      <Editor
+        pageId="page-a"
+        pageFacade={pageFacade}
+        commands={commandBus}
+      />,
+    );
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    await waitFor(() => expect(editor).toHaveValue("Alpha page"));
+    await user.clear(editor);
+    await user.type(editor, "Alpha edited");
+
+    rerender(
+      <Editor
+        pageId="page-b"
+        pageFacade={pageFacade}
+        commands={commandBus}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(pageFacade.save).not.toHaveBeenCalledWith({
+      pageId: "page-b",
+      markdown: "Alpha edited",
+    });
+
+    nextPageLoad.resolve(createEditorDocument("page-b", "Beta page"));
+    await waitFor(() => expect(editor).toHaveValue("Beta page"));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() =>
+      expect(pageFacade.save).toHaveBeenLastCalledWith({
+        pageId: "page-b",
+        markdown: "Beta page",
+      }),
+    );
+  });
+
+  it("keeps edits made after save starts when the save response completes", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const saveCompletion = createDeferred<MarkdownEditorDocument>();
+    const pageFacade: MarkdownPageFacade = {
+      load: vi.fn(async () => createEditorDocument("page-save-race", "Draft")),
+      save: vi.fn(() => saveCompletion.promise),
+    };
+
+    renderPersistedMarkdownEditor(runtime, {
+      pageId: "page-save-race",
+      pageFacade,
+      commands: createCommandBus(runtime),
+    });
+    const editor = await screen.findByRole("textbox", { name: /markdown/i });
+
+    await waitFor(() => expect(editor).toHaveValue("Draft"));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+    await waitFor(() =>
+      expect(pageFacade.save).toHaveBeenCalledWith({
+        pageId: "page-save-race",
+        markdown: "Draft",
+      }),
+    );
+
+    await user.click(editor);
+    await user.type(editor, " plus local edit");
+    expect(editor).toHaveValue("Draft plus local edit");
+
+    saveCompletion.resolve(createEditorDocument("page-save-race", "Draft"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /save/i })).not.toBeDisabled(),
+    );
+    expect(editor).toHaveValue("Draft plus local edit");
+  });
 });
 
 function renderPersistedMarkdownEditor(
   runtime: AppRuntime,
   props: PersistedMarkdownPageEditorProps,
 ) {
+  const Editor = getPersistedMarkdownPageEditorComponent(runtime);
+
+  return render(<Editor {...props} />);
+}
+
+function getPersistedMarkdownPageEditorComponent(
+  runtime: AppRuntime,
+): ComponentType<PersistedMarkdownPageEditorProps> {
   const pageEditor = runtime.registries.views.get(
     "markdown.page-editor",
   ) as unknown as {
     component: ComponentType<PersistedMarkdownPageEditorProps>;
   };
-  const Editor = pageEditor.component;
 
-  return render(<Editor {...props} />);
+  return pageEditor.component;
 }
 
 async function createRuntime(): Promise<AppRuntime> {
@@ -221,6 +441,74 @@ function createNativeBackedPageFacade(
           updatedAt,
         },
       }) as Promise<MarkdownEditorDocument>;
+    },
+  };
+}
+
+function createRecordingCorePageNativeBridge(
+  initialPage: CoreMarkdownPageDto,
+): RecordingNativeBridge {
+  let currentPage = initialPage;
+  const execute = vi.fn(async (query: DbQuery) => {
+    if (query.operation === DB_PERSISTENCE_OPERATIONS.pagesGet) {
+      return currentPage;
+    }
+
+    if (query.operation === DB_PERSISTENCE_OPERATIONS.pagesUpdate) {
+      const payload = query.payload as {
+        id: string;
+        title: string;
+        parentPageId: string | null;
+        body: ReturnType<typeof markdownToNativeBody>;
+        updatedAt: string;
+      };
+
+      currentPage = {
+        id: payload.id,
+        title: payload.title,
+        parentPageId: payload.parentPageId,
+        body: payload.body,
+        createdAt: currentPage.createdAt,
+        updatedAt: payload.updatedAt,
+      };
+
+      return currentPage;
+    }
+
+    return undefined;
+  });
+
+  return {
+    db: {
+      execute,
+      async transaction<Response>(
+        _queries: DbQuery[],
+      ): Promise<NativeBridgeTransactionResult<Response>> {
+        void _queries;
+
+        return [] as NativeBridgeTransactionResult<Response>;
+      },
+    },
+    shortcuts: {
+      async register() {
+        return undefined;
+      },
+      async unregister() {
+        return undefined;
+      },
+    },
+    notifications: {
+      async notify() {
+        return undefined;
+      },
+    },
+    files: {
+      async importMarkdown() {
+        return "";
+      },
+      async exportMarkdown() {
+        return undefined;
+      },
     },
   };
 }
@@ -288,6 +576,32 @@ function createRecordingNativeBridge(
   };
 }
 
+function createCorePageDto(input: {
+  id: string;
+  title: string;
+  markdown: string;
+}): CoreMarkdownPageDto {
+  return {
+    id: input.id,
+    title: input.title,
+    parentPageId: null,
+    body: markdownToNativeBody(input.markdown),
+    createdAt,
+    updatedAt,
+  };
+}
+
+function createEditorDocument(
+  id: string,
+  markdown: string,
+): MarkdownEditorDocument {
+  return {
+    id,
+    title: "Inbox",
+    markdown,
+  };
+}
+
 function markdownToNativeBody(markdown: string) {
   return {
     type: "doc",
@@ -302,4 +616,23 @@ function markdownToNativeBody(markdown: string) {
 
 function toKeyboardLiteral(markdown: string): string {
   return markdown.split("[").join("[[").split("{").join("{{");
+}
+
+function createDeferred<Value>(): Deferred<Value> {
+  let resolve: Deferred<Value>["resolve"] | undefined;
+  let reject: Deferred<Value>["reject"] | undefined;
+  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  if (resolve === undefined || reject === undefined) {
+    throw new Error("Failed to create deferred promise");
+  }
+
+  return {
+    promise,
+    resolve,
+    reject,
+  };
 }

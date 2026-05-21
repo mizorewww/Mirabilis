@@ -28,6 +28,16 @@ type MarkdownPageEditorProps = {
   commands: MarkdownCommandBus;
 };
 
+type MarkdownEditorExtension = {
+  pluginId: string;
+  id: string;
+  syntax?: string;
+};
+
+type MarkdownExtensionSource = {
+  collectEditorExtensions(): readonly MarkdownEditorExtension[];
+};
+
 type MarkdownInsertTextResult = {
   markdown: string;
   selectionStart: number;
@@ -130,6 +140,36 @@ describe("Markdown Editor Plugin shell", () => {
     } satisfies MarkdownInsertTextResult);
   });
 
+  it("treats an omitted selectionEnd as the normalized selectionStart", async () => {
+    const runtime = await createRuntime();
+
+    await expect(
+      runtime.commands.execute("markdown.insert-text", {
+        pageId: "page-1",
+        markdown: "Paragraph",
+        text: "#",
+        selectionStart: 0,
+      }),
+    ).resolves.toStrictEqual({
+      markdown: "#Paragraph",
+      selectionStart: 1,
+      selectionEnd: 1,
+    } satisfies MarkdownInsertTextResult);
+
+    await expect(
+      runtime.commands.execute("markdown.insert-text", {
+        pageId: "page-1",
+        markdown: "abcdef",
+        text: "X",
+        selectionStart: 2.8,
+      }),
+    ).resolves.toStrictEqual({
+      markdown: "abXcdef",
+      selectionStart: 3,
+      selectionEnd: 3,
+    } satisfies MarkdownInsertTextResult);
+  });
+
   it("renders a labeled multiline editor and preserves baseline Markdown syntax exactly", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -159,6 +199,52 @@ describe("Markdown Editor Plugin shell", () => {
     await user.keyboard(toKeyboardLiteral(markdown));
 
     expect(editor).toHaveValue(markdown);
+  });
+
+  it("collects editor extensions from a narrow markdown runtime facade during render", async () => {
+    const runtime = await createRuntime();
+    const commandBus = createCommandBus(runtime);
+    const markdownRuntime = {
+      collectEditorExtensions: vi.fn(() => [
+        {
+          pluginId: "task",
+          id: "task.markdown.checkbox",
+          syntax: "- [ ]",
+        },
+      ]),
+    } satisfies MarkdownExtensionSource;
+
+    renderMarkdownPageEditor(runtime, {
+      page: createEditorDocument("page-extensions", ""),
+      commands: commandBus,
+      markdownRuntime,
+    } as MarkdownPageEditorProps & {
+      markdownRuntime: MarkdownExtensionSource;
+    });
+
+    expect(markdownRuntime.collectEditorExtensions).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates the controlled editor value when the host switches to a different page", async () => {
+    const runtime = await createRuntime();
+    const commandBus = createCommandBus(runtime);
+    const Editor = getMarkdownPageEditorComponent(runtime);
+    const firstPage = createEditorDocument("page-a", "Alpha page");
+    const secondPage = createEditorDocument("page-b", "Beta page");
+
+    const { rerender } = render(
+      <Editor page={firstPage} commands={commandBus} />,
+    );
+
+    expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+      "Alpha page",
+    );
+
+    rerender(<Editor page={secondPage} commands={commandBus} />);
+
+    expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+      "Beta page",
+    );
   });
 
   it("inserts mobile toolbar Markdown snippets by dispatching markdown.insert-text", async () => {
@@ -218,6 +304,63 @@ describe("Markdown Editor Plugin shell", () => {
     expect(editor).toHaveValue("- [ ] #[[ ]]");
   });
 
+  it("renders the registered mobile toolbar slot with only narrow insert behavior", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const insertText = vi.fn();
+    const toolbarSlot = runtime.registries.slots.get(
+      "markdown.editor-mobile-toolbar.base",
+    ) as unknown as {
+      component: ComponentType<{
+        disabled?: boolean;
+        onInsertText(text: string): void;
+      }>;
+    };
+    const Toolbar = toolbarSlot.component;
+    const broadHandles = {
+      runtime: {
+        commands: {
+          execute: vi.fn(),
+        },
+      },
+      nativeBridge: {
+        db: {
+          execute: vi.fn(),
+        },
+      },
+      registries: {
+        commands: {
+          register: vi.fn(),
+        },
+      },
+    };
+
+    render(
+      <Toolbar
+        disabled={false}
+        onInsertText={insertText}
+        {...broadHandles}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /insert task syntax/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /insert heading or tag marker/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /insert page link syntax/i }),
+    );
+
+    expect(insertText).toHaveBeenNthCalledWith(1, "- [ ] ");
+    expect(insertText).toHaveBeenNthCalledWith(2, "#");
+    expect(insertText).toHaveBeenNthCalledWith(3, "[[ ]]");
+    expect(broadHandles.runtime.commands.execute).not.toHaveBeenCalled();
+    expect(broadHandles.nativeBridge.db.execute).not.toHaveBeenCalled();
+    expect(broadHandles.registries.commands.register).not.toHaveBeenCalled();
+  });
+
   it("keeps malicious Markdown inert in the editor surface", async () => {
     const runtime = await createRuntime();
     const maliciousMarkdown = [
@@ -271,14 +414,21 @@ function renderMarkdownPageEditor(
   runtime: AppRuntime,
   props: MarkdownPageEditorProps,
 ) {
+  const Editor = getMarkdownPageEditorComponent(runtime);
+
+  return render(<Editor {...props} />);
+}
+
+function getMarkdownPageEditorComponent(
+  runtime: AppRuntime,
+): ComponentType<MarkdownPageEditorProps> {
   const pageEditor = runtime.registries.views.get(
     "markdown.page-editor",
   ) as unknown as {
     component: ComponentType<MarkdownPageEditorProps>;
   };
-  const Editor = pageEditor.component;
 
-  return render(<Editor {...props} />);
+  return pageEditor.component;
 }
 
 function createEditorDocument(
