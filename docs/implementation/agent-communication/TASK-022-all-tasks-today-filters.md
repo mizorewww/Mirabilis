@@ -411,4 +411,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run a narrow post-second-fix review, then proceed to formal docs sync.
+- Narrow post-second-fix review is running with Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`).
