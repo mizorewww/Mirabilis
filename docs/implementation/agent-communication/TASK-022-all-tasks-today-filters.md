@@ -409,6 +409,38 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Second review-fix focused tests passed with 4 files / 110 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Narrow Post-Second-Fix Review
+
+- Status: completed on 2026-05-21 19:58 CST by Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`).
+- P0 findings: none.
+- P1 findings:
+  - Pauli and Helmholtz found plugin-facing fixed filter id namespace enforcement is bypassable with an accessor-backed `id`. The guard inspects the descriptor but later spreads the original input into `filters.save`, evaluating the getter and allowing a non-owner plugin to save `task.filter.today`.
+- Accepted P2 findings:
+  - Halley found non-owner plugins can squat built-in `task` / `tag` metadata identities before the owning plugin writes them, creating a cross-plugin denial-of-service and contradicting the built-in metadata owner trust boundary used by `executeFilterQuery`.
+- Accepted P3 findings for opportunistic coverage:
+  - Halley found raw `date` metadata equality accepts malformed date strings such as `not-a-date`.
+- Deferred P3 findings:
+  - Halley found direct filter execution has depth/cycle guards but no total node, branch, or condition budget for very wide acyclic queries. Parent decision: record this as residual risk for TASK-022 and leave broader execution-budget policy to a later filter hardening task unless subsequent agents find a concrete TASK-022 blocker.
+- Cleared findings:
+  - Euclid found no P0/P1/P2/P3 test-quality findings and confirmed Ptolemy's tests are meaningful, not brittle implementation overfit, and did not weaken prior tests.
+  - Helmholtz found the `within` deferral coherent as long as formal docs call out the current executor subset.
+- Checks reported by agents:
+  - Second review-fix focused tests passed with 4 files / 110 tests.
+  - `bun run typecheck`, focused eslint, `git diff --check`, and native/package/Tauri diff guards were reported clean.
+  - Helmholtz checked current Vitest docs and noted TASK-022 changed tests use the current `toExtend` / `toEqualTypeOf` patterns.
+
+## Parent Decisions For Third Review-Fix Cycle
+
+- Delegate third review-fix regression tests to a `test_writer` first. Parent thread will not write tests.
+- Required test scope:
+  - A non-owner plugin cannot bypass fixed filter id namespace enforcement with accessor-backed or otherwise non-plain `id` inputs. The test should prove a `review` plugin cannot persist `task.filter.today` through a getter-backed `id`.
+  - A non-owner plugin cannot create built-in `task` or `tag` metadata identities, including the first write before the owning plugin has created the record. Same-owner writes to `task`/`tag` metadata must remain allowed, and generic non-built-in namespaces must remain allowed.
+  - If concise, add a raw date metadata equality fail-closed regression for malformed `valueType: "date"` values.
+- Required implementation scope after red tests:
+  - Normalize/read plugin-facing fixed filter `id` once before namespace validation and store save, or otherwise close accessor/proxy materialization gaps.
+  - Reserve built-in metadata namespaces required by TASK-022's trust boundary.
+  - Keep native/Tauri/package/Rust changes, broad plugin namespace policy, `within`, JS filters, and wide-query execution budgets out of scope.
+
 ## Current Next Action
 
-- Narrow post-second-fix review is running with Pauli (`reviewer`), Halley (`security_reviewer`), Helmholtz (`deprecation_auditor`), and Euclid (`test_quality_reviewer`).
+- Spawn third review-fix `test_writer` for the remaining P1/P2 plugin-host boundary regressions, then validate the expected red signal before committing the tests.
