@@ -192,4 +192,31 @@
 
 ## Current Next Action
 
-- Commit pre-test guidance, then delegate failing acceptance tests to `test_writer`.
+## Test Writer Handoff
+
+- Status: completed by Carver the 4th (`test_writer`) on 2026-05-21 15:45 CST.
+- Files changed:
+  - `src/test/tag-plugin-baseline.test.tsx`.
+- Coverage added:
+  - Built-in `tag` plugin registration, `tag.hashtag` syntax descriptor, `tag.tags` metadata descriptor, canonical command registration, and `page.header.metadata` slot registration.
+  - `tag.refresh-tags` extraction, normalization, ignored unsafe Markdown locations, empty array writes, and 32-tag cap.
+  - `tag.add-tag` / `tag.remove-tag` strict payloads, invalid tag rejection, unknown page rejection, dedupe, idempotent remove, and no spoofed owner fields.
+  - Slot UI inert tag rendering plus exact add/remove command payloads.
+  - `tag.create-filter` plugin-owned static filter shape.
+  - Native/package/Tauri surface guard plus no task metadata mutation / no `attrs.boundPageId` trust.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bunx eslint src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: expected red signal. Focused test file ran 8 tests and all 8 failed because the Tag Plugin surfaces are not implemented yet: `tag` is not in `BUILT_IN_PLUGINS`, `tag.hashtag` / `tag.tags` are missing, tag command/slot registrations are empty, `tag.refresh-tags`, `tag.add-tag`, and `tag.create-filter` fail with `COMMAND_NOT_FOUND`, and `tag.page-header-metadata.tags` is missing. `bun run typecheck`, focused eslint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Test writer concern: the slot component prop shape is an inferred baseline contract: `{ pageId, tags, commands }`.
+
+## Current Next Action
+
+- Commit Carver the 4th's failing acceptance tests, then delegate implementation to `implementer`.

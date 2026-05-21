@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:36 CST.
+Last updated: 2026-05-21 15:45 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:36 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: pre-test planning/current-doc/API/security guidance completed; failing acceptance tests are next.
+- Current phase: failing acceptance tests written; implementation is next.
 
 ## Active Agents
 
@@ -55,6 +55,17 @@ Last updated: 2026-05-21 15:36 CST.
 
 - `.codex/agents/*.toml` parsed successfully with 11 files.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+- Focused red tests after Carver the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bunx eslint src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: expected red signal. `tag-plugin-baseline.test.tsx` ran 8 tests and all 8 failed because Tag Plugin surfaces are not implemented yet. `bun run typecheck`, focused eslint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
 ## Completed TASK-021 Agent Outcomes
 
@@ -62,6 +73,7 @@ Last updated: 2026-05-21 15:36 CST.
 - Boyle the 4th (`docs_researcher`) completed current-doc/test guidance. Recommendation: use existing metadata/filter/command/slot/plugin facades, execute commands through `runtime.commands.execute`, test metadata writes as `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, and cover UI with RTL/user-event role queries. It noted metadata field renderer/editor and full Filter Engine execution are future-facing.
 - Descartes the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0/P1 guidance: use plugin id `tag`, syntax id `tag.hashtag`, metadata field id `tag.tags`, `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, kebab-case command IDs, explicit refresh semantics, filter query `metadata.tag.tags includes <tag>`, and slot id `tag.page-header-metadata.tags` on `page.header.metadata` with order `300`.
 - Rawls the 4th (`security_reviewer`) completed security guidance. Recommendation: define a conservative tag grammar, reject untrusted/extra command payload fields, verify page existence, mutate through plugin facades/transactions, parse structured Markdown text rather than HTML, keep filters static/plugin-owned, render tags as inert React text, and avoid native/Tauri/package/Cargo changes.
+- Carver the 4th (`test_writer`) added focused TASK-021 acceptance tests in `src/test/tag-plugin-baseline.test.tsx`. Coverage includes built-in plugin registration, manifest descriptors, commands, metadata writes, refresh extraction/normalization, picker add/remove commands, slot UI behavior, filter definition creation, native surface guard, and no task metadata mutation from source-line tags.
 
 ## Parent Decisions After TASK-021 Pre-test Guidance
 
@@ -79,6 +91,12 @@ Last updated: 2026-05-21 15:36 CST.
 - Filter contract: `tag.create-filter` saves a plugin-owned filter named `#tag` with query `{ where: [{ field: "metadata.tag.tags", op: "includes", value: tag }] }` and `viewType: "page.list"`; result execution/rendering remains out of scope.
 - UI contract: register a `page.header.metadata` slot component that renders inert tag chips/text and a small labeled add/remove picker. Tests may render the slot component directly or through a minimal test host because no full metadata-bar outlet exists yet.
 - Security boundaries: strict payload readers, no trusted caller-supplied owner fields, page existence checks, plugin-facade metadata/filter writes, no `attrs.boundPageId` trust or Task Plugin metadata mutation, and no native/Tauri/package/Cargo surface.
+
+## Next Actions
+
+1. Commit Carver the 4th's failing acceptance tests.
+2. Delegate implementation to `implementer`.
+3. Run focused TASK-021 tests after implementation.
 
 ## Completed TASK-020 Agent Outcomes
 
