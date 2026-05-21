@@ -44,6 +44,7 @@ const tagMetadataSlotId = "tag.page-header-metadata.tags";
 const pageHeaderMetadataSlot = "page.header.metadata";
 const maxTagsPerPage = 32;
 const tagPattern = /^[a-z0-9][a-z0-9_-]{0,31}$/u;
+const sourceTokenTrailingPunctuationPattern = /[.,;!?)}\]]+$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 const refreshTagsInputKeys = new Set(["pageId"]);
 const mutateTagInputKeys = new Set(["pageId", "tag"]);
@@ -167,9 +168,7 @@ function removeTag(
     const existingTags = readExistingTags(tx.metadata, page.id);
     const tags = existingTags.filter((tag) => tag !== payload.tag);
 
-    if (tags.length !== existingTags.length) {
-      writeTagMetadata(tx.metadata, page.id, tags);
-    }
+    writeTagMetadata(tx.metadata, page.id, tags);
 
     return {
       pageId: page.id,
@@ -359,7 +358,11 @@ function extractLineTags(line: string): string[] {
       continue;
     }
 
-    const rawTag = readRawTagToken(line, index + 1);
+    const sourceToken = readSourceToken(line, index + 1);
+    const rawTag = sourceToken.replace(
+      sourceTokenTrailingPunctuationPattern,
+      "",
+    );
 
     if (rawTag.length === 0) {
       continue;
@@ -369,7 +372,7 @@ function extractLineTags(line: string): string[] {
 
     if (tagPattern.test(normalizedTag)) {
       tags.push(normalizedTag);
-      index += rawTag.length;
+      index += sourceToken.length;
     }
   }
 
@@ -384,13 +387,13 @@ function hasTagBoundary(line: string, index: number): boolean {
   return index === 0 || /\s/u.test(line[index - 1] ?? "");
 }
 
-function readRawTagToken(line: string, startIndex: number): string {
+function readSourceToken(line: string, startIndex: number): string {
   let token = "";
 
   for (let index = startIndex; index < line.length; index += 1) {
     const character = line[index] ?? "";
 
-    if (!/[A-Za-z0-9_-]/u.test(character)) {
+    if (/\s/u.test(character)) {
       break;
     }
 

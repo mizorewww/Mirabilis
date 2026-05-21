@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 
 export type TagMetadataSlotProps = {
   pageId: string;
@@ -19,41 +19,59 @@ type CommandTags = {
 
 const addTagCommandId = "tag.add-tag";
 const removeTagCommandId = "tag.remove-tag";
+const tagPattern = /^[a-z0-9][a-z0-9_-]{0,31}$/u;
 
 export function TagMetadataSlot({
   pageId,
   tags,
   commands,
 }: TagMetadataSlotProps) {
+  const inputId = useId();
   const [commandTags, setCommandTags] = useState<CommandTags | null>(null);
   const [draftTag, setDraftTag] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
   const visibleTags = commandTags?.pageId === pageId ? commandTags.tags : tags;
 
   async function addTag(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const result = await commands.execute(addTagCommandId, {
-      pageId,
-      tag: draftTag,
-    });
+    if (!isValidDraftTag(draftTag)) {
+      setFeedback("Enter a valid tag before adding it.");
+      return;
+    }
 
-    setCommandTags({
-      pageId,
-      tags: readTagCommandResult(result).tags,
-    });
-    setDraftTag("");
+    try {
+      const result = await commands.execute(addTagCommandId, {
+        pageId,
+        tag: draftTag,
+      });
+
+      setCommandTags({
+        pageId,
+        tags: readTagCommandResult(result).tags,
+      });
+      setDraftTag("");
+      setFeedback(null);
+    } catch {
+      setFeedback("Tag update failed.");
+    }
   }
 
   async function removeTag(tag: string) {
-    const result = await commands.execute(removeTagCommandId, {
-      pageId,
-      tag,
-    });
+    try {
+      const result = await commands.execute(removeTagCommandId, {
+        pageId,
+        tag,
+      });
 
-    setCommandTags({
-      pageId,
-      tags: readTagCommandResult(result).tags,
-    });
+      setCommandTags({
+        pageId,
+        tags: readTagCommandResult(result).tags,
+      });
+      setFeedback(null);
+    } catch {
+      setFeedback("Tag update failed.");
+    }
   }
 
   return (
@@ -75,16 +93,24 @@ export function TagMetadataSlot({
         ))}
       </ul>
       <form onSubmit={(event) => void addTag(event)}>
-        <label htmlFor="tag-metadata-slot-input">Tag</label>
+        <label htmlFor={inputId}>Tag</label>
         <input
-          id="tag-metadata-slot-input"
+          id={inputId}
           value={draftTag}
           onChange={(event) => setDraftTag(event.currentTarget.value)}
         />
         <button type="submit">Add tag</button>
       </form>
+      {feedback === null ? null : <p role="alert">{feedback}</p>}
     </section>
   );
+}
+
+function isValidDraftTag(value: string): boolean {
+  const trimmed = value.trim();
+  const withoutHash = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
+
+  return tagPattern.test(withoutHash.toLowerCase());
 }
 
 function readTagCommandResult(result: unknown): TagCommandResult {
