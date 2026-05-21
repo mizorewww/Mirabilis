@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 13:46 CST.
+Last updated: 2026-05-21 13:55 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 13:46 CST.
 - Branch: `feat/task-019-task-navigation-infinite-nesting`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: code/test/security re-review cleared; docs sync completed and validated.
+- Current phase: final local gate and docs re-review cleared; completion ledger is being committed before merge to `master`.
 
 ## Active Agents
 
@@ -48,6 +48,7 @@ Last updated: 2026-05-21 13:46 CST.
   - Documented loaded `pageId/pageFacade` structured body propagation, structured-body task-title buttons, unsaved edit invalidation, delayed open stale guards, and malformed `attrs.boundPageId` as absent/untrusted.
   - Kept automatic editor-save scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces deferred.
   - Validation: `git diff --check` passed; focused stale searches found no `page.open` or `task.open_task_page` in product/architecture/development/testing docs, and remaining `boundPageId` / TASK-019 future-scope hits are source-binding or deferred-scope notes.
+- Linnaeus the 3rd (`docs_researcher`) completed final docs re-review. P0/P1/P2 blockers: none. Confirmed docs match `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }`, verified/recovered `attrs.boundPageId` source binding rather than trusted navigation, loaded structured body propagation, stale async guards, unsaved edit invalidation, and deferred scope boundaries. No edits were made by the re-review agent.
 
 ## Completed Recent Task
 
@@ -55,16 +56,13 @@ Last updated: 2026-05-21 13:46 CST.
 
 ## Current TASK-019 State
 
-- TASK-019 follows TASK-018 and owns the next task UX slice:
-  - Clicking task text opens the bound task page.
-  - Task pages are normal Markdown pages that can contain more tasks.
-  - Nested tasks create their own task pages using the same source-page/source-block mechanism.
-  - Parent/source relationships remain queryable through metadata.
-- Initial parent interpretation:
-  - Reuse TASK-018 `task.resolve-task-block`, `attrs.boundPageId`, and `task.sourcePageId` / `task.sourceBlockId` metadata unless agents identify a safer local pattern.
-  - Keep task navigation and nesting behavior in plugin/runtime/editor/App Shell surfaces, not Core business logic.
-  - Preserve Command Registry as the user-action boundary.
-  - Keep checkbox toggles, task events, filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, native filesystem behavior, and new Tauri capabilities out of scope unless agents prove a TASK-019 acceptance dependency.
+- TASK-019 is merge-ready after completion ledger commit:
+  - Clicking task text opens the verified task page through `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }`.
+  - Task pages remain normal Markdown pages and can contain more task blocks.
+  - Nested tasks create their own task pages through the same source-page/source-block mechanism.
+  - Parent/source relationships remain queryable through `task.sourcePageId` and `task.sourceBlockId` metadata.
+  - `attrs.boundPageId` is verified/recovered source binding data, not a trusted navigation target.
+  - Checkbox toggles, task events, filters, Tag Plugin parsing, metadata UI, timer/calendar behavior, rich editor migration, native filesystem behavior, and new Tauri capabilities remain out of scope for TASK-019.
 - Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal note and update notice.
 
 ## Parent Decisions After Pre-test Guidance
@@ -143,6 +141,16 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ```
 
 - Result: all passed or clean. Test groups passed with 2 files / 22 tests, 2 files / 28 tests, and 3 files / 66 tests. Typecheck, lint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Final local gate before merge:
+
+```bash
+bun run check:quick
+bun run build
+git diff --check
+rg -n "page\\.open|task\\.open_task_page|点击.*boundPageId|open.*boundPageId|future.*TASK-019|TASK-019.*future|TASK-019.*后续|后续.*TASK-019" docs/product docs/architecture docs/development docs/testing
+```
+
+- Result: all passed or clean. `bun run check:quick` passed with 23 frontend test files / 331 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. `git diff --check` passed. Focused docs stale searches found no `page.open` or `task.open_task_page`; remaining `boundPageId` / TASK-019 future-scope hits were source-binding or deferred-scope notes.
 
 ## Source Docs Read By Parent
 
@@ -156,5 +164,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit final focused re-review and docs sync summaries.
-2. Run final local gate before merge.
+1. Commit TASK-019 completion ledger.
+2. Merge `feat/task-019-task-navigation-infinite-nesting` into `master` after merge-tree `bun run check:quick`.
+3. Continue with TASK-020 on a new focused branch.

@@ -288,6 +288,41 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
   - Remaining `boundPageId` hits are source-binding, verification, or explicit "not a navigation target" notes, not direct navigation claims.
   - Remaining TASK-019/deferred wording keeps only automatic save-time scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces in future scope.
 
+### Final Docs Re-review And Merge Readiness
+
+- Status: completed by Linnaeus the 3rd (`docs_researcher`) on 2026-05-21 13:55 CST.
+- P0/P1/P2 blockers: none.
+- Findings:
+  - Product, architecture, development, and testing docs match final TASK-019 behavior.
+  - Current command contract is documented as `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }`.
+  - `attrs.boundPageId` is documented as verified/recovered source binding data, not a trusted navigation target.
+  - Loaded `pageId/pageFacade` structured body, stale async guards, and unsaved edit invalidation are covered.
+  - Deferred scope remains automatic save-time scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces.
+- Re-review commands:
+
+```bash
+git status --short --branch
+git rev-parse --abbrev-ref HEAD
+git log --oneline -5
+rg -n "page\\.open|task\\.open_task_page|open_task_page" docs --glob '!docs/implementation/agent-communication/**'
+rg -n "boundPageId.*(navigate|navigation|open|target|目标|打开|导航)|(?:navigate|navigation|open|target|目标|打开|导航).*boundPageId" docs --glob '!docs/implementation/agent-communication/**'
+rg -n "TASK-019.*(future|later|planned|deferred|will|尚未|后续|未实现)|future.*TASK-019|later.*TASK-019|planned.*TASK-019|TASK-019.*click|click.*TASK-019|点击.*TASK-019|TASK-019.*点击" docs --glob '!docs/implementation/agent-communication/**'
+git diff --name-only master...HEAD -- package.json bun.lockb bun.lock src-tauri Cargo.toml Cargo.lock
+git diff --check master...HEAD
+```
+
+- Final local gate:
+
+```bash
+bun run check:quick
+bun run build
+git diff --check
+rg -n "page\\.open|task\\.open_task_page|点击.*boundPageId|open.*boundPageId|future.*TASK-019|TASK-019.*future|TASK-019.*后续|后续.*TASK-019" docs/product docs/architecture docs/development docs/testing
+```
+
+- Final gate result: passed. `bun run check:quick` passed with 23 frontend test files / 331 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. `git diff --check` passed. Focused stale docs search found no blocker wording.
+- Parent decision: accept final docs re-review and proceed to completion ledger commit, merge-tree validation, merge to `master`, then continue to TASK-020.
+
 ### Pre-test Guidance
 
 - Jason the 3rd (`planner`) completed read-only planning.
