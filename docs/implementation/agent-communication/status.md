@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 14:41 CST.
+Last updated: 2026-05-21 14:52 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 14:41 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation and review-fix checks passed; production commit is next.
+- Current phase: focused review completed; P2 behavior fixes and docs sync are pending.
 
 ## Active Agents
 
@@ -30,6 +30,12 @@ Last updated: 2026-05-21 14:41 CST.
 - Laplace the 4th (`test_quality_reviewer`) found P1 test gaps matching the vanished-controls issue and missing loaded `pageId/pageFacade` checkbox coverage; P2 gaps for valid-shaped invalid source cases. Laplace noted the native-surface guard is brittle but useful as a temporary task-scope guard.
 - Noether the 4th (`test_writer`) added review-fix regressions in `src/test/task-checkbox-toggle-events.test.tsx`. Commit: `0b7874b`.
 - Hooke the 4th (`implementer`) fixed the review-fix regressions in `src/plugins/task/plugin.ts` and `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Focused review completed:
+  - Gauss the 4th (`pr_explorer`) mapped the changed surface and confirmed no native/package/Tauri surface changes. Hotspots: initially checked unresolved task open behavior, rapid repeated checkbox toggles, UI duplicate task title text, client-side Markdown reconstruction, and stale status docs.
+  - Sagan the 4th (`reviewer`) found two P2 correctness findings: task title click semantics are split across duplicated visible title text, and rapid repeated checkbox toggles can desync UI from committed state while async commands are in flight.
+  - Franklin the 4th (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings. P3: the native-surface guard shells out to `git diff master`.
+  - Archimedes the 4th (`security_reviewer`) found no P0/P1/P2 security findings. P3: existing `task.resolve-task-block` / `task.open-task-page` input readers still allow extra fields, but they are ignored and not trusted.
+  - Planck the 4th (`deprecation_auditor`) found P1 docs drift for stale command aliases/payloads, P2 checked-task open behavior under-specification, and P2 broader docs still saying checkbox toggle/events are unimplemented.
 
 ## Current TASK-020 State
 
@@ -66,6 +72,14 @@ Last updated: 2026-05-21 14:41 CST.
 - Source Markdown marker, task metadata, and event append must commit or roll back together through plugin transaction APIs.
 - UI tests should use a real accessible checkbox, send only `{ sourcePageId, sourceBlockId }`, preserve title-button navigation behavior from TASK-019, and cover stale delayed toggle results after page switch or same-page unsaved edit.
 
+## Parent Decisions After Focused Review
+
+- Add TDD review-fix tests before changing implementation.
+- Resolve duplicated title semantics by making the visible task title the open affordance. The checkbox remains a real accessible checkbox, but its visible label must not duplicate the task title or make clicking title text toggle status.
+- Prevent rapid repeated toggle desync by disabling or otherwise ignoring checkbox toggles while a toggle for that source block is pending.
+- Make `task.open-task-page` handle an unresolved checked source line by creating/binding/opening a task page with `task.status = "done"` and no `task.completed` / `task.reopened` event. Keep `task.resolve-task-block` unchanged as unchecked-only.
+- Defer docs drift fixes to docs sync after behavior fixes pass focused review.
+
 ## Source Docs Read By Parent
 
 - `.codex/skills/mirabilis-dev-runner/SKILL.md`.
@@ -95,6 +109,6 @@ git diff --cached --check
 
 ## Next Actions
 
-1. Commit TASK-020 production implementation.
-2. Spawn focused review agents.
-3. Fix any P0/P1 findings before docs sync.
+1. Delegate review-fix tests for the focused P2 behavior findings.
+2. Run expected red tests.
+3. Delegate review-fix implementation.

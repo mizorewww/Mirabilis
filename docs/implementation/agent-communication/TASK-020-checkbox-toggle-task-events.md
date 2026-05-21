@@ -324,6 +324,92 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Result: all passed or clean. Focused tests passed with 3 files / 43 tests. `bun run typecheck` passed. `bun run lint` passed. `git diff --check` passed. Native/package/Tauri surface diff was empty.
 - Remaining concern: none known in the requested TASK-020 scope before focused review.
 
+## Focused Review Round
+
+### Gauss the 4th - Changed Surface Explorer
+
+- Status: completed read-only changed-surface exploration.
+- Changed files from `master...HEAD`:
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+  - `src/test/task-checkbox-toggle-events.test.tsx`.
+  - `docs/implementation/agent-communication/TASK-020-checkbox-toggle-task-events.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/progress.md`.
+- Native/package/Tauri surface: no changed files.
+- Hotspots:
+  - Initially checked unresolved tasks: toggle can create/reopen but open refuses unresolved checked lines.
+  - Rapid repeated checkbox toggles before the first command resolves.
+  - UI duplicates task title text as checkbox label and open button.
+  - Editor reconstructs Markdown locally from structured snapshot after command success.
+  - Agent communication status was stale after implementation commit.
+
+### Sagan the 4th - Correctness Reviewer
+
+- Status: completed read-only correctness review.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+git diff --check master...HEAD
+```
+
+- Result: focused tests passed with 3 files / 43 tests. Typecheck, lint, and diff check passed. Native/package/Tauri surface diff was empty.
+- Findings:
+  - P2: task title click semantics are split across two visible title copies. The checkbox label contains the task title, so clicking that visible title toggles status; a second duplicated title button opens the page. Product docs specify checkbox click completes and task text click opens.
+  - P2: rapid repeated checkbox toggles can desync UI from committed task state. While a toggle command is in flight, the checkbox remains enabled and a later committed toggle result can be ignored by the stale guard after the first result updates local Markdown/version.
+
+### Franklin the 4th - Test Quality Reviewer
+
+- Status: completed read-only test-quality review.
+- Finding: no P0/P1/P2 test-quality findings.
+- P3: native-surface guard shells out to `git diff master`; useful for task-scope discipline but branch/environment coupled.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+```
+
+- Result: passed with 3 files / 43 tests.
+
+### Archimedes the 4th - Security Reviewer
+
+- Status: completed read-only security review.
+- Finding: no P0/P1/P2 security findings.
+- P3: existing `task.resolve-task-block` / `task.open-task-page` input readers still accept extra fields, unlike the strict toggle reader; ignored extra fields are not trusted.
+- Checks run:
+
+```bash
+bun run test:frontend -- src/test/task-checkbox-toggle-events.test.tsx
+cargo test --manifest-path src-tauri/Cargo.toml --all-features ipc_boundary
+cargo test --manifest-path src-tauri/Cargo.toml --all-features ipc_capabilities_are_narrow_and_review_db_command_exposure
+git diff --check master...HEAD
+```
+
+- Result: all passed or clean. Native/package/Tauri surface diff returned no changed files.
+
+### Planck the 4th - API/Deprecation Auditor
+
+- Status: completed read-only API/deprecation audit.
+- Findings:
+  - P1 docs: local docs still publish stale aliases and one wrong payload: `task.toggle_status`, `task.toggle_checkbox`, and `task.toggle-status` with `{ pageId }`.
+  - P2 behavior/docs: checked-task open behavior is under-specified. Current editor renders checked tasks as openable, but `task.open-task-page` throws for an unresolved checked source line without an existing verified/metadata relation.
+  - P2 docs: broader product/architecture docs still say checkbox toggle/events are not implemented.
+- Clean areas:
+  - No deprecated React test-utils usage.
+  - React controlled checkbox and RTL/user-event patterns are current.
+  - Tauri/package surface is clean.
+
+## Parent Decisions After Focused Review
+
+- Add review-fix tests first.
+- Task title interaction: the visible task title should be the open affordance. Checkbox remains a real accessible checkbox but should not duplicate the visible title text or make clicking the task title toggle status.
+- Rapid repeated toggles: while a toggle for a source block is pending, further checkbox toggles for that same control should be disabled or ignored so UI cannot desync from committed command state.
+- Checked task open: `task.open-task-page` should create/bind/open an unresolved checked task as a normal task page with `task.status = "done"` and no completion/reopen event. `task.resolve-task-block` remains unchecked-only.
+- Docs P1/P2 drift will be handled by a docs sync agent after behavior fixes and focused review pass.
+
 ## Current Next Action
 
-- Commit TASK-020 production implementation.
+- Delegate review-fix tests for the focused P2 findings.
