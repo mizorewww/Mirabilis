@@ -40,15 +40,16 @@
 
 ## Current Status
 
-- Status: red tests committed; implementation handoff pending.
-- Active agents: none.
+- Status: implementation agent running.
+- Active agents:
+  - Peirce the 3rd (`implementer`): production implementation for Task Plugin syntax/page creation.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
   - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit completed.
   - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance completed.
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
-- Next parent step: commit red-test result record, then delegate implementation to `implementer`.
+- Next parent step: wait for Peirce the 3rd's implementation, then run focused TASK-018 checks and commit if green.
 
 ## Agent Handoffs
 
@@ -120,6 +121,13 @@ git diff --check
 ```
 
 - Result: expected red signal from the focused test command. 1 file failed, 5 tests failed, 3 tests passed. Main failures: missing built-in `task` plugin, missing task checkbox syntax contribution, and missing `task.resolve-task-block` command (`COMMAND_NOT_FOUND`). `bun run typecheck` and `git diff --check` passed.
+
+### Peirce the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: production implementation only, with tiny test typing/import fixes only if unavoidable and without weakening assertions.
+- Expected files: likely `src/plugins/task/**`, `src/bootstrap/built-in-plugins.ts`, and a minimal generic command execution context in Core command/plugin-host code if needed.
+- Constraints: no task business logic in Core/App Shell/MarkdownEditor UI; no native/Tauri/Rust/package/capability/filesystem changes; no stale register-time `PluginContext` mutation; no nonexistent `updateBlockAttrs`; no duplicate task pages for `(sourcePageId, sourceBlockId)`.
 
 ## Parent Decisions
 
