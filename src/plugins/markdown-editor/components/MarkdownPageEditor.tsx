@@ -6,7 +6,11 @@ import {
   type ChangeEvent,
 } from "react";
 
-import type { BlockNode, StructuredMarkdownDocument } from "../../../core";
+import {
+  exportStructuredDocumentToMarkdown,
+  type BlockNode,
+  type StructuredMarkdownDocument,
+} from "../../../core";
 import type { MarkdownInsertTextResult } from "../commands/insert-text";
 import { BaseMarkdownToolbar } from "./BaseMarkdownToolbar";
 
@@ -129,7 +133,7 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     pageFacade === undefined ? readStructuredBody(props) : state.body;
   const collectedExtensions = extensionSource?.collectEditorExtensions() ?? [];
   const taskTitleButtons = collectTaskTitleButtons(
-    structuredBody,
+    readCurrentStructuredBody(structuredBody, markdown),
     collectedExtensions,
   );
   const canSave =
@@ -418,6 +422,17 @@ function readExtensionSource(
   props: MarkdownPageEditorProps,
 ): MarkdownExtensionSource | undefined {
   return props.markdownRuntime;
+}
+
+function readCurrentStructuredBody(
+  body: StructuredMarkdownDocument | undefined,
+  markdown: string,
+): StructuredMarkdownDocument | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+
+  return exportStructuredDocumentToMarkdown(body) === markdown ? body : undefined;
 }
 
 function createInitialEditorState(input: {
