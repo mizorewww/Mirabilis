@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: review-fix red-test agent running.
-- Active agents:
-  - Boole the 3rd (`test_writer`): review-fix failing tests for TASK-018 review findings.
+- Status: review-fix red tests committed; implementation handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -51,7 +50,8 @@
   - Harvey the 3rd (`test_writer`): red acceptance tests completed, verified red, committed, and closed.
   - Peirce the 3rd (`implementer`): production implementation completed, focused checks green, committed, and closed.
   - Review round 1 agents completed and reported findings.
-- Next parent step: wait for Boole the 3rd's review-fix red tests, run focused red-test command, and commit the tests.
+  - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
+- Next parent step: commit review-fix red-test result record, then delegate review-fix implementation to `implementer`.
 
 ## Agent Handoffs
 
@@ -230,9 +230,14 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ### Boole the 3rd (`test_writer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: tests only.
-- Review-fix test targets:
+- Files changed:
+  - `src/test/task-plugin-syntax-page-creation.test.ts`.
+  - `src/test/plugin-host-lifecycle.test.ts`.
+  - `src/test/plugin-api-contracts.test.ts`.
+- Commit: `4b1001f` (`Boole the 3rd(test)(Implement Task Plugin syntax and task page creation): add review-fix regression tests`).
+- Review-fix coverage added:
   - Duplicate top-level `blockId` source safety.
   - Unverified `attrs.boundPageId` safety and verified relation reuse.
   - Metadata-only relation reuse and source binding restoration.
@@ -242,6 +247,15 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Public `PluginCommandHandler` API contract coverage.
   - Command-time PluginContext hardening where practical.
   - Resolver atomicity if a clean test seam exists.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 3 files ran, 2 failed, 1 passed; 4 tests failed and 72 passed. Failures covered duplicate top-level `blockId` mutation, unverified `attrs.boundPageId` reuse, CommonMark indented-code task parsing, and missing command failure cause/context preservation. `bun run typecheck` and `git diff --check` passed.
 
 ## Parent Decisions
 
