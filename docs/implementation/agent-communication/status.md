@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:28 CST.
+Last updated: 2026-05-21 19:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-21 19:28 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review-fix implementation committed; post-fix focused review is next.
+- Current phase: post-fix focused review is running.
 
 ## Active Agents
 
-- None. Ampere (`implementer`) completed the review-fix implementation.
+- Hume (`pr_explorer`) is mapping the post-fix changed surface.
+- Dewey (`reviewer`) is reviewing correctness.
+- Avicenna (`security_reviewer`) is reviewing security boundaries.
+- Beauvoir (`deprecation_auditor`) is checking API/deprecation risks.
+- Archimedes (`test_quality_reviewer`) is reviewing test quality.
 
 ## Completed Recent Task
 
@@ -78,7 +82,7 @@ Last updated: 2026-05-21 19:28 CST.
 
 ## Next Actions
 
-1. Spawn post-fix focused review agents for the review-fix code.
+1. Wait for post-fix focused review agents.
 2. Address any P0/P1 findings; evaluate P2 findings.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.

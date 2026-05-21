@@ -314,4 +314,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run a focused post-fix review for the review-fix code before formal docs sync.
+- Post-fix focused review is running with Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`).
