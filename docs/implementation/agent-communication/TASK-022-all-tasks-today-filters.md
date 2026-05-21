@@ -253,6 +253,35 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Implement only the current page/metadata subset of comparison operators needed by the new tests.
   - Keep JS filters, native/Tauri/package/Rust changes, global saved-filter navigation, automatic scanning, persistence rewiring, and Event/plugin-index `within` execution out of scope.
 
+## Review-Fix Regression Tests
+
+- Status: completed by Hooke (`test_writer`) on 2026-05-21 19:23 CST.
+- Commit: `c765349`.
+- Files changed:
+  - `src/test/core-filter-engine.test.ts`.
+  - `src/test/task-filters-view-rendering.test.tsx`.
+  - `src/test/core-filter-store.test.ts`.
+  - `src/test/plugin-api-contracts.test.ts`.
+- Coverage added:
+  - Task Plugin deactivate, re-register, and reactivate regression for fixed default filters.
+  - Runtime and typed public fixed filter `id` coverage for Core and plugin filter saves.
+  - Generic non-task/non-tag metadata namespace execution plus forged-owner exclusion.
+  - `gt`/`lt` numeric and date metadata comparisons plus wrong-value-type fail-closed behavior.
+  - Relative-date `neq` fail-closed behavior for wrong-typed date metadata.
+  - View lookup through a saved filter's `viewType`.
+  - Empty results routed through `filter.empty_state`.
+  - Generic empty-state copy that does not force task wording for all `page.list` filters.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-store.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bunx eslint src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-store.test.ts src/test/plugin-api-contracts.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 4 files / 94 tests with 4 failed / 90 passed. Failures were missing `gt`/`lt` support, wrong-typed relative-date `neq` matching, Task Plugin re-register `FILTER_ID_COLLISION`, and task-specific empty-state copy. `bun run typecheck` failed because `SaveFilterInput` and `PluginSaveFilterInput` do not expose optional `id`. Focused eslint and `git diff --check` passed.
+
 ## Current Next Action
 
-- Hooke (`test_writer`) is adding failing regressions for the accepted P1/P2/P3 findings. Parent will validate the expected red signal before committing the tests.
+- Spawn review-fix `implementer` to make Hooke's red regressions pass with the minimum production change.
