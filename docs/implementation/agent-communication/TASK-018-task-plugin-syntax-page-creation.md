@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: second review-fix implementation agent running.
-- Active agents:
-  - Darwin the 3rd (`implementer`): second review-fix implementation for spoofed command cause redaction.
+- Status: second review-fix implementation committed; final focused re-review pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +53,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Darwin the 3rd's second review-fix implementation, run focused checks, and commit if green.
+- Next parent step: commit second review-fix implementation result record, then run final focused re-review for command failure redaction.
 
 ## Agent Handoffs
 
@@ -339,9 +338,23 @@ git diff --check
 
 ### Darwin the 3rd (`implementer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: minimal production fix only.
 - Target: preserve command failure causes only for genuine PluginHostError instances from plugin command execution, while preserving raw-cause redaction for normal command handlers.
+- File changed:
+  - `src/core/commands/command-registry.ts`.
+- Commit: `8ecfbbd` (`Darwin the 3rd(review-fix)(Implement Task Plugin syntax and task page creation): protect command failure redaction`).
+- Summary: replaced duck-typed PluginHostError shape detection with `cause instanceof PluginHostError`, so normal command handlers cannot spoof Plugin Host failures while genuine plugin command failures still preserve context.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts src/test/plugin-host-lifecycle.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+- Result: all passed. Core command registry + Plugin Host lifecycle tests passed with 2 files / 59 tests.
 
 ## Parent Decisions
 
