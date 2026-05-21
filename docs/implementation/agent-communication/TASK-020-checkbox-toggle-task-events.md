@@ -586,6 +586,18 @@ git diff --check
 - Result: stale command name, unimplemented checkbox/event wording, and dotted event scans were clean. The broad payload scan only matched valid `{ pageId }` return/open-command contexts, not stale `task.toggle-status({ pageId })` examples. `git diff --check` passed.
 - Remaining docs risk: historical `docs/implementation/agent-communication/*` entries still record earlier stale names and audit findings by design.
 
+## Final Gate
+
+- Status: passed on 2026-05-21 15:24 CST.
+- Checks run:
+
+```bash
+bun run check:quick
+bun run build
+```
+
+- Result: both passed. `check:quick` passed with 24 frontend test files / 351 tests, Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed.
+
 ## Current Next Action
 
-- Commit Peirce the 4th's formal docs sync, then run the final local gate.
+- Commit the TASK-020 completion ledger, then merge to `master`.

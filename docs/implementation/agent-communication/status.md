@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:22 CST.
+Last updated: 2026-05-21 15:24 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:22 CST.
 - Branch: `feat/task-020-checkbox-toggle-task-events`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-020 formal docs sync is complete; final local gate is next.
+- Current phase: TASK-020 final local gate passed; completion ledger and merge are next.
 
 ## Active Agents
 
@@ -156,9 +156,17 @@ git diff --check
 ```
 
 - Result: stale command name, unimplemented checkbox/event wording, and dotted event scans were clean. The broad payload scan only matched valid `{ pageId }` return/open-command contexts, not stale `task.toggle-status({ pageId })` examples. `git diff --check` passed.
+- Final TASK-020 local gate:
+
+```bash
+bun run check:quick
+bun run build
+```
+
+- Result: both passed. `check:quick` passed with 24 frontend test files / 351 tests, Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed.
 
 ## Next Actions
 
-1. Commit Peirce the 4th's formal docs sync.
-2. Run final local gate.
-3. Mark TASK-020 complete, merge to `master`, and continue to the next unblocked task.
+1. Commit the TASK-020 completion ledger.
+2. Merge `feat/task-020-checkbox-toggle-task-events` to `master`.
+3. Continue to the next unblocked task.

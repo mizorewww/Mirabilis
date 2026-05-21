@@ -51,7 +51,7 @@ Status markers:
 
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
 - [x] TASK-019: Implement task navigation and infinite nesting
-- [~] TASK-020: Implement checkbox toggle and task events
+- [x] TASK-020: Implement checkbox toggle and task events
 - [ ] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
 
@@ -78,6 +78,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 15:24 CST - TASK-020 completed
+
+- Branch: `feat/task-020-checkbox-toggle-task-events`.
+- Task: Implement checkbox toggle and task events.
+- Commits: `bd94701`, `2f6fb8a`, `c9c0c33`, `c16be38`, `16557be`, `0b7874b`, `c7aa9d0`, `8fda852`, `c59561c`, `2134c16`, `bd7c147`, `0b54251`, `3c83bfa`, `9c21c94`, and `c6f8a5b`.
+- Delivered: canonical Task Plugin command `task.toggle-status({ sourcePageId, sourceBlockId }) -> { pageId, status }`; checkbox completion from `- [ ]` to `- [x]`; reopen from `- [x]` / `- [X]` to `- [ ]`; same-transaction source marker, source binding, task metadata, and task event mutation; `task.status = "todo" | "done"` metadata; `namespace: "task", type: "completed" | "reopened"` events with camelCase payloads; accessible Markdown editor checkbox controls; visible task title preserved as the open affordance; pending same-source toggle suppression; stale delayed toggle guards; loaded `pageId/pageFacade` real-command toggle coverage; and `task.open-task-page` creation/opening for unresolved checked task lines as `done` pages without completion/reopen events while `task.resolve-task-block` remains unchecked-only.
+- Validation: focused TASK-020 acceptance and review-fix checks passed throughout the TDD loop. Final focused checks passed for TASK-020 alone with 20 frontend tests and for TASK-018/TASK-019/TASK-020 together with 3 frontend files / 48 tests. Expanded frontend coverage passed with 6 files / 113 tests before docs sync. Final local gate `bun run check:quick` passed with 24 frontend test files / 351 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed. `git diff --check` passed. Formal-doc stale scans found no stale `task.toggle_status` / `task.toggle_checkbox`, dotted task event names, or checkbox/event unimplemented wording in product/architecture/development/testing docs. Native/package/Tauri surface diff checks were empty.
+- `check:full`: not run for TASK-020 because the branch did not add Tauri commands, permissions/capabilities, filesystem/native behavior, package or Cargo dependencies, persistence schema behavior, packaging, release behavior, or app-runtime persistence wiring. The branch is TypeScript plugin/runtime/editor behavior plus docs and focused tests, covered by `check:quick`, `bun run build`, focused frontend/runtime tests, docs review, and empty native/package/Tauri surface checks.
+- Review: planning/current-doc guidance, deprecation/API audit, security guidance, TDD tests, implementation, correctness/security/test-quality/API/deprecation reviews, changed-surface exploration, two review-fix TDD loops, loaded-runtime regression coverage, docs sync, and final local gate were delegated to agents or run by the parent orchestrator. Final P0/P1/P2 code/security/test-quality findings were fixed or cleared. Remaining P1/P2 docs drift found by API/deprecation review was fixed in formal docs before completion.
+- External docs verified by agents: React 19 events, controlled checkbox input, `act` and test-utils deprecation guidance; Testing Library/user-event v14 setup/click/ByRole checked/async docs; Vitest async, mock, and v4 API docs; Tauri v2 API/migration/permissions/capabilities docs; Vite 7 migration/support guidance; and React Testing Library API docs. Final docs sync was based on local implementation/tests and did not require new external docs.
+- Remaining risk: TASK-020 intentionally keeps automatic editor-save task scanning/indexing, All Tasks / Today filters, Tag Plugin parsing/indexing, metadata UI, Timer/Calendar reactions, rich editor behavior, and native/Tauri/package surfaces deferred. Non-blocking P3: the native-surface shell-out guard in Vitest is branch/git-environment coupled but accepted because `master` is canonical and the guard passed locally. Loaded real-command coverage exercises completion; reopen is covered through runtime command/UI tests but not repeated in the exact loaded `pageId/pageFacade` shape. Historical `docs/implementation/agent-communication/*` entries still record earlier stale command-name findings by design.
 
 ### 2026-05-21 13:58 CST - TASK-020 started
 
