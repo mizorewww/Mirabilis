@@ -37,8 +37,9 @@
 
 ## Current Status
 
-- Status: review-fix red tests completed and committed; review-fix implementation handoff pending.
-- Active agents: none.
+- Status: review-fix implementation in progress.
+- Active agents:
+  - Fermat the 3rd (`implementer`) for production review-fix implementation.
 - Completed agents:
   - Kuhn the 2nd (`planner`): scope and implementation plan completed.
   - Averroes the 2nd (`docs_researcher`): current docs research completed.
@@ -54,7 +55,8 @@
   - Boyle the 3rd (`test_quality_reviewer`): test quality review completed.
   - Maxwell the 3rd (`doc_writer`): documentation gap review completed.
   - Chandrasekhar the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
-- Next parent step: spawn `implementer` for the minimum production review-fix patch.
+  - Fermat the 3rd (`implementer`): production review-fix implementation in progress.
+- Next parent step: wait for Fermat the 3rd, run focused green checks, and commit implementation if scope and validation match.
 
 ## Agent Handoffs
 
@@ -302,3 +304,26 @@
   - `git diff --check` passed.
   - `git diff --cached --check` passed before commit.
 - Commit: `a574683 Chandrasekhar the 3rd(test)(Implement Markdown Editor Plugin shell): cover review findings`.
+
+### Fermat the 3rd (`implementer`) Handoff
+
+- Status: in progress.
+- Agent ID: `019e47ea-acb2-7bc1-892d-5f47bd2e6e03`.
+- Ownership: minimum production code to pass the committed review-fix tests.
+- Allowed write scope:
+  - `src/plugins/markdown-editor/**`.
+  - `src/core/runtime/**`.
+  - `src/core/plugin-host/**` only if needed for safe status-aware metadata/contribution access.
+  - `src/bootstrap/create-app-runtime.ts`.
+  - `src/core/index.ts` or barrel exports if required.
+  - Small adjacent production type/helper files only if clearly needed by existing architecture.
+- Required fixes:
+  - Add production `runtime.markdown.pages` facade backed by allowlisted NativeBridge DB DTOs.
+  - Make editor collect markdown runtime extensions through a narrow API.
+  - Preserve trusted extension `pluginId`, fix omitted `selectionEnd`, controlled textarea/page-change/save-race behavior, and deactivated plugin filtering.
+- Required checks:
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+- Restrictions: no test edits, docs edits, Tauri config/capabilities, Rust code, package/Cargo dependency changes, generated files, Tiptap/ProseMirror, new native commands, or broad Core store-to-SQLite rewiring.
