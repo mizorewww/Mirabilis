@@ -382,6 +382,33 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 4 files / 110 tests with 10 failed / 100 passed. Failures were cross-plugin fixed task filter ids still being accepted, cyclic/deep direct queries not failing closed, malformed direct query/valueType cases matching, and generic metadata owner pairs with non-matching `sourcePluginId` being rejected. `bun run typecheck`, focused eslint, and `git diff --check` passed.
 
+## Second Review-Fix Implementation
+
+- Status: completed by Einstein (`implementer`) on 2026-05-21 19:51 CST.
+- Commit: `2b61886`.
+- Files changed:
+  - `src/core/filter-engine.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+- Behavior implemented:
+  - `executeFilterQuery` fails closed for cyclic and over-deep direct query objects.
+  - Direct query execution rejects `exists` with a value and non-`exists` operators without a value.
+  - Metadata execution validates stored value shape against `valueType` before matching.
+  - Generic metadata can match valid namespace/source-owner pairs such as `metadata.profile.visibility` from `profile-plugin`, while `task` and `tag` metadata still require their built-in owners.
+  - Plugin-facing fixed filter IDs such as `task.filter.*` are rejected unless saved by the owning plugin namespace.
+  - Task default-filter preservation was verified by Ptolemy's regression without requiring a Task Plugin implementation change.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts src/test/core-filter-store.test.ts
+bun run test:frontend -- src/test/core-view-slot-registry.test.ts src/test/task-plugin-syntax-page-creation.test.ts src/test/task-checkbox-toggle-events.test.tsx src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Second review-fix focused tests passed with 4 files / 110 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Einstein (`implementer`) is fixing Ptolemy's red regressions with the minimum production/type change.
+- Run a narrow post-second-fix review, then proceed to formal docs sync.

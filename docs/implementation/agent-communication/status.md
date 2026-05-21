@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:45 CST.
+Last updated: 2026-05-21 19:51 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 19:45 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: second review-fix implementation is in progress.
+- Current phase: second review-fix implementation committed; narrow post-second-fix review is next.
 
 ## Active Agents
 
-- Einstein (`implementer`) is fixing Ptolemy's second review-fix regressions.
+- None. Einstein (`implementer`) completed the second review-fix implementation.
 
 ## Completed Recent Task
 
@@ -69,6 +69,7 @@ Last updated: 2026-05-21 19:45 CST.
 - Ampere (`implementer`) fixed the review regressions in `src/core/filter-engine.ts`, `src/core/stores/filter-store.ts`, `src/core/plugin-api/context.ts`, `src/plugins/task/plugin.ts`, and `src/plugins/task/components/TaskFilterViews.tsx`. It made Task default filters idempotent, typed optional fixed filter IDs, implemented the current `gt`/`lt` page/metadata comparison subset, hardened relative-date `neq`, and made empty-state copy generic. Parent validation passed: review-fix focused tests 94/94, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `a9b0579`.
 - Post-fix focused review completed with Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`). P0/P1 findings: none. Accepted P2 follow-up: preserve user-created task-owned filters during default upsert, guard direct `executeFilterQuery` against cyclic/over-deep queries, prevent cross-plugin fixed filter id collisions such as foreign-owned `task.filter.*`, remove the hidden assumption that every metadata `sourcePluginId` equals namespace while preserving built-in Task/Tag trust boundaries, and fail closed for malformed metadata `valueType` on `eq`/`neq`/`includes`. `within` remains deferred to formal docs sync as an explicit current-executor subset caveat.
 - Ptolemy (`test_writer`) added second review-fix regression tests in `src/test/core-filter-engine.test.ts`, `src/test/plugin-api-contracts.test.ts`, and `src/test/task-filters-view-rendering.test.tsx`. Parent red validation matched the expected signal: focused tests had 10 failures / 100 passes, `bun run typecheck` passed, focused eslint passed, and `git diff --check` passed. Commit: `abbd9ff`; the auto-push initially timed out over SSH, then parent retried `git push` successfully.
+- Einstein (`implementer`) fixed the second review regressions in `src/core/filter-engine.ts` and `src/core/plugin-host/plugin-host.ts`. It added direct query traversal guards, operator/value-shape validation, metadata value-shape validation, generic metadata owner handling with built-in Task/Tag owner boundaries, and plugin-facing fixed filter id namespace enforcement. Parent validation passed: second review-fix focused tests 110/110, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `2b61886`.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -80,8 +81,8 @@ Last updated: 2026-05-21 19:45 CST.
 
 ## Next Actions
 
-1. Wait for Einstein's second review-fix implementation.
-2. Re-run focused and adjacent validation, then commit implementation.
+1. Spawn narrow post-second-fix review agents for the security/API-heavy changes.
+2. Address any P0/P1 findings and evaluate P2 findings.
 3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
 4. Run final branch gates before marking TASK-022 complete.
 
