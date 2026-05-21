@@ -40,9 +40,13 @@
 
 ## Current Status
 
-- Status: task started; pre-test guidance agents pending.
-- Active agents: none yet.
-- Next parent step: commit start docs, then spawn `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer`.
+- Status: pre-test guidance agents running.
+- Active agents:
+  - Godel the 3rd (`planner`): read-only TASK-018 scope and TDD plan.
+  - Copernicus the 3rd (`docs_researcher`): read-only current-doc guidance for APIs/tools TASK-018 may touch.
+  - Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit.
+  - Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance before tests.
+- Next parent step: wait for pre-test guidance, persist findings and parent decisions, then delegate failing tests to `test_writer`.
 
 ## Parent Decisions
 

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 11:12 CST.
+Last updated: 2026-05-21 11:13 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 11:12 CST.
 - Branch: `feat/task-018-task-plugin-syntax-page-creation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test planning/current-doc/security/deprecation guidance pending.
+- Current phase: pre-test planning/current-doc/security/deprecation guidance agents running.
 
 ## Active Agents
 
-- None yet.
+- Godel the 3rd (`planner`): read-only TASK-018 scope and TDD plan.
+- Copernicus the 3rd (`docs_researcher`): read-only current-doc guidance for APIs/tools TASK-018 may touch.
+- Planck the 3rd (`deprecation_auditor`): read-only local API/deprecation/migration risk audit.
+- Euclid the 3rd (`security_reviewer`): read-only security and boundary guidance before tests.
 
 ## Current TASK-018 State
 
@@ -46,6 +49,6 @@ Last updated: 2026-05-21 11:12 CST.
 
 ## Next Actions
 
-1. Commit TASK-018 start progress/status docs.
-2. Spawn pre-test guidance agents: `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer`.
-3. Persist agent findings, then delegate failing tests to `test_writer`.
+1. Wait for pre-test guidance agents.
+2. Persist agent findings and parent decisions.
+3. Delegate failing tests to `test_writer`.
