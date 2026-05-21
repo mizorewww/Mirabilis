@@ -159,12 +159,14 @@ D
 
 用户可以一直写，不需要切换到表单模式。
 
+TASK-016 当前只交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体是受控 `<textarea>`，保存的是用户输入的 Markdown 文本。Task / Tag / Date / Page Link 等语义识别仍由后续插件接管。
+
 ### 12.2 UI 只辅助插入语法
 
 UI 不负责“创建任务表单”。
 UI 负责帮助用户快速插入语法。
 
-工具栏：
+长期目标工具栏：
 
 ```text
 ☐   #   @date   [[ ]]   /
@@ -180,7 +182,17 @@ UI 负责帮助用户快速插入语法。
 /      打开轻量 command menu
 ```
 
-用户点击 `☐`，编辑器插入：
+TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
+
+```text
+☐      插入 - [ ] <space>
+#      插入 #
+[[ ]]  插入 [[ ]]
+```
+
+这些按钮通过 `markdown.insert-text` command bus 插入文本。`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、稳定 block ID、Markdown import/export、以及 task/tag/page-link 的语义行为都延后到后续插件或编辑器任务。
+
+用户点击 `☐`，编辑器插入 `- [ ] `（末尾有空格）：
 
 ```markdown
 - [ ]
@@ -204,7 +216,7 @@ Task Plugin 接管后续识别。
 
 ```text
 自动弹出键盘
-底部出现工具栏：☐ # @date [[ ]] /
+底部出现工具栏：☐ # [[ ]]
 ```
 
 用户点击 `☐`：
@@ -223,9 +235,9 @@ Task Plugin 接管后续识别。
 
 ```text
 进入 Inbox Page
-Task Plugin 创建任务页面
-Tag Plugin 识别 #ml
-Filter 自动更新
+后续 Task Plugin 创建任务页面
+后续 Tag Plugin 识别 #ml
+后续 Filter 自动更新
 ```
 
 移动端不需要复杂任务创建表单。

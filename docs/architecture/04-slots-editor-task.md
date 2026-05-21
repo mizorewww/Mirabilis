@@ -106,15 +106,20 @@ ML Plugin 可以渲染：
 
 ## 8. Markdown Editor Plugin
 
-Markdown Editor Plugin 是必需插件。
+Markdown Editor Plugin 是 TASK-016 后的内置插件，manifest id 是 `markdown`。
 
-它负责编辑器体验，但任务语义仍由 Task Plugin 负责。
+它负责最小 Markdown 编辑体验，但任务、标签、日期、页面链接和富编辑语义仍由后续插件或编辑器任务负责。
 
 ### 8.1 注册内容
 
 ```ts
 export const MarkdownEditorPlugin: AppPlugin = {
-  manifest,
+  manifest: {
+    id: "markdown",
+    name: "Markdown Editor",
+    version: "1.0.0",
+    minAppVersion: "0.1.0"
+  },
   register(ctx) {
     ctx.views.register({
       id: "markdown.page-editor",
@@ -139,7 +144,23 @@ export const MarkdownEditorPlugin: AppPlugin = {
 };
 ```
 
-### 8.2 编辑器扩展收集
+`markdown.page-editor` 是 `type: "page.editor"` 的 view，`markdown.insert-text` 是插入文本 command，`markdown.editor-mobile-toolbar.base` 挂到 `editor.mobile.toolbar` slot。
+
+### 8.2 TASK-016 编辑器 shell
+
+当前编辑器是受控 `<textarea>` shell，不是 Tiptap / ProseMirror / rich editor：
+
+- `MarkdownPageEditor` 用 `value` + synchronous `onChange` 保存 textarea 状态，保留用户输入的 Markdown 文本。
+- 基线输入覆盖 heading、paragraph、list、task syntax text、tag text 和 page-link text，但只按普通文本保存。
+- `BaseMarkdownToolbar` 只插入三个 literal snippet：`- [ ] `、`#`、`[[ ]]`。
+- 工具栏调用 editor 的 `insertText()`，editor 再通过 `commands.execute("markdown.insert-text", input)` 走 command bus。
+- `markdown.insert-text` 归一化 selection offset；省略 `selectionEnd` 时使用归一化后的 `selectionStart`，返回新的 `markdown`、`selectionStart` 和 `selectionEnd`。
+- 异步插入会在 await command 前 snapshot page id、当前 markdown、selection 和内容 generation。command 结果回来时，如果 page 或内容 generation 已变化，结果会被丢弃，避免慢 command 覆盖用户后续输入或页面切换。
+- 通过 `pageFacade` 加载页面时，页面切换会进入 loading state 并禁用编辑/保存；save 完成后只有在仍是同一页面且内容 generation 未变化时才应用 saved markdown。
+
+TASK-016 明确不实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、semantic task/tag/page-link behavior、stable block IDs、Markdown import/export 或 rich editor behavior。
+
+### 8.3 Markdown runtime facade
 
 编辑器启动时从所有插件收集扩展：
 
@@ -147,10 +168,35 @@ export const MarkdownEditorPlugin: AppPlugin = {
 const editorExtensions = runtime.markdown.collectEditorExtensions();
 ```
 
-Task Plugin 提供 task block extension。
-Tag Plugin 提供 tag token extension。
-Date Plugin 提供 date token extension。
-Page Link Plugin 提供 `[[page]]` extension。
+TASK-016 的 `collectEditorExtensions()` 只收集 active plugin manifest 里的 `contributes.markdownSyntax` descriptor：
+
+```ts
+type CollectedMarkdownSyntaxContribution = MarkdownSyntaxContribution & {
+  pluginId: string;
+};
+```
+
+这些 descriptor 是 inert JSON-like metadata，不是 executable Tiptap / ProseMirror extension。`pluginId` 由 Plugin Host 根据 manifest owner 写入；如果 contribution 对象里带有伪造的 `pluginId`，会被 host-owned `pluginId` 覆盖。deactivated plugin 的 descriptor 不会被收集。
+
+`runtime.markdown.pages` 是一个 narrow page facade：
+
+```ts
+runtime.markdown.pages.load(pageId);
+runtime.markdown.pages.save({ pageId, markdown });
+```
+
+它只通过 NativeBridge DB allowlist 调用 `core.pages.get` 和 `core.pages.update` DTO，并把 Markdown 文本包装为当前窄结构：
+
+```ts
+{
+  type: "doc",
+  content: [{ type: "markdown.text", text: markdown }]
+}
+```
+
+这个 facade 不接受 raw SQL、SQL params、filesystem path 或 file DTO。它也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，TASK-016 只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。
+
+后续 Task Plugin 可以提供 task block syntax descriptor，Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。真正的解析、索引、导航和 rich editor adaptation 仍未实现。
 
 ---
 

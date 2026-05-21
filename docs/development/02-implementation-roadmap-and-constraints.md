@@ -37,15 +37,18 @@ Transaction Manager
 
 ### Phase 2：Markdown Editor Plugin
 
-实现：
+TASK-016 已交付的实现：
 
 ```text
-Tiptap editor
-Structured Markdown document
-Block ID
-Basic Markdown nodes
-Mobile toolbar
-Editor slot
+Built-in markdown plugin
+markdown.page-editor view
+markdown.insert-text command
+markdown.editor-mobile-toolbar.base slot
+Controlled textarea shell
+Toolbar snippets: - [ ] , #, [[ ]]
+Command-bus insertion
+runtime.markdown.collectEditorExtensions()
+runtime.markdown.pages narrow page facade
 ```
 
 验收：
@@ -61,6 +64,21 @@ Editor slot
 ```
 
 可以正常输入、保存、重新打开。
+
+当前保存/重新打开只通过 Markdown runtime 的 narrow page facade 走 allowlisted NativeBridge `core.pages.get` / `core.pages.update` DTO。`storage.persistence = "in-memory-core"` 仍然属实，Core stores 没有整体改为 SQLite-backed。
+
+延后实现：
+
+```text
+Tiptap / ProseMirror / rich editor
+Semantic task/tag/page-link behavior
+@date token
+Autocomplete
+Slash menu
+Stable block ID
+Markdown import/export
+Full editor extension adaptation
+```
 
 ---
 
