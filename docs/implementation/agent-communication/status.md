@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:27 CST.
+Last updated: 2026-05-21 15:36 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 15:27 CST.
 - Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task orchestration started; pre-test planning/current-doc/API/security guidance is next.
+- Current phase: pre-test planning/current-doc/API/security guidance completed; failing acceptance tests are next.
 
 ## Active Agents
 
@@ -55,6 +55,30 @@ Last updated: 2026-05-21 15:27 CST.
 
 - `.codex/agents/*.toml` parsed successfully with 11 files.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+
+## Completed TASK-021 Agent Outcomes
+
+- Boole the 4th (`planner`) completed read-only planning. Recommendation: implement a built-in `TagPlugin` only, use a command-driven tag recognition baseline, register a `page.header.metadata` tag slot, use add/remove picker commands, create tag-owned filter definitions, and keep Core/rich editor/indexer/native surfaces out of scope.
+- Boyle the 4th (`docs_researcher`) completed current-doc/test guidance. Recommendation: use existing metadata/filter/command/slot/plugin facades, execute commands through `runtime.commands.execute`, test metadata writes as `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, and cover UI with RTL/user-event role queries. It noted metadata field renderer/editor and full Filter Engine execution are future-facing.
+- Descartes the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0/P1 guidance: use plugin id `tag`, syntax id `tag.hashtag`, metadata field id `tag.tags`, `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, kebab-case command IDs, explicit refresh semantics, filter query `metadata.tag.tags includes <tag>`, and slot id `tag.page-header-metadata.tags` on `page.header.metadata` with order `300`.
+- Rawls the 4th (`security_reviewer`) completed security guidance. Recommendation: define a conservative tag grammar, reject untrusted/extra command payload fields, verify page existence, mutate through plugin facades/transactions, parse structured Markdown text rather than HTML, keep filters static/plugin-owned, render tags as inert React text, and avoid native/Tauri/package/Cargo changes.
+
+## Parent Decisions After TASK-021 Pre-test Guidance
+
+- Implement only a built-in `TagPlugin`; Core remains generic infrastructure.
+- Canonical ids: plugin `tag`, markdown syntax `tag.hashtag`, metadata field `tag.tags`, slot contribution `tag.page-header-metadata.tags`.
+- Metadata contract: `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, `value: string[]` of normalized tags without `#`.
+- Commands:
+  - `tag.refresh-tags({ pageId }) -> { pageId, tags }`.
+  - `tag.add-tag({ pageId, tag }) -> { pageId, tags }`.
+  - `tag.remove-tag({ pageId, tag }) -> { pageId, tags }`.
+  - `tag.create-filter({ tag }) -> { filterId }`.
+- Defer `tag.toggle-tag`; add/remove satisfy the picker acceptance criteria with a smaller command surface.
+- Recognition is command-driven through `tag.refresh-tags`; no save-time scanner, global indexer, or rich editor tokenization in TASK-021.
+- Tag grammar is conservative ASCII slug tags: trim, strip one leading `#`, lowercase, leading alphanumeric, then letters/digits/`_`/`-`, max length 32, max 32 unique tags per page, dedupe by first-seen order, reject blank/whitespace/control/HTML-like/URL-like/colon/non-ASCII values.
+- Filter contract: `tag.create-filter` saves a plugin-owned filter named `#tag` with query `{ where: [{ field: "metadata.tag.tags", op: "includes", value: tag }] }` and `viewType: "page.list"`; result execution/rendering remains out of scope.
+- UI contract: register a `page.header.metadata` slot component that renders inert tag chips/text and a small labeled add/remove picker. Tests may render the slot component directly or through a minimal test host because no full metadata-bar outlet exists yet.
+- Security boundaries: strict payload readers, no trusted caller-supplied owner fields, page existence checks, plugin-facade metadata/filter writes, no `attrs.boundPageId` trust or Task Plugin metadata mutation, and no native/Tauri/package/Cargo surface.
 
 ## Completed TASK-020 Agent Outcomes
 
@@ -205,6 +229,6 @@ bun run build
 
 ## Next Actions
 
-1. Commit TASK-021 start orchestration state.
-2. Spawn pre-test planning/current-doc/API/security agents.
-3. Use their guidance to hand off TDD acceptance tests to `test_writer`.
+1. Commit TASK-021 pre-test guidance.
+2. Delegate failing acceptance tests to `test_writer`.
+3. Run expected-red focused tests before implementation.
