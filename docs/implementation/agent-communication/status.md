@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:14 CST.
+Last updated: 2026-05-21 09:15 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-21 09:14 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; pre-test planning and current-doc guidance pending.
+- Current phase: read-only pre-test guidance agents running.
 
 ## Active Agents
 
-- None.
+- James the 3rd (`planner`): read-only TASK-017 scope and plan.
+- Carver the 3rd (`docs_researcher`): read-only current-doc guidance.
+- Mill the 3rd (`deprecation_auditor`): read-only API/deprecation audit.
+- Gauss the 3rd (`security_reviewer`): read-only security boundary review.
 
 ## Current TASK-017 State
 
@@ -31,7 +34,7 @@ Last updated: 2026-05-21 09:14 CST.
 
 ## Completed TASK-017 Agent Outcomes
 
-- None yet. Pre-test guidance agents are the next blocking step.
+- None yet. Pre-test guidance agents are running.
 
 ## Validation Already Reported By Parent
 
@@ -53,7 +56,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit TASK-017 start orchestration docs.
-2. Spawn read-only pre-test guidance agents: planner, docs researcher, deprecation auditor, and security reviewer.
-3. Summarize their guidance in this file and the TASK-017 communication file.
-4. Delegate failing acceptance tests to `test_writer`.
+1. Wait for read-only pre-test guidance agents.
+2. Summarize their guidance in this file and the TASK-017 communication file.
+3. Delegate failing acceptance tests to `test_writer`.

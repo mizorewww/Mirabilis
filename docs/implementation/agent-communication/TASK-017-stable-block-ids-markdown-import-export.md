@@ -39,21 +39,25 @@
 
 ## Current Status
 
-- Status: started.
-- Active agents: none.
+- Status: read-only pre-test guidance agents running.
+- Active agents:
+  - James the 3rd (`planner`): scope, design slices, test plan, implementation guidance, and risks.
+  - Carver the 3rd (`docs_researcher`): current official docs guidance for Markdown conversion and test tooling.
+  - Mill the 3rd (`deprecation_auditor`): API/dependency/deprecation risk audit.
+  - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review.
 - Completed agents: none.
-- Next parent step: commit this start record, then spawn read-only pre-test guidance agents.
+- Next parent step: wait for guidance, summarize outcomes, and commit parent decisions before `test_writer`.
 
 ## Agent Handoffs
 
 ### Pre-test Guidance Round
 
-- Status: pending.
-- Planned agents:
-  - `planner`: read-only scope, design slices, tests, dependencies, and risks.
-  - `docs_researcher`: read-only current official docs guidance for Markdown parsing/export choices and current React/Vitest/editor testing guidance if needed.
-  - `deprecation_auditor`: read-only API/dependency/deprecation risk audit for any proposed Markdown parsing/editor library path.
-  - `security_reviewer`: read-only Markdown import/export and structured document security boundary review.
+- Status: running.
+- Agents:
+  - James the 3rd (`planner`): read-only scope, design slices, tests, dependencies, and risks.
+  - Carver the 3rd (`docs_researcher`): read-only current official docs guidance for Markdown parsing/export choices and current React/Vitest/editor testing guidance if needed.
+  - Mill the 3rd (`deprecation_auditor`): read-only API/dependency/deprecation risk audit for any proposed Markdown parsing/editor library path.
+  - Gauss the 3rd (`security_reviewer`): read-only Markdown import/export and structured document security boundary review.
 
 ## Parent Decisions
 
