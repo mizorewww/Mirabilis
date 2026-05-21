@@ -282,6 +282,36 @@ git diff --check
 
 - Result: expected red signal. Focused tests ran 4 files / 94 tests with 4 failed / 90 passed. Failures were missing `gt`/`lt` support, wrong-typed relative-date `neq` matching, Task Plugin re-register `FILTER_ID_COLLISION`, and task-specific empty-state copy. `bun run typecheck` failed because `SaveFilterInput` and `PluginSaveFilterInput` do not expose optional `id`. Focused eslint and `git diff --check` passed.
 
+## Review-Fix Implementation
+
+- Status: completed by Ampere (`implementer`) on 2026-05-21 19:28 CST.
+- Commit: `a9b0579`.
+- Files changed:
+  - `src/core/filter-engine.ts`.
+  - `src/core/stores/filter-store.ts`.
+  - `src/core/plugin-api/context.ts`.
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/task/components/TaskFilterViews.tsx`.
+- Behavior implemented:
+  - Task default filters now upsert owned fixed IDs on re-register without deleting user filters.
+  - `SaveFilterInput` and `PluginSaveFilterInput` now expose optional `id?: string`.
+  - `executeFilterQuery` supports the current page/metadata subset of `gt` and `lt` for numeric and date metadata.
+  - Wrong `valueType` or incompatible comparison value shapes fail closed.
+  - Relative-date `neq` fails closed for wrong-typed date metadata.
+  - `filter.empty_state` copy is generic rather than task-specific.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-store.test.ts src/test/plugin-api-contracts.test.ts
+bun run test:frontend -- src/test/core-view-slot-registry.test.ts src/test/task-plugin-syntax-page-creation.test.ts src/test/task-checkbox-toggle-events.test.tsx src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Review-fix focused tests passed with 4 files / 94 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Ampere (`implementer`) is fixing Hooke's red regressions with the minimum production/type change.
+- Run a focused post-fix review for the review-fix code before formal docs sync.
