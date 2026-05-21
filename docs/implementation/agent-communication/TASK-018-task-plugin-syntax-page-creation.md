@@ -40,9 +40,9 @@
 
 ## Current Status
 
-- Status: third review-fix red-test agent running.
+- Status: third review-fix implementation agent running.
 - Active agents:
-  - Heisenberg the 3rd (`test_writer`): third review-fix regression test for real PluginHostError instance thrown by non-plugin commands.
+  - Dalton the 3rd (`implementer`): third review-fix implementation for command failure provenance.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +54,7 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Heisenberg the 3rd's red test, run focused red-test command, and commit if expected.
+- Next parent step: wait for Dalton the 3rd's third review-fix implementation, run focused checks, and commit if green.
 
 ## Agent Handoffs
 
@@ -374,9 +374,27 @@ git diff --check
 
 ### Heisenberg the 3rd (`test_writer`) Handoff
 
-- Status: running.
+- Status: completed, committed, and closed.
 - Ownership: tests only.
 - Target: add a focused `core-command-registry` red test proving normal/non-plugin command failures cannot preserve a real exported `PluginHostError` instance as `CommandRegistryError.cause`.
+- File changed:
+  - `src/test/core-command-registry.test.ts`.
+- Commit: `8a98a96` (`Heisenberg the 3rd(test)(Implement Task Plugin syntax and task page creation): cover direct PluginHostError redaction`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/core-command-registry.test.ts
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. 1 test failed, 12 passed; failure proved normal commands throwing real `PluginHostError` still exposed an own `CommandRegistryError.cause`. `bun run typecheck` and `git diff --check` passed.
+
+### Dalton the 3rd (`implementer`) Handoff
+
+- Status: running.
+- Ownership: minimal production fix only.
+- Target: preserve `CommandRegistryError.cause` only for failures marked/proven as coming from Plugin Host command execution, while preserving raw-cause redaction for ordinary command handlers even if they throw a real exported `PluginHostError`.
 
 ## Parent Decisions
 
