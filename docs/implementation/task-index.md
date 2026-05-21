@@ -522,15 +522,19 @@ Source docs:
 
 Acceptance criteria:
 
-- `#tag` text is recognized as tag metadata.
-- Tags render in metadata bar through slot contribution.
-- Tag picker can add/remove tags through commands.
-- Tag filters can query pages by tag.
+- Built-in `TagPlugin` is registered via `BUILT_IN_PLUGINS` with plugin id `tag`.
+- Manifest contributes inert Markdown syntax descriptor `tag.hashtag` for `#tag` and metadata field descriptor `tag.tags` (`namespace: "tag"`, `key: "tags"`, `valueType: "json"`).
+- `tag.refresh-tags({ pageId })` explicitly scans saved structured `markdown.line` blocks and replaces page-scoped `tag.tags` with normalized lowercase ASCII slug `string[]` values, or `[]` when no tags remain.
+- `tag.add-tag({ pageId, tag })` and `tag.remove-tag({ pageId, tag })` update page-scoped tag metadata through commands, enforcing the same conservative tag normalization and max 32 unique tags.
+- `TagMetadataSlot` is registered as `page.header.metadata` contribution `tag.page-header-metadata.tags` with order `300`, displaying inert tags plus add/remove controls.
+- `tag.create-filter({ tag })` stores a Tag Plugin-owned filter definition named `#tag` with query `metadata.tag.tags includes tag` and `viewType: "page.list"`; filter execution/rendering remains TASK-022+.
+- No automatic save-time scan, background indexer, rich inline token UI, autocomplete, global metadata bar, Tauri IPC, package/Cargo, native, filesystem, or permission surface is added.
 
 Test plan:
 
-- Plugin tests for tag extraction and metadata updates.
-- UI tests for tag display and editing.
+- Plugin tests for manifest descriptors, command registration, strict payloads, ASCII tag extraction/normalization, stale metadata replacement, dedupe/order/limit behavior, metadata add/remove, explicit empty `[]`, and filter definition creation.
+- UI tests for inert `TagMetadataSlot` display, accessible add/remove controls, command-bus payloads, invalid input feedback, and page-scoped command result handling.
+- Native-surface guard proving no Tauri IPC, permission/capability, package/Cargo, Rust command, filesystem, or native surface changes.
 
 Dependencies:
 

@@ -106,7 +106,7 @@ For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are th
 TASK-015 tests should cover the observable app bootstrap/provider contract without adding business plugin behavior:
 
 - Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. Later runtime facades such as TASK-016 `runtime.markdown` may be added to the runtime object without changing this ordering.
-- TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-018, production `BUILT_IN_PLUGINS` contains the built-in `markdown` and `task` plugins; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
+- TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-021, production `BUILT_IN_PLUGINS` contains the built-in `markdown`, `task`, and `tag` plugins; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
 - Rejection propagation for startup failures, including `loadBuiltInPlugins()` and `activateAll()` failures; startup must not report a ready runtime after those failures.
 - React StrictMode single-flight initialization so bootstrap and plugin activation are not duplicated during development double-mount behavior.
 - Retry after a failed initializer mount with the same initializer; rejected initializer promises must not poison future mounts forever.
@@ -256,6 +256,30 @@ git diff --check
 ```
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-020 itself is TypeScript plugin/runtime/editor behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
+
+## TASK-021 Tag Plugin Baseline Guidance
+
+TASK-021 tests cover explicit Tag Plugin metadata recognition and page-scoped tag controls without adding automatic save-time scanning, background indexing, rich inline tokens, autocomplete, global metadata bar, filter result execution/rendering, or native surface:
+
+- Built-in `tag` plugin is present in `BUILT_IN_PLUGINS`, contributes inert Markdown syntax descriptor `tag.hashtag` with syntax `#tag`, contributes metadata field descriptor `tag.tags` with `namespace: "tag"`, `key: "tags"`, and `valueType: "json"`, and registers owned commands `tag.refresh-tags`, `tag.add-tag`, `tag.remove-tag`, and `tag.create-filter`.
+- `tag.refresh-tags` tests should execute through the real runtime command bus with payload `{ pageId }`; tests should prove it scans saved structured `markdown.line` blocks and replaces `tag.tags` exactly with current source tags or `[]`.
+- Source extraction coverage should include headings, fenced code, escaped hashes, non-token boundaries such as `foo#bar`, URL-ish invalid source tokens, HTML-like fragments, non-ASCII tokens, control-ish tokens, trailing punctuation, duplicate tags, and the first 32 unique tags only.
+- Normalization coverage should prove command and source tags trim input, strip at most one leading `#`, require raw ASCII slug before lowercasing, produce lowercase `string[]` values without `#`, cap each tag at 32 chars, and reject non-ASCII values such as `K` instead of Unicode case-folding them.
+- `tag.add-tag` / `tag.remove-tag` tests should execute through the command bus with payload `{ pageId, tag }`, reject extra untrusted ownership fields, dedupe first-seen order, reject a 33rd unique page tag without mutation, and prove remove on a touched page writes explicit empty `[]`.
+- UI coverage should render the registered `TagMetadataSlot` from `page.header.metadata` contribution `tag.page-header-metadata.tags` with order `300`, assert inert tag text display, accessible add/remove controls, exact command-bus payloads, invalid input feedback, and rejection of command results for the wrong page.
+- `tag.create-filter` tests should prove it accepts only `{ tag }`, stores a plugin-owned filter named `#tag`, uses query `{ where: [{ field: "metadata.tag.tags", op: "includes", value: tag }] }`, sets `viewType: "page.list"`, and does not accept caller-supplied query, view type, plugin ownership, or source ownership.
+- Native-surface guards should continue proving TASK-021 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+
+TASK-021 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-021 itself is TypeScript plugin/runtime/slot behavior with no new native, IPC, permission, filesystem, package, Cargo, or Rust surface.
 
 ## Merge Gate
 

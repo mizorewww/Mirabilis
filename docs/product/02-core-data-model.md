@@ -81,7 +81,10 @@ page_id: xxx
 namespace: tag
 key: tags
 value: ["product", "timer"]
+value_type: json
 ```
+
+TASK-021 当前由 Tag Plugin 写入 `namespace: "tag"`、`key: "tags"`、`value_type: "json"`。值必须是规范化后的 `string[]`：不带 `#`、小写 ASCII slug、最多 32 个唯一 tag，并按第一次出现顺序保存。Core 只保存该 JSON 值，不解释 tag 语义。
 
 ```text
 page_id: xxx
@@ -232,9 +235,11 @@ open-page
 task.toggle-status
 start-timer
 stop-timer
-add-tag
+tag.refresh-tags
+tag.add-tag
+tag.remove-tag
 set-due-date
-create-filter
+tag.create-filter
 run-ml-prediction
 generate-ai-summary
 ```

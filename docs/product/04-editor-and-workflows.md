@@ -166,7 +166,7 @@ D
 
 用户可以一直写，不需要切换到表单模式。
 
-TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。TASK-018 已提供 Task Plugin 的 command-level resolver；TASK-019 已提供结构化 body 上的 task-title 点击打开行为；TASK-020 已提供结构化 body 上的 checkbox status toggle。Tag / Date / Page Link 等语义识别，以及 task 的保存时自动扫描、过滤视图和富编辑器行为，仍由后续插件或编辑器任务接管。
+TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。TASK-018 已提供 Task Plugin 的 command-level resolver；TASK-019 已提供结构化 body 上的 task-title 点击打开行为；TASK-020 已提供结构化 body 上的 checkbox status toggle。TASK-021 已提供 Tag Plugin 的 inert `tag.hashtag` syntax descriptor 和显式 `tag.refresh-tags({ pageId })` command，用来扫描已保存的 `markdown.line` blocks 并写入 `tag.tags` metadata。编辑器保存本身仍不会自动扫描 tag/task/page-link/date 语义；Date / Page Link 等识别、task 的保存时自动扫描、过滤视图和富编辑器行为，仍由后续插件或编辑器任务接管。
 
 ### 12.2 UI 只辅助插入语法
 
@@ -198,7 +198,7 @@ TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
 ```
 
 这些按钮通过 `markdown.insert-text` command bus 插入文本。TASK-017 已交付稳定 block ID 和当前 textarea 支持样例的内部 Markdown import/export。
-`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、完整 CommonMark AST 往返、原生文件系统 Markdown import/export、以及 tag/page-link 语义行为都延后到后续插件或编辑器任务。
+`@date`、tag autocomplete、page autocomplete、slash menu、富文本/块级编辑器行为、完整 CommonMark AST 往返、原生文件系统 Markdown import/export、以及自动 tag/page-link 语义行为都延后到后续插件或编辑器任务。TASK-021 的 tag 行为是显式命令驱动：调用 `tag.refresh-tags({ pageId })` 才会从已保存结构化 Markdown 刷新 `tag.tags`。
 
 用户点击 `☐`，编辑器插入 `- [ ] `（末尾有空格）：
 
@@ -244,8 +244,8 @@ TASK-018 起，Task Plugin 可以在 command 层接管后续识别：调用 `tas
 ```text
 进入 Inbox Page
 TASK-018 command-level resolver 可创建任务页面
-后续 Tag Plugin 识别 #ml
-后续 Filter 自动更新
+TASK-021 可通过显式 tag.refresh-tags({ pageId }) 刷新 #ml 到 tag.tags
+后续 Filter execution/rendering 更新
 ```
 
 移动端不需要复杂任务创建表单。
@@ -255,7 +255,7 @@ TASK-018 command-level resolver 可创建任务页面
 
 ## 14. Metadata 图形化展示
 
-任务页面顶部显示 metadata bar。
+长期目标中，任务页面顶部显示 metadata bar。
 
 示例：
 
@@ -274,7 +274,7 @@ ML Plugin: predicted remaining time
 Stats Plugin: estimate error
 ```
 
-用户点击字段即可编辑：
+长期目标中，用户点击字段即可编辑：
 
 ```text
 点击 todo         打开状态选择
@@ -285,8 +285,10 @@ Stats Plugin: estimate error
 点击 Start        开始计时
 ```
 
-字段可以通过插件扩展。
-新插件只要注册 metadata field + renderer + editor，就可以出现在 metadata bar 中。
+长期字段可以通过插件扩展。
+新插件只要注册 metadata field + renderer + editor，就可以出现在完整 metadata bar 中。
+
+TASK-021 当前只交付 Tag Plugin 的窄 slot contribution：`tag.page-header-metadata.tags` 注册到 `page.header.metadata`，order 为 `300`，显示 inert `#tag` 文本并提供 add/remove 控件。控件执行 `tag.add-tag({ pageId, tag })` 和 `tag.remove-tag({ pageId, tag })`，写入页面 scoped `tag.tags` metadata。它不是 TASK-023 的完整 Metadata UI Plugin、全局 metadata bar 或完整 tag picker。
 
 ---
 
@@ -359,6 +361,8 @@ metadata 更新：
 ```text
 tags = ["architecture", "plugin"]
 ```
+
+TASK-021 当前这类更新由 Tag Plugin slot 控件或命令完成；统一 metadata bar、picker 体验和其他插件字段编辑仍属于 TASK-023+。
 
 ### 26.4 计时
 

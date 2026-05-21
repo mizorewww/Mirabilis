@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 15:24 CST.
+Last updated: 2026-05-21 18:35 CST.
 
 ## Current Task
 
-- Task: TASK-020 - Implement checkbox toggle and task events.
-- Branch: `feat/task-020-checkbox-toggle-task-events`.
+- Task: TASK-021 - Implement Tag Plugin baseline.
+- Branch: `feat/task-021-tag-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-020 final local gate passed; completion ledger and merge are next.
+- Current phase: final local gate passed; progress completion update is being committed.
 
 ## Active Agents
 
@@ -16,7 +16,142 @@ Last updated: 2026-05-21 15:24 CST.
 
 ## Completed Recent Task
 
+- TASK-020 - Implement checkbox toggle and task events was completed on branch `feat/task-020-checkbox-toggle-task-events`, validated with focused frontend/runtime/docs checks, final branch `bun run check:quick`, `bun run build`, and merge-result `bun run check:quick`, then merged to `master` in commit `c42fa5f`.
 - TASK-019 - Implement task navigation and infinite nesting was completed on branch `feat/task-019-task-navigation-infinite-nesting`, validated with focused frontend/runtime/security/docs checks, final `bun run check:quick`, `bun run build`, and merge-tree `bun run check:quick`, then merged to `master` in commit `7a2ce72`.
+
+## Current TASK-021 State
+
+- TASK-021 follows TASK-016 and TASK-008 and owns the Tag Plugin baseline:
+  - `#tag` text is recognized as tag metadata.
+  - Tags render in metadata bar through slot contribution.
+  - Tag picker can add/remove tags through commands.
+  - Tag filters can query pages by tag.
+- Initial parent interpretation:
+  - Keep Tag behavior in a built-in Tag Plugin, not Core business logic.
+  - Use existing metadata/filter/view/slot/plugin primitives where possible.
+  - Preserve Markdown-first behavior: the editor keeps tag text as Markdown text unless agents define a narrow command/indexing slice for TASK-021.
+  - Keep rich editor autocomplete, date/page-link semantics, Timer/Calendar/Stats tag aggregation, native/Tauri/package changes, broad persistence/schema changes, and release packaging out of scope unless agents identify an acceptance dependency.
+- Agent/config checks passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking update/sandbox notes.
+
+## Parent Decisions At TASK-021 Start
+
+- Start from `master` after TASK-020 merge commit `c42fa5f`.
+- Use branch `feat/task-021-tag-plugin-baseline`.
+- Delegate planning/current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync to agents.
+- The parent thread must not write TASK-021 tests or production implementation unless a delegated role fails or is explicitly cancelled and the fallback is recorded.
+
+## Source Docs Read By Parent For TASK-021
+
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`.
+- `docs/implementation/progress.md`.
+- `docs/implementation/task-index.md#task-021-implement-tag-plugin-baseline`.
+- `docs/product/05-built-in-plugins.md#15-tag-plugin`.
+- `docs/product/04-editor-and-workflows.md#12-markdown-first-编辑器`.
+- `docs/architecture/04-slots-editor-task.md` metadata bar / Tag Plugin notes.
+- `docs/product/03-plugin-platform.md#94-metadata-field-registry`.
+- Related Tag references in `docs/architecture/06-filter-native-database.md`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/development/02-implementation-roadmap-and-constraints.md`.
+
+## TASK-021 Validation Log
+
+- `.codex/agents/*.toml` parsed successfully with 11 files.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network, the known `TERM=dumb` terminal failure, and an available Codex update.
+- Focused red tests after Carver the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bunx eslint src/test/tag-plugin-baseline.test.tsx --max-warnings=0
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: expected red signal. `tag-plugin-baseline.test.tsx` ran 8 tests and all 8 failed because Tag Plugin surfaces are not implemented yet. `bun run typecheck`, focused eslint, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Initial implementation validation after Wegener the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/core-filter-store.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 8 tests. Adjacent plugin/filter/editor coverage passed with 4 files / 116 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Review-fix red tests after Hypatia the 4th:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: expected red signal. Focused test file ran 12 tests with 4 failed / 8 passed, plus one unhandled rejection. Failures were extra extracted tags `time`, `https`, and `bad`; missing empty `tag.tags` metadata for a no-record remove; no accessible alert/status feedback for invalid add failure; and duplicate label/input association. `bun run typecheck` passed. `git diff --check` passed.
+- Review-fix implementation validation after Faraday:
+
+```bash
+bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-021 focused test passed with 1 file / 12 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty. Commit: `f39c1e3`.
+
+## Completed TASK-021 Agent Outcomes
+
+- Boole the 4th (`planner`) completed read-only planning. Recommendation: implement a built-in `TagPlugin` only, use a command-driven tag recognition baseline, register a `page.header.metadata` tag slot, use add/remove picker commands, create tag-owned filter definitions, and keep Core/rich editor/indexer/native surfaces out of scope.
+- Boyle the 4th (`docs_researcher`) completed current-doc/test guidance. Recommendation: use existing metadata/filter/command/slot/plugin facades, execute commands through `runtime.commands.execute`, test metadata writes as `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, and cover UI with RTL/user-event role queries. It noted metadata field renderer/editor and full Filter Engine execution are future-facing.
+- Descartes the 4th (`deprecation_auditor`) completed API/deprecation guidance. P0/P1 guidance: use plugin id `tag`, syntax id `tag.hashtag`, metadata field id `tag.tags`, `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, kebab-case command IDs, explicit refresh semantics, filter query `metadata.tag.tags includes <tag>`, and slot id `tag.page-header-metadata.tags` on `page.header.metadata` with order `300`.
+- Rawls the 4th (`security_reviewer`) completed security guidance. Recommendation: define a conservative tag grammar, reject untrusted/extra command payload fields, verify page existence, mutate through plugin facades/transactions, parse structured Markdown text rather than HTML, keep filters static/plugin-owned, render tags as inert React text, and avoid native/Tauri/package/Cargo changes.
+- Carver the 4th (`test_writer`) added focused TASK-021 acceptance tests in `src/test/tag-plugin-baseline.test.tsx`. Coverage includes built-in plugin registration, manifest descriptors, commands, metadata writes, refresh extraction/normalization, picker add/remove commands, slot UI behavior, filter definition creation, native surface guard, and no task metadata mutation from source-line tags.
+- Wegener the 4th (`implementer`) added the initial TASK-021 production implementation in `src/bootstrap/built-in-plugins.ts` and `src/plugins/tag/*`. It registers the built-in Tag Plugin, descriptors, commands, metadata slot, tag parsing/normalization, metadata writes, and tag-owned filter creation without native/Tauri/package changes.
+- Focused review after commit `bde416d` completed:
+  - Ramanujan the 4th (`pr_explorer`) found P2: tag slot command rejection handling is missing, and `tag.remove-tag` does not write explicit `tag.tags: []` on a missing-tag remove for a never-tagged page.
+  - Carson the 4th (`reviewer`) found P2: `tag.refresh-tags` indexes prefixes of invalid source tokens like `#time:now` and `#https://example.test/tag`; P2: missing-tag remove on a never-tagged page does not persist empty tag metadata; P3: fixed slot input id can duplicate in multi-slot renders.
+  - Popper the 4th (`security_reviewer`) found no P0/P1/P2 security findings.
+  - Nietzsche the 4th (`test_quality_reviewer`) found no P0/P1 blocking gaps, but P2 missing coverage for invalid source-token forms and P2 branch-coupled native-surface guard.
+  - Ptolemy the 4th (`deprecation_auditor`) found no code blockers. It noted docs-only drift in live agent communication status and formal docs still describing Tag Plugin recognition as entirely future after save.
+- Hypatia the 4th (`test_writer`) added review-fix regression tests for invalid source-token extraction, explicit empty metadata on missing-tag remove, accessible local slot feedback on add failures, and distinct input label associations across multiple slot instances.
+- Faraday (`implementer`) fixed the review-fix regressions in `src/plugins/tag/plugin.ts` and `src/plugins/tag/components/TagMetadataSlot.tsx`. It ignores invalid full source tokens, always persists touched empty tag metadata on remove, catches slot command failures, shows accessible tag feedback, and uses unique input ids. Commit: `f39c1e3`.
+- Post-fix focused review after commit `f39c1e3` completed:
+  - Kierkegaard (`pr_explorer`) found no P0/P1/P2 findings. P3 residuals: slot-local command state can become stale if a future metadata bar refreshes the same page externally, and the native-surface guard remains git-environment coupled.
+  - Dalton (`reviewer`) found no P0/P1/P2/P3 correctness findings and confirmed the TASK-021 command, metadata, filter, slot, and native-surface contracts.
+  - Poincare (`security_reviewer`) found no P0/P1/P2 security findings. P3: Unicode case-folding can convert raw non-ASCII characters such as `K` to ASCII before validation, which conflicts with the stated raw ASCII-only input intent.
+  - Newton (`test_quality_reviewer`) found no P0/P1 gaps. P2: refresh coverage does not prove stale `tag.tags` records are replaced. P2: native-surface guard is still git-environment coupled.
+  - Boole (`deprecation_auditor`) found no P0/P1 findings. P2: `TagMetadataSlot` narrows command results to `{ tags }`, ignores returned `pageId`, and should reject/ignore mismatched page results.
+  - Erdos (`docs_researcher`) found P1 docs drift: formal docs still frame tag recognition as future/ambiguous and overstate metadata bar/filter UI behavior. It also identified P2 architecture/testing/progress sync needs and P3 metadata-shape documentation.
+- Second review-fix cycle completed:
+  - James (`test_writer`) added regressions for stale refresh replacement, slot command-result page matching, and raw non-ASCII tag rejection. Expected red: focused test ran 15 tests with 2 failures for `K` command input and mismatched slot add result; typecheck, focused eslint, `git diff --check`, and native/package guard passed.
+  - Godel (`implementer`) fixed raw ASCII validation before lowercasing and strict slot command-result `{ pageId, tags }` validation. Parent validation passed: focused test 15/15, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package guard. Commit: `184e669`.
+- Copernicus (`doc_writer`) synced formal TASK-021 docs in product, architecture, development, task-index, and testing docs. It documented the command-driven Tag Plugin baseline, `tag.hashtag`, `tag.tags`, `tag.refresh-tags`, add/remove commands, `TagMetadataSlot`, `tag.create-filter`, ASCII slug normalization, current non-features, and no native/Tauri/package surface changes. Commit: `cee4d4a`.
+- Final TASK-021 branch validation passed:
+  - `bun run check:quick` passed with 25 frontend test files / 366 tests plus Rust fmt, Rust clippy, and full Rust tests.
+  - `bun run build` passed.
+
+## Parent Decisions After TASK-021 Pre-test Guidance
+
+- Implement only a built-in `TagPlugin`; Core remains generic infrastructure.
+- Canonical ids: plugin `tag`, markdown syntax `tag.hashtag`, metadata field `tag.tags`, slot contribution `tag.page-header-metadata.tags`.
+- Metadata contract: `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, `value: string[]` of normalized tags without `#`.
+- Commands:
+  - `tag.refresh-tags({ pageId }) -> { pageId, tags }`.
+  - `tag.add-tag({ pageId, tag }) -> { pageId, tags }`.
+  - `tag.remove-tag({ pageId, tag }) -> { pageId, tags }`.
+  - `tag.create-filter({ tag }) -> { filterId }`.
+- Defer `tag.toggle-tag`; add/remove satisfy the picker acceptance criteria with a smaller command surface.
+- Recognition is command-driven through `tag.refresh-tags`; no save-time scanner, global indexer, or rich editor tokenization in TASK-021.
+- Tag grammar is conservative ASCII slug tags: trim, strip one leading `#`, lowercase, leading alphanumeric, then letters/digits/`_`/`-`, max length 32, max 32 unique tags per page, dedupe by first-seen order, reject blank/whitespace/control/HTML-like/URL-like/colon/non-ASCII values.
+- Filter contract: `tag.create-filter` saves a plugin-owned filter named `#tag` with query `{ where: [{ field: "metadata.tag.tags", op: "includes", value: tag }] }` and `viewType: "page.list"`; result execution/rendering remains out of scope.
+- UI contract: register a `page.header.metadata` slot component that renders inert tag chips/text and a small labeled add/remove picker. Tests may render the slot component directly or through a minimal test host because no full metadata-bar outlet exists yet.
+- Security boundaries: strict payload readers, no trusted caller-supplied owner fields, page existence checks, plugin-facade metadata/filter writes, no `attrs.boundPageId` trust or Task Plugin metadata mutation, and no native/Tauri/package/Cargo surface.
+
+## Next Actions
+
+1. Commit `progress.md` and communication completion updates.
+2. Merge TASK-021 back to `master`.
+3. Verify merge-result local gate.
 
 ## Completed TASK-020 Agent Outcomes
 
@@ -167,6 +302,6 @@ bun run build
 
 ## Next Actions
 
-1. Commit the TASK-020 completion ledger.
-2. Merge `feat/task-020-checkbox-toggle-task-events` to `master`.
-3. Continue to the next unblocked task.
+1. Commit TASK-021 pre-test guidance.
+2. Delegate failing acceptance tests to `test_writer`.
+3. Run expected-red focused tests before implementation.

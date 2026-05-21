@@ -84,11 +84,13 @@ Timer Plugin 会渲染：
 tracked 2h10m · Start
 ```
 
-Tag Plugin 会渲染：
+Tag Plugin 长期会渲染：
 
 ```text
 #product #timer
 ```
+
+TASK-021 当前的 Tag Plugin slot contribution 是 `tag.page-header-metadata.tags`，挂在 `page.header.metadata`，order 为 `300`。它渲染 inert `#tag` 文本并提供 add/remove 控件，控件通过 `tag.add-tag` / `tag.remove-tag` command 写 `tag.tags` metadata。完整 Metadata UI Plugin、全局 metadata bar 编排和 picker 体验仍属于 TASK-023+。
 
 Habit Plugin 会渲染：
 
@@ -108,7 +110,7 @@ ML Plugin 可以渲染：
 
 Markdown Editor Plugin 是 TASK-016/TASK-017 后的内置插件，manifest id 是 `markdown`。
 
-它负责最小 Markdown 编辑体验。TASK-020 起，编辑器还提供一个窄的 Task Plugin 集成点：当 active markdown syntax extensions 包含 `- [ ]`，且当前 textarea Markdown 仍与结构化 body 快照一致时，结构化 task title 会渲染为按钮并通过 command bus 打开任务页，checkbox 会渲染为真实 checkbox 并通过 command bus 切换 source task line 状态。标签、日期、页面链接、过滤视图和富编辑语义仍由后续插件或编辑器任务负责。
+它负责最小 Markdown 编辑体验。TASK-020 起，编辑器还提供一个窄的 Task Plugin 集成点：当 active markdown syntax extensions 包含 `- [ ]`，且当前 textarea Markdown 仍与结构化 body 快照一致时，结构化 task title 会渲染为按钮并通过 command bus 打开任务页，checkbox 会渲染为真实 checkbox 并通过 command bus 切换 source task line 状态。TASK-021 起，active markdown syntax extensions 还会包含 Tag Plugin 的 inert `tag.hashtag` / `#tag` descriptor，但 Markdown Editor 保存时仍不会自动扫描 tags。显式 `tag.refresh-tags({ pageId })` command 才会从已保存 `markdown.line` blocks 刷新 `tag.tags`。日期、页面链接、过滤视图和富编辑语义仍由后续插件或编辑器任务负责。
 
 ### 8.1 注册内容
 
@@ -214,7 +216,7 @@ runtime.markdown.pages.save({ pageId, markdown });
 
 TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-020 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 和 checkbox 的信号；点击按钮执行 `task.open-task-page`，点击 checkbox 执行 `task.toggle-status`，仍不会在保存时自动扫描全部 task block。
 
-后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh 和 rich editor adaptation 仍未实现。
+TASK-021 后，内置 Tag Plugin 已提供 `tag.hashtag` descriptor，syntax 为 `#tag`。它同样只是 inert manifest metadata；不会创建 rich inline token，也不会触发 save-time scan。`tag.refresh-tags` 显式扫描 saved `markdown.line` source；`tag.add-tag` / `tag.remove-tag` 通过 command 更新当前 page metadata；`tag.create-filter` 只保存 filter definition。Date Plugin 可以后续提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh 和 rich editor adaptation 仍未实现。
 
 ---
 
