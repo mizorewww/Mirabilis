@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: review-fix implementation committed; test-only rustfmt fix pending.
+- Status: review-fix implementation and test formatting complete; focused re-review pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -59,7 +59,8 @@
   - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation and TypeScript conversion review fixes completed.
   - Tesla the 3rd (`test_writer`): review-fix red tests completed, verified red, committed, and closed.
   - Hooke the 3rd (`implementer`): review-fix implementation completed, focused checks green except test-file rustfmt, committed, and closed.
-- Next parent step: delegate test-only rustfmt fix for `src-tauri/tests/ipc_persistence.rs`.
+  - Aristotle the 3rd (`test_writer`): test-only Rust IPC formatting fix completed, validated, committed, and closed.
+- Next parent step: commit review-fix formatting result and spawn focused re-review agents.
 
 ## Agent Handoffs
 
@@ -379,6 +380,24 @@ git diff --check
 
 - Result: focused frontend tests passed with 15/15 tests. Rust IPC page tests passed with 3/3 tests. `bun run typecheck` passed. `git diff --check` passed.
 - Remaining blocker: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` fails only on formatting in `src-tauri/tests/ipc_persistence.rs` from the review-fix red-test commit. Parent will delegate this test-only formatting fix to `test_writer`.
+
+### Aristotle the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: test-file formatting only.
+- File changed:
+  - `src-tauri/tests/ipc_persistence.rs`.
+- Commit: `916b51c` (`Aristotle the 3rd(test-fix)(Add stable block IDs and markdown import/export): format IPC review tests`).
+- Parent verification:
+
+```bash
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence page
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
+
+- Result: all passed.
 
 ## Validation
 
