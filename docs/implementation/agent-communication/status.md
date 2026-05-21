@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:02 CST.
+Last updated: 2026-05-21 22:07 CST.
 
 ## Current Task
 
@@ -8,15 +8,11 @@ Last updated: 2026-05-21 22:02 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 focused review is running.
+- Current phase: TASK-023 review-fix regression tests are pending.
 
 ## Active Agents
 
-- Turing (`pr_explorer`) is mapping TASK-023 changed paths and review hotspots.
-- Fermat (`reviewer`) is reviewing correctness and behavior regressions.
-- Russell (`security_reviewer`) is reviewing metadata UI security and boundary risks.
-- Dirac (`deprecation_auditor`) is reviewing API/deprecation and docs handoff needs.
-- Plato (`test_quality_reviewer`) is reviewing TASK-023 test quality.
+- None currently. Next step is to delegate review-fix regression tests.
 
 ## Completed Recent Task
 
@@ -69,6 +65,7 @@ Last updated: 2026-05-21 22:02 CST.
 - Sartre (`security_reviewer`) completed security guidance. P0/P1 guidance: no native/package/network/eval/raw SQL surface, no raw runtime/store/native handles to plugin-rendered UI, no universal metadata writer, exact command payloads, forged metadata filtering, inert rendering, and page/field-scoped async result validation.
 - Lovelace (`test_writer`) added TASK-023 failing acceptance tests in `src/test/metadata-ui-plugin.test.tsx`. Coverage includes unified metadata bar ordering, Tag compatibility through the bar, Task current fields, Timer inert placeholder, unsafe metadata inert rendering, narrow field props, forged owner metadata rejection, and native-surface guard. Parent red validation matched the expected signal: the new file had 8 failures because `src/plugins/metadata-ui` is missing; existing focused files passed with 112 tests. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --check` passed. Commit: `bc30f82`.
 - Tesla (`implementer`) added the initial TASK-023 production implementation in `src/plugins/metadata-ui/*`, `src/plugins/task/components/TaskMetadataSlot.tsx`, `src/plugins/timer/*`, `src/plugins/tag/components/TagMetadataSlot.tsx`, `src/plugins/task/plugin.ts`, and `src/bootstrap/built-in-plugins.ts`. It adds built-in `metadata-ui`, `MetadataBar`, plugin-driven `page.header.metadata` rendering, owner-trusted metadata filtering, Task read-only field UI, Timer inert placeholder, and preserves Tag behavior through the unified bar. Parent validation passed: focused metadata/tag/slot/lifecycle/API tests 120/120, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `38910da`.
+- Focused review completed with Turing (`pr_explorer`), Fermat (`reviewer`), Russell (`security_reviewer`), Dirac (`deprecation_auditor`), and Plato (`test_quality_reviewer`). P0/P1 findings: none. Fermat found no correctness regressions. Accepted P2 follow-up: scope metadata field commands per contribution or allowlist owner commands instead of passing a universal command executor; fail closed when plugin host ownership cannot be verified; mirror Plugin Host descriptor trust boundaries in `MetadataBar` for array/object shape, safe namespace/key segments, `valueType`, and null-prototype value maps; add unified-bar + real runtime command mutation coverage; broaden forged/corrupt metadata coverage. Docs sync must document the delivered narrow slice and deferred full registry/date/timer/app-shell work.
 
 ## Current TASK-022 State
 
@@ -147,8 +144,8 @@ Last updated: 2026-05-21 22:02 CST.
 
 ## Next Actions
 
-1. Wait for Turing, Fermat, Russell, Dirac, and Plato.
-2. Fix any P0/P1 findings through delegated agents.
+1. Spawn `test_writer` for review-fix regressions.
+2. Validate expected red signal and commit tests.
 
 ## Current TASK-021 State
 

@@ -223,6 +223,46 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Focused TASK-023 tests passed with 5 files / 120 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Focused Review
+
+- Status: completed on 2026-05-21 22:07 CST by Turing (`pr_explorer`), Fermat (`reviewer`), Russell (`security_reviewer`), Dirac (`deprecation_auditor`), and Plato (`test_quality_reviewer`).
+- P0/P1 findings: none.
+- Cleared findings:
+  - Fermat found no correctness regressions in MetadataBar slot ordering, Tag compatibility, Task current field rendering, Timer inert placeholder behavior, forged owner filtering, narrow props, wrong-page Tag command result handling, or existing plugin/slot behavior.
+- Accepted P2 findings:
+  - Russell found `MetadataBar` passes a universal command executor to every metadata slot. Parent decision: require per-contribution command scoping or explicit owner-command allowlisting.
+  - Russell found `MetadataBar` fails open when `pluginHost` is omitted, allowing components to render without active ownership verification. Parent decision: fail closed when ownership cannot be verified.
+  - Dirac and Russell found `MetadataBar` trust validation is weaker than Plugin Host metadata reservation handling: non-array or malformed `metadataFields` can crash or be trusted, unsafe keys such as `__proto__` can enter plain value maps, and metadata values are accepted without matching descriptor `valueType`.
+  - Plato found missing coverage for unified metadata bar + real runtime command mutation through owner command/service boundaries.
+  - Plato found forged owner coverage should include descriptor/valueType mismatch and corrupt owner-looking records, not only wrong `sourcePluginId`.
+- Accepted P3/test/docs notes:
+  - Task placeholder tests should assert all current fields if convenient.
+  - Narrow props coverage is useful but blacklist-based.
+  - Native-surface guard in Vitest remains branch-coupled; parent checks remain stronger.
+  - Formal docs still need to describe the delivered narrow TASK-023 slice and deferred full renderer/editor registry, date picker, timer runtime, and app-shell mounting.
+- Checks reported by agents:
+  - Focused TASK-023 tests passed with 5 files / 120 tests where run.
+  - Metadata UI-only tests passed with 9 tests where run.
+  - Architecture-boundary test passed where run.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, no `.skip` / `.only`, and native/package/Tauri guards passed where run.
+
+## Parent Decisions For Review-Fix Cycle
+
+- Delegate review-fix regression tests to `test_writer` first. Parent thread will not write tests.
+- Required test scope:
+  - A metadata slot contribution cannot execute another plugin's command through the metadata bar command facade.
+  - Metadata bar fails closed or renders no trusted field UI when plugin host ownership cannot be verified.
+  - Malformed or non-array `metadataFields`, unsafe namespace/key segments, and mismatched `record.valueType` do not produce trusted fields or values and do not crash.
+  - Trusted values should not be vulnerable to prototype-pollution keys such as `__proto__`.
+  - A unified metadata bar rendered with the real runtime command facade can edit Tag metadata through `tag.add-tag` / `tag.remove-tag` and update runtime metadata through the owner command path.
+  - Forged/corrupt owner-looking records, including descriptor/valueType mismatch, are not rendered as trusted owner metadata.
+- Required implementation scope after red tests:
+  - Keep MetadataBar generic and plugin-driven.
+  - Scope commands per contribution by plugin ownership or allowlist.
+  - Require active plugin host ownership data for trusted rendering.
+  - Mirror Plugin Host metadata descriptor safety checks in MetadataBar without importing business terms into Core.
+  - Avoid native/Tauri/package/Rust changes, full metadata renderer/editor registry, date picker, real timer runtime, and app-shell mounting.
+
 ## Current Next Action
 
-- Turing (`pr_explorer`), Fermat (`reviewer`), Russell (`security_reviewer`), Dirac (`deprecation_auditor`), and Plato (`test_quality_reviewer`) are reviewing Tesla's TASK-023 implementation.
+- Spawn `test_writer` for TASK-023 review-fix regression tests.
