@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 22:24 CST.
+Last updated: 2026-05-21 22:28 CST.
 
 ## Current Task
 
@@ -8,13 +8,11 @@ Last updated: 2026-05-21 22:24 CST.
 - Branch: `feat/task-023-metadata-ui-plugin`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-023 post-fix review is running.
+- Current phase: TASK-023 formal docs sync is pending.
 
 ## Active Agents
 
-- Bacon (`reviewer`) is reviewing Galileo's MetadataBar boundary fix for correctness.
-- Arendt (`security_reviewer`) is reviewing Galileo's MetadataBar boundary fix for security.
-- Rawls (`test_quality_reviewer`) is reviewing Cicero's regression tests and Galileo's fix.
+- None currently. Next step is to delegate formal docs sync.
 
 ## Completed Recent Task
 
@@ -70,6 +68,7 @@ Last updated: 2026-05-21 22:24 CST.
 - Focused review completed with Turing (`pr_explorer`), Fermat (`reviewer`), Russell (`security_reviewer`), Dirac (`deprecation_auditor`), and Plato (`test_quality_reviewer`). P0/P1 findings: none. Fermat found no correctness regressions. Accepted P2 follow-up: scope metadata field commands per contribution or allowlist owner commands instead of passing a universal command executor; fail closed when plugin host ownership cannot be verified; mirror Plugin Host descriptor trust boundaries in `MetadataBar` for array/object shape, safe namespace/key segments, `valueType`, and null-prototype value maps; add unified-bar + real runtime command mutation coverage; broaden forged/corrupt metadata coverage. Docs sync must document the delivered narrow slice and deferred full registry/date/timer/app-shell work.
 - Cicero (`test_writer`) added review-fix regression tests in `src/test/metadata-ui-plugin.test.tsx`. Parent red validation matched the expected signal: focused tests had 5 failures / 121 passes for foreign command escape, hostless fail-open, malformed descriptor crash, unsafe segment trust, and valueType mismatch trust. `bun run typecheck`, focused eslint, and `git diff --check` passed. Commit: `c19517c`.
 - Galileo (`implementer`) fixed the MetadataBar boundary regressions in `src/plugins/metadata-ui/components/MetadataBar.tsx`. It fails closed without plugin host ownership data, scopes command execution to the contributing plugin namespace, validates metadata field descriptors with safe segments and valid `valueType`, uses prototype-safe trusted values, and requires stored metadata valueType to match the descriptor. Parent validation passed: focused TASK-023 tests 126/126, architecture-boundary 1/1, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `12dc21b`.
+- Narrow post-fix review completed with Bacon (`reviewer`), Arendt (`security_reviewer`), and Rawls (`test_quality_reviewer`). P0/P1/P2 findings: none. Bacon and Arendt said TASK-023 can proceed to docs sync. Rawls found only P3 test-hardening gaps: future tests could cover sloppy command-prefix matching, stale/inactive host records, and the `prototype` unsafe segment. Parent accepts these as non-blocking residuals.
 
 ## Current TASK-022 State
 
@@ -148,8 +147,8 @@ Last updated: 2026-05-21 22:24 CST.
 
 ## Next Actions
 
-1. Wait for Bacon, Arendt, and Rawls.
-2. Fix any P0/P1 findings through delegated agents.
+1. Spawn `doc_writer` for TASK-023 formal docs sync.
+2. Validate docs and focused checks, then commit docs.
 
 ## Current TASK-021 State
 
