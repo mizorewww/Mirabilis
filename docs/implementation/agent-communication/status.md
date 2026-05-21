@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:39 CST.
+Last updated: 2026-05-21 09:41 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:39 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: implementation committed; test-only typecheck fix pending.
+- Current phase: test-only typecheck fix running.
 
 ## Active Agents
 
-- None.
+- Averroes the 3rd (`test_writer`): narrow TS7053 test helper fix.
 
 ## Current TASK-017 State
 
@@ -75,6 +75,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Delegate TS7053 test-only typecheck fix to `test_writer`.
+1. Wait for Averroes the 3rd to finish the test-only typecheck fix.
 2. Re-run `bun run typecheck` and focused tests after the fix.
 3. Continue to review agents when checks are green.

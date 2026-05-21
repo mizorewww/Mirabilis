@@ -39,8 +39,9 @@
 
 ## Current Status
 
-- Status: implementation committed; test-only typecheck fix pending.
-- Active agents: none.
+- Status: test-only typecheck fix running.
+- Active agents:
+  - Averroes the 3rd (`test_writer`): narrow TS7053 test helper fix.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -48,7 +49,7 @@
   - Gauss the 3rd (`security_reviewer`): Markdown import/export and boundary security review completed.
   - Euler the 3rd (`test_writer`): red tests completed, verified red, committed, and closed.
   - Erdos the 3rd (`implementer`): production implementation completed, focused tests green, committed, and closed.
-- Next parent step: delegate TS7053 test-only typecheck fix to `test_writer`.
+- Next parent step: wait for Averroes the 3rd, re-run `typecheck` and focused tests, then commit the test-only fix if green.
 
 ## Agent Handoffs
 
@@ -200,6 +201,21 @@ git diff --check
 
 - Result: focused tests passed with 2 files / 11 tests. `bun run lint` passed. `git diff --check` passed.
 - `bun run typecheck` still fails in `src/test/markdown-import-export.test.ts:269` with TS7053. This is a test-only typing issue from the red-test helper and is outside the implementer scope.
+
+### Averroes the 3rd (`test_writer`) Handoff
+
+- Status: running.
+- Ownership: test-only TypeScript typing fix.
+- Expected write scope: `src/test/markdown-import-export.test.ts` only unless the exact helper type issue requires another test helper file.
+- Explicit exclusions: production code, docs, Tauri config/capabilities, Rust, package/Cargo files, generated files, and dependencies.
+- Goal: fix TS7053 in the test helper without weakening assertions or deleting coverage.
+- Required checks:
+
+```bash
+bun run typecheck
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
 
 ## Validation
 
