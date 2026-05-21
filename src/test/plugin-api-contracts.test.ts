@@ -1582,6 +1582,28 @@ describe("Plugin API contracts", () => {
     },
   );
 
+  it("prevents accessor-backed plugin-facing fixed filter ids from claiming another plugin namespace", async () => {
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        accessorBackedFilterSavingPlugin("review", "task.filter.today"),
+      ]),
+    ).rejects.toMatchObject({
+      name: "PluginHostError",
+      code: "PLUGIN_LIFECYCLE_FAILED",
+      pluginId: "review",
+      phase: "register",
+      cause: expect.objectContaining({
+        name: "PluginHostError",
+        code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+        pluginId: "review",
+      }),
+    });
+    expect(runtime.services.filters.list()).toStrictEqual([]);
+    expect(() => runtime.services.filters.get("task.filter.today")).toThrow();
+  });
+
   it("allows plugin-facing fixed filter ids inside the current plugin namespace", async () => {
     const { runtime, host } = createPluginApiTestHost();
     const records = await host.loadBuiltInPlugins([
@@ -1600,6 +1622,73 @@ describe("Plugin API contracts", () => {
       name: "task fixed filter",
       sourcePluginId: "task",
     });
+  });
+
+  it("reserves built-in task and tag metadata identities for their owning plugins", async () => {
+    await expectBuiltInMetadataWriteRejected({
+      pluginId: "review",
+      namespace: "task",
+      key: "enabled",
+      value: true,
+      valueType: "boolean",
+    });
+    await expectBuiltInMetadataWriteRejected({
+      pluginId: "review",
+      namespace: "tag",
+      key: "tags",
+      value: ["product"],
+      valueType: "json",
+    });
+
+    const { runtime, host } = createPluginApiTestHost();
+
+    await expect(
+      host.loadBuiltInPlugins([
+        metadataSavingPlugin({
+          pluginId: "task",
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          valueType: "boolean",
+        }),
+        metadataSavingPlugin({
+          pluginId: "tag",
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          valueType: "json",
+        }),
+        metadataSavingPlugin({
+          pluginId: "review",
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          valueType: "string",
+        }),
+      ]),
+    ).resolves.toHaveLength(3);
+    expect(runtime.services.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "task",
+          key: "enabled",
+          value: true,
+          sourcePluginId: "task",
+        }),
+        expect.objectContaining({
+          namespace: "tag",
+          key: "tags",
+          value: ["product"],
+          sourcePluginId: "tag",
+        }),
+        expect.objectContaining({
+          namespace: "quality",
+          key: "status",
+          value: "open",
+          sourcePluginId: "review",
+        }),
+      ]),
+    );
   });
 
   it("rejects explicit undefined plugin ids from plugin registry inputs", () => {
@@ -1834,4 +1923,82 @@ function filterSavingPlugin(
       });
     },
   };
+}
+
+function accessorBackedFilterSavingPlugin(
+  pluginId: string,
+  fixedFilterId: string,
+): AppPlugin {
+  return {
+    manifest: {
+      id: pluginId,
+      name: `${pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      const filterInput = {
+        get id() {
+          return fixedFilterId;
+        },
+        name: `${pluginId} accessor filter`,
+        query: { where: [] },
+        viewType: `${pluginId}.list`,
+      } satisfies PluginSaveFilterInput;
+
+      ctx.filters.save(filterInput);
+    },
+  };
+}
+
+type MetadataSavingPluginInput = {
+  pluginId: string;
+  namespace: string;
+  key: string;
+  value: MetadataJsonValue;
+  valueType: MetadataValueType;
+  pageId?: string;
+};
+
+function metadataSavingPlugin(
+  input: MetadataSavingPluginInput,
+): AppPlugin {
+  return {
+    manifest: {
+      id: input.pluginId,
+      name: `${input.pluginId} Plugin`,
+      version: "1.0.0",
+      minAppVersion: "0.1.0",
+    },
+    register(ctx) {
+      ctx.metadata.set({
+        pageId: input.pageId ?? "page-plugin-api-boundary",
+        namespace: input.namespace,
+        key: input.key,
+        value: input.value,
+        valueType: input.valueType,
+      });
+    },
+  };
+}
+
+async function expectBuiltInMetadataWriteRejected(
+  input: MetadataSavingPluginInput,
+): Promise<void> {
+  const { runtime, host } = createPluginApiTestHost();
+
+  await expect(
+    host.loadBuiltInPlugins([metadataSavingPlugin(input)]),
+  ).rejects.toMatchObject({
+    name: "PluginHostError",
+    code: "PLUGIN_LIFECYCLE_FAILED",
+    pluginId: input.pluginId,
+    phase: "register",
+    cause: expect.objectContaining({
+      name: "PluginHostError",
+      code: "PLUGIN_FACADE_OWNERSHIP_FORBIDDEN",
+      pluginId: input.pluginId,
+    }),
+  });
+  expect(runtime.services.metadata.list()).toStrictEqual([]);
 }

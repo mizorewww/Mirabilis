@@ -583,6 +583,50 @@ describe("Core filter query execution", () => {
     ).toStrictEqual([future.id]);
   });
 
+  it.each([
+    {
+      op: "eq",
+      operand: "not-a-date",
+    },
+    {
+      op: "neq",
+      operand: fixedCurrentDate,
+    },
+  ] as const)(
+    "fails closed for raw $op comparisons against malformed date metadata",
+    ({ op, operand }) => {
+      const executeFilterQuery = requireExecuteFilterQuery();
+      const malformedDate = page({
+        id: `page-malformed-date-${op}`,
+        title: `Malformed date ${op}`,
+      });
+      const query = {
+        where: [
+          {
+            field: "metadata.review.reviewedAt",
+            op,
+            value: operand,
+          },
+        ],
+      } satisfies FilterQuery;
+
+      expect(
+        executeFilterQuery({
+          pages: [malformedDate],
+          metadata: [
+            reviewMetadata(
+              "reviewedAt",
+              "not-a-date",
+              malformedDate.id,
+              "date",
+            ),
+          ],
+          query,
+        }),
+      ).toStrictEqual([]);
+    },
+  );
+
   it("does not mutate pages, metadata, or query inputs while executing", () => {
     const executeFilterQuery = requireExecuteFilterQuery();
     const pages = [page({ id: "page-task", title: "Task" })];
