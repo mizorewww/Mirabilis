@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 09:50 CST.
+Last updated: 2026-05-21 09:52 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-21 09:50 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: review findings complete; review-fix planning pending.
+- Current phase: Rust/IPC review-fix docs guidance running.
 
 ## Active Agents
 
-- None.
+- Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation review fix.
 
 ## Current TASK-017 State
 
@@ -93,6 +93,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit review findings.
-2. Run current-doc guidance for the Rust/IPC body-validation review fix.
-3. Delegate review-fix red tests, then implementation.
+1. Wait for Newton the 3rd's current-doc guidance.
+2. Delegate review-fix red tests.
+3. Delegate review-fix implementation.

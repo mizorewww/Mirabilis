@@ -39,8 +39,9 @@
 
 ## Current Status
 
-- Status: review findings complete; review-fix planning pending.
-- Active agents: none.
+- Status: Rust/IPC review-fix docs guidance running.
+- Active agents:
+  - Newton the 3rd (`docs_researcher`): current guidance for Rust IPC body-validation review fix.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
   - Carver the 3rd (`docs_researcher`): current official docs guidance completed.
@@ -56,7 +57,7 @@
   - Schrodinger the 3rd (`docs_researcher`): docs/current-guidance review completed with required docs sync findings.
   - Bohr the 3rd (`test_quality_reviewer`): test quality review completed with P1/P2 findings.
   - Rawls the 3rd (`doc_writer`): documentation gap review completed.
-- Next parent step: commit review findings, run current-doc guidance for Rust/IPC validation, then delegate review-fix red tests.
+- Next parent step: wait for Newton the 3rd, then delegate review-fix red tests.
 
 ## Agent Handoffs
 
@@ -306,6 +307,15 @@ git diff --check
   - Malformed legacy fallback rejection.
   - Deleted-ID collision coverage.
   - Avoid adding more representation-overfit tests where observable behavior is enough.
+
+### Newton the 3rd (`docs_researcher`) Handoff
+
+- Status: running.
+- Ownership: read-only current guidance for Rust/Tauri/Serde review-fix tests and implementation.
+- Scope:
+  - Rust IPC `core.pages.create/update` structured body validation.
+  - TypeScript Markdown conversion validation/reconciliation test guidance.
+  - Current official docs only as needed for Tauri v2 command/error patterns, Serde/serde_json validation, and Rust testing style.
 
 ## Validation
 
