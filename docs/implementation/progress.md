@@ -52,7 +52,7 @@ Status markers:
 - [x] TASK-018: Implement Task Plugin syntax and task page creation
 - [x] TASK-019: Implement task navigation and infinite nesting
 - [x] TASK-020: Implement checkbox toggle and task events
-- [~] TASK-021: Implement Tag Plugin baseline
+- [x] TASK-021: Implement Tag Plugin baseline
 - [ ] TASK-022: Implement All Tasks and Today filters
 
 ## Milestone M5: Metadata and timer loop
@@ -78,6 +78,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 18:35 CST - TASK-021 completed
+
+- Branch: `feat/task-021-tag-plugin-baseline`.
+- Task: Implement Tag Plugin baseline.
+- Commits: `9df88c3`, `912014c`, `a94cf88`, `bde416d`, `453e80e`, `746d5f3`, `a541f34`, `f39c1e3`, `1e6ab88`, `297f6e9`, `e679f04`, `2b54c67`, `d3819b1`, `59ccea4`, `184e669`, `5a49a4a`, `4f5eb02`, `cee4d4a`, and `d143453`.
+- Delivered: built-in `TagPlugin` registration through `BUILT_IN_PLUGINS`; plugin id `tag`; manifest descriptors `tag.hashtag` and `tag.tags`; metadata contract `namespace: "tag"`, `key: "tags"`, `valueType: "json"`, normalized lowercase ASCII slug `string[]` values without `#`; explicit `tag.refresh-tags({ pageId }) -> { pageId, tags }` command-driven recognition from saved structured `markdown.line` blocks; stale tag metadata replacement with exact current tags or `[]`; first-seen dedupe and max 32 unique tags per page; strict raw ASCII validation before lowercasing, including rejection of Unicode case-folding inputs such as `K`; `tag.add-tag` and `tag.remove-tag` page-scoped commands; explicit empty `tag.tags: []` writes on touched removes; registered `TagMetadataSlot` contribution `tag.page-header-metadata.tags` on `page.header.metadata` with order `300`; inert tag display and accessible add/remove controls with command rejection feedback and page-matched command results; and `tag.create-filter({ tag })` storing a plugin-owned `#tag` filter definition with `metadata.tag.tags includes <tag>` and `viewType: "page.list"`.
+- Validation: initial acceptance tests were red before implementation, review-fix regressions were red before fixes, and second review-fix regressions were red before fixes. Final focused validation passed with `bun run test:frontend -- src/test/tag-plugin-baseline.test.tsx` (15 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and empty native/package/Tauri surface diff. Final local gate `bun run check:quick` passed with 25 frontend test files / 366 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed.
+- `check:full`: not run for TASK-021 because the branch did not add Tauri IPC, permissions/capabilities, filesystem/native behavior, package or Cargo dependencies, persistence schema behavior, packaging, release behavior, or app-runtime persistence wiring. TASK-021 is TypeScript plugin/runtime/slot behavior plus docs and focused tests, covered by `check:quick`, `bun run build`, focused frontend tests, reviews, docs sync, and empty native/package/Tauri surface checks.
+- Review: planning/current-doc guidance, deprecation/API audit, security guidance, TDD acceptance tests, implementation, correctness/security/test-quality/API/deprecation reviews, changed-surface exploration, two review-fix TDD loops, docs semantics review, formal docs sync, and final local gate were delegated to agents or run by the parent orchestrator. Final P0/P1/P2 code/security/test-quality findings were fixed or cleared. Formal docs drift found by Erdos and Boole was fixed before completion.
+- External docs verified by agents: React `useId`, React 19 upgrade/deprecation guidance, Testing Library React/user-event/async query guidance, Vitest `vi.fn` / `expect` guidance, Vite 7 migration and browser externalization guidance, Tauri v2 capabilities and JavaScript API reference. Final docs sync was based on local implementation/tests and did not require additional external docs.
+- Remaining risk: TASK-021 intentionally keeps automatic save-time tag scanning, background indexing, rich inline token UI, autocomplete, global Metadata UI Plugin behavior, full metadata field renderer/editor, filter result execution/rendering, All Tasks / Today filters, task source-line tag propagation to task pages, Timer/Calendar/Stats tag aggregation, and native/Tauri/package surfaces deferred. Non-blocking P3: the native-surface shell-out guard in Vitest is branch/git-environment coupled but accepted because `master` is canonical and parent native/package/Tauri diff checks passed. `TagMetadataSlot` stores local command results for immediate feedback; future app-level metadata refresh wiring may need to replace that interim state model.
 
 ### 2026-05-21 15:27 CST - TASK-021 started
 

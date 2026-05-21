@@ -465,6 +465,19 @@ git diff --check
 
 - Result: passed. No markdown/doc lint script was found in `package.json`, and no markdownlint/remark/textlint config was present.
 
+## Final Branch Validation
+
+- Status: passed on 2026-05-21 18:35 CST.
+- Checks:
+
+```bash
+bun run check:quick
+bun run build
+```
+
+- Result: `bun run check:quick` passed with 25 frontend test files / 366 tests plus Rust fmt, Rust clippy, and full Rust tests. `bun run build` passed.
+- `check:full`: not run because TASK-021 did not add Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, persistence wiring, packaging, or release behavior.
+
 ## Current Next Action
 
-- Run the final branch local gate, then update `progress.md` if it passes.
+- Commit progress completion update, then merge TASK-021 back to `master`.
