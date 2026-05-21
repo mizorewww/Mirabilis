@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 10:42 CST.
+Last updated: 2026-05-21 10:51 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 10:42 CST.
 - Branch: `feat/task-017-stable-block-ids-markdown-import-export`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: final focused re-review found one remaining P1; third review-fix red test pending.
+- Current phase: third review-fix implementation complete; final correctness re-review pending.
 
 ## Active Agents
 
@@ -60,6 +60,8 @@ Last updated: 2026-05-21 10:42 CST.
   - Pascal the 3rd (`reviewer`) found one remaining P1: a longer similar inserted line can still steal the old block ID before the actual edited old line.
   - Pasteur the 3rd (`security_reviewer`) found no remaining P0/P1/P2 security findings.
   - Halley the 3rd (`test_quality_reviewer`) found no remaining P0/P1/P2 test-quality findings.
+- Hume the 3rd (`test_writer`) added the long similar-line regression test. Commit: `18f0f04`.
+- McClintock the 3rd (`implementer`) anchored fuzzy reconciliation to the next retained block so the edited old block keeps its ID. Commit: `61ee5f8`.
 
 ## Validation Already Reported By Parent
 
@@ -107,6 +109,6 @@ codex --strict-config doctor --summary --ascii
 
 ## Next Actions
 
-1. Commit final focused re-review finding.
-2. Delegate third review-fix red test for Pascal the 3rd's remaining P1.
-3. Delegate implementation and re-review again.
+1. Commit third review-fix implementation result.
+2. Run final correctness re-review for Pascal the 3rd's remaining P1.
+3. Proceed to docs sync if clear.

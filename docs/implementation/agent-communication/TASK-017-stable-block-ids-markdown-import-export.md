@@ -39,7 +39,7 @@
 
 ## Current Status
 
-- Status: final focused re-review found one remaining P1; third review-fix red test pending.
+- Status: third review-fix implementation complete; final correctness re-review pending.
 - Active agents: none.
 - Completed agents:
   - James the 3rd (`planner`): scope, design slices, TDD plan, implementation guidance, and risks completed.
@@ -68,7 +68,9 @@
   - Pascal the 3rd (`reviewer`): final focused correctness re-review completed with one remaining P1.
   - Pasteur the 3rd (`security_reviewer`): final focused security re-review completed with no remaining P0/P1/P2 findings.
   - Halley the 3rd (`test_quality_reviewer`): final focused test-quality re-review completed with no remaining P0/P1/P2 findings.
-- Next parent step: commit final focused re-review finding and delegate third review-fix red test.
+  - Hume the 3rd (`test_writer`): long similar-line regression test completed, verified red, committed, and closed.
+  - McClintock the 3rd (`implementer`): anchor-based reconciliation fix completed, validated, committed, and closed.
+- Next parent step: commit McClintock the 3rd's result and run final correctness re-review.
 
 ## Agent Handoffs
 
@@ -525,6 +527,41 @@ git diff --check
   - Add a red test for Pascal the 3rd's longer-similar-inserted-line variant.
   - Update ID reconciliation so the actual edited old block keeps its ID even when an earlier inserted line has higher continuation length.
 - Docs sync remains after this final correctness loop is clean.
+
+### Hume the 3rd (`test_writer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: test-only.
+- File changed:
+  - `src/test/markdown-import-export.test.ts`.
+- Coverage added: a long similar inserted line before the actual edited old block must get a fresh ID, while the edited old block keeps the original ID.
+- Commit: `18f0f04` (`Hume the 3rd(test)(Add stable block IDs and markdown import/export): add long similar line regression`).
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+git diff --check
+```
+
+- Result: expected red signal. Frontend focused tests: 1 failed / 16 passed. `git diff --check` passed.
+
+### McClintock the 3rd (`implementer`) Handoff
+
+- Status: completed, committed, and closed.
+- Ownership: production TypeScript implementation only.
+- File changed:
+  - `src/core/markdown/markdown-conversion.ts`.
+- Commit: `61ee5f8` (`McClintock the 3rd(review-fix)(Add stable block IDs and markdown import/export): anchor edited block reconciliation`).
+- Summary: reconciliation now uses the next retained block as an anchor when fuzzy candidates have equal similarity, preserving the actual edited old block ID even when an earlier inserted line is a longer similar continuation.
+- Parent verification:
+
+```bash
+bun run test:frontend -- src/test/markdown-import-export.test.ts src/test/markdown-page-persistence.test.tsx
+bun run typecheck
+git diff --check
+```
+
+- Result: all passed. Focused frontend tests passed with 2 files / 17 tests.
 
 ## Validation
 
