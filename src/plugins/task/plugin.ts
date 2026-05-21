@@ -13,6 +13,10 @@ type ResolveTaskBlockInput = {
   sourceBlockId: string;
 };
 
+type OpenTaskPageResult = {
+  pageId: string;
+};
+
 type SourceBlockMatch = {
   block: BlockNode;
   index: number;
@@ -20,6 +24,7 @@ type SourceBlockMatch = {
 
 const taskNamespace = "task";
 const resolveTaskBlockCommandId = "task.resolve-task-block";
+const openTaskPageCommandId = "task.open-task-page";
 const uncheckedTaskLinePattern = /^ {0,3}-\s+\[\s\]\s+(?<title>.*)$/u;
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 
@@ -46,6 +51,12 @@ export const TaskPlugin: AppPlugin = {
       title: "Resolve task block",
       handler: resolveTaskBlock,
     });
+
+    ctx.commands.register({
+      id: openTaskPageCommandId,
+      title: "Open task page",
+      handler: openTaskPage,
+    });
   },
 };
 
@@ -55,6 +66,25 @@ async function resolveTaskBlock(
 ): Promise<MarkdownPage> {
   const payload = readResolveTaskBlockInput(input);
 
+  return resolveTaskPage(payload, ctx);
+}
+
+async function openTaskPage(
+  input: unknown,
+  ctx: PluginContext,
+): Promise<OpenTaskPageResult> {
+  const payload = readResolveTaskBlockInput(input);
+  const taskPage = await resolveTaskPage(payload, ctx);
+
+  return {
+    pageId: taskPage.id,
+  };
+}
+
+function resolveTaskPage(
+  payload: ResolveTaskBlockInput,
+  ctx: PluginContext,
+): Promise<MarkdownPage> {
   return ctx.transaction.run((tx) => {
     const sourcePage = tx.pages.get(payload.sourcePageId);
     const sourceBlockMatch = findTopLevelSourceBlock(
