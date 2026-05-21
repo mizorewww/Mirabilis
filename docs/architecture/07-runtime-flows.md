@@ -52,15 +52,17 @@ async function createAppRuntime() {
 }
 ```
 
-TASK-016/TASK-017 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
+TASK-016/TASK-018 当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
 
-`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-017 没有做 broad Core store-to-SQLite rewiring。
+`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-018 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-016 后只包含内置 `MarkdownEditorPlugin`。Quick capture、search、task、timer、calendar 等具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-018 后包含内置 `MarkdownEditorPlugin` 和 `TaskPlugin`。Quick capture、search、timer、calendar 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
 TASK-017 后，`runtime.markdown.pages.load()` 从 `core.pages.get` 读取 body，把结构化 `markdown.line` blocks 导出为 editor Markdown；仅对 TASK-016 旧的 exact one-node `markdown.text` body 做 load-only fallback。`runtime.markdown.pages.save()` 把 editor Markdown 导入为结构化 body 并通过 `core.pages.update` 保存，导入时使用上一版结构化 document 作为上下文来保留稳定 block IDs。新保存不写 legacy `markdown.text` body。
+
+TASK-018 的 `task.resolve-task-block` 运行在当前 in-memory Core/plugin runtime 内：Command Registry 调用 Plugin Host 包装过的 Task Plugin handler，Plugin Host 为本次 command execution 创建 fresh `PluginContext`，handler 通过 plugin-facing transaction、page store 和 metadata store 创建任务页、写 metadata、绑定 source block。这个流程不新增 NativeBridge/Tauri IPC、权限、filesystem 或 package/Rust surface。
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -92,15 +94,27 @@ MarkdownEditorPlugin 渲染受控 textarea
 保存时通过 runtime.markdown.pages narrow facade 把 editor Markdown 导入为 markdown.line blocks
 runtime.markdown.pages 只调用 core.pages.get / core.pages.update
 每个 markdown.line block 都带稳定 blockId，空行也保留 blockId
+保存不会自动扫描 task syntax，也不会自动执行 task.resolve-task-block
 
-后续 Task Plugin 落地后：
-TaskPlugin 识别 - [ ] task text
-TaskPlugin 检查 block 是否有 boundPageId
-没有 boundPageId → 执行 task.resolve-task-block command
-Command 创建 Markdown Page
-Command 写 task metadata
-Command 更新 block attrs
-FilterEngine 刷新 All Tasks
+TASK-018 当前：
+TaskPlugin 是内置插件，manifest 贡献 inert - [ ] syntax descriptor
+调用方执行 runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })
+Command Registry 进入 Plugin Host command wrapper
+Plugin Host 创建 command-time PluginContext
+TaskPlugin 校验 source block 是唯一 top-level markdown.line
+TaskPlugin 排除空标题、非 - [ ]、- [x]、四空格或 tab 缩进代码、fenced code 内 task-looking line
+TaskPlugin 从当前 source block 派生标题
+TaskPlugin 按 (sourcePageId, sourceBlockId) metadata relation 查重
+TaskPlugin 只复用经过 task.sourcePageId/task.sourceBlockId 验证的 attrs.boundPageId
+没有已有任务页时创建空 Markdown Page
+Command 写 task.enabled、task.status、task.sourcePageId、task.sourceBlockId
+Command 复制更新 source page body，给 source block 写 attrs.boundPageId
+
+后续：
+编辑器保存后自动扫描 task blocks
+点击任务文字导航到 boundPageId
+checkbox toggle / - [x]
+FilterEngine 刷新 All Tasks / Today
 ViewRegistry 渲染任务列表
 ```
 

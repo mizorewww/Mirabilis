@@ -34,9 +34,10 @@
 ☐ 设计 Timer Plugin
 ```
 
-Task Plugin 识别两个 task block。
+产品目标是 Task Plugin 识别两个 task block 并创建对应页面。
+TASK-018 交付的是命令级创建切片：内置 `task` 插件注册 `- [ ]` 语法 descriptor，并在执行 `task.resolve-task-block` command 时创建或复用对应 Markdown Page。当前编辑器保存还不会自动扫描页面、自动调用 resolver、或自动导航到任务页。
 
-系统自动创建两个 Markdown Page：
+当 resolver 对这两个 source block 分别执行后，系统创建两个 Markdown Page：
 
 ```text
 设计快速收集箱
@@ -48,8 +49,8 @@ Task Plugin 识别两个 task block。
 ```text
 task.enabled = true
 task.status = todo
-task.source_page_id = 当前页面
-task.source_block_id = 对应 block
+task.sourcePageId = 当前页面
+task.sourceBlockId = 对应 block
 ```
 
 ---
@@ -74,7 +75,9 @@ task.source_block_id = 对应 block
 - [ ] 设计停止计时后的 Note
 ```
 
-这些子任务也会自动生成对应页面。
+这些子任务也会生成对应页面。
+
+当前 TASK-018 尚未实现点击文字导航，也未在编辑器保存时自动扫描子任务。点击任务文字进入 `attrs.boundPageId` 对应页面、保存后自动解析新 task block、以及子任务的自动页面创建属于 TASK-019 及后续编辑器/导航任务。
 
 ---
 
@@ -88,6 +91,8 @@ Task Plugin 都会创建一个对应 Markdown Page
 这个对应页面仍然是 Markdown Page
 因此它内部还可以继续出现 - [ ] yyy
 ```
+
+当前 TASK-018 只保证 `task.resolve-task-block` 对给定 `{ sourcePageId, sourceBlockId }` 的单个 `markdown.line` source block 可创建或复用一个任务页。无限嵌套的用户体验还需要后续自动扫描、点击导航和视图刷新任务。
 
 示例：
 
@@ -159,7 +164,7 @@ D
 
 用户可以一直写，不需要切换到表单模式。
 
-TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。Task / Tag / Date / Page Link 等语义识别仍由后续插件接管。
+TASK-016 交付 Markdown Editor Plugin shell：内置 `markdown` 插件注册页面编辑器 view、插入文本 command 和移动工具栏 slot；编辑器主体仍是受控 `<textarea>`。TASK-017 在这个 shell 下加入内部 Markdown import/export：编辑器继续显示用户输入的 Markdown 文本，保存时转成带稳定 `blockId` 的结构化 `markdown.line` blocks，重新打开时再导出为可见 Markdown。TASK-018 已提供 Task Plugin 的 command-level resolver；Tag / Date / Page Link 等语义识别，以及 task 的自动编辑器扫描和导航，仍由后续插件或编辑器任务接管。
 
 ### 12.2 UI 只辅助插入语法
 
@@ -205,7 +210,7 @@ TASK-016 基线工具栏只包含已经实现的三个纯文本 snippet：
 - [ ] 写统计图插件
 ```
 
-Task Plugin 接管后续识别。
+TASK-018 起，Task Plugin 可以在 command 层接管后续识别：调用 `task.resolve-task-block` 并传入 `{ sourcePageId, sourceBlockId }` 后，resolver 会从当前 source block 派生标题并创建或复用任务页。编辑器保存本身仍只保存 Markdown 文本，不会自动调用该 command。
 
 ---
 
@@ -236,7 +241,7 @@ Task Plugin 接管后续识别。
 
 ```text
 进入 Inbox Page
-后续 Task Plugin 创建任务页面
+TASK-018 command-level resolver 可创建任务页面
 后续 Tag Plugin 识别 #ml
 后续 Filter 自动更新
 ```
@@ -303,9 +308,11 @@ Stats Plugin: estimate error
 
 ```text
 Markdown Page 保存正文
-Task Plugin 识别三个任务
-每个任务生成 Markdown Page
-All Tasks Filter 更新
+TASK-017 结构化保存为带稳定 blockId 的 markdown.line blocks
+TASK-018 在执行 task.resolve-task-block 时为指定 task block 创建或复用 Markdown Page
+任务页写入 task.enabled、task.status、task.sourcePageId、task.sourceBlockId
+source block 通过 attrs.boundPageId 绑定到任务页
+后续任务负责自动扫描、点击导航和 All Tasks Filter 更新
 ```
 
 ### 26.2 进入任务页

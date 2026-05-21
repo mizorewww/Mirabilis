@@ -106,7 +106,7 @@ For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are th
 TASK-015 tests should cover the observable app bootstrap/provider contract without adding business plugin behavior:
 
 - Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. Later runtime facades such as TASK-016 `runtime.markdown` may be added to the runtime object without changing this ordering.
-- TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-016, production `BUILT_IN_PLUGINS` contains the built-in `markdown` plugin; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
+- TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-018, production `BUILT_IN_PLUGINS` contains the built-in `markdown` and `task` plugins; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
 - Rejection propagation for startup failures, including `loadBuiltInPlugins()` and `activateAll()` failures; startup must not report a ready runtime after those failures.
 - React StrictMode single-flight initialization so bootstrap and plugin activation are not duplicated during development double-mount behavior.
 - Retry after a failed initializer mount with the same initializer; rejected initializer promises must not poison future mounts forever.
@@ -176,6 +176,31 @@ git diff --check
 ```
 
 Escalate to `bun run check:full` for future work that changes Tauri commands/capabilities, filesystem/native import-export, app-runtime persistence wiring, packaging, release behavior, or broader IPC contracts beyond the TASK-017 body validation now covered by focused Rust IPC tests.
+
+## TASK-018 Task Plugin Syntax and Page Creation Guidance
+
+TASK-018 tests cover the first built-in Task Plugin slice without adding automatic editor-save scanning, navigation, filters, views, or native surface:
+
+- Built-in `task` plugin is present in `BUILT_IN_PLUGINS`, contributes inert checkbox syntax descriptor `- [ ]`, and registers owned command `task.resolve-task-block`.
+- Resolver command tests should execute through the real runtime command bus with payload `{ sourcePageId, sourceBlockId }`; tests should not call plugin internals directly.
+- Positive coverage should prove an unbound stable top-level `markdown.line` task block creates exactly one Markdown Page, derives the title from the current source block, writes `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId`, and binds the source block with `attrs.boundPageId`.
+- Duplicate coverage should use the full `(sourcePageId, sourceBlockId)` relation, including same `sourceBlockId` on different pages, metadata-only relation reuse, verified `attrs.boundPageId` reuse, and binding restoration after Markdown save/import drops attrs.
+- Negative coverage should prove no mutation for invalid payloads, stale source blocks, duplicate top-level block IDs, non-task blocks, malformed checkbox lines, four-space or tab-indented code lines, fenced-code task-looking lines, forged/unverified `attrs.boundPageId`, and unsafe-looking title text that must remain inert data.
+- Atomicity coverage should prove page creation, metadata writes, and source binding roll back together on resolver failure.
+- Plugin Host lifecycle tests should cover command-time `PluginContext`: handler signature `PluginCommandHandler(input, context)`, fresh command execution context, command-time data mutation allowed, runtime contribution registration rejected during command execution, and stale command context writes rejected after command completion.
+- Command Registry / Plugin Host tests should cover command error provenance: only Plugin Host-marked command execution failures preserve `CommandRegistryError.cause`; ordinary command handlers must keep raw causes redacted even if they throw PluginHostError-shaped plain objects or constructible `PluginHostError` instances.
+- Native-surface guards should continue proving TASK-018 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+
+TASK-018 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/task-plugin-syntax-page-creation.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-command-registry.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-018 itself is TypeScript Core/plugin runtime behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
 
 ## Merge Gate
 

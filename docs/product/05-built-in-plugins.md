@@ -58,23 +58,38 @@ Task Plugin 是一个插件，不是 Core 功能。
 
 ### 16.1 注册能力
 
-Task Plugin 注册：
+TASK-018 当前已经交付的注册能力：
 
 ```text
 Markdown Syntax:
 - [ ]
-- [x]
 
 Metadata:
 task.enabled
 task.status
-task.due
-task.scheduled
-task.estimate
-task.priority
-task.done_at
-task.source_page_id
-task.source_block_id
+task.sourcePageId
+task.sourceBlockId
+
+Commands:
+task.resolve-task-block
+```
+
+`task` 是内置插件。manifest 暴露 `task.checkbox` markdown syntax descriptor，语法文本为 `- [ ]`；descriptor 只是编辑器扩展 metadata，不会自己创建任务页。`task.resolve-task-block` 是命令级 resolver，payload 为：
+
+```ts
+{
+  sourcePageId: string;
+  sourceBlockId: string;
+}
+```
+
+resolver 从当前 source block 派生任务标题，创建或复用任务页，并把 source block 复制更新为带 `attrs.boundPageId` 的 block。重复执行同一 `(sourcePageId, sourceBlockId)` 不会创建重复任务页。
+
+后续范围：
+
+```text
+Markdown Syntax:
+- [x]
 
 Events:
 task.completed
@@ -101,6 +116,8 @@ task.list_item
 task.metadata_fields
 ```
 
+`task.due`、`task.scheduled`、`task.estimate`、`task.priority`、`task.done_at`、checkbox toggle、open-page command、filters、views 和 events 都是后续 Task Plugin 范围，不属于 TASK-018 当前行为。
+
 ### 16.2 输入到任务页面的完整流程
 
 用户输入：
@@ -113,15 +130,15 @@ task.metadata_fields
 
 ```text
 Markdown Page 更新
-Task Plugin 识别 - [ ]
-Tag Plugin 识别 #product
-Task Plugin 创建任务对应 Markdown Page
-Task Plugin 写入 task metadata
-Tag Plugin 写入 tag metadata
-Task Plugin 注册 source relation
-Filter Engine 刷新 All Tasks / Today / Tag Filter
-View Registry 渲染列表项
+TASK-017 保存为带稳定 blockId 的 markdown.line blocks
+TASK-018 可执行 task.resolve-task-block({ sourcePageId, sourceBlockId })
+Task Plugin 校验 source block 是未完成任务语法 - [ ] ...
+Task Plugin 创建或复用任务对应 Markdown Page
+Task Plugin 写入 task.enabled、task.status、task.sourcePageId、task.sourceBlockId
+Task Plugin 通过 source block attrs.boundPageId 记录 source relation
 ```
+
+当前不会因为保存 Markdown Page 自动扫描所有 task block；也不会处理 `#product`、自动刷新 All Tasks / Today / Tag Filter，或注册任务列表渲染项。这些属于后续 Tag、Filter、View 和 editor integration 任务。
 
 ### 16.3 点击逻辑
 
@@ -145,6 +162,8 @@ Metadata: task.status 更新
 Command: page.open
 Target: 该任务对应 Markdown Page
 ```
+
+以上点击逻辑是后续范围。TASK-018 只保证已有调用方可通过 command-level resolver 创建/绑定任务页；点击 checkbox、点击文字打开任务页、`- [x]` 识别和状态切换尚未实现。
 
 ---
 

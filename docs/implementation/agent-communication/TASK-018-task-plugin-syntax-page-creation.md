@@ -40,9 +40,8 @@
 
 ## Current Status
 
-- Status: blocking docs sync agent running.
-- Active agents:
-  - Kierkegaard the 3rd (`doc_writer`): blocking TASK-018 docs sync.
+- Status: blocking docs sync completed; parent final validation/commit pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -54,7 +53,8 @@
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
   - Focused re-review agents completed.
-- Next parent step: wait for Kierkegaard the 3rd's docs sync, then run docs checks and commit if clean.
+  - Kierkegaard the 3rd (`doc_writer`): blocking TASK-018 docs sync completed.
+- Next parent step: run final branch validation as needed, commit docs sync if clean, and update progress only after final gates/merge readiness.
 
 ## Agent Handoffs
 
@@ -427,10 +427,26 @@ git diff --check
 
 ### Kierkegaard the 3rd (`doc_writer`) Handoff
 
-- Status: running.
+- Status: completed.
 - Ownership: documentation sync only.
 - Target docs: `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and live communication docs if useful.
 - Required sync: final TASK-018 behavior, command-time PluginContext, camelCase task metadata, `attrs.boundPageId`, no native surface, deferred future Task Plugin scope, and final command failure provenance behavior.
+- Files changed:
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-018-task-plugin-syntax-page-creation.md`.
+- Summary: synced docs to the command-level TASK-018 slice: built-in `task` plugin, `- [ ]` syntax descriptor, `task.resolve-task-block`, payload `{ sourcePageId, sourceBlockId }`, camelCase task metadata, verified `attrs.boundPageId` source binding, duplicate detection by `(sourcePageId, sourceBlockId)`, command-time fresh `PluginContext`, runtime contribution registration rejected during command execution, stale command contexts invalid after completion, Plugin Host-marked command failure cause preservation, ordinary command failure redaction, unchanged NativeBridge/Tauri/package/Rust surface, and deferred automatic scanning/navigation/filters/views/events.
+- Checks run:
+  - `git diff --check`.
+  - `rg -n "source_page_id|source_block_id|MarkdownEditorPlugin.*only|only contains.*Markdown|Task Plugin.*future-only|updateBlockAttrs|ctx\\.commands\\.execute|task\\.source_page_id|task\\.source_block_id" docs`.
+  - Same stale search scoped to `docs/product docs/architecture docs/development docs/testing`.
+- Result: `git diff --check` passed. Scoped stale search over product/architecture/development/testing docs returned no matches. Broad docs search returned only historical agent-communication notes about old review findings and prior stale-search results.
 
 ## Parent Decisions
 

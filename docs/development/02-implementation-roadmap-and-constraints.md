@@ -94,33 +94,57 @@ Packaging/release behavior
 
 ### Phase 3：Task Plugin
 
-实现：
+TASK-018 已交付的最小切片：
 
 ```text
-- [ ] syntax
-TaskBlock
-TaskBlock → Markdown Page
-Checkbox toggle
-Click title → open page
-Task metadata
-All Tasks Filter
-Today Filter
+Built-in task plugin in BUILT_IN_PLUGINS
+Manifest markdown syntax descriptor: - [ ]
+Command: task.resolve-task-block
+Command payload: { sourcePageId, sourceBlockId }
+Parser input: TASK-017 top-level markdown.line blocks with stable blockId
+Task title derived from the current source block
+TaskBlock → Markdown Page through command-level resolver
+Task metadata: task.enabled, task.status, task.sourcePageId, task.sourceBlockId
+Source binding: attrs.boundPageId copied into the source block body
+Duplicate prevention by (sourcePageId, sourceBlockId)
+Verified attrs.boundPageId reuse only when task metadata matches the same source relation
+Metadata-only relation recovery after Markdown save/import drops attrs
+CommonMark indented-code and fenced-code task-looking lines stay inert
+No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
 ```
 
-验收：
+TASK-018 验收：
 
 ```markdown
 - [ ] A
 ```
 
-点击 A 进入 A 页面。
-A 页面写：
+执行：
 
-```markdown
-- [ ] B
+```ts
+runtime.commands.execute("task.resolve-task-block", {
+  sourcePageId,
+  sourceBlockId
+});
 ```
 
-点击 B 进入 B 页面。
+会创建或复用 A 的任务页，并写入 task metadata 与 source binding。
+
+Phase 3 后续范围：
+
+```text
+Automatic editor-save scanning / indexing
+- [x] syntax
+Checkbox toggle
+Click title → open page
+Task navigation and infinite nesting UX
+All Tasks Filter
+Today Filter
+Task list item / metadata field views
+task.completed / task.reopened events
+```
+
+点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 及后续导航/自动扫描任务的验收目标，不是 TASK-018 当前行为。
 
 ---
 
@@ -338,7 +362,8 @@ Plugin Host
     管理生命周期
     注册能力
     处理依赖
-    提供插件上下文
+    提供 lifecycle plugin context
+    为 plugin command execution 提供 fresh command-time context
 
 Plugins
   负责：
@@ -354,6 +379,16 @@ Plugins
     搜索
     同步
     快速收集箱
+
+当前 TASK-018 代码流
+  负责：
+    TaskPlugin 注册 - [ ] markdown syntax descriptor
+    TaskPlugin 注册 task.resolve-task-block
+    Command Registry 执行 command
+    Plugin Host 注入 command-time PluginContext
+    TaskPlugin 通过 Core/plugin transaction 创建或复用任务页
+    TaskPlugin 写 task metadata 并复制更新 source block attrs.boundPageId
+    NativeBridge/Tauri surface 保持不变
 
 React App Shell
   负责：
