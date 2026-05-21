@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 19:30 CST.
+Last updated: 2026-05-21 19:36 CST.
 
 ## Current Task
 
@@ -8,15 +8,11 @@ Last updated: 2026-05-21 19:30 CST.
 - Branch: `feat/task-022-all-tasks-today-filters`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: post-fix focused review is running.
+- Current phase: post-fix focused review completed; second review-fix regression tests are next.
 
 ## Active Agents
 
-- Hume (`pr_explorer`) is mapping the post-fix changed surface.
-- Dewey (`reviewer`) is reviewing correctness.
-- Avicenna (`security_reviewer`) is reviewing security boundaries.
-- Beauvoir (`deprecation_auditor`) is checking API/deprecation risks.
-- Archimedes (`test_quality_reviewer`) is reviewing test quality.
+- None. The post-fix focused review agents completed and are ready to close.
 
 ## Completed Recent Task
 
@@ -71,6 +67,7 @@ Last updated: 2026-05-21 19:30 CST.
 - Focused review completed with Maxwell (`pr_explorer`), Hubble (`reviewer`), Gibbs (`security_reviewer`), Schrodinger (`deprecation_auditor`), Planck (`test_quality_reviewer`), and Epicurus (`docs_researcher`). P0 findings: none. P1 findings: default Task filter registration is not idempotent after plugin deactivation/re-registration, and formal docs drift from the implemented filter/view/date contract. Accepted P2/P3 follow-up: type fixed filter IDs as public save inputs, broaden generic executor coverage, cover `gt`/`lt`, harden relative-date `neq`, make empty-state copy generic or prop-scoped, and prove view/slot lookup through `viewType` and `filter.empty_state`. Deferred P2/P3: Event/plugin-index `within` execution, git-coupled native guard cleanup, and absence-command assertion brittleness.
 - Hooke (`test_writer`) added review-fix regression tests in `src/test/core-filter-engine.test.ts`, `src/test/task-filters-view-rendering.test.tsx`, `src/test/core-filter-store.test.ts`, and `src/test/plugin-api-contracts.test.ts`. Parent red validation matched the expected signal: focused tests had 4 failures / 90 passes, `bun run typecheck` failed on missing optional fixed filter id types, focused eslint passed, and `git diff --check` passed. Commit: `c765349`.
 - Ampere (`implementer`) fixed the review regressions in `src/core/filter-engine.ts`, `src/core/stores/filter-store.ts`, `src/core/plugin-api/context.ts`, `src/plugins/task/plugin.ts`, and `src/plugins/task/components/TaskFilterViews.tsx`. It made Task default filters idempotent, typed optional fixed filter IDs, implemented the current `gt`/`lt` page/metadata comparison subset, hardened relative-date `neq`, and made empty-state copy generic. Parent validation passed: review-fix focused tests 94/94, adjacent view/task/tag tests 69/69, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard. Commit: `a9b0579`.
+- Post-fix focused review completed with Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`). P0/P1 findings: none. Accepted P2 follow-up: preserve user-created task-owned filters during default upsert, guard direct `executeFilterQuery` against cyclic/over-deep queries, prevent cross-plugin fixed filter id collisions such as foreign-owned `task.filter.*`, remove the hidden assumption that every metadata `sourcePluginId` equals namespace while preserving built-in Task/Tag trust boundaries, and fail closed for malformed metadata `valueType` on `eq`/`neq`/`includes`. `within` remains deferred to formal docs sync as an explicit current-executor subset caveat.
 
 ## Parent Decisions After TASK-022 Start
 
@@ -82,10 +79,11 @@ Last updated: 2026-05-21 19:30 CST.
 
 ## Next Actions
 
-1. Wait for post-fix focused review agents.
-2. Address any P0/P1 findings; evaluate P2 findings.
-3. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
-4. Run final branch gates before marking TASK-022 complete.
+1. Spawn second review-fix `test_writer` for accepted P2/P3 regression coverage.
+2. Validate expected red focused tests, then commit the test patch.
+3. Spawn `implementer` for the minimum code fix.
+4. Spawn `doc_writer` for TASK-022 formal docs sync after behavior review fixes pass.
+5. Run final branch gates before marking TASK-022 complete.
 
 ## Current TASK-021 State
 

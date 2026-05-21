@@ -312,6 +312,48 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Review-fix focused tests passed with 4 files / 94 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Post-Fix Focused Review
+
+- Status: completed on 2026-05-21 19:36 CST by Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`).
+- P0 findings: none.
+- P1 findings: none.
+- Cleared findings:
+  - Hume found the accepted Hooke/Ampere review-fix items addressed and the changed surface limited to expected TypeScript/docs/test files with no native/package/Tauri surface changes.
+  - Archimedes found no `.only` / `.skip`, no weakened original TASK-022 assertions, and meaningful coverage for the first review-fix set.
+- Accepted P2 findings for a second review-fix cycle:
+  - Archimedes found the Task Plugin re-register regression does not prove user-created task-owned filters survive default filter upsert.
+  - Avicenna found public `executeFilterQuery` can recurse without bound on cyclic unsaved query objects.
+  - Avicenna found fixed task filter IDs can still be persistently blocked if another plugin creates a foreign-owned filter with a `task.*` fixed id.
+  - Beauvoir found the current executor hard-binds `metadata.<namespace>.<key>` to `sourcePluginId === namespace`, which is stricter than the existing metadata contract where namespace and source owner are separate.
+  - Dewey found `eq`, `neq`, and `includes` can match malformed metadata records whose `valueType` does not match the stored value shape.
+- Accepted P3 findings for opportunistic coverage or docs:
+  - Beauvoir found direct executor inputs do not enforce the same operator/value shape as `FilterStore`, for example `exists` with a value.
+  - Archimedes found `gt`/`lt` coverage could cover the full number/date operator cross-product and wrong query operand types more tightly.
+- Deferred to formal docs sync:
+  - `within` remains a legal AST operator for future Event/plugin-index execution, but TASK-022's public `executeFilterQuery` only implements the current page/metadata subset. Formal docs must explicitly call out this current-executor subset before merge.
+- Checks reported by post-fix reviewers:
+  - Review-fix focused tests passed with 4 files / 94 tests.
+  - Adjacent view/task/tag tests passed with 4 files / 69 tests.
+  - `bun run typecheck`, `bun run lint`, focused eslint, `git diff --check`, Rust fmt, and native/package/Tauri diff guards were reported clean across the agents.
+  - Beauvoir checked current official React, Testing Library, Vitest, and Tauri docs and found no deprecated touched API patterns.
+
+## Parent Decisions For Second Review-Fix Cycle
+
+- Delegate second review-fix regression tests to a `test_writer` first. Parent thread will not write tests.
+- Required test scope:
+  - Task Plugin default filter upsert must preserve an existing user-created task-owned filter.
+  - A plugin must not be able to save a caller-provided fixed filter id in another plugin's id namespace, especially `task.filter.*` from a non-task plugin. A same-plugin fixed id should remain allowed.
+  - `executeFilterQuery` must fail closed without throwing for cyclic or over-deep direct query objects.
+  - Direct `executeFilterQuery` must enforce the same basic operator/value shape as saved filters for the covered subset, including `exists` with no value and non-`exists` operators requiring a value.
+  - `eq`, `neq`, and `includes` must fail closed when the metadata record's `valueType` does not match the stored value shape.
+  - Generic metadata execution should allow a namespace/source owner pair that is valid in the Metadata Store even when `sourcePluginId` is not exactly the namespace. Preserve the built-in Task/Tag trust boundary either through narrower tests for built-in namespaces or an explicit owner rule documented in the test.
+  - If convenient, broaden `gt`/`lt` coverage for number/date operator cross-product and wrong query operand types.
+- Required implementation scope after red tests:
+  - Add validation or traversal guards to `executeFilterQuery` without changing saved filter store validation semantics.
+  - Preserve Task/Tag built-in metadata trust boundaries while avoiding a hidden global assumption that all metadata source plugin IDs equal namespace.
+  - Restrict plugin-provided fixed filter IDs enough to prevent cross-plugin fixed-id collisions.
+  - Keep `within`, JS filters, native/Tauri/package/Rust changes, global saved-filter navigation, automatic scanning, persistence rewiring, and Event/plugin-index execution out of scope.
+
 ## Current Next Action
 
-- Post-fix focused review is running with Hume (`pr_explorer`), Dewey (`reviewer`), Avicenna (`security_reviewer`), Beauvoir (`deprecation_auditor`), and Archimedes (`test_quality_reviewer`).
+- Spawn second review-fix `test_writer` for accepted P2/P3 regression coverage, then validate the expected red signal before committing the tests.
