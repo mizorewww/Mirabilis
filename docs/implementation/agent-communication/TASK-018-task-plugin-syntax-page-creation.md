@@ -40,11 +40,8 @@
 
 ## Current Status
 
-- Status: focused re-review agents running.
-- Active agents:
-  - Pauli the 3rd (`reviewer`): focused correctness/API re-review after review fixes.
-  - Raman the 3rd (`security_reviewer`): focused security re-review after review fixes.
-  - Volta the 3rd (`test_quality_reviewer`): focused test-quality re-review after review fixes.
+- Status: focused re-review found one P2; second review-fix TDD handoff pending.
+- Active agents: none.
 - Completed agents:
   - Godel the 3rd (`planner`): read-only scope, TDD slices, boundaries, and risks completed.
   - Copernicus the 3rd (`docs_researcher`): read-only current official docs guidance completed.
@@ -55,7 +52,8 @@
   - Review round 1 agents completed and reported findings.
   - Boole the 3rd (`test_writer`): review-fix regression tests completed, verified red, committed, and closed.
   - Curie the 3rd (`implementer`): review-fix implementation completed, focused checks green, committed, and closed.
-- Next parent step: wait for focused re-review agents; if clear, delegate blocking docs sync.
+  - Focused re-review agents completed.
+- Next parent step: commit focused re-review findings, then delegate second review-fix regression test to `test_writer`.
 
 ## Agent Handoffs
 
@@ -291,11 +289,35 @@ git diff --check
 
 ### Focused Re-review Round
 
-- Status: running.
+- Status: completed.
 - Agents:
   - Pauli the 3rd (`reviewer`): focused correctness/API re-review after review fixes.
   - Raman the 3rd (`security_reviewer`): focused security re-review after review fixes.
   - Volta the 3rd (`test_quality_reviewer`): focused test-quality re-review after review fixes.
+
+### Pauli the 3rd (`reviewer`) Outcome
+
+- Status: completed read-only correctness/API re-review; no files edited.
+- No P0/P1 findings.
+- Remaining P2:
+  - `CommandRegistry` preserves plugin command causes by duck-typing any thrown value with `name`, `code`, `pluginId`, and `phase` as a `PluginHostError`. A non-plugin command can throw a plain object with that shape and bypass the existing raw-cause redaction contract.
+- Cleared items: duplicate top-level block IDs, verified `boundPageId` reuse, metadata-only recovery after Markdown import/export drops attrs, indented-code rejection, command-time context behavior, and transaction rollback.
+- Checks run: focused TASK-018 review-fix tests, core command registry tests, Markdown import/export tests, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, and native/package/Tauri surface diff; all passed.
+
+### Raman the 3rd (`security_reviewer`) Outcome
+
+- Status: completed read-only focused security re-review; no files edited.
+- No remaining P0/P1/P2 security findings.
+- Cleared items: duplicate `blockId` binding, unverified `attrs.boundPageId`, command-time PluginContext, native/Tauri/package surface.
+- Checks run: `git diff --check master...HEAD`, native/package/Tauri surface diff, `bun run typecheck`, `bun run lint`, and focused TASK-018 review-fix tests; all passed.
+
+### Volta the 3rd (`test_quality_reviewer`) Outcome
+
+- Status: completed read-only focused test-quality re-review; no files edited.
+- No remaining P0/P1/P2 test-quality gaps.
+- P3 non-blocking notes: task resolver negative table still catches and ignores individual resolver failures; native-surface guard remains branch-state/environment coupled via `git diff master`.
+- Coverage assessed as meaningful for relation reuse, forged `boundPageId`, save/import recovery, atomicity, indented code, command-time context, type contract, and command failure cause preservation.
+- Checks run: focused TASK-018 review-fix tests, `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri surface diff, and `rg` for skipped tests; all passed.
 
 ## Parent Decisions
 
