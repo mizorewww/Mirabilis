@@ -182,4 +182,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate implementation to `implementer`.
+- Ramanujan (`implementer`) is implementing TASK-022 production code only. Parent will validate and commit after the agent reports completion.
