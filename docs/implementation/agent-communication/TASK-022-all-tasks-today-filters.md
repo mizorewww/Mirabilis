@@ -631,8 +631,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Manifest-reservation focused tests passed with 3 files / 68 tests. Architecture-boundary focused test passed with 1 file / 1 test. Expanded focused coverage passed with 4 files / 119 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
-## Current Next Action
-
 ## Narrow Manifest-Reservation Review
 
 - Status: completed on 2026-05-21 20:52 CST by Carver (`reviewer`), Socrates (`security_reviewer`), Raman (`deprecation_auditor`), and Kant (`test_quality_reviewer`).
@@ -713,6 +711,26 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: all passed or clean. Focused manifest tests passed with 3 files / 71 tests. Architecture-boundary focused test passed with 1 file / 1 test. Expanded focused coverage passed with 4 files / 122 tests. Plugin Host lifecycle tests passed with 1 file / 47 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
 
+## Narrow Manifest-Hardening Follow-Up Review
+
+- Status: completed on 2026-05-21 21:12 CST by Bohr (`reviewer`), Linnaeus (`security_reviewer`), and Averroes (`test_quality_reviewer`).
+- P0/P1 findings: none.
+- Behavior/security findings:
+  - Bohr found no P0/P1/P2/P3 correctness findings and confirmed batch reservations are collected before lifecycle writes, scoped to install/register contexts, not inherited by command-time contexts, and malformed `metadataFields` are ignored unless valid descriptors.
+  - Linnaeus found no P0/P1/P2 security findings and confirmed same-batch namespace squatting prevention, malformed manifest hardening, generic Core boundary, and no native/Tauri/package/network/eval/raw-SQL surface.
+- Accepted P2 test-quality follow-up:
+  - Averroes found same-batch reservation tests cover direct `ctx.metadata.set` but not transaction-scoped `tx.metadata.set`, even though Carson threads batch reservations into transaction contexts.
+- P3/docs handoff:
+  - Linnaeus reiterated docs should state that low-level `executeFilterQuery` callers must supply host-derived `metadataOwnerReservations` for built-in Task/Tag trust boundaries.
+- Checks reported by agents:
+  - Focused Plugin API / lifecycle / architecture tests passed where run.
+  - Expanded focused filter/view/plugin tests passed where run.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard were clean where run.
+
+## Parent Decision For Transaction-Path Coverage
+
+- Add a small test-only regression for transaction-scoped metadata writes under same-batch manifest reservations before formal docs sync. No production implementation is expected unless the test exposes a red behavior gap.
+
 ## Current Next Action
 
-- Bohr (`reviewer`), Linnaeus (`security_reviewer`), and Averroes (`test_quality_reviewer`) are reviewing Carson's P2 manifest-reservation hardening implementation.
+- Spawn `test_writer` for transaction-scoped same-batch manifest reservation coverage.
