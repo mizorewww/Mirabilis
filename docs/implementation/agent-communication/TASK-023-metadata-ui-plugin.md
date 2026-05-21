@@ -263,6 +263,31 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Mirror Plugin Host metadata descriptor safety checks in MetadataBar without importing business terms into Core.
   - Avoid native/Tauri/package/Rust changes, full metadata renderer/editor registry, date picker, real timer runtime, and app-shell mounting.
 
+## Review-Fix Regression Tests
+
+- Status: completed by Cicero (`test_writer`) on 2026-05-21 22:17 CST.
+- Commit: `c19517c`.
+- Files changed:
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - Metadata slot contributions cannot execute another plugin's command through the `MetadataBar` command facade.
+  - `MetadataBar` fails closed when plugin host ownership cannot be verified.
+  - Malformed/non-array `metadataFields` do not crash or trust values.
+  - Unsafe namespace/key segments, including `__proto__` and `constructor`, are rejected and prototype-safe.
+  - Stored metadata `record.valueType` must match descriptor `valueType`.
+  - Real runtime Tag add/remove through the unified bar mutates runtime metadata through owner command boundaries.
+  - Task placeholder assertions now cover `enabled`, `status`, `sourcePageId`, `sourceBlockId`, `scheduled`, and `due`.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/core-view-slot-registry.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bunx eslint src/test/metadata-ui-plugin.test.tsx --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 5 files / 126 tests with 5 failed / 121 passed. Failures were foreign command escape, hostless fail-open, malformed descriptor crash, unsafe segment trust, and valueType mismatch trust. `bun run typecheck`, focused eslint, and `git diff --check` passed.
+
 ## Current Next Action
 
-- Cicero (`test_writer`) is adding review-fix regression tests for MetadataBar trust and command-scoping boundaries.
+- Spawn `implementer` for the MetadataBar boundary fixes.
