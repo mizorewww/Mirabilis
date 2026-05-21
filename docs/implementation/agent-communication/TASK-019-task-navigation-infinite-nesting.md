@@ -102,6 +102,49 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
   - Keep App Shell generic and avoid exposing full runtime through `useRuntime()`.
   - Do not touch native/Tauri/package surfaces unless a blocker is recorded first.
 
+### Review Round 1
+
+- Status: completed.
+- Agents:
+  - Descartes the 3rd (`pr_explorer`): changed-surface explorer.
+  - Epicurus the 3rd (`reviewer`): correctness review.
+  - Aquinas the 3rd (`security_reviewer`): security review.
+  - Ptolemy the 3rd (`deprecation_auditor`): API/deprecation audit.
+  - Bernoulli the 3rd (`docs_researcher`): docs/current-guidance review.
+  - Bacon the 3rd (`test_quality_reviewer`): test-quality review.
+
+#### Review Findings
+
+- P1 correctness/test-quality/API: loaded `pageId/pageFacade` editor mode cannot show task-title buttons. `MarkdownPageEditor` derives task buttons only from direct `props.page.body`, while the runtime Markdown page facade returns `id`, `title`, and `markdown` only. Normal loaded/persisted pages can therefore miss TASK-019 click navigation while direct-prop tests pass.
+- P1 correctness: task open navigation has no stale async guard. `openStructuredTaskPage` awaits `task.open-task-page` and then unconditionally calls `onOpenPage`, so a slow open result from an old page/block could navigate after the user changes pages or edits content.
+- P1 docs: product/architecture docs still describe task-title navigation as `page.open` / direct `boundPageId` navigation, conflicting with the implemented `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }` contract.
+- P1 docs: product/development/architecture docs still present click navigation and infinite nesting as future/TASK-019-or-later behavior. They need to distinguish current TASK-019 explicit click/open behavior from still-deferred save-time scanning, filters/views, checkbox events, and rich editor work.
+- P2 docs/testing: testing docs need TASK-019 coverage notes for `task.open-task-page`, structured-body task-title buttons, forged binding rejection, metadata-only recovery, nested A -> B open flow, and native/package/Tauri surface guard.
+- P2 API/deprecation: Markdown Editor now hardcodes Task Plugin command/parsing semantics outside a declared plugin contract. This may be acceptable as an interim TASK-019 slice but should be documented or refactored if future plugin contracts change.
+- P2 test-quality: the native-surface regression shells out to `git diff master` inside Vitest. It is useful as an orchestration guard but brittle in shallow clones or unrelated dirty worktrees.
+- Low security hardening: malformed `attrs.boundPageId` currently blocks navigation instead of being treated as untrusted/absent, and command payload validation reads direct properties from unknown input.
+
+#### Review Validation
+
+- Correctness/test-quality/security agents ran focused checks including:
+  - `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts`.
+  - `bun run test:frontend -- src/test/markdown-page-persistence.test.tsx src/test/markdown-editor-plugin-shell.test.tsx`.
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts`.
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check master...HEAD`.
+  - Native/package/Tauri surface diff scans; all returned no changed native/package/Tauri files.
+  - Focused Rust IPC boundary/persistence checks from security review.
+
+### Review-fix Test Handoff
+
+- Status: pending.
+- Required red coverage:
+  - Loaded/persisted editor path: render the registered editor with `pageId/pageFacade` or runtime Markdown page facade data containing a structured task body and verify task-title click navigation is available.
+  - Stale async navigation guard: delay `task.open-task-page`, change page or content before it resolves, and assert old result does not call `onOpenPage`.
+  - Consider adding low-risk hardening coverage for malformed `attrs.boundPageId` as untrusted/absent if test_writer can do so without broadening the loop.
+  - Consider replacing or quarantining the brittle native-surface Vitest shell-out if a more stable repo-local boundary assertion is available.
+
 ### Pre-test Guidance
 
 - Jason the 3rd (`planner`) completed read-only planning.
