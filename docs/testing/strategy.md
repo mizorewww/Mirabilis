@@ -202,6 +202,34 @@ git diff --check
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-018 itself is TypeScript Core/plugin runtime behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
 
+## TASK-019 Task Navigation and Infinite Nesting Guidance
+
+TASK-019 tests cover explicit task-title click/open navigation without adding automatic save-time scanning, checkbox toggle/events, filters/views, rich editor behavior, or native surface:
+
+- Built-in `task` plugin registers owned command `task.open-task-page`.
+- Open command tests should execute through the real runtime command bus with payload `{ sourcePageId, sourceBlockId }` and assert the return shape is exactly `{ pageId }`.
+- Positive coverage should prove an unbound task opens once, creates/reuses a normal Markdown Page, writes the same `task.enabled`, `task.status`, `task.sourcePageId`, and `task.sourceBlockId` metadata relation as TASK-018, binds the source block, and exposes the opened page from the page source used by navigation.
+- Relation coverage should prove verified `attrs.boundPageId` reuse, metadata-only recovery after attrs are lost, forged/unverified binding rejection, and malformed `attrs.boundPageId` being treated as absent/untrusted.
+- Nested coverage should prove page A can contain a `- [ ] B` source block and `task.open-task-page({ sourcePageId: pageA.id, sourceBlockId })` opens/creates page B through the same source relation mechanism.
+- Negative coverage should prove invalid payloads, missing/stale source pages or blocks, duplicate top-level block IDs, non-task blocks, and fenced/code-looking task lines fail without mutation or navigation.
+- Editor coverage should use Testing Library user interactions and accessible role queries for structured-body task-title buttons. The UI must send only `{ sourcePageId, sourceBlockId }`, never navigate directly to `attrs.boundPageId`, and must call `onOpenPage` only with the command's returned `pageId`.
+- Loaded editor coverage should pin the real `createMarkdownPageRuntimeFacade().load()` path carrying structured `body` into loaded `pageId/pageFacade` mode so reopened pages can render task-title buttons.
+- Stale-navigation coverage should delay `task.open-task-page` and prove old results are ignored after page switches and same-page content edits.
+- Unsaved-edit coverage should prove task-title buttons are hidden or disabled when current textarea Markdown no longer matches the structured body snapshot they came from.
+- Unsafe-title coverage should prove task titles render as inert React text, not HTML, links, hrefs, or scriptable markup.
+- Native-surface guards should continue proving TASK-019 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+
+TASK-019 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-plugin-syntax-page-creation.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-019 itself is TypeScript plugin/runtime/editor behavior with no new native, IPC, permission, filesystem, package, or Rust surface.
+
 ## Merge Gate
 
 Before merging to `master`:

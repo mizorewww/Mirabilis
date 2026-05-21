@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-21 13:41 CST.
+Last updated: 2026-05-21 13:46 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-21 13:41 CST.
 - Branch: `feat/task-019-task-navigation-infinite-nesting`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: code/test/security re-review cleared; docs sync pending.
+- Current phase: code/test/security re-review cleared; docs sync completed and validated.
 
 ## Active Agents
 
@@ -42,6 +42,12 @@ Last updated: 2026-05-21 13:41 CST.
   - Kant the 3rd (`reviewer`) found no P0/P1/P2/P3 correctness findings. Verified loaded runtime facade body path, loaded editor task navigation, stale page-switch and same-page edit guards, unsaved edit button invalidation, malformed `boundPageId` handling, and TASK-018 resolver behavior.
   - Hilbert the 3rd (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings. Remaining P3: the native-surface shell-out guard in Vitest is branch/git-environment coupled but non-blocking in this repo.
   - Beauvoir the 3rd (`security_reviewer`) found no P0/P1/P2 security/API issues. Verified unsafe titles remain inert, `boundPageId` is not sent by UI, stale navigation guards, `useRuntime`/App Shell/native surfaces unchanged.
+- Docs sync writer completed TASK-019 documentation sync:
+  - Updated product, architecture, development, and testing docs to describe `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }` as current explicit click/open behavior.
+  - Removed stale current-behavior wording for direct `page.open`, direct `boundPageId` navigation, stale snake_case `task.open_task_page`, and future-only TASK-019 click navigation.
+  - Documented loaded `pageId/pageFacade` structured body propagation, structured-body task-title buttons, unsaved edit invalidation, delayed open stale guards, and malformed `attrs.boundPageId` as absent/untrusted.
+  - Kept automatic editor-save scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces deferred.
+  - Validation: `git diff --check` passed; focused stale searches found no `page.open` or `task.open_task_page` in product/architecture/development/testing docs, and remaining `boundPageId` / TASK-019 future-scope hits are source-binding or deferred-scope notes.
 
 ## Completed Recent Task
 
@@ -150,6 +156,5 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Next Actions
 
-1. Commit final focused re-review summary.
-2. Spawn `doc_writer` to sync TASK-019 product, architecture, development, testing, and live communication docs.
-3. Run docs drift checks, then final local gate.
+1. Commit final focused re-review and docs sync summaries.
+2. Run final local gate before merge.

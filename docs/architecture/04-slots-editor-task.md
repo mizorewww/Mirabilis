@@ -108,7 +108,7 @@ ML Plugin 可以渲染：
 
 Markdown Editor Plugin 是 TASK-016/TASK-017 后的内置插件，manifest id 是 `markdown`。
 
-它负责最小 Markdown 编辑体验，但任务、标签、日期、页面链接和富编辑语义仍由后续插件或编辑器任务负责。
+它负责最小 Markdown 编辑体验。TASK-019 起，编辑器还提供一个窄的 Task Plugin 集成点：当 active markdown syntax extensions 包含 `- [ ]`，且当前 textarea Markdown 仍与结构化 body 快照一致时，结构化 task title 会渲染为按钮并通过 command bus 打开任务页。标签、日期、页面链接、checkbox 状态、过滤视图和富编辑语义仍由后续插件或编辑器任务负责。
 
 ### 8.1 注册内容
 
@@ -159,8 +159,12 @@ export const MarkdownEditorPlugin: AppPlugin = {
 - 通过 `pageFacade` 加载页面时，页面切换会进入 loading state 并禁用编辑/保存；save 完成后只有在仍是同一页面且内容 generation 未变化时才应用 saved markdown。
 - TASK-017 保存时把 textarea Markdown 导入为带稳定 `blockId` 的 `markdown.line` blocks；每一行对应一个 block，包括空行。
 - TASK-017 重新打开时把结构化 body 导出回 textarea Markdown。当前测试覆盖的 textarea-supported Markdown 样例会保持可见文本不变。
+- TASK-019 在结构化 body 可用且 task syntax descriptor 存在时，从 `markdown.line` source block 派生 task-title 按钮。按钮调用 `task.open-task-page({ sourcePageId, sourceBlockId })`，并只把 command 返回的 `{ pageId }` 交给 `onOpenPage`。
+- TASK-019 的 loaded `pageId/pageFacade` 模式会从 runtime Markdown page facade 保存 loaded/saved structured `body`，所以重新打开页面后仍能从结构化 body 渲染 task-title 按钮。
+- TASK-019 的 task-title 按钮只在当前 textarea Markdown 与该 structured body 快照导出的 Markdown 完全一致时显示；未保存编辑删除或改名任务行后，旧 source block 按钮会隐藏。
+- TASK-019 的 task open flow 在 await command 前 snapshot page id 和内容 generation；command 结果回来时，如果 page 或内容 generation 已变化，结果会被丢弃，避免慢 open result 导航到旧页面。
 
-TASK-017 已实现稳定 block ID 与内部 Markdown import/export。仍未实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、semantic task/tag/page-link behavior、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
+TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation。仍未实现 `@date`、autocomplete、slash menu、task checkbox toggle、tag indexing、page-link navigation、保存时 task 自动扫描/索引、filters/views、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
 
 ### 8.3 Markdown runtime facade
 
@@ -206,16 +210,16 @@ runtime.markdown.pages.save({ pageId, markdown });
 
 这个 facade 也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，当前只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
 
-TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。
+TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-019 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 的信号；点击按钮执行 `task.open-task-page`，仍不会在保存时自动扫描全部 task block。
 
-后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、点击导航、filter/view refresh 和 rich editor adaptation 仍未实现。
+后续 Tag Plugin 可以提供 tag token descriptor，Date Plugin 可以提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh、checkbox toggle/events 和 rich editor adaptation 仍未实现。
 
 ---
 
 ## 9. Task Plugin 代码架构
 
 Task Plugin 是最重要的插件之一。
-长期目录可能长这样；TASK-018 当前只实现内置 `TaskPlugin` 的 syntax descriptor 和 resolver command：
+长期目录可能长这样；TASK-018/TASK-019 当前只实现内置 `TaskPlugin` 的 syntax descriptor、resolver command 和 open command：
 
 ```text
 plugins/task/
@@ -254,7 +258,7 @@ plugins/task/
 
 ### 9.1 Task Plugin 注册内容
 
-TASK-018 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
+TASK-018/TASK-019 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
 
 Task manifest 当前声明：
 
@@ -278,11 +282,17 @@ export const TaskPlugin: AppPlugin = {
       title: "Resolve task block",
       handler: resolveTaskBlock
     });
+
+    ctx.commands.register({
+      id: "task.open-task-page",
+      title: "Open task page",
+      handler: openTaskPage
+    });
   }
 };
 ```
 
-当前没有注册 task view、slot、filter、event type、metadata-field renderer、indexer 或 checkbox toggle command。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动解析正文或创建页面。
+当前没有注册 task view、slot、filter、event type、metadata-field renderer、indexer 或 checkbox toggle command。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动扫描正文或在保存时创建页面。
 
 ### 9.2 Task Syntax
 
@@ -316,7 +326,26 @@ resolver 读取当前 source page，要求 `sourceBlockId` 在 top-level blocks 
 0 到 3 个前导空格 + "- " + "[ ]" + 至少一个空白 + 非空标题
 ```
 
-四个空格缩进、tab 缩进和 fenced code block 内的 task-looking line 都不是任务语法；`- [x]` 当前也不是 TASK-018 行为。
+四个空格缩进、tab 缩进和 fenced code block 内的 task-looking line 都不是任务语法；`- [x]` 当前也不是 TASK-019 行为。
+
+TASK-019 的 open command 输入与 resolver 相同：
+
+```ts
+type OpenTaskPageInput = {
+  sourcePageId: string;
+  sourceBlockId: string;
+};
+```
+
+它调用同一 `resolveTaskPage` 路径，然后只返回：
+
+```ts
+type OpenTaskPageResult = {
+  pageId: string;
+};
+```
+
+UI/editor 不传 title 或 `boundPageId`，也不直接导航到 source block attrs 里的 page id。
 
 ### 9.3 创建任务对应页面
 
@@ -345,7 +374,7 @@ async function resolveTaskBlock(input, context) {
 }
 ```
 
-TASK-018 当前写入 metadata：
+TASK-018/TASK-019 当前写入 metadata：
 
 ```text
 task.enabled = true
@@ -356,7 +385,7 @@ task.sourceBlockId = input.sourceBlockId
 
 这些 metadata 写入通过 plugin-facing `metadata.set` 发生，`sourcePluginId` 由 Plugin Host 注入为 `task`。
 
-重复检测使用 `(sourcePageId, sourceBlockId)` metadata relation。若 source block 已有 `attrs.boundPageId`，resolver 只有在该 bound page 的 `task.sourcePageId` 和 `task.sourceBlockId` 同时验证为同一 source relation 时才复用它；伪造或不匹配的 `boundPageId` 不会被信任。Markdown save/import 当前不保留 block `attrs`，所以 resolver 也能从 metadata-only relation 恢复 source binding。
+重复检测使用 `(sourcePageId, sourceBlockId)` metadata relation。若 source block 已有 `attrs.boundPageId`，resolver 只有在该 bound page 的 `task.sourcePageId` 和 `task.sourceBlockId` 同时验证为同一 source relation 时才复用它；伪造、不匹配或 malformed `boundPageId` 不会被信任，按未绑定处理。Markdown save/import 当前不保留 block `attrs`，所以 resolver 也能从 metadata-only relation 恢复 source binding。
 
 source binding 当前做法是复制 source page 的结构化 body，仅替换目标 block 的 `attrs.boundPageId`，再通过 `pages.update(sourcePage.id, { body })` 保存。创建任务页、写 task metadata、绑定 source block 必须在一个 transaction 中完成；任一步失败都不应留下部分页面或 metadata。
 

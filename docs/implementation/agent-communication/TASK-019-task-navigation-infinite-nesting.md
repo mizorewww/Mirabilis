@@ -261,13 +261,32 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
 
 ### Docs Sync Handoff
 
-- Status: pending.
+- Status: completed by docs sync writer on 2026-05-21 13:46 CST.
 - Required docs sync:
   - Replace direct `page.open` / direct `attrs.boundPageId` navigation descriptions with TASK-019's command-driven contract: task-title click -> `task.open-task-page({ sourcePageId, sourceBlockId })` -> `{ pageId }` -> shell/editor callback opens returned page id.
   - Move explicit task-title click/open navigation out of future-only wording while keeping automatic save-time scanning/indexing, checkbox events, filters/views, Tag/Timer UI, and rich editor work as future.
   - Document `task.open-task-page` as an implemented current Task Plugin command; remove stale `task.open_task_page`.
   - Document loaded `pageId/pageFacade` editor mode carrying structured body, task-title buttons derived from structured body, stale delayed open results being ignored after page/content changes, and unsaved edits invalidating stale task buttons.
   - Add TASK-019 testing guidance for command payload/return contract, verified/metadata-only/malformed/forged bindings, nested A -> B flow, loaded editor path, stale guards, unsafe title inertness, and native/package/Tauri surface guard.
+- Files updated:
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/testing/strategy.md`.
+  - `docs/implementation/agent-communication/status.md`.
+  - `docs/implementation/agent-communication/TASK-019-task-navigation-infinite-nesting.md`.
+- Outcome:
+  - Product, architecture, development, and testing docs now describe TASK-019 explicit task-title click/open navigation as current behavior.
+  - Docs now use `task.open-task-page({ sourcePageId, sourceBlockId }) -> { pageId }` and avoid direct `page.open` / direct `boundPageId` navigation claims in current TASK-019 contracts.
+  - Docs now call `attrs.boundPageId` verified/recovered source binding data, not a trusted navigation target; malformed values are untrusted/absent.
+  - Docs now preserve deferred scope for automatic editor-save scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces.
+- Validation:
+  - `git diff --check` passed.
+  - Focused stale searches over `docs/product`, `docs/architecture`, `docs/development`, and `docs/testing` found no remaining `page.open` or `task.open_task_page` wording.
+  - Remaining `boundPageId` hits are source-binding, verification, or explicit "not a navigation target" notes, not direct navigation claims.
+  - Remaining TASK-019/deferred wording keeps only automatic save-time scanning/indexing, checkbox toggle/events, filters/views, Tag/Timer UI, rich editor behavior, and native/Tauri/package surfaces in future scope.
 
 ### Pre-test Guidance
 

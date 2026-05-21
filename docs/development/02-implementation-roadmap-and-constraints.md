@@ -136,15 +136,28 @@ Phase 3 后续范围：
 Automatic editor-save scanning / indexing
 - [x] syntax
 Checkbox toggle
-Click title → open page
-Task navigation and infinite nesting UX
 All Tasks Filter
 Today Filter
 Task list item / metadata field views
 task.completed / task.reopened events
 ```
 
-点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 及后续导航/自动扫描任务的验收目标，不是 TASK-018 当前行为。
+TASK-019 已交付的最小导航切片：
+
+```text
+Command: task.open-task-page
+Command payload: { sourcePageId, sourceBlockId }
+Command return: { pageId }
+Shared behavior: same resolver/source relation path as task.resolve-task-block
+Click title -> task.open-task-page -> open returned pageId
+Loaded pageId/pageFacade editor mode carries structured body
+Task-title buttons hidden after unsaved edits diverge from the structured body snapshot
+Delayed open results ignored after page/content changes
+Malformed attrs.boundPageId treated as absent/untrusted
+No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
+```
+
+点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。保存后自动扫描/索引、checkbox toggle/events、All Tasks / Today filters、Task/Tag/Timer UI、rich editor behavior 和 native/package surfaces 仍是后续范围。
 
 ---
 
@@ -380,14 +393,17 @@ Plugins
     同步
     快速收集箱
 
-当前 TASK-018 代码流
+当前 TASK-018/TASK-019 代码流
   负责：
     TaskPlugin 注册 - [ ] markdown syntax descriptor
     TaskPlugin 注册 task.resolve-task-block
+    TaskPlugin 注册 task.open-task-page
     Command Registry 执行 command
     Plugin Host 注入 command-time PluginContext
     TaskPlugin 通过 Core/plugin transaction 创建或复用任务页
     TaskPlugin 写 task metadata 并复制更新 source block attrs.boundPageId
+    MarkdownEditorPlugin 从结构化 body 渲染 task-title buttons
+    MarkdownEditorPlugin 点击 task title 时发送 sourcePageId/sourceBlockId 并打开返回的 pageId
     NativeBridge/Tauri surface 保持不变
 
 React App Shell
@@ -446,15 +462,15 @@ FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-这不是 TASK-018 当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。保存后自动扫描、点击导航、Tag/Timer/UI/filter/view 刷新和无限嵌套 UX 都属于后续任务。
+这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享同一 resolver/source relation 行为，并只把返回的 `{ pageId }` 用于导航。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
 
-后续导航/自动扫描任务完成后，用户点击任务进入页面，继续写：
+当前显式点击导航完成后，用户在任务页继续写：
 
 ```markdown
 - [ ] 子任务
 ```
 
-完整架构会重复同样流程，因此任务可以无限嵌套。
+TASK-019 可以用同样 click/open 流程创建或打开子任务页，因此任务可以显式无限嵌套。保存后自动扫描、Tag/Timer/UI/filter/view 刷新、checkbox events 和 rich editor 行为仍属于后续任务。
 
 这个架构的中心就是一句话：
 
