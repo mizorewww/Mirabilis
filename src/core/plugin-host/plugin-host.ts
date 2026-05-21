@@ -99,6 +99,7 @@ export type PluginHostInstance = {
   deactivate(pluginId: string): Promise<PluginHostRecord>;
   uninstall(pluginId: string): Promise<PluginHostRecord>;
   getPlugin(pluginId: string): PluginHostRecord;
+  listPlugins(): readonly PluginHostRecord[];
 };
 
 class PluginHostErrorImpl extends Error {
@@ -391,6 +392,12 @@ class PluginHostImpl implements PluginHostInstance {
 
   getPlugin(pluginId: string): PluginHostRecord {
     return this.toPublicRecord(this.requireRecord(pluginId));
+  }
+
+  listPlugins(): readonly PluginHostRecord[] {
+    return [...this.records.values()]
+      .sort(compareStoredRecordOrder)
+      .map((record) => this.toPublicRecord(record));
   }
 
   private requireRecord(pluginId: string): StoredPluginRecord {

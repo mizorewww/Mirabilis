@@ -105,8 +105,8 @@ For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are th
 
 TASK-015 tests should cover the observable app bootstrap/provider contract without adding business plugin behavior:
 
-- Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`.
-- Explicit empty production `BUILT_IN_PLUGINS` until later plugin tasks, while tests may inject fake plugins to prove load/activation behavior.
+- Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. Later runtime facades such as TASK-016 `runtime.markdown` may be added to the runtime object without changing this ordering.
+- TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-016, production `BUILT_IN_PLUGINS` contains the built-in `markdown` plugin; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
 - Rejection propagation for startup failures, including `loadBuiltInPlugins()` and `activateAll()` failures; startup must not report a ready runtime after those failures.
 - React StrictMode single-flight initialization so bootstrap and plugin activation are not duplicated during development double-mount behavior.
 - Retry after a failed initializer mount with the same initializer; rejected initializer promises must not poison future mounts forever.
@@ -127,6 +127,30 @@ bun run check:quick
 ```
 
 Run `bun run check:full` only if later edits add or change persistence wiring, Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior.
+
+## TASK-016 Markdown Editor Plugin Shell Guidance
+
+TASK-016 tests cover the first built-in editor plugin without adding a rich editor dependency or new native surface:
+
+- Built-in `markdown` plugin is present in `BUILT_IN_PLUGINS` and registers owned `markdown.page-editor`, `markdown.insert-text`, and `markdown.editor-mobile-toolbar.base`.
+- `MarkdownPageEditor` is a visible labeled multiline controlled textarea that preserves heading, paragraph, list, task syntax text, tag text, and page-link text exactly as Markdown.
+- Toolbar buttons insert literal snippets `- [ ] `, `#`, and `[[ ]]` through `markdown.insert-text` / command-bus execution.
+- `markdown.insert-text` normalizes offsets, treats omitted `selectionEnd` as normalized `selectionStart`, returns caret positions, and is covered through the real runtime command registry.
+- Async insert results are guarded: a slow command result must not overwrite newer user edits or a page switch.
+- `runtime.markdown.collectEditorExtensions()` collects only inert `contributes.markdownSyntax` descriptors from active plugin manifests, preserves host-owned `pluginId`, ignores deactivated plugins, and does not expose executable Tiptap / ProseMirror extensions.
+- `runtime.markdown.pages` is covered as a production narrow NativeBridge page facade using allowlisted `core.pages.get` / `core.pages.update` DTOs, without raw `sql`, `params`, table names, filesystem paths, or file DTOs.
+- Page load/save tests cover save/reopen, page-switch loading, stale save completion, disabled save while loading, and controlled value updates.
+- Native-surface guard stays focused on proving TASK-016 did not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, or native command surfaces.
+
+Review-fix concerns that remain follow-up material unless a later task expands the editor or persistence surface: stronger Markdown DTO/body size validation, load/save rejection UX, insert-only command capability props instead of a generic command bus, and explicit behavior for custom plugin hosts without `listPlugins()`.
+
+TASK-016 focused validation command:
+
+```bash
+bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx
+```
+
+Run `bun run typecheck`, `bun run lint`, and `git diff --check` with the focused tests. Escalate to `bun run check:full` only if a later edit changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior; TASK-016 uses existing DB IPC allowlisted operations and adds no new native commands or permissions.
 
 ## Merge Gate
 

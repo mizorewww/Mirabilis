@@ -61,6 +61,8 @@ export type PluginContributions = {
 它们声明插件贡献的形状和身份，但不是同名 runtime facade：当前 `PluginContext` 没有用于 metadata field、event type、algorithm、indexer、mobile toolbar item 或 settings panel 的 runtime registration facade。
 这些运行时 facade 属于后续 Plugin Host / Plugin Platform 工作。
 
+TASK-016 增加了一个很窄的 Markdown runtime facade：`runtime.markdown.collectEditorExtensions()` 会从 active plugin manifest 的 `contributes.markdownSyntax` 收集 inert descriptor。它不会执行插件代码，也不是 Tiptap / ProseMirror extension 注册表；返回项的 `pluginId` 由 Plugin Host 的 manifest owner 注入，manifest contribution 自带的同名字段不能覆盖 host-owned identity。
+
 ---
 
 ### 5.3 AppPlugin
@@ -200,6 +202,8 @@ type PluginHostInstance = {
   uninstall(pluginId: string): Promise<PluginHostRecord>;
 
   getPlugin(pluginId: string): PluginHostRecord;
+
+  listPlugins(): readonly PluginHostRecord[];
 };
 ```
 
@@ -236,5 +240,6 @@ type PluginHostInstance = {
 - `ctx.commands`、`ctx.views`、`ctx.slots` 自动注入 `pluginId`，并将 `get` / `list` 限制在当前插件拥有的 runtime contribution 上。
 - plugin-facing 输入拒绝调用方传入 `pluginId` 或 `sourcePluginId`；绕过 TypeScript 类型的 runtime spoofing 会抛出 `PLUGIN_FACADE_OWNERSHIP_FORBIDDEN` 且不应改变 registry 或 store。
 - 捕获到的 context 在 lifecycle 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
+- `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。TASK-016 的 Markdown runtime 只用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。
 
 ---

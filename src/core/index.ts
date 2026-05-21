@@ -119,6 +119,7 @@ export {
   PluginHost,
   PluginHostError,
   type PluginHostErrorCode,
+  type PluginHostInstance,
   type PluginHostOptions,
   type PluginHostRecord,
   type PluginHostStatus,
@@ -134,7 +135,11 @@ export {
   createCoreServices,
   createCoreStores,
 } from "./services";
-export { createInMemoryAppRuntime } from "./runtime";
+export {
+  createInMemoryAppRuntime,
+  createMarkdownPageRuntimeFacade,
+  createMarkdownRuntimeFacade,
+} from "./runtime";
 export type {
   AppendEventInput,
   CreateInMemoryEventStoreOptions,
@@ -167,4 +172,10 @@ export type {
   TransactionHandler,
   TransactionManager,
 } from "./services";
-export type { CoreRuntime } from "./runtime";
+export type {
+  CollectedMarkdownSyntaxContribution,
+  CoreRuntime,
+  MarkdownEditorDocument,
+  MarkdownPageRuntimeFacade,
+  MarkdownRuntimeFacade,
+} from "./runtime";

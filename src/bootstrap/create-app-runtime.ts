@@ -3,12 +3,17 @@ import {
   createCoreRegistries,
   createCoreServices,
   createCoreStores,
+  createMarkdownPageRuntimeFacade,
   createTauriNativeBridge,
+  createMarkdownRuntimeFacade,
   type AppPlugin,
   type AppRuntimeInfo,
   type CoreRegistries,
   type CoreServices,
   type CoreStores,
+  type MarkdownRuntimeFacade,
+  type NativeBridge,
+  type PluginHostRecord,
 } from "../core";
 
 import { BUILT_IN_PLUGINS } from "./built-in-plugins";
@@ -18,10 +23,12 @@ export type AppPluginHost = {
     plugins: readonly AppPlugin[],
   ): Promise<readonly unknown[]>;
   activateAll(): Promise<readonly unknown[]>;
+  listPlugins?(): readonly PluginHostRecord[];
 };
 
 export type AppRuntime = CoreServices & {
   app: AppRuntimeInfo;
+  markdown: MarkdownRuntimeFacade;
   stores: CoreStores;
   registries: CoreRegistries;
   services: CoreServices;
@@ -55,6 +62,7 @@ export type AppBootstrapOptions<Runtime extends object = AppRuntime> = {
     app: AppRuntimeInfo;
   }) => AppPluginHost;
   createRuntime?: (dependencies: {
+    nativeBridge: unknown;
     stores: unknown;
     registries: unknown;
     services: unknown;
@@ -88,6 +96,7 @@ export async function createAppRuntime<Runtime extends object = AppRuntime>(
   const services = await createServices({ stores, registries, storage });
   const pluginHost = createPluginHost({ services, registries, app });
   const runtime = await createRuntime({
+    nativeBridge,
     stores,
     registries,
     services,
@@ -142,12 +151,14 @@ function createDefaultPluginHost({
 }
 
 function createDefaultRuntime({
+  nativeBridge,
   stores,
   registries,
   services,
   pluginHost,
   app,
 }: {
+  nativeBridge: unknown;
   stores: unknown;
   registries: unknown;
   services: unknown;
@@ -158,6 +169,9 @@ function createDefaultRuntime({
 
   return {
     app,
+    markdown: createMarkdownRuntimeFacade(pluginHost, {
+      pages: createMarkdownPageRuntimeFacade(nativeBridge as NativeBridge),
+    }),
     stores: stores as CoreStores,
     registries: registries as CoreRegistries,
     services: coreServices,

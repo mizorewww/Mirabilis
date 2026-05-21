@@ -44,7 +44,7 @@ Status markers:
 
 ## Milestone M3: Editor and plugin runtime
 
-- [ ] TASK-016: Implement Markdown Editor Plugin shell
+- [x] TASK-016: Implement Markdown Editor Plugin shell
 - [ ] TASK-017: Add stable block IDs and markdown import/export
 
 ## Milestone M4: Task and tag MVP
@@ -78,6 +78,27 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 09:08 CST - TASK-016 completed
+
+- Branch: `feat/task-016-markdown-editor-plugin-shell`.
+- Task: Implement Markdown Editor Plugin shell.
+- Commits: `faf94bb` start task orchestration, `ba74654` pre-test guidance, `a3e515f` editor shell acceptance tests, `6836b17` red test result, `097af58` implementation handoff, `0107d45` keyboard fixture test fix, `5c9819b` initial markdown editor plugin shell, `f5d9eb5` implementation result, `2a5f79e` review handoff, `8310bab` review findings, `2d3cce8` review-fix test handoff, `a574683` review-fix tests, `705e4b6` review-fix red tests, `504ac47` review-fix implementation handoff, `3d36da8` review test lint fix, `d2b9702` review-fix implementation, `0ad46c6` review-fix implementation record, `465d821` focused re-review handoff, `d6e25d9` focused re-review summary, `28753fe` async insert test handoff, `630cc3a` async insert race test, `6218fa8` async insert red test record, `51ef24d` async insert implementation handoff, `3204d34` async insert race fix, `e9d2636` async insert implementation record, `0d32e17` async insert re-review record, `8d80b6c` docs sync handoff, and `71b33f2` final docs sync.
+- Delivered: built-in `MarkdownEditorPlugin` registered from `BUILT_IN_PLUGINS`; owned `markdown.page-editor` view, `markdown.insert-text` command, and `markdown.editor-mobile-toolbar.base` mobile toolbar slot; controlled textarea editor shell preserving heading, paragraph, list, task syntax text, tag text, and page-link text; toolbar snippets `- [ ] `, `#`, and `[[ ]]` through the command bus; guarded async insert results so slow commands cannot overwrite newer edits/page switches; inert active-plugin markdown syntax descriptor collection through `runtime.markdown.collectEditorExtensions()` with host-owned `pluginId`; narrow `runtime.markdown.pages` NativeBridge facade using allowlisted `core.pages.get` / `core.pages.update` DTOs; docs synced for product, architecture, development, testing, and live agent status.
+- Validation: focused TASK-016 frontend tests passed with 3 files and 19 tests: `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-runtime-extensions.test.ts src/test/markdown-page-persistence.test.tsx`. `bun run typecheck` passed. `bun run lint` passed. `bun run build` passed. `bun run check:quick` passed with 20 frontend test files / 284 tests, Rust fmt, Rust clippy, and full Rust tests. `git diff --check` passed.
+- `check:full`: not run for TASK-016 because the branch does not add or modify Tauri commands, capabilities, generated permissions, Rust code, package/Cargo dependencies, filesystem/native behavior, packaging, or release behavior. It reuses the existing TASK-014 DB IPC allowlist through a narrow frontend runtime facade.
+- Review: planner, docs/current-guidance, deprecation/API, security, correctness, test-quality, changed-surface, and docs-writing agents completed. Review-fix loops addressed P1 findings for production NativeBridge page persistence coverage, editor runtime extension collection, trusted extension `pluginId` ownership, and async insert stale-result races. Focused re-review cleared remaining P0/P1/P2 async insert findings.
+- External docs verified by agents: React controlled `<textarea>`, `useRef`, `useEffect` async race cleanup guidance, `useLayoutEffect`, React hooks refs lint guidance, Testing Library `user-event`, Vitest, Vite, Tauri v2 invoke/capabilities/permissions, Tiptap React/Markdown beta docs, and ProseMirror guide.
+- Remaining risk: TASK-016 intentionally keeps semantic task/tag/page-link behavior, `@date`, autocomplete, slash menu, stable block IDs, Markdown import/export, rich editor behavior, stronger Markdown DTO/body size validation, load/save error UX, insert-only command capability props, and custom plugin-host extension-listing hardening for later tasks. `storage.persistence = "in-memory-core"` remains accurate for Core stores; only the Markdown runtime page facade uses existing allowlisted NativeBridge page DTOs.
+
+### 2026-05-21 07:35 CST - TASK-016 started
+
+- Branch: `feat/task-016-markdown-editor-plugin-shell`.
+- Task: Implement Markdown Editor Plugin shell.
+- Scope: add the first Markdown Editor Plugin shell that registers a page editor view, insert text command, and mobile toolbar slot; support baseline markdown text for headings, paragraphs, lists, task syntax, tag text, and page-link text; collect markdown editor extensions from runtime; and prove save/reopen through the existing Core/runtime/native boundary available after TASK-015.
+- Out of scope until agents narrow it: Task Plugin page creation semantics, checkbox toggle behavior, tag plugin behavior, stable block IDs/import-export, advanced ProseMirror/Tiptap schema behavior, sync, release packaging, and new Tauri command/capability expansion.
+- Agent orchestration: parent thread remains orchestration-only; planner, current-docs research, security/deprecation review, TDD tests, implementation, docs, and review work will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-016-markdown-editor-plugin-shell.md`.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus the known desktop-terminal `TERM=dumb` failure. Parent treats this as non-blocking for repository agent work.
 
 ### 2026-05-21 07:32 CST - TASK-015 completed
 
