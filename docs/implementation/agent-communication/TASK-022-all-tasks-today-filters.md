@@ -581,6 +581,31 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Expected red signal: current code likely fails the foreign-namespace manifest reservation case; the TaskPlugin manifest assertion may already pass and is still valuable regression coverage.
 - Implementation after red tests should keep Core business-agnostic, avoid native/Tauri/package/Rust changes, and keep `within` / app-shell filter execution routing out of scope.
 
+## Manifest-Reservation Regression Tests
+
+- Status: completed by Goodall (`test_writer`) on 2026-05-21 20:39 CST.
+- Commit: `9301698`.
+- Files changed:
+  - `src/test/task-filters-view-rendering.test.tsx`.
+  - `src/test/plugin-api-contracts.test.ts`.
+  - `src/test/core-filter-engine.test.ts`.
+- Coverage added:
+  - Real `TaskPlugin` manifest declares `task.enabled`, `task.status`, `task.sourcePageId`, `task.sourceBlockId`, `task.scheduled`, and `task.due`.
+  - Manifest-derived metadata reservations are owner-bound instead of load-order based.
+  - Generic own-namespace reservations and unreserved metadata remain allowed.
+  - Incomplete metadata field descriptors do not reserve namespaces.
+  - `metadataOwnerReservations` is explicitly covered as the Core filter-engine behavior switch.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts
+bun run typecheck
+bunx eslint src/test/plugin-api-contracts.test.ts src/test/task-filters-view-rendering.test.tsx src/test/core-filter-engine.test.ts --max-warnings=0
+git diff --check
+```
+
+- Result: expected red signal. Focused tests ran 3 files / 68 tests with 2 failed / 66 passed. Failures show current `PluginHost` still lets first foreign manifest declarations reserve `task`/`tag`, and incomplete descriptors still reserve a namespace. `bun run typecheck`, focused eslint, and `git diff --check` passed.
+
 ## Current Next Action
 
-- Goodall (`test_writer`) is adding manifest-derived metadata reservation regression tests. Parent will validate the expected red signal before committing the tests.
+- Spawn `implementer` to make Goodall's manifest-reservation regressions pass with the minimum production change.
