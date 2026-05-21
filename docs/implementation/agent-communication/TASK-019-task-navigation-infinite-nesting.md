@@ -75,9 +75,27 @@ Result: expected red signal. The focused TASK-019 test command failed with 7 fai
 
 ### Implementation Handoff
 
-- Status: pending.
+- Status: completed, committed, and closed.
+- Agent: Gibbs the 3rd (`implementer`).
 - Target: implement the minimum production behavior needed to satisfy the TASK-019 tests without broad save-time scanning.
-- Expected work:
+- Files changed:
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`.
+- Commit: `ecebed7` (`Gibbs the 3rd(implementation)(Implement task navigation and infinite nesting): add task open navigation`).
+- Summary:
+  - Registered Task Plugin-owned `task.open-task-page`.
+  - Shared the existing source-block resolver behavior so `task.resolve-task-block` and `task.open-task-page` both use the same transaction/source relation path.
+  - `task.open-task-page` validates `{ sourcePageId, sourceBlockId }` and returns exactly `{ pageId }`.
+  - Markdown editor can render task-title buttons from a structured body when task syntax extensions are present; clicking a button executes `task.open-task-page` and calls an injected `onOpenPage` callback with the resolved page id.
+  - Task titles render as React text, not HTML or links.
+- Validation:
+  - `bun run test:frontend -- src/test/task-navigation-infinite-nesting.test.tsx src/test/task-plugin-syntax-page-creation.test.ts` passed with 2 files / 23 tests.
+  - `bun run test:frontend -- src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/plugin-host-lifecycle.test.ts` passed with 3 files / 65 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri surface diff from `master` returned no files.
+- Original expected work:
   - Add/centralize a task-owned `task.open-task-page` command that validates `{ sourcePageId, sourceBlockId }`, reuses the TASK-018 resolver/source relation behavior, and returns exactly `{ pageId }`.
   - Expose an accessible task-title click path in the Markdown editor/plugin UI that calls the task open command with stable source page/block identity and invokes a supplied page-open callback with the returned page id.
   - Keep unsafe titles inert as text.
