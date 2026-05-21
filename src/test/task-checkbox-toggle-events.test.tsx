@@ -101,6 +101,7 @@ type Deferred<Value> = {
 
 const toggleTaskStatusCommandId = "task.toggle-status";
 const openTaskPageCommandId = "task.open-task-page";
+const resolveTaskBlockCommandId = "task.resolve-task-block";
 const taskNamespace = "task";
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -617,6 +618,65 @@ describe("Task checkbox toggle and task events", () => {
     );
   });
 
+  it("uses the visible task title only once as the open affordance and keeps checkbox toggles separate", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const taskTitle = "Open from title only";
+    const sourcePage = createSourcePage(runtime, "Title interaction source", [
+      {
+        blockId: "task-block-a",
+        text: `- [ ] ${taskTitle}`,
+      },
+    ]);
+    const execute = vi.fn(async (commandId: string) => {
+      if (commandId === openTaskPageCommandId) {
+        return { pageId: "opened-task-page" };
+      }
+
+      return {
+        pageId: "resolved-task-page",
+        status: "done",
+      } satisfies ToggleTaskStatusResult;
+    });
+    const onOpenPage = vi.fn();
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands: { execute },
+      onOpenPage,
+      markdownRuntime: runtime.markdown,
+    });
+
+    const titleButton = await screen.findByRole("button", { name: taskTitle });
+    const checkbox = screen.getByRole("checkbox");
+
+    expect(checkbox).toHaveAccessibleName(/.+/u);
+    expect(screen.getAllByText(taskTitle)).toHaveLength(1);
+
+    await user.click(titleButton);
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    );
+    expect(onOpenPage).toHaveBeenCalledWith("opened-task-page");
+    expect(commandPayloadsFor(execute, toggleTaskStatusCommandId)).toStrictEqual(
+      [],
+    );
+
+    await user.click(checkbox);
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith(toggleTaskStatusCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      } satisfies ToggleTaskStatusInput),
+    );
+    expect(commandPayloadsFor(execute, openTaskPageCommandId)).toHaveLength(1);
+  });
+
   it("keeps a checked checkbox visible after a direct-page toggle so the task can immediately reopen", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -738,6 +798,63 @@ describe("Task checkbox toggle and task events", () => {
     expect(pageFacade.save).not.toHaveBeenCalled();
   });
 
+  it("ignores repeated checkbox toggles for the same source block while the first toggle is pending", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const toggleCompletion = createDeferred<ToggleTaskStatusResult>();
+    const sourcePage = createSourcePage(runtime, "Pending toggle source", [
+      { blockId: "task-block-a", text: "- [ ] A" },
+    ]);
+    const execute = vi.fn((commandId: string) => {
+      if (commandId !== toggleTaskStatusCommandId) {
+        throw new Error(`Unexpected command ${commandId}`);
+      }
+
+      return toggleCompletion.promise;
+    });
+
+    renderMarkdownPageEditor(runtime, {
+      page: editorDocumentFromRuntimePage(sourcePage),
+      commands: { execute },
+      markdownRuntime: runtime.markdown,
+    });
+
+    const checkbox = await screen.findByRole("checkbox", {
+      name: "A",
+      checked: false,
+    });
+
+    await user.click(checkbox);
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(1));
+
+    await user.click(checkbox);
+
+    expect(commandPayloadsFor(execute, toggleTaskStatusCommandId)).toStrictEqual([
+      {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      },
+    ] satisfies ToggleTaskStatusInput[]);
+
+    await act(async () => {
+      toggleCompletion.resolve({
+        pageId: "resolved-task-page",
+        status: "done",
+      });
+      await toggleCompletion.promise;
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: /markdown/i })).toHaveValue(
+        "- [x] A",
+      ),
+    );
+    expect(
+      await screen.findByRole("checkbox", { name: "A", checked: true }),
+    ).toBeVisible();
+  });
+
   it("opens completed task titles through task.open-task-page using only source identity", async () => {
     const runtime = await createRuntime({
       pageIds: ["source-page", "task-page-a"],
@@ -781,6 +898,73 @@ describe("Task checkbox toggle and task events", () => {
       sourceBlockId: "task-block-a",
     });
     await waitFor(() => expect(onOpenPage).toHaveBeenCalledWith(taskPage.id));
+  });
+
+  it("creates and opens an unresolved checked task as done without completed or reopened events", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "task-page-a"],
+    });
+    const sourcePage = createSourcePage(runtime, "Unresolved checked source", [
+      {
+        blockId: "task-block-a",
+        text: "- [x] A",
+        attrs: { customAttr: "preserved" },
+      },
+    ]);
+
+    await expect(
+      runtime.commands.execute(openTaskPageCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    ).resolves.toStrictEqual({
+      pageId: "task-page-a",
+    });
+
+    const taskPage = expectSingleTaskPageForSource(
+      runtime,
+      sourcePage.id,
+      "task-block-a",
+    );
+
+    expect(taskPage).toMatchObject({
+      id: "task-page-a",
+      title: "A",
+    });
+    expectTaskMetadata(runtime, {
+      taskPageId: taskPage.id,
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      status: "done",
+    });
+    expectSourceBlock(runtime, {
+      sourcePageId: sourcePage.id,
+      sourceBlockId: "task-block-a",
+      text: "- [x] A",
+      attrs: {
+        customAttr: "preserved",
+        boundPageId: taskPage.id,
+      },
+    });
+    expect(runtime.events.list()).toStrictEqual([]);
+  });
+
+  it("keeps task.resolve-task-block unchecked-only for unresolved checked task lines", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["source-page", "unexpected-task-page"],
+    });
+    const sourcePage = createSourcePage(runtime, "Checked resolver source", [
+      { blockId: "task-block-a", text: "- [x] A" },
+    ]);
+    const before = snapshotPageMetadataEventState(runtime);
+
+    await expect(
+      runtime.commands.execute(resolveTaskBlockCommandId, {
+        sourcePageId: sourcePage.id,
+        sourceBlockId: "task-block-a",
+      }),
+    ).rejects.toThrow();
+    expect(snapshotPageMetadataEventState(runtime)).toStrictEqual(before);
   });
 
   it("ignores a stale delayed checkbox toggle after the editor switches pages", async () => {
