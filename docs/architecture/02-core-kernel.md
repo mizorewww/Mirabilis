@@ -192,18 +192,20 @@ export interface FilterDefinition {
 
 ```ts
 {
+  id: "task.filter.all-tasks",
   name: "All Tasks",
   query: {
     where: [
       { field: "metadata.task.enabled", op: "eq", value: true }
     ]
   },
-  viewType: "task.list"
+  viewType: "page.list",
+  sourcePluginId: "task"
 }
 ```
 
 Core 保存 Filter。
-Filter 的具体 UI 和高级查询能力由 Filter Plugin 扩展。
+TASK-022 当前还导出 data-only `executeFilterQuery`，用于对 current pages 和 metadata records 执行受限 query subset。它不读取 Filter Store、不会 mutation stores、不会执行插件代码，并排除 archived pages。当前 subset 覆盖 metadata field paths、`eq` / `neq` / `gt` / `lt` / `includes` / `exists`、`and` / `or`；`within` 仍是 legal AST/store operator，但当前 executor 不实现 Event/plugin-index 语义并 fail closed。Filter 的高级 UI、排序/分组、JS filters、Event/plugin-index execution 和 app-shell route wiring 仍由后续 Filter Plugin / App Shell 扩展。
 
 ---
 
@@ -226,17 +228,18 @@ export interface ViewDefinition {
 
 ```ts
 viewRegistry.register({
-  id: "habit.heatmap",
-  pluginId: "habit",
-  type: "heatmap",
-  title: "Habit heatmap",
-  component: HabitHeatmapView,
+  id: "task.page-list",
+  pluginId: "task",
+  type: "page.list",
+  title: "Task page list",
+  component: TaskPageListView,
   accepts: {
-    kind: "event-series",
-    namespace: "habit"
+    kind: "filter-results.markdown-pages"
   }
 });
 ```
+
+`page.list` 是当前 canonical filter result list view type。Task Plugin 的 All Tasks / Today filters 和 Tag Plugin 的 `tag.create-filter` saved filters 都使用 `viewType: "page.list"`，避免把 generic page results 绑定到 task-only view type。
 
 ---
 

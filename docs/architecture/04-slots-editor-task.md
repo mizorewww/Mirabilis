@@ -92,6 +92,8 @@ Tag Plugin 长期会渲染：
 
 TASK-021 当前的 Tag Plugin slot contribution 是 `tag.page-header-metadata.tags`，挂在 `page.header.metadata`，order 为 `300`。它渲染 inert `#tag` 文本并提供 add/remove 控件，控件通过 `tag.add-tag` / `tag.remove-tag` command 写 `tag.tags` metadata。完整 Metadata UI Plugin、全局 metadata bar 编排和 picker 体验仍属于 TASK-023+。
 
+TASK-022 当前的 Task Plugin slot contribution 是 `task.filter-empty-state`，挂在 `filter.empty_state`，order 为 `100`。它接收最小 `{ filterName }` props 并渲染 generic page empty-state copy，不渲染 task-only 文案。
+
 Habit Plugin 会渲染：
 
 ```text
@@ -168,7 +170,7 @@ export const MarkdownEditorPlugin: AppPlugin = {
 - TASK-020 在同一 structured-body 条件下渲染 task checkbox。checkbox 调用 `task.toggle-status({ sourcePageId, sourceBlockId })`，读取 `{ pageId, status }`，将 `todo` 显示为 unchecked、`done` 显示为 checked，并在页面切换或内容 generation 变化后丢弃慢 toggle result。
 - TASK-020 对同一 source block 的 pending checkbox toggle 去重；pending 时 checkbox disabled，避免同一 source block 重复提交。
 
-TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation，TASK-020 已实现 checkbox status toggle。仍未实现 `@date`、autocomplete、slash menu、tag indexing、page-link navigation、保存时 task 自动扫描/索引、filters/views、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
+TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation，TASK-020 已实现 checkbox status toggle，TASK-022 已实现 Task Plugin-owned All Tasks / Today filter definitions 和 `page.list` registered view rendering slice。仍未实现 `@date`、autocomplete、slash menu、tag indexing、page-link navigation、保存时 task 自动扫描/索引、全局 saved-filter navigation、app-shell filter route、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
 
 ### 8.3 Markdown runtime facade
 
@@ -216,14 +218,14 @@ runtime.markdown.pages.save({ pageId, markdown });
 
 TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-020 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 和 checkbox 的信号；点击按钮执行 `task.open-task-page`，点击 checkbox 执行 `task.toggle-status`，仍不会在保存时自动扫描全部 task block。
 
-TASK-021 后，内置 Tag Plugin 已提供 `tag.hashtag` descriptor，syntax 为 `#tag`。它同样只是 inert manifest metadata；不会创建 rich inline token，也不会触发 save-time scan。`tag.refresh-tags` 显式扫描 saved `markdown.line` source；`tag.add-tag` / `tag.remove-tag` 通过 command 更新当前 page metadata；`tag.create-filter` 只保存 filter definition。Date Plugin 可以后续提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、filter/view refresh 和 rich editor adaptation 仍未实现。
+TASK-021 后，内置 Tag Plugin 已提供 `tag.hashtag` descriptor，syntax 为 `#tag`。它同样只是 inert manifest metadata；不会创建 rich inline token，也不会触发 save-time scan。`tag.refresh-tags` 显式扫描 saved `markdown.line` source；`tag.add-tag` / `tag.remove-tag` 通过 command 更新当前 page metadata；`tag.create-filter` 只保存 filter definition。TASK-022 后，saved `page.list` filters 可被 generic executor 和 registered view path 执行/渲染。Date Plugin 可以后续提供 date token descriptor，Page Link Plugin 可以提供 `[[page]]` descriptor。自动索引、全局 filter navigation/app-shell route 和 rich editor adaptation 仍未实现。
 
 ---
 
 ## 9. Task Plugin 代码架构
 
 Task Plugin 是最重要的插件之一。
-长期目录可能长这样；TASK-018/TASK-020 当前只实现内置 `TaskPlugin` 的 syntax descriptor、resolver command、open command 和 checkbox status toggle command：
+长期目录可能长这样；TASK-018/TASK-022 当前实现内置 `TaskPlugin` 的 syntax descriptor、resolver command、open command、checkbox status toggle command、default filters、`page.list` view 和 empty-state slot：
 
 ```text
 plugins/task/
@@ -262,7 +264,7 @@ plugins/task/
 
 ### 9.1 Task Plugin 注册内容
 
-TASK-018/TASK-020 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
+TASK-018/TASK-022 当前实现位于 `src/plugins/task/plugin.ts`，并通过内置插件列表加载。
 
 Task manifest 当前声明：
 
@@ -277,10 +279,35 @@ export const TaskPlugin: AppPlugin = {
           name: "Checkbox task",
           syntax: "- [ ]"
         }
+      ],
+      metadataFields: [
+        { id: "task.enabled", namespace: "task", key: "enabled", valueType: "boolean" },
+        { id: "task.status", namespace: "task", key: "status", valueType: "string" },
+        { id: "task.sourcePageId", namespace: "task", key: "sourcePageId", valueType: "string" },
+        { id: "task.sourceBlockId", namespace: "task", key: "sourceBlockId", valueType: "string" },
+        { id: "task.scheduled", namespace: "task", key: "scheduled", valueType: "date" },
+        { id: "task.due", namespace: "task", key: "due", valueType: "date" }
       ]
     }
   },
   register(ctx) {
+    registerTaskFilters(ctx);
+
+    ctx.views.register({
+      id: "task.page-list",
+      type: "page.list",
+      title: "Task page list",
+      component: TaskPageListView,
+      accepts: { kind: "filter-results.markdown-pages" }
+    });
+
+    ctx.slots.register({
+      id: "task.filter-empty-state",
+      slot: "filter.empty_state",
+      order: 100,
+      component: TaskFilterEmptyState
+    });
+
     ctx.commands.register({
       id: "task.resolve-task-block",
       title: "Resolve task block",
@@ -302,7 +329,27 @@ export const TaskPlugin: AppPlugin = {
 };
 ```
 
-当前没有注册 task view、slot、filter、event type、metadata-field renderer 或 indexer。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动扫描正文或在保存时创建页面。
+当前没有注册 event type、metadata-field renderer 或 indexer。manifest syntax descriptor 只让 editor/runtime 能看到 `- [ ]` 语法贡献；它不会自动扫描正文或在保存时创建页面。manifest metadata fields 会让 Plugin Host 为 `task` namespace 派生 metadata owner reservation。
+
+TASK-022 default filters：
+
+```text
+task.filter.all-tasks:
+  name = All Tasks
+  viewType = page.list
+  query = metadata.task.enabled eq true
+
+task.filter.today:
+  name = Today
+  viewType = page.list
+  query =
+    metadata.task.enabled eq true
+    metadata.task.status neq "done"
+    and (metadata.task.scheduled eq relative today
+         or metadata.task.due eq relative today)
+```
+
+All Tasks includes done tasks and relies on the filter executor/listing path to exclude archived pages. Today compares date metadata with `valueType: "date"` and local `YYYY-MM-DD` values; `@date` parsing, date picker UI, `task.set_due` / `task.set-due`, Overdue / Done filters, and automatic save-time scanning/indexing are still deferred.
 
 ### 9.2 Task Syntax
 
@@ -402,13 +449,15 @@ async function resolveTaskBlock(input, context) {
 }
 ```
 
-TASK-018/TASK-020 当前写入 metadata：
+TASK-018/TASK-020 当前写入 source relation/status metadata；TASK-022 manifest also declares date metadata:
 
 ```text
 task.enabled = true
 task.status = todo | done
 task.sourcePageId = input.sourcePageId
 task.sourceBlockId = input.sourceBlockId
+task.scheduled = YYYY-MM-DD date metadata when seeded by caller/future UI
+task.due = YYYY-MM-DD date metadata when seeded by caller/future UI
 ```
 
 这些 metadata 写入通过 plugin-facing `metadata.set` 发生，`sourcePluginId` 由 Plugin Host 注入为 `task`。

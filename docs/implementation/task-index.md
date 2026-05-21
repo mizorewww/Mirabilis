@@ -527,7 +527,7 @@ Acceptance criteria:
 - `tag.refresh-tags({ pageId })` explicitly scans saved structured `markdown.line` blocks and replaces page-scoped `tag.tags` with normalized lowercase ASCII slug `string[]` values, or `[]` when no tags remain.
 - `tag.add-tag({ pageId, tag })` and `tag.remove-tag({ pageId, tag })` update page-scoped tag metadata through commands, enforcing the same conservative tag normalization and max 32 unique tags.
 - `TagMetadataSlot` is registered as `page.header.metadata` contribution `tag.page-header-metadata.tags` with order `300`, displaying inert tags plus add/remove controls.
-- `tag.create-filter({ tag })` stores a Tag Plugin-owned filter definition named `#tag` with query `metadata.tag.tags includes tag` and `viewType: "page.list"`; filter execution/rendering remains TASK-022+.
+- `tag.create-filter({ tag })` stores a Tag Plugin-owned filter definition named `#tag` with query `metadata.tag.tags includes tag` and `viewType: "page.list"`; TASK-022 keeps this compatible with the generic `page.list` execution/rendering path.
 - No automatic save-time scan, background indexer, rich inline token UI, autocomplete, global metadata bar, Tauri IPC, package/Cargo, native, filesystem, or permission surface is added.
 
 Test plan:
@@ -549,15 +549,18 @@ Source docs:
 
 Acceptance criteria:
 
-- All Tasks filter lists task-enabled pages.
-- Today filter uses documented metadata/date semantics.
-- Filters render through the registered view system.
-- Empty states are provided through slots.
+- Core exports generic data-only `executeFilterQuery` for current pages/metadata without store mutation or plugin execution.
+- All Tasks fixed filter `task.filter.all-tasks` lists task-enabled pages with `metadata.task.enabled eq true`, includes done tasks, uses `viewType: "page.list"`, and excludes archived pages through execution/listing behavior.
+- Today fixed filter `task.filter.today` uses `metadata.task.enabled eq true`, `metadata.task.status neq "done"`, and scheduled/due relative-today date metadata with `valueType: "date"` and local `YYYY-MM-DD` strings.
+- Task Plugin declares current task metadata fields, owns the default filters, registers `task.page-list` with type `page.list`, and contributes generic empty-state copy on `filter.empty_state`.
+- `page.list` remains canonical so TASK-021 Tag Plugin saved filters continue to execute/render.
+- Core remains business-agnostic; owner-sensitive metadata filtering is driven by explicit `metadataOwnerReservations` and Plugin Host manifest-derived reservations.
+- Out of scope: save-time task scanning/indexing, date picker, `@date` parser, `task.set_due` / `task.set-due`, Overdue/Done filters, JS filters, global saved-filter navigation, app-shell filter route, Event/plugin-index `within` execution, native/Tauri/package/Rust changes, persistence rewiring, and release packaging.
 
 Test plan:
 
-- Filter engine tests for task queries.
-- UI tests for filter result rendering.
+- Filter engine tests for task/tag-compatible metadata queries, relative Today, owner reservations, fail-closed malformed values/types/unsafe fields/cycles/over-depth, and deferred `within` semantics.
+- UI tests for `page.list` view lookup by `viewType`, inert page title rendering, generic `filter.empty_state` slot rendering, Task manifest metadata fields, default filter idempotency, and native-surface guard.
 
 Dependencies:
 

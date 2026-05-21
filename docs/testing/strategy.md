@@ -259,7 +259,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-021 Tag Plugin Baseline Guidance
 
-TASK-021 tests cover explicit Tag Plugin metadata recognition and page-scoped tag controls without adding automatic save-time scanning, background indexing, rich inline tokens, autocomplete, global metadata bar, filter result execution/rendering, or native surface:
+TASK-021 tests cover explicit Tag Plugin metadata recognition and page-scoped tag controls without adding automatic save-time scanning, background indexing, rich inline tokens, autocomplete, global metadata bar, tag-specific filter result rendering, or native surface:
 
 - Built-in `tag` plugin is present in `BUILT_IN_PLUGINS`, contributes inert Markdown syntax descriptor `tag.hashtag` with syntax `#tag`, contributes metadata field descriptor `tag.tags` with `namespace: "tag"`, `key: "tags"`, and `valueType: "json"`, and registers owned commands `tag.refresh-tags`, `tag.add-tag`, `tag.remove-tag`, and `tag.create-filter`.
 - `tag.refresh-tags` tests should execute through the real runtime command bus with payload `{ pageId }`; tests should prove it scans saved structured `markdown.line` blocks and replaces `tag.tags` exactly with current source tags or `[]`.
@@ -280,6 +280,32 @@ git diff --check
 ```
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-021 itself is TypeScript plugin/runtime/slot behavior with no new native, IPC, permission, filesystem, package, Cargo, or Rust surface.
+
+## TASK-022 All Tasks and Today Filter Guidance
+
+TASK-022 tests cover a generic Core filter executor plus Task Plugin-owned default filters and registered rendering surfaces, without adding save-time scanning, global filter navigation, app-shell filter routes, JS filters, Event/plugin-index execution, native/Tauri/package/Rust changes, or persistence rewiring:
+
+- Core filter coverage should prove `executeFilterQuery` is exported from the public Core entrypoint, takes current `pages`, `metadata`, `query`, optional deterministic `currentDate`, and optional `metadataOwnerReservations`, returns matching pages, excludes archived pages, and does not mutate stores.
+- Query coverage should include metadata field paths, `eq`, `neq`, `gt`, `lt`, `includes`, `exists`, `and`, and `or`. Unknown/unsafe fields, malformed values, wrong value types, invalid date metadata, cyclic queries, and over-depth queries must fail closed.
+- `within` coverage should document the current boundary: it remains a legal AST/store operator but the current page/metadata executor has no Event/plugin-index semantics and returns no matches.
+- Owner-boundary coverage should prove Core stays business-agnostic and that built-in Task/Tag trust is enforced only when callers pass host-derived `metadataOwnerReservations`.
+- Plugin Host coverage should prove valid manifest `metadataFields` derive reservations only for complete descriptors whose `namespace === manifest.id`, whose namespace/key are safe metadata segments, and whose `valueType` is valid. Malformed/non-array/incomplete descriptors must not reserve, and same-batch `loadBuiltInPlugins()` reservations must apply before install/register writes, including transaction-scoped writes.
+- Task Plugin coverage should assert manifest metadata fields `task.enabled`, `task.status`, `task.sourcePageId`, `task.sourceBlockId`, `task.scheduled`, and `task.due`.
+- All Tasks coverage should assert fixed id `task.filter.all-tasks`, name `All Tasks`, `viewType: "page.list"`, query `metadata.task.enabled eq true`, inclusion of done tasks, exclusion of archived pages, and rejection of forged non-task-owned task metadata when reservations are supplied.
+- Today coverage should assert fixed id `task.filter.today`, name `Today`, `viewType: "page.list"`, enabled/not-done conditions, scheduled-or-due relative today matching, `valueType: "date"`, local `YYYY-MM-DD` values, deterministic `currentDate`, and fail-closed invalid/string-typed date metadata.
+- UI coverage should resolve the registered view from `filter.viewType`, render `task.page-list` / `type: "page.list"` for page results, keep unsafe titles inert as React text, and render empty results through `filter.empty_state` using generic page copy.
+- Native-surface guards should continue proving TASK-022 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+
+TASK-022 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-022 itself is TypeScript Core/plugin/runtime/view behavior with no new native, IPC, permission, filesystem, package, Cargo, or Rust surface.
 
 ## Merge Gate
 

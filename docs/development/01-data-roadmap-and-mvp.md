@@ -204,6 +204,8 @@ All Tasks Filter
 Today Filter
 ```
 
+TASK-022 当前已经交付 All Tasks / Today 的 narrow slice：Task Plugin owns the default filters, both use `viewType: "page.list"`, and results can be executed/rendered through the generic page/metadata executor plus registered view/slot path. Save-time task scanning/indexing, global saved-filter navigation, app-shell filter route, date picker, `@date` parser, Overdue/Done filters, and richer task list UI remain later work.
+
 验收：
 
 ```markdown

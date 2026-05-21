@@ -132,10 +132,15 @@ TagPlugin 写 namespace: "tag", key: "tags", valueType: "json" metadata，value 
 tag.refresh-tags 精确替换该页 tag.tags，当前 source 没有 tag 时写 []
 没有保存时自动扫描、background indexer、rich inline token UI、autocomplete 或全局 metadata bar
 
+TASK-022 当前：
+TaskPlugin register upserts task.filter.all-tasks and task.filter.today
+TaskPlugin registers view task.page-list with type page.list
+TaskPlugin registers task.filter-empty-state on filter.empty_state
+executeFilterQuery can execute current page/metadata filter results when called explicitly
+
 后续：
 编辑器保存后自动扫描 task blocks
-FilterEngine 刷新 All Tasks / Today
-ViewRegistry 渲染任务列表
+全局 saved-filter navigation / app-shell filter route
 ```
 
 ### 18.2 用户点击任务文字
@@ -203,9 +208,27 @@ CommandRegistry.execute("tag.create-filter", { tag })
 → viewType = "page.list"
 ```
 
-Filter result execution and rendering remain TASK-022+.
+TASK-022 makes this saved filter shape executable/renderable through the generic `page.list` path when a caller supplies pages, metadata, query, and required metadata owner reservations.
 
-### 18.5 用户点击 Start
+### 18.5 用户打开 All Tasks / Today filter result
+
+```text
+TaskPlugin registered default filter exists
+→ App/filter caller reads saved FilterDefinition
+→ Caller supplies current pages and metadata records
+→ Caller supplies Plugin Host-derived metadataOwnerReservations when enforcing built-in metadata trust
+→ executeFilterQuery({ pages, metadata, query, currentDate?, metadataOwnerReservations })
+→ Core excludes archived pages and evaluates metadata-only query subset
+→ Caller resolves ViewRegistry by filter.viewType
+→ viewType "page.list" resolves to task.page-list
+→ TaskPageListView renders page titles as inert React text
+→ If result is empty, caller resolves filter.empty_state slot
+→ task.filter-empty-state renders generic empty-state copy from filterName
+```
+
+There is no production app-shell filter route yet. Automatic save-time scanning/indexing, Event/plugin-index `within` execution, JS filters, date picker, `@date` parser, and global saved-filter navigation remain deferred.
+
+### 18.6 用户点击 Start
 
 ```text
 TimerMetadataSlot 中 Start button clicked
@@ -215,7 +238,7 @@ TimerMetadataSlot 中 Start button clicked
 → GlobalTimerSlot 重新渲染
 ```
 
-### 18.6 用户 Stop 并写 Note
+### 18.7 用户 Stop 并写 Note
 
 ```text
 CommandRegistry.execute("timer.stop")

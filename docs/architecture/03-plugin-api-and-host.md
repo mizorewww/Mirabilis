@@ -61,6 +61,8 @@ export type PluginContributions = {
 它们声明插件贡献的形状和身份，但不是同名 runtime facade：当前 `PluginContext` 没有用于 metadata field、event type、algorithm、indexer、mobile toolbar item 或 settings panel 的 runtime registration facade。
 这些运行时 facade 属于后续 Plugin Host / Plugin Platform 工作。
 
+TASK-022 后，`metadataFields` 还被 Plugin Host 用来派生 metadata owner reservations。这个派生只接受 complete valid descriptor：`namespace === manifest.id`、`namespace` / `key` 都是 metadata-safe segment、`valueType` 是有效 metadata value type。malformed、non-array 或 incomplete descriptors 不 reserve namespace。该 reservation 只建立 ownership/trust boundary，不代表 renderer/editor runtime 已实现。
+
 TASK-016 增加了一个很窄的 Markdown runtime facade：`runtime.markdown.collectEditorExtensions()` 会从 active plugin manifest 的 `contributes.markdownSyntax` 收集 inert descriptor。它不会执行插件代码，也不是 Tiptap / ProseMirror extension 注册表；返回项的 `pluginId` 由 Plugin Host 的 manifest owner 注入，manifest contribution 自带的同名字段不能覆盖 host-owned identity。
 
 TASK-021 后，`collectEditorExtensions()` 会同样收集内置 Tag Plugin 的 inert `tag.hashtag` descriptor（syntax `#tag`）。该 descriptor 只说明可见 Markdown syntax；它不代表 rich inline token、autocomplete、save-time scan 或 background indexer 已经存在。
@@ -151,6 +153,8 @@ Plugin-facing stores 和 registries 的输入不接受调用方传入的 `plugin
 TASK-018 后，plugin command handler 的运行签名是 `PluginCommandHandler(input, context)`。`register(ctx)` 期间注册 command 时只交出 handler；真正执行 command 时，Plugin Host 会创建一个新的 command-time `PluginContext` 并传给 handler。因此 command handler 可以通过 fresh `context.pages`、`context.metadata`、`context.events`、`context.filters` 或 `context.transaction` 做数据写入，而不需要也不允许闭包复用 register-time `ctx` 做后续 mutation。
 
 TASK-021 的 Tag Plugin command 使用同一 command-time context model：`tag.refresh-tags`、`tag.add-tag` 和 `tag.remove-tag` 通过 plugin-owned metadata facade 写 `tag.tags`；`tag.create-filter` 通过 plugin-owned filter facade 保存 filter definition。调用方不能在 payload 中提供 `pluginId`、`sourcePluginId`、query 或 view override。
+
+TASK-022 的 Task Plugin registration 使用同一 plugin-facing model：Task Plugin 在 `register(ctx)` 中 upsert fixed filters `task.filter.all-tasks` 和 `task.filter.today`，注册 view `task.page-list` / `type: "page.list"`，并注册 `task.filter-empty-state` 到 `filter.empty_state`。Filter definitions 使用 plugin-owned `ctx.filters` 写入，view/slot ownership 由 Plugin Host 注入。
 
 command-time `PluginContext` 仍是 plugin-scoped facade：不暴露 NativeBridge、Tauri/raw invoke、SQLite、filesystem、Core stores、Core registries、Core services 或 raw runtime handles。command-time context 允许数据 mutation，但不允许 runtime contribution registration；在 command handler 中调用 `context.commands.register`、`context.views.register` 或 `context.slots.register` 会抛出 typed Plugin Host lifecycle error。command handler 返回或抛错后，该 command-time context 会失效；任何捕获后继续使用的 stale command context 都不能再写入数据或注册贡献。
 
@@ -262,6 +266,8 @@ type PluginHostInstance = {
 - `ctx.metadata`、`ctx.events`、`ctx.filters` 自动注入 `sourcePluginId`，并将读写限制在当前插件拥有的数据上。
 - `ctx.commands`、`ctx.views`、`ctx.slots` 自动注入 `pluginId`，并将 `get` / `list` 限制在当前插件拥有的 runtime contribution 上。
 - plugin-facing 输入拒绝调用方传入 `pluginId` 或 `sourcePluginId`；绕过 TypeScript 类型的 runtime spoofing 会抛出 `PLUGIN_FACADE_OWNERSHIP_FORBIDDEN` 且不应改变 registry 或 store。
+- Metadata owner reservations 由 valid manifest `contributes.metadataFields` 派生。A plugin can reserve only its own namespace, because descriptor `namespace` must equal the declaring manifest id and must be a safe metadata segment. Built-in batch `loadBuiltInPlugins()` stages valid reservations before install/register writes run, including transaction-scoped writes, so same-batch plugins cannot claim another built-in plugin's reserved metadata namespace. Dotted plugin ids cannot reserve same-named metadata namespace under the current safe-segment rule.
+- Low-level callers of `executeFilterQuery` must pass host-derived `metadataOwnerReservations` when they need built-in Task/Tag metadata trust enforcement. The executor itself stays business-agnostic and does not hard-code `task` or `tag`; no production app-shell filter route exists yet.
 - 捕获到的 context 在 lifecycle 或 command execution 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
 - Plugin Host-marked command execution failures preserve their typed `PluginHostError` as `CommandRegistryError.cause`, so callers can inspect plugin id, phase `command`, and original plugin failure. Ordinary command handler failures remain redacted by Command Registry, including plain objects or directly constructed `PluginHostError` instances thrown outside the Plugin Host command wrapper.
 - `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。Markdown runtime 用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；TASK-018 后这包括内置 `markdown` 和 `task` 插件贡献的 inert syntax descriptors。调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。

@@ -53,7 +53,7 @@ Status markers:
 - [x] TASK-019: Implement task navigation and infinite nesting
 - [x] TASK-020: Implement checkbox toggle and task events
 - [x] TASK-021: Implement Tag Plugin baseline
-- [~] TASK-022: Implement All Tasks and Today filters
+- [x] TASK-022: Implement All Tasks and Today filters
 
 ## Milestone M5: Metadata and timer loop
 
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-21 21:26 CST - TASK-022 docs sync completed
+
+- Branch: `feat/task-022-all-tasks-today-filters`.
+- Task: Implement All Tasks and Today filters.
+- Delivered docs sync: formal product, architecture, development, implementation-index, progress, and testing docs now describe TASK-022 as a generic data-only `executeFilterQuery` page/metadata executor plus Task Plugin-owned All Tasks / Today filters, canonical `page.list` view compatibility, `task.page-list` rendering, `filter.empty_state` generic empty state, Task manifest date metadata fields, and Plugin Host manifest-derived metadata owner reservations.
+- Delivered behavior recorded: All Tasks fixed id `task.filter.all-tasks`, name `All Tasks`, `viewType: "page.list"`, query `metadata.task.enabled eq true`, done-task inclusion, archived-page exclusion; Today fixed id `task.filter.today`, enabled/not-done query plus scheduled/due relative today date matching with `valueType: "date"` and local `YYYY-MM-DD` values.
+- Deferred scope recorded: automatic save-time scanning/indexing, date picker, `@date` parser, `task.set_due` / `task.set-due`, Overdue/Done filters, JS filters, global saved-filter navigation, production app-shell filter route, Event/plugin-index `within` execution, wide-query total node/branch budgets, native/Tauri/package/Rust changes, persistence rewiring, and release packaging.
+- Docs checks: stale scans over product/architecture/development/implementation/testing docs found no remaining `task.list`, `TASK-022+`, or future-only filter execution/rendering drift; remaining `within` and due-command hits are intentional deferred-scope notes. `git diff --check` passed. `bun run typecheck` passed.
+- Remaining docs risk: the request summary mentioned page-field predicate support, but current source/tests show metadata field-path predicates plus archived-page exclusion rather than general page-field conditions. Formal docs were kept aligned to the implemented/tested subset instead of documenting unsupported page-field predicates.
+- Commit/push: none by docs writer per parent request.
 
 ### 2026-05-21 18:35 CST - TASK-022 started
 
