@@ -180,6 +180,38 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Result: expected red signal. Focused tests ran 2 files / 22 tests with 21 failures and 1 pass. Failures were missing `executeFilterQuery` export and missing Task Plugin `All Tasks` / `Today` filters, `page.list` view, and `filter.empty_state` slot. `bun run typecheck`, focused eslint, `git diff --check`, and native/package/Tauri guard passed.
 
+## Initial Implementation Handoff
+
+- Status: completed by Ramanujan (`implementer`) on 2026-05-21 19:03 CST.
+- Commit: `a9a07e9`.
+- Files changed:
+  - `src/core/filter-engine.ts`.
+  - `src/core/index.ts`.
+  - `src/core/stores/filter-store.ts`.
+  - `src/plugins/task/plugin.ts`.
+  - `src/plugins/task/components/TaskFilterViews.tsx`.
+- Behavior implemented:
+  - Public Core `executeFilterQuery`.
+  - Data-only metadata query execution for `eq`, `neq`, `includes`, `exists`, `and`, and `or`.
+  - Archived-page exclusion, stable input page order, no mutation, and fail-closed unknown/unsafe fields.
+  - Metadata owner consistency for `metadata.task.*` and `metadata.tag.*`.
+  - Relative today query value resolved against `currentDate` for date metadata.
+  - Task Plugin default `All Tasks` and `Today` filters with `viewType: "page.list"`.
+  - Registered `task.page-list` view and `task.filter-empty-state` slot.
+  - Inert page-title rendering and accessible empty-state status text.
+- Validation:
+
+```bash
+bun run test:frontend -- src/test/core-filter-engine.test.ts src/test/task-filters-view-rendering.test.tsx
+bun run test:frontend -- src/test/core-view-slot-registry.test.ts src/test/task-plugin-syntax-page-creation.test.ts src/test/task-checkbox-toggle-events.test.tsx src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. TASK-022 focused tests passed with 2 files / 22 tests. Adjacent view/task/tag coverage passed with 4 files / 69 tests. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Ramanujan (`implementer`) is implementing TASK-022 production code only. Parent will validate and commit after the agent reports completion.
+- Run focused review agents.
