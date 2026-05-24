@@ -37,7 +37,8 @@ type TimerCommandId =
   | "timer.pause"
   | "timer.resume"
   | "timer.stop"
-  | "timer.switch";
+  | "timer.switch"
+  | "timer.add-note";
 
 type TimerState = "running" | "paused" | "stopped";
 
@@ -59,6 +60,25 @@ type TimerDtoRecord = Record<string, unknown> & {
   stoppedAt?: string;
 };
 
+type TimeSegmentDtoRecord = Record<string, unknown> & {
+  durationSeconds: number;
+  endAt: string;
+  notePageId?: string;
+  pageId: string;
+  segmentId: string;
+  source: "timer";
+  startAt: string;
+};
+
+type ExpectedTimeSegmentDto = {
+  durationSeconds: number;
+  endAt: string;
+  notePageId?: string;
+  pageId: string;
+  segmentId: string;
+  startAt: string;
+};
+
 type TimerGlobalActiveBarProps = {
   commands: Pick<AppRuntime["commands"], "execute">;
 };
@@ -70,6 +90,7 @@ const timerCommandIds = [
   "timer.pause",
   "timer.resume",
   "timer.switch",
+  "timer.add-note",
 ] as const;
 const timerGlobalFloatingSlot = "global.floating";
 const timerGlobalActiveBarSlotId = "timer.global-active-bar";
@@ -103,7 +124,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     vi.useRealTimers();
   });
 
-  it("registers only the canonical TASK-024 Timer commands and the global active-bar slot", async () => {
+  it("registers the canonical Timer commands and the global active-bar slot", async () => {
     const runtime = await createRuntime();
     const builtInPluginIds = BUILT_IN_PLUGINS.map(
       (plugin) => plugin.manifest.id,
@@ -122,6 +143,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     );
     expect(registeredCommandIds).not.toContain("timer.start_timer");
     expect(registeredCommandIds).not.toContain("timer.stop_timer");
+    expect(registeredCommandIds).not.toContain("timer.add_note");
     expect(globalTimerSlots).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -168,7 +190,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     expectNoUnsafeDtoSurface(result);
   });
 
-  it("pauses, resumes, and stops with frozen elapsed time and no TASK-025 segment side effects", async () => {
+  it("pauses, resumes, and stops with frozen elapsed time and a Timer-owned time segment", async () => {
     useFakeClock(timerStartedAt);
     const runtime = await createRuntime({
       pageIds: ["timer-page"],
@@ -177,6 +199,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         "event-timer-paused",
         "event-timer-resumed",
         "event-timer-stopped",
+        "event-time-segment-created",
       ],
     });
     const page = createPage(runtime, "Pause resume timer");
@@ -218,17 +241,32 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       segmentId: startedTimer.segmentId,
       elapsedSeconds: 120,
     });
+    const stoppedAt = expectStoppedAt(stoppedTimer);
+    const createdSegment = expectCreatedSegmentResult(stopResult, {
+      durationSeconds: 120,
+      endAt: stoppedAt,
+      pageId: page.id,
+      segmentId: startedTimer.segmentId,
+      startAt: startedTimer.startedAt,
+    });
     const events = expectTimerEvents(runtime, [
       "started",
       "paused",
       "resumed",
       "stopped",
+      "time_segment_created",
     ]);
 
     expect(readRecord(stopResult, "timer.stop result").activeTimer).toBeNull();
     expect(stoppedTimer.segmentId).toBe(startedTimer.segmentId);
-    expect(events.map((event) => event.type)).not.toContain(
-      "time_segment_created",
+    expect(createdSegment).toStrictEqual(
+      expectTimeSegmentCreatedEvent(events[4], {
+        durationSeconds: 120,
+        endAt: stoppedAt,
+        pageId: page.id,
+        segmentId: startedTimer.segmentId,
+        startAt: startedTimer.startedAt,
+      }),
     );
     expect(runtime.pages.list()).toHaveLength(1);
     expect(runtime.metadata.list({ namespace: timerNamespace })).toStrictEqual(
@@ -245,6 +283,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         "event-timer-started",
         "event-timer-paused",
         "event-timer-stopped",
+        "event-time-segment-created",
       ],
     });
     const page = createPage(runtime, "Paused stop timer");
@@ -291,13 +330,25 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     vi.advanceTimersByTime(30_000);
 
     const stopResult = await executeTimerCommand(runtime, "timer.stop", {});
-    expectStoppedTimerResult(stopResult, {
+    const stoppedTimer = expectStoppedTimerResult(stopResult, {
       pageId: page.id,
       status: "stopped",
       segmentId: activeTimer.segmentId,
       elapsedSeconds: 25,
     });
-    expectTimerEvents(runtime, ["started", "paused", "stopped"]);
+    expectCreatedSegmentResult(stopResult, {
+      durationSeconds: 25,
+      endAt: expectStoppedAt(stoppedTimer),
+      pageId: page.id,
+      segmentId: activeTimer.segmentId,
+      startAt: activeTimer.startedAt,
+    });
+    expectTimerEvents(runtime, [
+      "started",
+      "paused",
+      "stopped",
+      "time_segment_created",
+    ]);
   });
 
   it("switches by stopping the previous active timer then starting the next without a pause event", async () => {
@@ -307,6 +358,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       eventIds: [
         "event-first-started",
         "event-first-stopped",
+        "event-first-time-segment-created",
         "event-second-started",
       ],
     });
@@ -333,20 +385,42 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       segmentId: firstTimer.segmentId,
       elapsedSeconds: 45,
     });
+    const createdSegment = expectSegmentRecord(
+      switchRecord.createdSegment,
+      {
+        durationSeconds: 45,
+        endAt: expectStoppedAt(stoppedTimer),
+        pageId: firstPage.id,
+        segmentId: firstTimer.segmentId,
+        startAt: firstTimer.startedAt,
+      },
+      "timer.switch createdSegment",
+    );
     const activeTimer = expectTimerDto(switchRecord.activeTimer, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
       status: "running",
       elapsedSeconds: 0,
     });
-    const events = expectTimerEvents(runtime, ["started", "stopped", "started"]);
+    const events = expectTimerEvents(runtime, [
+      "started",
+      "stopped",
+      "time_segment_created",
+      "started",
+    ]);
 
     expect(stoppedTimer.segmentId).toBe(firstTimer.segmentId);
     expect(activeTimer.segmentId).not.toBe(firstTimer.segmentId);
-    expect(events.map((event) => event.type)).not.toContain("paused");
-    expect(events.map((event) => event.type)).not.toContain(
-      "time_segment_created",
+    expect(createdSegment).toStrictEqual(
+      expectTimeSegmentCreatedEvent(events[2], {
+        durationSeconds: 45,
+        endAt: expectStoppedAt(stoppedTimer),
+        pageId: firstPage.id,
+        segmentId: firstTimer.segmentId,
+        startAt: firstTimer.startedAt,
+      }),
     );
+    expect(events.map((event) => event.type)).not.toContain("paused");
     expect(runtime.pages.list()).toHaveLength(2);
     expect(runtime.metadata.list({ namespace: timerNamespace })).toStrictEqual(
       [],
@@ -361,8 +435,10 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       eventIds: [
         "event-first-started",
         "event-first-stopped",
+        "event-first-time-segment-created",
         "event-second-started",
         "event-second-stopped",
+        "event-second-time-segment-created",
         "event-second-restarted",
       ],
     });
@@ -393,6 +469,17 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       segmentId: firstTimer.segmentId,
       elapsedSeconds: 35,
     });
+    const firstCreatedSegment = expectSegmentRecord(
+      secondStartRecord.createdSegment,
+      {
+        durationSeconds: 35,
+        endAt: expectStoppedAt(firstStopped),
+        pageId: firstPage.id,
+        segmentId: firstTimer.segmentId,
+        startAt: firstTimer.startedAt,
+      },
+      "direct timer.start first createdSegment",
+    );
     const secondTimer = expectTimerDto(secondStartRecord.activeTimer, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
@@ -416,6 +503,17 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       segmentId: secondTimer.segmentId,
       elapsedSeconds: 12,
     });
+    const secondCreatedSegment = expectSegmentRecord(
+      samePageRecord.createdSegment,
+      {
+        durationSeconds: 12,
+        endAt: expectStoppedAt(previousSecondTimer),
+        pageId: secondPage.id,
+        segmentId: secondTimer.segmentId,
+        startAt: secondTimer.startedAt,
+      },
+      "direct same-page timer.start createdSegment",
+    );
     const restartedSecondTimer = expectTimerDto(samePageRecord.activeTimer, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
@@ -425,18 +523,35 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     const events = expectTimerEvents(runtime, [
       "started",
       "stopped",
+      "time_segment_created",
       "started",
       "stopped",
+      "time_segment_created",
       "started",
     ]);
 
     expect(firstStopped.segmentId).toBe(firstTimer.segmentId);
     expect(previousSecondTimer.segmentId).toBe(secondTimer.segmentId);
     expect(restartedSecondTimer.segmentId).not.toBe(secondTimer.segmentId);
-    expect(events.map((event) => event.type)).not.toContain("paused");
-    expect(events.map((event) => event.type)).not.toContain(
-      "time_segment_created",
+    expect(firstCreatedSegment).toStrictEqual(
+      expectTimeSegmentCreatedEvent(events[2], {
+        durationSeconds: 35,
+        endAt: expectStoppedAt(firstStopped),
+        pageId: firstPage.id,
+        segmentId: firstTimer.segmentId,
+        startAt: firstTimer.startedAt,
+      }),
     );
+    expect(secondCreatedSegment).toStrictEqual(
+      expectTimeSegmentCreatedEvent(events[5], {
+        durationSeconds: 12,
+        endAt: expectStoppedAt(previousSecondTimer),
+        pageId: secondPage.id,
+        segmentId: secondTimer.segmentId,
+        startAt: secondTimer.startedAt,
+      }),
+    );
+    expect(events.map((event) => event.type)).not.toContain("paused");
     expect(
       events
         .filter((event) => event.type === "started")
@@ -467,10 +582,13 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         "event-switch-started",
         "event-switch-paused",
         "event-switch-stopped",
+        "event-switch-time-segment-created",
         "event-second-started",
         "event-second-stopped",
+        "event-second-time-segment-created",
         "event-second-restarted",
         "event-final-stopped",
+        "event-final-time-segment-created",
       ],
     });
     const firstPage = createPage(runtime, "Switch edge first page");
@@ -491,6 +609,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     });
 
     expect(noActiveSwitchRecord.stoppedTimer).toBeUndefined();
+    expect(noActiveSwitchRecord.createdSegment).toBeUndefined();
     expectTimerEvents(runtime, ["started"]);
 
     vi.advanceTimersByTime(20_000);
@@ -505,13 +624,24 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       pausedSwitch,
       "paused timer.switch result",
     );
-    expectTimerDto(pausedSwitchRecord.stoppedTimer, {
+    const pausedStoppedTimer = expectTimerDto(pausedSwitchRecord.stoppedTimer, {
       pageId: firstPage.id,
       pageTitle: firstPage.title,
       status: "stopped",
       segmentId: firstTimer.segmentId,
       elapsedSeconds: 20,
     });
+    expectSegmentRecord(
+      pausedSwitchRecord.createdSegment,
+      {
+        durationSeconds: 20,
+        endAt: expectStoppedAt(pausedStoppedTimer),
+        pageId: firstPage.id,
+        segmentId: firstTimer.segmentId,
+        startAt: firstTimer.startedAt,
+      },
+      "paused timer.switch createdSegment",
+    );
     const secondTimer = expectTimerDto(pausedSwitchRecord.activeTimer, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
@@ -528,13 +658,24 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       samePageSwitch,
       "same-page timer.switch result",
     );
-    expectTimerDto(samePageSwitchRecord.stoppedTimer, {
+    const samePageStoppedTimer = expectTimerDto(samePageSwitchRecord.stoppedTimer, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
       status: "stopped",
       segmentId: secondTimer.segmentId,
       elapsedSeconds: 9,
     });
+    expectSegmentRecord(
+      samePageSwitchRecord.createdSegment,
+      {
+        durationSeconds: 9,
+        endAt: expectStoppedAt(samePageStoppedTimer),
+        pageId: secondPage.id,
+        segmentId: secondTimer.segmentId,
+        startAt: secondTimer.startedAt,
+      },
+      "same-page timer.switch createdSegment",
+    );
     const restartedSecondTimer = expectTimerDto(
       samePageSwitchRecord.activeTimer,
       {
@@ -554,31 +695,42 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     expect(listTimerEvents(runtime)).toStrictEqual(eventsBeforeMissingSwitch);
 
     const stopAfterMissingSwitch = await executeTimerCommand(runtime, "timer.stop");
-    expectStoppedTimerResult(stopAfterMissingSwitch, {
+    const finalStoppedTimer = expectStoppedTimerResult(stopAfterMissingSwitch, {
       pageId: secondPage.id,
       pageTitle: secondPage.title,
       status: "stopped",
       segmentId: restartedSecondTimer.segmentId,
     });
+    expectCreatedSegmentResult(stopAfterMissingSwitch, {
+      durationSeconds: finalStoppedTimer.elapsedSeconds,
+      endAt: expectStoppedAt(finalStoppedTimer),
+      pageId: secondPage.id,
+      segmentId: restartedSecondTimer.segmentId,
+      startAt: restartedSecondTimer.startedAt,
+    });
     expectTimerEvents(runtime, [
       "started",
       "paused",
       "stopped",
-      "started",
-      "stopped",
-      "started",
-      "stopped",
-    ]);
-    expect(listTimerEvents(runtime).map((event) => event.type)).not.toContain(
       "time_segment_created",
-    );
+      "started",
+      "stopped",
+      "time_segment_created",
+      "started",
+      "stopped",
+      "time_segment_created",
+    ]);
   });
 
   it("rejects malformed, extra, and caller-owned payload fields without changing active state or appending events", async () => {
     useFakeClock(timerStartedAt);
     const runtime = await createRuntime({
       pageIds: ["timer-page"],
-      eventIds: ["event-timer-started", "event-timer-stopped"],
+      eventIds: [
+        "event-timer-started",
+        "event-timer-stopped",
+        "event-time-segment-created",
+      ],
     });
     const page = createPage(runtime, "Payload validation timer");
     const startResult = await executeTimerCommand(runtime, "timer.start", {
@@ -650,7 +802,114 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       status: "stopped",
       segmentId: activeTimer.segmentId,
     });
-    expectTimerEvents(runtime, ["started", "stopped"]);
+    expectTimerEvents(runtime, ["started", "stopped", "time_segment_created"]);
+  });
+
+  it("rejects unsafe timer.stop finalization payloads without event, page, or active-state mutation", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: ["unsafe-stop-page"],
+      eventIds: [
+        "event-unsafe-stop-started",
+        "event-unsafe-stop-stopped",
+        "event-unsafe-stop-time-segment-created",
+      ],
+    });
+    const page = createPage(runtime, "Unsafe stop timer");
+    const startResult = await executeTimerCommand(runtime, "timer.start", {
+      pageId: page.id,
+    });
+    const activeTimer = expectResultActiveTimer(startResult, {
+      pageId: page.id,
+      status: "running",
+    });
+    const originalEvents = listTimerEvents(runtime);
+    const originalPages = runtime.pages.list({ includeArchived: true });
+    const originalMetadata = runtime.metadata.list({ namespace: timerNamespace });
+    const invalidStopInputs: Array<{ input: unknown; label: string }> = [
+      { input: { pageId: page.id }, label: "pageId field" },
+      { input: { segmentId: activeTimer.segmentId }, label: "segmentId field" },
+      { input: { startAt: timerStartedAt }, label: "startAt field" },
+      { input: { startedAt: timerStartedAt }, label: "startedAt field" },
+      { input: { endAt: timerStartedAt }, label: "endAt field" },
+      { input: { stoppedAt: timerStartedAt }, label: "stoppedAt field" },
+      { input: { durationSeconds: 1 }, label: "durationSeconds field" },
+      { input: { notePageId: "caller-note-page" }, label: "notePageId field" },
+      { input: { source: "manual" }, label: "source field" },
+      { input: { sourcePluginId: timerPluginId }, label: "sourcePluginId field" },
+      { input: { ownerPluginId: timerPluginId }, label: "ownerPluginId field" },
+      { input: { namespace: timerNamespace }, label: "namespace field" },
+      { input: { type: "time_segment_created" }, label: "event type field" },
+      { input: { eventId: "caller-event" }, label: "eventId field" },
+      { input: { createdAt: timerStartedAt }, label: "createdAt field" },
+      { input: [activeTimer.segmentId], label: "array payload" },
+      {
+        input: createClassInstancePayload(page.id),
+        label: "class instance payload",
+      },
+      {
+        input: createAccessorExtraPayload("segmentId", activeTimer.segmentId),
+        label: "accessor payload",
+      },
+      {
+        input: createSymbolOnlyPayload("segmentId", activeTimer.segmentId),
+        label: "symbol-key payload",
+      },
+      {
+        input: createNonEnumerableOnlyPayload(
+          "segmentId",
+          activeTimer.segmentId,
+        ),
+        label: "non-enumerable payload",
+      },
+      {
+        input: createPrototypeCarriedOnlyPayload(
+          "segmentId",
+          activeTimer.segmentId,
+        ),
+        label: "prototype-carried payload",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "__proto__"),
+        label: "__proto__ payload key",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "constructor"),
+        label: "constructor payload key",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "prototype"),
+        label: "prototype payload key",
+      },
+      {
+        input: createNullPrototypeExtraPayload(
+          "segmentId",
+          activeTimer.segmentId,
+        ),
+        label: "non-empty null-prototype payload",
+      },
+    ];
+
+    for (const { input, label } of invalidStopInputs) {
+      await expect(
+        executeTimerCommand(runtime, "timer.stop", input),
+        label,
+      ).rejects.toBeInstanceOf(Error);
+      expect(listTimerEvents(runtime), label).toStrictEqual(originalEvents);
+      expect(runtime.pages.list({ includeArchived: true }), label).toStrictEqual(
+        originalPages,
+      );
+      expect(runtime.metadata.list({ namespace: timerNamespace }), label)
+        .toStrictEqual(originalMetadata);
+    }
+
+    const stopResult = await executeTimerCommand(runtime, "timer.stop");
+    expectStoppedTimerResult(stopResult, {
+      pageId: page.id,
+      status: "stopped",
+      segmentId: activeTimer.segmentId,
+    });
+    expectTimerEvents(runtime, ["started", "stopped", "time_segment_created"]);
   });
 
   it("rejects descriptor-unsafe and prototype-shaped payloads without mutating active timer state or events", async () => {
@@ -658,7 +917,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     const runtime = await createRuntime({
       pageIds: ["descriptor-safe-page"],
       eventIds: Array.from(
-        { length: 50 },
+        { length: 51 },
         (_unused, index) => `event-descriptor-${index}`,
       ),
     });
@@ -785,12 +1044,25 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       "timer.stop",
       createNullPrototypeEmptyPayload(),
     );
-    expectStoppedTimerResult(stopResult, {
+    const stoppedTimer = expectStoppedTimerResult(stopResult, {
       pageId: page.id,
       status: "stopped",
       segmentId: activeTimer.segmentId,
     });
-    expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
+    expectCreatedSegmentResult(stopResult, {
+      durationSeconds: stoppedTimer.elapsedSeconds,
+      endAt: expectStoppedAt(stoppedTimer),
+      pageId: page.id,
+      segmentId: activeTimer.segmentId,
+      startAt: activeTimer.startedAt,
+    });
+    expectTimerEvents(runtime, [
+      "started",
+      "paused",
+      "resumed",
+      "stopped",
+      "time_segment_created",
+    ]);
   });
 
   it("executes active-bar Pause, Resume, and Stop through exact Timer command IDs with empty payloads", async () => {
@@ -801,6 +1073,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         "event-command-paused",
         "event-command-resumed",
         "event-command-stopped",
+        "event-command-time-segment-created",
       ],
     });
     const user = userEvent.setup();
@@ -856,18 +1129,24 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         screen.queryByRole("region", { name: /active timer/i }),
       ).not.toBeInTheDocument(),
     );
-    expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
+    expectTimerEvents(runtime, [
+      "started",
+      "paused",
+      "resumed",
+      "stopped",
+      "time_segment_created",
+    ]);
   });
 
   it("keeps active timer state scoped to one Timer Plugin registration and never leaks across runtimes", async () => {
     useFakeClock(timerStartedAt);
     const firstRuntime = await createRuntime({
       pageIds: ["first-runtime-page"],
-      eventIds: ["first-started", "first-stopped"],
+      eventIds: ["first-started", "first-stopped", "first-segment-created"],
     });
     const secondRuntime = await createRuntime({
       pageIds: ["second-runtime-page"],
-      eventIds: ["second-started", "second-stopped"],
+      eventIds: ["second-started", "second-stopped", "second-segment-created"],
     });
     const firstPage = createPage(firstRuntime, "First runtime timer");
     const secondPage = createPage(secondRuntime, "Second runtime timer");
@@ -900,7 +1179,11 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       status: "stopped",
       segmentId: secondTimer.segmentId,
     });
-    expectTimerEvents(secondRuntime, ["started", "stopped"]);
+    expectTimerEvents(secondRuntime, [
+      "started",
+      "stopped",
+      "time_segment_created",
+    ]);
 
     const firstStop = await executeTimerCommand(firstRuntime, "timer.stop");
     expectStoppedTimerResult(firstStop, {
@@ -908,7 +1191,11 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       status: "stopped",
       segmentId: firstTimer.segmentId,
     });
-    expectTimerEvents(firstRuntime, ["started", "stopped"]);
+    expectTimerEvents(firstRuntime, [
+      "started",
+      "stopped",
+      "time_segment_created",
+    ]);
   });
 
   it("updates the same visible active-bar elapsed element and state-driven controls while running, paused, resumed, and stopped", async () => {
@@ -920,6 +1207,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         "event-paused",
         "event-resumed",
         "event-stopped",
+        "event-time-segment-created",
       ],
     });
     const user = userEvent.setup({
@@ -1006,14 +1294,25 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         screen.queryByRole("region", { name: /active timer/i }),
       ).not.toBeInTheDocument(),
     );
-    expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
+    expectTimerEvents(runtime, [
+      "started",
+      "paused",
+      "resumed",
+      "stopped",
+      "time_segment_created",
+    ]);
     expectNoDangerousDom();
   });
 
   it("recovers visible active-bar updates after a rejected control command", async () => {
     const runtime = await createRuntime({
       pageIds: ["rejected-control-page"],
-      eventIds: ["event-started", "event-paused", "event-stopped"],
+      eventIds: [
+        "event-started",
+        "event-paused",
+        "event-stopped",
+        "event-time-segment-created",
+      ],
     });
     const user = userEvent.setup();
     const page = createPage(runtime, "Rejected control page");
@@ -1208,6 +1507,19 @@ function expectStoppedTimerResult(
   return expectTimerDto(resultRecord.stoppedTimer, expected);
 }
 
+function expectCreatedSegmentResult(
+  result: unknown,
+  expected: ExpectedTimeSegmentDto,
+): TimeSegmentDtoRecord {
+  const resultRecord = readRecord(result, "timer command result");
+
+  return expectSegmentRecord(
+    resultRecord.createdSegment,
+    expected,
+    "createdSegment DTO",
+  );
+}
+
 function expectTimerDto(
   value: unknown,
   expected: ExpectedTimerDto,
@@ -1247,6 +1559,67 @@ function expectTimerDto(
   }
 
   return timer as TimerDtoRecord;
+}
+
+function expectStoppedAt(timer: TimerDtoRecord): string {
+  expect(timer.stoppedAt).toEqual(expect.any(String));
+
+  return timer.stoppedAt as string;
+}
+
+function expectTimeSegmentCreatedEvent(
+  event: AppEvent | undefined,
+  expected: ExpectedTimeSegmentDto,
+): TimeSegmentDtoRecord {
+  expect(event).toMatchObject({
+    pageId: expected.pageId,
+    namespace: timerNamespace,
+    type: "time_segment_created",
+    sourcePluginId: timerPluginId,
+  });
+
+  const payload = expectSegmentRecord(
+    expectEventPayload(event),
+    expected,
+    "timer.time_segment_created payload",
+  );
+
+  expect(event?.pageId).toBe(payload.pageId);
+
+  return payload;
+}
+
+function expectSegmentRecord(
+  value: unknown,
+  expected: ExpectedTimeSegmentDto,
+  label: string,
+): TimeSegmentDtoRecord {
+  const segment = readRecord(value, label);
+  const expectedKeys = [
+    "durationSeconds",
+    "endAt",
+    "pageId",
+    "segmentId",
+    "source",
+    "startAt",
+    ...(expected.notePageId === undefined ? [] : ["notePageId"]),
+  ];
+
+  expect(Object.keys(segment).sort()).toStrictEqual(expectedKeys.sort());
+  expect(segment.segmentId).toBe(expected.segmentId);
+  expect(segment.pageId).toBe(expected.pageId);
+  expect(segment.startAt).toBe(expected.startAt);
+  expect(segment.endAt).toBe(expected.endAt);
+  expect(segment.durationSeconds).toBe(expected.durationSeconds);
+  expect(segment.source).toBe("timer");
+
+  if (expected.notePageId === undefined) {
+    expect(segment).not.toHaveProperty("notePageId");
+  } else {
+    expect(segment.notePageId).toBe(expected.notePageId);
+  }
+
+  return segment as TimeSegmentDtoRecord;
 }
 
 function expectTimerEvents(
@@ -1446,12 +1819,42 @@ function createAccessorPagePayload(pageId: string): Record<string, unknown> {
   return payload;
 }
 
+function createAccessorExtraPayload(
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  Object.defineProperty(payload, key, {
+    enumerable: true,
+    get() {
+      return value;
+    },
+  });
+
+  return payload;
+}
+
 function createSymbolExtraPayload(pageId: string): Record<string, unknown> {
   const payload = { pageId } as Record<PropertyKey, unknown>;
 
   Object.defineProperty(payload, Symbol("segmentId"), {
     enumerable: true,
     value: "caller-segment",
+  });
+
+  return payload as Record<string, unknown>;
+}
+
+function createSymbolOnlyPayload(
+  keyLabel: string,
+  value: unknown,
+): Record<string, unknown> {
+  const payload = {} as Record<PropertyKey, unknown>;
+
+  Object.defineProperty(payload, Symbol(keyLabel), {
+    enumerable: true,
+    value,
   });
 
   return payload as Record<string, unknown>;
@@ -1468,6 +1871,20 @@ function createNonEnumerableExtraPayload(pageId: string): Record<string, unknown
   return payload;
 }
 
+function createNonEnumerableOnlyPayload(
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  Object.defineProperty(payload, key, {
+    enumerable: false,
+    value,
+  });
+
+  return payload;
+}
+
 function createPrototypeCarriedExtraPayload(
   pageId: string,
 ): Record<string, unknown> {
@@ -1478,6 +1895,15 @@ function createPrototypeCarriedExtraPayload(
   payload.pageId = pageId;
 
   return payload;
+}
+
+function createPrototypeCarriedOnlyPayload(
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  return Object.create({
+    [key]: value,
+  }) as Record<string, unknown>;
 }
 
 function createPrototypeShapedKeyPayload(
