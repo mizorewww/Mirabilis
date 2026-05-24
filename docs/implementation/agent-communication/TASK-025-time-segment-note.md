@@ -176,4 +176,24 @@
 
 ## Current Next Action
 
-- Wait for Goodall (`test_writer`) to finish review-fix tests, validate expected red/green signal, and commit tests.
+## Review-Fix Tests
+
+- Status: completed by Goodall (`test_writer`) on 2026-05-24 19:34 CST.
+- Commit: `61a83a3`.
+- File changed:
+  - `src/test/timer-time-segment-note.test.tsx`.
+- Coverage added:
+  - Exact `timer.add-note` result DTO assertions.
+  - Real `timer.page-timeline.segments` UI create/edit note flow using Testing Library and `userEvent`.
+  - Timeline filtering for wrong-owner and malformed `time_segment_note_added` events attached to a valid segment.
+- Parent validation:
+  - `bun run test:frontend -- src/test/timer-time-segment-note.test.tsx` failed as expected with 7 tests run, 6 passed, 1 failed.
+  - Expected red reason: timeline renders segment text only and has no accessible `Add Note` button/editor yet.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/timer-time-segment-note.test.tsx --max-warnings=0` passed.
+  - No `.skip` / `.only` matches in the touched test file.
+  - `git diff --check` and `git diff --cached --check` passed.
+
+## Current Next Action
+
+- Commit review-fix test validation summary, then delegate timeline note UI implementation to `implementer`.
