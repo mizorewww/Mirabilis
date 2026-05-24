@@ -359,4 +359,16 @@
 
 ## Current Next Action
 
-- Delegate `implementer` to fix MetadataBar command ownership while preserving same-owner command execution and avoiding native/Tauri/package/Rust/schema changes.
+## MetadataBar Command Ownership Implementation Handoff
+
+- Nash (`implementer`) started 2026-05-25 07:51 CST.
+- Scope: minimum production MetadataBar fix so slot command execution authorizes by registered command descriptor owner instead of command ID prefix.
+- Required behavior:
+  - Same-owner commands still execute.
+  - Foreign-owned matching-prefix commands such as beta-owned `alpha.foreign` are rejected before dispatch.
+  - MetadataBar keeps existing fail-closed PluginHost ownership behavior and trust boundaries.
+  - No tests, formal docs, package, native, Tauri, Rust, schema, commits, pushes, or branch changes.
+
+## Current Next Action
+
+- Wait for Nash (`implementer`) to finish, validate focused tests/checks, and commit implementation if green.
