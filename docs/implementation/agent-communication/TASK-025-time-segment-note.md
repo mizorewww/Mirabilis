@@ -209,4 +209,30 @@
 
 ## Current Next Action
 
-- Wait for Anscombe (`implementer`) to finish review-fix implementation, validate focused tests/checks, and commit implementation if green.
+## Review-Fix Implementation
+
+- Status: completed by Anscombe (`implementer`) on 2026-05-24 19:45 CST.
+- Commit: `a09fe98`.
+- Files changed:
+  - `src/plugins/timer/plugin.ts`.
+  - `src/core/plugin-host/plugin-host.ts`.
+- Behavior implemented:
+  - `timer.page-timeline.segments` renders accessible `Add Note` / `Edit Note` controls per segment.
+  - Add/Edit opens an accessible `Note` textbox and `Save Note` button.
+  - Save executes `timer.add-note` through a narrow Timer-scoped command executor, creates/updates Markdown Page notes, appends `time_segment_note_added`, and refreshes inert timeline note text.
+  - PluginHost now attaches a non-enumerable internal scoped command executor so slot UI can execute only commands owned by the contributing plugin without receiving raw runtime/store/native handles.
+- Parent validation:
+  - `bun run test:frontend -- src/test/timer-time-segment-note.test.tsx` passed with 1 file / 7 tests.
+  - `bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx` passed with 2 files / 23 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts src/test/metadata-ui-plugin.test.tsx` passed with 4 files / 112 tests.
+  - `bun run test:frontend -- src/test/core-architecture-boundary.test.ts` passed.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - No `.skip` / `.only` matches in touched Timer tests.
+  - Timer/PluginHost forbidden-pattern scan for fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handlers, dangerous HTML, storage/network, and Tauri API imports was empty.
+  - `git diff --check` and `git diff --cached --check` passed.
+  - Native/package/Tauri/Rust diff guard against `master` was empty.
+
+## Current Next Action
+
+- Commit review-fix implementation validation summary and spawn narrow re-review for scoped command executor, security boundary, and test-quality closure.
