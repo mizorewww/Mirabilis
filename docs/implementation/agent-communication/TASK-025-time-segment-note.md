@@ -106,4 +106,20 @@
 
 ## Current Next Action
 
-- Commit TASK-025 test validation summary, then delegate minimum production implementation to `implementer`.
+## Implementation Handoff
+
+- Socrates (`implementer`) started 2026-05-24 19:17 CST.
+- Scope: minimum production Timer Plugin implementation for committed TASK-025 tests.
+- Required implementation:
+  - Add `timer.add-note`.
+  - Create `timer.time_segment_created` on all active timer finalization paths.
+  - Return narrow `createdSegment` DTOs.
+  - Preserve `timer.stopped` before `timer.time_segment_created`.
+  - Preserve exact payload hardening and paused-duration accounting.
+  - Add `timer.page-timeline.segments` on `page.timeline`.
+  - Keep Time Segment Notes as Markdown Pages and link through `timer.time_segment_note_added`.
+  - Avoid native/Tauri/package/Rust/schema, Core Timer services, event mutation APIs, fake-clock/eval/string-handler behavior, Calendar/Stats/ML, metadata totals, Recently Worked, Unnoted Sessions, and manual segments.
+
+## Current Next Action
+
+- Wait for Socrates (`implementer`) to finish implementation, validate focused tests/checks, and commit implementation if green.
