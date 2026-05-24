@@ -204,6 +204,35 @@ git diff --cached --check
   - No TASK-025 segment/note side effects and no native/package/Tauri/Core Timer business changes.
 - Parent thread will not write implementation.
 
+## Initial Implementation
+
+- Status: completed by Lovelace (`implementer`) on 2026-05-24 16:55 CST.
+- Commit: `4a7d34b`.
+- Files changed:
+  - `src/plugins/timer/plugin.ts`.
+  - `src/plugins/timer/components/TimerMetadataPlaceholder.tsx`.
+- Behavior implemented:
+  - Registered canonical Timer commands: `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`.
+  - Added Timer-owned registration-scoped active timer state.
+  - Added lifecycle events with namespace `timer` and types `started`, `paused`, `resumed`, and `stopped`.
+  - Added exact payload validation and narrow JSON DTO command results.
+  - Enabled metadata Start control through scoped `timer.start`.
+  - Added Timer-owned `timer.global-active-bar` on `global.floating`.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused Timer and adjacent plugin tests passed with 5 files / 120 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Remaining risk from implementer:
+  - Active-bar elapsed UI is intentionally minimal for TASK-024; richer live ticking/polish can be handled in a later Timer UI slice.
+
 ## Current Next Action
 
-- Wait for Lovelace's implementation.
+- Spawn focused review agents.
