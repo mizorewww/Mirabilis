@@ -404,12 +404,28 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 ## Narrow Post-Fix Review
 
 - Started on 2026-05-24 18:13 CST.
-- Active agents:
-  - Galileo (`reviewer`) is checking post-fix correctness and previously accepted P1/P2 behavior.
-  - Ramanujan (`security_reviewer`) is checking post-fix security and boundary fixes.
-  - Mendel (`test_quality_reviewer`) is checking review-fix test quality and false-positive risks.
-  - Tesla (`deprecation_auditor`) is checking post-fix API/deprecation and architecture boundaries.
+- Completed on 2026-05-24 by Galileo (`reviewer`), Ramanujan (`security_reviewer`), Mendel (`test_quality_reviewer`), and Tesla (`deprecation_auditor`).
+- P0 findings: none.
+- Remaining accepted finding:
+  - Production Timer code still contains a test/fake-clock global timer monkeypatch path. The code detects controlled clocks through `globalThis.setTimeout.clock` and replaces/restores `globalThis.setTimeout` through `Object.defineProperty`; active-bar control clicks can install that bridge. This is production plugin source and does not satisfy the accepted "no production timer monkeypatch/test runner shim" boundary.
+- Test-quality follow-up:
+  - The static guard missed `Object.defineProperty(globalThis, "setTimeout", ...)`, so add regression coverage for `globalThis.setTimeout`, `Object.defineProperty` on timer globals, controlled-clock bridge names, and other production fake-clock shim patterns.
+  - Broaden descriptor/prototype payload hardening coverage to `timer.start`, not only `timer.switch`, so a separate start validator regression cannot pass.
+  - Prefer behavioral assertions for active-bar control command calls where practical, so timer controls prove exact timer command IDs/payloads instead of relying only on source regex.
+- Cleared areas:
+  - Active-bar elapsed/control state updates now pass focused review.
+  - Active `timer.start` behaves switch-like, including edge cases.
+  - `timer.started` event payload uses `startAt`.
+  - Stop/switch do not emit TASK-025 `time_segment_created`, note-page, or timer metadata side effects.
+  - Exact payload validation is descriptor/plain-data based and focused tests cover accessors, arrays, symbols, non-enumerable fields, prototype-carried extras, prototype-shaped keys, and null-prototype empty payloads.
+  - Active-bar command execution is timer-scoped in implementation.
+  - No native/Tauri/package/filesystem/network/raw SQL/Core Timer business surface changes were found.
+- Docs drift remains for later `doc_writer`:
+  - Remove/mark stale old command IDs and TASK-023-era Timer placeholder/no-command wording.
+  - Document TASK-024 runtime commands/global active bar while keeping Time Segment/note/totals/timeline/Calendar/Stats deferred.
+- Parent decision:
+  - Write failing regression tests for the remaining monkeypatch/static-guard gap and useful P2 test-quality hardening before implementation.
 
 ## Current Next Action
 
-- Wait for narrow post-fix review agents.
+- Delegate the remaining regression tests to `test_writer`.
