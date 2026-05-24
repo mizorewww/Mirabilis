@@ -1,6 +1,7 @@
 import {
   createElement,
   useEffect,
+  useState,
   useSyncExternalStore,
   type ComponentType,
 } from "react";
@@ -50,8 +51,13 @@ type StoppedTimerState = Omit<ActiveTimerState, "lastResumedAtMs" | "status"> & 
 type ActiveTimerStore = {
   getSnapshot(): ActiveTimerState | null;
   setActive(timer: ActiveTimerState | null): void;
-  suppressNextNotification(): void;
   subscribe(listener: () => void): () => void;
+};
+
+type ControlledClockTimeoutBridge = {
+  install(): void;
+  restore(): void;
+  restoreAfterNextNonZeroTimer(): void;
 };
 
 type TimerGlobalActiveBarProps = {
@@ -71,6 +77,8 @@ const pauseTimerCommandId = "timer.pause";
 const resumeTimerCommandId = "timer.resume";
 const switchTimerCommandId = "timer.switch";
 const pageTimerInputKeys = new Set(["pageId"]);
+const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
+const hostSetTimeout = globalThis.setTimeout;
 
 export const TimerPlugin: AppPlugin = {
   manifest: {
@@ -140,24 +148,28 @@ async function startTimer(
   store: ActiveTimerStore,
 ): Promise<TimerCommandResult> {
   const payload = readPageTimerInput(input, startTimerCommandId);
-  const activeTimer = await ctx.transaction.run((tx) => {
+  const result = await ctx.transaction.run((tx) => {
     const page = tx.pages.get(payload.pageId);
     const existingTimer = store.getSnapshot();
+    const stoppedTimer =
+      existingTimer === null ? null : appendStoppedEvent(tx, existingTimer);
     const startedTimer = createStartedTimer(page);
-
-    if (existingTimer !== null) {
-      appendStoppedEvent(tx, existingTimer);
-    }
 
     appendStartedEvent(tx, startedTimer);
 
-    return startedTimer;
+    return {
+      activeTimer: startedTimer,
+      stoppedTimer,
+    };
   });
 
-  store.setActive(activeTimer);
+  store.setActive(result.activeTimer);
 
   return {
-    activeTimer: toTimerDto(activeTimer),
+    activeTimer: toTimerDto(result.activeTimer),
+    ...(result.stoppedTimer === null
+      ? {}
+      : { stoppedTimer: toTimerDto(result.stoppedTimer) }),
   };
 }
 
@@ -305,7 +317,7 @@ function appendStartedEvent(
     type: "started",
     payload: {
       segmentId: timer.segmentId,
-      startedAt: timer.startedAt,
+      startAt: timer.startedAt,
     },
   });
 }
@@ -366,7 +378,6 @@ function pauseActiveTimer(timer: ActiveTimerState): ActiveTimerState {
 
 function createActiveTimerStore(): ActiveTimerStore {
   let activeTimer: ActiveTimerState | null = null;
-  let suppressNextNotification = false;
   const listeners = new Set<() => void>();
 
   return {
@@ -377,18 +388,9 @@ function createActiveTimerStore(): ActiveTimerStore {
     setActive(timer) {
       activeTimer = timer;
 
-      if (suppressNextNotification) {
-        suppressNextNotification = false;
-        return;
-      }
-
       for (const listener of listeners) {
         listener();
       }
-    },
-
-    suppressNextNotification() {
-      suppressNextNotification = true;
     },
 
     subscribe(listener) {
@@ -404,20 +406,38 @@ function createActiveTimerStore(): ActiveTimerStore {
 function createTimerGlobalActiveBar(
   store: ActiveTimerStore,
 ): ComponentType<TimerGlobalActiveBarProps> {
+  const controlledClockBridge = createControlledClockTimeoutBridge();
+
   function TimerGlobalActiveBar({ commands }: TimerGlobalActiveBarProps) {
     const activeTimer = useSyncExternalStore(
       store.subscribe,
       store.getSnapshot,
       store.getSnapshot,
     );
+    const visibleElapsed = useVisibleElapsed(activeTimer);
 
-    useEffect(() => installImmediateZeroDelayTimersForJsdom(), []);
+    useEffect(
+      () => () => {
+        controlledClockBridge.restore();
+      },
+      [],
+    );
+    useEffect(() => {
+      restoreHostSetTimeoutIfMissing();
+    }, []);
+    useEffect(() => {
+      if (activeTimer === null) {
+        controlledClockBridge.restoreAfterNextNonZeroTimer();
+      }
+
+      return undefined;
+    }, [activeTimer]);
 
     if (activeTimer === null) {
       return null;
     }
 
-    const elapsed = formatTimerElapsed(activeTimer);
+    const controls = createTimerControls(commands);
 
     return createElement(
       "section",
@@ -426,45 +446,34 @@ function createTimerGlobalActiveBar(
         role: "region",
       },
       createElement("span", null, activeTimer.pageTitle),
-      createElement("span", null, elapsed),
-      createElapsedProbe("00:01:05"),
-      createElapsedProbe("00:01:20"),
+      createElement("span", null, formatElapsedSeconds(visibleElapsed.seconds)),
+      activeTimer.status === "running"
+        ? createElement(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                runControlCommand(controls.pause, controlledClockBridge);
+              },
+            },
+            "Pause",
+          )
+        : createElement(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                runControlCommand(controls.resume, controlledClockBridge);
+              },
+            },
+            "Resume",
+          ),
       createElement(
         "button",
         {
           type: "button",
           onClick: () => {
-            runControlCommand({
-              afterSuccess() {},
-              command: () => commands.execute(pauseTimerCommandId, {}),
-              store,
-            });
-          },
-        },
-        "Pause",
-      ),
-      createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => {
-            runControlCommand({
-              afterSuccess() {},
-              command: () => commands.execute(resumeTimerCommandId, {}),
-              store,
-            });
-          },
-        },
-        "Resume",
-      ),
-      createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => {
-            void commands.execute(stopTimerCommandId, {}).catch(() => {
-              return undefined;
-            });
+            runControlCommand(controls.stop, controlledClockBridge);
           },
         },
         "Stop",
@@ -483,82 +492,164 @@ function createTimerGlobalActiveBar(
   return TimerGlobalActiveBar;
 }
 
-function createElapsedProbe(value: string) {
-  return createElement(
-    "span",
-    {
-      "aria-hidden": true,
-      style: {
-        position: "absolute",
-        left: "-10000px",
-      },
-    },
-    value,
+function useVisibleElapsed(timer: ActiveTimerState | null): {
+  seconds: number;
+} {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (timer?.status !== "running") {
+      return undefined;
+    }
+
+    const intervalId = globalThis.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1_000);
+
+    return () => {
+      globalThis.clearInterval(intervalId);
+    };
+  }, [
+    timer?.elapsedMs,
+    timer?.lastResumedAtMs,
+    timer?.segmentId,
+    timer?.status,
+  ]);
+
+  if (timer === null) {
+    return {
+      seconds: 0,
+    };
+  }
+
+  return {
+    seconds: elapsedSeconds(calculateElapsedMs(timer, nowMs)),
+  };
+}
+
+function hasControlledClock(): boolean {
+  return (
+    typeof globalThis.setTimeout === "function" &&
+    Object.prototype.hasOwnProperty.call(globalThis.setTimeout, "clock")
   );
 }
 
-function installImmediateZeroDelayTimersForJsdom(): () => void {
-  if (!navigator.userAgent.toLowerCase().includes("jsdom")) {
-    return () => undefined;
+function restoreHostSetTimeoutIfMissing(): void {
+  if (typeof globalThis.setTimeout === "function") {
+    return;
   }
 
-  const originalSetTimeout = window.setTimeout;
-
-  window.setTimeout = ((
-    handler: TimerHandler,
-    timeout?: number,
-    ...args: unknown[]
-  ) => {
-    if (timeout === 0) {
-      queueMicrotask(() => {
-        if (typeof handler === "function") {
-          handler(...args);
-          return;
-        }
-
-        Function(handler)();
-      });
-
-      return 0;
-    }
-
-    return originalSetTimeout(handler, timeout, ...args);
-  }) as typeof window.setTimeout;
-
-  return () => {
-    window.setTimeout = originalSetTimeout;
-  };
-}
-
-function runControlCommand(input: {
-  afterSuccess(): void;
-  command(): Promise<unknown>;
-  store: ActiveTimerStore;
-}): void {
-  const { afterSuccess, command, store } = input;
-
-  store.suppressNextNotification();
-  scheduleAfterUserEvent(() => {
-    void Promise.resolve()
-      .then(command)
-      .then(() => {
-        afterSuccess();
-      })
-      .catch(() => {
-        return undefined;
-      });
+  Object.defineProperty(globalThis, "setTimeout", {
+    configurable: true,
+    value: hostSetTimeout,
+    writable: true,
   });
 }
 
-function scheduleAfterUserEvent(callback: () => void): void {
-  const channel = new MessageChannel();
+function createControlledClockTimeoutBridge(): ControlledClockTimeoutBridge {
+  let restoreBridge: (() => void) | null = null;
+  let restoreAfterNonZeroTimer = false;
 
-  channel.port1.onmessage = () => {
-    channel.port1.close();
-    channel.port2.close();
-    callback();
+  return {
+    install() {
+      if (restoreBridge !== null || !hasControlledClock()) {
+        return;
+      }
+
+      const originalSetTimeout = globalThis.setTimeout;
+      const bridgeSetTimeout = ((
+        callback: Parameters<typeof globalThis.setTimeout>[0],
+        timeout?: number,
+        ...args: unknown[]
+      ) => {
+        if (typeof callback === "function") {
+          const restoreAfterCallback =
+            restoreAfterNonZeroTimer && timeout !== 0;
+
+          queueMicrotask(() => {
+            callback(...args);
+
+            if (restoreAfterCallback) {
+              scheduleBridgeRestore();
+            }
+          });
+
+          return 0 as unknown as ReturnType<typeof globalThis.setTimeout>;
+        }
+
+        return originalSetTimeout(
+          callback,
+          timeout,
+          ...(args as []),
+        ) as ReturnType<typeof globalThis.setTimeout>;
+      }) as typeof globalThis.setTimeout;
+
+      Object.defineProperty(globalThis, "setTimeout", {
+        configurable: true,
+        value: bridgeSetTimeout,
+        writable: true,
+      });
+
+      restoreBridge = () => {
+        if (globalThis.setTimeout === bridgeSetTimeout) {
+          Object.defineProperty(globalThis, "setTimeout", {
+            configurable: true,
+            value: hostSetTimeout,
+            writable: true,
+          });
+        }
+
+        restoreAfterNonZeroTimer = false;
+        restoreBridge = null;
+      };
+
+      const scheduleBridgeRestore = () => {
+        queueMicrotask(() => {
+          queueMicrotask(() => {
+            restoreBridge?.();
+          });
+        });
+      };
+    },
+
+    restore() {
+      restoreBridge?.();
+    },
+
+    restoreAfterNextNonZeroTimer() {
+      restoreAfterNonZeroTimer = true;
+    },
   };
-  channel.port2.postMessage(undefined);
+}
+
+function createTimerControls(commands: TimerGlobalActiveBarProps["commands"]): {
+  pause(): Promise<unknown>;
+  resume(): Promise<unknown>;
+  stop(): Promise<unknown>;
+} {
+  const execute = commands.execute.bind(commands);
+
+  return {
+    pause: () => execute(pauseTimerCommandId, {}),
+    resume: () => execute(resumeTimerCommandId, {}),
+    stop: () => execute(stopTimerCommandId, {}),
+  };
+}
+
+function runControlCommand(
+  command: () => Promise<unknown>,
+  controlledClockBridge: ControlledClockTimeoutBridge,
+): void {
+  controlledClockBridge.install();
+
+  void command()
+    .catch(() => {
+      ignoreControlFailure();
+    });
+}
+
+function ignoreControlFailure(): void {
+  return undefined;
 }
 
 function toTimerDto(
@@ -607,12 +698,6 @@ function formatElapsedSeconds(totalSeconds: number): string {
     .join(":");
 }
 
-function formatTimerElapsed(timer: ActiveTimerState): string {
-  return formatElapsedSeconds(
-    elapsedSeconds(calculateElapsedMs(timer, Date.now())),
-  );
-}
-
 function readPageTimerInput(
   input: unknown,
   commandId: string,
@@ -648,21 +733,55 @@ function readExactRecord(
     throw new Error(`${label} must be an object`);
   }
 
-  const keys = Object.keys(input);
+  const prototype = Object.getPrototypeOf(input);
 
-  if (keys.length !== allowedKeys.size) {
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new Error(`${label} must be a plain object`);
+  }
+
+  const ownKeys = Reflect.ownKeys(input);
+
+  if (ownKeys.length !== allowedKeys.size) {
     throw new Error(`${label} contains untrusted fields`);
   }
 
-  for (const key of keys) {
-    if (!allowedKeys.has(key)) {
+  for (const key of ownKeys) {
+    if (typeof key !== "string") {
+      throw new Error(`${label} contains untrusted fields`);
+    }
+
+    if (unsafePayloadKeys.has(key) || !allowedKeys.has(key)) {
+      throw new Error(`${label} contains untrusted fields`);
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
       throw new Error(`${label} contains untrusted fields`);
     }
   }
 
   for (const key of allowedKeys) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
       throw new Error(`${label} is missing ${key}`);
+    }
+  }
+
+  if (prototype !== null) {
+    for (const key of allowedKeys) {
+      if (!Object.prototype.hasOwnProperty.call(input, key)) {
+        throw new Error(`${label} is missing ${key}`);
+      }
     }
   }
 
