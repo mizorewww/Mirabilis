@@ -6,7 +6,10 @@ import {
   type ComponentType,
 } from "react";
 
-import type {
+import {
+  exportStructuredDocumentToMarkdown,
+  importMarkdownToStructuredDocument,
+  type AppEvent,
   AppPlugin,
   MarkdownPage,
   PluginContext,
@@ -16,7 +19,12 @@ import { TimerMetadataPlaceholder } from "./components/TimerMetadataPlaceholder"
 
 type TimerCommandResult = {
   activeTimer: TimerDto | null;
+  createdSegment?: TimeSegmentDto;
   stoppedTimer?: TimerDto;
+};
+
+type TimerNoteResult = {
+  notePageId: string;
 };
 
 type TimerDto = {
@@ -48,6 +56,21 @@ type StoppedTimerState = Omit<ActiveTimerState, "lastResumedAtMs" | "status"> & 
   stoppedAt: string;
 };
 
+type TimeSegmentDto = {
+  durationSeconds: number;
+  endAt: string;
+  notePageId?: string;
+  pageId: string;
+  segmentId: string;
+  source: "timer";
+  startAt: string;
+};
+
+type FinalizedTimer = {
+  createdSegment: TimeSegmentDto;
+  stoppedTimer: StoppedTimerState;
+};
+
 type ActiveTimerStore = {
   getSnapshot(): ActiveTimerState | null;
   setActive(timer: ActiveTimerState | null): void;
@@ -60,17 +83,27 @@ type TimerGlobalActiveBarProps = {
   };
 };
 
+type TimerPageTimelineProps = {
+  page: Pick<MarkdownPage, "id" | "title">;
+};
+
 const timerMetadataSlotId = "timer.page-header-metadata.placeholder";
 const timerGlobalActiveBarSlotId = "timer.global-active-bar";
+const timerPageTimelineSlotId = "timer.page-timeline.segments";
 const pageHeaderMetadataSlot = "page.header.metadata";
 const globalFloatingSlot = "global.floating";
+const pageTimelineSlot = "page.timeline";
 const timerNamespace = "timer";
 const startTimerCommandId = "timer.start";
 const stopTimerCommandId = "timer.stop";
 const pauseTimerCommandId = "timer.pause";
 const resumeTimerCommandId = "timer.resume";
 const switchTimerCommandId = "timer.switch";
+const addTimerNoteCommandId = "timer.add-note";
+const timeSegmentCreatedType = "time_segment_created";
+const timeSegmentNoteAddedType = "time_segment_note_added";
 const pageTimerInputKeys = new Set(["pageId"]);
+const timerNoteInputKeys = new Set(["segmentId", "markdown"]);
 const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
 
 export const TimerPlugin: AppPlugin = {
@@ -119,6 +152,13 @@ export const TimerPlugin: AppPlugin = {
         switchTimer(input, commandCtx, activeTimers),
     });
 
+    ctx.commands.register({
+      id: addTimerNoteCommandId,
+      title: "Add time segment note",
+      handler: (input, commandCtx) =>
+        addTimeSegmentNote(input, commandCtx, activeTimers),
+    });
+
     ctx.slots.register({
       id: timerMetadataSlotId,
       slot: pageHeaderMetadataSlot,
@@ -132,6 +172,13 @@ export const TimerPlugin: AppPlugin = {
       order: 100,
       component: createTimerGlobalActiveBar(activeTimers),
     });
+
+    ctx.slots.register({
+      id: timerPageTimelineSlotId,
+      slot: pageTimelineSlot,
+      order: 100,
+      component: createTimerPageTimeline(ctx),
+    });
   },
 };
 
@@ -144,15 +191,15 @@ async function startTimer(
   const result = await ctx.transaction.run((tx) => {
     const page = tx.pages.get(payload.pageId);
     const existingTimer = store.getSnapshot();
-    const stoppedTimer =
-      existingTimer === null ? null : appendStoppedEvent(tx, existingTimer);
+    const finalizedTimer =
+      existingTimer === null ? null : finalizeActiveTimer(tx, existingTimer);
     const startedTimer = createStartedTimer(page);
 
     appendStartedEvent(tx, startedTimer);
 
     return {
       activeTimer: startedTimer,
-      stoppedTimer,
+      finalizedTimer,
     };
   });
 
@@ -160,9 +207,12 @@ async function startTimer(
 
   return {
     activeTimer: toTimerDto(result.activeTimer),
-    ...(result.stoppedTimer === null
+    ...(result.finalizedTimer === null
       ? {}
-      : { stoppedTimer: toTimerDto(result.stoppedTimer) }),
+      : {
+          createdSegment: result.finalizedTimer.createdSegment,
+          stoppedTimer: toTimerDto(result.finalizedTimer.stoppedTimer),
+        }),
   };
 }
 
@@ -258,15 +308,16 @@ async function stopTimer(
     throw new Error("Timer stop requires an active timer");
   }
 
-  const stoppedTimer = await ctx.transaction.run((tx) =>
-    appendStoppedEvent(tx, activeTimer),
+  const finalizedTimer = await ctx.transaction.run((tx) =>
+    finalizeActiveTimer(tx, activeTimer),
   );
 
   store.setActive(null);
 
   return {
     activeTimer: null,
-    stoppedTimer: toTimerDto(stoppedTimer),
+    createdSegment: finalizedTimer.createdSegment,
+    stoppedTimer: toTimerDto(finalizedTimer.stoppedTimer),
   };
 }
 
@@ -279,15 +330,15 @@ async function switchTimer(
   const currentTimer = store.getSnapshot();
   const result = await ctx.transaction.run((tx) => {
     const page = tx.pages.get(payload.pageId);
-    const stoppedTimer =
-      currentTimer === null ? null : appendStoppedEvent(tx, currentTimer);
+    const finalizedTimer =
+      currentTimer === null ? null : finalizeActiveTimer(tx, currentTimer);
     const activeTimer = createStartedTimer(page);
 
     appendStartedEvent(tx, activeTimer);
 
     return {
       activeTimer,
-      stoppedTimer,
+      finalizedTimer,
     };
   });
 
@@ -295,9 +346,73 @@ async function switchTimer(
 
   return {
     activeTimer: toTimerDto(result.activeTimer),
-    stoppedTimer:
-      result.stoppedTimer === null ? undefined : toTimerDto(result.stoppedTimer),
+    ...(result.finalizedTimer === null
+      ? {}
+      : {
+          createdSegment: result.finalizedTimer.createdSegment,
+          stoppedTimer: toTimerDto(result.finalizedTimer.stoppedTimer),
+        }),
   };
+}
+
+async function addTimeSegmentNote(
+  input: unknown,
+  ctx: PluginContext,
+  store: ActiveTimerStore,
+): Promise<TimerNoteResult> {
+  const payload = readTimerNoteInput(input);
+  const activeTimer = store.getSnapshot();
+
+  if (activeTimer?.segmentId === payload.segmentId) {
+    throw new Error("Timer note requires a stopped time segment");
+  }
+
+  return ctx.transaction.run((tx) => {
+    const activeTimerInTransaction = store.getSnapshot();
+
+    if (activeTimerInTransaction?.segmentId === payload.segmentId) {
+      throw new Error("Timer note requires a stopped time segment");
+    }
+
+    const timerEvents = tx.events.list({ namespace: timerNamespace });
+    const segment = findTimerSegment(timerEvents, payload.segmentId);
+
+    if (segment === undefined) {
+      throw new Error("Timer note requires a known stopped time segment");
+    }
+
+    const existingNotePageId = findLatestNotePageId(
+      timerEvents,
+      segment.segmentId,
+      segment.pageId,
+    );
+    const noteBody = importMarkdownToStructuredDocument(payload.markdown);
+    const notePage =
+      existingNotePageId === undefined
+        ? tx.pages.create({
+            title: "Time Segment Note",
+            body: noteBody,
+          })
+        : tx.pages.update(existingNotePageId, {
+            body: noteBody,
+          });
+    const notedAt = createCurrentInstant();
+
+    tx.events.append({
+      pageId: segment.pageId,
+      namespace: timerNamespace,
+      type: timeSegmentNoteAddedType,
+      payload: {
+        segmentId: segment.segmentId,
+        notePageId: notePage.id,
+        notedAt,
+      },
+    });
+
+    return {
+      notePageId: notePage.id,
+    };
+  });
 }
 
 function appendStartedEvent(
@@ -342,6 +457,37 @@ function appendStoppedEvent(
   });
 
   return stoppedTimer;
+}
+
+function finalizeActiveTimer(
+  tx: PluginTransaction,
+  timer: ActiveTimerState,
+): FinalizedTimer {
+  const stoppedTimer = appendStoppedEvent(tx, timer);
+  const createdSegment = createTimeSegmentDto(stoppedTimer);
+
+  tx.events.append({
+    pageId: createdSegment.pageId,
+    namespace: timerNamespace,
+    type: timeSegmentCreatedType,
+    payload: createdSegment,
+  });
+
+  return {
+    createdSegment,
+    stoppedTimer,
+  };
+}
+
+function createTimeSegmentDto(timer: StoppedTimerState): TimeSegmentDto {
+  return {
+    durationSeconds: elapsedSeconds(timer.elapsedMs),
+    endAt: timer.stoppedAt,
+    pageId: timer.pageId,
+    segmentId: timer.segmentId,
+    source: "timer",
+    startAt: timer.startedAt,
+  };
 }
 
 function createStartedTimer(page: MarkdownPage): ActiveTimerState {
@@ -466,6 +612,101 @@ function createTimerGlobalActiveBar(
   return TimerGlobalActiveBar;
 }
 
+function createTimerPageTimeline(
+  ctx: PluginContext,
+): ComponentType<TimerPageTimelineProps> {
+  function TimerPageTimeline({ page }: TimerPageTimelineProps) {
+    const segments = listTimelineSegments(ctx, page.id);
+
+    return createElement(
+      "section",
+      {
+        "aria-label": "Time segments",
+        role: "region",
+      },
+      createElement("h2", null, "Time segments"),
+      segments.length === 0
+        ? createElement("p", null, "No time segments")
+        : createElement(
+            "ol",
+            null,
+            segments.map(({ noteLines, segment }) =>
+              createElement(
+                "li",
+                { key: segment.segmentId },
+                createElement("time", { dateTime: segment.startAt }, segment.startAt),
+                createElement("span", null, ` ${segment.durationSeconds}s`),
+                noteLines.map((line, index) =>
+                  createElement(
+                    "p",
+                    { key: `${segment.segmentId}-note-${index}` },
+                    line,
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
+  return TimerPageTimeline;
+}
+
+function listTimelineSegments(
+  ctx: PluginContext,
+  pageId: string,
+): Array<{ noteLines: string[]; segment: TimeSegmentDto }> {
+  const events = ctx.events.list({ namespace: timerNamespace });
+  const notePageIds = collectNotePageIds(events, pageId);
+
+  return events.flatMap((event) => {
+    const segment = readTimeSegmentEvent(event);
+
+    if (segment === null || segment.pageId !== pageId || event.pageId !== pageId) {
+      return [];
+    }
+
+    const notePageId = notePageIds.get(segment.segmentId);
+    const noteLines = notePageId === undefined
+      ? []
+      : readNotePageLines(ctx, notePageId);
+
+    return [
+      {
+        noteLines,
+        segment,
+      },
+    ];
+  });
+}
+
+function collectNotePageIds(
+  events: readonly AppEvent[],
+  pageId: string,
+): Map<string, string> {
+  const notePageIds = new Map<string, string>();
+
+  for (const event of events) {
+    const note = readTimeSegmentNoteEvent(event);
+
+    if (note !== null && event.pageId === pageId) {
+      notePageIds.set(note.segmentId, note.notePageId);
+    }
+  }
+
+  return notePageIds;
+}
+
+function readNotePageLines(ctx: PluginContext, notePageId: string): string[] {
+  try {
+    return exportStructuredDocumentToMarkdown(ctx.pages.get(notePageId).body)
+      .split("\n")
+      .filter((line) => line.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 function useVisibleElapsed(timer: ActiveTimerState | null): {
   seconds: number;
 } {
@@ -586,6 +827,28 @@ function readPageTimerInput(
   return { pageId };
 }
 
+function readTimerNoteInput(
+  input: unknown,
+): { markdown: string; segmentId: string } {
+  const payload = readExactRecord(
+    input,
+    timerNoteInputKeys,
+    `${addTimerNoteCommandId} input`,
+  );
+  const segmentId = payload.segmentId;
+  const markdown = payload.markdown;
+
+  if (typeof segmentId !== "string" || segmentId.trim().length === 0) {
+    throw new Error(`${addTimerNoteCommandId} requires segmentId`);
+  }
+
+  if (typeof markdown !== "string") {
+    throw new Error(`${addTimerNoteCommandId} requires markdown`);
+  }
+
+  return { markdown, segmentId };
+}
+
 function readEmptyTimerInput(input: unknown, commandId: string): void {
   if (input === undefined) {
     return;
@@ -668,6 +931,162 @@ function readExactRecord(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function findTimerSegment(
+  events: readonly AppEvent[],
+  segmentId: string,
+): TimeSegmentDto | undefined {
+  for (const event of events) {
+    const segment = readTimeSegmentEvent(event);
+
+    if (segment?.segmentId === segmentId) {
+      return segment;
+    }
+  }
+
+  return undefined;
+}
+
+function findLatestNotePageId(
+  events: readonly AppEvent[],
+  segmentId: string,
+  pageId: string,
+): string | undefined {
+  let notePageId: string | undefined;
+
+  for (const event of events) {
+    const note = readTimeSegmentNoteEvent(event);
+
+    if (note?.segmentId === segmentId && event.pageId === pageId) {
+      notePageId = note.notePageId;
+    }
+  }
+
+  return notePageId;
+}
+
+function readTimeSegmentEvent(event: AppEvent): TimeSegmentDto | null {
+  if (
+    event.namespace !== timerNamespace ||
+    event.type !== timeSegmentCreatedType ||
+    event.sourcePluginId !== timerNamespace ||
+    event.pageId === undefined
+  ) {
+    return null;
+  }
+
+  const segment = readTimeSegmentPayload(event.payload);
+
+  if (segment === null || segment.pageId !== event.pageId) {
+    return null;
+  }
+
+  return segment;
+}
+
+function readTimeSegmentNoteEvent(
+  event: AppEvent,
+): { notePageId: string; segmentId: string } | null {
+  if (
+    event.namespace !== timerNamespace ||
+    event.type !== timeSegmentNoteAddedType ||
+    event.sourcePluginId !== timerNamespace ||
+    event.pageId === undefined ||
+    !isRecord(event.payload)
+  ) {
+    return null;
+  }
+
+  const keys = Object.keys(event.payload).sort();
+
+  if (keys.join("\u0000") !== "notePageId\u0000notedAt\u0000segmentId") {
+    return null;
+  }
+
+  const { notePageId, notedAt, segmentId } = event.payload;
+
+  if (
+    typeof notePageId !== "string" ||
+    notePageId.trim().length === 0 ||
+    typeof notedAt !== "string" ||
+    notedAt.trim().length === 0 ||
+    typeof segmentId !== "string" ||
+    segmentId.trim().length === 0
+  ) {
+    return null;
+  }
+
+  return { notePageId, segmentId };
+}
+
+function readTimeSegmentPayload(payload: unknown): TimeSegmentDto | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const keys = Object.keys(payload).sort();
+  const hasNotePageId = Object.prototype.hasOwnProperty.call(
+    payload,
+    "notePageId",
+  );
+  const expectedKeys = [
+    "durationSeconds",
+    "endAt",
+    "pageId",
+    "segmentId",
+    "source",
+    "startAt",
+    ...(hasNotePageId ? ["notePageId"] : []),
+  ].sort();
+
+  if (keys.join("\u0000") !== expectedKeys.join("\u0000")) {
+    return null;
+  }
+
+  const {
+    durationSeconds,
+    endAt,
+    notePageId,
+    pageId,
+    segmentId,
+    source,
+    startAt,
+  } = payload;
+
+  if (
+    typeof durationSeconds !== "number" ||
+    !Number.isFinite(durationSeconds) ||
+    durationSeconds < 0 ||
+    typeof endAt !== "string" ||
+    endAt.trim().length === 0 ||
+    typeof pageId !== "string" ||
+    pageId.trim().length === 0 ||
+    typeof segmentId !== "string" ||
+    segmentId.trim().length === 0 ||
+    source !== "timer" ||
+    typeof startAt !== "string" ||
+    startAt.trim().length === 0
+  ) {
+    return null;
+  }
+
+  if (
+    hasNotePageId &&
+    (typeof notePageId !== "string" || notePageId.trim().length === 0)
+  ) {
+    return null;
+  }
+
+  return {
+    durationSeconds,
+    endAt,
+    pageId,
+    segmentId,
+    source,
+    startAt,
+    ...(hasNotePageId ? { notePageId: notePageId as string } : {}),
+  };
 }
 
 function createCurrentInstant(): string {
