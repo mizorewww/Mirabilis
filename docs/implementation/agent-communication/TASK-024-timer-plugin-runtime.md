@@ -235,4 +235,17 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn focused review agents.
+## Focused Review
+
+- Started on 2026-05-24 16:56 CST.
+- Active agents:
+  - Russell (`pr_explorer`) is mapping TASK-024 changed files, behavior surfaces, and review hotspots.
+  - Parfit (`reviewer`) is reviewing correctness, state transitions, events, UI, and edge cases.
+  - Ohm (`security_reviewer`) is reviewing Timer command/state/event/UI security boundaries.
+  - Maxwell (`deprecation_auditor`) is reviewing API/deprecation and architecture-boundary risks.
+  - Zeno (`test_quality_reviewer`) is reviewing TASK-024 acceptance test quality.
+- Docs drift reviewer is pending because the agent thread limit was reached; parent will spawn it after a slot frees.
+
+## Current Next Action
+
+- Wait for focused review agents, then spawn docs drift review.

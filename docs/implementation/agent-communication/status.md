@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 16:55 CST.
+Last updated: 2026-05-24 16:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-24 16:55 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 initial implementation is committed; focused review is next.
+- Current phase: TASK-024 focused review is in progress.
 
 ## Active Agents
 
-- None.
+- Russell (`pr_explorer`) is mapping TASK-024 changed files, behavior surfaces, and review hotspots.
+- Parfit (`reviewer`) is reviewing correctness, state transitions, events, UI, and edge cases.
+- Ohm (`security_reviewer`) is reviewing Timer command/state/event/UI security boundaries.
+- Maxwell (`deprecation_auditor`) is reviewing API/deprecation and architecture-boundary risks.
+- Zeno (`test_quality_reviewer`) is reviewing TASK-024 acceptance test quality.
 
 ## Completed Recent Task
 
@@ -151,8 +155,9 @@ Last updated: 2026-05-24 16:55 CST.
 
 ## Next Actions
 
-1. Spawn focused review agents for TASK-024 implementation.
-2. Fix any P0/P1 findings before docs sync and final gates.
+1. Wait for focused review agents.
+2. Spawn docs drift review after an agent slot frees.
+3. Fix any P0/P1 findings before docs sync and final gates.
 
 ## Current TASK-021 State
 
