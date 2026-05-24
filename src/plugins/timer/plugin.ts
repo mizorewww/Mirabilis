@@ -54,12 +54,6 @@ type ActiveTimerStore = {
   subscribe(listener: () => void): () => void;
 };
 
-type ControlledClockTimeoutBridge = {
-  install(): void;
-  restore(): void;
-  restoreAfterNextNonZeroTimer(): void;
-};
-
 type TimerGlobalActiveBarProps = {
   commands: {
     execute(commandId: string, input?: unknown): Promise<unknown>;
@@ -78,7 +72,6 @@ const resumeTimerCommandId = "timer.resume";
 const switchTimerCommandId = "timer.switch";
 const pageTimerInputKeys = new Set(["pageId"]);
 const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
-const hostSetTimeout = globalThis.setTimeout;
 
 export const TimerPlugin: AppPlugin = {
   manifest: {
@@ -406,8 +399,6 @@ function createActiveTimerStore(): ActiveTimerStore {
 function createTimerGlobalActiveBar(
   store: ActiveTimerStore,
 ): ComponentType<TimerGlobalActiveBarProps> {
-  const controlledClockBridge = createControlledClockTimeoutBridge();
-
   function TimerGlobalActiveBar({ commands }: TimerGlobalActiveBarProps) {
     const activeTimer = useSyncExternalStore(
       store.subscribe,
@@ -415,23 +406,6 @@ function createTimerGlobalActiveBar(
       store.getSnapshot,
     );
     const visibleElapsed = useVisibleElapsed(activeTimer);
-
-    useEffect(
-      () => () => {
-        controlledClockBridge.restore();
-      },
-      [],
-    );
-    useEffect(() => {
-      restoreHostSetTimeoutIfMissing();
-    }, []);
-    useEffect(() => {
-      if (activeTimer === null) {
-        controlledClockBridge.restoreAfterNextNonZeroTimer();
-      }
-
-      return undefined;
-    }, [activeTimer]);
 
     if (activeTimer === null) {
       return null;
@@ -453,7 +427,7 @@ function createTimerGlobalActiveBar(
             {
               type: "button",
               onClick: () => {
-                runControlCommand(controls.pause, controlledClockBridge);
+                runControlCommand(controls.pause);
               },
             },
             "Pause",
@@ -463,7 +437,7 @@ function createTimerGlobalActiveBar(
             {
               type: "button",
               onClick: () => {
-                runControlCommand(controls.resume, controlledClockBridge);
+                runControlCommand(controls.resume);
               },
             },
             "Resume",
@@ -473,7 +447,7 @@ function createTimerGlobalActiveBar(
         {
           type: "button",
           onClick: () => {
-            runControlCommand(controls.stop, controlledClockBridge);
+            runControlCommand(controls.stop);
           },
         },
         "Stop",
@@ -527,101 +501,6 @@ function useVisibleElapsed(timer: ActiveTimerState | null): {
   };
 }
 
-function hasControlledClock(): boolean {
-  return (
-    typeof globalThis.setTimeout === "function" &&
-    Object.prototype.hasOwnProperty.call(globalThis.setTimeout, "clock")
-  );
-}
-
-function restoreHostSetTimeoutIfMissing(): void {
-  if (typeof globalThis.setTimeout === "function") {
-    return;
-  }
-
-  Object.defineProperty(globalThis, "setTimeout", {
-    configurable: true,
-    value: hostSetTimeout,
-    writable: true,
-  });
-}
-
-function createControlledClockTimeoutBridge(): ControlledClockTimeoutBridge {
-  let restoreBridge: (() => void) | null = null;
-  let restoreAfterNonZeroTimer = false;
-
-  return {
-    install() {
-      if (restoreBridge !== null || !hasControlledClock()) {
-        return;
-      }
-
-      const originalSetTimeout = globalThis.setTimeout;
-      const bridgeSetTimeout = ((
-        callback: Parameters<typeof globalThis.setTimeout>[0],
-        timeout?: number,
-        ...args: unknown[]
-      ) => {
-        if (typeof callback === "function") {
-          const restoreAfterCallback =
-            restoreAfterNonZeroTimer && timeout !== 0;
-
-          queueMicrotask(() => {
-            callback(...args);
-
-            if (restoreAfterCallback) {
-              scheduleBridgeRestore();
-            }
-          });
-
-          return 0 as unknown as ReturnType<typeof globalThis.setTimeout>;
-        }
-
-        return originalSetTimeout(
-          callback,
-          timeout,
-          ...(args as []),
-        ) as ReturnType<typeof globalThis.setTimeout>;
-      }) as typeof globalThis.setTimeout;
-
-      Object.defineProperty(globalThis, "setTimeout", {
-        configurable: true,
-        value: bridgeSetTimeout,
-        writable: true,
-      });
-
-      restoreBridge = () => {
-        if (globalThis.setTimeout === bridgeSetTimeout) {
-          Object.defineProperty(globalThis, "setTimeout", {
-            configurable: true,
-            value: hostSetTimeout,
-            writable: true,
-          });
-        }
-
-        restoreAfterNonZeroTimer = false;
-        restoreBridge = null;
-      };
-
-      const scheduleBridgeRestore = () => {
-        queueMicrotask(() => {
-          queueMicrotask(() => {
-            restoreBridge?.();
-          });
-        });
-      };
-    },
-
-    restore() {
-      restoreBridge?.();
-    },
-
-    restoreAfterNextNonZeroTimer() {
-      restoreAfterNonZeroTimer = true;
-    },
-  };
-}
-
 function createTimerControls(commands: TimerGlobalActiveBarProps["commands"]): {
   pause(): Promise<unknown>;
   resume(): Promise<unknown>;
@@ -636,12 +515,7 @@ function createTimerControls(commands: TimerGlobalActiveBarProps["commands"]): {
   };
 }
 
-function runControlCommand(
-  command: () => Promise<unknown>,
-  controlledClockBridge: ControlledClockTimeoutBridge,
-): void {
-  controlledClockBridge.install();
-
+function runControlCommand(command: () => Promise<unknown>): void {
   void command()
     .catch(() => {
       ignoreControlFailure();
@@ -740,6 +614,10 @@ function readExactRecord(
   }
 
   const ownKeys = Reflect.ownKeys(input);
+
+  if (prototype === null && ownKeys.length > 0) {
+    throw new Error(`${label} contains untrusted fields`);
+  }
 
   if (ownKeys.length !== allowedKeys.size) {
     throw new Error(`${label} contains untrusted fields`);
