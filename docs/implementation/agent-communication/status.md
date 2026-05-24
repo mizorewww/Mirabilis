@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 17:13 CST.
+Last updated: 2026-05-24 17:42 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 17:13 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 review-fix implementation is in progress.
+- Current phase: TASK-024 review-fix implementation is partially complete but blocked; test conflict adjudication is next.
 
 ## Active Agents
 
-- Dewey (`implementer`) is fixing Timer review regressions: visible active-bar ticking/state updates, no production eval/monkeypatch, real MetadataBar Start flow, direct-start/switch semantics, descriptor-safe payload validation, and scoped active-bar commands.
+- None.
 
 ## Completed Recent Task
 
@@ -151,8 +151,8 @@ Last updated: 2026-05-24 17:13 CST.
 
 ## Next Actions
 
-1. Wait for Dewey's review-fix implementation.
-2. Validate focused tests until green, then commit review-fix implementation.
+1. Delegate the null-prototype empty-payload test conflict to `test_writer`.
+2. After test adjustment, delegate remaining active-bar review-fix implementation to a replacement `implementer`.
 
 ## Current TASK-021 State
 

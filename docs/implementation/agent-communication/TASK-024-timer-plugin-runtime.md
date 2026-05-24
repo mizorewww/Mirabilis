@@ -318,6 +318,28 @@ git diff --cached --check
   - Narrow active-bar command surface and keep TASK-024 TypeScript-only.
 - Parent thread will not write implementation.
 
+## Review-Fix Implementation Blocker
+
+- Dewey (`implementer`) stopped blocked on 2026-05-24 17:42 CST after partial implementation changes in `src/plugins/timer/plugin.ts`.
+- Partial behavior implemented by Dewey:
+  - `timer.started` payload uses `startAt`.
+  - Direct `timer.start` while active stops the previous timer and returns `stoppedTimer`.
+  - Removed production jsdom timer monkeypatch/eval/string-handler path.
+  - Removed notification suppression that could desync future active-bar updates.
+  - Hardened payload validation for descriptor/prototype/symbol/non-enumerable cases.
+  - Added state-driven active-bar Pause/Resume/Stop wiring and a timer tick path.
+- Dewey checks:
+  - Focused review-fix tests: 124 passed / 2 failed.
+  - Architecture-boundary focused test passed.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri diff guard passed.
+- Remaining blockers:
+  - Test conflict: committed test expects `timer.pause(Object.create(null))` to reject, but parent handoff requires exact null-prototype empty payloads to be allowed for empty commands.
+  - Active-bar fake-timer/user-event test still times out when clicked controls change active state.
+- Parent decision:
+  - Do not complete or rewrite code in the parent thread.
+  - Delegate the null-prototype empty-payload test conflict to `test_writer`.
+  - Then delegate the remaining implementation fix to a replacement `implementer` while preserving Dewey's partial production changes.
+
 ## Current Next Action
 
-- Wait for Dewey's review-fix implementation.
+- Delegate test conflict adjustment to `test_writer`.
