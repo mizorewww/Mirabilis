@@ -104,6 +104,18 @@ TASK-022 delivers compatible generic `page.list` execution/rendering for this sa
 
 Timer Plugin 是另一个核心插件。
 
+TASK-024 当前实现的文件范围很小：
+
+```text
+src/plugins/timer/
+  index.ts
+  plugin.ts
+  components/
+    TimerMetadataPlaceholder.tsx
+```
+
+长期目录可能继续扩展为：
+
 ```text
 plugins/timer/
   src/
@@ -143,7 +155,7 @@ plugins/timer/
 ### 11.1 Timer Plugin 注册内容
 
 Timer manifest 长期会声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
-TASK-023 当前只注册一个 metadata UI placeholder slot，不注册 timer commands、views、events、metadata writers、indexers 或 active timer runtime。
+TASK-024 当前注册 canonical Timer commands、metadata Start control 和 global active bar。它不注册 timer metadata writers、indexers、timeline views、native/Tauri commands 或 schema-backed persistence。
 
 ```ts
 export const TimerPlugin: AppPlugin = {
@@ -151,32 +163,72 @@ export const TimerPlugin: AppPlugin = {
     id: "timer",
     name: "Timer Plugin",
     version: "1.0.0",
-    description: "Reserve an inert timer metadata placeholder.",
+    description: "Track one active timer through plugin-owned runtime state.",
     minAppVersion: "0.1.0"
   },
 
   register(ctx) {
+    ctx.commands.register({ id: "timer.start", title: "Start timer", handler: startTimer });
+    ctx.commands.register({ id: "timer.stop", title: "Stop timer", handler: stopTimer });
+    ctx.commands.register({ id: "timer.pause", title: "Pause timer", handler: pauseTimer });
+    ctx.commands.register({ id: "timer.resume", title: "Resume timer", handler: resumeTimer });
+    ctx.commands.register({ id: "timer.switch", title: "Switch timer", handler: switchTimer });
+
     ctx.slots.register({
       id: "timer.page-header-metadata.placeholder",
       slot: "page.header.metadata",
       order: 400,
       component: TimerMetadataPlaceholder
     });
+
+    ctx.slots.register({
+      id: "timer.global-active-bar",
+      slot: "global.floating",
+      order: 100,
+      component: TimerGlobalActiveBar
+    });
   }
 };
 ```
 
-### 11.2 Start Timer
+The one global active timer is plugin-owned, registration-scoped, in-memory runtime state created inside `TimerPlugin.register(ctx)`. It is not Core-owned state, not a NativeBridge/Tauri surface, not persistent, and not schema-backed.
 
-TASK-023 当前：
+### 11.2 Timer command contract
 
-```text
-Start timer button is disabled and inert
-No timer.start command exists
-No timer metadata/event/runtime state is written
+Current commands:
+
+- `timer.start({ pageId })`
+- `timer.stop()` / exact empty payload
+- `timer.pause()` / exact empty payload
+- `timer.resume()` / exact empty payload
+- `timer.switch({ pageId })`
+
+`timer.start` and `timer.switch` validate exact payload shape and page existence. Extra keys, missing `pageId`, non-string/blank `pageId`, missing pages, caller-supplied segment/time/event fields, accessors, symbol keys, non-enumerable keys, prototype-carried fields, arrays, class instances, and unsafe `__proto__` / `constructor` / `prototype` keys are rejected. Non-empty null-prototype page payloads are rejected; exact null-prototype empty payloads are allowed only for empty-payload commands.
+
+`timer.pause`、`timer.resume` 和 `timer.stop` accept `undefined`, `{}`, or an exact null-prototype empty object. Non-empty, prototype-shaped, accessor, symbol-keyed, non-enumerable, or caller-owned unsafe payloads are rejected.
+
+Command results are narrow DTOs:
+
+```ts
+type TimerCommandResult = {
+  activeTimer: TimerDto | null;
+  stoppedTimer?: TimerDto;
+};
+
+type TimerDto = {
+  elapsedSeconds: number;
+  pageId: string;
+  pageTitle: string;
+  segmentId: string;
+  startedAt: string;
+  status: "running" | "paused" | "stopped";
+  stoppedAt?: string;
+};
 ```
 
-长期目标：
+DTOs do not expose runtime, store, transaction, registry, event, metadata, NativeBridge, filesystem, DB, stack, token, or handler surfaces.
+
+### 11.3 Start / Pause / Resume / Stop / Switch
 
 用户点击页面顶部：
 
@@ -190,40 +242,31 @@ UI 执行：
 runtime.commands.execute("timer.start", { pageId });
 ```
 
-Timer Plugin handler：
+Timer Plugin appends events with namespace `timer` and simple type names:
 
-这个 sketch 里的 active timer state 使用后续 plugin-local runtime storage，不是 TASK-010 当前的 `ctx.metadata` facade。
-
-```ts
-async function startTimer(ctx, { pageId }) {
-  await ctx.transaction.run(async tx => {
-    const active = await readTimerRuntimeState("activeSegmentId");
-
-    if (active) {
-      await stopActiveTimer(tx);
-    }
-
-    const segmentId = createId();
-
-    await writeTimerRuntimeState("activeSegmentId", segmentId);
-
-    await tx.events.append({
-      pageId,
-      namespace: "timer",
-      type: "started",
-      payload: {
-        segmentId,
-        startAt: now()
-      }
-    });
-  });
-}
+```text
+started
+paused
+resumed
+stopped
 ```
 
-### 11.3 Stop Timer
+`timer.started` event payload uses `startAt`; active/stopped DTOs use `startedAt`. Pause/resume/stop event payloads use `pausedAt` / `resumedAt` / `stoppedAt` and elapsed seconds.
 
-Stop 后生成 Time Segment。
-当前 TASK-010 `PluginEventStore` 只暴露 `append` 和 `list`；插件需要通过 `list` 查询事件并在插件内收窄 payload。更专用的 timer event 查询 facade 属于后续接口面。
+Current state transitions:
+
+- `timer.start({ pageId })` starts a running active timer for the page and appends `timer.started`.
+- If another timer is active, `timer.start({ pageId })` first appends `timer.stopped` for the previous timer, then appends `timer.started` for the new timer, and returns `{ activeTimer, stoppedTimer }`. Same-page start is treated as stop then restart.
+- `timer.pause()` requires a running active timer, freezes elapsed time, appends `timer.paused`, and returns `{ activeTimer }`.
+- `timer.resume()` requires a paused active timer, resumes elapsed time, appends `timer.resumed`, and returns `{ activeTimer }`.
+- `timer.stop()` requires a running or paused active timer, appends `timer.stopped`, clears active state, and returns `{ activeTimer: null, stoppedTimer }`.
+- `timer.switch({ pageId })` stops the previous active timer then starts the next page timer. It supports no-active, paused, and same-page cases. If the target page is missing, active state and events are preserved.
+
+`timer.global-active-bar` reads the registration-scoped active timer store and renders active page title, visible elapsed time, and Pause / Resume / Stop controls. The controls execute exactly `timer.pause`, `timer.resume`, and `timer.stop` with `{}` through Timer-scoped functions. The metadata Start control executes `timer.start` through the scoped command executor passed by `MetadataBar`.
+
+No production fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handler, or broad active-bar command execution behavior belongs in Timer production code. The Vitest-only fake timer cleanup compatibility shim lives in `src/test/setup.ts`.
+
+### 11.4 Time Segment and Note future
 
 ```ts
 async function stopTimer(ctx) {
@@ -268,8 +311,7 @@ async function stopTimer(ctx) {
 }
 ```
 
-Time Segment Note 必须是 Markdown Page。
-这样每段时间都能写结构化笔记。
+The sketch above is TASK-025+ future behavior. TASK-024 `timer.stop` does not append `timer.time_segment_created`, create note Markdown Pages, update `timer.total_tracked_time`, update `timer.last_tracked_at`, write `timer.active_segment_id`, populate timelines, or feed Calendar/Stats/ML. Time Segment Note must remain a Markdown Page when TASK-025 implements it.
 
 ---
 

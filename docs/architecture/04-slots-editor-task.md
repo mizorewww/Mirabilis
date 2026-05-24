@@ -75,7 +75,7 @@ view.chart.tooltip
 />
 ```
 
-TASK-023 当前没有交付 generic app-wide `SlotRenderer` integration；它交付的是 built-in `metadata-ui` plugin 导出的 reusable `MetadataBar`。`MetadataBar` 读取 `page.header.metadata` slot contributions 并按 SlotRegistry order 渲染，production app-shell/editor mounting 仍是后续 integration，除非调用方已经显式挂载它。
+TASK-023 交付 built-in `metadata-ui` plugin 导出的 reusable `MetadataBar`，但没有交付 generic app-wide `SlotRenderer` integration。TASK-024 后，Timer 的 metadata slot 已从 Start reservation 升级为 enabled Start control。`MetadataBar` 读取 `page.header.metadata` slot contributions 并按 SlotRegistry order 渲染，production app-shell/editor mounting 仍是后续 integration，除非调用方已经显式挂载它。
 
 如果当前页面是任务页，Task Plugin 当前会在这里 read-only 渲染 existing current fields：
 
@@ -83,10 +83,10 @@ TASK-023 当前没有交付 generic app-wide `SlotRenderer` integration；它交
 enabled · status · sourcePageId · sourceBlockId · scheduled · due
 ```
 
-Timer Plugin 当前只渲染 inert placeholder：
+Timer Plugin 当前渲染 enabled Start control：
 
 ```text
-Start disabled
+Start timer
 ```
 
 Tag Plugin 当前渲染：
@@ -95,11 +95,13 @@ Tag Plugin 当前渲染：
 #product #timer
 ```
 
-TASK-023 当前的 page header metadata contributions：
+TASK-024 当前的 page header metadata contributions：
 
 - `task.page-header-metadata.current-fields`，order `100`，read-only current fields only。
 - `tag.page-header-metadata.tags`，order `300`，渲染 inert `#tag` 文本并提供 add/remove 控件，控件通过 `tag.add-tag` / `tag.remove-tag` command 写 `tag.tags` metadata，wrong-page command result 会被拒绝。
-- `timer.page-header-metadata.placeholder`，order `400`，disabled inert Start timer affordance，no timer command execution。
+- `timer.page-header-metadata.placeholder`，order `400`，enabled Start control，through scoped `commands.execute("timer.start", { pageId })`。
+
+TASK-024 也注册 `timer.global-active-bar` 到 `global.floating`，显示 active page title、elapsed time 和 Pause / Resume / Stop controls。该 bar 读取 Timer Plugin registration-scoped in-memory active timer state；Time Segment timeline、Note 和 Calendar/Stats integration 仍是后续范围。
 
 `MetadataBar` 传给每个 slot component 的 props 是 narrow controlled props：`pageId`、contributing `pluginId`、trusted field descriptors、trusted values 和 scoped `commands.execute`。scoped command executor 只允许执行该 contributing plugin namespace 下的 command。缺少 Plugin Host ownership data、inactive/missing owner plugin、malformed descriptor、unsafe namespace/key、wrong `sourcePluginId` 或 mismatched `valueType` 都不会产生 trusted field/value props。Manifest `metadataFields` 仍是 descriptors/reservation inputs，不是 renderer/editor declarations。
 

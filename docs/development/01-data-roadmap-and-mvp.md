@@ -231,16 +231,16 @@ MetadataBar export
 page.header.metadata slot composition in SlotRegistry order
 Task read-only current fields
 Tag existing add/remove controls through tag commands
-Timer disabled inert Start placeholder
+Timer Start control through scoped timer.start
 ```
 
 当前可见验收面：
 
 ```text
-todo · #tag · due · Start disabled
+todo · #tag · due · Start
 ```
 
-`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和真实 Timer runtime 仍是后续范围。
+`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和 Time Segment timeline/note flow 仍是后续范围。
 
 ### Phase 5：Timer Plugin
 
@@ -252,20 +252,36 @@ Stop
 Pause
 Resume
 Switch
+Global Timer
+```
+
+TASK-024 当前计时行为：
+
+```text
+timer.start
+timer.stop
+timer.pause
+timer.resume
+timer.switch
+timer.global-active-bar
+```
+
+TASK-025+ 后续行为：
+
+```text
 Time Segment
 Time Segment Note
-Global Timer
 Recently Worked
 Unnoted Sessions
 ```
 
-验收：
+TASK-024 验收：
 
 ```text
 任务能计时
-停止后生成 Time Segment
-Time Segment 能写 Note
-任务页能看到时间线
+Global Timer 显示 active page title / elapsed / Pause / Resume / Stop
+停止只追加 timer.stopped 并清除 active state
+不生成 Time Segment
 ```
 
 ### Phase 6：Calendar Plugin
@@ -404,18 +420,18 @@ todo · #plugin · estimate empty · tracked 0m · Start
 
 ```text
 设计 Plugin 系统 · 00:00:01
-Pause · Stop · Note · Switch
+Pause · Stop
 ```
 
-用户写 Note：
+TASK-024 当前 Global Timer 可以 Pause / Resume / Stop。Note、Time Segment timeline 和 Calendar/Stats 使用是 TASK-025+ 范围。
+
+TASK-025+ 用户写 Note：
 
 ```text
 刚想清楚：Core 只负责 Markdown Page、Metadata、Event、Filter、View registry、Command registry。任务、习惯、计时、统计、ML 全部是 Plugin。
 ```
 
-用户 Stop。
-
-系统生成 Time Segment：
+TASK-025+ 用户 Stop 后系统生成 Time Segment：
 
 ```text
 10:00–10:47
