@@ -1,4 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createElement, type ComponentType } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -236,7 +237,7 @@ describe("Timer Time Segment notes and page timeline", () => {
 
     vi.advanceTimersByTime(15_000);
 
-    await executeTimerCommand(runtime, "timer.add-note", {
+    const firstResult = await executeTimerCommand(runtime, "timer.add-note", {
       segmentId: stopped.segment.segmentId,
       markdown: "# Time Segment Note\nInitial decisions stayed plugin-owned.",
     });
@@ -252,6 +253,7 @@ describe("Timer Time Segment notes and page timeline", () => {
     );
     const firstNotePage = runtime.pages.get(firstNoteEvent.notePageId);
 
+    expectAddNoteResult(firstResult, firstNoteEvent.notePageId);
     expect(runtime.pages.list({ includeArchived: true })).toHaveLength(2);
     expect(firstNotePage.title).toMatch(/time segment note/iu);
     expect(pageText(firstNotePage)).toContain(
@@ -260,7 +262,7 @@ describe("Timer Time Segment notes and page timeline", () => {
 
     vi.advanceTimersByTime(30_000);
 
-    await executeTimerCommand(runtime, "timer.add-note", {
+    const secondResult = await executeTimerCommand(runtime, "timer.add-note", {
       segmentId: stopped.segment.segmentId,
       markdown: "# Time Segment Note\nUpdated blockers and next action.",
     });
@@ -280,6 +282,7 @@ describe("Timer Time Segment notes and page timeline", () => {
       "segment payload after note updates",
     );
 
+    expectAddNoteResult(secondResult, firstNoteEvent.notePageId);
     expect(runtime.pages.list({ includeArchived: true })).toHaveLength(2);
     expect(secondNoteEvent.notePageId).toBe(firstNoteEvent.notePageId);
     expect(pageText(updatedNotePage)).toContain(
@@ -439,6 +442,195 @@ describe("Timer Time Segment notes and page timeline", () => {
     expect(within(timeline).queryByText("Cross-page note text."))
       .not.toBeInTheDocument();
     expect(within(timeline).queryByText("Malformed segment note text."))
+      .not.toBeInTheDocument();
+    expectNoDangerousDom();
+  });
+
+  it("creates and edits a segment note through the real page timeline UI", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: ["ui-note-page", "ui-note-markdown-page"],
+      eventIds: [
+        "event-ui-note-started",
+        "event-ui-note-stopped",
+        "event-ui-note-segment-created",
+        "event-ui-note-added",
+        "event-ui-note-updated",
+      ],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (milliseconds) => vi.advanceTimersByTime(milliseconds),
+    });
+    const page = createPage(runtime, "Timeline note UI page");
+    const stopped = await createStoppedSegment(runtime, page, 75_000);
+    const Timeline = getTimerPageTimelineComponent(runtime);
+
+    render(createElement(Timeline, { page }));
+
+    const timeline = screen.getByRole("region", { name: /time segments/i });
+
+    expect(within(timeline).getByText(/75s/u)).toBeVisible();
+    expect(
+      within(timeline).getByRole("button", { name: /add note/i }),
+    ).toBeEnabled();
+
+    await user.click(
+      within(timeline).getByRole("button", { name: /add note/i }),
+    );
+
+    const noteEditor = await within(timeline).findByRole("textbox", {
+      name: /note/i,
+    });
+
+    await user.type(noteEditor, "Initial UI note <script>alert(1)</script>");
+    await user.click(
+      within(timeline).getByRole("button", { name: /save note/i }),
+    );
+
+    await waitFor(() =>
+      expect(timerNoteEvents(runtime)).toHaveLength(1),
+    );
+
+    const firstNoteEvent = expectTimeSegmentNoteEvent(
+      timerNoteEvents(runtime)[0],
+      {
+        notePageId: "ui-note-markdown-page",
+        notedAt: "2026-05-24T01:01:15.000Z",
+        pageId: page.id,
+        segmentId: stopped.segment.segmentId,
+      },
+    );
+
+    expect(runtime.pages.list({ includeArchived: true })).toHaveLength(2);
+    expect(pageText(runtime.pages.get(firstNoteEvent.notePageId))).toContain(
+      "Initial UI note <script>alert(1)</script>",
+    );
+    await waitFor(() =>
+      expect(
+        within(timeline).getByText("Initial UI note <script>alert(1)</script>"),
+      ).toBeVisible(),
+    );
+    expectNoDangerousDom();
+
+    vi.advanceTimersByTime(30_000);
+
+    await user.click(
+      within(timeline).getByRole("button", { name: /edit note/i }),
+    );
+
+    const editEditor = await within(timeline).findByRole("textbox", {
+      name: /note/i,
+    });
+
+    await user.clear(editEditor);
+    await user.type(editEditor, "Updated UI note stays on one Markdown page.");
+    await user.click(
+      within(timeline).getByRole("button", { name: /save note/i }),
+    );
+
+    await waitFor(() =>
+      expect(timerNoteEvents(runtime)).toHaveLength(2),
+    );
+
+    const secondNoteEvent = expectTimeSegmentNoteEvent(
+      timerNoteEvents(runtime)[1],
+      {
+        notePageId: firstNoteEvent.notePageId,
+        notedAt: "2026-05-24T01:01:45.000Z",
+        pageId: page.id,
+        segmentId: stopped.segment.segmentId,
+      },
+    );
+
+    expect(secondNoteEvent.notePageId).toBe(firstNoteEvent.notePageId);
+    expect(runtime.pages.list({ includeArchived: true })).toHaveLength(2);
+    expect(pageText(runtime.pages.get(secondNoteEvent.notePageId))).toContain(
+      "Updated UI note stays on one Markdown page.",
+    );
+    expect(pageText(runtime.pages.get(secondNoteEvent.notePageId))).not
+      .toContain("Initial UI note");
+    await waitFor(() =>
+      expect(
+        within(timeline).getByText("Updated UI note stays on one Markdown page."),
+      ).toBeVisible(),
+    );
+    expect(
+      within(timeline).queryByText("Initial UI note <script>alert(1)</script>"),
+    ).not.toBeInTheDocument();
+    expectNoDangerousDom();
+  });
+
+  it("ignores wrong-owner and malformed note-link events for otherwise valid timeline segments", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: [
+        "note-link-filter-page",
+        "wrong-owner-linked-note-page",
+        "malformed-linked-note-page",
+        "valid-linked-note-page",
+      ],
+      eventIds: [
+        "event-note-link-started",
+        "event-note-link-stopped",
+        "event-note-link-segment-created",
+        "event-note-link-wrong-owner",
+        "event-note-link-malformed",
+        "event-note-link-valid",
+      ],
+    });
+    const page = createPage(runtime, "Note-link filtering page");
+    const stopped = await createStoppedSegment(runtime, page, 40_000);
+    const wrongOwnerNote = createPageWithText(
+      runtime,
+      "Wrong owner linked note",
+      "Wrong-owner linked note text.",
+    );
+    const malformedNote = createPageWithText(
+      runtime,
+      "Malformed linked note",
+      "Malformed linked note text.",
+    );
+    const validNote = createPageWithText(
+      runtime,
+      "Valid linked note",
+      "Valid linked note text.",
+    );
+
+    appendTimerNoteEvent(runtime, {
+      notePageId: wrongOwnerNote.id,
+      pageId: page.id,
+      segmentId: stopped.segment.segmentId,
+      sourcePluginId: "task",
+    });
+    runtime.events.append({
+      pageId: page.id,
+      namespace: timerNamespace,
+      type: "time_segment_note_added",
+      sourcePluginId: timerPluginId,
+      payload: {
+        notePageId: malformedNote.id,
+        notedAt: "2026-05-24T01:00:40.000Z",
+        segmentId: stopped.segment.segmentId,
+        untrusted: true,
+      },
+    });
+    appendTimerNoteEvent(runtime, {
+      notePageId: validNote.id,
+      pageId: page.id,
+      segmentId: stopped.segment.segmentId,
+      sourcePluginId: timerPluginId,
+    });
+
+    const Timeline = getTimerPageTimelineComponent(runtime);
+
+    render(createElement(Timeline, { page }));
+
+    const timeline = screen.getByRole("region", { name: /time segments/i });
+
+    expect(within(timeline).getByText("Valid linked note text.")).toBeVisible();
+    expect(within(timeline).queryByText("Wrong-owner linked note text."))
+      .not.toBeInTheDocument();
+    expect(within(timeline).queryByText("Malformed linked note text."))
       .not.toBeInTheDocument();
     expectNoDangerousDom();
   });
@@ -715,6 +907,16 @@ function expectTimeSegmentNoteEvent(
   return { notePageId: payload.notePageId as string };
 }
 
+function expectAddNoteResult(
+  result: unknown,
+  expectedNotePageId: string,
+): void {
+  const resultRecord = readRecord(result, "timer.add-note result");
+
+  expect(Object.keys(resultRecord)).toStrictEqual(["notePageId"]);
+  expect(resultRecord).toStrictEqual({ notePageId: expectedNotePageId });
+}
+
 function expectTimerEvents(
   runtime: AppRuntime,
   expectedTypes: readonly string[],
@@ -738,6 +940,12 @@ function expectTimerEvents(
 
 function listTimerEvents(runtime: AppRuntime): AppEvent[] {
   return runtime.events.list({ namespace: timerNamespace });
+}
+
+function timerNoteEvents(runtime: AppRuntime): AppEvent[] {
+  return listTimerEvents(runtime).filter(
+    (event) => event.type === "time_segment_note_added",
+  );
 }
 
 function expectEventPayload(
