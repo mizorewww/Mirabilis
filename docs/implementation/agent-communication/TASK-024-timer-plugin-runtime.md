@@ -374,6 +374,31 @@ git diff --cached --check
   - Keep active-bar commands timer-scoped, no production eval/jsdom monkeypatch, no native/package/Tauri/Core Timer business changes.
 - Parent thread will not write implementation.
 
+## Review-Fix Implementation
+
+- Status: completed by Popper (`implementer`) on 2026-05-24 18:12 CST.
+- Commit: `a05b69f`.
+- File changed:
+  - `src/plugins/timer/plugin.ts`.
+- Behavior fixed:
+  - Visible active-bar elapsed updates on the same displayed element while running.
+  - Pause freezes elapsed, Resume continues from frozen elapsed, and Stop hides the active bar.
+  - Active-bar controls are state-driven and timer-scoped.
+  - Preserved `startAt` event payload, active `timer.start` returning `stoppedTimer`, descriptor-safe payload validation, no jsdom/eval production path, no notification suppression desync, and null-prototype empty payload support for pause/resume/stop.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+rg -n "\\.skip\\(|\\.only\\(" src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused Timer and adjacent plugin tests passed with 5 files / 126 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, no `.skip` / `.only`, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+
 ## Current Next Action
 
-- Wait for Popper's replacement review-fix implementation.
+- Spawn narrow post-fix review agents.
