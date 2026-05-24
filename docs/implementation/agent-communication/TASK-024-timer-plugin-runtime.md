@@ -305,6 +305,19 @@ git diff --cached --check
 
 - Result: expected red signal. Focused tests ran 5 files / 126 tests with 7 failed / 119 passed. Failures matched accepted review findings: missing `startAt`, missing `stoppedTimer` for active `timer.start`, unsafe payload accepted, visible elapsed not ticking, control UI desync after rejected command, production eval/jsdom monkeypatch/broad executor guard, and real MetadataBar Start payload mismatch. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
 
+## Review-Fix Implementation Handoff
+
+- Delegated to Dewey (`implementer`) on 2026-05-24 17:13 CST.
+- Required scope:
+  - Production fixes only for committed review-fix tests.
+  - Remove production jsdom timer monkeypatch/eval path.
+  - Make visible active-bar elapsed/control state update correctly.
+  - Fix direct-start-while-active and switch edge semantics.
+  - Use `startAt` in Timer started event payloads while keeping DTO snapshots narrow.
+  - Harden exact payload validation against descriptor/prototype/accessor/symbol/non-enumerable inputs.
+  - Narrow active-bar command surface and keep TASK-024 TypeScript-only.
+- Parent thread will not write implementation.
+
 ## Current Next Action
 
-- Delegate review-fix implementation to `implementer`.
+- Wait for Dewey's review-fix implementation.
