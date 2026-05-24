@@ -59,7 +59,7 @@ Status markers:
 
 - [x] TASK-023: Implement Metadata UI Plugin
 - [x] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
-- [ ] TASK-025: Implement Time Segment and Time Segment Note
+- [~] TASK-025: Implement Time Segment and Time Segment Note
 
 ## Milestone M6: Calendar and reporting
 
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-24 18:56 CST - TASK-025 started
+
+- Branch: `feat/task-025-time-segment-note`.
+- Task: Implement Time Segment and Time Segment Note.
+- Start point: `master` after TASK-024 merge validation commit `22402e2`.
+- Source docs read: `docs/implementation/task-index.md#task-025-implement-time-segment-and-time-segment-note`, `docs/product/05-built-in-plugins.md#183-time-segment`, `docs/product/04-editor-and-workflows.md#264-计时`, `docs/product/06-view-slots.md`, `docs/architecture/05-plugin-implementations.md#114-time-segment-and-note-future`, `docs/architecture/07-runtime-flows.md#188-用户-stop-并写-note`, `docs/development/01-data-roadmap-and-mvp.md#phase-5timer-plugin`, and `docs/development/02-implementation-roadmap-and-constraints.md#phase-5timer-plugin`.
+- Initial scope: stopping a timer creates a `timer.time_segment_created` event with start, end, duration, page id, and optional note page id; Time Segment Note remains a Markdown Page; task page timeline can render that page's segments.
+- Initial out of scope until agents narrow otherwise: Calendar/Stats/ML integration, native/Tauri/package/Rust/schema changes, persistent storage beyond current runtime stores, broad app-shell/editor mounting, Recently Worked and Unnoted Sessions filters, manual segment editing, drag/drop calendar blocks, and broad metadata totals unless acceptance requires a narrow update.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-025-time-segment-note.md`.
 
 ### 2026-05-24 18:54 CST - TASK-024 merged
 
