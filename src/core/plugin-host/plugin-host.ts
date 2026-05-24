@@ -184,6 +184,14 @@ type PluginLifecyclePhase =
 
 type PluginRemovalPhase = "deactivate" | "uninstall";
 
+type PluginScopedCommandExecutor = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
+
+const pluginScopedCommandExecutorKey = Symbol.for(
+  "mirabilis.internal.pluginScopedCommandExecutor",
+);
+
 type PluginContextScope = {
   pluginId: string;
   phase: PluginLifecyclePhase;
@@ -665,7 +673,7 @@ class PluginHostImpl implements PluginHostInstance {
   }
 
   private createPluginContext(scope: PluginContextScope): PluginContext {
-    return {
+    const context: PluginContext = {
       pluginId: scope.pluginId,
       app: cloneAppRuntimeInfo(this.app),
       pages: createPluginPageStore(scope, this.services.pages),
@@ -680,6 +688,32 @@ class PluginHostImpl implements PluginHostInstance {
       views: this.createPluginViewRegistry(scope),
       slots: this.createPluginSlotRegistry(scope),
       transaction: this.createPluginTransactionManager(scope),
+    };
+
+    Object.defineProperty(context, pluginScopedCommandExecutorKey, {
+      enumerable: false,
+      value: this.createPluginScopedCommandExecutor(scope.pluginId),
+    });
+
+    return context;
+  }
+
+  private createPluginScopedCommandExecutor(
+    pluginId: string,
+  ): PluginScopedCommandExecutor {
+    return {
+      execute: (commandId, input) => {
+        if (
+          typeof commandId !== "string" ||
+          !commandBelongsToPlugin(commandId, pluginId)
+        ) {
+          return Promise.reject(
+            new Error(`Plugin ${pluginId} cannot execute command ${commandId}`),
+          );
+        }
+
+        return this.registries.commands.execute(commandId, input);
+      },
     };
   }
 
@@ -1276,6 +1310,10 @@ function assertCanMutatePluginData(scope: PluginContextScope): void {
       phase: scope.phase,
     },
   );
+}
+
+function commandBelongsToPlugin(commandId: string, pluginId: string): boolean {
+  return commandId === pluginId || commandId.startsWith(`${pluginId}.`);
 }
 
 function createPluginPageStore(

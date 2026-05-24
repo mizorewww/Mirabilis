@@ -1,8 +1,10 @@
 import {
   createElement,
+  useReducer,
   useEffect,
   useState,
   useSyncExternalStore,
+  type ChangeEvent,
   type ComponentType,
 } from "react";
 
@@ -77,14 +79,27 @@ type ActiveTimerStore = {
   subscribe(listener: () => void): () => void;
 };
 
+type TimerCommandExecutor = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
+
 type TimerGlobalActiveBarProps = {
-  commands: {
-    execute(commandId: string, input?: unknown): Promise<unknown>;
-  };
+  commands: TimerCommandExecutor;
 };
 
 type TimerPageTimelineProps = {
   page: Pick<MarkdownPage, "id" | "title">;
+};
+
+type TimelineSegment = {
+  noteLines: string[];
+  noteMarkdown: string | null;
+  segment: TimeSegmentDto;
+};
+
+type TimerTimelineSegmentItemProps = TimelineSegment & {
+  commandExecutor: TimerCommandExecutor;
+  onSaved(): void;
 };
 
 const timerMetadataSlotId = "timer.page-header-metadata.placeholder";
@@ -105,6 +120,9 @@ const timeSegmentNoteAddedType = "time_segment_note_added";
 const pageTimerInputKeys = new Set(["pageId"]);
 const timerNoteInputKeys = new Set(["segmentId", "markdown"]);
 const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
+const pluginScopedCommandExecutorKey = Symbol.for(
+  "mirabilis.internal.pluginScopedCommandExecutor",
+);
 
 export const TimerPlugin: AppPlugin = {
   manifest: {
@@ -396,7 +414,7 @@ async function addTimeSegmentNote(
         : tx.pages.update(existingNotePageId, {
             body: noteBody,
           });
-    const notedAt = createCurrentInstant();
+    const notedAt = createCurrentSecondInstant();
 
     tx.events.append({
       pageId: segment.pageId,
@@ -615,7 +633,13 @@ function createTimerGlobalActiveBar(
 function createTimerPageTimeline(
   ctx: PluginContext,
 ): ComponentType<TimerPageTimelineProps> {
+  const commandExecutor = readPluginScopedCommandExecutor(ctx);
+
   function TimerPageTimeline({ page }: TimerPageTimelineProps) {
+    const [segmentsRevision, refreshSegments] = useReducer(
+      (revision: number) => revision + 1,
+      0,
+    );
     const segments = listTimelineSegments(ctx, page.id);
 
     return createElement(
@@ -629,20 +653,16 @@ function createTimerPageTimeline(
         ? createElement("p", null, "No time segments")
         : createElement(
             "ol",
-            null,
-            segments.map(({ noteLines, segment }) =>
+            { key: segmentsRevision },
+            segments.map((timelineSegment) =>
               createElement(
-                "li",
-                { key: segment.segmentId },
-                createElement("time", { dateTime: segment.startAt }, segment.startAt),
-                createElement("span", null, ` ${segment.durationSeconds}s`),
-                noteLines.map((line, index) =>
-                  createElement(
-                    "p",
-                    { key: `${segment.segmentId}-note-${index}` },
-                    line,
-                  ),
-                ),
+                TimerTimelineSegmentItem,
+                {
+                  ...timelineSegment,
+                  commandExecutor,
+                  key: timelineSegment.segment.segmentId,
+                  onSaved: refreshSegments,
+                },
               ),
             ),
           ),
@@ -652,10 +672,95 @@ function createTimerPageTimeline(
   return TimerPageTimeline;
 }
 
+function TimerTimelineSegmentItem({
+  commandExecutor,
+  noteLines,
+  noteMarkdown,
+  onSaved,
+  segment,
+}: TimerTimelineSegmentItemProps) {
+  const [draftMarkdown, setDraftMarkdown] = useState(noteMarkdown ?? "");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const hasNote = noteMarkdown !== null;
+
+  function openEditor(): void {
+    setDraftMarkdown(noteMarkdown ?? "");
+    setIsEditing(true);
+  }
+
+  async function saveNote(): Promise<void> {
+    setIsSaving(true);
+    setIsEditing(false);
+
+    try {
+      await commandExecutor.execute(addTimerNoteCommandId, {
+        segmentId: segment.segmentId,
+        markdown: draftMarkdown,
+      });
+      onSaved();
+    } catch {
+      setIsEditing(true);
+      ignoreControlFailure();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return createElement(
+    "li",
+    null,
+    createElement("time", { dateTime: segment.startAt }, segment.startAt),
+    createElement("span", null, ` ${segment.durationSeconds}s`),
+    noteLines.map((line, index) =>
+      createElement(
+        "p",
+        { key: `${segment.segmentId}-note-${index}` },
+        line,
+      ),
+    ),
+    createElement(
+      "button",
+      {
+        onClick: openEditor,
+        type: "button",
+      },
+      hasNote ? "Edit Note" : "Add Note",
+    ),
+    isEditing
+      ? createElement(
+          "form",
+          {
+            onSubmit: (event) => {
+              event.preventDefault();
+              void saveNote();
+            },
+          },
+          createElement("label", null, "Note"),
+          createElement("textarea", {
+            "aria-label": "Note",
+            onChange: (event: ChangeEvent<HTMLTextAreaElement>) => {
+              setDraftMarkdown(event.currentTarget.value);
+            },
+            value: draftMarkdown,
+          }),
+          createElement(
+            "button",
+            {
+              disabled: isSaving,
+              type: "submit",
+            },
+            "Save Note",
+          ),
+        )
+      : null,
+  );
+}
+
 function listTimelineSegments(
   ctx: PluginContext,
   pageId: string,
-): Array<{ noteLines: string[]; segment: TimeSegmentDto }> {
+): TimelineSegment[] {
   const events = ctx.events.list({ namespace: timerNamespace });
   const notePageIds = collectNotePageIds(events, pageId);
 
@@ -667,13 +772,17 @@ function listTimelineSegments(
     }
 
     const notePageId = notePageIds.get(segment.segmentId);
-    const noteLines = notePageId === undefined
-      ? []
-      : readNotePageLines(ctx, notePageId);
+    const noteMarkdown =
+      notePageId === undefined ? null : readNotePageMarkdown(ctx, notePageId);
+    const noteLines =
+      noteMarkdown === null
+        ? []
+        : noteMarkdown.split("\n").filter((line) => line.length > 0);
 
     return [
       {
         noteLines,
+        noteMarkdown,
         segment,
       },
     ];
@@ -697,14 +806,43 @@ function collectNotePageIds(
   return notePageIds;
 }
 
-function readNotePageLines(ctx: PluginContext, notePageId: string): string[] {
+function readNotePageMarkdown(
+  ctx: PluginContext,
+  notePageId: string,
+): string | null {
   try {
-    return exportStructuredDocumentToMarkdown(ctx.pages.get(notePageId).body)
-      .split("\n")
-      .filter((line) => line.length > 0);
+    return exportStructuredDocumentToMarkdown(ctx.pages.get(notePageId).body);
   } catch {
-    return [];
+    return null;
   }
+}
+
+function readPluginScopedCommandExecutor(
+  ctx: PluginContext,
+): TimerCommandExecutor {
+  const value = (ctx as Record<PropertyKey, unknown>)[
+    pluginScopedCommandExecutorKey
+  ];
+
+  if (isTimerCommandExecutor(value)) {
+    return value;
+  }
+
+  return {
+    execute: (commandId) =>
+      Promise.reject(
+        new Error(`Timer timeline cannot execute command ${commandId}`),
+      ),
+  };
+}
+
+function isTimerCommandExecutor(value: unknown): value is TimerCommandExecutor {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "execute" in value &&
+    typeof value.execute === "function"
+  );
 }
 
 function useVisibleElapsed(timer: ActiveTimerState | null): {
@@ -1091,6 +1229,10 @@ function readTimeSegmentPayload(payload: unknown): TimeSegmentDto | null {
 
 function createCurrentInstant(): string {
   return createInstantFromMs(Date.now());
+}
+
+function createCurrentSecondInstant(): string {
+  return createInstantFromMs(Math.floor(Date.now() / 1_000) * 1_000);
 }
 
 function createInstantFromMs(milliseconds: number): string {
