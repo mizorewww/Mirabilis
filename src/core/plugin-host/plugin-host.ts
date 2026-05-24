@@ -702,17 +702,16 @@ class PluginHostImpl implements PluginHostInstance {
     pluginId: string,
   ): PluginScopedCommandExecutor {
     return {
-      execute: (commandId, input) => {
-        if (
-          typeof commandId !== "string" ||
-          !commandBelongsToPlugin(commandId, pluginId)
-        ) {
-          return Promise.reject(
-            new Error(`Plugin ${pluginId} cannot execute command ${commandId}`),
+      execute: async (commandId, input) => {
+        if (typeof commandId !== "string") {
+          throw new Error(
+            `Plugin ${pluginId} cannot execute command ${commandId}`,
           );
         }
 
-        return this.registries.commands.execute(commandId, input);
+        const descriptor = this.getOwnedCommandDescriptor(pluginId, commandId);
+
+        return this.registries.commands.execute(descriptor.id, input);
       },
     };
   }
@@ -1310,10 +1309,6 @@ function assertCanMutatePluginData(scope: PluginContextScope): void {
       phase: scope.phase,
     },
   );
-}
-
-function commandBelongsToPlugin(commandId: string, pluginId: string): boolean {
-  return commandId === pluginId || commandId.startsWith(`${pluginId}.`);
 }
 
 function createPluginPageStore(
