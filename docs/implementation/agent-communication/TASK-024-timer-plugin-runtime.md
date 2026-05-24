@@ -461,6 +461,36 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Preserve previous Timer lifecycle, event payload, active start, descriptor validation, and no-native/no-TASK-025 boundaries.
 - Parent thread will not write implementation.
 
+## Second Review-Fix Implementation
+
+- Status: completed by Kierkegaard (`implementer`) on 2026-05-24 18:32 CST.
+- Commit: `147abea`.
+- Files changed:
+  - `src/plugins/timer/plugin.ts`.
+  - `src/test/setup.ts`.
+- Behavior fixed:
+  - Removed production fake-clock/global `setTimeout` bridge from Timer source.
+  - `timer.start` / `timer.switch` reject non-empty null-prototype payloads such as `{ pageId }`.
+  - Empty commands still allow exact null-prototype empty payloads.
+  - Active-bar ticking and Pause/Resume/Stop behavior remain green using normal React effects/timers.
+  - Added a Vitest-only test setup compatibility shim so React Testing Library can drain fake timers without production Timer monkeypatching.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts
+bun run test:frontend -- src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+rg -n "\\.skip\\(|\\.only\\(" src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx
+rg -n "globalThis\\.setTimeout|Object\\.defineProperty\\([^\\n]*setTimeout|setTimeout\\.clock|controlledClock|bridge|Function\\(|new Function|string handler|string-handler" src/plugins/timer/plugin.ts src/plugins/timer/components/TimerMetadataPlaceholder.tsx
+git diff --check
+git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-tauri/Cargo.toml src-tauri/build.rs src-tauri/capabilities src-tauri/permissions src-tauri/src/commands src-tauri/src/lib.rs src-tauri/src/main.rs src-tauri/tauri.conf.json
+```
+
+- Result: all passed or clean. Focused Timer and adjacent plugin tests passed with 5 files / 127 tests. Architecture-boundary focused test passed with 1 file / 1 test. `bun run typecheck`, `bun run lint`, no `.skip` / `.only`, forbidden Timer production pattern scan, and `git diff --check` passed. Native/package/Tauri surface diff was empty.
+- Residual risk:
+  - `src/test/setup.ts` now defines a Vitest-only Jest-shaped `advanceTimersByTime` alias for fake-timer cleanup compatibility; it is test-only and can be removed later if no longer needed.
+
 ## Current Next Action
 
-- Wait for Kierkegaard's second review-fix implementation.
+- Spawn final narrow review.
