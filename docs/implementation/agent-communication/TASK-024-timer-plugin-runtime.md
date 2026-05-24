@@ -278,6 +278,33 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Timer-scoped command surface for active-bar controls where testable.
 - Parent thread will not write review-fix tests.
 
+## Review-Fix Regression Tests
+
+- Status: completed by Pasteur (`test_writer`) on 2026-05-24 17:12 CST.
+- Commit: `55580a4`.
+- Files changed:
+  - `src/test/timer-plugin-runtime.test.tsx`.
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - Visible active-bar elapsed updates on the same displayed element, plus pause/resume/stop control state.
+  - Production Timer guard against `Function(`, string timer handler eval, `window.setTimeout` monkeypatch, production jsdom branch, and broad active-bar command execution.
+  - Real MetadataBar Start path through runtime, asserting `timer.started`, active state, and global active bar refresh.
+  - Direct `timer.start` while active as switch-like stop/start, including same-page restart.
+  - `timer.started` event payload contract uses `startAt`, while DTO can keep `startedAt`.
+  - Descriptor/prototype-safe payload rejection: arrays, accessors, symbols, non-enumerables, prototype-carried fields, `__proto__`, `constructor`, `prototype`, and null-prototype empty payload.
+  - Switch edge cases and rejected active-bar control recovery.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts
+bun run typecheck
+bunx eslint src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx --max-warnings=0
+rg -n "\\.skip\\(|\\.only\\(" src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx
+git diff --cached --check
+```
+
+- Result: expected red signal. Focused tests ran 5 files / 126 tests with 7 failed / 119 passed. Failures matched accepted review findings: missing `startAt`, missing `stoppedTimer` for active `timer.start`, unsafe payload accepted, visible elapsed not ticking, control UI desync after rejected command, production eval/jsdom monkeypatch/broad executor guard, and real MetadataBar Start payload mismatch. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
+
 ## Current Next Action
 
-- Wait for Pasteur's review-fix regression tests.
+- Delegate review-fix implementation to `implementer`.
