@@ -58,7 +58,7 @@ Status markers:
 ## Milestone M5: Metadata and timer loop
 
 - [x] TASK-023: Implement Metadata UI Plugin
-- [ ] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
+- [~] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
 - [ ] TASK-025: Implement Time Segment and Time Segment Note
 
 ## Milestone M6: Calendar and reporting
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-24 16:05 CST - TASK-024 started
+
+- Branch: `feat/task-024-timer-plugin-runtime`.
+- Task: Implement Timer Plugin start/stop/pause/resume/switch.
+- Start point: `master` after TASK-023 merge validation commit `d711b15`.
+- Source docs read: `docs/implementation/task-index.md#task-024-implement-timer-plugin-startstoppauseresumeswitch`, `docs/product/05-built-in-plugins.md#18-timer-plugin`, `docs/architecture/05-plugin-implementations.md#11-timer-plugin-代码架构`, `docs/architecture/07-runtime-flows.md#187-用户点击-start`, `docs/development/01-data-roadmap-and-mvp.md#phase-5timer-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-5timer-plugin`, plus related Timer references in `docs/product/04-editor-and-workflows.md` and `docs/product/06-view-slots.md`.
+- Initial scope: Timer Plugin command registration for `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`; one global active timer UI/state; start associates a timer with a page/task; switch handles the previous active timer according to documented behavior.
+- Initial out of scope until agents narrow otherwise: TASK-025 Time Segment persistence/note-page workflow, Calendar/Stats/ML aggregation, native/Tauri/package changes, persistence schema changes, filesystem/IPC changes, release packaging, and direct Task Plugin private-state mutation.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-024-timer-plugin-runtime.md`.
 
 ### 2026-05-24 16:03 CST - TASK-023 merged
 
