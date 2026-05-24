@@ -361,4 +361,15 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Run final TASK-023 branch gates.
+## Final Branch Gates
+
+- Status: passed on 2026-05-24 16:02 CST.
+- Checks:
+  - `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `bun run build` passed.
+- Parent decision:
+  - Mark TASK-023 `[x]`, commit final progress, merge branch to `master`, run merge-result checks, and continue to TASK-024.
+
+## Current Next Action
+
+- Commit final TASK-023 progress and merge to `master`.

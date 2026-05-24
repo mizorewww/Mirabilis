@@ -57,7 +57,7 @@ Status markers:
 
 ## Milestone M5: Metadata and timer loop
 
-- [~] TASK-023: Implement Metadata UI Plugin
+- [x] TASK-023: Implement Metadata UI Plugin
 - [ ] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
 - [ ] TASK-025: Implement Time Segment and Time Segment Note
 
@@ -78,6 +78,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-24 16:02 CST - TASK-023 completed
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Final branch gates passed: `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests; `bun run build` passed.
+- Completion commits on branch: `bc30f82` acceptance tests, `38910da` implementation, `c19517c` review-fix tests, `12dc21b` review-fix implementation, `7fa761e` docs sync, plus parent orchestration/progress commits.
+- Remaining accepted risks: future test hardening for stale/inactive host records, explicit `prototype` unsafe segment coverage, and sloppy command-prefix edge cases; docs note the Timer slot ID mismatch between early handoff wording and current source-aligned `timer.page-header-metadata.placeholder`.
+- Next action: merge `feat/task-023-metadata-ui-plugin` to `master`, run merge-result checks, and continue to TASK-024.
 
 ### 2026-05-24 15:51 CST - TASK-023 docs sync completed
 
