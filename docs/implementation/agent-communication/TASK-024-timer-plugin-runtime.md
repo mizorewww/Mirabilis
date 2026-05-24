@@ -153,4 +153,16 @@
 
 ## Current Next Action
 
-- Delegate failing acceptance tests to `test_writer`.
+## Acceptance Test Handoff
+
+- Delegated to Leibniz (`test_writer`) on 2026-05-24 16:17 CST.
+- Required scope:
+  - Built-in Timer registers canonical command IDs and not stale `timer.start_timer` / `timer.stop_timer`.
+  - Timer command payload validation, lifecycle events, active runtime state, pause/resume/stop/switch behavior, and no TASK-025 segment/note side effects.
+  - Timer-owned `global.floating` active bar and metadata Start control through scoped command execution.
+  - Boundary/security tests for narrow DTO results, inert UI rendering, no raw handles, and no native/package/Tauri surface.
+- Parent thread will not write tests.
+
+## Current Next Action
+
+- Wait for Leibniz's failing acceptance tests.

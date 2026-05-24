@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 16:15 CST.
+Last updated: 2026-05-24 16:17 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 16:15 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 pre-test guidance completed; acceptance tests are next.
+- Current phase: TASK-024 failing acceptance tests are in progress.
 
 ## Active Agents
 
-- None.
+- Leibniz (`test_writer`) is writing TASK-024 failing acceptance tests for Timer commands, state transitions, active bar UI, metadata Start control, and boundary guards.
 
 ## Completed Recent Task
 
@@ -151,8 +151,8 @@ Last updated: 2026-05-24 16:15 CST.
 
 ## Next Actions
 
-1. Commit TASK-024 pre-test guidance decisions.
-2. Delegate failing acceptance tests to `test_writer`.
+1. Wait for Leibniz's failing acceptance tests.
+2. Validate the expected red signal, commit tests, then delegate implementation.
 
 ## Current TASK-021 State
 
