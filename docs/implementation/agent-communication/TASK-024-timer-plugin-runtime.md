@@ -233,19 +233,36 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Remaining risk from implementer:
   - Active-bar elapsed UI is intentionally minimal for TASK-024; richer live ticking/polish can be handled in a later Timer UI slice.
 
-## Current Next Action
-
 ## Focused Review
 
 - Started on 2026-05-24 16:56 CST.
-- Active agents:
-  - Russell (`pr_explorer`) is mapping TASK-024 changed files, behavior surfaces, and review hotspots.
-  - Parfit (`reviewer`) is reviewing correctness, state transitions, events, UI, and edge cases.
-  - Ohm (`security_reviewer`) is reviewing Timer command/state/event/UI security boundaries.
-  - Maxwell (`deprecation_auditor`) is reviewing API/deprecation and architecture-boundary risks.
-  - Zeno (`test_quality_reviewer`) is reviewing TASK-024 acceptance test quality.
-- Docs drift reviewer is pending because the agent thread limit was reached; parent will spawn it after a slot frees.
+- Completed on 2026-05-24 by Russell (`pr_explorer`), Parfit (`reviewer`), Ohm (`security_reviewer`), Maxwell (`deprecation_auditor`), Zeno (`test_quality_reviewer`), and Plato (`docs_researcher`).
+- P0 findings: none.
+- Accepted P1 findings:
+  - Active timer bar does not show real elapsed/state updates. It computes elapsed only at render time, has no ticking re-render, suppresses pause/resume notifications, and current tests can pass against hidden/offscreen probe text.
+  - Production Timer code contains a jsdom/test workaround that monkeypatches `window.setTimeout` and executes string handlers through `Function(handler)()`, violating the no-eval production boundary.
+  - Active timer UI tests are too brittle and must prove the same displayed elapsed value/control state changes, not hidden duplicate text.
+  - Metadata Start test is too mocked and must prove the real runtime command path appends `timer.started`, sets active timer state, and can refresh/show the global active bar.
+  - Direct `timer.start` while a timer is already active is untested and must be pinned.
+- Accepted P2 findings:
+  - `timer.started` event payload currently uses `startedAt`, while architecture docs and later Time Segment sketches expect `startAt`.
+  - Exact payload validation is not plain-data/descriptor-safe; accessor properties, non-enumerable/symbol fields, arrays, prototype-carried fields, and prototype-shaped inputs need fail-closed coverage.
+  - Invalid active-bar controls can desync UI from active state because command failure is swallowed and notification suppression can remain armed.
+  - `timer.global-active-bar` currently accepts a broad `commands.execute(commandId, input)` prop; global slot mounting should move toward a timer-scoped command executor or narrower control callbacks.
+  - Switch edge coverage is incomplete: no-active switch, paused switch, same-page switch, and missing-page switch preserving existing active state/events.
+- Docs drift for later `doc_writer`:
+  - Remove or mark stale old command IDs `timer.start_timer` / `timer.stop_timer`.
+  - Replace TASK-023-era "Timer has no commands / disabled placeholder" wording.
+  - Document TASK-024 current behavior while preserving Time Segment creation, note pages, total tracked metadata, timeline UI, Calendar, and Stats as TASK-025+ scope.
+  - Add TASK-024 testing strategy guidance.
+- Parent decisions for review-fix:
+  - Write failing regression tests first.
+  - Remove production jsdom monkeypatch/eval behavior rather than moving it into production code.
+  - Make the visible active bar tick/re-render while running and update controls based on state.
+  - Direct `timer.start({ pageId })` while a timer is active should behave like the documented start sketch / switch-like behavior: stop the previous active timer, append `timer.stopped`, start the new page timer, append `timer.started`, return `{ activeTimer, stoppedTimer }`, and emit no pause or TASK-025 events.
+  - Timer lifecycle event payloads should use `startAt` / `pausedAt` / `resumedAt` / `stoppedAt` event fields; command DTOs may keep `startedAt` for active timer snapshots.
+  - Exact payload validation should reject non-plain records, arrays, accessors, symbols, prototype-carried fields, and prototype-shaped keys such as `__proto__`, `constructor`, and `prototype`.
 
 ## Current Next Action
 
-- Wait for focused review agents, then spawn docs drift review.
+- Delegate review-fix regression tests to `test_writer`.
