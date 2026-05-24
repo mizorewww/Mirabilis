@@ -196,4 +196,17 @@
 
 ## Current Next Action
 
-- Commit review-fix test validation summary, then delegate timeline note UI implementation to `implementer`.
+## Review-Fix Implementation Handoff
+
+- Anscombe (`implementer`) started 2026-05-24 19:35 CST.
+- Scope: minimum production Timer Plugin update for accessible Add/Edit Note UI in `timer.page-timeline.segments`.
+- Required behavior:
+  - Add accessible `Add Note` button for unnoted segments.
+  - Add accessible `Edit Note` button for noted segments.
+  - Show an accessible note textbox and `Save Note` button.
+  - Save through Timer-owned note behavior so Markdown Page notes are created/updated, `time_segment_note_added` events are appended, and timeline inert text refreshes.
+  - Preserve narrow UI props and avoid native/Tauri/package/Rust/schema, fake-clock/eval/string-handler, and Core Timer service surfaces.
+
+## Current Next Action
+
+- Wait for Anscombe (`implementer`) to finish review-fix implementation, validate focused tests/checks, and commit implementation if green.

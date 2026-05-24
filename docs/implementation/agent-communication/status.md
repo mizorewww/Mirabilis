@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:34 CST.
+Last updated: 2026-05-24 19:35 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:34 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 review-fix tests committed; review-fix implementation is next.
+- Current phase: TASK-025 review-fix implementation delegated to Anscombe (`implementer`).
 
 ## Active Agents
 
-- None.
+- Anscombe (`implementer`) is adding accessible Add/Edit Note UI wiring to the Timer page timeline slot. Scope is production Timer Plugin TypeScript only; no tests, commits, pushes, merges, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:34 CST.
 
 ## Next Actions
 
-1. Commit review-fix test validation summary.
-2. Delegate timeline note UI implementation to `implementer`.
+1. Wait for Anscombe (`implementer`) to finish review-fix implementation.
+2. Validate focused tests/checks and commit implementation if green.
 
 ## Current TASK-021 State
 
