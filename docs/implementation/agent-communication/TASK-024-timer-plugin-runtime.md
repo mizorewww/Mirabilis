@@ -401,4 +401,15 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents.
+## Narrow Post-Fix Review
+
+- Started on 2026-05-24 18:13 CST.
+- Active agents:
+  - Galileo (`reviewer`) is checking post-fix correctness and previously accepted P1/P2 behavior.
+  - Ramanujan (`security_reviewer`) is checking post-fix security and boundary fixes.
+  - Mendel (`test_quality_reviewer`) is checking review-fix test quality and false-positive risks.
+  - Tesla (`deprecation_auditor`) is checking post-fix API/deprecation and architecture boundaries.
+
+## Current Next Action
+
+- Wait for narrow post-fix review agents.

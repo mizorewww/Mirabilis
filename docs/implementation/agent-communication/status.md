@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 18:12 CST.
+Last updated: 2026-05-24 18:13 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-24 18:12 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 review-fix implementation is committed; narrow post-fix review is next.
+- Current phase: TASK-024 narrow post-fix review is in progress.
 
 ## Active Agents
 
-- None.
+- Galileo (`reviewer`) is checking post-fix correctness and previously accepted P1/P2 behavior.
+- Ramanujan (`security_reviewer`) is checking post-fix security and boundary fixes.
+- Mendel (`test_quality_reviewer`) is checking review-fix test quality and false-positive risks.
+- Tesla (`deprecation_auditor`) is checking post-fix API/deprecation and architecture boundaries.
 
 ## Completed Recent Task
 
@@ -151,8 +154,8 @@ Last updated: 2026-05-24 18:12 CST.
 
 ## Next Actions
 
-1. Spawn narrow post-fix review agents.
-2. If no P0/P1 findings remain, proceed to formal docs sync.
+1. Wait for narrow post-fix review agents.
+2. If no P0/P1/P2 findings remain, proceed to formal docs sync.
 
 ## Current TASK-021 State
 
