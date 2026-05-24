@@ -154,6 +154,14 @@
 - Aristotle (`deprecation_auditor`) started 2026-05-24 19:25 CST to review stale/deprecated API usage and docs drift.
 - Nash (`test_quality_reviewer`) started 2026-05-24 19:25 CST to review TASK-025 test quality and coverage.
 
+## Focused Review Outcomes
+
+- Halley (`pr_explorer`) completed diff mapping. Confirmed `master` is an ancestor, worktree was clean at review time, changed surfaces are docs plus TypeScript plugin/runtime tests only, no package/Cargo/Tauri/native/capability/permission/Rust files changed, and focused Timer tests passed. Hotspots: note linkage is event-derived, timeline reads Timer events on render, and unreadable note pages are currently ignored.
+- Beauvoir (`reviewer`) found no P0/P1/P2 correctness findings. It verified finalization paths use `finalizeActiveTimer`, event ordering is `timer.stopped` then `timer.time_segment_created`, `timer.add-note` leaves original segment events immutable, and timeline filters current-page Timer-owned segment events. Residual non-blocking risk: no dedicated Timer test injects note page create/update success followed by event append failure; shared transaction tests and invalid-payload no-mutation tests cover the general rollback contract.
+- Gauss (`security_reviewer`) found no P0/P1/P2 security findings. It confirmed no native/Tauri/Rust/package/schema/native bridge changes, exact payload hardening, Timer-owned segment derivation, Plugin Host `sourcePluginId` injection, transactional note/event writes, inert timeline rendering, and structured Markdown note content.
+- Aristotle (`deprecation_auditor`) found no P0/P1 API findings and no code/API drift. P2 docs drift remains for doc sync: formal docs and communication notes should describe event records as `namespace: "timer", type: "time_segment_created"` / `type: "time_segment_note_added"`, replace stale `timer.add_note` with `timer.add-note`, and keep Timer metadata totals deferred.
+- Nash (`test_quality_reviewer`) found P1: tests lack a real UI note create/edit path, so missing/stale Note UI wiring would not be caught. Accepted P2 hardening: timeline tests should cover wrong-owner/malformed `time_segment_note_added` events attached to valid segments, and tests should assert `timer.add-note` result shape. Accepted non-blocking gaps: explicit empty/unnoted timeline display and broader inert unsafe-line assertions can be covered if concise.
+
 ## Current Next Action
 
-- Wait for focused review agents, record findings, and delegate review-fix tests/implementation if needed.
+- Commit focused review findings, then delegate review-fix tests for Nash's P1/P2 accepted findings.
