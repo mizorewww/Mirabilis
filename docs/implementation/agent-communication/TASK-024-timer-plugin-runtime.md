@@ -364,6 +364,16 @@ git diff --cached --check
   - Remaining failure is the known active-bar fake-timer/user-event issue.
   - `bun run typecheck`, focused eslint, `git diff --check`, and no `.skip` / `.only` passed.
 
+## Replacement Review-Fix Implementation Handoff
+
+- Delegated to Popper (`implementer`) on 2026-05-24 17:47 CST.
+- Required scope:
+  - Preserve and refine Dewey's uncommitted `src/plugins/timer/plugin.ts` production changes.
+  - Resolve the remaining active-bar fake-timer/user-event failure.
+  - Keep exact null-prototype empty payloads valid for empty commands and unsafe non-empty/prototype payloads rejected.
+  - Keep active-bar commands timer-scoped, no production eval/jsdom monkeypatch, no native/package/Tauri/Core Timer business changes.
+- Parent thread will not write implementation.
+
 ## Current Next Action
 
-- Delegate remaining review-fix implementation to a replacement `implementer`.
+- Wait for Popper's replacement review-fix implementation.

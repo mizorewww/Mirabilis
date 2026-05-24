@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 17:46 CST.
+Last updated: 2026-05-24 17:47 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 17:46 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 test conflict adjustment is committed; replacement review-fix implementation is next.
+- Current phase: TASK-024 replacement review-fix implementation is in progress.
 
 ## Active Agents
 
-- None.
+- Popper (`implementer`) is completing the review-fix implementation from Dewey's partial Timer production changes, focused on the remaining active-bar fake-timer/user-event failure.
 
 ## Completed Recent Task
 
@@ -151,7 +151,7 @@ Last updated: 2026-05-24 17:46 CST.
 
 ## Next Actions
 
-1. Delegate remaining active-bar review-fix implementation to a replacement `implementer`.
+1. Wait for Popper's replacement review-fix implementation.
 2. Validate focused tests until green, then commit review-fix implementation.
 
 ## Current TASK-021 State
