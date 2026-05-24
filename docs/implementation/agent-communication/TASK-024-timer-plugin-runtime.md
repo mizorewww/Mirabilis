@@ -163,6 +163,36 @@
   - Boundary/security tests for narrow DTO results, inert UI rendering, no raw handles, and no native/package/Tauri surface.
 - Parent thread will not write tests.
 
+## Acceptance Tests
+
+- Status: completed by Leibniz (`test_writer`) on 2026-05-24 16:24 CST.
+- Commit: `277ba9a`.
+- Files changed:
+  - `src/test/timer-plugin-runtime.test.tsx`.
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - Canonical Timer commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`.
+  - Stale command IDs `timer.start_timer` and `timer.stop_timer` are not registered.
+  - Timer lifecycle events use namespace `timer` and types `started`, `paused`, `resumed`, and `stopped`.
+  - Start, pause, resume, stop, and switch state transitions, elapsed freezing, stop-from-paused, and switch without pause.
+  - Exact payload validation and dangerous caller-supplied fields rejected without mutation.
+  - Narrow DTO results, internally generated `segmentId`, and no raw handles/event records.
+  - No TASK-025 side effects: no `time_segment_created`, note pages, or timer metadata totals.
+  - Registration-scoped active state to catch cross-runtime leakage.
+  - Timer-owned `global.floating` active bar UI with inert unsafe titles, elapsed time, lifecycle controls, and metadata Start control through scoped command execution.
+  - Native/package/Tauri surface guard.
+- Parent validation:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-view-slot-registry.test.ts
+bun run typecheck
+bunx eslint src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx --max-warnings=0
+rg -n "\\.skip\\(|\\.only\\(" src/test/timer-plugin-runtime.test.tsx src/test/metadata-ui-plugin.test.tsx
+git diff --cached --check
+```
+
+- Result: expected red signal. Focused tests ran 5 files / 120 tests with 9 failed / 111 passed. Failures were missing TASK-024 behavior: Timer commands are not registered, `timer.start` is `COMMAND_NOT_FOUND`, `timer.global-active-bar` is missing, and metadata Start is still disabled. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
+
 ## Current Next Action
 
-- Wait for Leibniz's failing acceptance tests.
+- Delegate implementation to `implementer`.
