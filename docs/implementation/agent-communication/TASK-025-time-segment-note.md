@@ -49,6 +49,21 @@
 - James (`deprecation_auditor`) started 2026-05-24 18:58 CST to audit canonical command/event/view/slot IDs and stale API risks.
 - Descartes (`security_reviewer`) started 2026-05-24 18:58 CST to review note/page/event boundaries and negative test guidance.
 
+## Pre-Test Guidance Outcomes
+
+- Locke (`planner`) completed read-only planning. Recommendation: keep TASK-025 entirely inside Timer Plugin and TypeScript runtime tests; finalizing an active timer through explicit `timer.stop`, active `timer.start`, or `timer.switch` should append `timer.time_segment_created`; keep `notePageId` optional; create/edit notes through a Timer-owned command; render page segments through a `timer.page-timeline.segments` contribution on `page.timeline`; defer Calendar/Stats/ML, native/schema/Rust/Tauri/package changes, metadata totals, manual segments, Recently Worked, and Unnoted Sessions.
+- Lorentz (`docs_researcher`) completed read-only current-doc and testing guidance. Recommendation: use current React 19 / Testing Library / Vitest patterns, semantic RTL queries, `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })` when fake timers and user-event mix, no `react-dom/test-utils`, camelCase Timer payload names, and focused Timer/page/event/store validation.
+- James (`deprecation_auditor`) completed read-only API audit. Recommendation: event records use `namespace: "timer"` and simple `type: "time_segment_created"` / `type: "time_segment_note_added"`; avoid stale `timer.start_timer`, `timer.stop_timer`, underscore future command names, metadata totals, Core TimeSegmentStore, native/Tauri commands, SQLite schema, event mutation APIs, and fake-clock/eval/string-handler production code.
+- Descartes (`security_reviewer`) completed read-only security guidance. Recommendation: `timer.stop` remains exact empty input; `timer.time_segment_created` derives from Timer-owned active state only; note content remains a Markdown Page; segment/note operations are atomic; timeline renders narrow inert data and ignores malformed/wrong-owner/cross-page events; native/package/Rust/Tauri/capability/permission surfaces stay unchanged.
+
+## Parent Decisions After Guidance
+
+- Canonical note command for TASK-025 is `timer.add-note`, matching existing hyphenated multi-word command style (`tag.add-tag`, `task.open-task-page`) while avoiding stale underscore names.
+- `timer.add-note({ segmentId, markdown })` creates a Markdown Page note for a stopped segment on first call and updates the same note page on later calls.
+- The original `timer.time_segment_created` event remains immutable; note linkage is represented by `timer.time_segment_note_added` event(s), and timeline/DTO logic derives the note page from Timer-owned note-link events.
+- `timer.stop`, active `timer.start`, and `timer.switch` all create a Time Segment when they stop an active timer. Preserve ordering: `timer.stopped` before `timer.time_segment_created`.
+- Segment payloads should use camelCase and omit absent optional fields rather than writing `undefined`.
+
 ## Current Next Action
 
-- Wait for TASK-025 pre-test guidance agents, record their findings, and delegate failing acceptance tests to `test_writer`.
+- Delegate failing acceptance tests to `test_writer`.
