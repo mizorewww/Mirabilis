@@ -715,19 +715,74 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       expect(listTimerEvents(runtime), label).toStrictEqual(originalEvents);
     }
 
-    await expect(
-      executeTimerCommand(runtime, "timer.pause", Object.create(null)),
-      "null-prototype empty payload",
-    ).rejects.toBeInstanceOf(Error);
-    expect(listTimerEvents(runtime)).toStrictEqual(originalEvents);
+    const invalidEmptyCommandInputs: Array<{
+      commandId: Extract<
+        TimerCommandId,
+        "timer.pause" | "timer.resume" | "timer.stop"
+      >;
+      input: unknown;
+      label: string;
+    }> = [
+      {
+        commandId: "timer.pause",
+        input: createNullPrototypeExtraPayload("segmentId", "caller-segment"),
+        label: "null-prototype pause extra payload",
+      },
+      {
+        commandId: "timer.resume",
+        input: createNullPrototypeExtraPayload("durationSeconds", 1),
+        label: "null-prototype resume extra payload",
+      },
+      {
+        commandId: "timer.stop",
+        input: createNullPrototypeExtraPayload("sourcePluginId", timerPluginId),
+        label: "null-prototype stop extra payload",
+      },
+    ];
 
-    const stopResult = await executeTimerCommand(runtime, "timer.stop");
+    for (const { commandId, input, label } of invalidEmptyCommandInputs) {
+      await expect(
+        executeTimerCommand(runtime, commandId, input),
+        label,
+      ).rejects.toBeInstanceOf(Error);
+      expect(listTimerEvents(runtime), label).toStrictEqual(originalEvents);
+    }
+
+    const pausedResult = await executeTimerCommand(
+      runtime,
+      "timer.pause",
+      createNullPrototypeEmptyPayload(),
+    );
+    expectResultActiveTimer(pausedResult, {
+      pageId: page.id,
+      status: "paused",
+      segmentId: activeTimer.segmentId,
+    });
+    expectTimerEvents(runtime, ["started", "paused"]);
+
+    const resumedResult = await executeTimerCommand(
+      runtime,
+      "timer.resume",
+      createNullPrototypeEmptyPayload(),
+    );
+    expectResultActiveTimer(resumedResult, {
+      pageId: page.id,
+      status: "running",
+      segmentId: activeTimer.segmentId,
+    });
+    expectTimerEvents(runtime, ["started", "paused", "resumed"]);
+
+    const stopResult = await executeTimerCommand(
+      runtime,
+      "timer.stop",
+      createNullPrototypeEmptyPayload(),
+    );
     expectStoppedTimerResult(stopResult, {
       pageId: page.id,
       status: "stopped",
       segmentId: activeTimer.segmentId,
     });
-    expectTimerEvents(runtime, ["started", "stopped"]);
+    expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
   });
 
   it("keeps active timer state scoped to one Timer Plugin registration and never leaks across runtimes", async () => {
@@ -1331,6 +1386,24 @@ function createPrototypeShapedKeyPayload(
   Object.defineProperty(payload, key, {
     enumerable: true,
     value: "caller-controlled",
+  });
+
+  return payload;
+}
+
+function createNullPrototypeEmptyPayload(): Record<string, never> {
+  return Object.create(null) as Record<string, never>;
+}
+
+function createNullPrototypeExtraPayload(
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  const payload = Object.create(null) as Record<string, unknown>;
+
+  Object.defineProperty(payload, key, {
+    enumerable: true,
+    value,
   });
 
   return payload;
