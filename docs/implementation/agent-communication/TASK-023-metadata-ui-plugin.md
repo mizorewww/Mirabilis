@@ -331,6 +331,12 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Architecture-boundary test passed where run.
   - `bun run typecheck`, focused eslint, `git diff --check`, no `.skip` / `.only`, and native/package/Tauri guard passed where run.
 
+## Docs Sync Replacement
+
+- Parfit (`doc_writer`) started the formal TASK-023 docs sync after post-fix review, then disconnected before completion on 2026-05-24.
+- Parfit left uncommitted docs edits in product and architecture docs. Parent decision: keep the partial diff intact, do not repair docs in the parent thread, and delegate completion/repair to Pascal (`doc_writer`).
+- Pascal (`doc_writer`) is responsible for inspecting the partial diff, completing formal docs sync, running targeted stale-claim scans and `git diff --check`, and reporting remaining documentation gaps.
+
 ## Current Next Action
 
-- Parfit (`doc_writer`) is synchronizing formal TASK-023 product, architecture, development, implementation, and testing docs.
+- Wait for Pascal's replacement formal TASK-023 docs sync.
