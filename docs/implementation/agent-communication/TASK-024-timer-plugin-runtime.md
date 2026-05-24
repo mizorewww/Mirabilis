@@ -63,11 +63,94 @@
 
 ## Active Pre-test Guidance Agents
 
-- Feynman (`planner`) is planning the narrow Timer runtime, command, active-state, switch, UI, and deferred TASK-025 scope.
-- Erdos (`docs_researcher`) is checking current React, Testing Library, user-event, and Vitest fake-time/testing guidance.
-- Laplace (`deprecation_auditor`) is auditing Timer API/deprecation and architecture-boundary risks.
-- Wegener (`security_reviewer`) is auditing Timer command/state/event/UI security boundaries.
+- Completed on 2026-05-24 with Feynman (`planner`), Erdos (`docs_researcher`), Laplace (`deprecation_auditor`), and Wegener (`security_reviewer`).
+
+## Pre-test Guidance
+
+### Feynman - Planner
+
+- Status: completed read-only planning; no files edited, staged, committed, or pushed.
+- Recommended scope:
+  - TASK-024 should be a TypeScript-only Timer Plugin runtime slice.
+  - No native, persistence, schema, package, Rust, app-shell business wiring, Time Segment, or note-page work.
+  - Timer Plugin should register `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`.
+  - Use Timer events with namespace `timer` and types `started`, `paused`, `resumed`, and `stopped`.
+- Recommended command behavior:
+  - `timer.start({ pageId })` validates exact payload and page existence, appends `timer.started`, starts a running timer, and returns `{ activeTimer }`.
+  - `timer.pause()` is valid only for a running timer, appends `timer.paused`, freezes elapsed time, and returns `{ activeTimer }`.
+  - `timer.resume()` is valid only for a paused timer, appends `timer.resumed`, resumes elapsed time, and returns `{ activeTimer }`.
+  - `timer.stop()` is valid for a running or paused timer, appends `timer.stopped`, clears active state, and returns `{ activeTimer: null, stoppedTimer }`.
+  - `timer.switch({ pageId })` stops any previous active timer, appends `timer.stopped`, then starts the new page timer and appends `timer.started`; it does not pause the previous timer.
+- State/UI guidance:
+  - Represent the one global active timer with a Timer Plugin-owned registration-scoped in-memory store created inside `TimerPlugin.register(ctx)`, not a module singleton and not Core-owned state.
+  - Commit store changes only after event append/transaction success.
+  - Convert the existing metadata placeholder into a Timer-owned Start control in `page.header.metadata` for now because `page.header.actions` is not mounted.
+  - Register `timer.global-active-bar` to `global.floating`; tests can render it through SlotRegistry with narrow command props.
+- Deferred:
+  - `timer.time_segment_created`, Time Segment persistence, duration aggregation metadata, `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id`, note-page creation/editing, timeline UI, Calendar/Stats/ML integration, native storage, and schema work.
+
+### Erdos - Docs Researcher
+
+- Status: completed read-only current-doc/test research; no files edited, staged, committed, or pushed.
+- Official docs checked:
+  - React 19 testing deprecations, React `act`, `useEffect`, and `useSyncExternalStore`.
+  - Testing Library queries, async APIs, fake timers, and user-event v14 setup/options.
+  - Vitest fake timers/date/jsdom guidance.
+- Guidance:
+  - Existing TASK-023 metadata tests still assert Timer has no commands and disabled Start; TASK-024 tests should update that expectation.
+  - Prefer an injected clock for command/runtime tests where practical; use Vitest fake timers for elapsed active-bar rendering.
+  - With user-event and fake timers, use `userEvent.setup({ advanceTimers })`, advance interval-driven React updates inside `act`, and restore timers after each test.
+  - Avoid `react-dom/test-utils`, `react-test-renderer`, Enzyme, static `userEvent.click(...)`, `delay: null`, and `jest.*` APIs.
+
+### Laplace - API/Deprecation Auditor
+
+- Status: completed read-only API/deprecation audit; no files edited, staged, committed, or pushed.
+- P0 guardrail:
+  - Do not add Timer or Task business logic under `src/core`; existing architecture-boundary tests forbid `timer` in production Core files.
+- P1 guidance:
+  - Reuse existing plugin APIs: `ctx.commands.register`, `ctx.transaction.run`, `tx.pages.get`, `tx.events.append/list`, and `ctx.slots.register`.
+  - Do not invent `runtime.timer`, generic plugin storage, new Core Timer services, or native IPC.
+  - Use canonical command IDs only: `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`.
+  - Add explicit negative tests that old `timer.start_timer` and `timer.stop_timer` names are not registered.
+  - Events should use `{ namespace: "timer", type: "started" | "paused" | "resumed" | "stopped" }`, not dotted event types.
+  - Do not emit `timer.time_segment_created`, create note pages, or update total tracked metadata in TASK-024.
+- P2/docs sync:
+  - Later docs sync should update TASK-023 notes that said Timer has no commands and remove stale `timer.start_timer` / `timer.stop_timer` wording.
+
+### Wegener - Security Reviewer
+
+- Status: completed read-only security guidance; no files edited, staged, committed, or pushed.
+- P0 constraints:
+  - No new native/Tauri command/capability/package/Cargo/filesystem/path/network/eval/raw-SQL surface.
+  - Timer commands must validate exact payloads before mutation.
+  - `timer.start` and `timer.switch` should accept only `{ pageId: string }`; `timer.stop`, `timer.pause`, and `timer.resume` should accept no payload or an exact empty object.
+  - Do not accept caller-supplied segment IDs, timestamps, namespace/type, `sourcePluginId`, duration, mode, or ownership fields.
+  - Segment IDs must be generated internally.
+  - Active timer state must remain Timer Plugin-owned and must not mutate Task Plugin metadata, task page attrs, Core Timer-specific state, or another plugin's private state.
+  - UI must render page titles and timer labels as inert React text; no `dangerouslySetInnerHTML`, unsafe links, opener calls, raw HTML, or URL interpretation.
+- Security test recommendations:
+  - Reject malformed/extra payloads without changing active state/events.
+  - Verify command results are small DTOs without raw event records, stores, contexts, functions, or stack/secrets.
+  - Verify UI gets narrow props and no raw runtime/native/store handles.
+  - Add native/package/Tauri surface guard for TASK-024.
+
+## Parent Decisions After Pre-test Guidance
+
+- Implement TASK-024 as a narrow TypeScript-only Timer Plugin runtime slice.
+- Use the canonical command contracts and IDs from the task index:
+  - `timer.start({ pageId })`.
+  - `timer.stop()` / exact empty payload.
+  - `timer.pause()` / exact empty payload.
+  - `timer.resume()` / exact empty payload.
+  - `timer.switch({ pageId })`.
+- Use event namespace `timer` with types `started`, `paused`, `resumed`, and `stopped`.
+- Treat `timer.switch` as "stop previous active timer, then start the next page timer" because local architecture docs only specify `stopActiveTimer(tx)` and do not define pause-on-switch.
+- Represent active timer state in a Timer Plugin-owned registration-scoped in-memory store, created in `TimerPlugin.register(ctx)` and shared only with Timer command handlers and Timer-owned slot components.
+- Render the one global active timer through a Timer-owned `global.floating` slot contribution, not app-shell Timer-specific code.
+- Convert the current metadata placeholder into a Start control that executes `timer.start` through the scoped command executor while still receiving narrow metadata slot props.
+- Defer Time Segment creation, note pages, total tracked metadata, calendar/stats integration, timeline UI, native/persistence/schema work, and release packaging to later tasks.
+- Do not add Timer business logic to Core or widen public runtime handles.
 
 ## Current Next Action
 
-- Wait for pre-test guidance agents, record parent decisions, then delegate failing acceptance tests to `test_writer`.
+- Delegate failing acceptance tests to `test_writer`.
