@@ -193,6 +193,17 @@ git diff --cached --check
 
 - Result: expected red signal. Focused tests ran 5 files / 120 tests with 9 failed / 111 passed. Failures were missing TASK-024 behavior: Timer commands are not registered, `timer.start` is `COMMAND_NOT_FOUND`, `timer.global-active-bar` is missing, and metadata Start is still disabled. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
 
+## Implementation Handoff
+
+- Delegated to Lovelace (`implementer`) on 2026-05-24 16:26 CST.
+- Required scope:
+  - Minimum production code to satisfy committed TASK-024 tests.
+  - Timer-owned registration-scoped in-memory active timer state.
+  - Canonical Timer commands, lifecycle events, exact payload validation, and narrow DTO results.
+  - Timer-owned `global.floating` active bar and `page.header.metadata` Start control.
+  - No TASK-025 segment/note side effects and no native/package/Tauri/Core Timer business changes.
+- Parent thread will not write implementation.
+
 ## Current Next Action
 
-- Delegate implementation to `implementer`.
+- Wait for Lovelace's implementation.
