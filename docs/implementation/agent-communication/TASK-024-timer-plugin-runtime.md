@@ -451,6 +451,16 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Focused tests ran 5 files / 127 tests with 2 failed / 125 passed. Failures were expected: `timer.start` accepts non-empty null-prototype `{ pageId }`, and production Timer source still contains global `setTimeout` fake-clock bridge patterns.
   - `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
 
+## Second Review-Fix Implementation Handoff
+
+- Delegated to Kierkegaard (`implementer`) on 2026-05-24 18:22 CST.
+- Required scope:
+  - Remove production fake-clock/global timer monkeypatch bridge entirely.
+  - Keep active-bar ticking/control behavior passing without replacing timer globals.
+  - Reject non-empty null-prototype records for `timer.start` while preserving exact null-prototype empty payloads for pause/resume/stop.
+  - Preserve previous Timer lifecycle, event payload, active start, descriptor validation, and no-native/no-TASK-025 boundaries.
+- Parent thread will not write implementation.
+
 ## Current Next Action
 
-- Delegate second review-fix implementation to `implementer`.
+- Wait for Kierkegaard's second review-fix implementation.
