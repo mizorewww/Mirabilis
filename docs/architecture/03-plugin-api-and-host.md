@@ -63,6 +63,8 @@ export type PluginContributions = {
 
 TASK-022 后，`metadataFields` 还被 Plugin Host 用来派生 metadata owner reservations。这个派生只接受 complete valid descriptor：`namespace === manifest.id`、`namespace` / `key` 都是 metadata-safe segment、`valueType` 是有效 metadata value type。malformed、non-array 或 incomplete descriptors 不 reserve namespace。该 reservation 只建立 ownership/trust boundary，不代表 renderer/editor runtime 已实现。
 
+TASK-023 后，Metadata UI 也读取 active Plugin Host records 中的 manifest `metadataFields`，但用途仍是 trust filtering：`MetadataBar` uses descriptors to decide which owner field/value pairs can be passed to a plugin-owned slot contribution. It does not execute renderers or editors from the manifest, and it does not add a `ctx.metadataFields` facade.
+
 TASK-016 增加了一个很窄的 Markdown runtime facade：`runtime.markdown.collectEditorExtensions()` 会从 active plugin manifest 的 `contributes.markdownSyntax` 收集 inert descriptor。它不会执行插件代码，也不是 Tiptap / ProseMirror extension 注册表；返回项的 `pluginId` 由 Plugin Host 的 manifest owner 注入，manifest contribution 自带的同名字段不能覆盖 host-owned identity。
 
 TASK-021 后，`collectEditorExtensions()` 会同样收集内置 Tag Plugin 的 inert `tag.hashtag` descriptor（syntax `#tag`）。该 descriptor 只说明可见 Markdown syntax；它不代表 rich inline token、autocomplete、save-time scan 或 background indexer 已经存在。
@@ -183,6 +185,8 @@ Provider 从 full runtime 复制 app info，并发布 frozen `{ app: { version, 
 - `db`、SQLite、storage driver、filesystem、file、path、shortcut、notification APIs。
 - Command registry mutation handles such as direct `register` / `unregister` / raw `execute`.
 
+TASK-023 的 `MetadataBar` follows this boundary for `page.header.metadata` slot UI. It passes only `pageId`, contributing `pluginId`, trusted owner field descriptors, trusted owner values, and a command executor scoped to the contributing plugin namespace. It does not pass full runtime, Core stores, registries, Plugin Host, NativeBridge, DB, filesystem, path, shell, notification, or shortcut handles.
+
 后续如果插件贡献 view、slot 或其他 plugin-rendered React subtree，这些 subtree 不能通过 `useRuntime()` 获取 full runtime。它们只能接收 `PluginContext`、plugin-scoped facades，或 App Shell 明确传入的 controlled props。
 
 ---
@@ -270,6 +274,6 @@ type PluginHostInstance = {
 - Low-level callers of `executeFilterQuery` must pass host-derived `metadataOwnerReservations` when they need built-in Task/Tag metadata trust enforcement. The executor itself stays business-agnostic and does not hard-code `task` or `tag`; no production app-shell filter route exists yet.
 - 捕获到的 context 在 lifecycle 或 command execution 退出后不能继续注册 command、view 或 slot，也不能继续通过 `pages`、`metadata`、`events`、`filters` 或 `transaction` 写入 Core 数据；这些 stale context 写入会在 mutation 前抛出 typed `PLUGIN_LIFECYCLE_FAILED`。runtime contribution 注册只在尚未退出的 `register(ctx)` 调用期间有效。
 - Plugin Host-marked command execution failures preserve their typed `PluginHostError` as `CommandRegistryError.cause`, so callers can inspect plugin id, phase `command`, and original plugin failure. Ordinary command handler failures remain redacted by Command Registry, including plain objects or directly constructed `PluginHostError` instances thrown outside the Plugin Host command wrapper.
-- `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。Markdown runtime 用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；TASK-018 后这包括内置 `markdown` 和 `task` 插件贡献的 inert syntax descriptors。调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。
+- `listPlugins()` 返回按 host 安装顺序排序的 public `PluginHostRecord[]`，每条记录包含 cloned manifest metadata、`status` 和 `enabled`。Markdown runtime 用它读取 active plugin 的 manifest `contributes.markdownSyntax` descriptor；TASK-018 后这包括内置 `markdown` 和 `task` 插件贡献的 inert syntax descriptors。TASK-023 的 `MetadataBar` 用同一 public ownership data 收集 active owner manifest `metadataFields`，并在缺少 Plugin Host ownership data 时 fail closed。调用方不能通过返回值拿到 plugin instance、lifecycle scope、Core services、registries、NativeBridge、SQLite 或 filesystem handle。
 
 ---

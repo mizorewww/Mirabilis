@@ -138,9 +138,19 @@ TaskPlugin registers view task.page-list with type page.list
 TaskPlugin registers task.filter-empty-state on filter.empty_state
 executeFilterQuery can execute current page/metadata filter results when called explicitly
 
+TASK-023 当前：
+metadata-ui exports reusable MetadataBar
+MetadataBar composes page.header.metadata slot contributions in SlotRegistry order
+TaskPlugin contributes read-only current fields
+TagPlugin keeps add/remove controls through tag commands
+TimerPlugin contributes disabled inert Start placeholder only
+
 后续：
 编辑器保存后自动扫描 task blocks
 全局 saved-filter navigation / app-shell filter route
+Production app-shell/editor mounting for MetadataBar
+Full metadata renderer/editor registry
+Real Timer runtime and commands
 ```
 
 ### 18.2 用户点击任务文字
@@ -156,7 +166,7 @@ TaskBlock title clicked
 → MarkdownPageEditor calls onOpenPage(pageId)
 → AppShell/editor route opens only the returned pageId
 → MarkdownEditorPlugin 渲染该页面
-→ SlotRenderer 渲染 page.header.metadata
+→ 后续 app-shell/editor mounting can render MetadataBar for page.header.metadata
 ```
 
 The click path never trusts `attrs.boundPageId` as a navigation target. That attr is recovered/verifiable source binding data for the resolver path. Missing, forged, mismatched, or malformed values are treated as absent/untrusted.
@@ -230,12 +240,16 @@ There is no production app-shell filter route yet. Automatic save-time scanning/
 
 ### 18.6 用户点击 Start
 
+TASK-023 当前只有 Timer metadata placeholder：`TimerMetadataPlaceholder` 在 `page.header.metadata` 中显示 disabled inert `Start timer` button，不注册 `timer.start`，不执行 command，不写 timer metadata/event，也没有 global active timer runtime。
+
+TASK-024 之后的目标流程才是：
+
 ```text
-TimerMetadataSlot 中 Start button clicked
+Timer start affordance clicked
 → CommandRegistry.execute("timer.start", { pageId })
 → TimerPlugin append timer.started event
-→ TimerPlugin set global metadata timer.activeSegmentId
-→ GlobalTimerSlot 重新渲染
+→ TimerPlugin set active timer state
+→ Global timer UI refreshes
 ```
 
 ### 18.7 用户 Stop 并写 Note

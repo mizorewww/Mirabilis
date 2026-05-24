@@ -79,6 +79,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-24 15:51 CST - TASK-023 docs sync completed
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Delivered docs sync: formal product, architecture, development, implementation-index, progress, and testing docs now describe TASK-023 as a narrow plugin-driven Metadata UI slice: built-in `metadata-ui`, reusable `MetadataBar`, `page.header.metadata` composition in SlotRegistry order, Tag compatibility through existing add/remove commands, Task read-only current fields, Timer disabled inert Start placeholder, and the MetadataBar trust boundary.
+- Deferred scope recorded: production app-shell/editor mounting, full metadata renderer/editor registry, date picker, estimate editor semantics, full tag picker polish, real Timer runtime/commands, save-time scanning/indexing, native/Tauri/package/Rust changes, Calendar/Habit/Stats/ML/AI behavior, and release packaging.
+- Security/API notes recorded: manifest `metadataFields` remain inert descriptors/reservation inputs, trusted metadata requires active Plugin Host ownership data plus matching `sourcePluginId` / descriptor / `valueType`, safe namespace/key/valueType validation, prototype-safe trusted values, scoped command execution, narrow slot props, inert React text rendering, and no raw runtime/native/store handles for plugin-rendered slot UI.
+- Residual documentation risk: parent handoff names the Timer metadata contribution `timer.page-header-metadata.tracked`, but current source registers `timer.page-header-metadata.placeholder`; docs are kept aligned to the current source until implementation or parent decision changes the ID.
+- Docs checks: targeted stale-claim scans found no remaining TASK-023 claim that full renderer/editor registries, Timer runtime/commands, production app-shell/editor mounting, or save-time scanning/indexing are delivered. Remaining hits are deferred/future-scope notes plus the intentional Timer slot ID mismatch risk above. `git diff --check` passed. `bun run typecheck` passed.
+
 ### 2026-05-21 21:32 CST - TASK-023 started
 
 - Branch: `feat/task-023-metadata-ui-plugin`.

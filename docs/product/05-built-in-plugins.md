@@ -1,10 +1,70 @@
 # 内置插件产品设计
 
-集中描述 Tag、Task、Habit、Timer、Calendar、Stats、Chart、ML、AI、Filter 和 Quick Capture 等内置插件的产品语义。
+集中描述 Metadata UI、Tag、Task、Habit、Timer、Calendar、Stats、Chart、ML、AI、Filter 和 Quick Capture 等内置插件的产品语义。
+
+## 14. Metadata UI Plugin
+
+Metadata UI Plugin 是内置插件，manifest id 是 `metadata-ui`。TASK-023 当前交付的是 reusable unified metadata bar slice，不是完整 metadata renderer/editor registry，也不是 app-shell/editor 默认挂载。
+
+当前注册和导出：
+
+```text
+Built-in plugin: MetadataUiPlugin
+Manifest id: metadata-ui
+Export: MetadataBar
+Slot composed by the bar: page.header.metadata
+```
+
+`MetadataBar` 从 `SlotRegistry` 读取 `page.header.metadata` contributions，并按 registry order 渲染。它本身不把 Task、Tag、Timer 业务逻辑写进 Core，也不把 manifest `metadataFields` 当作 executable renderer/editor declaration；具体字段 UI 仍由插件通过 slot contribution 提供。
+
+当前信任和安全边界：
+
+- 需要 Plugin Host ownership data；缺失时 fail closed。
+- 只使用 active plugin manifest 中 valid `metadataFields` descriptor 作为 trusted field descriptors。
+- Metadata record 必须匹配当前 page、owner `sourcePluginId`、descriptor namespace/key 和 descriptor `valueType`。
+- namespace/key 必须是安全 segment，`valueType` 必须有效，trusted values 使用 prototype-safe object。
+- slot props 只包含 `pageId`、contributing `pluginId`、trusted fields、trusted values 和限定到该 contributing plugin namespace 的 command executor。
+- 不向 slot component 暴露 full runtime、stores、registries、Plugin Host、NativeBridge、DB、filesystem、path、shell、notification 或 shortcut handles。
+- 渲染值时使用 React text sinks；unsafe metadata strings 仍是 inert text。
+
+当前 built-in metadata contributors：
+
+```text
+Task Plugin:
+  slot: task.page-header-metadata.current-fields
+  behavior: read-only display for enabled, status, sourcePageId, sourceBlockId, scheduled, due
+
+Tag Plugin:
+  slot: tag.page-header-metadata.tags
+  order: 300
+  behavior: inert #tag display plus tag.add-tag / tag.remove-tag controls
+
+Timer Plugin:
+  slot: timer.page-header-metadata.placeholder
+  behavior: disabled inert Start timer affordance only
+```
+
+Deferred after TASK-023:
+
+```text
+Full metadata renderer/editor registry
+Date picker
+Estimate editor semantics
+Full tag picker polish beyond existing Tag controls
+Real Timer runtime and timer commands
+App-shell/editor mounting if not already wired by a caller
+Save-time scanning/indexing
+Rich editor migration
+Native/Tauri/package/Rust changes
+Calendar/Habit/Stats/ML/AI metadata behavior
+Release packaging
+```
+
+---
 
 ## 15. Tag Plugin
 
-Tag Plugin 是内置插件，manifest id 是 `tag`。TASK-021 当前交付的是显式命令驱动的 tag baseline，不是保存时自动索引、富 inline token UI、autocomplete 或全局 metadata bar。TASK-022 后，Tag Plugin 保存的 `viewType: "page.list"` filter definition 可以通过 generic filter executor 和 registered `page.list` view path 执行/渲染；Tag Plugin 本身仍只负责保存 tag-owned filter definition。
+Tag Plugin 是内置插件，manifest id 是 `tag`。TASK-021 当前交付的是显式命令驱动的 tag baseline，不是保存时自动索引、富 inline token UI 或 autocomplete。TASK-022 后，Tag Plugin 保存的 `viewType: "page.list"` filter definition 可以通过 generic filter executor 和 registered `page.list` view path 执行/渲染；Tag Plugin 本身仍只负责保存 tag-owned filter definition。TASK-023 后，Tag Plugin 的 `page.header.metadata` contribution 会通过 `MetadataBar` 统一组合，但具体 tag UI 仍归 Tag Plugin 所有。
 
 ### 15.1 当前注册能力
 
@@ -73,7 +133,7 @@ tag.add-tag({ pageId, tag })
 tag.remove-tag({ pageId, tag })
 ```
 
-这不是 TASK-023 的完整 Metadata UI Plugin，也不是全局 metadata bar 或完整 tag picker。长期 tag picker、autocomplete 和统一 metadata field editor 仍属于后续任务。
+TASK-023 后，这个 contribution 可由 `MetadataBar` 统一组合。它仍不是完整 tag picker、autocomplete 或 metadata field editor registry；长期 tag picker polish 和统一字段编辑器仍属于后续任务。
 
 添加 `product` 后：
 
@@ -155,6 +215,7 @@ task.page-list, type page.list
 
 Slots:
 task.filter-empty-state on filter.empty_state
+task.page-header-metadata.current-fields on page.header.metadata
 ```
 
 `task` 是内置插件。manifest 暴露 `task.checkbox` markdown syntax descriptor，语法文本为 `- [ ]`；descriptor 只是编辑器扩展 metadata，不会自己创建任务页。`task.resolve-task-block` 是命令级 resolver，payload 为：
@@ -226,7 +287,7 @@ Future Views:
 task.metadata_fields
 ```
 
-TASK-020 已实现 checkbox status toggle 和完成/重开 events。TASK-022 已声明 `task.due` 和 `task.scheduled` date metadata fields，并交付 All Tasks / Today filters、`task.page-list` registered view 和 `filter.empty_state` empty-state slot。`task.estimate`、`task.priority`、完成时间 metadata、Overdue / Done / No Estimate / Unlinked filters、完整 task metadata field UI、`task.renamed` 和非 toggle commands 仍是后续 Task Plugin 范围；后续新增 task metadata 时应继续使用 camelCase key。当前 command ID 使用 kebab-case：`task.resolve-task-block`、`task.open-task-page`、`task.toggle-status`；`task.set_due` / `task.set-due` 仍未实现。
+TASK-020 已实现 checkbox status toggle 和完成/重开 events。TASK-022 已声明 `task.due` 和 `task.scheduled` date metadata fields，并交付 All Tasks / Today filters、`task.page-list` registered view 和 `filter.empty_state` empty-state slot。TASK-023 添加了 `task.page-header-metadata.current-fields` slot contribution，用于在 `MetadataBar` 中 read-only 显示当前字段：`enabled`、`status`、`sourcePageId`、`sourceBlockId`、`scheduled` 和 `due`。`task.estimate`、`task.priority`、完成时间 metadata、Overdue / Done / No Estimate / Unlinked filters、task metadata editors、`task.renamed` 和非 toggle commands 仍是后续 Task Plugin 范围；后续新增 task metadata 时应继续使用 camelCase key。当前 command ID 使用 kebab-case：`task.resolve-task-block`、`task.open-task-page`、`task.toggle-status`；`task.set_due` / `task.set-due` 仍未实现。
 
 ### 16.2 输入到任务页面的完整流程
 
@@ -377,6 +438,8 @@ Data: habit.checked events
 
 Timer Plugin 是核心体验插件，但仍然不是 Core 功能。
 
+TASK-023 当前只交付 Timer metadata UI placeholder。内置 `TimerPlugin` 注册 `timer.page-header-metadata.placeholder` 到 `page.header.metadata`，显示 disabled inert Start timer affordance，不注册任何 timer commands，不写 timer metadata/event，也没有 active timer runtime。真实 Timer Plugin runtime 从 TASK-024 开始。
+
 ### 18.1 计时的重要性
 
 计时是这个产品的关键差异化。
@@ -404,6 +467,18 @@ Timer Plugin 是核心体验插件，但仍然不是 Core 功能。
 ---
 
 ### 18.2 Timer Plugin 注册能力
+
+当前 TASK-023 注册能力：
+
+```text
+Slot:
+timer.page-header-metadata.placeholder on page.header.metadata
+
+Commands:
+none
+```
+
+长期 Timer Plugin 注册能力：
 
 ```text
 Metadata:
@@ -476,7 +551,7 @@ Note 是一个 Markdown Page：
 
 ### 18.4 开始计时
 
-用户在任务页面点击 Start。
+长期目标中，用户在任务页面点击 Start。
 
 系统：
 
