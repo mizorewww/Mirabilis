@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:47 CST.
+Last updated: 2026-05-24 19:51 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-24 19:47 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 narrow re-review agents are running.
+- Current phase: TASK-025 narrow re-review found a P1 scoped command executor ownership issue; review-fix tests are next.
 
 ## Active Agents
 
-- Carson (`reviewer`) is reviewing timeline note UI and PluginHost scoped executor correctness.
-- Hegel (`security_reviewer`) is reviewing scoped executor and timeline note UI security boundaries.
-- Peirce (`deprecation_auditor`) is auditing API/deprecation/docs drift for the scoped executor and Timer timeline UI.
-- Cicero (`test_quality_reviewer`) is confirming Nash's P1 test-quality finding is closed.
+- None.
 
 ## Completed Recent Task
 
@@ -155,8 +152,8 @@ Last updated: 2026-05-24 19:47 CST.
 
 ## Next Actions
 
-1. Wait for narrow re-review agents.
-2. Record findings and proceed to docs sync if clear.
+1. Commit narrow re-review findings.
+2. Delegate review-fix tests for scoped command executor descriptor-owner enforcement.
 
 ## Current TASK-021 State
 

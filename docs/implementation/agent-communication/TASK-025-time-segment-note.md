@@ -242,6 +242,13 @@
 - Peirce (`deprecation_auditor`) started 2026-05-24 19:47 CST to audit API/deprecation/docs drift for the scoped executor and Timer timeline UI.
 - Cicero (`test_quality_reviewer`) started 2026-05-24 19:47 CST to confirm Nash's P1 test-quality finding is closed.
 
+## Narrow Re-Review Outcomes
+
+- Peirce (`deprecation_auditor`) found no P0/P1 code or API issues. P2 formal docs drift remains for `doc_writer`: update docs from future/TASK-025+ wording to current TASK-025 behavior, use `timer.add-note`, `timer.page-timeline.segments`, and event records as `namespace: "timer", type: "time_segment_created"` / `type: "time_segment_note_added"`, while keeping metadata totals and Calendar/Stats/ML/native/schema bridges deferred.
+- Carson (`reviewer`) found no P0/P1 correctness blocker, but flagged scoped executor ownership as P2: the new internal executor scopes by command ID prefix instead of actual registered command owner. Recommendation: resolve the command descriptor and require `descriptor.pluginId === pluginId`.
+- Cicero (`test_quality_reviewer`) found no P0/P1/P2 after the review-fix tests. Nash's prior P1 is closed: the added slot-level UI test exercises accessible Add Note / Note textbox / Save Note / Edit Note controls, same Markdown Page update, note-link events, inert rendering, exact result shape, and wrong-owner/malformed note-link filtering.
+- Hegel (`security_reviewer`) found P1: scoped executor allows prefix-matching foreign commands, not descriptor-owned commands. A plugin can own command id `alpha.foreign` under descriptor `pluginId: "beta"`, and plugin `alpha`'s scoped executor would execute it because the ID prefix matches. Fix direction: before executing, resolve the command descriptor and require `descriptor.pluginId === pluginId`, or enforce command-id namespace ownership at registration.
+
 ## Current Next Action
 
-- Wait for narrow re-review agents, record findings, and proceed to docs sync if clear.
+- Commit narrow re-review findings, then delegate review-fix tests for scoped command executor descriptor-owner enforcement.
