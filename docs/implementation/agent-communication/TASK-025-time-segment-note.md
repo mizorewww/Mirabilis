@@ -403,4 +403,18 @@
 
 ## Current Next Action
 
-- Wait for MetadataBar narrow post-fix review agents. If no P0/P1 remains, delegate TASK-025 formal docs sync.
+## MetadataBar Narrow Re-Review Outcomes
+
+- Helmholtz (`test_quality_reviewer`) found no P0/P1, but identified P2 missing coverage: descriptor lookup unavailable / execute-only command executor behavior is not tested. Harvey's regression covers the normal runtime path where `runtime.commands` exposes `get()`, but Nash's fix still falls back to prefix-based dispatch when `commands.get` is unavailable.
+- Noether (`security_reviewer`) found P1: MetadataBar still fails open when `commands.get` is unavailable. Because `MetadataBarCommandExecutor` only requires `execute`, an execute-only facade can still forward matching-prefix commands such as `alpha.foreign` to the raw command bus without descriptor-owner verification. Fix direction: fail closed when descriptor lookup is unavailable or require owner-aware descriptor lookup in the MetadataBar contract.
+- Dalton (`reviewer`) found P1 for the same execute-only fallback: the descriptor-backed path is fixed, but the fallback leaves the prior ownership bug alive for execute-only mounts. Dalton found no other P0/P1/P2 issues.
+- Meitner (`deprecation_auditor`) found no P0/P1 code/API findings, but recorded the same issue as a P2 API contract gap and recommended either requiring descriptor lookup in `MetadataBarCommandExecutor` or failing closed when lookup is unavailable. Meitner also repeated the formal docs handoff needs and confirmed no deprecated React/Tauri/Vite API usage was introduced.
+- Checks reported by agents:
+  - Helmholtz: MetadataBar focused tests, expanded MetadataBar/PluginHost/API/Timer tests, typecheck, focused eslint, diff check, and skip/only scan passed.
+  - Noether: MetadataBar/PluginHost/Timer focused tests, typecheck, lint, diff check, and native/package/Tauri guard passed.
+  - Dalton: MetadataBar focused tests, typecheck, diff check, and skip/only scan passed.
+  - Meitner: MetadataBar + PluginHost focused tests, typecheck, diff check, and native/package/Tauri/Rust guard passed.
+
+## Current Next Action
+
+- Delegate `test_writer` to add a failing execute-only MetadataBar command executor regression before any production fix.
