@@ -42,4 +42,13 @@
 
 ## Current Next Action
 
-- Spawn planner, docs_researcher, deprecation_auditor, and security_reviewer for TASK-025 pre-test guidance.
+## Pre-Test Agent Handoff
+
+- Locke (`planner`) started 2026-05-24 18:58 CST to define the smallest safe TASK-025 scope, acceptance criteria, risks, and TDD handoff.
+- Lorentz (`docs_researcher`) started 2026-05-24 18:58 CST to check local/current official docs and testing guidance.
+- James (`deprecation_auditor`) started 2026-05-24 18:58 CST to audit canonical command/event/view/slot IDs and stale API risks.
+- Descartes (`security_reviewer`) started 2026-05-24 18:58 CST to review note/page/event boundaries and negative test guidance.
+
+## Current Next Action
+
+- Wait for TASK-025 pre-test guidance agents, record their findings, and delegate failing acceptance tests to `test_writer`.

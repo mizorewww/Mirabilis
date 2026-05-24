@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 18:56 CST.
+Last updated: 2026-05-24 18:58 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-24 18:56 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 started; pre-test planning, docs research, deprecation/API review, and security guidance are next.
+- Current phase: TASK-025 pre-test guidance agents are running.
 
 ## Active Agents
 
-- None.
+- Locke (`planner`) is defining the smallest TASK-025 scope, acceptance, risks, and TDD handoff.
+- Lorentz (`docs_researcher`) is checking current local/official docs and testing guidance.
+- James (`deprecation_auditor`) is auditing command/event/view/slot IDs and stale API risks.
+- Descartes (`security_reviewer`) is reviewing Timer note/event/page boundaries and negative test guidance.
 
 ## Completed Recent Task
 
@@ -152,8 +155,8 @@ Last updated: 2026-05-24 18:56 CST.
 
 ## Next Actions
 
-1. Commit and push TASK-025 start state on `feat/task-025-time-segment-note`.
-2. Spawn planner, docs_researcher, deprecation_auditor, and security_reviewer for pre-test guidance.
+1. Wait for TASK-025 pre-test guidance agents.
+2. Record guidance and then delegate failing acceptance tests to `test_writer`.
 
 ## Current TASK-021 State
 
