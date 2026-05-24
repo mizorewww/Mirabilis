@@ -338,4 +338,25 @@
 
 ## Current Next Action
 
-- Wait for Harvey (`test_writer`) to finish, validate the red signal, commit tests, then delegate implementation.
+## MetadataBar Command Ownership Review-Fix Tests
+
+- Status: completed by Harvey (`test_writer`) on 2026-05-25 07:49 CST.
+- Commit: `b45a4c6`.
+- File changed:
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - A plugin `alpha` metadata slot receives MetadataBar command props.
+  - Same-owner `alpha.own-command` still executes through the slot path.
+  - Plugin `beta` registers and owns matching-prefix command `alpha.foreign`.
+  - The `alpha` slot must reject `alpha.foreign` and must not call `beta`'s handler.
+- Parent validation:
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx` failed as expected with 1 failed / 16 passed.
+  - Expected red reason: the UI showed `Foreign command escaped`, and `betaHandler` was called once.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/metadata-ui-plugin.test.tsx --max-warnings=0` passed.
+  - No `.skip` / `.only` matches in the touched test file.
+  - `git diff --check` passed.
+
+## Current Next Action
+
+- Delegate `implementer` to fix MetadataBar command ownership while preserving same-owner command execution and avoiding native/Tauri/package/Rust/schema changes.

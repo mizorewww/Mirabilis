@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 07:48 CST.
+Last updated: 2026-05-25 07:50 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 07:48 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar scoped command ownership review-fix tests delegated to Harvey (`test_writer`).
+- Current phase: TASK-025 MetadataBar scoped command ownership red tests committed; implementation handoff pending.
 
 ## Active Agents
 
-- Harvey (`test_writer`) is adding a failing MetadataBar command-ownership regression for Zeno's P1. Scope is tests only; no production code, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
+- None currently running. Next delegation is an `implementer` fix for MetadataBar command ownership.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-25 07:48 CST.
 
 ## Next Actions
 
-1. Wait for Harvey (`test_writer`) to finish MetadataBar command-ownership regression tests.
-2. Validate the red signal, commit tests, then delegate implementation.
+1. Delegate MetadataBar command ownership implementation fix.
+2. Validate focused tests/checks and commit implementation if green.
 
 ## Current TASK-021 State
 
