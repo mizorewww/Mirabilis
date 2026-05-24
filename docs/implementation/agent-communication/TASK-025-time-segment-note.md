@@ -289,4 +289,25 @@
 
 ## Current Next Action
 
-- Wait for Kuhn (`implementer`) to finish scoped-executor review-fix implementation, validate focused tests/checks, and commit implementation if green.
+- Kuhn (`implementer`) completed the scoped executor review-fix implementation.
+- Commit: `ee4c205`.
+- File changed:
+  - `src/core/plugin-host/plugin-host.ts`.
+- Behavior implemented:
+  - Internal non-enumerable plugin-scoped command executor now resolves the registered command descriptor and requires ownership through `getOwnedCommandDescriptor(pluginId, commandId)`.
+  - Same-owner commands still execute through the normal command registry.
+  - Foreign-owned commands with a matching ID prefix are rejected before dispatch, so the foreign handler is not called.
+  - Missing or non-string command IDs are rejected.
+- Parent validation:
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` passed with 1 file / 48 tests.
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/timer-time-segment-note.test.tsx src/test/timer-plugin-runtime.test.tsx` passed with 4 files / 100 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - No `.skip` / `.only` matches in the touched PluginHost/Timer tests.
+  - Timer/PluginHost forbidden-pattern scan for fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handlers, dangerous HTML, storage/network, and Tauri API imports was empty.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust diff guard against `master` was empty.
+
+## Current Next Action
+
+- Spawn narrow post-fix review agents to confirm the P1 scoped-executor ownership issue is closed and no public API/security/test-quality regression remains.

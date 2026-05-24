@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:57 CST.
+Last updated: 2026-05-25 07:41 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:57 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 scoped command executor review-fix implementation delegated to Kuhn (`implementer`).
+- Current phase: TASK-025 scoped command executor review-fix implementation committed; narrow post-fix re-review pending.
 
 ## Active Agents
 
-- Kuhn (`implementer`) is fixing the internal scoped command executor to authorize by registered command descriptor owner instead of command ID prefix. Scope is production PluginHost TypeScript only; no tests, commits, pushes, merges, branch changes, or native/Tauri/package/Rust/schema changes.
+- None currently running. Next delegation is a narrow post-fix re-review of Kuhn's scoped command ownership fix.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:57 CST.
 
 ## Next Actions
 
-1. Wait for Kuhn (`implementer`) to finish scoped-executor review-fix implementation.
-2. Validate focused tests/checks and commit implementation if green.
+1. Spawn narrow post-fix review agents for the scoped command executor fix.
+2. If no P0/P1 remains, delegate TASK-025 formal docs sync to `doc_writer`.
 
 ## Current TASK-021 State
 
