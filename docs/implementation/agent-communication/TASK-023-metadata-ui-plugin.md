@@ -370,6 +370,13 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Parent decision:
   - Mark TASK-023 `[x]`, commit final progress, merge branch to `master`, run merge-result checks, and continue to TASK-024.
 
+## Merge Result
+
+- Status: merged on 2026-05-24 16:03 CST.
+- Merge commit: `58c3a40` on `master`.
+- Merge-result check:
+  - `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests.
+
 ## Current Next Action
 
-- Commit final TASK-023 progress and merge to `master`.
+- TASK-023 is complete; start TASK-024 from `master`.

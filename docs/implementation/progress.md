@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-24 16:03 CST - TASK-023 merged
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Merge commit: `58c3a40` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-023 is complete on `master`; next autonomous task is TASK-024.
+
 ### 2026-05-24 16:02 CST - TASK-023 completed
 
 - Branch: `feat/task-023-metadata-ui-plugin`.
@@ -86,7 +93,7 @@ Add newest entries at the top.
 - Final branch gates passed: `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests; `bun run build` passed.
 - Completion commits on branch: `bc30f82` acceptance tests, `38910da` implementation, `c19517c` review-fix tests, `12dc21b` review-fix implementation, `7fa761e` docs sync, plus parent orchestration/progress commits.
 - Remaining accepted risks: future test hardening for stale/inactive host records, explicit `prototype` unsafe segment coverage, and sloppy command-prefix edge cases; docs note the Timer slot ID mismatch between early handoff wording and current source-aligned `timer.page-header-metadata.placeholder`.
-- Next action: merge `feat/task-023-metadata-ui-plugin` to `master`, run merge-result checks, and continue to TASK-024.
+- Merged to `master` in commit `58c3a40`; merge-result `bun run check:quick` passed.
 
 ### 2026-05-24 15:51 CST - TASK-023 docs sync completed
 
