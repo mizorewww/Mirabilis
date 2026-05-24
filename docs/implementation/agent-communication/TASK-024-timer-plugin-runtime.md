@@ -348,6 +348,22 @@ git diff --cached --check
   - Allow exact null-prototype empty records for empty-payload commands: `timer.pause`, `timer.resume`, and `timer.stop`.
   - Preserve descriptor/prototype hardening coverage for arrays, accessors, symbol keys, non-enumerable extra fields, prototype-carried fields, and prototype-shaped keys.
 
+## Test Conflict Adjustment
+
+- Status: completed by Epicurus (`test_writer`) on 2026-05-24 17:46 CST.
+- Commit: `d09328e`.
+- File changed:
+  - `src/test/timer-plugin-runtime.test.tsx`.
+- Adjustment:
+  - Removed the expectation that `timer.pause(Object.create(null))` rejects.
+  - Added passing coverage for exact null-prototype empty payloads on `timer.pause`, `timer.resume`, and `timer.stop`.
+  - Added rejection coverage for non-empty null-prototype payloads carrying caller-owned fields on empty-payload commands.
+  - Preserved descriptor/prototype-shaped payload rejection coverage.
+- Agent validation:
+  - Focused tests remained red as expected: 125 passed / 1 failed.
+  - Remaining failure is the known active-bar fake-timer/user-event issue.
+  - `bun run typecheck`, focused eslint, `git diff --check`, and no `.skip` / `.only` passed.
+
 ## Current Next Action
 
-- Wait for Epicurus's test adjustment.
+- Delegate remaining review-fix implementation to a replacement `implementer`.

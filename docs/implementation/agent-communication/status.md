@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 17:43 CST.
+Last updated: 2026-05-24 17:46 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 17:43 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 null-prototype empty-payload test adjustment is in progress.
+- Current phase: TASK-024 test conflict adjustment is committed; replacement review-fix implementation is next.
 
 ## Active Agents
 
-- Epicurus (`test_writer`) is adjusting the review-fix payload tests so exact null-prototype empty records are allowed for empty-payload Timer commands while unsafe payload shapes remain rejected.
+- None.
 
 ## Completed Recent Task
 
@@ -151,8 +151,8 @@ Last updated: 2026-05-24 17:43 CST.
 
 ## Next Actions
 
-1. Wait for Epicurus's test adjustment.
-2. After test adjustment, delegate remaining active-bar review-fix implementation to a replacement `implementer`.
+1. Delegate remaining active-bar review-fix implementation to a replacement `implementer`.
+2. Validate focused tests until green, then commit review-fix implementation.
 
 ## Current TASK-021 State
 
