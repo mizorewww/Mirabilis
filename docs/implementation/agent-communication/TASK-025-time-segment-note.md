@@ -324,4 +324,18 @@
 
 ## Current Next Action
 
-- Delegate `test_writer` to add a failing MetadataBar command-ownership regression before any production fix.
+## MetadataBar Command Ownership Review-Fix Test Handoff
+
+- Harvey (`test_writer`) started 2026-05-25 07:48 CST.
+- Scope: failing tests only, no production code.
+- Required coverage:
+  - A MetadataBar slot contribution for plugin `alpha` receives the existing scoped command execution path.
+  - Plugin `beta` registers/owns a command with matching-prefix id such as `alpha.foreign`.
+  - The `alpha` MetadataBar slot path must reject or fail closed before dispatching that foreign-owned command.
+  - The foreign `beta` handler must not be called.
+  - Same-owner `alpha` command execution should still work if concise.
+- Expected red signal: current `MetadataBar` prefix-based scoped executor will dispatch the beta-owned `alpha.foreign` command.
+
+## Current Next Action
+
+- Wait for Harvey (`test_writer`) to finish, validate the red signal, commit tests, then delegate implementation.
