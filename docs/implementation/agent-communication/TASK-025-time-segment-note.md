@@ -146,4 +146,14 @@
 
 ## Current Next Action
 
-- Commit TASK-025 implementation validation summary and spawn focused review agents.
+## Focused Review Handoff
+
+- Halley (`pr_explorer`) started 2026-05-24 19:25 CST to map TASK-025 diff and review hotspots.
+- Beauvoir (`reviewer`) started 2026-05-24 19:25 CST to review correctness and behavioral regressions.
+- Gauss (`security_reviewer`) started 2026-05-24 19:25 CST to review security and boundary risks.
+- Aristotle (`deprecation_auditor`) started 2026-05-24 19:25 CST to review stale/deprecated API usage and docs drift.
+- Nash (`test_quality_reviewer`) started 2026-05-24 19:25 CST to review TASK-025 test quality and coverage.
+
+## Current Next Action
+
+- Wait for focused review agents, record findings, and delegate review-fix tests/implementation if needed.

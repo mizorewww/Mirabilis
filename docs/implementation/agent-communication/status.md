@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:23 CST.
+Last updated: 2026-05-24 19:25 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-24 19:23 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 initial production implementation committed; focused review is next.
+- Current phase: TASK-025 focused review agents are running.
 
 ## Active Agents
 
-- None.
+- Halley (`pr_explorer`) is mapping the TASK-025 diff and review hotspots.
+- Beauvoir (`reviewer`) is reviewing correctness and behavioral regressions.
+- Gauss (`security_reviewer`) is reviewing security and boundary risks.
+- Aristotle (`deprecation_auditor`) is reviewing stale/deprecated API usage and docs drift.
+- Nash (`test_quality_reviewer`) is reviewing TASK-025 test quality and coverage.
 
 ## Completed Recent Task
 
@@ -152,8 +156,8 @@ Last updated: 2026-05-24 19:23 CST.
 
 ## Next Actions
 
-1. Commit TASK-025 implementation validation summary.
-2. Spawn focused review agents.
+1. Wait for focused review agents.
+2. Record findings and delegate review-fix tests/implementation if needed.
 
 ## Current TASK-021 State
 
