@@ -335,8 +335,30 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 - Parfit (`doc_writer`) started the formal TASK-023 docs sync after post-fix review, then disconnected before completion on 2026-05-24.
 - Parfit left uncommitted docs edits in product and architecture docs. Parent decision: keep the partial diff intact, do not repair docs in the parent thread, and delegate completion/repair to Pascal (`doc_writer`).
-- Pascal (`doc_writer`) is responsible for inspecting the partial diff, completing formal docs sync, running targeted stale-claim scans and `git diff --check`, and reporting remaining documentation gaps.
+- Pascal (`doc_writer`) completed replacement formal docs sync on 2026-05-24. Commit: `7fa761e`.
+- Files changed:
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/05-plugin-implementations.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/01-data-roadmap-and-mvp.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/implementation/progress.md`.
+  - `docs/implementation/task-index.md`.
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/product/06-view-slots.md`.
+  - `docs/testing/strategy.md`.
+- Docs synchronized:
+  - Built-in `metadata-ui`, exported `MetadataBar`, ordered `page.header.metadata` composition, Tag compatibility, Task read-only fields, Timer inert placeholder, trust filtering, scoped command execution, and deferred full renderer/editor work.
+- Parent validation:
+  - Targeted stale-claim scans found only deferred/future-scope statements and historical agent-communication notes.
+  - `git diff --check` passed.
+  - `bun run typecheck` passed.
+- Remaining documentation risk:
+  - Early agent handoff suggested `timer.page-header-metadata.tracked`, while source/tests currently use `timer.page-header-metadata.placeholder`; Pascal kept formal docs aligned to source and recorded the mismatch in `docs/implementation/progress.md`.
 
 ## Current Next Action
 
-- Wait for Pascal's replacement formal TASK-023 docs sync.
+- Run final TASK-023 branch gates.
