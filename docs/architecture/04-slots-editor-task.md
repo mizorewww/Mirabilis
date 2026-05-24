@@ -63,34 +63,45 @@ view.heatmap.cell
 view.chart.tooltip
 ```
 
-### 7.3 SlotRenderer
+### 7.3 MetadataBar / Slot rendering
 
 ```tsx
-<SlotRenderer
-  slot="page.header.metadata"
-  props={{ pageId }}
+<MetadataBar
+  pageId={pageId}
+  metadata={metadataRecords}
+  slots={runtime.registries.slots}
+  commands={runtime.commands}
+  pluginHost={runtime.pluginHost}
 />
 ```
 
-如果当前页面是任务页，Task Plugin 会在这里渲染：
+TASK-023 当前没有交付 generic app-wide `SlotRenderer` integration；它交付的是 built-in `metadata-ui` plugin 导出的 reusable `MetadataBar`。`MetadataBar` 读取 `page.header.metadata` slot contributions 并按 SlotRegistry order 渲染，production app-shell/editor mounting 仍是后续 integration，除非调用方已经显式挂载它。
+
+如果当前页面是任务页，Task Plugin 当前会在这里 read-only 渲染 existing current fields：
 
 ```text
-todo · due · estimate
+enabled · status · sourcePageId · sourceBlockId · scheduled · due
 ```
 
-Timer Plugin 会渲染：
+Timer Plugin 当前只渲染 inert placeholder：
 
 ```text
-tracked 2h10m · Start
+Start disabled
 ```
 
-Tag Plugin 长期会渲染：
+Tag Plugin 当前渲染：
 
 ```text
 #product #timer
 ```
 
-TASK-021 当前的 Tag Plugin slot contribution 是 `tag.page-header-metadata.tags`，挂在 `page.header.metadata`，order 为 `300`。它渲染 inert `#tag` 文本并提供 add/remove 控件，控件通过 `tag.add-tag` / `tag.remove-tag` command 写 `tag.tags` metadata。完整 Metadata UI Plugin、全局 metadata bar 编排和 picker 体验仍属于 TASK-023+。
+TASK-023 当前的 page header metadata contributions：
+
+- `task.page-header-metadata.current-fields`，order `100`，read-only current fields only。
+- `tag.page-header-metadata.tags`，order `300`，渲染 inert `#tag` 文本并提供 add/remove 控件，控件通过 `tag.add-tag` / `tag.remove-tag` command 写 `tag.tags` metadata，wrong-page command result 会被拒绝。
+- `timer.page-header-metadata.placeholder`，order `400`，disabled inert Start timer affordance，no timer command execution。
+
+`MetadataBar` 传给每个 slot component 的 props 是 narrow controlled props：`pageId`、contributing `pluginId`、trusted field descriptors、trusted values 和 scoped `commands.execute`。scoped command executor 只允许执行该 contributing plugin namespace 下的 command。缺少 Plugin Host ownership data、inactive/missing owner plugin、malformed descriptor、unsafe namespace/key、wrong `sourcePluginId` 或 mismatched `valueType` 都不会产生 trusted field/value props。Manifest `metadataFields` 仍是 descriptors/reservation inputs，不是 renderer/editor declarations。
 
 TASK-022 当前的 Task Plugin slot contribution 是 `task.filter-empty-state`，挂在 `filter.empty_state`，order 为 `100`。它接收最小 `{ filterName }` props 并渲染 generic page empty-state copy，不渲染 task-only 文案。
 
@@ -306,6 +317,13 @@ export const TaskPlugin: AppPlugin = {
       slot: "filter.empty_state",
       order: 100,
       component: TaskFilterEmptyState
+    });
+
+    ctx.slots.register({
+      id: "task.page-header-metadata.current-fields",
+      slot: "page.header.metadata",
+      order: 100,
+      component: TaskMetadataSlot
     });
 
     ctx.commands.register({

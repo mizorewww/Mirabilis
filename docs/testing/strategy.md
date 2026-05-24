@@ -307,6 +307,31 @@ git diff --check
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-022 itself is TypeScript Core/plugin/runtime/view behavior with no new native, IPC, permission, filesystem, package, Cargo, or Rust surface.
 
+## TASK-023 Metadata UI Plugin Guidance
+
+TASK-023 tests cover a reusable, plugin-driven metadata UI slice without adding a full renderer/editor registry, production app-shell/editor mounting, real Timer runtime, save-time scanning/indexing, or native/Tauri/package/Rust changes:
+
+- Built-in plugin coverage should assert `metadata-ui` is present in `BUILT_IN_PLUGINS` and exports `MetadataBar`.
+- Ordering coverage should render `page.header.metadata` through the real SlotRegistry and prove deterministic SlotRegistry order, including default order ties and existing Tag order `300`.
+- Tag compatibility coverage should render `tag.page-header-metadata.tags` through `MetadataBar`, assert inert `#tag` text, accessible add/remove controls, exact `tag.add-tag` / `tag.remove-tag` payloads, wrong-page command-result rejection, and real runtime metadata mutation through owner commands.
+- Task coverage should assert `task.page-header-metadata.current-fields` renders read-only values for current manifest fields `enabled`, `status`, `sourcePageId`, `sourceBlockId`, `scheduled`, and `due`, without `estimate` or editable widgets.
+- Timer coverage should assert the current metadata placeholder renders a disabled inert Start timer affordance and that the Timer Plugin registers no timer commands in TASK-023.
+- Boundary coverage should prove `MetadataBar` fails closed without Plugin Host ownership data, uses only active owner manifest `metadataFields`, rejects malformed/non-array descriptors, unsafe namespace/key segments, mismatched `sourcePluginId`, and mismatched stored `valueType`, and keeps trusted values prototype-safe.
+- Security coverage should assert slot props remain narrow, command execution is scoped to the contributing plugin namespace, unsafe metadata values render as inert React text, and no raw runtime/store/registry/Plugin Host/NativeBridge/DB/filesystem/path/shell/notification/shortcut handles reach plugin-rendered slot UI.
+- Native-surface guards should continue proving TASK-023 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
+- Accepted residual test-hardening notes after TASK-023: future tests may cover stale/inactive host records, the `prototype` unsafe segment explicitly, and sloppy command-prefix edge cases such as `review` vs `reviewer`.
+
+TASK-023 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/core-view-slot-registry.test.ts src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or app-runtime persistence wiring. TASK-023 itself is TypeScript plugin/runtime/slot UI behavior with no new native, IPC, permission, filesystem, package, Cargo, or Rust surface.
+
 ## Merge Gate
 
 Before merging to `master`:

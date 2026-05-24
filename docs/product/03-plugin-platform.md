@@ -63,7 +63,7 @@ Markdown Extension Plugin
 Manifest 用来声明插件能给系统贡献什么。
 TASK-010 中，`contributes` 里的能力是 manifest contribution descriptor，不等于已经存在同名 runtime facade。
 当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
-其中只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；`metadataFields`、`eventTypes`、`indexers`、`algorithms`、`mobileToolbarItems`、`settingsPanels` 目前由 manifest 描述，后续 Plugin Host / Plugin Platform 再把它们接成可执行或可渲染运行时能力。TASK-022 后，Plugin Host 会从 valid `metadataFields` manifest descriptors 派生 metadata owner reservations，用于 plugin-facing metadata writes 和低层 filter execution 的 trust boundary；这不是 metadata field renderer/editor registry。
+其中只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；`metadataFields`、`eventTypes`、`indexers`、`algorithms`、`mobileToolbarItems`、`settingsPanels` 目前由 manifest 描述，后续 Plugin Host / Plugin Platform 再把它们接成可执行或可渲染运行时能力。TASK-022 后，Plugin Host 会从 valid `metadataFields` manifest descriptors 派生 metadata owner reservations，用于 plugin-facing metadata writes 和低层 filter execution 的 trust boundary。TASK-023 后，`metadataFields` 仍是 inert descriptors / reservation inputs；Metadata UI 不把 manifest 字段当作 executable renderer/editor declaration。
 
 ---
 
@@ -93,6 +93,8 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
   TASK-021 当前已接入内置 `TagPlugin`：manifest id `tag`，Markdown syntax descriptor `tag.hashtag` / `#tag`，metadata field descriptor `tag.tags` / `namespace: "tag"` / `key: "tags"` / `valueType: "json"`。descriptor 本身仍是 inert metadata；正文 tag 刷新由显式 `tag.refresh-tags({ pageId })` command 完成。
 
 - Task Plugin 当前通过 manifest 声明 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`、`task.scheduled` 和 `task.due` metadata fields。TASK-022 的 All Tasks / Today filters 使用这些 task-owned metadata fields，并通过 canonical `viewType: "page.list"` 渲染。
+
+- Metadata UI Plugin 当前是内置插件，manifest id 是 `metadata-ui`。它导出 reusable `MetadataBar` component；具体字段 UI 仍由业务插件通过 `page.header.metadata` slot contribution 提供，而不是通过 manifest `metadataFields` 执行 renderer/editor。
 
 - `#habit` 是 Habit Plugin 识别的语义；
 
@@ -288,9 +290,20 @@ timer.total_tracked_time
 ml.predicted_remaining_time
 ```
 
-TASK-021 当前 `tag.tags` 由 Tag Plugin 维护为 `json` metadata field，值是小写、不带 `#` 的 ASCII slug `string[]`，最多 32 个唯一值。Metadata field contribution 只声明字段形状；完整 renderer/editor registry 仍属于后续 Metadata UI 工作。TASK-021 的可见 tag UI 是单独注册到 `page.header.metadata` 的 `TagMetadataSlot` slot contribution。
+TASK-021 当前 `tag.tags` 由 Tag Plugin 维护为 `json` metadata field，值是小写、不带 `#` 的 ASCII slug `string[]`，最多 32 个唯一值。TASK-023 后，这个可见 tag UI 仍是 Tag Plugin 注册到 `page.header.metadata` 的 `TagMetadataSlot` slot contribution，并可由 `MetadataBar` 统一组合；它不是 manifest renderer/editor。
 
 TASK-022 当前 `task.scheduled` 和 `task.due` 是 `valueType: "date"` metadata field，存储 local `YYYY-MM-DD` 字符串。Today filter 使用 relative-date query value `{ kind: "relative-date", value: "today" }` 与这些 date metadata 比较；日期选择器、`@date` parser 和 `task.set_due` / `task.set-due` command 仍是后续范围。
+
+TASK-023 当前交付的 Metadata UI slice：
+
+- Built-in `metadata-ui` plugin exists and exports `MetadataBar`.
+- `MetadataBar` composes `page.header.metadata` slot contributions in SlotRegistry order; app-shell/editor mounting remains a later integration unless a caller explicitly mounts it.
+- Field UI remains plugin-driven through slot contributions. Manifest `metadataFields` only provide ownership/descriptor data for trust filtering.
+- `MetadataBar` passes narrow props to slot components: `pageId`, contributing `pluginId`, trusted owner field descriptors, trusted owner values, and a command executor scoped to the contributing plugin namespace.
+- It fails closed without Plugin Host ownership data, filters trusted metadata by active owner manifest plus matching `sourcePluginId` / descriptor / `valueType`, rejects unsafe namespace/key/valueType data, stores trusted values in a prototype-safe object, and renders values through React text sinks.
+- Current built-in contributors are Tag, Task, and Timer placeholder UI: Tag add/remove controls keep using Tag commands; Task current fields are read-only; Timer contributes only an inert disabled Start timer affordance.
+
+Full metadata renderer/editor registry, rich field widgets, date picker, estimate editor semantics, real Timer commands/runtime, save-time scanning/indexing, and app-shell/editor mounting remain deferred.
 
 Metadata owner reservation 规则：
 

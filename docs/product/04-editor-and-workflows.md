@@ -286,9 +286,39 @@ Stats Plugin: estimate error
 ```
 
 长期字段可以通过插件扩展。
-新插件只要注册 metadata field + renderer + editor，就可以出现在完整 metadata bar 中。
+完整形态中，新插件注册 metadata field + renderer + editor 后可出现在 metadata bar 中；TASK-023 还没有实现这个 renderer/editor registry。
 
-TASK-021 当前只交付 Tag Plugin 的窄 slot contribution：`tag.page-header-metadata.tags` 注册到 `page.header.metadata`，order 为 `300`，显示 inert `#tag` 文本并提供 add/remove 控件。控件执行 `tag.add-tag({ pageId, tag })` 和 `tag.remove-tag({ pageId, tag })`，写入页面 scoped `tag.tags` metadata。它不是 TASK-023 的完整 Metadata UI Plugin、全局 metadata bar 或完整 tag picker。
+TASK-023 当前交付的是窄的统一 metadata bar slice：
+
+```text
+Built-in plugin: metadata-ui
+Export: MetadataBar
+Composes: page.header.metadata slot contributions in SlotRegistry order
+Mounting: reusable component only; production app-shell/editor mounting remains deferred unless a caller mounts it
+```
+
+字段 UI 仍由插件通过 slot contribution 提供：
+
+```text
+Task Plugin: read-only current metadata fields
+Tag Plugin: existing inert #tag display plus add/remove controls
+Timer Plugin: inert disabled Start timer placeholder
+```
+
+`MetadataBar` 只信任 active Plugin Host ownership data：字段 descriptor 必须来自 owner manifest、`namespace` 必须匹配 owner plugin id、`sourcePluginId` 必须匹配、stored `valueType` 必须匹配 descriptor，并且 namespace/key/valueType 必须安全有效。没有 Plugin Host ownership data 时，bar fail closed，不渲染 trusted field UI。slot component 只收到 `pageId`、contributing `pluginId`、trusted fields、trusted values 和限定到该插件 command namespace 的 command executor；不会收到 full runtime、stores、registries、NativeBridge、filesystem 或 DB handles。
+
+当前 Task Plugin 只显示这些 current fields，且都是 read-only：
+
+```text
+task.enabled
+task.status
+task.sourcePageId
+task.sourceBlockId
+task.scheduled
+task.due
+```
+
+`task.estimate`、状态选择器、date picker、estimate editor、完整 tag picker polish、real Timer runtime/commands、自动保存时扫描/索引和 app-shell/editor mounting 仍属于后续任务。Metadata values 通过 React text rendering 显示，unsafe strings 不会被当作 HTML、link、image 或 script 执行。
 
 ---
 
@@ -363,11 +393,13 @@ metadata 更新：
 tags = ["architecture", "plugin"]
 ```
 
-TASK-021 当前这类更新由 Tag Plugin slot 控件或命令完成；统一 metadata bar、picker 体验和其他插件字段编辑仍属于 TASK-023+。
+TASK-023 后，这类 Tag 更新仍由 Tag Plugin-owned slot 控件或命令完成，但可以在 `MetadataBar` 统一组合的 `page.header.metadata` 区域中出现。完整 picker 体验、其他插件字段编辑器和 app-shell/editor 默认挂载仍属于后续任务。
 
 ### 26.4 计时
 
-用户点击 Start。
+长期目标中，用户点击 Start。
+
+TASK-023 当前只有 Timer Plugin 的 metadata UI placeholder：当前 source 注册 `timer.page-header-metadata.placeholder`，语义是 disabled inert Start timer affordance。真实 `timer.start` / `timer.stop` / `timer.pause` / `timer.resume` / `timer.switch` runtime 和 commands 仍是 TASK-024。
 
 全局计时器：
 

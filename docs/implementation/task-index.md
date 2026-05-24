@@ -576,15 +576,26 @@ Source docs:
 
 Acceptance criteria:
 
-- `page.header.metadata` slot renders plugin-contributed metadata fields.
-- Task, Tag, Timer placeholder fields can contribute display/edit components.
-- Field editors update metadata through commands/services.
+- Built-in `metadata-ui` plugin exports reusable `MetadataBar`.
+- `MetadataBar` composes `page.header.metadata` slot contributions in SlotRegistry order.
+- Task, Tag, and Timer placeholder fields contribute plugin-owned UI through the metadata slot.
+- Existing Tag add/remove controls keep updating metadata through Tag commands/services.
+- Task fields are read-only in TASK-023; Timer contributes only a disabled inert Start placeholder.
+- Manifest `metadataFields` remain inert descriptors/reservation inputs, not executable renderer/editor declarations.
 - Metadata UI remains plugin-driven.
+
+Out of scope for TASK-023:
+
+- Production app-shell/editor default mounting.
+- Full metadata renderer/editor registry.
+- Date picker, estimate editor, and full tag picker polish.
+- Real Timer runtime and `timer.start` / stop / pause / resume / switch commands.
+- Save-time scanning/indexing, native/Tauri/Rust/package changes, and release packaging.
 
 Test plan:
 
-- Component tests for metadata bar rendering and editing.
-- Slot ordering tests.
+- Component tests for metadata bar rendering, slot ordering, and Tag command editing.
+- Boundary tests for active Plugin Host ownership data, descriptor/valueType trust, safe namespace/key handling, prototype-safe values, scoped command execution, inert text rendering, and no native/Tauri/package surface changes.
 
 Dependencies:
 

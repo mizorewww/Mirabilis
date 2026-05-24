@@ -82,7 +82,7 @@ Non-ASCII values such as `K` are rejected instead of being Unicode case-folded
 
 ### 10.3 Tag metadata slot and filter definition
 
-`TagMetadataSlot` is a narrow `page.header.metadata` contribution. It displays inert tag text and local add/remove controls that execute `tag.add-tag` / `tag.remove-tag` with exact `{ pageId, tag }` payloads. It is not the full Metadata UI Plugin from TASK-023.
+`TagMetadataSlot` is a narrow `page.header.metadata` contribution. It displays inert tag text and local add/remove controls that execute `tag.add-tag` / `tag.remove-tag` with exact `{ pageId, tag }` payloads. TASK-023 composes this existing contribution through `MetadataBar`, but the full tag picker polish and generic metadata field editor registry remain deferred.
 
 `tag.create-filter({ tag })` saves a plugin-owned filter definition:
 
@@ -142,22 +142,41 @@ plugins/timer/
 
 ### 11.1 Timer Plugin 注册内容
 
-Timer manifest 声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
-当前 `register(ctx)` 只注册 commands、views 和 slots 这三个 TASK-010 runtime registration facades。
+Timer manifest 长期会声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
+TASK-023 当前只注册一个 metadata UI placeholder slot，不注册 timer commands、views、events、metadata writers、indexers 或 active timer runtime。
 
 ```ts
 export const TimerPlugin: AppPlugin = {
-  manifest,
+  manifest: {
+    id: "timer",
+    name: "Timer Plugin",
+    version: "1.0.0",
+    description: "Reserve an inert timer metadata placeholder.",
+    minAppVersion: "0.1.0"
+  },
 
   register(ctx) {
-    registerTimerCommands(ctx);
-    registerTimerViews(ctx);
-    registerTimerSlots(ctx);
+    ctx.slots.register({
+      id: "timer.page-header-metadata.placeholder",
+      slot: "page.header.metadata",
+      order: 400,
+      component: TimerMetadataPlaceholder
+    });
   }
 };
 ```
 
 ### 11.2 Start Timer
+
+TASK-023 当前：
+
+```text
+Start timer button is disabled and inert
+No timer.start command exists
+No timer metadata/event/runtime state is written
+```
+
+长期目标：
 
 用户点击页面顶部：
 

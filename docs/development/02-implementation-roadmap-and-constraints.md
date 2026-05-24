@@ -220,24 +220,24 @@ No JS filters, date picker, @date parser, task.set_due/task.set-due, Overdue/Don
 
 ### Phase 4：Metadata UI
 
-实现：
+TASK-023 当前已交付：
 
 ```text
-page.header.metadata slot
-metadata field renderer
-metadata field editor
-full tag picker
-date picker
-estimate editor
+metadata-ui built-in plugin
+MetadataBar export
+page.header.metadata slot composition in SlotRegistry order
+Task read-only current fields
+Tag existing add/remove controls through tag commands
+Timer disabled inert Start placeholder
 ```
 
-验收：
+当前验收面：
 
 ```text
-todo · #tag · due · estimate · tracked · Start
+todo · #tag · due · Start disabled
 ```
 
-全部能由插件贡献并点击编辑。TASK-021 已先交付 Tag Plugin 的窄 `page.header.metadata` slot contribution；Phase 4 / TASK-023 仍负责统一 metadata bar、renderer/editor runtime、完整 picker 和其他插件字段。
+`MetadataBar` 组合 plugin-owned `page.header.metadata` slot contributions，并用 active Plugin Host manifest ownership data 过滤 trusted field descriptors/values。Manifest `metadataFields` 仍是 inert descriptors / reservation inputs，不是 executable renderer/editor declarations。Production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和真实 Timer runtime 仍是后续范围。
 
 ---
 
@@ -515,20 +515,20 @@ TASK-015 App Shell 边界：
 - [ ] 任务2
 ```
 
-后续完整架构目标中，代码层会发生：
+当前 roadmap state through TASK-023：
 
 ```text
 MarkdownEditorPlugin 解析文档
 TaskPlugin 识别 - [ ]
 TaskPlugin 创建任务 Markdown Page
 TagPlugin 通过显式 tag.refresh-tags 识别已保存 #tag
-TimerPlugin 提供 Start
-Metadata UI 显示插件字段
+TimerPlugin 提供 disabled inert Start placeholder only
+Metadata UI 通过 reusable MetadataBar 组合 plugin-owned page.header.metadata fields
 FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
+这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer placeholder metadata slot contributions；没有 production app-shell/editor 默认挂载、完整 field renderer/editor registry 或真实 Timer commands。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
 
 当前显式点击导航完成后，用户在任务页继续写：
 

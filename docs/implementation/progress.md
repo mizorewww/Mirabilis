@@ -57,7 +57,7 @@ Status markers:
 
 ## Milestone M5: Metadata and timer loop
 
-- [ ] TASK-023: Implement Metadata UI Plugin
+- [x] TASK-023: Implement Metadata UI Plugin
 - [ ] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
 - [ ] TASK-025: Implement Time Segment and Time Segment Note
 
@@ -78,6 +78,35 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-24 16:02 CST - TASK-023 completed
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Final branch gates passed: `bun run check:quick` passed with typecheck, lint, 28 frontend test files / 441 tests, Rust fmt, Rust clippy, and Rust tests; `bun run build` passed.
+- Completion commits on branch: `bc30f82` acceptance tests, `38910da` implementation, `c19517c` review-fix tests, `12dc21b` review-fix implementation, `7fa761e` docs sync, plus parent orchestration/progress commits.
+- Remaining accepted risks: future test hardening for stale/inactive host records, explicit `prototype` unsafe segment coverage, and sloppy command-prefix edge cases; docs note the Timer slot ID mismatch between early handoff wording and current source-aligned `timer.page-header-metadata.placeholder`.
+- Next action: merge `feat/task-023-metadata-ui-plugin` to `master`, run merge-result checks, and continue to TASK-024.
+
+### 2026-05-24 15:51 CST - TASK-023 docs sync completed
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Delivered docs sync: formal product, architecture, development, implementation-index, progress, and testing docs now describe TASK-023 as a narrow plugin-driven Metadata UI slice: built-in `metadata-ui`, reusable `MetadataBar`, `page.header.metadata` composition in SlotRegistry order, Tag compatibility through existing add/remove commands, Task read-only current fields, Timer disabled inert Start placeholder, and the MetadataBar trust boundary.
+- Deferred scope recorded: production app-shell/editor mounting, full metadata renderer/editor registry, date picker, estimate editor semantics, full tag picker polish, real Timer runtime/commands, save-time scanning/indexing, native/Tauri/package/Rust changes, Calendar/Habit/Stats/ML/AI behavior, and release packaging.
+- Security/API notes recorded: manifest `metadataFields` remain inert descriptors/reservation inputs, trusted metadata requires active Plugin Host ownership data plus matching `sourcePluginId` / descriptor / `valueType`, safe namespace/key/valueType validation, prototype-safe trusted values, scoped command execution, narrow slot props, inert React text rendering, and no raw runtime/native/store handles for plugin-rendered slot UI.
+- Residual documentation risk: parent handoff names the Timer metadata contribution `timer.page-header-metadata.tracked`, but current source registers `timer.page-header-metadata.placeholder`; docs are kept aligned to the current source until implementation or parent decision changes the ID.
+- Docs checks: targeted stale-claim scans found no remaining TASK-023 claim that full renderer/editor registries, Timer runtime/commands, production app-shell/editor mounting, or save-time scanning/indexing are delivered. Remaining hits are deferred/future-scope notes plus the intentional Timer slot ID mismatch risk above. `git diff --check` passed. `bun run typecheck` passed.
+
+### 2026-05-21 21:32 CST - TASK-023 started
+
+- Branch: `feat/task-023-metadata-ui-plugin`.
+- Task: Implement Metadata UI Plugin.
+- Scope: implement the next plugin-driven metadata UI slice so `page.header.metadata` can render plugin-contributed metadata fields, Task/Tag/Timer placeholder fields can contribute display/edit components, editors update metadata through command/service boundaries, and the metadata UI remains plugin-driven.
+- Source docs: `docs/implementation/task-index.md#task-023-implement-metadata-ui-plugin`, `docs/product/04-editor-and-workflows.md#14-metadata-图形化展示`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-4metadata-ui`, `docs/development/01-data-roadmap-and-mvp.md#phase-4metadata-ui-plugin`, `docs/product/03-plugin-platform.md#94-metadata-registry`, and `docs/product/06-view-slots.md#252-页面插槽`.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package changes, persistence/schema rewiring, broad rich-editor migration, save-time scanning/indexing, Timer runtime behavior beyond placeholder field contribution, Calendar/Habit/Stats/ML behavior, release packaging, and Core business behavior beyond generic plugin metadata UI/slot primitives.
+- Agent/config checks: `.codex/agents/*.toml` parsed successfully with 11 agent config files. `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK, plus non-blocking unrestricted sandbox/network notes, the known desktop-terminal `TERM=dumb` failure, and an available Codex update.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, current-doc guidance, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-023-metadata-ui-plugin.md`.
 
 ### 2026-05-21 21:26 CST - TASK-022 docs sync completed
 

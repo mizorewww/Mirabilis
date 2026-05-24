@@ -223,24 +223,24 @@ A 页面写：
 
 ### Phase 4：Metadata UI Plugin
 
-实现：
+TASK-023 当前已交付窄的 Metadata UI slice：
 
 ```text
-page.header.metadata slot
-字段 renderer
-字段 editor
-tag picker
-date picker
-estimate editor
+metadata-ui built-in plugin
+MetadataBar export
+page.header.metadata slot composition in SlotRegistry order
+Task read-only current fields
+Tag existing add/remove controls through tag commands
+Timer disabled inert Start placeholder
 ```
 
-验收：
+当前可见验收面：
 
 ```text
-todo · #tag · due · estimate · tracked · Start
+todo · #tag · due · Start disabled
 ```
 
-字段可点击编辑。
+`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和真实 Timer runtime 仍是后续范围。
 
 ### Phase 5：Timer Plugin
 
