@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 16:05 CST.
+Last updated: 2026-05-24 16:07 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-24 16:05 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 started; pre-test planning/current-doc/security guidance is next.
+- Current phase: TASK-024 pre-test planning/current-doc/API/security guidance is running.
 
 ## Active Agents
 
-- None.
+- Feynman (`planner`) is planning the narrow Timer runtime, command, active-state, switch, UI, and deferred TASK-025 scope.
+- Erdos (`docs_researcher`) is checking current React, Testing Library, user-event, and Vitest fake-time/testing guidance.
+- Laplace (`deprecation_auditor`) is auditing Timer API/deprecation and architecture-boundary risks.
+- Wegener (`security_reviewer`) is auditing Timer command/state/event/UI security boundaries.
 
 ## Completed Recent Task
 
@@ -151,8 +154,8 @@ Last updated: 2026-05-24 16:05 CST.
 
 ## Next Actions
 
-1. Spawn TASK-024 planner, docs researcher, deprecation/API auditor, and security reviewer for pre-test guidance.
-2. After guidance, delegate failing acceptance tests to `test_writer`.
+1. Wait for Feynman, Erdos, Laplace, and Wegener pre-test guidance.
+2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
 
 ## Current TASK-021 State
 

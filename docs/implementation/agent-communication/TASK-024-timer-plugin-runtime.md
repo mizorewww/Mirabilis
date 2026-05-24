@@ -61,6 +61,13 @@
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK.
 - Non-blocking notes: unrestricted sandbox/network and the known `TERM=dumb` terminal failure.
 
+## Active Pre-test Guidance Agents
+
+- Feynman (`planner`) is planning the narrow Timer runtime, command, active-state, switch, UI, and deferred TASK-025 scope.
+- Erdos (`docs_researcher`) is checking current React, Testing Library, user-event, and Vitest fake-time/testing guidance.
+- Laplace (`deprecation_auditor`) is auditing Timer API/deprecation and architecture-boundary risks.
+- Wegener (`security_reviewer`) is auditing Timer command/state/event/UI security boundaries.
+
 ## Current Next Action
 
-- Spawn pre-test guidance agents.
+- Wait for pre-test guidance agents, record parent decisions, then delegate failing acceptance tests to `test_writer`.
