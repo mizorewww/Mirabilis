@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:28 CST.
+Last updated: 2026-05-24 19:29 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:28 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 focused review completed; review-fix tests are next.
+- Current phase: TASK-025 review-fix tests delegated to Goodall (`test_writer`).
 
 ## Active Agents
 
-- None.
+- Goodall (`test_writer`) is adding review-fix tests for real timeline UI note create/edit coverage, note-link filtering, and `timer.add-note` result shape. Scope is tests only; no production code, commits, pushes, merges, or branch changes.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:28 CST.
 
 ## Next Actions
 
-1. Commit focused review findings.
-2. Delegate review-fix tests for Nash's P1 UI note-flow coverage and accepted P2 test hardening.
+1. Wait for Goodall (`test_writer`) to finish review-fix tests.
+2. Validate expected red/green signal and commit tests.
 
 ## Current TASK-021 State
 

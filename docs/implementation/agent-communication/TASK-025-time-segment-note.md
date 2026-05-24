@@ -164,4 +164,16 @@
 
 ## Current Next Action
 
-- Commit focused review findings, then delegate review-fix tests for Nash's P1/P2 accepted findings.
+## Review-Fix Test Handoff
+
+- Goodall (`test_writer`) started 2026-05-24 19:29 CST.
+- Scope: tests only, no production code.
+- Required coverage:
+  - Real `timer.page-timeline.segments` UI note create/edit path with accessible Add Note / Edit Note controls, Markdown Page note creation/update, note-link events, and inert timeline rendering.
+  - Timeline ignores wrong-owner/malformed `time_segment_note_added` events attached to an otherwise valid current-page segment.
+  - `timer.add-note` returns a narrow result DTO, expected to be `{ notePageId }`.
+- Expected red signal: the real UI note create/edit test should fail until the timeline component exposes the user-facing note editor path.
+
+## Current Next Action
+
+- Wait for Goodall (`test_writer`) to finish review-fix tests, validate expected red/green signal, and commit tests.
