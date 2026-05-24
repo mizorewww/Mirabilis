@@ -437,6 +437,20 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
   - Add active-bar command-surface behavior assertions if practical.
 - Parent thread will not write tests.
 
+## Second Review-Fix Regression Tests
+
+- Status: completed by Copernicus (`test_writer`) on 2026-05-24 18:21 CST.
+- Commit: `6fbad9b`.
+- File changed:
+  - `src/test/timer-plugin-runtime.test.tsx`.
+- Coverage added:
+  - Stronger Timer production source guard for `globalThis.setTimeout` fake-clock probing, `Object.defineProperty(..., "setTimeout", ...)`, controlled clock bridge/shim naming, saved/replaced timeout globals, and string-handler forwarding.
+  - Descriptor/prototype hardening coverage for both `timer.start` and `timer.switch`, including non-empty null-prototype page payloads.
+  - Active-bar behavioral assertions that Pause, Resume, and Stop call exactly `timer.pause`, `timer.resume`, and `timer.stop` with `{}` and no extra calls.
+- Parent validation:
+  - Focused tests ran 5 files / 127 tests with 2 failed / 125 passed. Failures were expected: `timer.start` accepts non-empty null-prototype `{ pageId }`, and production Timer source still contains global `setTimeout` fake-clock bridge patterns.
+  - `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --cached --check` passed.
+
 ## Current Next Action
 
-- Wait for Copernicus's second review-fix regression tests.
+- Delegate second review-fix implementation to `implementer`.
