@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-24 18:54 CST - TASK-024 merged
+
+- Branch: `feat/task-024-timer-plugin-runtime`.
+- Merge commit: `e219110` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 29 frontend test files / 457 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-024 is complete on `master`; next autonomous task is TASK-025.
+
 ### 2026-05-24 18:52 CST - TASK-024 completed
 
 - Branch: `feat/task-024-timer-plugin-runtime`.

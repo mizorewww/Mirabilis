@@ -562,4 +562,19 @@ bun run build
 
 ## Current Next Action
 
-- Commit final TASK-024 progress/status update, merge to `master`, run merge-result `bun run check:quick`, then continue to TASK-025.
+## Merge Result
+
+- Status: merged to `master` on 2026-05-24.
+- Merge commit: `e219110`.
+- Push: `master` pushed to `origin`.
+- Merge-result validation:
+
+```bash
+bun run check:quick
+```
+
+- Result: passed with typecheck, lint, 29 frontend test files / 457 tests, Rust fmt, Rust clippy, and Rust tests.
+
+## Current Next Action
+
+- Commit TASK-024 merge-validation status on `master`, then continue to TASK-025.
