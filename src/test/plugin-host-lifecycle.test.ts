@@ -51,6 +51,10 @@ type CapturedContributionDescriptors = ReturnType<
   typeof registerRuntimeContributions
 >;
 
+type InternalPluginScopedCommandExecutor = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
+
 type StaleContextFilterIds = {
   direct: string;
   transaction: string;
@@ -93,6 +97,9 @@ const testApp = {
 
 const RuntimeView: ComponentType<{ surface?: string }> = () => null;
 const RuntimeSlot: ComponentType<{ region?: string }> = () => null;
+const pluginScopedCommandExecutorKey = Symbol.for(
+  "mirabilis.internal.pluginScopedCommandExecutor",
+);
 
 describe("Plugin Host lifecycle", () => {
   it("exports the public Plugin Host API from Core entrypoints", () => {
@@ -694,6 +701,83 @@ describe("Plugin Host lifecycle", () => {
         pluginId: "alpha",
       },
     );
+  });
+
+  it("scopes the internal slot command executor by registered command owner, not command id prefix", async () => {
+    const runtime = createInMemoryAppRuntime();
+    const host = createHost(runtime);
+    let alphaExecutor: InternalPluginScopedCommandExecutor | undefined;
+    const alphaHandler = vi.fn((input: unknown) => ({
+      input,
+      owner: "alpha",
+    }));
+    const betaHandler = vi.fn(() => ({
+      owner: "beta",
+    }));
+    const alpha = createPlugin({
+      id: "alpha",
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.own-command",
+          title: "Alpha own command",
+          handler: alphaHandler,
+        });
+        ctx.slots.register({
+          id: "alpha.executor-probe",
+          slot: "test.executor-probe",
+          component: createInternalScopedExecutorProbeSlot(ctx, (executor) => {
+            alphaExecutor = executor;
+          }),
+        });
+      },
+    });
+    const beta = createPlugin({
+      id: "beta",
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.foreign",
+          title: "Foreign alpha-prefixed command",
+          handler: betaHandler,
+        });
+      },
+    });
+
+    await host.loadBuiltInPlugins([alpha, beta]);
+
+    expect(runtime.registries.commands.get("alpha.own-command")).toMatchObject({
+      id: "alpha.own-command",
+      pluginId: "alpha",
+    });
+    expect(runtime.registries.commands.get("alpha.foreign")).toMatchObject({
+      id: "alpha.foreign",
+      pluginId: "beta",
+    });
+    expect(runtime.registries.slots.get("alpha.executor-probe")).toMatchObject({
+      id: "alpha.executor-probe",
+      pluginId: "alpha",
+      slot: "test.executor-probe",
+    });
+
+    const executor = expectDefined(alphaExecutor);
+
+    await expect(
+      executor.execute("alpha.own-command", { source: "slot" }),
+    ).resolves.toStrictEqual({
+      input: { source: "slot" },
+      owner: "alpha",
+    });
+    expect(alphaHandler).toHaveBeenCalledTimes(1);
+
+    const foreignError = await captureOptionalAsyncError(() =>
+      executor.execute("alpha.foreign", { source: "slot" }),
+    );
+
+    expect.soft(betaHandler).not.toHaveBeenCalled();
+    expect.soft(foreignError).toBeInstanceOf(Error);
+
+    if (foreignError instanceof Error) {
+      expect(foreignError.message).toContain("alpha.foreign");
+    }
   });
 
   it("rejects runtime ownership spoofing through plugin facades without mutating registries or stores", async () => {
@@ -2927,6 +3011,33 @@ function registerRuntimeContributions(ctx: PluginContext, prefix: string) {
       when: () => true,
     }),
   };
+}
+
+function createInternalScopedExecutorProbeSlot(
+  ctx: PluginContext,
+  captureExecutor: (executor: InternalPluginScopedCommandExecutor) => void,
+): ComponentType<Record<string, never>> {
+  const executor = readInternalPluginScopedCommandExecutor(ctx);
+
+  captureExecutor(executor);
+
+  return function InternalScopedExecutorProbeSlot() {
+    return null;
+  };
+}
+
+function readInternalPluginScopedCommandExecutor(
+  ctx: PluginContext,
+): InternalPluginScopedCommandExecutor {
+  const value = (ctx as Record<PropertyKey, unknown>)[
+    pluginScopedCommandExecutorKey
+  ];
+
+  expect(value).toMatchObject({
+    execute: expect.any(Function),
+  });
+
+  return value as InternalPluginScopedCommandExecutor;
 }
 
 function tryLateRuntimeRegistrations(ctx: PluginContext, prefix: string) {
