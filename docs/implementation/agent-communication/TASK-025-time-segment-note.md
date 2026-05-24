@@ -81,4 +81,29 @@
 
 ## Current Next Action
 
-- Wait for Pauli (`test_writer`) to finish failing acceptance tests, validate expected red signal, and commit tests.
+## Failing Acceptance Tests
+
+- Status: completed by Pauli (`test_writer`) on 2026-05-24 19:15 CST.
+- Commit: `b4b41aa`.
+- Files changed:
+  - `src/test/timer-plugin-runtime.test.tsx`.
+  - `src/test/timer-time-segment-note.test.tsx`.
+- Coverage added:
+  - Segment creation on explicit `timer.stop`, active `timer.start`, and active `timer.switch`.
+  - `timer.stopped` before `timer.time_segment_created`.
+  - Exact/narrow segment payload and result DTO shape.
+  - Pause/resume duration excluding paused time.
+  - Hardened invalid `timer.stop` payloads without event/page/state mutation.
+  - `timer.add-note` registration, stale `timer.add_note` rejection, note create/update behavior, immutable segment events, and note-link events.
+  - Inert unsafe note rendering, `page.timeline` segment filtering, and native/package/Cargo/Tauri surface guard.
+- Parent validation:
+  - `bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx` failed as expected with 2 files failed, 17 failed / 4 passed.
+  - Expected failures: `timer.add-note` is not registered, finalizing timers does not return `createdSegment`, `timer.time_segment_created` events are not emitted, and `timer.page-timeline.segments` is not registered.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx --max-warnings=0` passed.
+  - No `.skip` / `.only` matches in touched test files.
+  - `git diff --check` and `git diff --cached --check` passed.
+
+## Current Next Action
+
+- Commit TASK-025 test validation summary, then delegate minimum production implementation to `implementer`.
