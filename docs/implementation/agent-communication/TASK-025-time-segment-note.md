@@ -310,4 +310,8 @@
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents to confirm the P1 scoped-executor ownership issue is closed and no public API/security/test-quality regression remains.
+- Wait for narrow post-fix review agents:
+  - Ampere (`reviewer`) is reviewing scoped command executor correctness and lifecycle behavior after Kuhn's fix.
+  - Zeno (`security_reviewer`) is reviewing scoped command executor plugin-boundary security after Kuhn's fix.
+  - Archimedes (`test_quality_reviewer`) is reviewing the scoped executor regression coverage and adjacent Timer note coverage.
+  - Euclid (`deprecation_auditor`) is auditing scoped executor API/deprecation risk and TASK-025 docs handoff needs.
