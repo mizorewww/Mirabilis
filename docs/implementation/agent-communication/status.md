@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 17:02 CST.
+Last updated: 2026-05-24 17:03 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 17:02 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 focused review completed; review-fix tests are next.
+- Current phase: TASK-024 review-fix regression tests are in progress.
 
 ## Active Agents
 
-- None.
+- Pasteur (`test_writer`) is writing review-fix regression tests for active-bar ticking/state updates, no production eval/monkeypatch, real metadata Start flow, direct-start/switch edges, payload hardening, and scoped active-bar commands.
 
 ## Completed Recent Task
 
@@ -151,7 +151,7 @@ Last updated: 2026-05-24 17:02 CST.
 
 ## Next Actions
 
-1. Delegate review-fix regression tests to `test_writer`.
+1. Wait for Pasteur's review-fix regression tests.
 2. Validate expected red tests, then delegate review-fix implementation.
 
 ## Current TASK-021 State

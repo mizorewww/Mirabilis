@@ -265,4 +265,19 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate review-fix regression tests to `test_writer`.
+## Review-Fix Test Handoff
+
+- Delegated to Pasteur (`test_writer`) on 2026-05-24 17:03 CST.
+- Required scope:
+  - Visible active-bar elapsed/state updates and state-driven controls.
+  - Static guard against production Timer eval/jsdom timer monkeypatch behavior.
+  - Real runtime MetadataBar Start flow.
+  - Direct `timer.start` while active and switch edge cases.
+  - Descriptor-safe exact payload validation for prototype/accessor/symbol/non-enumerable cases.
+  - Invalid control failure should not desync later UI updates.
+  - Timer-scoped command surface for active-bar controls where testable.
+- Parent thread will not write review-fix tests.
+
+## Current Next Action
+
+- Wait for Pasteur's review-fix regression tests.
