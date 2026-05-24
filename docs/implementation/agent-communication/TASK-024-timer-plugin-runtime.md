@@ -428,4 +428,15 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate the remaining regression tests to `test_writer`.
+## Second Review-Fix Test Handoff
+
+- Delegated to Copernicus (`test_writer`) on 2026-05-24 18:18 CST.
+- Required scope:
+  - Strengthen production Timer static guard for `globalThis.setTimeout`, `Object.defineProperty(...setTimeout...)`, `setTimeout.clock`, controlled-clock bridge/shim names, and string-handler timer forwarding/eval patterns.
+  - Add `timer.start` descriptor/prototype payload hardening coverage.
+  - Add active-bar command-surface behavior assertions if practical.
+- Parent thread will not write tests.
+
+## Current Next Action
+
+- Wait for Copernicus's second review-fix regression tests.
