@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 07:51 CST.
+Last updated: 2026-05-25 07:55 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 07:51 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar scoped command ownership implementation delegated to Nash (`implementer`).
+- Current phase: TASK-025 MetadataBar scoped command ownership implementation committed; narrow post-fix re-review pending.
 
 ## Active Agents
 
-- Nash (`implementer`) is fixing MetadataBar command execution to authorize by registered command descriptor owner instead of command ID prefix. Scope is production MetadataBar boundary only; no tests, formal docs, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
+- None currently running. Next delegation is a narrow post-fix review of Nash's MetadataBar command ownership fix.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-25 07:51 CST.
 
 ## Next Actions
 
-1. Wait for Nash (`implementer`) to finish MetadataBar command ownership implementation.
-2. Validate focused tests/checks and commit implementation if green.
+1. Spawn narrow post-fix review agents for Nash's MetadataBar command ownership fix.
+2. If no P0/P1 remains, delegate TASK-025 formal docs sync to `doc_writer`.
 
 ## Current TASK-021 State
 

@@ -371,4 +371,27 @@
 
 ## Current Next Action
 
-- Wait for Nash (`implementer`) to finish, validate focused tests/checks, and commit implementation if green.
+## MetadataBar Command Ownership Implementation
+
+- Status: completed by Nash (`implementer`) on 2026-05-25 07:54 CST.
+- Commit: `c6b2837`.
+- File changed:
+  - `src/plugins/metadata-ui/components/MetadataBar.tsx`.
+- Behavior implemented:
+  - MetadataBar scoped command execution now resolves a registered command descriptor when the command service exposes descriptor lookup.
+  - Same-owner commands still execute.
+  - Foreign-owned matching-prefix commands are rejected before dispatch, so a beta-owned `alpha.foreign` handler is not called from an alpha metadata slot path.
+  - Slot UI still receives only the narrow command execution facade.
+- Parent validation:
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx` passed with 1 file / 17 tests.
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/timer-time-segment-note.test.tsx src/test/timer-plugin-runtime.test.tsx` passed with 5 files / 117 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - No `.skip` / `.only` matches in touched MetadataBar/PluginHost/Timer tests.
+  - MetadataBar/Timer/PluginHost forbidden-pattern scan for fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handlers, dangerous HTML, storage/network, and Tauri API imports was empty.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust diff guard against `master` was empty.
+
+## Current Next Action
+
+- Spawn narrow post-fix review agents to confirm Zeno's MetadataBar P1 is closed and no API/security/test-quality regression remains.
