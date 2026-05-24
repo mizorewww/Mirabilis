@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 18:32 CST.
+Last updated: 2026-05-24 18:36 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-24 18:32 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 second review-fix implementation is committed; final narrow review is next.
+- Current phase: TASK-024 final narrow review cleared; formal docs sync is next.
 
 ## Active Agents
 
@@ -151,8 +151,8 @@ Last updated: 2026-05-24 18:32 CST.
 
 ## Next Actions
 
-1. Spawn final narrow review for production timer monkeypatch closure.
-2. If clear, proceed to formal docs sync.
+1. Delegate formal TASK-024 docs sync to `doc_writer`.
+2. Validate docs and focused checks, then commit docs.
 
 ## Current TASK-021 State
 

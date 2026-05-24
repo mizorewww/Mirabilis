@@ -493,4 +493,23 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Spawn final narrow review.
+## Final Narrow Review
+
+- Status: completed on 2026-05-24 by Averroes (`security_reviewer`) and Darwin (`test_quality_reviewer`).
+- Findings: no P0/P1/P2 findings remain.
+- Security confirmations:
+  - Production Timer code uses normal function callback timers only and no longer probes/replaces `setTimeout`, uses `Object.defineProperty` on timer globals, contains controlled/fake clock bridges or shims, or uses eval/string timer handlers.
+  - The fake-timer compatibility shim is confined to `src/test/setup.ts` and wired only through Vitest setup.
+- Test-quality confirmations:
+  - The final regression tests catch the prior production timer monkeypatch false negative.
+  - `timer.start` descriptor/prototype hardening is covered alongside `timer.switch`.
+  - Active-bar command behavior asserts exact `timer.pause`, `timer.resume`, and `timer.stop` calls with `{}` payloads.
+  - Real MetadataBar start-to-active-bar behavior is covered.
+- Checks reported:
+  - Focused Timer tests passed where run.
+  - No `.skip` / `.only` in reviewed files.
+  - `git diff --check` passed where run.
+
+## Current Next Action
+
+- Delegate formal TASK-024 docs sync to `doc_writer`.
