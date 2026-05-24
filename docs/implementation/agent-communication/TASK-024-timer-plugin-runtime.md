@@ -491,8 +491,6 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 - Residual risk:
   - `src/test/setup.ts` now defines a Vitest-only Jest-shaped `advanceTimersByTime` alias for fake-timer cleanup compatibility; it is test-only and can be removed later if no longer needed.
 
-## Current Next Action
-
 ## Final Narrow Review
 
 - Status: completed on 2026-05-24 by Averroes (`security_reviewer`) and Darwin (`test_quality_reviewer`).
@@ -512,4 +510,4 @@ git diff --name-only master -- package.json bun.lock src-tauri/Cargo.lock src-ta
 
 ## Current Next Action
 
-- Delegate formal TASK-024 docs sync to `doc_writer`.
+- Linnaeus (`doc_writer`) is syncing formal TASK-024 docs. Parent will wait, validate the resulting docs, and commit the docs sync separately.

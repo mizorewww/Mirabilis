@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 18:36 CST.
+Last updated: 2026-05-24 18:39 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 18:36 CST.
 - Branch: `feat/task-024-timer-plugin-runtime`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-024 final narrow review cleared; formal docs sync is next.
+- Current phase: TASK-024 formal docs sync is delegated to Linnaeus (`doc_writer`).
 
 ## Active Agents
 
-- None.
+- Linnaeus (`doc_writer`) is syncing formal TASK-024 product, architecture, development, implementation, and testing docs. Scope is documentation-only; no production/test code, commits, pushes, merges, or branch changes.
 
 ## Completed Recent Task
 
@@ -151,7 +151,7 @@ Last updated: 2026-05-24 18:36 CST.
 
 ## Next Actions
 
-1. Delegate formal TASK-024 docs sync to `doc_writer`.
+1. Wait for Linnaeus (`doc_writer`) to finish formal TASK-024 docs sync.
 2. Validate docs and focused checks, then commit docs.
 
 ## Current TASK-021 State
