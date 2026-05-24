@@ -387,6 +387,148 @@ describe("Metadata UI Plugin", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
+  it("scopes metadata slot commands by registered command owner instead of id prefix", async () => {
+    const alphaHandler = vi.fn((input: unknown) => ({
+      input,
+      owner: "alpha",
+    }));
+    const betaHandler = vi.fn(() => ({
+      owner: "beta",
+    }));
+    const CommandOwnerProbe = (props: CapturedFieldProps) => {
+      const [ownOutcome, setOwnOutcome] = useState("Own command idle");
+      const [foreignOutcome, setForeignOutcome] = useState(
+        "Foreign command idle",
+      );
+
+      return (
+        <section aria-label="Command owner probe">
+          <button
+            type="button"
+            onClick={() => {
+              const commands = readCommandExecutor(props.commands);
+
+              if (commands === null) {
+                setOwnOutcome("Own command blocked");
+                return;
+              }
+
+              void commands
+                .execute("alpha.own-command", { pageId: props.pageId })
+                .then(
+                  () => setOwnOutcome("Own command executed"),
+                  () => setOwnOutcome("Own command blocked"),
+                );
+            }}
+          >
+            Run own command
+          </button>
+          <span>{ownOutcome}</span>
+          <button
+            type="button"
+            onClick={() => {
+              const commands = readCommandExecutor(props.commands);
+
+              if (commands === null) {
+                setForeignOutcome("Foreign command blocked");
+                return;
+              }
+
+              void commands
+                .execute("alpha.foreign", { pageId: props.pageId })
+                .then(
+                  () => setForeignOutcome("Foreign command escaped"),
+                  () => setForeignOutcome("Foreign command blocked"),
+                );
+            }}
+          >
+            Run foreign command
+          </button>
+          <span>{foreignOutcome}</span>
+        </section>
+      );
+    };
+    const alphaPlugin: AppPlugin = {
+      manifest: {
+        id: "alpha",
+        name: "alpha metadata field",
+        version: "1.0.0",
+        minAppVersion: "0.1.0",
+        contributes: {
+          metadataFields: [
+            {
+              id: "alpha.status",
+              namespace: "alpha",
+              key: "status",
+              valueType: "string",
+            },
+          ],
+        },
+      },
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.own-command",
+          title: "Alpha own command",
+          handler: alphaHandler,
+        });
+        ctx.slots.register({
+          id: "alpha.page-header-metadata.command-owner",
+          slot: pageHeaderMetadataSlot,
+          component: CommandOwnerProbe,
+        });
+      },
+    };
+    const betaPlugin: AppPlugin = {
+      manifest: {
+        id: "beta",
+        name: "beta command owner",
+        version: "1.0.0",
+        minAppVersion: "0.1.0",
+      },
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.foreign",
+          title: "Beta-owned alpha-prefixed command",
+          handler: betaHandler,
+        });
+      },
+    };
+    const runtime = await createRuntime({
+      pageIds: ["metadata-command-owner-page"],
+      builtInPlugins: [...BUILT_IN_PLUGINS, alphaPlugin, betaPlugin],
+    });
+    const user = userEvent.setup();
+    const page = createPage(runtime, "Metadata command owner page");
+
+    render(await createMetadataBar(runtime, page.id));
+
+    expect(runtime.registries.commands.get("alpha.foreign")).toMatchObject({
+      id: "alpha.foreign",
+      pluginId: "beta",
+    });
+
+    await user.click(screen.getByRole("button", { name: /run own command/i }));
+    await waitFor(() =>
+      expect(screen.getByText("Own command executed")).toBeVisible(),
+    );
+    expect(alphaHandler).toHaveBeenCalledTimes(1);
+    expect(alphaHandler.mock.calls[0]?.[0]).toStrictEqual({ pageId: page.id });
+
+    await user.click(
+      screen.getByRole("button", { name: /run foreign command/i }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Foreign command (blocked|escaped)/),
+      ).toBeVisible(),
+    );
+
+    expect
+      .soft(screen.getByText(/Foreign command (blocked|escaped)/))
+      .toHaveTextContent("Foreign command blocked");
+    expect.soft(betaHandler).not.toHaveBeenCalled();
+  });
+
   it("keeps repeated Tag editors label-associated when multiple metadata bars render", async () => {
     const runtime = await createRuntime({
       pageIds: ["first-tag-page", "second-tag-page"],
