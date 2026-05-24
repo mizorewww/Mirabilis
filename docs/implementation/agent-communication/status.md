@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:52 CST.
+Last updated: 2026-05-24 19:57 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:52 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 scoped command executor review-fix tests delegated to Bohr (`test_writer`).
+- Current phase: TASK-025 scoped command executor review-fix implementation delegated to Kuhn (`implementer`).
 
 ## Active Agents
 
-- Bohr (`test_writer`) is adding failing tests proving the internal scoped command executor checks registered command descriptor ownership, not command ID prefix only. Scope is tests only; no production code, commits, pushes, merges, or branch changes.
+- Kuhn (`implementer`) is fixing the internal scoped command executor to authorize by registered command descriptor owner instead of command ID prefix. Scope is production PluginHost TypeScript only; no tests, commits, pushes, merges, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:52 CST.
 
 ## Next Actions
 
-1. Wait for Bohr (`test_writer`) to finish scoped-executor review-fix tests.
-2. Validate expected red signal and commit tests.
+1. Wait for Kuhn (`implementer`) to finish scoped-executor review-fix implementation.
+2. Validate focused tests/checks and commit implementation if green.
 
 ## Current TASK-021 State
 

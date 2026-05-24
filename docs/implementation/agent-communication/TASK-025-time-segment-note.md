@@ -264,4 +264,29 @@
 
 ## Current Next Action
 
-- Wait for Bohr (`test_writer`) to finish scoped-executor review-fix tests, validate expected red signal, and commit tests.
+## Scoped Executor Review-Fix Tests
+
+- Status: completed by Bohr (`test_writer`) on 2026-05-24 19:56 CST.
+- Commit: `7aafc97`.
+- File changed:
+  - `src/test/plugin-host-lifecycle.test.ts`.
+- Coverage added:
+  - A plugin's internal scoped command executor can execute its own registered command.
+  - A foreign plugin can own a command with a matching ID prefix such as `alpha.foreign`.
+  - The original plugin's scoped executor must reject that foreign-owned command and must not call the foreign handler.
+- Parent validation:
+  - `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts` failed as expected with 1 failed / 47 passed.
+  - Expected red reason: current scoped executor checks command ID prefix only, so beta-owned `alpha.foreign` ran and no error was captured.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/plugin-host-lifecycle.test.ts --max-warnings=0` passed.
+  - No `.skip` / `.only` matches in the touched test file.
+  - `git diff --check` and `git diff --cached --check` passed.
+
+## Scoped Executor Review-Fix Implementation Handoff
+
+- Kuhn (`implementer`) started 2026-05-24 19:57 CST.
+- Scope: minimum production PluginHost fix so the internal scoped command executor authorizes by registered command descriptor owner (`descriptor.pluginId === pluginId`) instead of command ID prefix.
+
+## Current Next Action
+
+- Wait for Kuhn (`implementer`) to finish scoped-executor review-fix implementation, validate focused tests/checks, and commit implementation if green.
