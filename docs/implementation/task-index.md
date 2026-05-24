@@ -578,9 +578,9 @@ Acceptance criteria:
 
 - Built-in `metadata-ui` plugin exports reusable `MetadataBar`.
 - `MetadataBar` composes `page.header.metadata` slot contributions in SlotRegistry order.
-- Task, Tag, and Timer placeholder fields contribute plugin-owned UI through the metadata slot.
+- Task, Tag, and Timer fields contribute plugin-owned UI through the metadata slot.
 - Existing Tag add/remove controls keep updating metadata through Tag commands/services.
-- Task fields are read-only in TASK-023; Timer contributes only a disabled inert Start placeholder.
+- Task fields are read-only in TASK-023; Timer reserves the Start contribution that TASK-024 later enables.
 - Manifest `metadataFields` remain inert descriptors/reservation inputs, not executable renderer/editor declarations.
 - Metadata UI remains plugin-driven.
 
@@ -589,7 +589,7 @@ Out of scope for TASK-023:
 - Production app-shell/editor default mounting.
 - Full metadata renderer/editor registry.
 - Date picker, estimate editor, and full tag picker polish.
-- Real Timer runtime and `timer.start` / stop / pause / resume / switch commands.
+- Timer lifecycle runtime and `timer.start` / stop / pause / resume / switch commands remain TASK-024 scope.
 - Save-time scanning/indexing, native/Tauri/Rust/package changes, and release packaging.
 
 Test plan:
@@ -606,20 +606,31 @@ Dependencies:
 Source docs:
 
 - `docs/product/05-built-in-plugins.md#18-timer-plugin`
-- `docs/architecture/05-plugin-implementations.md#10-timer-plugin-代码架构`
-- `docs/architecture/07-runtime-flows.md#183-用户点击-start`
+- `docs/architecture/05-plugin-implementations.md#11-timer-plugin-代码架构`
+- `docs/architecture/07-runtime-flows.md#186-用户点击-start`
 
 Acceptance criteria:
 
 - Timer Plugin registers `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, and `timer.switch`.
-- One global active timer is visible.
-- Starting a timer associates it with a page/task.
-- Switching timers closes or pauses the previous active timer according to documented behavior.
+- Canonical timer events use `namespace: "timer"` and types `started`, `paused`, `resumed`, and `stopped`.
+- `timer.started` event payload uses `startAt`; active timer DTOs may expose `startedAt`.
+- One global active timer is visible through `timer.global-active-bar` on `global.floating`.
+- Active timer state is Timer Plugin-owned, registration-scoped, in-memory runtime state, not Core-owned/native/persistent/schema-backed state.
+- The `page.header.metadata` Timer Start control is enabled and executes `timer.start` through the scoped command executor.
+- Starting a timer associates it with a page/task; if another timer is active, `timer.start` stops the previous timer, appends `timer.stopped`, starts the new timer, appends `timer.started`, and returns `{ activeTimer, stoppedTimer }`.
+- `timer.pause`, `timer.resume`, and `timer.stop` use exact empty payloads; exact null-prototype empty payloads are allowed, but caller-owned/non-empty/prototype/accessor/symbol/non-enumerable unsafe payloads are rejected.
+- `timer.switch` stops previous then starts next, supports no-active, paused, and same-page cases, and preserves active state/events when the target page is missing.
+- Command results are narrow DTOs.
+
+Out of scope for TASK-024:
+
+- Time Segment creation, note pages, total tracked metadata, timeline views, Calendar/Stats integration, native persistence, schema changes, Tauri/package/Rust changes, production fake-clock/global timer monkeypatches, eval, and string timer handlers.
 
 Test plan:
 
 - Timer Plugin unit/integration tests for state transitions.
 - UI tests for active timer bar.
+- Boundary tests for payload exactness, scoped metadata Start execution, event payload shape, active timer registration scoping, no TASK-025 side effects, no native surface changes, and no production fake-clock/eval/string-handler behavior.
 
 Dependencies:
 

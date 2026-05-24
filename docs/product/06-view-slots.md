@@ -42,20 +42,21 @@ page.timeline
 Metadata UI Plugin 提供 reusable MetadataBar 组合 page.header.metadata
 Task Plugin 在 page.header.metadata 放 read-only current fields
 Tag Plugin 在 page.header.metadata 放 #tag display / add-remove controls
-Timer Plugin 在 page.header.metadata 放 disabled Start timer placeholder
-Timer Plugin 长期在 page.header.actions 放 Start
-Timer Plugin 在 page.timeline 放 Time Segments
+Timer Plugin 在 page.header.metadata 放 enabled Start timer control
+Timer Plugin 后续可在 page.header.actions 放更完整 Start / Switch actions
+Timer Plugin 后续在 page.timeline 放 Time Segments
 ML Plugin 在 sidebar 放 prediction panel
 ```
 
-TASK-023 当前 `page.header.metadata` 行为：
+TASK-024 当前 `page.header.metadata` 行为：
 
 ```text
 metadata-ui exports MetadataBar
 MetadataBar lists page.header.metadata slot contributions in SlotRegistry order
 task.page-header-metadata.current-fields renders read-only enabled/status/source relation/scheduled/due
 tag.page-header-metadata.tags keeps order 300 and preserves existing tag add/remove command behavior
-timer.page-header-metadata.placeholder renders only a disabled inert Start timer affordance
+timer.page-header-metadata.placeholder renders an enabled Start timer control
+Start executes timer.start through the scoped Timer command executor
 ```
 
 `MetadataBar` 是 reusable slice；production app-shell/editor 默认 mounting 仍是后续 integration，除非调用方已经显式挂载它。Manifest `metadataFields` 仍是 ownership descriptors/reservation inputs，不是 executable renderer/editor declarations。
@@ -72,10 +73,12 @@ global.left_sidebar
 示例：
 
 ```text
-Timer Plugin 在 global.floating 放全局计时器
+Timer Plugin 在 global.floating 放 timer.global-active-bar
 Command Plugin 在 global.command_palette 放所有命令
 Filter Plugin 在 left_sidebar 放 saved filters
 ```
+
+TASK-024 当前 `timer.global-active-bar` 显示 active page title、elapsed time，以及 Pause / Resume / Stop controls。它使用 Timer Plugin registration-scoped in-memory active timer state；Time Segment timeline、Note 和 Calendar/Stats integration 仍是后续范围。
 
 ### 25.4 View 插槽
 
