@@ -58,7 +58,7 @@ Status markers:
 ## Milestone M5: Metadata and timer loop
 
 - [x] TASK-023: Implement Metadata UI Plugin
-- [~] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
+- [x] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
 - [ ] TASK-025: Implement Time Segment and Time Segment Note
 
 ## Milestone M6: Calendar and reporting
@@ -79,6 +79,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-24 18:52 CST - TASK-024 completed
+
+- Branch: `feat/task-024-timer-plugin-runtime`.
+- Task: Implement Timer Plugin start/stop/pause/resume/switch.
+- Validation: `bun run check:quick` passed with typecheck, lint, 29 frontend test files / 457 tests, Rust fmt, Rust clippy, and Rust tests. `bun run build` passed.
+- Release readiness: Avicenna (`release_checker`) found no P0/P1 blockers, confirmed `master` is an ancestor, confirmed the branch is docs plus TypeScript only, and confirmed native/package/Rust/Tauri/capability/permission diff guard is empty.
+- Docs sync: Linnaeus (`doc_writer`) synchronized product, architecture, development, implementation, and testing docs in commit `e080f19`; stale `timer.start_timer` / `timer.stop_timer` formal-doc scans were empty.
+- Remaining accepted risks: TASK-025+ still owns Time Segment creation, Time Segment Note pages, total tracked metadata, timeline views, Calendar/Stats/ML integration, native persistence, schema changes, Tauri/package/Rust changes, and broader Timer persistence/reporting behavior. TASK-024 includes a Vitest-only fake-timer cleanup compatibility shim in `src/test/setup.ts`; production Timer code has no fake-clock/global timer monkeypatch, eval, or string-handler behavior.
+
 ### 2026-05-24 18:45 CST - TASK-024 docs sync
 
 - Branch: `feat/task-024-timer-plugin-runtime`.
@@ -86,7 +95,7 @@ Add newest entries at the top.
 - Documentation sync scope: product, architecture, development, implementation index/progress, and testing docs now describe TASK-024 current Timer runtime behavior.
 - Delivered docs sync: canonical Timer commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, `timer.switch`; lifecycle events `namespace: "timer"` with types `started` / `paused` / `resumed` / `stopped`; `timer.started` payload `startAt`; narrow active/stopped DTOs with `startedAt`; enabled `page.header.metadata` Start control through scoped `timer.start`; and `timer.global-active-bar` on `global.floating`.
 - Runtime boundary recorded: one active timer is Timer Plugin-owned, registration-scoped, and in-memory; TASK-024 does not create Time Segments, note pages, total tracked metadata, timeline data, Calendar/Stats integration, native persistence, schema, Tauri/package/Rust changes, or production fake-clock/eval/string-handler behavior.
-- Status remains `[~]` for parent orchestration to finish branch validation, progress completion, commit, and merge.
+- At docs-sync time, status remained `[~]` for parent orchestration to finish branch validation, progress completion, commit, and merge.
 
 ### 2026-05-24 16:05 CST - TASK-024 started
 
