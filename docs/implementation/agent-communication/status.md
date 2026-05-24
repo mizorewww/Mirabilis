@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:51 CST.
+Last updated: 2026-05-24 19:52 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:51 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 narrow re-review found a P1 scoped command executor ownership issue; review-fix tests are next.
+- Current phase: TASK-025 scoped command executor review-fix tests delegated to Bohr (`test_writer`).
 
 ## Active Agents
 
-- None.
+- Bohr (`test_writer`) is adding failing tests proving the internal scoped command executor checks registered command descriptor ownership, not command ID prefix only. Scope is tests only; no production code, commits, pushes, merges, or branch changes.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:51 CST.
 
 ## Next Actions
 
-1. Commit narrow re-review findings.
-2. Delegate review-fix tests for scoped command executor descriptor-owner enforcement.
+1. Wait for Bohr (`test_writer`) to finish scoped-executor review-fix tests.
+2. Validate expected red signal and commit tests.
 
 ## Current TASK-021 State
 

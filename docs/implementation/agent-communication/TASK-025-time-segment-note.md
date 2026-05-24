@@ -251,4 +251,17 @@
 
 ## Current Next Action
 
-- Commit narrow re-review findings, then delegate review-fix tests for scoped command executor descriptor-owner enforcement.
+## Scoped Executor Review-Fix Test Handoff
+
+- Bohr (`test_writer`) started 2026-05-24 19:52 CST.
+- Scope: tests only, no production code.
+- Required coverage:
+  - A plugin's internal scoped command executor rejects a command whose ID has that plugin's prefix but whose registered descriptor owner belongs to another plugin.
+  - The foreign owner command handler is not called.
+  - The same scoped executor can still execute an actual same-owner command.
+  - The internal executor remains an internal boundary detail, not public plugin API.
+- Expected red signal: current production code gates scoped execution by command ID prefix only, so a foreign-owned command such as `alpha.foreign` can still run through plugin `alpha`'s scoped executor.
+
+## Current Next Action
+
+- Wait for Bohr (`test_writer`) to finish scoped-executor review-fix tests, validate expected red signal, and commit tests.
