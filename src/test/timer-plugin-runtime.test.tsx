@@ -705,14 +705,22 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
         input: createPrototypeShapedKeyPayload(page.id, "prototype"),
         label: "prototype payload key",
       },
+      {
+        input: createNullPrototypePagePayload(page.id),
+        label: "non-empty null-prototype page payload",
+      },
     ];
 
-    for (const { input, label } of invalidPageInputs) {
-      await expect(
-        executeTimerCommand(runtime, "timer.switch", input),
-        label,
-      ).rejects.toBeInstanceOf(Error);
-      expect(listTimerEvents(runtime), label).toStrictEqual(originalEvents);
+    for (const commandId of ["timer.start", "timer.switch"] as const) {
+      for (const { input, label } of invalidPageInputs) {
+        await expect(
+          executeTimerCommand(runtime, commandId, input),
+          `${commandId} ${label}`,
+        ).rejects.toBeInstanceOf(Error);
+        expect(listTimerEvents(runtime), `${commandId} ${label}`).toStrictEqual(
+          originalEvents,
+        );
+      }
     }
 
     const invalidEmptyCommandInputs: Array<{
@@ -782,6 +790,72 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       status: "stopped",
       segmentId: activeTimer.segmentId,
     });
+    expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
+  });
+
+  it("executes active-bar Pause, Resume, and Stop through exact Timer command IDs with empty payloads", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["active-bar-command-page"],
+      eventIds: [
+        "event-command-started",
+        "event-command-paused",
+        "event-command-resumed",
+        "event-command-stopped",
+      ],
+    });
+    const user = userEvent.setup();
+    const page = createPage(runtime, "Active bar command surface");
+    const ActiveTimerBar = getTimerGlobalActiveBarComponent(runtime);
+    const execute = vi.fn(
+      (commandId: string, input?: unknown): Promise<unknown> =>
+        runtime.commands.execute(commandId, input),
+    );
+
+    await executeTimerCommand(runtime, "timer.start", { pageId: page.id });
+    render(createElement(ActiveTimerBar, { commands: { execute } }));
+
+    const activeTimer = screen.getByRole("region", { name: /active timer/i });
+
+    await user.click(within(activeTimer).getByRole("button", { name: /pause/i }));
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(1));
+    expect(execute).toHaveBeenNthCalledWith(1, "timer.pause", {});
+    expect(execute.mock.calls).toStrictEqual([["timer.pause", {}]]);
+
+    await waitFor(() =>
+      expect(
+        within(activeTimer).getByRole("button", { name: /resume/i }),
+      ).toBeEnabled(),
+    );
+
+    await user.click(
+      within(activeTimer).getByRole("button", { name: /resume/i }),
+    );
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(2));
+    expect(execute).toHaveBeenNthCalledWith(2, "timer.resume", {});
+    expect(execute.mock.calls).toStrictEqual([
+      ["timer.pause", {}],
+      ["timer.resume", {}],
+    ]);
+
+    await waitFor(() =>
+      expect(
+        within(activeTimer).getByRole("button", { name: /pause/i }),
+      ).toBeEnabled(),
+    );
+
+    await user.click(within(activeTimer).getByRole("button", { name: /stop/i }));
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(3));
+    expect(execute).toHaveBeenNthCalledWith(3, "timer.stop", {});
+    expect(execute.mock.calls).toStrictEqual([
+      ["timer.pause", {}],
+      ["timer.resume", {}],
+      ["timer.stop", {}],
+    ]);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("region", { name: /active timer/i }),
+      ).not.toBeInTheDocument(),
+    );
     expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
   });
 
@@ -1006,6 +1080,35 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       {
         label: "production jsdom branch",
         pattern: /\bjsdom\b/iu,
+      },
+      {
+        label: "global setTimeout fake-clock probing",
+        pattern:
+          /(?:globalThis|global|window)\.setTimeout(?:\s*\.\s*clock|[^;{}]*,\s*["']clock["'])/u,
+      },
+      {
+        label: "Object.defineProperty setTimeout replacement",
+        pattern:
+          /Object\.defineProperty\s*\(\s*(?:globalThis|global|window)\s*,\s*["']setTimeout["']/u,
+      },
+      {
+        label: "controlled clock bridge or shim",
+        pattern:
+          /\bcontrolledClock(?:Timeout)?Bridge\b|\bcreateControlledClockTimeoutBridge\b|\b(?:fake|controlled)\w*Clock\w*(?:Bridge|Shim)\b|\b(?:Bridge|Shim)\w*setTimeout\b/iu,
+      },
+      {
+        label: "host setTimeout snapshot for replacement",
+        pattern:
+          /\b(?:host|original|native)\w*SetTimeout\s*=\s*(?:globalThis|global|window)\.setTimeout\b/iu,
+      },
+      {
+        label: "bridge setTimeout replacement",
+        pattern: /\bbridgeSetTimeout\b/iu,
+      },
+      {
+        label: "string-handler timer forwarding",
+        pattern:
+          /\boriginalSetTimeout\s*\(\s*callback\b|\bTimerHandler\b|typeof\s+\w+\s*===\s*["']string["']/u,
       },
     ];
     const violations = sources.flatMap(({ filePath, source }) =>
@@ -1393,6 +1496,17 @@ function createPrototypeShapedKeyPayload(
 
 function createNullPrototypeEmptyPayload(): Record<string, never> {
   return Object.create(null) as Record<string, never>;
+}
+
+function createNullPrototypePagePayload(pageId: string): Record<string, unknown> {
+  const payload = Object.create(null) as Record<string, unknown>;
+
+  Object.defineProperty(payload, "pageId", {
+    enumerable: true,
+    value: pageId,
+  });
+
+  return payload;
 }
 
 function createNullPrototypeExtraPayload(
