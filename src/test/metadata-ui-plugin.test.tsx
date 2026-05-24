@@ -54,6 +54,7 @@ const taskPluginId = "task";
 const tagPluginId = "tag";
 const timerPluginId = "timer";
 const pageHeaderMetadataSlot = "page.header.metadata";
+const timerStartCommandId = "timer.start";
 const tagAddCommandId = "tag.add-tag";
 const tagRemoveCommandId = "tag.remove-tag";
 const metadataUiModulePath = "../plugins/metadata-ui";
@@ -429,7 +430,7 @@ describe("Metadata UI Plugin", () => {
     expect(secondEditor).toHaveValue("beta");
   });
 
-  it("renders Task current fields read-only and Timer placeholder controls inertly from plugin-owned contributions", async () => {
+  it("renders Task current fields read-only and Timer Start through the scoped command boundary", async () => {
     const runtime = await createRuntime({
       pageIds: ["task-metadata-page"],
       metadataIds: [
@@ -443,9 +444,16 @@ describe("Metadata UI Plugin", () => {
     });
     const user = userEvent.setup();
     const page = createPage(runtime, "Task metadata page");
-    const execute = vi.fn(async (): Promise<unknown> => {
-      throw new Error("Metadata field should not execute a timer command");
-    });
+    const execute = vi.fn(async (): Promise<unknown> => ({
+      activeTimer: {
+        segmentId: "segment-from-metadata-start",
+        pageId: page.id,
+        pageTitle: page.title,
+        status: "running",
+        startedAt: "2026-05-24T01:00:00.000Z",
+        elapsedSeconds: 0,
+      },
+    }));
 
     setTaskMetadata(runtime, page.id, {
       enabled: true,
@@ -458,7 +466,7 @@ describe("Metadata UI Plugin", () => {
     render(await createMetadataBar(runtime, page.id, { commands: { execute } }));
 
     expectTaskHeaderContributions(runtime);
-    expectTimerPlaceholderContribution(runtime);
+    expectTimerStartContribution(runtime);
 
     const taskGroup = screen.getByRole("group", { name: /task metadata/i });
     expect(within(taskGroup).getByText(/todo/i)).toBeVisible();
@@ -482,14 +490,17 @@ describe("Metadata UI Plugin", () => {
       name: /start timer/i,
     });
 
-    expect(startTimer).toBeDisabled();
+    expect(startTimer).toBeEnabled();
     await user.click(startTimer);
-    expect(execute).not.toHaveBeenCalled();
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(execute).toHaveBeenCalledWith(timerStartCommandId, {
+      pageId: page.id,
+    });
     expect(
       runtime.registries.commands
         .list({ pluginId: timerPluginId })
         .map((command) => command.id),
-    ).toStrictEqual([]);
+    ).toEqual(expect.arrayContaining([timerStartCommandId]));
   });
 
   it("renders unsafe metadata values as inert text without links, images, scripts, or executable attributes", async () => {
@@ -1200,7 +1211,7 @@ function expectTaskHeaderContributions(runtime: AppRuntime): void {
   ]);
 }
 
-function expectTimerPlaceholderContribution(runtime: AppRuntime): void {
+function expectTimerStartContribution(runtime: AppRuntime): void {
   expect(
     runtime.registries.slots.list({
       pluginId: timerPluginId,
