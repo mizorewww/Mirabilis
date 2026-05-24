@@ -340,6 +340,14 @@ git diff --cached --check
   - Delegate the null-prototype empty-payload test conflict to `test_writer`.
   - Then delegate the remaining implementation fix to a replacement `implementer` while preserving Dewey's partial production changes.
 
+## Test Conflict Adjustment Handoff
+
+- Delegated to Epicurus (`test_writer`) on 2026-05-24 17:43 CST.
+- Required scope:
+  - Tests only.
+  - Allow exact null-prototype empty records for empty-payload commands: `timer.pause`, `timer.resume`, and `timer.stop`.
+  - Preserve descriptor/prototype hardening coverage for arrays, accessors, symbol keys, non-enumerable extra fields, prototype-carried fields, and prototype-shaped keys.
+
 ## Current Next Action
 
-- Delegate test conflict adjustment to `test_writer`.
+- Wait for Epicurus's test adjustment.
