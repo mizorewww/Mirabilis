@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 07:55 CST.
+Last updated: 2026-05-25 07:57 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 07:55 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar scoped command ownership implementation committed; narrow post-fix re-review pending.
+- Current phase: TASK-025 MetadataBar scoped command ownership narrow post-fix re-review in progress.
 
 ## Active Agents
 
-- None currently running. Next delegation is a narrow post-fix review of Nash's MetadataBar command ownership fix.
+- Dalton (`reviewer`) is reviewing Nash's MetadataBar command ownership correctness.
+- Noether (`security_reviewer`) is reviewing Nash's MetadataBar command ownership security boundary.
+- Helmholtz (`test_quality_reviewer`) is reviewing Harvey's MetadataBar regression coverage.
+- Meitner (`deprecation_auditor`) is auditing Nash's MetadataBar fix for API/deprecation/docs handoff risk.
 
 ## Completed Recent Task
 
@@ -152,7 +155,7 @@ Last updated: 2026-05-25 07:55 CST.
 
 ## Next Actions
 
-1. Spawn narrow post-fix review agents for Nash's MetadataBar command ownership fix.
+1. Wait for MetadataBar narrow post-fix review agents.
 2. If no P0/P1 remains, delegate TASK-025 formal docs sync to `doc_writer`.
 
 ## Current TASK-021 State

@@ -394,4 +394,13 @@
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents to confirm Zeno's MetadataBar P1 is closed and no API/security/test-quality regression remains.
+## MetadataBar Narrow Re-Review Handoff
+
+- Dalton (`reviewer`) started 2026-05-25 07:57 CST to review Nash's MetadataBar command ownership correctness.
+- Noether (`security_reviewer`) started 2026-05-25 07:57 CST to review Nash's MetadataBar command ownership security boundary, including descriptor lookup unavailable behavior.
+- Helmholtz (`test_quality_reviewer`) started 2026-05-25 07:57 CST to review Harvey's MetadataBar regression coverage.
+- Meitner (`deprecation_auditor`) started 2026-05-25 07:57 CST to audit Nash's MetadataBar fix for API/deprecation/docs handoff risk.
+
+## Current Next Action
+
+- Wait for MetadataBar narrow post-fix review agents. If no P0/P1 remains, delegate TASK-025 formal docs sync.
