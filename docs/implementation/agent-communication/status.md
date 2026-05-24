@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:45 CST.
+Last updated: 2026-05-24 19:47 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-24 19:45 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 review-fix implementation committed; narrow re-review is next.
+- Current phase: TASK-025 narrow re-review agents are running.
 
 ## Active Agents
 
-- None.
+- Carson (`reviewer`) is reviewing timeline note UI and PluginHost scoped executor correctness.
+- Hegel (`security_reviewer`) is reviewing scoped executor and timeline note UI security boundaries.
+- Peirce (`deprecation_auditor`) is auditing API/deprecation/docs drift for the scoped executor and Timer timeline UI.
+- Cicero (`test_quality_reviewer`) is confirming Nash's P1 test-quality finding is closed.
 
 ## Completed Recent Task
 
@@ -152,8 +155,8 @@ Last updated: 2026-05-24 19:45 CST.
 
 ## Next Actions
 
-1. Commit review-fix implementation validation summary.
-2. Spawn narrow re-review for scoped command executor, security boundary, and test quality closure.
+1. Wait for narrow re-review agents.
+2. Record findings and proceed to docs sync if clear.
 
 ## Current TASK-021 State
 

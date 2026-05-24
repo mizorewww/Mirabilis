@@ -235,4 +235,13 @@
 
 ## Current Next Action
 
-- Commit review-fix implementation validation summary and spawn narrow re-review for scoped command executor, security boundary, and test-quality closure.
+## Narrow Re-Review Handoff
+
+- Carson (`reviewer`) started 2026-05-24 19:47 CST to review timeline note UI and PluginHost scoped executor correctness.
+- Hegel (`security_reviewer`) started 2026-05-24 19:47 CST to review scoped executor and timeline note UI security boundaries.
+- Peirce (`deprecation_auditor`) started 2026-05-24 19:47 CST to audit API/deprecation/docs drift for the scoped executor and Timer timeline UI.
+- Cicero (`test_quality_reviewer`) started 2026-05-24 19:47 CST to confirm Nash's P1 test-quality finding is closed.
+
+## Current Next Action
+
+- Wait for narrow re-review agents, record findings, and proceed to docs sync if clear.
