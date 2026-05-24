@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -92,6 +93,10 @@ const nativeSurfaceEntrypoints = [
   "src-tauri/src/main.rs",
   "src-tauri/tauri.conf.json",
 ];
+const timerProductionFiles = [
+  "src/plugins/timer/plugin.ts",
+  "src/plugins/timer/components/TimerMetadataPlaceholder.tsx",
+] as const;
 
 describe("Timer Plugin runtime commands and active timer UI", () => {
   afterEach(() => {
@@ -157,7 +162,9 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       createdAt: timerStartedAt,
     });
     expect(startedPayload.segmentId).toBe(activeTimer.segmentId);
-    expect(startedPayload.startedAt).toBe(timerStartedAt);
+    expect(startedPayload.startAt).toBe(timerStartedAt);
+    expect(startedPayload).not.toHaveProperty("startedAt");
+    expect(activeTimer.startedAt).toBe(timerStartedAt);
     expectNoUnsafeDtoSurface(result);
   });
 
@@ -347,6 +354,226 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     expectNoUnsafeDtoSurface(switchResult);
   });
 
+  it("treats direct timer.start while active as a switch and returns both active and stopped timer DTOs", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: ["direct-start-page-a", "direct-start-page-b"],
+      eventIds: [
+        "event-first-started",
+        "event-first-stopped",
+        "event-second-started",
+        "event-second-stopped",
+        "event-second-restarted",
+      ],
+    });
+    const firstPage = createPage(runtime, "Direct start first page");
+    const secondPage = createPage(runtime, "Direct start second page");
+    const firstStart = await executeTimerCommand(runtime, "timer.start", {
+      pageId: firstPage.id,
+    });
+    const firstTimer = expectResultActiveTimer(firstStart, {
+      pageId: firstPage.id,
+      status: "running",
+      elapsedSeconds: 0,
+    });
+
+    vi.advanceTimersByTime(35_000);
+
+    const secondStart = await executeTimerCommand(runtime, "timer.start", {
+      pageId: secondPage.id,
+    });
+    const secondStartRecord = readRecord(
+      secondStart,
+      "direct timer.start switch result",
+    );
+    const firstStopped = expectTimerDto(secondStartRecord.stoppedTimer, {
+      pageId: firstPage.id,
+      pageTitle: firstPage.title,
+      status: "stopped",
+      segmentId: firstTimer.segmentId,
+      elapsedSeconds: 35,
+    });
+    const secondTimer = expectTimerDto(secondStartRecord.activeTimer, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "running",
+      elapsedSeconds: 0,
+    });
+
+    vi.advanceTimersByTime(12_000);
+
+    const samePageStart = await executeTimerCommand(runtime, "timer.start", {
+      pageId: secondPage.id,
+    });
+    const samePageRecord = readRecord(
+      samePageStart,
+      "direct same-page timer.start result",
+    );
+    const previousSecondTimer = expectTimerDto(samePageRecord.stoppedTimer, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "stopped",
+      segmentId: secondTimer.segmentId,
+      elapsedSeconds: 12,
+    });
+    const restartedSecondTimer = expectTimerDto(samePageRecord.activeTimer, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "running",
+      elapsedSeconds: 0,
+    });
+    const events = expectTimerEvents(runtime, [
+      "started",
+      "stopped",
+      "started",
+      "stopped",
+      "started",
+    ]);
+
+    expect(firstStopped.segmentId).toBe(firstTimer.segmentId);
+    expect(previousSecondTimer.segmentId).toBe(secondTimer.segmentId);
+    expect(restartedSecondTimer.segmentId).not.toBe(secondTimer.segmentId);
+    expect(events.map((event) => event.type)).not.toContain("paused");
+    expect(events.map((event) => event.type)).not.toContain(
+      "time_segment_created",
+    );
+    expect(
+      events
+        .filter((event) => event.type === "started")
+        .map((event) => expectEventPayload(event)),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ startAt: timerStartedAt }),
+      ]),
+    );
+    expect(
+      events
+        .filter((event) => event.type === "started")
+        .some((event) =>
+          Object.prototype.hasOwnProperty.call(
+            expectEventPayload(event),
+            "startedAt",
+          ),
+        ),
+    ).toBe(false);
+    expectNoUnsafeDtoSurface([secondStart, samePageStart]);
+  });
+
+  it("pins switch edge behavior for no-active, paused, same-page, and missing-page cases", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: ["switch-edge-page-a", "switch-edge-page-b"],
+      eventIds: [
+        "event-switch-started",
+        "event-switch-paused",
+        "event-switch-stopped",
+        "event-second-started",
+        "event-second-stopped",
+        "event-second-restarted",
+        "event-final-stopped",
+      ],
+    });
+    const firstPage = createPage(runtime, "Switch edge first page");
+    const secondPage = createPage(runtime, "Switch edge second page");
+
+    const noActiveSwitch = await executeTimerCommand(runtime, "timer.switch", {
+      pageId: firstPage.id,
+    });
+    const noActiveSwitchRecord = readRecord(
+      noActiveSwitch,
+      "no-active timer.switch result",
+    );
+    const firstTimer = expectTimerDto(noActiveSwitchRecord.activeTimer, {
+      pageId: firstPage.id,
+      pageTitle: firstPage.title,
+      status: "running",
+      elapsedSeconds: 0,
+    });
+
+    expect(noActiveSwitchRecord.stoppedTimer).toBeUndefined();
+    expectTimerEvents(runtime, ["started"]);
+
+    vi.advanceTimersByTime(20_000);
+    await executeTimerCommand(runtime, "timer.pause");
+
+    vi.advanceTimersByTime(30_000);
+
+    const pausedSwitch = await executeTimerCommand(runtime, "timer.switch", {
+      pageId: secondPage.id,
+    });
+    const pausedSwitchRecord = readRecord(
+      pausedSwitch,
+      "paused timer.switch result",
+    );
+    expectTimerDto(pausedSwitchRecord.stoppedTimer, {
+      pageId: firstPage.id,
+      pageTitle: firstPage.title,
+      status: "stopped",
+      segmentId: firstTimer.segmentId,
+      elapsedSeconds: 20,
+    });
+    const secondTimer = expectTimerDto(pausedSwitchRecord.activeTimer, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "running",
+      elapsedSeconds: 0,
+    });
+
+    vi.advanceTimersByTime(9_000);
+
+    const samePageSwitch = await executeTimerCommand(runtime, "timer.switch", {
+      pageId: secondPage.id,
+    });
+    const samePageSwitchRecord = readRecord(
+      samePageSwitch,
+      "same-page timer.switch result",
+    );
+    expectTimerDto(samePageSwitchRecord.stoppedTimer, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "stopped",
+      segmentId: secondTimer.segmentId,
+      elapsedSeconds: 9,
+    });
+    const restartedSecondTimer = expectTimerDto(
+      samePageSwitchRecord.activeTimer,
+      {
+        pageId: secondPage.id,
+        pageTitle: secondPage.title,
+        status: "running",
+        elapsedSeconds: 0,
+      },
+    );
+    const eventsBeforeMissingSwitch = listTimerEvents(runtime);
+
+    await expect(
+      executeTimerCommand(runtime, "timer.switch", {
+        pageId: "missing-switch-page",
+      }),
+    ).rejects.toBeInstanceOf(Error);
+    expect(listTimerEvents(runtime)).toStrictEqual(eventsBeforeMissingSwitch);
+
+    const stopAfterMissingSwitch = await executeTimerCommand(runtime, "timer.stop");
+    expectStoppedTimerResult(stopAfterMissingSwitch, {
+      pageId: secondPage.id,
+      pageTitle: secondPage.title,
+      status: "stopped",
+      segmentId: restartedSecondTimer.segmentId,
+    });
+    expectTimerEvents(runtime, [
+      "started",
+      "paused",
+      "stopped",
+      "started",
+      "stopped",
+      "started",
+      "stopped",
+    ]);
+    expect(listTimerEvents(runtime).map((event) => event.type)).not.toContain(
+      "time_segment_created",
+    );
+  });
+
   it("rejects malformed, extra, and caller-owned payload fields without changing active state or appending events", async () => {
     useFakeClock(timerStartedAt);
     const runtime = await createRuntime({
@@ -426,6 +653,83 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     expectTimerEvents(runtime, ["started", "stopped"]);
   });
 
+  it("rejects descriptor-unsafe and prototype-shaped payloads without mutating active timer state or events", async () => {
+    useFakeClock(timerStartedAt);
+    const runtime = await createRuntime({
+      pageIds: ["descriptor-safe-page"],
+      eventIds: Array.from(
+        { length: 50 },
+        (_unused, index) => `event-descriptor-${index}`,
+      ),
+    });
+    const page = createPage(runtime, "Descriptor-safe timer payloads");
+    const startResult = await executeTimerCommand(runtime, "timer.start", {
+      pageId: page.id,
+    });
+    const activeTimer = expectResultActiveTimer(startResult, {
+      pageId: page.id,
+      status: "running",
+    });
+    const originalEvents = listTimerEvents(runtime);
+    const invalidPageInputs: Array<{ input: unknown; label: string }> = [
+      { input: [page.id], label: "array page payload" },
+      {
+        input: createClassInstancePayload(page.id),
+        label: "class instance page payload",
+      },
+      {
+        input: createAccessorPagePayload(page.id),
+        label: "accessor pageId payload",
+      },
+      {
+        input: createSymbolExtraPayload(page.id),
+        label: "symbol-key extra payload",
+      },
+      {
+        input: createNonEnumerableExtraPayload(page.id),
+        label: "non-enumerable extra payload",
+      },
+      {
+        input: createPrototypeCarriedExtraPayload(page.id),
+        label: "prototype-carried extra payload",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "__proto__"),
+        label: "__proto__ payload key",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "constructor"),
+        label: "constructor payload key",
+      },
+      {
+        input: createPrototypeShapedKeyPayload(page.id, "prototype"),
+        label: "prototype payload key",
+      },
+    ];
+
+    for (const { input, label } of invalidPageInputs) {
+      await expect(
+        executeTimerCommand(runtime, "timer.switch", input),
+        label,
+      ).rejects.toBeInstanceOf(Error);
+      expect(listTimerEvents(runtime), label).toStrictEqual(originalEvents);
+    }
+
+    await expect(
+      executeTimerCommand(runtime, "timer.pause", Object.create(null)),
+      "null-prototype empty payload",
+    ).rejects.toBeInstanceOf(Error);
+    expect(listTimerEvents(runtime)).toStrictEqual(originalEvents);
+
+    const stopResult = await executeTimerCommand(runtime, "timer.stop");
+    expectStoppedTimerResult(stopResult, {
+      pageId: page.id,
+      status: "stopped",
+      segmentId: activeTimer.segmentId,
+    });
+    expectTimerEvents(runtime, ["started", "stopped"]);
+  });
+
   it("keeps active timer state scoped to one Timer Plugin registration and never leaks across runtimes", async () => {
     useFakeClock(timerStartedAt);
     const firstRuntime = await createRuntime({
@@ -478,7 +782,7 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     expectTimerEvents(firstRuntime, ["started", "stopped"]);
   });
 
-  it("renders the Timer-owned global active bar with inert text, elapsed time, and lifecycle controls", async () => {
+  it("updates the same visible active-bar elapsed element and state-driven controls while running, paused, resumed, and stopped", async () => {
     useFakeClock(timerStartedAt);
     const runtime = await createRuntime({
       pageIds: ["unsafe-title-page"],
@@ -503,13 +807,15 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     const activeTimer = screen.getByRole("region", { name: /active timer/i });
 
     expect(within(activeTimer).getByText(unsafeTitle)).toBeVisible();
-    expect(within(activeTimer).getByText("00:00:00")).toBeVisible();
+    const elapsed = within(activeTimer).getByText("00:00:00");
+
+    expect(elapsed).toBeVisible();
     expect(
       within(activeTimer).getByRole("button", { name: /pause/i }),
-    ).toBeVisible();
+    ).toBeEnabled();
     expect(
       within(activeTimer).getByRole("button", { name: /stop/i }),
-    ).toBeVisible();
+    ).toBeEnabled();
     expect(
       within(activeTimer).getByRole("button", { name: /switch/i }),
     ).toBeVisible();
@@ -519,30 +825,50 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
       vi.advanceTimersByTime(65_000);
     });
 
-    expect(within(activeTimer).getByText("00:01:05")).toBeVisible();
+    expect(elapsed).toHaveTextContent("00:01:05");
+    expect(within(activeTimer).getAllByText("00:01:05")).toStrictEqual([
+      elapsed,
+    ]);
+    expect(
+      within(activeTimer).queryByRole("button", { name: /resume/i }),
+    ).not.toBeInTheDocument();
 
     await user.click(within(activeTimer).getByRole("button", { name: /pause/i }));
     await waitFor(() =>
       expect(
         within(activeTimer).getByRole("button", { name: /resume/i }),
-      ).toBeVisible(),
+      ).toBeEnabled(),
     );
+    expect(
+      within(activeTimer).queryByRole("button", { name: /pause/i }),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(30_000);
     });
 
-    expect(within(activeTimer).getByText("00:01:05")).toBeVisible();
+    expect(elapsed).toHaveTextContent("00:01:05");
 
     await user.click(
       within(activeTimer).getByRole("button", { name: /resume/i }),
     );
+    await waitFor(() =>
+      expect(
+        within(activeTimer).getByRole("button", { name: /pause/i }),
+      ).toBeEnabled(),
+    );
+    expect(
+      within(activeTimer).queryByRole("button", { name: /resume/i }),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(15_000);
     });
 
-    expect(within(activeTimer).getByText("00:01:20")).toBeVisible();
+    expect(elapsed).toHaveTextContent("00:01:20");
+    expect(within(activeTimer).getAllByText("00:01:20")).toStrictEqual([
+      elapsed,
+    ]);
 
     await user.click(within(activeTimer).getByRole("button", { name: /stop/i }));
 
@@ -553,6 +879,96 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
     );
     expectTimerEvents(runtime, ["started", "paused", "resumed", "stopped"]);
     expectNoDangerousDom();
+  });
+
+  it("recovers visible active-bar updates after a rejected control command", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["rejected-control-page"],
+      eventIds: ["event-started", "event-paused", "event-stopped"],
+    });
+    const user = userEvent.setup();
+    const page = createPage(runtime, "Rejected control page");
+    const ActiveTimerBar = getTimerGlobalActiveBarComponent(runtime);
+    const execute = vi.fn(
+      async (commandId: string, input?: unknown): Promise<unknown> => {
+        if (commandId === "timer.pause") {
+          throw new Error("Injected rejected control");
+        }
+
+        return runtime.commands.execute(commandId, input);
+      },
+    );
+
+    await executeTimerCommand(runtime, "timer.start", { pageId: page.id });
+    render(createElement(ActiveTimerBar, { commands: { execute } }));
+
+    const activeTimer = screen.getByRole("region", { name: /active timer/i });
+
+    await user.click(within(activeTimer).getByRole("button", { name: /pause/i }));
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith("timer.pause", {}),
+    );
+
+    await act(async () => {
+      await executeTimerCommand(runtime, "timer.pause");
+    });
+
+    await waitFor(() =>
+      expect(
+        within(activeTimer).getByRole("button", { name: /resume/i }),
+      ).toBeEnabled(),
+    );
+    expect(
+      within(activeTimer).queryByRole("button", { name: /pause/i }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      await executeTimerCommand(runtime, "timer.stop");
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("region", { name: /active timer/i }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("keeps Timer production code free of test monkeypatches, eval, and broad active-bar command execution", async () => {
+    const sources = await readTimerProductionSources();
+    const forbiddenPatterns = [
+      {
+        label: "Function constructor eval",
+        pattern: /\b(?:new\s+)?Function\s*\(/u,
+      },
+      {
+        label: "string timer handler execution",
+        pattern: /\bTimerHandler\b|typeof\s+handler\s*===\s*["']string["']/u,
+      },
+      {
+        label: "window.setTimeout monkeypatch",
+        pattern: /window\.setTimeout\s*=/u,
+      },
+      {
+        label: "production jsdom branch",
+        pattern: /\bjsdom\b/iu,
+      },
+    ];
+    const violations = sources.flatMap(({ filePath, source }) =>
+      forbiddenPatterns
+        .filter(({ pattern }) => pattern.test(source))
+        .map(({ label }) => `${filePath}: ${label}`),
+    );
+    const timerPluginSource =
+      sources.find(({ filePath }) => filePath === "src/plugins/timer/plugin.ts")
+        ?.source ?? "";
+
+    if (/\bcommands\.execute\s*\(/u.test(timerPluginSource)) {
+      violations.push(
+        "src/plugins/timer/plugin.ts: broad active-bar command executor",
+      );
+    }
+
+    expect(violations).toStrictEqual([]);
   });
 
   it("does not require native, Tauri, package, Cargo, permission, IPC, or command-surface changes", async () => {
@@ -847,6 +1263,79 @@ function useFakeClock(isoInstant: string): void {
   vi.setSystemTime(new Date(isoInstant));
 }
 
+class TimerPagePayload {
+  pageId: string;
+
+  constructor(pageId: string) {
+    this.pageId = pageId;
+  }
+}
+
+function createClassInstancePayload(pageId: string): unknown {
+  return new TimerPagePayload(pageId);
+}
+
+function createAccessorPagePayload(pageId: string): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  Object.defineProperty(payload, "pageId", {
+    enumerable: true,
+    get() {
+      return pageId;
+    },
+  });
+
+  return payload;
+}
+
+function createSymbolExtraPayload(pageId: string): Record<string, unknown> {
+  const payload = { pageId } as Record<PropertyKey, unknown>;
+
+  Object.defineProperty(payload, Symbol("segmentId"), {
+    enumerable: true,
+    value: "caller-segment",
+  });
+
+  return payload as Record<string, unknown>;
+}
+
+function createNonEnumerableExtraPayload(pageId: string): Record<string, unknown> {
+  const payload: Record<string, unknown> = { pageId };
+
+  Object.defineProperty(payload, "segmentId", {
+    enumerable: false,
+    value: "caller-segment",
+  });
+
+  return payload;
+}
+
+function createPrototypeCarriedExtraPayload(
+  pageId: string,
+): Record<string, unknown> {
+  const payload = Object.create({
+    segmentId: "caller-segment",
+  }) as Record<string, unknown>;
+
+  payload.pageId = pageId;
+
+  return payload;
+}
+
+function createPrototypeShapedKeyPayload(
+  pageId: string,
+  key: "__proto__" | "constructor" | "prototype",
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { pageId };
+
+  Object.defineProperty(payload, key, {
+    enumerable: true,
+    value: "caller-controlled",
+  });
+
+  return payload;
+}
+
 function createNoopNativeBridge(): NativeBridge {
   return {
     db: {
@@ -885,6 +1374,17 @@ function createNoopNativeBridge(): NativeBridge {
       },
     },
   };
+}
+
+async function readTimerProductionSources(): Promise<
+  Array<{ filePath: string; source: string }>
+> {
+  return Promise.all(
+    timerProductionFiles.map(async (filePath) => ({
+      filePath,
+      source: await readFile(path.join(repoRoot, filePath), "utf8"),
+    })),
+  );
 }
 
 async function listNativeSurfaceChangesFromMaster(): Promise<string[]> {

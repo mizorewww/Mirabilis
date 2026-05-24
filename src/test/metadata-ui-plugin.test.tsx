@@ -36,6 +36,10 @@ type MetadataBarProps = {
   pluginHost?: Pick<AppRuntime["pluginHost"], "listPlugins">;
 };
 
+type TimerGlobalActiveBarProps = {
+  commands: MetadataBarProps["commands"];
+};
+
 type MetadataUiModule = {
   MetadataBar?: ComponentType<MetadataBarProps>;
   MetadataUiPlugin?: AppPlugin;
@@ -44,6 +48,7 @@ type MetadataUiModule = {
 type CreateRuntimeOptions = {
   pageIds?: readonly string[];
   metadataIds?: readonly string[];
+  eventIds?: readonly string[];
   builtInPlugins?: readonly AppPlugin[];
 };
 
@@ -54,7 +59,10 @@ const taskPluginId = "task";
 const tagPluginId = "tag";
 const timerPluginId = "timer";
 const pageHeaderMetadataSlot = "page.header.metadata";
+const timerGlobalFloatingSlot = "global.floating";
+const timerGlobalActiveBarSlotId = "timer.global-active-bar";
 const timerStartCommandId = "timer.start";
+const timerNamespace = "timer";
 const tagAddCommandId = "tag.add-tag";
 const tagRemoveCommandId = "tag.remove-tag";
 const metadataUiModulePath = "../plugins/metadata-ui";
@@ -501,6 +509,40 @@ describe("Metadata UI Plugin", () => {
         .list({ pluginId: timerPluginId })
         .map((command) => command.id),
     ).toEqual(expect.arrayContaining([timerStartCommandId]));
+  });
+
+  it("starts Timer through the real MetadataBar runtime path and refreshes the global active bar", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["runtime-timer-metadata-page"],
+      eventIds: ["runtime-timer-started"],
+    });
+    const user = userEvent.setup();
+    const page = createPage(runtime, "Runtime metadata timer page");
+    const ActiveTimerBar = getTimerGlobalActiveBarComponent(runtime);
+
+    render(
+      <>
+        {await createMetadataBar(runtime, page.id)}
+        <ActiveTimerBar commands={runtime.commands} />
+      </>,
+    );
+
+    expect(
+      screen.queryByRole("region", { name: /active timer/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /start timer/i }));
+
+    const activeTimer = await screen.findByRole("region", {
+      name: /active timer/i,
+    });
+    const startedPayload = expectSingleTimerStartedEvent(runtime, page);
+
+    expect(within(activeTimer).getByText(page.title)).toBeVisible();
+    expect(within(activeTimer).getByText("00:00:00")).toBeVisible();
+    expect(startedPayload.segmentId).toEqual(expect.any(String));
+    expect(startedPayload.startAt).toEqual(expect.any(String));
+    expect(startedPayload).not.toHaveProperty("startedAt");
   });
 
   it("renders unsafe metadata values as inert text without links, images, scripts, or executable attributes", async () => {
@@ -1012,11 +1054,17 @@ async function createRuntime(
     options.metadataIds === undefined
       ? undefined
       : createSequenceFactory(options.metadataIds);
+  const createEventId =
+    options.eventIds === undefined
+      ? undefined
+      : createSequenceFactory(options.eventIds);
 
   return createAppRuntime({
     builtInPlugins: options.builtInPlugins,
     createNativeBridge: () => createNoopNativeBridge(),
-    ...(createPageId === undefined && createMetadataId === undefined
+    ...(createPageId === undefined &&
+    createMetadataId === undefined &&
+    createEventId === undefined
       ? {}
       : {
           createStores: (): CoreStores =>
@@ -1033,6 +1081,13 @@ async function createRuntime(
                 : {
                     metadata: {
                       createId: createMetadataId,
+                    },
+                  }),
+              ...(createEventId === undefined
+                ? {}
+                : {
+                    events: {
+                      createId: createEventId,
                     },
                   }),
             }),
@@ -1218,6 +1273,42 @@ function expectTimerStartContribution(runtime: AppRuntime): void {
       slot: pageHeaderMetadataSlot,
     }).length,
   ).toBeGreaterThan(0);
+}
+
+function getTimerGlobalActiveBarComponent(
+  runtime: AppRuntime,
+): ComponentType<TimerGlobalActiveBarProps> {
+  const contribution = runtime.registries.slots
+    .list({
+      pluginId: timerPluginId,
+      slot: timerGlobalFloatingSlot,
+    })
+    .find((slot) => slot.id === timerGlobalActiveBarSlotId);
+
+  if (contribution === undefined) {
+    throw new Error("Timer Plugin must register timer.global-active-bar.");
+  }
+
+  return contribution.component as ComponentType<TimerGlobalActiveBarProps>;
+}
+
+function expectSingleTimerStartedEvent(
+  runtime: AppRuntime,
+  page: MarkdownPage,
+): Record<string, unknown> {
+  const events = runtime.events.list({ namespace: timerNamespace });
+  const [event] = events;
+
+  expect(events).toHaveLength(1);
+  expect(event).toMatchObject({
+    id: "runtime-timer-started",
+    pageId: page.id,
+    namespace: timerNamespace,
+    type: "started",
+    sourcePluginId: timerPluginId,
+  });
+
+  return readRecord(event?.payload, "timer.started metadata event payload");
 }
 
 function expectTagMetadata(
@@ -1458,6 +1549,12 @@ async function runGitLines(args: readonly string[]): Promise<string[]> {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+}
+
+function readRecord(value: unknown, label: string): Record<string, unknown> {
+  expect(isRecord(value), `${label} must be a record`).toBe(true);
+
+  return value as Record<string, unknown>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
