@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 07:42 CST.
+Last updated: 2026-05-25 07:47 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 07:42 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 scoped command executor review-fix implementation committed; narrow post-fix re-review in progress.
+- Current phase: TASK-025 narrow post-fix re-review found a new P1 in MetadataBar scoped command execution; review-fix test handoff pending.
 
 ## Active Agents
 
-- Ampere (`reviewer`) is reviewing scoped command executor correctness and lifecycle behavior after Kuhn's fix.
-- Zeno (`security_reviewer`) is reviewing scoped command executor plugin-boundary security after Kuhn's fix.
-- Archimedes (`test_quality_reviewer`) is reviewing the scoped executor regression coverage and adjacent Timer note coverage.
-- Euclid (`deprecation_auditor`) is auditing scoped executor API/deprecation risk and TASK-025 docs handoff needs.
+- None currently running. Next delegation is a `test_writer` review-fix regression for MetadataBar command ownership.
 
 ## Completed Recent Task
 
@@ -155,8 +152,8 @@ Last updated: 2026-05-25 07:42 CST.
 
 ## Next Actions
 
-1. Wait for narrow post-fix re-review agents.
-2. If no P0/P1 remains, delegate TASK-025 formal docs sync to `doc_writer`.
+1. Delegate a failing regression test for MetadataBar command ownership.
+2. Validate the red signal, commit tests, then delegate implementation.
 
 ## Current TASK-021 State
 

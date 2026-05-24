@@ -310,8 +310,18 @@
 
 ## Current Next Action
 
-- Wait for narrow post-fix review agents:
-  - Ampere (`reviewer`) is reviewing scoped command executor correctness and lifecycle behavior after Kuhn's fix.
-  - Zeno (`security_reviewer`) is reviewing scoped command executor plugin-boundary security after Kuhn's fix.
-  - Archimedes (`test_quality_reviewer`) is reviewing the scoped executor regression coverage and adjacent Timer note coverage.
-  - Euclid (`deprecation_auditor`) is auditing scoped executor API/deprecation risk and TASK-025 docs handoff needs.
+## Narrow Post-Fix Re-Review Outcomes
+
+- Ampere (`reviewer`) found no P0/P1/P2 correctness findings. It confirmed Kuhn's fix resolves the prior P1 by resolving registered command descriptors and requiring `descriptor.pluginId === pluginId` before dispatch.
+- Archimedes (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings. It confirmed the scoped-executor regression covers same-owner command execution, foreign-owner matching-prefix rejection, and no foreign handler call. It also confirmed TASK-025 Timer note/segment tests remain aligned.
+- Zeno (`security_reviewer`) confirmed the narrow PluginHost/Timer scoped executor path is fixed, but found a new P1 outside the narrow PluginHost executor: `src/plugins/metadata-ui/components/MetadataBar.tsx` still authorizes command execution by `commandId === pluginId || commandId.startsWith(`${pluginId}.`)` before dispatching through raw `commands.execute`. A foreign plugin can own a matching-prefix command such as `alpha.foreign`, and an `alpha` metadata slot could execute it.
+- Euclid (`deprecation_auditor`) found no P0/P1 code/API issues. P2: the internal executor remains a hidden runtime API surface because `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` is globally discoverable and duplicated by Timer. It should be documented or replaced by a controlled internal channel in a follow-up. Euclid also handed off docs drift: use `timer.add-note`, event records as `namespace: "timer", type: "time_segment_created" | "time_segment_note_added"`, keep Timer metadata totals / Calendar / Stats / native / schema deferred, and describe scoped execution as descriptor-owner based rather than namespace-prefix based.
+- Checks reported by agents:
+  - Ampere: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts`, `bun run test:frontend -- src/test/plugin-api-contracts.test.ts`, `bun run typecheck`, and scoped `git diff --check` passed.
+  - Archimedes: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/timer-time-segment-note.test.tsx src/test/timer-plugin-runtime.test.tsx` passed with 3 files / 71 tests; no `.skip` / `.only`; scoped diff check passed.
+  - Zeno: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/timer-time-segment-note.test.tsx` passed with 55 tests; `git diff --check` passed; dangerous-pattern scans were empty for PluginHost and Timer.
+  - Euclid: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts` passed with 77 tests; `bun run typecheck` passed; `git diff --check master...HEAD` passed; native/package/Tauri/Rust scoped diff was empty.
+
+## Current Next Action
+
+- Delegate `test_writer` to add a failing MetadataBar command-ownership regression before any production fix.
