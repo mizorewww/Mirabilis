@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-24 19:04 CST.
+Last updated: 2026-05-24 19:05 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-24 19:04 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 pre-test guidance completed; failing acceptance tests are next.
+- Current phase: TASK-025 failing acceptance tests delegated to Pauli (`test_writer`).
 
 ## Active Agents
 
-- None.
+- Pauli (`test_writer`) is writing failing TASK-025 acceptance tests for time segment creation, note creation/update, page timeline, payload hardening, and native-surface guard. Scope is tests only; no production code, commits, pushes, merges, or branch changes.
 
 ## Completed Recent Task
 
@@ -152,8 +152,8 @@ Last updated: 2026-05-24 19:04 CST.
 
 ## Next Actions
 
-1. Commit pre-test guidance summary and parent note-command decision.
-2. Delegate failing TASK-025 acceptance tests to `test_writer`.
+1. Wait for Pauli (`test_writer`) to finish failing acceptance tests.
+2. Validate expected red signal, then commit tests.
 
 ## Current TASK-021 State
 

@@ -66,4 +66,19 @@
 
 ## Current Next Action
 
-- Delegate failing acceptance tests to `test_writer`.
+## Test Writer Handoff
+
+- Pauli (`test_writer`) started 2026-05-24 19:05 CST.
+- Scope: failing TASK-025 tests only, no production code.
+- Required coverage:
+  - `timer.stop`, active `timer.start`, and `timer.switch` create `timer.time_segment_created` for the finalized active timer.
+  - Event ordering is `timer.stopped` before `timer.time_segment_created`.
+  - Segment payloads are exact/narrow camelCase records with `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, `source: "timer"`, and optional omitted `notePageId`.
+  - Pause/resume duration excludes paused time.
+  - `timer.add-note` creates/updates Markdown Page notes for stopped segments and appends `timer.time_segment_note_added` without mutating original segment events.
+  - `timer.page-timeline.segments` on `page.timeline` renders only valid current-page Timer-owned segments.
+  - Payload hardening and native-surface guard remain in force.
+
+## Current Next Action
+
+- Wait for Pauli (`test_writer`) to finish failing acceptance tests, validate expected red signal, and commit tests.
