@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:44 CST.
+Last updated: 2026-05-25 10:45 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 10:44 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 pre-test guidance complete; failing test handoff pending.
+- Current phase: TASK-028 failing acceptance tests delegated.
 
 ## Active Agents
 
-- None currently active. Next agent should be `test_writer` for TASK-028 failing acceptance tests.
+- Locke (`test_writer`) is active for TASK-028 failing acceptance tests.
 
 ## Current TASK-028 State
 
@@ -148,5 +148,5 @@ Last updated: 2026-05-25 10:44 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for TASK-028 failing acceptance tests.
+1. Wait for Locke (`test_writer`) to finish failing acceptance tests.
 2. Validate the expected red signal and commit tests before delegating implementation.

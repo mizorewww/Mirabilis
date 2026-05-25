@@ -109,4 +109,5 @@
 
 ## Current Next Action
 
-- Spawn `test_writer` for failing TASK-028 acceptance tests, validate the expected red signal, and commit tests.
+- Locke (`test_writer`) started at 2026-05-25 10:45 CST for failing TASK-028 acceptance tests.
+- Parent next action: wait for Locke, validate the expected red signal, and commit tests before delegating implementation.
