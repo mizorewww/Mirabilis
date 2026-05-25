@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:36 CST.
+Last updated: 2026-05-25 13:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-25 13:36 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 implementation committed; review wave pending.
+- Current phase: TASK-030 review wave delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording implementation results before review delegation.
+- Leibniz (`pr_explorer`) is mapping changed paths and review surfaces.
+- Goodall the 2nd (`reviewer`) is reviewing correctness and edge cases.
+- Bernoulli the 2nd (`deprecation_auditor`) is auditing APIs, deprecations, and stale patterns.
+- McClintock the 2nd (`security_reviewer`) is reviewing ML trust boundaries and native/package impact.
+- Pascal the 2nd (`docs_researcher`) is reviewing current docs and accessibility.
+- Pasteur the 2nd (`test_quality_reviewer`) is reviewing test quality.
 
 ## Current TASK-030 State
 
@@ -64,6 +69,13 @@ Last updated: 2026-05-25 13:36 CST.
   - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/ml/index.ts`, `src/plugins/ml/plugin.ts`, `src/plugins/ml/algorithms/predictRemainingTime.ts`, `src/plugins/ml/features/buildRemainingTimeFeatures.ts`, and `src/plugins/ml/views/PredictionPanel.tsx`.
   - Parent validated: focused TASK-030 tests passed (7 tests), adjacent plugin/API/Stats/Search/Task/Tag suite passed (8 files / 152 tests), `bun run typecheck` passed, `bun run lint` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, and package/native/Tauri/Rust/schema diff guard was empty.
   - Implementation commit: `6b0a32f Dewey(implementation)(Implement ML Plugin baseline predictions): implement ml prediction baseline`; post-commit auto-push succeeded.
+- Review wave delegated:
+  - Leibniz (`pr_explorer`) maps changed files and review surfaces.
+  - Goodall the 2nd (`reviewer`) checks correctness, regression, edge cases, and missing tests.
+  - Bernoulli the 2nd (`deprecation_auditor`) checks stale IDs, absent APIs, and version-specific API risks.
+  - McClintock the 2nd (`security_reviewer`) checks payload/projection/native/package trust boundaries.
+  - Pascal the 2nd (`docs_researcher`) checks current-doc/accessibility behavior and docs drift.
+  - Pasteur the 2nd (`test_quality_reviewer`) checks test quality and acceptance coverage.
 
 ## Current TASK-029 State
 

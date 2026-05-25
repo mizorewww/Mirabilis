@@ -207,3 +207,14 @@
   - `docs_researcher` for current-doc/accessibility/view review.
   - `test_quality_reviewer` for acceptance test quality.
 - Fix P0/P1 findings before docs sync and final branch gate.
+
+## Review Wave Handoff
+
+- Leibniz (`pr_explorer`) started at 2026-05-25 13:37 CST.
+- Goodall the 2nd (`reviewer`) started at 2026-05-25 13:37 CST.
+- Bernoulli the 2nd (`deprecation_auditor`) started at 2026-05-25 13:37 CST.
+- McClintock the 2nd (`security_reviewer`) started at 2026-05-25 13:37 CST.
+- Pascal the 2nd (`docs_researcher`) started at 2026-05-25 13:37 CST.
+- Pasteur the 2nd (`test_quality_reviewer`) started at 2026-05-25 13:37 CST.
+- All review agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.
