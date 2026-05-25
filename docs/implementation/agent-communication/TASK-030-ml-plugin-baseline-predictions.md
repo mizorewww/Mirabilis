@@ -133,3 +133,31 @@
   - static guards for no Core ML business logic, no sibling plugin/private store/native/Tauri imports, no execution/rendering sinks, and no package/native/Tauri/Rust/schema/capability diffs.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Aristotle, validate the expected red signal, and commit the test-only patch.
+
+## Test Writer Outcome
+
+- Aristotle (`test_writer`) added `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Coverage added:
+  - ML built-in registration with canonical algorithm, command, view, slot, metadata, and event descriptor ids.
+  - Stale underscore id absence and explicit no executable AlgorithmRegistry reliance.
+  - `ml.run-prediction` command contract through the runtime command registry.
+  - Deterministic baseline prediction output, feature fixtures, ML-owned metadata/event writes only, and insufficient-data behavior.
+  - Hostile/bounded payload rejection, stale command alias rejection, forged provenance handling, and no sibling private mutation assumptions.
+  - Accessible inert `ml.prediction-panel` rendering.
+  - Static architecture guards for Core isolation, sibling/private imports, HTML/code sinks, and native/package diffs.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx` failed as expected with 6 failed / 1 passed.
+  - Failure symptoms: missing `ml` built-in descriptors, missing `ml.run-prediction`, missing `ml.prediction-panel`, and missing `src/plugins/ml/index.ts`.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/ml-plugin-baseline-predictions.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan.
+  - Production-source diff guard.
+  - Package/native/Tauri/Rust/schema diff guard.
+- Test commit: `17bcba4 Aristotle(test)(Implement ML Plugin baseline predictions): add ml prediction acceptance tests`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate minimum production implementation to `implementer`.
+- Expected production scope: add built-in ML Plugin files, deterministic feature/model helpers, prediction panel view/slot contribution, `ml.run-prediction` command, and `BUILT_IN_PLUGINS` registration while keeping package/native/Tauri/Rust/schema/capability surfaces unchanged.
