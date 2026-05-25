@@ -42,6 +42,26 @@ type RuntimeSnapshot = {
   pages: MarkdownPage[];
 };
 
+type ExecutionSentinel = {
+  readonly count: number;
+  trip: () => never;
+};
+
+type BoundaryCommandOutcome =
+  | {
+      error: unknown;
+      rejected: true;
+    }
+  | {
+      rejected: false;
+      result: unknown;
+    };
+
+type BoundaryChartOutcome = {
+  error: unknown;
+  renderResult: ReturnType<typeof render> | null;
+};
+
 type StatsAggregationId = (typeof statsAggregationIds)[number];
 
 type StatsRunAggregationPayload = {
@@ -443,6 +463,87 @@ describe("Stats and Chart plugins", () => {
     }
 
     expect(resolved).toBe(false);
+  });
+
+  it("fails closed for accessor-backed Stats input arrays before reading elements", async () => {
+    const runtime = await createRuntime();
+    const sentinel = createExecutionSentinel("Stats segment accessor executed");
+    const segments = createAccessorBackedArray<TimerSegmentFixture>(sentinel);
+    const outcome = await runStatsAggregationAtBoundary(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-page",
+        createTimeByPageInput(segments),
+      ),
+    );
+
+    expect(sentinel.count).toBe(0);
+    expectStatsRejectedOrEmptyCategorySeries(outcome, "Time by page", "seconds");
+  });
+
+  it("does not call caller-overridden Stats input array methods", async () => {
+    const runtime = await createRuntime();
+    const sentinel = createExecutionSentinel("Stats tags flatMap executed");
+    const tags = createArrayWithOverriddenFlatMap(
+      [createTagMetadata("tag-safe", "Safe tag")],
+      sentinel,
+    );
+    const outcome = await runStatsAggregationAtBoundary(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-tag",
+        createTimeByTagInput(
+          [
+            createTimerSegment({
+              durationSeconds: 30,
+              pageId: "page-stats-flatmap",
+              pageTitle: "Stats flatMap",
+              segmentId: "segment-stats-flatmap",
+              tagIds: ["tag-safe"],
+            }),
+          ],
+          tags,
+        ),
+      ),
+    );
+
+    expect(sentinel.count).toBe(0);
+    expectStatsRejectedOrEmptyOrExpectedCategorySeries(outcome, {
+      expectedCategories: [{ label: "Safe tag", value: 30 }],
+      title: "Time by tag",
+      unit: "seconds",
+    });
+  });
+
+  it("does not use custom iterators from nested Stats tag arrays", async () => {
+    const runtime = await createRuntime();
+    const sentinel = createExecutionSentinel("Stats tagIds iterator executed");
+    const tagIds = createArrayWithCustomIterator(["tag-safe"], sentinel);
+    const outcome = await runStatsAggregationAtBoundary(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-tag",
+        createTimeByTagInput(
+          [
+            createTimerSegment({
+              durationSeconds: 45,
+              pageId: "page-stats-iterator",
+              pageTitle: "Stats iterator",
+              segmentId: "segment-stats-iterator",
+              tagIds,
+            }),
+          ],
+          [createTagMetadata("tag-safe", "Safe tag")],
+        ),
+      ),
+    );
+
+    expect(sentinel.count).toBe(0);
+    expectStatsRejectedOrEmptyOrExpectedCategorySeries(outcome, {
+      expectedCategories: [{ label: "Safe tag", value: 45 }],
+      title: "Time by tag",
+      unit: "seconds",
+    });
   });
 
   it("ignores out-of-bound Stats numeric magnitudes and labels", async () => {
@@ -1093,6 +1194,46 @@ describe("Stats and Chart plugins", () => {
     }
   });
 
+  it("renders empty Chart state for accessor-backed category rows without reading them", async () => {
+    const runtime = await createRuntime();
+    const sentinel = createExecutionSentinel("Chart category accessor executed");
+    const categories = createAccessorBackedArray<ChartCategoryItem>(sentinel);
+    const view = renderChartViewAtBoundary(runtime, "chart.bar", {
+      data: createCategorySeries({
+        categories,
+        title: "Accessor categories",
+        unit: "count",
+      }),
+    });
+
+    expect(sentinel.count).toBe(0);
+    expectChartEmptyOutcome(view, "Bar chart");
+  });
+
+  it("does not call caller-overridden Chart series array methods", async () => {
+    const runtime = await createRuntime();
+    const sentinel = createExecutionSentinel("Chart categories flatMap executed");
+    const categories = createArrayWithOverriddenFlatMap(
+      [{ label: "Visible category", value: 7 }],
+      sentinel,
+    );
+    const view = renderChartViewAtBoundary(runtime, "chart.bar", {
+      data: createCategorySeries({
+        categories,
+        title: "Overridden category methods",
+        unit: "count",
+      }),
+    });
+
+    expect(sentinel.count).toBe(0);
+    expectChartEmptyOrExpectedRow(view, {
+      label: "Visible category",
+      regionName: "Bar chart",
+      tableName: "Overridden category methods",
+      valueText: "7 count",
+    });
+  });
+
   it("ignores Chart rows with out-of-bound labels or numeric magnitudes", async () => {
     const runtime = await createRuntime();
     const overlongLabel = "L".repeat(maxTrustedLabelLength + 1);
@@ -1403,6 +1544,23 @@ function runStatsAggregation(
   input: unknown,
 ): Promise<unknown> {
   return runtime.commands.execute(statsRunAggregationCommandId, input);
+}
+
+async function runStatsAggregationAtBoundary(
+  runtime: AppRuntime,
+  input: unknown,
+): Promise<BoundaryCommandOutcome> {
+  try {
+    return {
+      rejected: false,
+      result: await runStatsAggregation(runtime, input),
+    };
+  } catch (error) {
+    return {
+      error,
+      rejected: true,
+    };
+  }
 }
 
 function createRunAggregationPayload(
@@ -1748,6 +1906,24 @@ function renderChartView(
   return render(createElement(View, props));
 }
 
+function renderChartViewAtBoundary(
+  runtime: AppRuntime,
+  viewId: ChartViewId,
+  props: ChartViewProps,
+): BoundaryChartOutcome {
+  try {
+    return {
+      error: undefined,
+      renderResult: renderChartView(runtime, viewId, props),
+    };
+  } catch (error) {
+    return {
+      error,
+      renderResult: null,
+    };
+  }
+}
+
 function getChartViewComponent(
   runtime: AppRuntime,
   viewId: ChartViewId,
@@ -1884,6 +2060,151 @@ function makeNonEnumerableOwnValue(
     value: record[key],
     writable: true,
   });
+}
+
+function createExecutionSentinel(message: string): ExecutionSentinel {
+  let count = 0;
+
+  return {
+    get count() {
+      return count;
+    },
+    trip() {
+      count += 1;
+      throw new Error(message);
+    },
+  };
+}
+
+function createAccessorBackedArray<T>(
+  sentinel: ExecutionSentinel,
+): readonly T[] {
+  const values: T[] = [];
+
+  Object.defineProperty(values, "0", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return sentinel.trip();
+    },
+  });
+
+  return values;
+}
+
+function createArrayWithOverriddenFlatMap<T>(
+  values: readonly T[],
+  sentinel: ExecutionSentinel,
+): readonly T[] {
+  const array = [...values];
+
+  Object.defineProperty(array, "flatMap", {
+    configurable: true,
+    value() {
+      return sentinel.trip();
+    },
+  });
+
+  return array;
+}
+
+function createArrayWithCustomIterator<T>(
+  values: readonly T[],
+  sentinel: ExecutionSentinel,
+): readonly T[] {
+  const array = [...values];
+
+  Object.defineProperty(array, Symbol.iterator, {
+    configurable: true,
+    value() {
+      return sentinel.trip();
+    },
+  });
+
+  return array;
+}
+
+function expectStatsRejectedOrEmptyCategorySeries(
+  outcome: BoundaryCommandOutcome,
+  title: string,
+  unit: ChartCategorySeries["unit"],
+): void {
+  if (outcome.rejected) {
+    expect(outcome.error).toBeInstanceOf(Error);
+    return;
+  }
+
+  expect(outcome.result).toStrictEqual({
+    categories: [],
+    kind: "chart.category-series",
+    title,
+    unit,
+  } satisfies ChartCategorySeries);
+}
+
+function expectStatsRejectedOrEmptyOrExpectedCategorySeries(
+  outcome: BoundaryCommandOutcome,
+  input: {
+    expectedCategories: readonly ChartCategoryItem[];
+    title: string;
+    unit: ChartCategorySeries["unit"];
+  },
+): void {
+  if (outcome.rejected) {
+    expect(outcome.error).toBeInstanceOf(Error);
+    return;
+  }
+
+  expect(outcome.result).toMatchObject({
+    kind: "chart.category-series",
+    title: input.title,
+    unit: input.unit,
+  });
+  const categories = (outcome.result as ChartCategorySeries).categories;
+  const allowedCategories = [[], input.expectedCategories];
+
+  expect(allowedCategories).toContainEqual(categories);
+}
+
+function expectChartEmptyOutcome(
+  outcome: BoundaryChartOutcome,
+  regionName: "Bar chart" | "Line chart" | "Pie chart",
+): void {
+  expect(outcome.error).toBeUndefined();
+  expect(outcome.renderResult).not.toBeNull();
+
+  const chart = screen.getByRole("region", { name: regionName });
+  const status = within(chart).getByRole("status", { name: /chart empty/i });
+
+  expect(status).toHaveTextContent("No chart data");
+}
+
+function expectChartEmptyOrExpectedRow(
+  outcome: BoundaryChartOutcome,
+  input: {
+    label: string;
+    regionName: "Bar chart" | "Line chart" | "Pie chart";
+    tableName: string;
+    valueText: string;
+  },
+): void {
+  expect(outcome.error).toBeUndefined();
+  expect(outcome.renderResult).not.toBeNull();
+
+  const chart = screen.getByRole("region", { name: input.regionName });
+  const emptyStatus = within(chart).queryByRole("status", {
+    name: /chart empty/i,
+  });
+
+  if (emptyStatus !== null) {
+    expect(emptyStatus).toHaveTextContent("No chart data");
+    return;
+  }
+
+  const table = within(chart).getByRole("table", { name: input.tableName });
+
+  expect(within(table).getByText(input.label)).toBeVisible();
+  expect(within(table).getByText(input.valueText)).toBeVisible();
 }
 
 function expectNoDangerousDom(): void {
