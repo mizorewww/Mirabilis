@@ -1,18 +1,32 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:05 CST.
+Last updated: 2026-05-25 13:07 CST.
 
 ## Current Task
 
-- Task: TASK-029 - Implement Quick Capture and Search plugins.
-- Branch: `feat/task-029-quick-capture-search-plugins`.
+- Task: TASK-030 - Implement ML Plugin baseline predictions.
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 merged and merge-result gate passed; TASK-030 selection pending.
+- Current phase: TASK-030 started; pre-test guidance pending.
 
 ## Active Agents
 
-- No active agents. Parent is recording TASK-029 merge validation before starting TASK-030.
+- No active agents. Parent is about to delegate TASK-030 pre-test guidance.
+
+## Current TASK-030 State
+
+- TASK-030 follows TASK-028 and owns the first ML plugin baseline:
+  - ML Plugin builds features from pages, metadata, and events.
+  - Remaining-time prediction has a deterministic baseline model.
+  - Prediction panel renders as a plugin view or slot contribution.
+  - Model limitations and confidence are documented.
+- Initial parent interpretation:
+  - Keep ML behavior in a built-in plugin, not Core.
+  - Use current plugin runtime primitives and caller-visible page/metadata/event data only.
+  - Treat manifest algorithm descriptors as inert unless agents identify an existing executable runtime hook.
+  - Prefer a deterministic TypeScript-only baseline and defer real model training, background jobs, persistent model/index storage, AI/provider calls, app-shell route polish, broad cross-plugin private reads, and native/Tauri/package/Rust/schema/capability changes.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
 
 ## Current TASK-029 State
 

@@ -70,7 +70,7 @@ Status markers:
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
 - [x] TASK-029: Implement Quick Capture and Search plugins
-- [ ] TASK-030: Implement ML Plugin baseline predictions
+- [~] TASK-030: Implement ML Plugin baseline predictions
 - [ ] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 13:07 CST - TASK-030 started
+
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Task: Implement ML Plugin baseline predictions.
+- Start point: `master` after TASK-029 merge validation commit `10b833c`.
+- Source docs read: `docs/implementation/task-index.md#task-030-implement-ml-plugin-baseline-predictions`, `docs/product/05-built-in-plugins.md#21-machine-learning-plugin`, `docs/architecture/05-plugin-implementations.md#134-machine-learning-plugin`, `docs/development/01-data-roadmap-and-mvp.md#phase-9ml-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-9ml-plugin`, `docs/product/06-view-slots.md`, `docs/product/03-plugin-platform.md`, `docs/implementation/agent-workflow.md`, and `docs/testing/strategy.md`.
+- Initial scope: built-in ML Plugin baseline for feature building from caller-visible pages/metadata/events, deterministic remaining-time prediction, prediction panel rendering as plugin view or slot contribution, and documented model limitations/confidence.
+- Initial out of scope until agents narrow otherwise: AI/provider calls, real model training, persistent model/index storage, background refresh jobs, AlgorithmRegistry runtime execution, native/Tauri/package/Rust/schema/capability changes, broad cross-plugin private reads, app-shell route polish, and production dashboard wiring.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-030-ml-plugin-baseline-predictions.md`.
 
 ### 2026-05-25 13:05 CST - TASK-029 merged
 
