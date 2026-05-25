@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Complete formal docs sync for the accepted TASK-037 implementation and review-fix loops, then hand back for branch gate / closeout. TASK-037 remains in progress on the branch until the parent runs the branch gate and explicitly marks progress complete.
+- TASK-037 has been merged to `master`; push `master`, then start TASK-038 from `master`.
 
 ## Pre-Test Guidance Outcomes
 
@@ -226,4 +226,6 @@
 - Parent closeout:
   - TASK-037 is marked `[x]` in `docs/implementation/progress.md` on the feature branch.
   - Remaining accepted P2/risk: the known MUI-era Vite chunk-size warning remains accepted; non-Home routes, slots, dialogs, panels, responsive polish, lazy/Suspense, and broader route data are TASK-038+.
-  - Next action: merge `feat/task-037-home-workspace-editor` into `master`, run merge-result validation, push `master`, and continue TASK-038.
+  - Merge commit on `master`: `e871bf0 Merge TASK-037 home workspace editor`.
+  - Merge-result validation: `bun run check:quick` passed on `master` with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
+  - Next action: push `master` and continue TASK-038.
