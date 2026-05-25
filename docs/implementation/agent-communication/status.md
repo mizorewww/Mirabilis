@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:49 CST.
+Last updated: 2026-05-25 14:51 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 14:49 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 failing acceptance tests committed; parent is recording red validation before implementation handoff.
+- Current phase: TASK-031 production implementation delegated; waiting for `implementer`.
 
 ## Active Agents
 
-- No active agents. Parent is recording Noether the 2nd's test outcome before delegating implementation.
+- Wegener the 2nd (`implementer`) is adding the minimum production AI plugin/provider abstraction needed to pass focused TASK-031 tests.
 
 ## Current TASK-031 State
 
@@ -57,7 +57,10 @@ Last updated: 2026-05-25 14:49 CST.
   - Parent validated the expected red signal: focused TASK-031 tests failed with 8 failed / 1 passed because the `ai` built-in, `src/plugins/ai/test-support`, `ai.suggestion-panel`, and `src/plugins/ai/index.ts` production surfaces do not exist yet.
   - Parent static validation passed: `bun run typecheck`, focused ESLint for the new test file, `git diff --check`, `.skip/.only` scan, changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
   - Test commit: `fd2c9c8 Noether(test)(Implement AI Plugin provider abstraction): add ai provider acceptance tests`; post-commit auto-push succeeded.
-- Next action: commit red validation record, then delegate minimum production implementation to `implementer`.
+- Implementation delegated:
+  - Wegener the 2nd (`implementer`) should add the built-in `ai` plugin, plugin-local provider/settings abstraction, OpenAI Responses adapter boundary with injected transport/settings, command handlers, test support seam, and inert views.
+  - Scope: production code only, expected under `src/plugins/ai/**` plus `src/bootstrap/built-in-plugins.ts`; no tests/docs/progress/package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Wegener the 2nd, validate focused green checks and static guards, then commit implementation separately.
 
 ## Current TASK-030 State
 

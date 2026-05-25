@@ -179,3 +179,21 @@
 ## Current Next Action
 
 - Commit red validation record, then delegate minimum production implementation to `implementer`.
+
+## Implementation Handoff
+
+- Wegener the 2nd (`implementer`) started at 2026-05-25 14:51 CST.
+- Scope: production code only for the TASK-031 AI Plugin provider abstraction.
+- Expected changed files: `src/bootstrap/built-in-plugins.ts` and `src/plugins/ai/**`.
+- Required result:
+  - built-in `ai` plugin registration;
+  - canonical kebab-case commands and descriptors only;
+  - plugin-local provider/settings abstraction;
+  - injected/mockable OpenAI Responses adapter boundary with `gpt-5.5`, `store: false`, top-level `instructions` / `input`, and `text.format`;
+  - command DTO validation and advisory non-mutating results;
+  - redacted unconfigured/provider failure behavior;
+  - provider output validation and fail-closed handling;
+  - inert accessible suggestion/review views;
+  - no package/native/Tauri/Rust/schema/capability changes.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Wegener the 2nd, validate focused green checks, and commit implementation separately.
