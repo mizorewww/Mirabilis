@@ -15,7 +15,7 @@
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
     "clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings",
     "check:quick": "bun run typecheck && bun run lint && bun run test:frontend && bun run fmt:rust && bun run clippy && bun run test:rust",
-    "check:full": "bun run check:quick && bun run tauri build"
+    "check:full": "bun run check:quick && bun run tauri build --ci --bundles deb,rpm"
   },
   "dependencies": {
     "react": "^19.1.0",

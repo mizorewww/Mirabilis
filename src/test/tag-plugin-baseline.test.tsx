@@ -21,6 +21,7 @@ import {
   type SlotContribution,
   type StructuredMarkdownDocument,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -798,7 +799,11 @@ describe("Tag Plugin baseline", () => {
       namespace: "task",
     });
 
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
     await expect(
       executeRefreshTags(runtime, { pageId: sourcePage.id }),
     ).resolves.toStrictEqual({

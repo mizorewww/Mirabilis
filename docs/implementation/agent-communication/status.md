@@ -1,18 +1,154 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:00 CST.
+Last updated: 2026-05-26 00:05 CST.
 
 ## Current Task
 
-- Task: TASK-032 - Implement Sync Plugin skeleton.
-- Branch: `feat/task-032-sync-plugin-skeleton`.
+- Task: TASK-033 - Add release packaging and local full gate.
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 merged and merge-result gate passed; TASK-033 start pending.
+- Current phase: TASK-033 progress closeout ready to merge.
 
 ## Active Agents
 
-- None.
+- None. Final release readiness, security, deprecation, test-quality, docs re-review, and docs polish agents have completed.
+
+## Current TASK-033 State
+
+- TASK-033 follows TASK-032 and owns the local release/full-gate slice:
+  - make `bun run check:full` run quick checks and Tauri build reliably enough for local release readiness;
+  - document packaging changes and version/changelog expectations;
+  - use `release_checker` as the local readiness gate before merge, without requiring GitHub CI.
+- Start point: `master` after TASK-032 merge validation commit `dfe0e91`.
+- Initial parent interpretation:
+  - `package.json` already defines `check:full` as `bun run check:quick && bun run tauri build`.
+  - Current Tauri bundle config has `bundle.targets = "all"`, which may reproduce the TASK-014 AppImage/local environment failure.
+  - Agents should decide the smallest safe release-gate slice and whether this task needs tests/scripts/docs/config changes, or primarily release documentation and local validation.
+  - Avoid weakening quick checks or hiding real packaging failures; if local Linux packaging limitations remain, document them explicitly and let `release_checker` assess severity.
+- Source docs read:
+  - `docs/implementation/task-index.md#task-033-add-release-packaging-and-local-full-gate`.
+  - `docs/testing/strategy.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md#21-最终代码架构总结`.
+  - Current `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`.
+- Agent/config validation passed for orchestration start:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network and `TERM=dumb` terminal failure notes.
+- Parent decisions before guidance:
+  - Continue TASK-033 as an autonomous task on branch `feat/task-033-release-packaging-local-full-gate`.
+  - Delegate planning, docs/current Tauri release guidance, deprecation/API audit, and security review before asking for tests or implementation because TASK-033 touches packaging/release behavior and may change Tauri build/bundle surfaces.
+- Pre-test guidance delegated:
+  - Boole (`planner`) should define the smallest safe TASK-033 slice, acceptance criteria, expected files, tests, local gate semantics, release readiness workflow, and deferred scope.
+  - Mendel (`docs_researcher`) should verify current official Tauri v2 release/build/bundle guidance and any Bun/Vite details needed for local `check:full`.
+  - Parfit (`deprecation_auditor`) should audit stale packaging assumptions, scripts, bundle targets, CLI flags, version/changelog conventions, and prior AppImage failure context.
+  - Descartes (`security_reviewer`) should define release/build security constraints around bundle targets, capabilities, signing/updater absence, filesystem/network permissions, and artifact leakage.
+- Pre-test guidance completed:
+  - Boole (`planner`) recommended a release-gate/config/docs slice only, with tests first. It recommended making the local full gate honest by validating explicit local targets, likely deb/rpm, and documenting AppImage as deferred to a controlled Linux builder if not fixed in this task.
+  - Mendel (`docs_researcher`) verified current Tauri v2 docs: `tauri build`, `--bundles`, `--ci`, `bundle.targets`, `beforeBuildCommand`, and `frontendDist` remain current. It confirmed `bundle.targets = "all"` is valid but platform/toolchain dependent, and Tauri recommends older controlled Linux bases such as Ubuntu 22.04 / Debian 12 for Linux package compatibility.
+  - Parfit (`deprecation_auditor`) found P1s: existing `check:full` is current API usage but stale as a reliable local gate because `all` includes known-failing AppImage, Cargo metadata still has placeholder description/authors, and version/changelog expectations lack tests/docs.
+  - Descartes (`security_reviewer`) found P1s: the local full gate is not reliable yet, signing/updater absence must be explicitly scoped, capabilities/IPC must not broaden, dormant native bridge commands must stay dormant, CSP-null must stay documented as local-only residual risk, and release artifacts/secrets must not be tracked.
+- Parent baseline validation:
+  - Current `bun run check:full` failed after passing `check:quick`, frontend production build, Rust release build, and deb/rpm bundling.
+  - Failure point: AppImage bundling via `linuxdeploy`, matching the prior TASK-014 local environment failure pattern.
+- Parent decisions after guidance:
+  - Use the smallest safe local release-gate slice.
+  - Keep `check:quick` unchanged.
+  - Make `check:full` explicit and unattended: it must run `check:quick` first and then run Tauri build in CI mode for locally supported Linux bundles, expected `deb,rpm`.
+  - Do not use `--no-bundle`, `|| true`, hidden env workarounds, or `--ignore-version-mismatches`.
+  - Treat AppImage as not validated by the default local gate in this Arch environment; document it as deferred to a controlled Linux builder and require `release_checker` to call out that status.
+  - Add tests for script ordering/flags, bundle target policy, version sync, non-placeholder release metadata, changelog/release notes, packaging file existence, no updater/signing unless explicitly configured, no native/capability broadening, and no tracked release artifacts/secrets.
+- Test writer delegated:
+  - Hegel (`test_writer`) should add focused failing tests for `check:full` ordering/flags/targets, Tauri bundle config, version sync, non-placeholder release metadata, changelog/release notes, release_checker readiness, AppImage status documentation, artifact/secret leak guards, updater/signing absence, and no native/capability broadening.
+  - Scope: tests only; no production, docs, progress, agent communication, package/config/Cargo/release-checker edits, commits, merges, or pushes.
+- Test writer completed:
+  - Hegel (`test_writer`) added `src/test/release-packaging-full-gate.test.ts`.
+  - Coverage added: `check:full` ordering, `--ci`, explicit `deb,rpm`, forbidden bypass/network patterns, Tauri bundle config/assets, explicit AppImage status, version sync, non-placeholder Cargo metadata, changelog/release-notes surface, release_checker checklist, no updater/signing/secrets/artifacts, and narrow native capabilities/commands.
+  - Parent red validation: `bun run test:frontend -- src/test/release-packaging-full-gate.test.ts` failed as expected with 5 failed / 4 passed.
+  - Failure symptoms: `check:full` lacks `--ci`, lacks explicit `deb,rpm`, relies on implicit AppImage/all-target behavior, Cargo metadata is placeholder, no release notes/changelog surface exists, and release_checker checklist is too generic.
+  - Test commit: `b94eefb Hegel(test)(Add release packaging and local full gate): add release gate acceptance tests`; post-commit auto-push succeeded.
+- Implementation delegated:
+  - Averroes (`implementer`) should make the focused release-gate tests pass with minimum config/docs/release-metadata changes.
+  - Expected write scope: `package.json`, `src-tauri/Cargo.toml`, `.codex/agents/release-checker.toml`, release notes/changelog surface, and relevant release docs such as `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md` if needed.
+  - Constraints: no tests, progress, agent communication, Core/plugin behavior, IPC, capabilities, Rust commands, dependencies, updater/signing config, CSP, filesystem/network permissions, or broad bundle resources; no commit, merge, or push.
+- Next action: wait for Averroes, validate focused tests and release-surface guards, then commit if green.
+- Implementation completed:
+  - Averroes (`implementer`) updated the local release gate and release metadata/docs without editing tests.
+  - Changed files: `package.json`, `src-tauri/Cargo.toml`, `CHANGELOG.md`, `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `.codex/agents/release-checker.toml`, and `tsconfig.json`.
+  - Parent validation passed for focused TASK-033 test, `bun run typecheck`, `bun run lint`, `git diff --check`, and release-checker TOML parse.
+  - Parent `bun run check:full` validation failed during frontend tests because 16 historical native-surface guards still expected no package/Cargo diff from `master`, while TASK-033 intentionally changes `package.json` and `src-tauri/Cargo.toml`.
+- Parent decisions after full-gate validation failure:
+  - Treat the failure as stale historical test guard scope, not a release-gate implementation failure.
+  - Delegate a tests-only fix so historical guards still forbid unreviewed native/capability/IPC/package drift, while allowing no diff after merge or the exact reviewed TASK-033 release files before merge.
+  - Do not commit Averroes' implementation until the tests-only guard fix is validated.
+- Test-fix delegated:
+  - Poincare (`test_writer`) should update affected historical tests only.
+  - Allowed behavior: native-surface changes are `[]` or a subset of `package.json` and `src-tauri/Cargo.toml`; any other native/package/Tauri/capability/command/dependency drift still fails.
+- Historical guard test-fix completed:
+  - Poincare (`test_writer`) added `src/test/native-surface-guard.ts` and updated 16 historical native-surface guard tests to use it.
+  - Guards now accept no diff after merge or the exact reviewed TASK-033 `package.json` / `src-tauri/Cargo.toml` diffs before merge; unreviewed edits inside those files or any other native/package/Tauri/capability/permission/command/lockfile drift still fail.
+- Final validation after implementation/test-fix:
+  - `bun run check:full` passed with typecheck, lint, 38 frontend test files / 587 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+  - Bundle outputs: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+  - Tracked artifact/secret scan found no tracked release artifacts, secrets, logs, `dist`, or `src-tauri/target` output.
+- Commits:
+  - `b5629a5 Averroes(implementation)(Add release packaging and local full gate): implement local release gate`
+  - `7149e5a Averroes(docs)(Add release packaging and local full gate): document local release readiness`
+  - `1a83600 Poincare(test-fix)(Add release packaging and local full gate): allow reviewed release surface guards`
+- Review wave delegated:
+  - Confucius (`pr_explorer`) maps changed paths, scope drift, and review hotspots.
+  - Bernoulli (`reviewer`) checks correctness of the local gate, AppImage deferral, version/changelog policy, release_checker checklist, and guard helper behavior.
+  - Dalton (`deprecation_auditor`) checks current Tauri/Bun/Vite/Cargo command/config usage and stale docs.
+  - Aquinas (`security_reviewer`) checks no bypass flags, artifact/secret leakage, updater/signing/capability/IPC drift, and release safety.
+  - Gibbs (`docs_researcher`) checks TASK-033 docs/changelog against current official guidance and local delivered/deferred scope.
+  - Galileo (`test_quality_reviewer`) checks release-gate and native-surface guard test quality.
+  - `release_checker` start was delayed because the agent thread limit was reached; parent will start it after a slot opens.
+- Review outcomes received:
+  - Confucius (`pr_explorer`) found no P0/P1, but flagged `tsconfig.json` adding `ES2021.String` as a scope hotspot caused by test `replaceAll` usage.
+  - Bernoulli (`reviewer`) found no P0/P1 correctness findings.
+  - Dalton (`deprecation_auditor`) found one P1: TASK-033 introduces/tests deprecated Cargo `[package].authors`; current Cargo docs mark `authors` deprecated.
+  - Aquinas (`security_reviewer`) found one P1: CSP remains `null` but TASK-033 docs under-document that this is pre-existing and not hardened by the release-gate slice.
+  - Gibbs (`docs_researcher`) found no P0/P1 current-guidance mismatch, but noted P2 doc sync needs for task-index delivered/deferred scope and wording cleanup.
+  - Galileo (`test_quality_reviewer`) found one P1: release-gate tests do not prove fail-fast semantics and would allow semicolon/fallback forms.
+- Parent decisions after review findings:
+  - Fix P1s before merge.
+  - Delegate tests-only changes for fail-fast coverage and deprecated Cargo authors expectations.
+  - Delegate docs-only changes for CSP release scope and TASK-033 delivered/deferred docs.
+  - Remove or avoid the test-driven `ES2021.String` tsconfig drift if the test fix can do so without weakening coverage.
+  - Start `release_checker` only after P1 fixes land and branch validation is green.
+- Active fix handoffs:
+  - Singer (`test_writer`) should strengthen fail-fast tests.
+  - Ohm (`doc_writer`) should document CSP scope.
+  - Plato (`test_writer`) should remove Cargo authors expectations from tests, reject deprecated authors, adjust native-surface exact diff expectations, and also cover fail-fast if Singer has not already completed it.
+- P1 review fixes completed:
+  - Singer (`test_writer`) strengthened fail-fast coverage and removed `replaceAll` usage from the release-gate test.
+  - Plato (`test_writer`) removed Cargo `authors` as a release-readiness requirement, added a deprecated-authors rejection, and updated the native-surface exact-diff guard.
+  - Godel (`implementer`) removed deprecated Cargo `authors` from `src-tauri/Cargo.toml` and removed the temporary `ES2021.String` tsconfig lib entry.
+  - Ohm (`doc_writer`) documented CSP scope: TASK-033 leaves pre-existing `app.security.csp: null` unchanged, and broader release/updater/remote-content work needs future CSP hardening review.
+- P1 fix validation:
+  - `bun run test:frontend -- src/test/release-packaging-full-gate.test.ts src/test/app-shell-boundary.test.ts src/test/sync-plugin-skeleton.test.ts` passed with 3 files / 33 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+  - `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- P1 fix commits:
+  - `eefc687 Plato(test-fix)(Add release packaging and local full gate): cover release gate review findings`
+  - `2fdcd23 Godel(review-fix)(Add release packaging and local full gate): remove deprecated Cargo authors`
+  - `f8847cf Ohm(docs)(Add release packaging and local full gate): document CSP release scope`
+- Release readiness / narrow re-review delegated:
+  - Sagan (`release_checker`) should verify local release readiness without GitHub CI.
+  - Carver (`security_reviewer`) should confirm CSP docs P1 and release-safety constraints are closed.
+  - Fermat (`deprecation_auditor`) should confirm Cargo authors P1 is closed and Tauri CLI usage remains current.
+  - McClintock (`test_quality_reviewer`) should confirm fail-fast and native-surface guard test P1 is closed.
+  - Euler (`docs_researcher`) should confirm TASK-033 docs/changelog/current-guidance readiness.
+- Final release readiness / narrow re-review outcomes:
+  - Sagan (`release_checker`) confirmed TASK-033 is release-ready for the local gate, reran a fresh `bun run check:full`, verified deb/rpm artifacts, and found no P0/P1 blockers.
+  - Carver (`security_reviewer`) found no P0/P1 security blockers; the CSP documentation P1 is closed and no release/security surface broadened.
+  - Fermat (`deprecation_auditor`) found no P0/P1 blockers; deprecated Cargo `authors` is removed and current Tauri CLI usage remains valid.
+  - McClintock (`test_quality_reviewer`) found no P0/P1 blockers; fail-fast and native-surface guard coverage are closed.
+  - Euler (`docs_researcher`) found no P0/P1 docs/current-guidance blockers and requested only P2/P3 wording/scope polish.
+  - Godel (`doc_writer`) completed the remaining docs polish: `CHANGELOG.md` now says unattended Tauri `--ci` mode rather than "Tauri CI build", and `docs/implementation/task-index.md` includes the TASK-033 delivered/deferred scope block.
+  - Parent validation for Godel's docs polish: `git diff --check` passed.
+- Final branch validation before completion remains the existing green TASK-033 `bun run check:full`: typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Progress closeout: TASK-033 is marked `[x]` in `docs/implementation/progress.md` with final delivered scope, checks, commits, residual risks, and merge status.
+- Next action: commit the progress closeout, merge to `master`, run merge-result `bun run check:full`, and push `master`.
 
 ## Current TASK-032 State
 

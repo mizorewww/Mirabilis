@@ -595,6 +595,33 @@ Tauri / Rust
     同步传输
 ```
 
+TASK-033 release packaging baseline:
+
+```text
+Local full gate:
+  bun run check:full
+  -> bun run check:quick
+  -> bun run tauri build --ci --bundles deb,rpm
+
+Validated by the default local Arch gate:
+  Linux deb bundle
+  Linux rpm bundle
+
+Deferred:
+  AppImage local validation
+  controlled AppImage builder path, such as Ubuntu 22.04 or Debian 12
+  updater configuration
+  release signing
+  artifact upload or publishing automation
+  CSP hardening; src-tauri/tauri.conf.json still has app.security.csp: null
+```
+
+AppImage is not validated by the default local Arch release gate and must not be silently claimed as passing. Release readiness review must state AppImage as deferred or require a controlled Linux builder / controlled environment before claiming AppImage support.
+
+TASK-033 does not change the pre-existing null CSP. Public release claims, updater enablement, or remote/web-content work require a future CSP hardening and security review before they can be treated as release-ready.
+
+Release versions stay synchronized across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`. The root `CHANGELOG.md` is the current changelog / release notes surface and should be updated whenever a version is prepared or release packaging scope changes.
+
 TASK-015 App Shell 边界：
 
 - App Shell 可以组合 `RuntimeProvider`、启动 loading state、通用启动失败 alert，以及基于 public runtime `{ app }` info 的 shell status。

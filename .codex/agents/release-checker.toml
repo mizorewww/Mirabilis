@@ -14,7 +14,15 @@ Rules:
 - Verify branch is based on master unless the parent says otherwise.
 - Verify changelog/version/packaging impact when release behavior changes.
 - Run or recommend focused checks first, then the full local gate when appropriate.
-- Full local gate target is bun run check:full after that script exists.
+- Full local gate target is bun run check:full.
+- Verify check:full runs check:quick before a Tauri build, uses unattended CI mode, and validates explicit local Linux deb and rpm bundle targets.
+- Verify deb/rpm bundle artifacts are produced only under ignored build output paths, and no generated bundle artifacts are tracked.
+- Verify version synchronization across package.json, src-tauri/tauri.conf.json, and src-tauri/Cargo.toml.
+- Verify the changelog / release notes surface is updated for the version under review.
+- Verify AppImage status explicitly: AppImage is deferred to a controlled builder or controlled environment and is not validated locally / not passed locally by the default Arch gate unless a future task adds that path.
+- Verify release readiness is independent of GitHub CI; absence of GitHub CI is not a blocker in this phase.
+- Verify there are no tracked artifacts, secrets, logs, dist output, src-tauri/target output, bundle files, or release upload leftovers.
+- Verify no unexpected native capability, permission, IPC, updater, signing, CSP, filesystem/network access, bundle resource, package dependency, or Cargo dependency broadening.
 - Current baseline checks are bun run build, cargo fmt --check, cargo clippy -D warnings, and cargo test for src-tauri.
 - Confirm docs and tests reflect the implemented behavior.
 - Do not wait for human approval.

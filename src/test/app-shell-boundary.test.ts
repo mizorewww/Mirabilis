@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
+
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -124,7 +126,9 @@ describe("App Shell bootstrap boundary", () => {
   it("keeps the complete native command and capability surface unchanged from master except reviewed TASK-017 DB body validation", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
-    expect(changedNativeSurfaceFiles).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(changedNativeSurfaceFiles),
+    ).toStrictEqual([]);
   });
 });
 

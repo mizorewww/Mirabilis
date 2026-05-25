@@ -73,11 +73,38 @@ Status markers:
 - [x] TASK-030: Implement ML Plugin baseline predictions
 - [x] TASK-031: Implement AI Plugin provider abstraction
 - [x] TASK-032: Implement Sync Plugin skeleton
-- [ ] TASK-033: Add release packaging and local full gate
+- [x] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 00:05 CST - TASK-033 completed
+
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Task: Add release packaging and local full gate.
+- Delivered: `bun run check:full` now runs `bun run check:quick` first and then `bun run tauri build --ci --bundles deb,rpm`; `check:quick` remains unchanged.
+- Delivered: local release readiness validates Linux `deb` and `rpm` artifacts, with AppImage explicitly deferred to a controlled Linux builder before support can be claimed.
+- Delivered: release version expectations stay synchronized at `0.1.0` across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`; root `CHANGELOG.md` is the release notes/changelog surface.
+- Delivered: Cargo release metadata now has a non-placeholder description and no deprecated `authors` field.
+- Delivered: `.codex/agents/release-checker.toml`, testing docs, development docs, task index, and changelog now document local gate semantics, artifact/version/changelog checks, AppImage deferral, no GitHub CI dependency, and pre-existing CSP-null scope.
+- Review and fixes: P1 findings for deprecated Cargo `authors`, missing fail-fast script coverage, and underdocumented CSP-null release scope were fixed and re-reviewed. Final release, security, deprecation, test-quality, and docs agents found no remaining P0/P1 blockers.
+- Final branch gate: `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Bundle outputs verified during branch gate: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- Key commits: `b94eefb` tests, `b5629a5` implementation, `7149e5a` docs, `1a83600` guard test-fix, `eefc687` review-fix tests, `2fdcd23` deprecated-authors fix, `f8847cf` CSP docs, `caf4c09` delivered/deferred docs, and `fa2324b` final readiness record.
+- Remaining accepted risks: AppImage controlled-builder validation, public-release CSP hardening, updater/signing/publishing, GitHub CI infrastructure, native behavior, capability/permission, IPC contract, and dependency changes remain future work.
+- Merge status: ready to merge to `master`; merge-result `bun run check:full` will run after merge.
+
+### 2026-05-25 21:03 CST - TASK-033 started
+
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Task: Add release packaging and local full gate.
+- Start point: `master` after TASK-032 merge validation commit `dfe0e91`.
+- Source docs read: `docs/implementation/task-index.md#task-033-add-release-packaging-and-local-full-gate`, `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md#21-最终代码架构总结`, current `package.json` scripts, and `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` release packaging surfaces.
+- Initial scope to narrow through agents: make local `bun run check:full` a reliable full gate that runs quick checks plus Tauri build, document packaging/version/changelog expectations, and make `release_checker` able to verify local readiness without GitHub CI.
+- Initial risks and questions: `package.json` already has `check:full = bun run check:quick && bun run tauri build`; current Tauri bundle targets are `all`; earlier TASK-014 full-gate exploration found local AppImage bundling environment/tooling failures on Arch, so agents must decide whether TASK-033 should adjust local full-gate behavior, packaging docs, bundle targets, environment expectations, or release-checker procedure without hiding real release risks.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking notes for unrestricted sandbox/network and `TERM=dumb` terminal failure.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs/current API research, deprecation/API audit, security review, TDD/release-gate test writing, implementation, docs sync, and release readiness review will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-033-release-packaging-local-full-gate.md`.
 
 ### 2026-05-25 21:00 CST - TASK-032 merged
 

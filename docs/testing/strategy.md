@@ -60,12 +60,22 @@ TASK-001 establishes these Bun scripts for local validation:
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
     "clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings",
     "check:quick": "bun run typecheck && bun run lint && bun run test:frontend && bun run fmt:rust && bun run clippy && bun run test:rust",
-    "check:full": "bun run check:quick && bun run tauri build"
+    "check:full": "bun run check:quick && bun run tauri build --ci --bundles deb,rpm"
   }
 }
 ```
 
 Frontend tests use Vitest with the project-level `jsdom` environment and `src/test/setup.ts` for `@testing-library/jest-dom/vitest` matchers. React Testing Library 16+ requires the `@testing-library/dom` peer dependency to be installed explicitly. ESLint uses flat config presets for React Hooks, Vite React Refresh, Testing Library, and jest-dom, with Testing Library and jest-dom rules scoped to test files. Run tests with `bun run test:frontend`; do not use `bun test` for this app.
+
+## TASK-033 Release Packaging Gate
+
+`bun run check:full` is the default local full release gate. It must run `bun run check:quick` first, then run `bun run tauri build --ci --bundles deb,rpm` so the gate is unattended and explicit about the local Linux bundle targets it validates.
+
+The default local Arch gate validates `deb` and `rpm` bundles only. AppImage is not validated locally and must not be reported as passing from this gate. AppImage remains deferred to a controlled Linux builder or controlled environment, such as Ubuntu 22.04 or Debian 12, unless a future task adds and documents that builder path.
+
+Release readiness also requires synchronized versions across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`. Keep the changelog or release notes surface current for the version under review; the repository root `CHANGELOG.md` is the current release notes surface.
+
+TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `app.security.csp: null`; public release claims, updater enablement, or remote/web-content work require a future CSP hardening and security review.
 
 ## Focused Test Guidance
 
@@ -491,6 +501,6 @@ Before merging to `master`:
 
 1. Run focused tests for the changed behavior.
 2. Run `bun run check:quick` for the branch local gate.
-3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior. Private Rust repository persistence should still run focused `cargo test`, `fmt`, and `clippy`; escalate to `check:full` when it is exposed through IPC, capabilities, app data paths, bootstrap providers, or release packaging.
+3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior. For TASK-033 this means quick checks plus `tauri build --ci --bundles deb,rpm`; AppImage is deferred to a controlled builder and is not validated by the default local Arch gate. TASK-033 also leaves the pre-existing `app.security.csp: null` unchanged; broader release, updater, or remote/web-content claims need future CSP hardening review. Private Rust repository persistence should still run focused `cargo test`, `fmt`, and `clippy`; escalate to `check:full` when it is exposed through IPC, capabilities, app data paths, bootstrap providers, or release packaging.
 4. Fix P0/P1 review findings.
 5. Record remaining P2/P3 findings as follow-up tasks when not fixed in the branch.

@@ -12,6 +12,7 @@ import type {
   MarkdownSyntaxContribution,
   NativeBridge,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type CollectedMarkdownSyntaxContribution = MarkdownSyntaxContribution & {
   pluginId: string;
@@ -146,7 +147,9 @@ describe("Markdown runtime extension collection", () => {
   it("does not require native command, capability, generated permission, Cargo, or package surface changes except reviewed TASK-017 DB body validation", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
-    expect(changedNativeSurfaceFiles).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(changedNativeSurfaceFiles),
+    ).toStrictEqual([]);
   });
 });
 

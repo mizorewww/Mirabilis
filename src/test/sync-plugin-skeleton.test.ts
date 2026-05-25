@@ -16,6 +16,7 @@ import type {
   MetadataRecord,
   StructuredMarkdownDocument,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type SyncUnitKind = (typeof expectedSyncUnitKinds)[number];
 
@@ -1078,7 +1079,9 @@ describe("Sync Plugin skeleton", () => {
     );
     const coreSources = await readProductionSources(["src/core"]);
 
-    expect(nativeSurfaceChanges).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(nativeSurfaceChanges),
+    ).toStrictEqual([]);
 
     for (const { filePath, source } of syncSources) {
       expect(source, `${filePath}: stale Sync ids`).not.toMatch(

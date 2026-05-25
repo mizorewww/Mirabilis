@@ -22,6 +22,7 @@ import {
   type NativeBridge,
   type StructuredMarkdownDocument,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -1195,7 +1196,9 @@ describe("Task checkbox toggle and task events", () => {
   it("does not require package, Cargo, Tauri config, capability, permission, or native command surface changes", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
-    expect(changedNativeSurfaceFiles).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(changedNativeSurfaceFiles),
+    ).toStrictEqual([]);
   });
 });
 

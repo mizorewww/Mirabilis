@@ -888,6 +888,17 @@ Acceptance criteria:
 - Packaging changes are documented.
 - `release_checker` can verify local readiness without GitHub CI.
 - Version/changelog expectations are clear.
+- CSP scope is explicit: TASK-033 leaves the pre-existing `app.security.csp: null` unchanged, and CSP hardening remains future security-review work.
+
+Delivered/deferred scope after TASK-033:
+
+- Delivered local `bun run check:full` release gate runs `bun run check:quick` first, then unattended `bun run tauri build --ci --bundles deb,rpm`.
+- Delivered local Linux `deb` and `rpm` artifact validation; AppImage remains explicitly deferred to controlled builder validation before support can be claimed.
+- Version expectations are synchronized across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`; root `CHANGELOG.md` is the release notes/changelog surface.
+- `release_checker` local-readiness review is hardened for local verification without GitHub CI, including release gate, packaging scope, version/changelog, AppImage deferral, and CSP-null checks.
+- Cargo package metadata now includes a description and removes the deprecated `authors` field.
+- Residual CSP scope remains explicit: TASK-033 leaves `app.security.csp: null` unchanged; public-release CSP hardening remains future security-review work.
+- Deferred scope: AppImage controlled-builder validation, public-release CSP hardening, updater/signing/publishing, GitHub CI infrastructure, and native behavior, capability/permission, IPC contract, or dependency changes.
 
 Test plan:
 
