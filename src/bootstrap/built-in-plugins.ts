@@ -1,4 +1,5 @@
 import type { AppPlugin } from "../core";
+import { AiPlugin } from "../plugins/ai";
 import { CalendarPlugin } from "../plugins/calendar";
 import { ChartPlugin } from "../plugins/chart";
 import { HabitPlugin } from "../plugins/habit";
@@ -27,4 +28,5 @@ export const BUILT_IN_PLUGINS = Object.freeze([
   QuickCapturePlugin,
   SearchPlugin,
   MlPlugin,
+  AiPlugin,
 ]) as readonly AppPlugin[];
