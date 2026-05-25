@@ -39,8 +39,13 @@
 
 ## Current Next Action
 
-- Spawn pre-test guidance agents:
-  - `planner` for smallest safe TASK-026 scope, acceptance criteria, risks, and TDD handoff.
-  - `docs_researcher` for current React/Vitest/Testing Library and any relevant view/calendar guidance.
-  - `deprecation_auditor` for canonical command/view/event IDs and stale API risks.
-  - `security_reviewer` for Timer event trust boundaries, inert rendering, command payloads, and native/Tauri/package/Rust/schema guardrails.
+## Pre-Test Agent Handoff
+
+- Pauli (`planner`) started 2026-05-25 08:41 CST to define the smallest safe TASK-026 scope, acceptance criteria, risks, and TDD handoff.
+- Turing (`docs_researcher`) started 2026-05-25 08:41 CST to check current React/Vitest/Testing Library guidance for Calendar view tests.
+- Cicero (`deprecation_auditor`) started 2026-05-25 08:41 CST to audit canonical Calendar identifiers and stale API risks.
+- Gauss (`security_reviewer`) started 2026-05-25 08:41 CST to review Calendar/Timer event trust boundaries, inert rendering, command payloads, and native/Tauri/package/Rust/schema guardrails.
+
+## Current Next Action
+
+- Wait for pre-test guidance agents, then summarize guidance, decide smallest safe TASK-026 scope, and delegate `test_writer`.
