@@ -79,7 +79,7 @@ Status markers:
 
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
-- [~] TASK-036: Add Generic ViewHost And SlotHost
+- [x] TASK-036: Add Generic ViewHost And SlotHost
 - [ ] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
@@ -93,6 +93,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 03:39 CST - TASK-036 completed and ready to merge
+
+- Branch: `feat/task-036-viewhost-slothost`.
+- Task: Add Generic ViewHost And SlotHost.
+- Final P2 hardening: Lagrange added coverage for nested `ViewHost.props` prototype-key fail-closed behavior, SlotHost plugin-unavailable skipping with visible sibling contributions, and slot `when` mutation/capture isolation. Commit: `f2e8ed7`.
+- Final implementation fix: Goodall updated `ViewHost` so nested controlled-prop prototype-key clone failures propagate to `View unavailable` instead of stripping the nested value and continuing. Commit: `114008d`.
+- Final docs sync: Lovelace documented the hardened host contract, delivered/deferred scope, and TASK-037+ deferrals in testing, product, task-index, progress, status, and TASK-036 communication docs. Commit: `3187b10`.
+- Final validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 36 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed after Goodall; `bun run build` passed with the known TASK-035 MUI chunk-size warning; `bun run check:quick` passed with 40 frontend test files / 635 tests, Rust fmt, Rust clippy, and Rust tests.
+- Release readiness: Boole found no code/security/release P0/P1 blockers, confirmed no package/lock/Tauri/Rust/IPC/capability/permission/release surface drift, confirmed `check:full` is not required for this TypeScript/React shell-host task, and accepted AppImage as still deferred to the controlled release-builder environment.
+- Deferred P2 risks: lazy/Suspense support moves to TASK-037+ route/plugin mounting; future `actions` callers must provide owner-scoped wrappers rather than raw command/native handles; the static host file-split guard can be revisited during later host refactors.
+- Next action: commit this closeout, merge `feat/task-036-viewhost-slothost` into `master`, validate the merge result, push `master`, then continue to TASK-037.
 
 ### 2026-05-26 03:30 CST - TASK-036 final docs sync applied
 

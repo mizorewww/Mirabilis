@@ -43,7 +43,7 @@
 
 ## Current Next Action
 
-- Complete docs-sync updates, then run release-readiness review and final closeout. TASK-036 remains `[~]` until final validation and merge to `master`.
+- Commit final closeout, merge `feat/task-036-viewhost-slothost` to `master`, validate the merge result, push `master`, then continue to TASK-037.
 
 ## Pre-Test Guidance Outcomes
 
@@ -185,3 +185,28 @@
   - Lazy/Suspense behavior is deferred to TASK-037+ route/plugin mounting.
   - Static host file-split guard brittleness is accepted as follow-up material for later host refactors.
 - Parent decision: keep TASK-036 `[~]` until P2 test-hardening disposition, release-readiness review, final validation, closeout, and merge are complete.
+
+## Final Test Hardening And Release Readiness
+
+- Lagrange (`test_writer`) added final P2 test-hardening coverage in `src/test/view-slot-hosts.test.tsx`:
+  - nested `ViewHost.props` prototype-key fail-closed behavior;
+  - SlotHost plugin-unavailable skipping while sibling contributions remain visible;
+  - slot `when` mutation/capture isolation so caller data and rendered component state remain unchanged.
+- Lagrange red validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 1 failed / 35 passed because nested `ViewHost.props` prototype keys were still stripped before rendering.
+- Test commit: `f2e8ed7 Lagrange(test-fix)(Add Generic ViewHost And SlotHost): cover final host edge cases`.
+- Goodall (`implementer`) updated `src/shell/hosts/ViewHost.tsx` so nested controlled-prop prototype-key clone failures propagate to the top-level `View unavailable` fail-closed path.
+- Goodall validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 36 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Implementation commit: `114008d Goodall(review-fix)(Add Generic ViewHost And SlotHost): fail closed on nested host prop keys`.
+- Final branch validation:
+  - `bun run build` passed with the known TASK-035 MUI chunk-size warning;
+  - `bun run check:quick` passed with 40 frontend test files / 635 tests, Rust fmt, Rust clippy, and Rust tests.
+- Boole (`release_checker`) found TASK-036 code, test, and release surfaces ready to merge after this closeout:
+  - no P0/P1 code, security, or release blockers;
+  - no package/lock/Tauri/Rust/IPC/capability/permission/release surface drift;
+  - `check:full` is not required for this TypeScript/React shell-host task.
+- Deferred P2 risks:
+  - lazy/Suspense support belongs with TASK-037+ route/plugin mounting;
+  - future `actions` callers must provide owner-scoped host wrappers, not raw command/native handles;
+  - AppImage remains deferred to the controlled release-builder environment;
+  - the static host file-split guard can be revisited during later host refactors.
+- Parent decision: mark TASK-036 `[x]`, commit closeout, merge to `master`, validate merge result, push `master`, then continue to TASK-037.
