@@ -75,6 +75,8 @@ The default local Arch gate validates `deb` and `rpm` bundles only. AppImage is 
 
 Release readiness also requires synchronized versions across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`. Keep the changelog or release notes surface current for the version under review; the repository root `CHANGELOG.md` is the current release notes surface.
 
+TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `app.security.csp: null`; public release claims, updater enablement, or remote/web-content work require a future CSP hardening and security review.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:
@@ -499,6 +501,6 @@ Before merging to `master`:
 
 1. Run focused tests for the changed behavior.
 2. Run `bun run check:quick` for the branch local gate.
-3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior. For TASK-033 this means quick checks plus `tauri build --ci --bundles deb,rpm`; AppImage is deferred to a controlled builder and is not validated by the default local Arch gate. Private Rust repository persistence should still run focused `cargo test`, `fmt`, and `clippy`; escalate to `check:full` when it is exposed through IPC, capabilities, app data paths, bootstrap providers, or release packaging.
+3. Run `bun run check:full` for changes touching Tauri IPC, permissions, filesystem, app-runtime persistence wiring, packaging, or release behavior. For TASK-033 this means quick checks plus `tauri build --ci --bundles deb,rpm`; AppImage is deferred to a controlled builder and is not validated by the default local Arch gate. TASK-033 also leaves the pre-existing `app.security.csp: null` unchanged; broader release, updater, or remote/web-content claims need future CSP hardening review. Private Rust repository persistence should still run focused `cargo test`, `fmt`, and `clippy`; escalate to `check:full` when it is exposed through IPC, capabilities, app data paths, bootstrap providers, or release packaging.
 4. Fix P0/P1 review findings.
 5. Record remaining P2/P3 findings as follow-up tasks when not fixed in the branch.

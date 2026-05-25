@@ -613,9 +613,12 @@ Deferred:
   updater configuration
   release signing
   artifact upload or publishing automation
+  CSP hardening; src-tauri/tauri.conf.json still has app.security.csp: null
 ```
 
 AppImage is not validated by the default local Arch release gate and must not be silently claimed as passing. Release readiness review must state AppImage as deferred or require a controlled Linux builder / controlled environment before claiming AppImage support.
+
+TASK-033 does not change the pre-existing null CSP. Public release claims, updater enablement, or remote/web-content work require a future CSP hardening and security review before they can be treated as release-ready.
 
 Release versions stay synchronized across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`. The root `CHANGELOG.md` is the current changelog / release notes surface and should be updated whenever a version is prepared or release packaging scope changes.
 

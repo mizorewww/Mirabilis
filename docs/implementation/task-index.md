@@ -888,6 +888,7 @@ Acceptance criteria:
 - Packaging changes are documented.
 - `release_checker` can verify local readiness without GitHub CI.
 - Version/changelog expectations are clear.
+- CSP scope is explicit: TASK-033 leaves the pre-existing `app.security.csp: null` unchanged, and CSP hardening remains future security-review work.
 
 Test plan:
 
