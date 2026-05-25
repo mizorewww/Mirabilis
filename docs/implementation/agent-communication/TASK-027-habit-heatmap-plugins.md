@@ -180,3 +180,33 @@
   - Native/package/Tauri/Rust/schema diff guard.
 - Test-fix commit: `50bd24d Darwin(test-fix)(Implement Habit and Heatmap plugins): cover same-day habit recheck`; post-commit auto-push succeeded.
 - Goodall (`implementer`) started at 2026-05-25 10:28 CST for the P1 production fix. Scope: production code only; expected behavior is duplicate consecutive same-day check remains idempotent, while same-day re-check after uncheck appends a trailing `checked` event.
+
+## Docs Sync Outcome
+
+- Ramanujan (`doc_writer`) completed docs-only sync in:
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/02-core-data-model.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+- Scope: canonical `habit` / `heatmap` plugin ids, kebab-case commands, camelCase Habit metadata, split Habit event namespace/type, `heatmap.calendar`, `heatmap.date-series`, and deferred Task checkbox bridge / Habit Review / Stats-ML-Calendar feeds / native changes.
+- Parent validated docs-only `git diff --check` and focused stale-id grep. Docs commit: `16c9a04 Ramanujan(docs)(Implement Habit and Heatmap plugins): sync habit heatmap docs`; post-commit auto-push succeeded.
+
+## P1 Fix Outcome
+
+- Goodall (`implementer`) completed the same-day re-check production fix in `src/plugins/habit/plugin.ts`.
+- Behavior: `habit.check-today` now treats same-day idempotency as "latest same-day terminal Habit event is checked". A duplicate consecutive check remains idempotent; `check -> uncheck -> check` appends the trailing `checked` event expected by append-only event consumers.
+- Parent validation after fix:
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` passed with 15 tests.
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/task-filters-view-rendering.test.tsx src/test/tag-plugin-baseline.test.tsx` passed with 6 files / 117 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust/schema diff guard was empty.
+- Review-fix commit: `5bfe173 Goodall(review-fix)(Implement Habit and Heatmap plugins): preserve rechecked habit events`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Run the final branch local gate, mark TASK-027 complete in `docs/implementation/progress.md` if green, then merge to `master`.

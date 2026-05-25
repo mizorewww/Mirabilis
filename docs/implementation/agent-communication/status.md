@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:28 CST.
+Last updated: 2026-05-25 10:32 CST.
 
 ## Current Task
 
@@ -8,12 +8,11 @@ Last updated: 2026-05-25 10:28 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 P1 production fix delegated; docs sync still active.
+- Current phase: TASK-027 P1 fixed and docs synced; final branch gate pending.
 
 ## Active Agents
 
-- Ramanujan (`doc_writer`) is active for stale Habit/Heatmap formal documentation sync.
-- Goodall (`implementer`) is active for the P1 same-day re-check production fix.
+- None currently active.
 
 ## Current TASK-027 State
 
@@ -65,6 +64,13 @@ Last updated: 2026-05-25 10:28 CST.
   - Parent validated the expected red signal: focused TASK-027 tests failed with 1 failed / 14 passed because the event stream had only `checked, unchecked` instead of `checked, unchecked, checked`.
   - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/habit-heatmap-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
   - Test-fix commit: `50bd24d Darwin(test-fix)(Implement Habit and Heatmap plugins): cover same-day habit recheck`; post-commit auto-push succeeded.
+- Docs sync completed:
+  - Ramanujan (`doc_writer`) updated formal product, architecture, and development docs for canonical Habit/Heatmap identifiers, Heatmap DTO naming, split event namespace/type, and deferred scope.
+  - Docs commit: `16c9a04 Ramanujan(docs)(Implement Habit and Heatmap plugins): sync habit heatmap docs`; post-commit auto-push succeeded.
+- P1 production fix completed:
+  - Goodall (`implementer`) changed `habit.check-today` idempotency to inspect the latest same-day terminal Habit event. Consecutive duplicate checks remain idempotent, while same-day re-check after `unchecked` appends a trailing `checked`.
+  - Parent validated focused TASK-027 tests passed (15 tests), adjacent plugin/core suite passed (6 files / 117 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `5bfe173 Goodall(review-fix)(Implement Habit and Heatmap plugins): preserve rechecked habit events`; post-commit auto-push succeeded.
 
 ## Completed Recent Task
 
@@ -109,6 +115,6 @@ Last updated: 2026-05-25 10:28 CST.
 
 ## Next Actions
 
-1. Wait for Goodall (`implementer`) to finish the P1 fix.
-2. Validate focused green checks and commit the production fix separately.
-3. Integrate Ramanujan's docs sync in a separate docs commit.
+1. Run the final branch local gate for TASK-027.
+2. If green, update `docs/implementation/progress.md` to mark TASK-027 complete and commit progress.
+3. Merge branch to `master`, validate merge result, push `master`, then continue autonomous roadmap work.
