@@ -65,7 +65,7 @@ Status markers:
 
 - [x] TASK-026: Implement Calendar Plugin baseline
 - [x] TASK-027: Implement Habit and Heatmap plugins
-- [ ] TASK-028: Implement Stats and Chart plugins
+- [~] TASK-028: Implement Stats and Chart plugins
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 10:36 CST - TASK-028 started
+
+- Branch: `feat/task-028-stats-chart-plugins`.
+- Task: Implement Stats and Chart plugins.
+- Start point: `master` after TASK-027 merge validation commit `69684a8`.
+- Source docs read: `docs/implementation/task-index.md#task-028-implement-stats-and-chart-plugins`, `docs/product/05-built-in-plugins.md#20-stats-plugin-与-chart-plugin`, `docs/architecture/05-plugin-implementations.md#13-stats--chart--ml-插件架构`, `docs/development/01-data-roadmap-and-mvp.md#phase-8stats--chart-plugin`, and `docs/development/02-implementation-roadmap-and-constraints.md#phase-8stats--chart-plugins`.
+- Initial scope: built-in Stats Plugin and Chart Plugin baseline for aggregation algorithms and plugin-owned chart views, with supported data shapes for time by tag/page, estimate vs actual, habit completion, task switching, and unnoted sessions.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package/Rust/schema changes, broad cross-plugin query facade, persistent stats indexes, app-shell dashboard routing, ML predictions, AI insight generation, production charting libraries, sync, release packaging, and Core business behavior for stats/charts.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-028-stats-chart-plugins.md`.
 
 ### 2026-05-25 10:35 CST - TASK-027 merged
 

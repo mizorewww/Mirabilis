@@ -1,18 +1,30 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:35 CST.
+Last updated: 2026-05-25 10:36 CST.
 
 ## Current Task
 
-- Task: TASK-027 - Implement Habit and Heatmap plugins.
-- Branch: `master` after merge commit `2f03864`.
+- Task: TASK-028 - Implement Stats and Chart plugins.
+- Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 merged and merge-result gate passed; next task selection pending.
+- Current phase: TASK-028 started; pre-test guidance pending.
 
 ## Active Agents
 
-- None currently active.
+- None currently active. Next agents should provide pre-test planning/current-doc/API/security guidance for TASK-028.
+
+## Current TASK-028 State
+
+- TASK-028 follows TASK-025 and TASK-027 and owns the first Stats + Chart plugin slice:
+  - Stats Plugin can aggregate time by tag, time by page, estimate vs actual, habit completion, task switching, and unnoted sessions.
+  - Chart Plugin registers plugin-owned chart views for supported data shapes.
+  - Empty and loading states are handled.
+- Initial parent interpretation:
+  - Keep Stats/Chart business behavior in built-in plugins, not Core.
+  - Prefer explicit normalized DTOs and command/view registry primitives already used by Calendar and Heatmap.
+  - Keep native/Tauri/package/Rust/schema changes, persistent indexes, app-shell dashboard routing, ML/AI insight generation, sync, release packaging, and broad cross-plugin query facade out of scope unless agents identify an acceptance-critical dependency.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
 
 ## Current TASK-027 State
 
@@ -120,5 +132,5 @@ Last updated: 2026-05-25 10:35 CST.
 
 ## Next Actions
 
-1. Commit merge validation on `master` and push.
-2. Select and start the next unblocked roadmap task.
+1. Spawn pre-test guidance agents for TASK-028.
+2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
