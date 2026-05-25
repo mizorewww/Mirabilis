@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:24 CST.
+Last updated: 2026-05-25 09:47 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 09:24 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 P1 review fixes cleared; formal docs sync pending.
+- Current phase: TASK-026 formal docs sync completed; parent final gates/progress still pending.
 
 ## Active Agents
 
-- None currently active. Next agent should be `doc_writer` for formal TASK-026 docs sync.
+- None currently active. Parent should run final gates and progress handling next.
 
 ## Current TASK-026 State
 
@@ -34,6 +34,7 @@ Last updated: 2026-05-25 09:24 CST.
 - Banach (`test_writer`) added review-fix regression tests in `src/test/calendar-plugin-baseline.test.tsx` for cross-runtime command leakage and unmount clearing, non-enumerable required/optional/provenance/command fields, and overlapping day/week segments. Parent red validation matched the expected signal: focused Calendar tests had 6 failures / 7 passes. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --check` passed. Commit: `dd41b35`.
 - Bacon (`implementer`) fixed the review regressions in `src/plugins/calendar/plugin.ts`. It made known segment validation runtime-scoped through `register(ctx)`, rejected non-enumerable allowed DTO/command fields, and switched day/week filtering to UTC interval overlap. Parent validation passed: focused Calendar tests 13/13, adjacent plugin/API/architecture tests 91/91, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `3e5b9fb`.
 - Narrow post-fix review completed with Russell (`reviewer`), Poincare (`security_reviewer`), and Bohr (`test_quality_reviewer`). P0/P1 findings: none. Accepted residuals: P2 strict UTC/duration matching and stale detail clearing; P3 internal Map passed as view prop, broader DTO field hardening matrix, week-overlap placement assertions, and UI command rejection coverage.
+- Doc writer completed formal docs sync across product, architecture, development, implementation, testing, and agent-communication docs. Checks passed: `git diff --check`, targeted Calendar stale scans, and `bun run typecheck`. TASK-026 remains `[~]` in `docs/implementation/progress.md` for parent final gates and completion ledger.
 
 ## Completed Recent Task
 
@@ -174,8 +175,8 @@ Last updated: 2026-05-25 09:24 CST.
 
 ## Next Actions
 
-1. Spawn `doc_writer` for TASK-026 formal docs sync.
-2. Validate docs, then run final local gates.
+1. Run final local gates for TASK-026.
+2. Update progress/completion ledger only after parent final gates pass.
 
 ## Current TASK-021 State
 

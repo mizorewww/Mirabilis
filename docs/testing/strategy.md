@@ -357,7 +357,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-025 Time Segment and Note Guidance
 
-TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar/Stats/ML integration, native/Tauri/package/Rust changes, or schema-backed storage:
+TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar app-shell feed/routing, Stats/ML integration, native/Tauri/package/Rust changes, or schema-backed storage:
 
 - Registration coverage should assert built-in `timer` registers canonical commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, `timer.switch`, and `timer.add-note`; legacy underscore aliases should be rejected or absent.
 - Finalization coverage should assert `timer.stop`, active `timer.start`, and active `timer.switch` append `namespace: "timer"`, `type: "time_segment_created"` for the finalized timer, with `timer.stopped` before segment creation where applicable.
@@ -379,6 +379,32 @@ git diff --check
 ```
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Timer storage. TASK-025 is TypeScript plugin/runtime/slot UI behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface.
+
+## TASK-026 Calendar Plugin Baseline Guidance
+
+TASK-026 tests cover the built-in Calendar Plugin baseline without adding native/Tauri/package/Rust/schema changes or a broad cross-plugin read/query facade:
+
+- Registration coverage should assert built-in plugin id `calendar`, views `calendar.day` and `calendar.week`, command `calendar.open-time-segment`, and absence of `calendar.month`, `calendar.open_time_segment`, `calendar.create_manual_segment`, `calendar.create-manual-segment`, `calendar.edit_time_block`, and `calendar.edit-time-block`.
+- View input coverage should render only explicit normalized `{ kind: "calendar.time-segments" }` DTOs. Calendar must not read Timer-owned events directly through its plugin-facing event facade in this slice; integration-style tests may normalize public Timer `time_segment_created` events in the test harness before rendering Calendar.
+- DTO coverage should require camelCase segment fields `segmentId`, `pageId`, `pageTitle`, `startAt`, `endAt`, `durationSeconds`, `source: "timer"`, and provenance `{ eventPageId, namespace: "timer", sourcePluginId: "timer", type: "time_segment_created" }`. Optional `note` and `detail` are normalized projection text, not raw Markdown/HTML execution surfaces.
+- UI coverage should assert accessible `Calendar day` / `Calendar week` regions, native buttons, UTC time ranges, deterministic UTC date/week props or fake system time for current-date defaults, day/week ordering, out-of-range filtering, and interval-overlap rendering for segments that start before the selected day/week but carry into it.
+- Detail coverage should click a block, execute `calendar.open-time-segment({ segmentId, pageId })` through the command registry, and render an accessible `Segment detail` region with inert text.
+- Command and DTO hardening coverage should reject malformed, wrong-owner, wrong-namespace, wrong-type, missing, extra-field, accessor, symbol, prototype-carried, non-enumerable, blank-id, non-string-id, invalid-date, end-before-start, and non-positive/non-finite-duration inputs without mutating pages/events/metadata.
+- Runtime isolation coverage should assert command validity is scoped to the current Calendar runtime/view lifecycle and is cleared on unmount.
+- Security/static coverage should keep Calendar production code free of Timer internals, raw runtime/store/registry/pluginHost access, NativeBridge/Tauri APIs, markdown/HTML injection sinks, package/native/Tauri/Rust/schema diffs, and snake_case/manual segment commands.
+- Accepted residuals after TASK-026 review: strict UTC `Z`-only and duration-match validation, stale detail clearing after data/date/week changes, broader DTO hardening matrices, week-overlap placement assertions, and UI command rejection messaging remain future hardening.
+
+TASK-026 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx
+bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Calendar storage. TASK-026 is TypeScript plugin/view/command behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface.
 
 ## Merge Gate
 

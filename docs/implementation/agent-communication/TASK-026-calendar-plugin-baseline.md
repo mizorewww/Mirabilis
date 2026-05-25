@@ -201,3 +201,11 @@
 ## Current Next Action
 
 - Spawn `doc_writer` for TASK-026 formal docs sync, then validate docs and run final gates.
+
+## Doc Writer Outcome
+
+- Formal docs sync completed on branch `feat/task-026-calendar-plugin-baseline` without code, test, progress-completion, commit, push, or branch changes.
+- Updated formal docs to describe the delivered TASK-026 Calendar baseline: built-in plugin id `calendar`, views `calendar.day` and `calendar.week`, command `calendar.open-time-segment`, explicit normalized `{ kind: "calendar.time-segments" }` DTO input, Timer segment provenance, inert detail rendering, UTC deterministic test contract, interval-overlap carryover display, runtime-scoped command validation, and fail-closed DTO/command validation.
+- Clarified that Calendar does not read Timer-owned events directly through the plugin-facing event facade in this slice. Calendar consumes normalized DTOs supplied by a caller/view host; a later task may introduce a reviewed cross-plugin read/query facade.
+- Documented deferrals: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route mounting/navigation, drag/drop, broad cross-plugin event query/read facade, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC/duration hardening, and stale detail clearing.
+- Checks passed: `git diff --check`; stale scans for `calendar.month`, `calendar.open_time_segment`, `calendar.create_manual_segment`, `calendar.edit_time_block`, and Calendar-future wording; `bun run typecheck`.

@@ -309,7 +309,88 @@ TASK-025 implements the narrow event/page slice:
 - The original segment event remains immutable; timeline data derives the latest note page from note-link events.
 - `timer.page-timeline.segments` is the current page timeline contribution. It filters to current-page Timer-owned events and ignores malformed, wrong-owner, wrong-page, or unreadable note data.
 
-Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar/Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
+Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
+
+### 11.5 Calendar Plugin baseline
+
+TASK-026 adds the first built-in Calendar Plugin slice:
+
+```text
+src/plugins/calendar/
+  index.ts
+  plugin.ts
+```
+
+Calendar registration is intentionally small:
+
+```ts
+export const CalendarPlugin: AppPlugin = {
+  manifest: {
+    id: "calendar",
+    name: "Calendar Plugin",
+    version: "1.0.0"
+  },
+  register(ctx) {
+    ctx.views.register({
+      id: "calendar.day",
+      type: "calendar.day",
+      title: "Calendar day",
+      accepts: { kind: "calendar.time-segments" }
+    });
+    ctx.views.register({
+      id: "calendar.week",
+      type: "calendar.week",
+      title: "Calendar week",
+      accepts: { kind: "calendar.time-segments" }
+    });
+    ctx.commands.register({
+      id: "calendar.open-time-segment",
+      title: "Open time segment"
+    });
+  }
+};
+```
+
+Calendar views consume explicit normalized DTOs supplied by a caller or view host:
+
+```ts
+type CalendarTimeSegmentsData = {
+  kind: "calendar.time-segments";
+  segments: readonly CalendarTimeSegmentInput[];
+};
+
+type CalendarTimeSegmentInput = {
+  segmentId: string;
+  pageId: string;
+  pageTitle: string;
+  startAt: string;
+  endAt: string;
+  durationSeconds: number;
+  source: "timer";
+  provenance: {
+    eventPageId: string;
+    namespace: "timer";
+    sourcePluginId: "timer";
+    type: "time_segment_created";
+  };
+  note?: string;
+  detail?: string;
+};
+```
+
+This is not a direct Timer event read path. Calendar does not import Timer internals, raw runtime stores, PluginHost, NativeBridge, Tauri APIs, markdown renderers, or HTML sinks. It does not call the plugin-facing event facade to query Timer-owned events. A future cross-plugin query/read facade must be reviewed before Calendar can read Timer events directly.
+
+Current behavior:
+
+- `calendar.day` and `calendar.week` render accessible regions and native buttons.
+- Time ranges are displayed in UTC.
+- Date/week selection uses UTC date-only props; tests should pass explicit dates or set the clock when relying on the current UTC date default.
+- Segments are shown by interval overlap, so carryover segments that start before the selected day/week still render if they overlap the range.
+- Clicking a block executes `calendar.open-time-segment({ segmentId, pageId })` and renders inert read-only detail text.
+- DTO and command inputs fail closed for malformed, wrong-owner, extra-field, accessor, symbol, prototype-carried, and non-enumerable shapes.
+- Command validity is scoped to the current `register(ctx)` runtime and to currently mounted/visible segments; unmount clears visibility.
+
+Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route/navigation, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
 
 ---
 
