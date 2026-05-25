@@ -47,7 +47,7 @@
 
 ## Current Next Action
 
-- Delegate failing TASK-038 acceptance and boundary tests to `test_writer`.
+- Delegate production implementation to `implementer`.
 
 ## Pre-Test Guidance Outcomes
 
@@ -85,3 +85,28 @@ type ActiveRoute =
 - Interpret "plugin route groups" as filter-backed plugin groups only for TASK-038. Arbitrary registered plugin view routes remain deferred until explicit DTO projections are designed in later tasks.
 - Adopt Ramanujan's stricter DTO boundary over the current full-page test helper pattern: saved-filter route `ViewHost` props should pass safe page summaries such as `{ id, title }`, not full `MarkdownPage` objects.
 - Require red tests for user-visible route behavior, DTO-only filter props, Quick Capture Inbox trust semantics, forged metadata exclusion, missing/unavailable state redaction, keyboard activation, and static no-drift/no-private-import boundaries before production implementation.
+
+## Test Writer Outcome
+
+- Heisenberg (`test_writer`) added failing TASK-038 acceptance and boundary coverage in commit `87d483a`.
+- Changed files:
+  - `src/test/sidebar-page-filter-navigation.test.tsx`.
+- Coverage added:
+  - Home and recent page navigation through registered `markdown.page-editor` / `page.editor` via `ViewHost`;
+  - All Tasks, Today, and Inbox saved-filter route selection through user clicks;
+  - All Tasks includes todo and done task pages while excluding archived pages and forged metadata;
+  - Today uses deterministic local date semantics and shows only unfinished due/scheduled-today pages;
+  - Inbox uses public `quick-capture.save` semantics and ignores title-only Inbox pages;
+  - filter result views receive safe page-summary DTOs only;
+  - empty filters render `filter.empty_state` through `SlotHost` with minimal props;
+  - missing filter/view/unavailable plugin route states are generic, accessible, and redacted;
+  - Drawer keyboard activation uses `Tab` and `Enter`;
+  - static guards reject direct business-plugin private imports, raw Tauri/native imports, stale MUI/React APIs, and package/native/release drift.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` failed as expected with 1 failed file / 2 passed files and 7 failed / 22 passed tests because production still lacks recent page navigation, saved-filter rendering, and generic unavailable route states.
+  - `bun run typecheck` passed.
+  - `git diff --check` passed.
+  - `.only/.skip` scan on `src/test/sidebar-page-filter-navigation.test.tsx` found no matches.
+- Parent decision:
+  - accept `87d483a` as the red baseline;
+  - delegate production code to `implementer`, preserving the TASK-038 no-package/no-native/no-private-import/DTO-only constraints.

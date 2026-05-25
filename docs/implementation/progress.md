@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 05:42 CST - TASK-038 failing tests committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Test writer: Heisenberg added `src/test/sidebar-page-filter-navigation.test.tsx` in commit `87d483a`.
+- Coverage: Home and recent page navigation through registered `page.editor` / `ViewHost`; All Tasks, Today, and Inbox saved-filter routes through registered `page.list` / `task.page-list`; DTO-only filter result props; Quick Capture public Inbox trust semantics; `filter.empty_state` SlotHost minimal props; generic redacted missing/unavailable route states; Drawer keyboard activation with `Tab` + `Enter`; static no private plugin/native/import/deprecated API/package/native drift guards.
+- Parent red validation: `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` failed as expected with 1 failed file / 2 passed files and 7 failed / 22 passed tests because current production still renders non-Home placeholders, has no recent page route, has no saved-filter route rendering, and lacks the generic redacted missing/unavailable route state.
+- Parent validation: `bun run typecheck` passed; `git diff --check` passed; `.only/.skip` scan on the touched TASK-038 test file found no matches.
+- Next action: delegate production implementation to `implementer` with ownership of app-shell navigation/filter route code, keeping DTO-only filter props and no package/native/Tauri/Rust/IPC/capability/permission/release changes.
+
 ### 2026-05-26 05:33 CST - TASK-038 pre-test guidance complete
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
