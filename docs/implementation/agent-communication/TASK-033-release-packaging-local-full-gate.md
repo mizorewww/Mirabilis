@@ -258,3 +258,65 @@
 - All six agents are read-only and must not edit files, commit, merge, or push.
 - `release_checker` start was delayed because the agent thread limit was reached; parent will start it after a slot opens.
 - Parent next action: wait for review outcomes, start `release_checker` when possible, and fix any P0/P1 findings before merge.
+
+## Review Wave Outcomes
+
+- Confucius (`pr_explorer`) found no confirmed P0/P1 blockers. It mapped changed paths and risk surfaces, and flagged one scope hotspot: `tsconfig.json` adds `ES2021.String` globally only because the new tests use `replaceAll`.
+- Bernoulli (`reviewer`) found no P0/P1 correctness findings. It confirmed `check:full` ordering/flags, version sync, AppImage deferral, and native-surface guard behavior before/after merge.
+- Dalton (`deprecation_auditor`) found one P1:
+  - TASK-033 introduces and tests for deprecated Cargo `[package].authors`. Current Cargo docs mark `authors` as deprecated. It recommended removing `authors`, keeping non-placeholder `description` / `version`, and using current Tauri bundle publisher metadata only if needed later.
+- Aquinas (`security_reviewer`) found one P1:
+  - TASK-033 release docs under-document CSP scope. The app currently has `csp: null`; TASK-033 should explicitly state that CSP remains pre-existing/null and is not hardened by this release-gate slice, or require CSP hardening before broader release claims.
+- Gibbs (`docs_researcher`) found no P0/P1 current-guidance mismatch. It listed P2/P3 docs needs: add TASK-033 delivered/deferred scope to `docs/implementation/task-index.md`, final durable progress closeout later, clarify TASK-001/TASK-033 script wording, and use "`--ci` unattended mode" wording in `CHANGELOG.md`.
+- Galileo (`test_quality_reviewer`) found one P1:
+  - `src/test/release-packaging-full-gate.test.ts` checks ordering/flags but does not prove fail-fast `check:quick && tauri build` semantics. Semicolon or `|| tauri build` forms could pass while letting Tauri build run after quick checks fail.
+
+## Parent Decisions After Review Findings
+
+- P1 findings must be fixed before merge:
+  - deprecated Cargo authors usage in implementation/tests;
+  - missing fail-fast test coverage;
+  - CSP release-doc scope.
+- Address Confucius' `ES2021.String` scope hotspot if the test changes can remove `replaceAll` usage without weakening coverage.
+- Docs should also absorb Gibbs' P2/P3 sync items while Ohm is already editing release docs.
+- `release_checker` will be started only after these P1 fixes and validation are complete.
+
+## Review-Fix Handoffs
+
+- Singer (`test_writer`) started at 2026-05-25 21:36 CST to strengthen fail-fast release gate tests.
+- Ohm (`doc_writer`) started at 2026-05-25 21:36 CST to document CSP release scope.
+- Plato (`test_writer`) started at 2026-05-25 21:38 CST to remove deprecated Cargo authors expectations from tests, reject Cargo authors usage, adjust native-surface exact diff expectations, and cover fail-fast if still needed.
+- Constraints:
+  - test writers must edit tests only;
+  - doc writer must edit docs only;
+  - no commits, merges, or pushes by agents.
+- Parent next action: wait for review-fix agents, validate, then delegate implementation if tests require removing `authors` from `src-tauri/Cargo.toml`.
+
+## Review-Fix Outcomes
+
+- Singer (`test_writer`) fixed the fail-fast test-quality P1 in `src/test/release-packaging-full-gate.test.ts`.
+  - Added coverage requiring `check:full` to chain `check:quick` directly into Tauri build with `&&`.
+  - Added regression examples for semicolon, fallback, mixed fallback, and interposed-command forms.
+  - Removed `String.replaceAll` usage from test path normalization.
+- Plato (`test_writer`) fixed the Cargo authors test/deprecation P1 in tests.
+  - Release readiness no longer requires Cargo `authors`.
+  - Tests now reject deprecated Cargo `[package].authors`.
+  - `src/test/native-surface-guard.ts` now expects the reviewed Cargo diff to remove placeholder authors without adding a replacement authors field.
+  - Parent red validation before implementation showed the expected failure while `src-tauri/Cargo.toml` still had `authors = ["Mirabilis contributors"]`.
+- Godel (`implementer`) fixed implementation/config.
+  - Removed deprecated `authors` from `src-tauri/Cargo.toml`.
+  - Removed the temporary `ES2021.String` lib entry from `tsconfig.json` after test code no longer needed `String.replaceAll`.
+- Ohm (`doc_writer`) fixed the CSP documentation P1 and absorbed related docs sync.
+  - `CHANGELOG.md`, `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md` now state that TASK-033 leaves pre-existing `app.security.csp: null` unchanged.
+  - Docs state that public release, updater, or remote/web-content claims require future CSP hardening and security review.
+- Parent validation after fixes:
+  - `bun run test:frontend -- src/test/release-packaging-full-gate.test.ts src/test/app-shell-boundary.test.ts src/test/sync-plugin-skeleton.test.ts` passed with 3 files / 33 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Commits:
+  - `eefc687 Plato(test-fix)(Add release packaging and local full gate): cover release gate review findings`
+  - `2fdcd23 Godel(review-fix)(Add release packaging and local full gate): remove deprecated Cargo authors`
+  - `f8847cf Ohm(docs)(Add release packaging and local full gate): document CSP release scope`
+- Parent next action: commit this review-fix outcome record, then run `release_checker` and any narrow re-review needed before marking TASK-033 complete.
