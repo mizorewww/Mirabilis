@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:25 CST.
+Last updated: 2026-05-25 11:26 CST.
 
 ## Current Task
 
@@ -8,11 +8,15 @@ Last updated: 2026-05-25 11:25 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 P1 production fixes completed; focused re-review next.
+- Current phase: TASK-028 focused re-review running.
 
 ## Active Agents
 
-- No active agents. Next delegation is focused re-review of the TASK-028 P1 fixes.
+- Kepler (`reviewer`) is re-checking TASK-028 correctness P1 fixes.
+- Hypatia (`security_reviewer`) is re-checking Stats/Chart DTO trust-boundary hardening.
+- Descartes (`test_quality_reviewer`) is re-checking review-fix test coverage.
+- Euler (`docs_researcher`) is re-checking Chart accessibility/current-doc concerns.
+- Nietzsche (`deprecation_auditor`) is re-checking API/deprecation and stale-pattern risk.
 
 ## Current TASK-028 State
 
@@ -176,5 +180,5 @@ Last updated: 2026-05-25 11:25 CST.
 
 ## Next Actions
 
-1. Delegate focused re-review of the TASK-028 P1 fixes to reviewer/security/test-quality/current-doc agents.
+1. Wait for focused TASK-028 re-review agents.
 2. If no P0/P1 findings remain, delegate docs sync for stale formal Stats/Chart docs.

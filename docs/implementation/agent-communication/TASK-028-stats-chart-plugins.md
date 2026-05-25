@@ -213,5 +213,10 @@
 
 ## Current Next Action
 
-- Delegate focused re-review of the fixed P1 surfaces to reviewer, security, test-quality, and current-doc agents.
+- Focused re-review started at 2026-05-25 11:26 CST:
+  - Kepler (`reviewer`) for correctness regression review.
+  - Hypatia (`security_reviewer`) for trust-boundary hardening review.
+  - Descartes (`test_quality_reviewer`) for review-fix coverage review.
+  - Euler (`docs_researcher`) for Chart accessibility/current-doc review.
+  - Nietzsche (`deprecation_auditor`) for API/deprecation and stale-pattern review.
 - If no P0/P1 findings remain, delegate formal docs sync for stale Stats/Chart docs.
