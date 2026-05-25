@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 14:25 CST - TASK-030 merged
+
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Merge commit: `48732ff` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 35 frontend test files / 546 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-030 is complete on `master`; next autonomous task is TASK-031.
+
 ### 2026-05-25 14:21 CST - TASK-030 completed
 
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
