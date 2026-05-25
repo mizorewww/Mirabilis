@@ -577,3 +577,33 @@
   - document advisory-only command behavior, exact bounded caller-provided projections, Core/sibling boundary, inert accessible views, descriptors, test strategy, and residual/deferred items.
 - Constraints: do not edit source, tests, `docs/implementation/progress.md`, agent-communication files, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Chandrasekhar the 2nd, validate docs-only scope, and commit docs sync separately.
+
+## Docs Sync Outcome
+
+- Chandrasekhar the 2nd (`doc_writer`) completed the docs-only TASK-031 sync.
+- Changed docs:
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/06-view-slots.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/architecture/01-overview-and-monorepo.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/implementation/task-index.md`
+  - `docs/testing/strategy.md`
+- Delivered:
+  - canonical AI command ids and stale underscore "not aliases" guidance;
+  - provider id `openai`, default model guidance `gpt-5.5`, plugin-owned provider boundary, Responses-style request shape, strict supported schema subset, raw Responses normalization, fail-closed redaction, mocked provider/transport tests, and no live OpenAI/package/native/Tauri changes;
+  - current provider-settings state as AI-plugin-owned injectable settings plus inert `ai.provider-settings`;
+  - advisory-only command behavior, exact bounded caller-provided projections, Core/sibling boundary, inert accessible views, descriptors, test strategy, and residual/deferred items.
+- Parent validation:
+  - `git diff --check` passed.
+  - Docs-only changed-file guard passed.
+  - Disallowed-file guard for `src`, `src-tauri`, package/lock, `progress.md`, and agent-communication passed.
+  - Stale underscore AI id scan found only explicit "not aliases" guidance.
+- Docs commit: `6fa9536 Chandrasekhar(docs)(Implement AI Plugin provider abstraction): sync ai provider docs`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this docs outcome record, run the final branch gate, and mark TASK-031 complete if checks pass.
