@@ -10,6 +10,7 @@ import { MlPlugin } from "../plugins/ml";
 import { QuickCapturePlugin } from "../plugins/quick-capture";
 import { SearchPlugin } from "../plugins/search";
 import { StatsPlugin } from "../plugins/stats";
+import { SyncPlugin } from "../plugins/sync";
 import { TagPlugin } from "../plugins/tag";
 import { TaskPlugin } from "../plugins/task";
 import { TimerPlugin } from "../plugins/timer";
@@ -29,4 +30,5 @@ export const BUILT_IN_PLUGINS = Object.freeze([
   SearchPlugin,
   MlPlugin,
   AiPlugin,
+  SyncPlugin,
 ]) as readonly AppPlugin[];
