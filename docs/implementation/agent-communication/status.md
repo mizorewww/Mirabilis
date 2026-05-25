@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:09 CST.
+Last updated: 2026-05-25 10:10 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 10:09 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 failing acceptance tests committed; implementation handoff pending.
+- Current phase: TASK-027 implementation delegated.
 
 ## Active Agents
 
-- None currently active. Next agent should be `implementer` for minimum production code.
+- Halley (`implementer`) is active. It owns minimum production plugin/bootstrap changes for TASK-027 and must not edit tests, docs, progress, branch state, commits, or pushes.
 
 ## Current TASK-027 State
 
@@ -85,5 +85,5 @@ Last updated: 2026-05-25 10:09 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for the minimum production implementation that makes `src/test/habit-heatmap-plugins.test.tsx` pass.
+1. Wait for Halley (`implementer`) to report implementation results.
 2. Validate focused green checks, then commit implementation separately from the test commit.

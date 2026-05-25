@@ -121,4 +121,5 @@
 
 ## Current Next Action
 
-- Spawn `implementer` for minimum production code. The implementer owns production plugin/bootstrap changes only and must not edit tests, docs, progress, branch state, commits, or pushes.
+- Halley (`implementer`) started at 2026-05-25 10:10 CST for minimum production code. It owns production plugin/bootstrap changes only and must not edit tests, docs, progress, branch state, commits, or pushes.
+- Parent next action: wait for Halley, validate focused green checks, and commit implementation if acceptable.
