@@ -211,4 +211,7 @@
 
 - Final branch gate passed:
   - `bun run check:quick` passed with typecheck, lint, 32 frontend test files / 496 tests, Rust fmt, Rust clippy, and Rust tests.
-- Parent next action: commit TASK-027 progress completion, merge to `master`, and run merge-result validation.
+- Merge completed:
+  - TASK-027 merged to `master` in commit `2f03864`.
+  - Merge-result `bun run check:quick` passed with typecheck, lint, 32 frontend test files / 496 tests, Rust fmt, Rust clippy, and Rust tests.
+- Parent next action: commit merge validation on `master`, push, then continue to TASK-028.

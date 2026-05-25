@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 10:35 CST - TASK-027 merged
+
+- Branch: `feat/task-027-habit-heatmap-plugins`.
+- Merge commit: `2f03864` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 32 frontend test files / 496 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-027 is complete on `master`; next autonomous task is TASK-028.
+
 ### 2026-05-25 10:33 CST - TASK-027 completed
 
 - Branch: `feat/task-027-habit-heatmap-plugins`.
