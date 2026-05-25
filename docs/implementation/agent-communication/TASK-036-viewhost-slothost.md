@@ -43,4 +43,31 @@
 
 ## Current Next Action
 
-- Delegate current-doc, deprecation/API, and security guidance before failing tests.
+- Delegate failing tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Pasteur (`docs_researcher`) verified current official guidance:
+  - render registry components through JSX or `createElement`, not direct component function calls;
+  - use real class Error Boundaries for render failures because parent `try/catch` cannot catch child render errors;
+  - use Testing Library role/name queries and `userEvent.setup()` with awaited interactions;
+  - use MUI v9 path imports for state/layout primitives such as `Alert`, `CircularProgress`, `Skeleton`, `Box`, and `Stack`;
+  - avoid deprecated MUI patterns such as barrels, `@material-ui/*`, `GridLegacy`, `Hidden`, `components` / `componentsProps`, `createMuiTheme`, and `MuiThemeProvider`.
+- Copernicus (`deprecation_auditor`) found no P0 and identified P1 risks:
+  - plugin render-error isolation must use a real Error Boundary with `static getDerivedStateFromError`;
+  - existing direct-render helper tests must not become the generic host pattern;
+  - resolving by `viewType` must fail closed on zero or ambiguous matches unless explicitly disambiguated;
+  - `SlotHost` must trust `SlotRegistry.list({ slot })` ordering and isolate each contribution's `when` and render failures.
+- Singer (`security_reviewer`) defined security acceptance criteria:
+  - plugin-rendered views/slots must receive only narrow controlled props/data/callbacks;
+  - full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, DB/storage, filesystem/path, provider settings, secrets, and command mutation handles are P0 leaks;
+  - `when` receives only the same narrow controlled props as the component and only literal `true` renders;
+  - missing, malformed, wrong-kind, thrown, unavailable, and ambiguous view/slot states must fail closed with redacted UI;
+  - TASK-036 must not touch package, lockfile, Tauri, Rust, IPC, capabilities, permissions, schema, or release surfaces.
+- Bernoulli (`planner`) recommended the smallest safe implementation slice:
+  - create app-shell infrastructure under `src/shell/hosts/`;
+  - likely files: `ViewHost.tsx`, `SlotHost.tsx`, `PluginRenderBoundary.tsx`, and `index.ts`;
+  - do not put React rendering in Core;
+  - do not mount Home, Markdown editor, metadata/timeline, dialogs, Calendar/Reports, ML/AI, or route data in this task;
+  - use optional `isPluginAvailable(pluginId)` predicates for availability until later shell integration can derive active plugin records.
+- Parent decision: accept guidance. The test writer should add failing RTL tests and static guards before implementation.

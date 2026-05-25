@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 02:05 CST.
+Last updated: 2026-05-26 02:08 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-26 02:05 CST.
 - Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 started; pre-test guidance pending.
+- Current phase: TASK-036 pre-test guidance received; failing tests pending.
 
 ## Active Agents
 
-- None yet for TASK-036.
+- None yet. Pre-test guidance agents completed.
 
 ## Current TASK-036 State
 
@@ -32,6 +32,12 @@ Last updated: 2026-05-26 02:05 CST.
   - 11 `.codex/agents/*.toml` files parsed.
   - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
 - Parent decision: collect current React/Testing Library/deprecation/security guidance before delegating failing tests.
+- Pre-test guidance:
+  - Pasteur (`docs_researcher`) confirmed current React guidance: render registered components via JSX / `createElement`, not direct function calls; use real class Error Boundaries for render failures; use RTL role/name queries and `userEvent.setup()`; use MUI v9 path imports for Alert/Progress/Skeleton/Box/Stack state UI.
+  - Copernicus (`deprecation_auditor`) found no P0. P1 risks: plugin render failures must use real Error Boundaries, direct-render test helper patterns must not become generic host behavior, and `SlotHost` must trust registry ordering while isolating each contribution.
+  - Singer (`security_reviewer`) defined P0/P1 boundaries: no full runtime/native/DB/filesystem/secrets/registries/PluginHost/command mutation handles in plugin props; view type ambiguity, wrong-kind data, thrown renders, broader slot condition props, raw errors, and business-plugin private imports must fail closed.
+  - Bernoulli (`planner`) recommended the smallest safe slice: app-shell host modules under `src/shell/hosts/`, with `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and barrel export. Do not put React rendering in Core and do not mount Home/editor/routes yet.
+- Parent decision: accept guidance and delegate failing tests to `test_writer`.
 
 ## Received Review Notes
 
