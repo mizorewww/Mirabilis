@@ -37,6 +37,7 @@ import {
   importMarkdownToStructuredDocument,
   type FilterDefinition,
   type MarkdownPage,
+  type MetadataRecord,
   type MetadataOwnerReservation,
   type PluginHostRecord,
   type StructuredMarkdownDocument,
@@ -164,6 +165,12 @@ const savedFilterRouteLabelAliases = new Map([
   ["inbox", "Capture box"],
   ["reports", "Review charts"],
   ["today", "Current day"],
+]);
+const primaryRouteLabels = new Set([
+  "all tasks",
+  "home",
+  "inbox",
+  "reports",
 ]);
 const metadataValueTypes = new Set([
   "boolean",
@@ -427,8 +434,9 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     activeRoute,
     homePageId,
   );
-  const recentPages =
-    activeRoute.kind === "page" ? listRecentPages(runtimeSource, homePageId) : [];
+  const recentPages = activeRouteCanShowRecentPages(runtimeSource, activeRoute)
+    ? listRecentPages(runtimeSource, homePageId)
+    : [];
   const savedFilterRoutes = listSavedFilterRoutes(runtimeSource);
   const workspaceTitleId = "workspace-title";
   const selectPageRoute = (pageId: string, role: PageRouteRole) => {
@@ -946,6 +954,31 @@ function listRecentPages(
     .map(toRecentPageSummary);
 }
 
+function activeRouteCanShowRecentPages(
+  runtime: AppRuntime,
+  activeRoute: ActiveRoute,
+): boolean {
+  if (activeRoute.kind !== "filter") {
+    return true;
+  }
+
+  const filter = getRouteFilter(runtime, activeRoute.filterId);
+
+  if (filter === undefined || !filterSourceIsAvailable(runtime, filter)) {
+    return false;
+  }
+
+  if (!filterViewIsAvailable(runtime, filter)) {
+    return false;
+  }
+
+  const plugins = listPluginRecords(runtime);
+
+  return (
+    plugins !== undefined && filterQueryOwnersAreAvailable(filter, plugins)
+  );
+}
+
 function listSavedFilterRoutes(
   runtime: AppRuntime,
 ): Array<{
@@ -1022,9 +1055,18 @@ function executeRouteFilter(
   filter: FilterDefinition,
 ): FilterPageSummary[] | undefined {
   try {
+    const plugins = listPluginRecords(runtime);
+
+    if (
+      plugins === undefined ||
+      !filterQueryOwnersAreAvailable(filter, plugins)
+    ) {
+      return undefined;
+    }
+
     return executeFilterQuery({
-      metadata: runtime.metadata.list(),
-      metadataOwnerReservations: collectMetadataOwnerReservations(runtime),
+      metadata: listActivePluginMetadata(runtime, plugins),
+      metadataOwnerReservations: collectMetadataOwnerReservations(plugins),
       pages: runtime.pages.list({ includeArchived: true }),
       query: filter.query,
     }).map(toFilterPageSummary);
@@ -1048,7 +1090,7 @@ function toRecentPageAccessibleLabel(title: string): string {
     return title;
   }
 
-  return savedFilterRouteLabelAliases.has(normalizedTitle)
+  return primaryRouteLabels.has(normalizedTitle)
     ? `Recent page ${title}`
     : title;
 }
@@ -1067,9 +1109,15 @@ function filterSourceIsAvailable(
   runtime: AppRuntime,
   filter: FilterDefinition,
 ): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
   return (
     filter.sourcePluginId === undefined ||
-    isPluginActive(runtime, filter.sourcePluginId)
+    pluginRecordIsActive(plugins, filter.sourcePluginId)
   );
 }
 
@@ -1077,10 +1125,16 @@ function filterViewIsAvailable(
   runtime: AppRuntime,
   filter: FilterDefinition,
 ): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
   try {
     const views = runtime.registries.views
       .list({ type: filter.viewType })
-      .filter((view) => isPluginActive(runtime, view.pluginId));
+      .filter((view) => pluginRecordIsActive(plugins, view.pluginId));
 
     return views.length === 1;
   } catch {
@@ -1089,9 +1143,8 @@ function filterViewIsAvailable(
 }
 
 function collectMetadataOwnerReservations(
-  runtime: AppRuntime,
+  plugins: readonly PluginHostRecord[],
 ): MetadataOwnerReservation[] {
-  const plugins = runtime.pluginHost.listPlugins?.() ?? [];
   const reservations = new Map<string, string>();
 
   for (const plugin of plugins) {
@@ -1102,6 +1155,153 @@ function collectMetadataOwnerReservations(
     namespace,
     sourcePluginId,
   }));
+}
+
+function listActivePluginMetadata(
+  runtime: AppRuntime,
+  plugins: readonly PluginHostRecord[],
+): MetadataRecord[] {
+  const activePluginIds = new Set(
+    plugins.filter(pluginIsActive).map((plugin) => plugin.id),
+  );
+
+  return runtime.metadata
+    .list()
+    .filter((record) => activePluginIds.has(record.sourcePluginId));
+}
+
+function filterQueryOwnersAreAvailable(
+  filter: FilterDefinition,
+  plugins: readonly PluginHostRecord[],
+): boolean {
+  const namespaces = collectFilterQueryMetadataNamespaces(filter.query);
+
+  if (namespaces === undefined) {
+    return false;
+  }
+
+  const reservations = new Map<string, string>();
+
+  for (const plugin of plugins) {
+    addPluginMetadataOwnerReservations(reservations, plugin);
+  }
+
+  for (const namespace of namespaces) {
+    const sourcePluginId = reservations.get(namespace);
+
+    if (
+      sourcePluginId === undefined ||
+      !pluginRecordIsActive(plugins, sourcePluginId)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function collectFilterQueryMetadataNamespaces(
+  query: unknown,
+): Set<string> | undefined {
+  const namespaces = new Set<string>();
+  const activeQueries = new WeakSet<object>();
+
+  return collectFilterQueryMetadataNamespacesInto(query, namespaces, {
+    activeQueries,
+    depth: 0,
+  })
+    ? namespaces
+    : undefined;
+}
+
+function collectFilterQueryMetadataNamespacesInto(
+  query: unknown,
+  namespaces: Set<string>,
+  state: {
+    activeQueries: WeakSet<object>;
+    depth: number;
+  },
+): boolean {
+  if (!isRecord(query) || state.depth > 1_000) {
+    return false;
+  }
+
+  if (state.activeQueries.has(query)) {
+    return false;
+  }
+
+  state.activeQueries.add(query);
+
+  try {
+    const where = query.where;
+
+    if (!Array.isArray(where)) {
+      return false;
+    }
+
+    for (const condition of where) {
+      if (!collectFilterConditionMetadataNamespace(condition, namespaces)) {
+        return false;
+      }
+    }
+
+    return (
+      collectNestedFilterQueryMetadataNamespaces(query.and, namespaces, state) &&
+      collectNestedFilterQueryMetadataNamespaces(query.or, namespaces, state)
+    );
+  } finally {
+    state.activeQueries.delete(query);
+  }
+}
+
+function collectNestedFilterQueryMetadataNamespaces(
+  branches: unknown,
+  namespaces: Set<string>,
+  state: {
+    activeQueries: WeakSet<object>;
+    depth: number;
+  },
+): boolean {
+  if (branches === undefined) {
+    return true;
+  }
+
+  if (!Array.isArray(branches)) {
+    return false;
+  }
+
+  return branches.every((branch) =>
+    collectFilterQueryMetadataNamespacesInto(branch, namespaces, {
+      activeQueries: state.activeQueries,
+      depth: state.depth + 1,
+    }),
+  );
+}
+
+function collectFilterConditionMetadataNamespace(
+  condition: unknown,
+  namespaces: Set<string>,
+): boolean {
+  if (!isRecord(condition) || typeof condition.field !== "string") {
+    return false;
+  }
+
+  const segments = condition.field.split(".");
+
+  if (segments.length !== 3 || segments[0] !== "metadata") {
+    return false;
+  }
+
+  const namespace = segments[1];
+  const key = segments[2];
+
+  if (!isSafeMetadataSegment(namespace) || !isSafeMetadataSegment(key)) {
+    return false;
+  }
+
+  namespaces.add(namespace);
+
+  return true;
 }
 
 function addPluginMetadataOwnerReservations(
@@ -1398,19 +1598,43 @@ function createEmptyMarkdownDocument(): StructuredMarkdownDocument {
   };
 }
 
-function isPluginActive(runtime: AppRuntime, pluginId: string): boolean {
-  const plugins = runtime.pluginHost.listPlugins?.();
+function listPluginRecords(
+  runtime: AppRuntime,
+): readonly PluginHostRecord[] | undefined {
+  const { listPlugins } = runtime.pluginHost;
 
-  if (plugins === undefined) {
-    return true;
+  if (typeof listPlugins !== "function") {
+    return undefined;
   }
 
+  try {
+    return listPlugins.call(runtime.pluginHost);
+  } catch {
+    return undefined;
+  }
+}
+
+function isPluginActive(runtime: AppRuntime, pluginId: string): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
+  return pluginRecordIsActive(plugins, pluginId);
+}
+
+function pluginRecordIsActive(
+  plugins: readonly PluginHostRecord[],
+  pluginId: string,
+): boolean {
   return plugins.some(
-    (plugin) =>
-      plugin.id === pluginId &&
-      plugin.enabled === true &&
-      plugin.status === "active",
+    (plugin) => plugin.id === pluginId && pluginIsActive(plugin),
   );
+}
+
+function pluginIsActive(plugin: PluginHostRecord): boolean {
+  return plugin.enabled === true && plugin.status === "active";
 }
 
 export default App;
