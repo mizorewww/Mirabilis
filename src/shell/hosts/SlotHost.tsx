@@ -79,12 +79,14 @@ function SlotContributionHost({
   }
 
   const component = contribution.component as ComponentType<ContributionProps>;
+  const resetKey = createResetKey(contribution.id, controlledProps);
 
   return (
     <PluginRenderBoundary
       fallbackLabel="Slot contribution unavailable"
       fallbackText="Contribution unavailable"
-      resetKey={contribution.id}
+      key={resetKey}
+      resetKey={resetKey}
     >
       {createElement(component, controlledProps)}
     </PluginRenderBoundary>
@@ -136,17 +138,31 @@ function cloneControlledProps(
     return undefined;
   }
 
+  const keys = safeKeys(props);
+
+  if (keys === undefined) {
+    return undefined;
+  }
+
   const output: ContributionProps = {};
 
-  for (const key of Object.keys(props)) {
+  for (const key of keys) {
     if (isBlockedKey(key)) {
       continue;
     }
 
-    const descriptor = Object.getOwnPropertyDescriptor(props, key);
+    const descriptor = safeDescriptor(props, key);
 
     if (!isReadableDataDescriptor(descriptor)) {
       return undefined;
+    }
+
+    if (typeof descriptor.value === "function") {
+      if (isAllowedCallbackKey(key)) {
+        output[key] = descriptor.value;
+      }
+
+      continue;
     }
 
     const clonedValue = cloneControlledValue(descriptor.value);
@@ -170,7 +186,7 @@ function cloneControlledValueInner(
   seen: WeakSet<object>,
 ): unknown | undefined {
   if (typeof value === "function") {
-    return value;
+    return undefined;
   }
 
   if (value === null || typeof value === "string" || typeof value === "boolean") {
@@ -188,22 +204,39 @@ function cloneControlledValueInner(
   seen.add(value);
 
   if (Array.isArray(value)) {
-    const output: unknown[] = [];
+    const length = safeArrayLength(value);
+    const keys = safeKeys(value);
 
-    for (let index = 0; index < value.length; index += 1) {
-      if (!Object.prototype.hasOwnProperty.call(value, index)) {
+    if (length === undefined || keys === undefined) {
+      seen.delete(value);
+
+      return undefined;
+    }
+
+    for (const key of keys) {
+      if (!isArrayIndexKey(key, length)) {
+        seen.delete(value);
+
         return undefined;
       }
+    }
 
-      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    const output: unknown[] = [];
+
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = safeDescriptor(value, String(index));
 
       if (!isReadableDataDescriptor(descriptor)) {
+        seen.delete(value);
+
         return undefined;
       }
 
       const clonedValue = cloneControlledValueInner(descriptor.value, seen);
 
       if (clonedValue === undefined) {
+        seen.delete(value);
+
         return undefined;
       }
 
@@ -216,19 +249,31 @@ function cloneControlledValueInner(
   }
 
   if (!isPlainRecord(value)) {
+    seen.delete(value);
+
+    return undefined;
+  }
+
+  const keys = safeKeys(value);
+
+  if (keys === undefined) {
+    seen.delete(value);
+
     return undefined;
   }
 
   const output: ContributionProps = {};
 
-  for (const key of Object.keys(value)) {
+  for (const key of keys) {
     if (isBlockedKey(key)) {
       continue;
     }
 
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    const descriptor = safeDescriptor(value, key);
 
     if (!isReadableDataDescriptor(descriptor)) {
+      seen.delete(value);
+
       return undefined;
     }
 
@@ -260,13 +305,152 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
     return false;
   }
 
-  const prototype = Object.getPrototypeOf(value);
+  const prototype = safePrototype(value);
 
   return prototype === Object.prototype || prototype === null;
 }
 
+function createResetKey(ownerId: string, value: unknown): string {
+  let hash = 2_166_136_261;
+  const seen = new WeakSet<object>();
+
+  function write(text: string): void {
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16_777_619);
+    }
+  }
+
+  function visit(input: unknown): void {
+    if (input === null) {
+      write("null");
+      return;
+    }
+
+    switch (typeof input) {
+      case "string":
+        write(`str:${input}`);
+        return;
+      case "number":
+        write(Number.isFinite(input) ? `num:${input}` : "num:invalid");
+        return;
+      case "boolean":
+        write(`bool:${input ? "1" : "0"}`);
+        return;
+      case "function":
+        write("fn");
+        return;
+      case "object":
+        break;
+      default:
+        write("unknown");
+        return;
+    }
+
+    if (seen.has(input)) {
+      write("cycle");
+      return;
+    }
+
+    seen.add(input);
+
+    if (Array.isArray(input)) {
+      write("array[");
+
+      for (const item of input) {
+        visit(item);
+        write(",");
+      }
+
+      write("]");
+      seen.delete(input);
+      return;
+    }
+
+    const keys = safeKeys(input)?.sort();
+
+    if (keys === undefined) {
+      write("invalid");
+      seen.delete(input);
+      return;
+    }
+
+    write("object{");
+
+    for (const key of keys) {
+      const descriptor = safeDescriptor(input, key);
+
+      if (!isReadableDataDescriptor(descriptor)) {
+        write(`${key}:invalid,`);
+        continue;
+      }
+
+      write(`${key}:`);
+      visit(descriptor.value);
+      write(",");
+    }
+
+    write("}");
+    seen.delete(input);
+  }
+
+  visit(value);
+
+  return `${ownerId}:${(hash >>> 0).toString(36)}`;
+}
+
+function safePrototype(value: object): object | null | undefined {
+  try {
+    return Object.getPrototypeOf(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function safeKeys(value: object): string[] | undefined {
+  try {
+    return Object.keys(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function safeDescriptor(
+  value: object,
+  key: string,
+): PropertyDescriptor | undefined {
+  try {
+    return Object.getOwnPropertyDescriptor(value, key);
+  } catch {
+    return undefined;
+  }
+}
+
+function safeArrayLength(value: unknown[]): number | undefined {
+  try {
+    return value.length;
+  } catch {
+    return undefined;
+  }
+}
+
+function isArrayIndexKey(key: string, length: number): boolean {
+  const index = Number(key);
+
+  return (
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index < length &&
+    String(index) === key
+  );
+}
+
+function isAllowedCallbackKey(key: string): boolean {
+  return new Set(["onSelect", "onApply", "onIncrement"]).has(key);
+}
+
 function isBlockedKey(key: string): boolean {
-  const normalized = key.toLowerCase();
+  const normalized = key.toLowerCase().replace(/[-_]/gu, "");
   const blockedKeys = new Set([
     "runtime",
     "stores",
@@ -284,12 +468,17 @@ function isBlockedKey(key: string): boolean {
     "fs",
     "path",
     "provider" + "settings",
+    "openai" + "api" + "key",
+    "auth" + "to" + "ken",
+    "access" + "to" + "ken",
     "api" + "key",
     "se" + "cret",
     "se" + "crets",
     "se" + "cret" + "to" + "ken",
     "to" + "ken",
     "pass" + "word",
+    "commands",
+    "execute",
     "commandregistry",
     "register",
     "unregister",
