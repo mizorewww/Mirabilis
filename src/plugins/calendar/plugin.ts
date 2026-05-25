@@ -59,6 +59,8 @@ type CalendarOpenSegmentInput = {
   segmentId: string;
 };
 
+type KnownSegmentRegistry = Map<string, number>;
+
 const calendarPluginId = "calendar";
 const calendarDayViewId = "calendar.day";
 const calendarWeekViewId = "calendar.week";
@@ -96,7 +98,6 @@ const dayNames = [
   "Friday",
   "Saturday",
 ] as const;
-const knownSegmentCounts = new Map<string, number>();
 
 export const CalendarPlugin: AppPlugin = {
   manifest: {
@@ -107,11 +108,27 @@ export const CalendarPlugin: AppPlugin = {
     minAppVersion: "0.1.0",
   },
   register(ctx) {
+    const knownSegments: KnownSegmentRegistry = new Map();
+    const CalendarDayViewForRuntime = (
+      props: CalendarViewProps,
+    ): ReactElement =>
+      createElement(CalendarDayView, {
+        ...props,
+        knownSegments,
+      });
+    const CalendarWeekViewForRuntime = (
+      props: CalendarViewProps,
+    ): ReactElement =>
+      createElement(CalendarWeekView, {
+        ...props,
+        knownSegments,
+      });
+
     ctx.views.register<CalendarViewProps>({
       id: calendarDayViewId,
       type: calendarDayViewId,
       title: "Calendar day",
-      component: CalendarDayView,
+      component: CalendarDayViewForRuntime,
       accepts: {
         kind: timeSegmentsKind,
       },
@@ -121,7 +138,7 @@ export const CalendarPlugin: AppPlugin = {
       id: calendarWeekViewId,
       type: calendarWeekViewId,
       title: "Calendar week",
-      component: CalendarWeekView,
+      component: CalendarWeekViewForRuntime,
       accepts: {
         kind: timeSegmentsKind,
       },
@@ -130,28 +147,36 @@ export const CalendarPlugin: AppPlugin = {
     ctx.commands.register<unknown, CalendarOpenSegmentInput>({
       id: openSegmentCommandId,
       title: "Open time segment",
-      handler: openTimeSegment,
+      handler: (input) => openTimeSegment(input, knownSegments),
     });
   },
+};
+
+type CalendarInternalViewProps = CalendarViewProps & {
+  knownSegments: KnownSegmentRegistry;
 };
 
 function CalendarDayView({
   commands,
   data,
   date,
+  knownSegments,
   timeZone,
-}: CalendarViewProps): ReactElement {
+}: CalendarInternalViewProps): ReactElement {
   const [detail, setDetail] = useState<CalendarTimeSegment | null>(null);
   const segments = useCalendarSegments(data, timeZone);
   const selectedDay = parseUtcDateOnly(date ?? currentUtcDateOnly());
+  const dayEndMs = selectedDay === null ? null : selectedDay.ms + dayMs;
   const visibleSegments =
-    selectedDay === null
+    selectedDay === null || dayEndMs === null
       ? []
       : segments
-          .filter((segment) => utcDateOnly(segment.startMs) === selectedDay.key)
+          .filter((segment) =>
+            overlapsUtcRange(segment, selectedDay.ms, dayEndMs),
+          )
           .sort(compareCalendarSegments);
 
-  useKnownSegments(visibleSegments);
+  useKnownSegments(visibleSegments, knownSegments);
 
   return createElement(
     "section",
@@ -169,9 +194,10 @@ function CalendarDayView({
 function CalendarWeekView({
   commands,
   data,
+  knownSegments,
   timeZone,
   weekStart,
-}: CalendarViewProps): ReactElement {
+}: CalendarInternalViewProps): ReactElement {
   const [detail, setDetail] = useState<CalendarTimeSegment | null>(null);
   const segments = useCalendarSegments(data, timeZone);
   const selectedWeekStart = parseUtcDateOnly(
@@ -184,14 +210,15 @@ function CalendarWeekView({
       ? []
       : segments
           .filter(
-            (segment) =>
-              segment.startMs >= selectedWeekStart.ms &&
-              segment.startMs < weekEndMs,
+            (segment) => overlapsUtcRange(segment, selectedWeekStart.ms, weekEndMs),
           )
           .sort(compareCalendarSegments);
-  const groupedSegments = groupSegmentsByDay(visibleSegments);
+  const groupedSegments = groupSegmentsByDay(
+    visibleSegments,
+    selectedWeekStart?.ms,
+  );
 
-  useKnownSegments(visibleSegments);
+  useKnownSegments(visibleSegments, knownSegments);
 
   return createElement(
     "section",
@@ -215,10 +242,13 @@ function CalendarWeekView({
   );
 }
 
-function openTimeSegment(input: unknown): CalendarOpenSegmentInput {
+function openTimeSegment(
+  input: unknown,
+  knownSegments: KnownSegmentRegistry,
+): CalendarOpenSegmentInput {
   const payload = readOpenSegmentInput(input);
 
-  if (!knownSegmentCounts.has(segmentKey(payload))) {
+  if (!knownSegments.has(segmentKey(payload))) {
     throw new Error("Calendar command requires a known time segment");
   }
 
@@ -242,26 +272,29 @@ function useCalendarSegments(
   }, [data, timeZone]);
 }
 
-function useKnownSegments(segments: readonly CalendarTimeSegment[]): void {
+function useKnownSegments(
+  segments: readonly CalendarTimeSegment[],
+  knownSegments: KnownSegmentRegistry,
+): void {
   useEffect(() => {
     const keys = segments.map((segment) => segmentKey(segment));
 
     for (const key of keys) {
-      knownSegmentCounts.set(key, (knownSegmentCounts.get(key) ?? 0) + 1);
+      knownSegments.set(key, (knownSegments.get(key) ?? 0) + 1);
     }
 
     return () => {
       for (const key of keys) {
-        const count = knownSegmentCounts.get(key);
+        const count = knownSegments.get(key);
 
         if (count === undefined || count <= 1) {
-          knownSegmentCounts.delete(key);
+          knownSegments.delete(key);
         } else {
-          knownSegmentCounts.set(key, count - 1);
+          knownSegments.set(key, count - 1);
         }
       }
     };
-  }, [segments]);
+  }, [knownSegments, segments]);
 }
 
 function renderSegmentButton(
@@ -289,30 +322,11 @@ async function openSegmentFromView(
   commands: CalendarViewProps["commands"],
   setDetail: (segment: CalendarTimeSegment) => void,
 ): Promise<void> {
-  const key = segmentKey(segment);
-  const previousCount = knownSegmentCounts.get(key) ?? 0;
-
-  knownSegmentCounts.set(key, previousCount + 1);
-
-  try {
-    await commands.execute(openSegmentCommandId, {
-      pageId: segment.pageId,
-      segmentId: segment.segmentId,
-    });
-    setDetail(segment);
-  } finally {
-    const count = knownSegmentCounts.get(key);
-
-    if (count === undefined || count <= previousCount + 1) {
-      if (previousCount === 0) {
-        knownSegmentCounts.delete(key);
-      } else {
-        knownSegmentCounts.set(key, previousCount);
-      }
-    } else {
-      knownSegmentCounts.set(key, count - 1);
-    }
-  }
+  await commands.execute(openSegmentCommandId, {
+    pageId: segment.pageId,
+    segmentId: segment.segmentId,
+  });
+  setDetail(segment);
 }
 
 function renderSegmentDetail(segment: CalendarTimeSegment): ReactElement {
@@ -482,7 +496,11 @@ function readExactRecordWithOptional(
 
     const descriptor = Object.getOwnPropertyDescriptor(input, name);
 
-    if (descriptor === undefined || !("value" in descriptor)) {
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !("value" in descriptor)
+    ) {
       return null;
     }
   }
@@ -566,6 +584,7 @@ function formatUtcTime(ms: number): string {
 
 function groupSegmentsByDay(
   segments: readonly CalendarTimeSegment[],
+  rangeStartMs?: number,
 ): Array<{
   dayKey: string;
   dayMs: number;
@@ -577,7 +596,11 @@ function groupSegmentsByDay(
   >();
 
   for (const segment of segments) {
-    const dayKey = utcDateOnly(segment.startMs);
+    const dayKey = utcDateOnly(
+      rangeStartMs === undefined
+        ? segment.startMs
+        : Math.max(segment.startMs, rangeStartMs),
+    );
     const existing = groups.get(dayKey);
 
     if (existing === undefined) {
@@ -612,6 +635,14 @@ function compareCalendarSegments(
     left.pageTitle.localeCompare(right.pageTitle) ||
     left.segmentId.localeCompare(right.segmentId)
   );
+}
+
+function overlapsUtcRange(
+  segment: CalendarTimeSegment,
+  rangeStartMs: number,
+  rangeEndMs: number,
+): boolean {
+  return segment.startMs < rangeEndMs && segment.endMs > rangeStartMs;
 }
 
 function segmentKey(input: { pageId: string; segmentId: string }): string {
