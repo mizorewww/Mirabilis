@@ -182,6 +182,50 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     expect(latestCapturedPageId(capturedEditorProps)).toBe(home.id);
   });
 
+  it("keeps Recent pages visible on filter routes and opens a recent page through the registered editor", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page", "project-roadmap-page"],
+    });
+    const capturedEditorProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, [
+      { blockId: "home-body", text: "Home route body" },
+    ]);
+    const project = createRuntimePage(runtime, "Project Roadmap", [
+      { blockId: "project-roadmap-body", text: "Project Roadmap body" },
+    ]);
+
+    replaceRegisteredPageEditor(
+      runtime,
+      createBridgeLoadingPageEditor(capturedEditorProps),
+    );
+    renderReadyApp(runtime);
+
+    await user.click(await findNavigationButton(/^today\b/i));
+
+    const navigation = await screen.findByRole("navigation", {
+      name: /^Workspace$/i,
+    });
+    const recentPages = await within(navigation).findByRole("list", {
+      name: /^Recent pages$/i,
+    });
+    const projectRoute = await within(recentPages).findByRole("button", {
+      name: /Project Roadmap/i,
+    });
+
+    expect(within(navigation).getByText("Recent pages")).toBeVisible();
+    expect(projectRoute).toBeVisible();
+
+    await user.click(projectRoute);
+
+    expect(projectRoute).toHaveAttribute("aria-current", "page");
+    expect(await screen.findByText("Project Roadmap body")).toBeVisible();
+    expect(latestCapturedPageId(capturedEditorProps)).toBe(project.id);
+  });
+
   it("routes All Tasks through the saved filter and renders safe page-summary DTOs through task.page-list", async () => {
     const runtime = await createRuntime({
       metadataIds: createMetadataIds(18),
@@ -593,6 +637,112 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     expect(document.body.textContent ?? "").not.toContain(forgedPage.title);
     expect(document.body.textContent ?? "").not.toContain(
       "FORGED_INACTIVE_TASK_BODY",
+    );
+  });
+
+  it("does not let active saved filters expose legacy metadata owned by an inactive plugin", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(1),
+      pageIds: ["home-page", "legacy-task-page"],
+    });
+    const capturedPageListProps: CapturedProps[] = [];
+    const capturedEmptyStateProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const legacyTaskPage = createRuntimePage(runtime, "Dormant Task Secret", [
+      {
+        blockId: "legacy-task-body",
+        text: "LEGACY_TASK_BODY_TOKEN PRIVATE_PAGE_BODY_TOKEN",
+      },
+    ]);
+
+    runtime.metadata.set({
+      pageId: legacyTaskPage.id,
+      namespace: "task",
+      key: "enabled",
+      value: true,
+      valueType: "boolean",
+      sourcePluginId: taskPluginId,
+    });
+    await deactivatePlugin(runtime, taskPluginId);
+    registerPageListView(runtime, {
+      capturedProps: capturedPageListProps,
+      pluginId: tagPluginId,
+      viewId: "tag.legacy-task-filter-page-list",
+    });
+    registerFilterEmptyStateSlot(runtime, {
+      capturedProps: capturedEmptyStateProps,
+      pluginId: tagPluginId,
+      slotId: "tag.legacy-task-filter-empty-state",
+    });
+    runtime.filters.save({
+      id: "tag.filter.legacy-task-enabled",
+      name: "Inactive Owner Metadata",
+      query: {
+        where: [{ field: "metadata.task.enabled", op: "eq", value: true }],
+      },
+      sourcePluginId: tagPluginId,
+      viewType: pageListViewType,
+    });
+    renderReadyApp(runtime);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+
+    await user.click(
+      await within(savedFilters).findByRole("button", {
+        name: /Inactive Owner Metadata/i,
+      }),
+    );
+
+    const state = await findUnavailableOrFilterEmptyState();
+
+    expect(state).toBeVisible();
+    expect(screen.queryByRole("list", { name: /task pages/i })).not.toBeInTheDocument();
+    expect(capturedPageListProps).toStrictEqual([]);
+    expect(document.body.textContent ?? "").not.toContain(legacyTaskPage.id);
+    expect(document.body.textContent ?? "").not.toContain(legacyTaskPage.title);
+    expect(document.body.textContent ?? "").not.toContain("LEGACY_TASK_BODY_TOKEN");
+  });
+
+  it("fails closed when plugin ownership data is unavailable for filter source and view checks", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(2),
+      pageIds: ["home-page", "ownership-unavailable-task-page"],
+    });
+    const capturedPageListProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const taskPage = createRuntimePage(runtime, "Ownership Data Task", [
+      {
+        blockId: "ownership-unavailable-body",
+        text: "OWNERSHIP_UNAVAILABLE_BODY_TOKEN PRIVATE_PAGE_BODY_TOKEN",
+      },
+    ]);
+
+    setTaskMetadata(runtime, taskPage, { status: "todo" });
+    replaceTaskPageListView(runtime, capturedPageListProps);
+    removePluginOwnershipData(runtime);
+    renderReadyApp(runtime);
+
+    await user.click(await findNavigationButton(/all tasks/i));
+
+    const state = await findGenericUnavailableState();
+
+    expect(state).toBeVisible();
+    expect(screen.queryByRole("list", { name: /task pages/i })).not.toBeInTheDocument();
+    expect(capturedPageListProps).toStrictEqual([]);
+    expect(document.body.textContent ?? "").not.toContain(taskPage.id);
+    expect(document.body.textContent ?? "").not.toContain(taskPage.title);
+    expect(document.body.textContent ?? "").not.toContain(
+      "OWNERSHIP_UNAVAILABLE_BODY_TOKEN",
     );
   });
 
@@ -1108,6 +1258,17 @@ async function deactivatePlugin(
   }
 
   await host.deactivate(pluginId);
+}
+
+function removePluginOwnershipData(runtime: AppRuntime): void {
+  const host = runtime.pluginHost as AppRuntime["pluginHost"] & {
+    listPlugins?: AppRuntime["pluginHost"]["listPlugins"];
+  };
+
+  Object.defineProperty(host, "listPlugins", {
+    configurable: true,
+    value: undefined,
+  });
 }
 
 function latestCapturedPageId(capturedProps: readonly CapturedProps[]): string {
