@@ -103,7 +103,8 @@ Add newest entries at the top.
 - Initial scope: make the ready app create/select a session Home Markdown Page when no route is active; render the registered `page.editor` view through `ViewHost`; preserve typing, toolbar snippets, save, task-title open, and checkbox toggle behavior for the selected session page; keep placeholder routes outside Home.
 - Initial constraints: parent remains orchestration-only; write failing user-event tests first; do not directly import `MarkdownPageEditor` into App Shell; do not add metadata/timeline/sidebar/search/capture/calendar/report/ML/AI/settings/sync route scope; do not change package/lock/Tauri/Rust/IPC/capability/permission/release surfaces.
 - Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with the known non-blocking unrestricted sandbox/network notes and the known `TERM=dumb` terminal failure.
-- Next action: delegate current-doc/deprecation/security/planning guidance before test writing.
+- Pre-test guidance: planner/current-doc/security/deprecation agents agree TASK-037 needs a narrow Home workspace adapter rather than relaxing `ViewHost`; public `useRuntime()` must remain `{ app }`; App Shell must not directly import Markdown editor/plugin internals; editor commands and page facade must be exact, owner-scoped, current-page bounded wrappers; React async work needs stale completion guards; MUI additions must use v9 path imports and avoid deprecated props.
+- Next action: delegate failing Home workspace editor tests to `test_writer`.
 
 ### 2026-05-26 03:43 CST - TASK-036 merged
 

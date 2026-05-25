@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 03:45 CST.
+Last updated: 2026-05-26 03:53 CST.
 
 ## Current Task
 
@@ -8,12 +8,31 @@ Last updated: 2026-05-26 03:45 CST.
 - Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 started; pre-test guidance pending.
+- Current phase: TASK-037 pre-test guidance complete; failing tests pending.
 
 ## Active Agents
 
-- None. TASK-037 guidance agents not yet started.
-- Pending: delegate current-doc, deprecation/API, security, and planning guidance.
+- None. TASK-037 guidance agents completed.
+- Pending: delegate failing Home workspace editor tests to `test_writer`.
+
+## Current TASK-037 State
+
+- TASK-037 starts from `master` after TASK-036 merge-validation commit `bf87242`.
+- Branch: `feat/task-037-home-workspace-editor`.
+- Initial scope:
+  - replace only the Home placeholder with a real session Markdown workspace;
+  - create/select a single session Home Markdown Page when no page route is active;
+  - render registered `page.editor` through `ViewHost`;
+  - preserve typing, toolbar snippets, save, task-title open, and checkbox toggle flows;
+  - keep non-Home routes and top-bar tools as placeholders.
+- Pre-test guidance:
+  - planner/current-doc/security/deprecation agents agree TASK-037 needs a narrow trusted adapter rather than relaxing TASK-036 host boundaries;
+  - public `useRuntime()` remains the frozen `{ app }` facade;
+  - App Shell must not import `MarkdownPageEditor` or plugin private components;
+  - editor command/page facades must be exact allowlist, owner-scoped, current-page bounded wrappers;
+  - stale async insert/save/open/toggle completions must be ignored;
+  - no package/native/Tauri/Rust/IPC/capability/permission/release surface changes.
+- Parent decision: ask `test_writer` for failing RTL/user-event tests and static guards before implementation.
 
 ## Current TASK-036 State
 

@@ -46,4 +46,35 @@
 
 ## Current Next Action
 
-- Delegate current-doc, deprecation/API, security, and planning guidance before asking `test_writer` for failing tests.
+- Ask `test_writer` to add failing user-event and boundary tests for the Home workspace editor slice.
+
+## Pre-Test Guidance Outcomes
+
+- Aristotle (`planner`) recommended the smallest safe TASK-037 slice:
+  - only replace the Home route placeholder with a session Home Markdown workspace;
+  - create/select exactly one session-scoped Home Markdown Page when no active page route exists;
+  - render the registered `page.editor` view through `ViewHost`, with `viewId="markdown.page-editor"` and `viewType="page.editor"`;
+  - keep non-Home routes as placeholders;
+  - keep page state and editor commands in one in-memory runtime source for this task;
+  - defer durable Home identity, saved filters, metadata/timeline slots, rich editor behavior, filesystem import/export, persistent/native Home creation, and all dialogs/routes outside Home.
+- Halley (`docs_researcher`) confirmed current official guidance:
+  - dynamic registered components should be rendered via `ViewHost` / `createElement`, not direct function calls;
+  - tests should use React Testing Library role/name queries and `userEvent.setup()` with awaited typing/clicking;
+  - async UI assertions should use awaited `findBy*` or `waitFor` where needed;
+  - React async load/save/open/toggle paths need cleanup/generation guards for stale completions;
+  - MUI additions should use v9 path imports and avoid deprecated props/patterns.
+- Sagan (`security_reviewer`) defined P0/P1 boundaries:
+  - do not broaden public `useRuntime()` beyond frozen `{ app }`;
+  - do not import `MarkdownPageEditor` or any business plugin private component into App Shell;
+  - do not loosen generic `ViewHost` function/key filtering for editor props;
+  - build a shell-internal trusted adapter with exact command allowlists, likely `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`;
+  - expose only current-page bounded `pageFacade.load/save`, not NativeBridge, DB, raw runtime markdown pages, filesystem/path, or full page dumps;
+  - all async insert/save/open/toggle paths must ignore stale page/generation completions and redact raw errors.
+- Mendel (`deprecation_auditor`) found no P0 but identified P1 design risks:
+  - current `ViewHost` and `MarkdownPageEditor` prop contracts do not directly match, so TASK-037 needs a narrow adapter or plugin view compatibility path;
+  - App Shell currently cannot access full runtime through public `useRuntime()`, and should not expand that public facade;
+  - MUI v9 additions must avoid old `componentsProps`, `InputProps`, `PaperProps`, `TransitionComponent`, `GridLegacy`, `Hidden`, `makeStyles`, and similar deprecated APIs.
+- Parent decision:
+  - accept the adapter-first direction;
+  - do not ask test writer to relax TASK-036 host boundaries;
+  - require failing tests for Home workspace rendering, no direct editor import, no raw runtime/facade leaks, real user-event editing flows, stale async guards, and no package/native drift before implementation.
