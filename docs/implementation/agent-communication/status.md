@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 05:25 CST.
+Last updated: 2026-05-26 05:33 CST.
 
 ## Current Task
 
@@ -8,13 +8,13 @@ Last updated: 2026-05-26 05:25 CST.
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-038 started; pre-test planning/current-doc/security/deprecation guidance pending.
+- Current phase: TASK-038 pre-test guidance complete; red acceptance tests are next.
 
 ## Active Agents
 
-- None yet for TASK-038.
-- Completed stale prior agents Laplace and Epicurus were closed before starting TASK-038.
-- Pending: spawn planner, docs_researcher, deprecation_auditor, and security_reviewer for TASK-038 pre-test guidance.
+- None currently active.
+- Kierkegaard (`planner`), Anscombe (`docs_researcher`), Ramanujan (`security_reviewer`), and Mill (`deprecation_auditor`) completed TASK-038 pre-test guidance and were closed.
+- Pending: spawn `test_writer` for the failing TASK-038 acceptance and boundary suite.
 
 ## Current TASK-038 State
 
@@ -35,6 +35,15 @@ Last updated: 2026-05-26 05:25 CST.
   - 11 `.codex/agents/*.toml` files parsed.
   - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
 - Parent decision: collect guidance from planner/current-doc/security/deprecation agents before delegating red tests.
+- Pre-test guidance outcome:
+  - Kierkegaard (`planner`) recommended one focused TASK-038 slice: real Drawer navigation for Home, Inbox, All Tasks, Today, session recent pages, and filter-backed plugin groups only; page routes render the editor through `ViewHost`; saved-filter routes execute `executeFilterQuery`, render registered `viewType` through `ViewHost`, and use `SlotHost` for `filter.empty_state`.
+  - Anscombe (`docs_researcher`) verified official MUI v9, React 19, Testing Library/user-event, Vitest, jsdom, and W3C `aria-current` guidance. Recommendations: MUI path imports only, `selected` for styling plus `aria-current="page"` for active route semantics, `userEvent.setup()` with awaited clicks/keyboard, no layout/media-query assertions in jsdom, and no `check:full` unless native/package/release surfaces change.
+  - Ramanujan (`security_reviewer`) required saved-filter views to receive DTO projections only, not full pages, page bodies, metadata, events, filter query JSON, runtime handles, or native surfaces. Inbox must use public Quick Capture filter/metadata semantics and ignore title-only Inbox pages.
+  - Mill (`deprecation_auditor`) found no P0/P1 blockers and warned against MUI v9 removed props/barrel imports, React 19 removed test APIs, stale `ListItem button`, and selected-state-only assertions.
+- Parent decisions:
+  - Interpret "plugin route groups" as filter-backed plugin groups only for TASK-038; arbitrary view routes remain deferred to TASK-042/TASK-043+ when explicit DTO projections exist.
+  - Adopt the stricter security line for filter result props: route code should pass safe page-summary DTOs such as `{ id, title }`, not full `MarkdownPage` objects.
+  - Require failing tests first in a focused sidebar/page/filter navigation test file, with updates to existing shell/static guards only where needed.
 
 ## Current TASK-037 State
 

@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 05:33 CST - TASK-038 pre-test guidance complete
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Agents: Kierkegaard (`planner`), Anscombe (`docs_researcher`), Ramanujan (`security_reviewer`), and Mill (`deprecation_auditor`) completed read-only pre-test guidance and were closed.
+- Guidance summary: deliver filter-backed Drawer navigation for Home, Inbox, All Tasks, Today, recent pages, and public filter-backed plugin groups only; page routes keep rendering the editor through `ViewHost`; saved-filter routes execute `executeFilterQuery`, render registered `viewType` through `ViewHost`, and use `SlotHost` for `filter.empty_state`; arbitrary plugin view routes, dialogs, slots, Calendar/Reports, ML/AI, Settings/Sync, responsive polish, persistence, native, package, and release surfaces remain deferred.
+- Parent decisions: adopt a discriminated route model; interpret plugin route groups as filter-backed groups only; require filter result route props to use safe page-summary DTOs rather than full `MarkdownPage` objects; require Inbox to use Quick Capture public filter/metadata semantics and ignore title-only Inbox pages.
+- External docs verified by Anscombe: official MUI v9 version/migration/API docs for Drawer/List/ListItemButton/Collapse/useMediaQuery/icons/path imports, W3C `aria-current`, React 19 upgrade/act guidance, Testing Library/user-event docs, Vitest config docs, and jsdom release/docs.
+- Next action: delegate failing TASK-038 RTL/user-event and static boundary tests to `test_writer`.
+
 ### 2026-05-26 05:25 CST - TASK-038 started
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.

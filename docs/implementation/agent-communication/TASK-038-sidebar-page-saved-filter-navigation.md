@@ -47,5 +47,41 @@
 
 ## Current Next Action
 
-- Delegate pre-test guidance to planner, docs_researcher, deprecation_auditor, and security_reviewer.
-- After guidance is summarized, delegate failing TASK-038 acceptance and boundary tests to `test_writer`.
+- Delegate failing TASK-038 acceptance and boundary tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Kierkegaard (`planner`) recommended the narrow TASK-038 slice:
+  - replace placeholder Drawer navigation with real Home, Inbox, All Tasks, Today, recent pages, and filter-backed plugin groups;
+  - keep Home and recent pages as page routes rendered through `markdown.page-editor` / `page.editor` via `ViewHost`;
+  - treat Inbox, All Tasks, and Today as aliases to public saved filters `quick-capture.filter.inbox`, `task.filter.all-tasks`, and `task.filter.today`;
+  - execute saved filters through `executeFilterQuery`, render filter `viewType` through `ViewHost`, and render empty results through `SlotHost` on `filter.empty_state`;
+  - defer metadata/timer/timeline/global slots, Quick Capture dialog, Search overlay, Calendar/Reports projections, ML/AI panels, Settings/Sync routes, responsive polish, persistent navigation, save-time indexing, Event `within`, native/Tauri/Rust/package changes, and arbitrary view routes.
+- Kierkegaard recommended one shell-owned route state:
+
+```ts
+type ActiveRoute =
+  | { kind: "page"; pageId: string; role: "home" | "recent" | "command-open" }
+  | { kind: "filter"; filterId: string; role: "inbox" | "all-tasks" | "today" | "saved" };
+```
+
+- Anscombe (`docs_researcher`) verified official docs for MUI v9 Drawer/List/ListItemButton/Collapse/useMediaQuery/icons/path imports, MUI v9 migration, W3C `aria-current`, React 19, Testing Library/user-event, Vitest, and jsdom. Key recommendations:
+  - use MUI path imports only;
+  - use `selected` for MUI styling and `aria-current="page"` for active route semantics;
+  - use `userEvent.setup()` with awaited `click`, `keyboard`, and `tab`;
+  - assert visible route/view outcomes, not transition timing, pixel layout, or media-query geometry in jsdom;
+  - `check:full` is not required for this TypeScript/MUI shell-navigation task unless forbidden native/package/release surfaces change.
+- Ramanujan (`security_reviewer`) defined the strict route and filter boundary:
+  - public `useRuntime()` remains frozen `{ app }`;
+  - App Shell must not import Task, Tag, Quick Capture, Search, Markdown editor, native, or plugin-private components;
+  - saved-filter routes must execute only public `FilterDefinition`s through `executeFilterQuery` with active plugin ownership and metadata owner reservations;
+  - Inbox must use Quick Capture's public `quick-capture.filter.inbox` and Quick Capture-owned `quick-capture.unprocessed=true` semantics, never title-only Inbox lookup or Quick Capture private code;
+  - filter result views must receive DTO projections only, not raw pages, bodies, metadata, events, filter query JSON, runtime handles, or native surfaces;
+  - missing, malformed, inactive, ambiguous, thrown, or unavailable route/view/slot states must be accessible and non-leaky.
+- Mill (`deprecation_auditor`) found no P0/P1 blockers. It advised avoiding MUI v9 removed props (`PaperProps`, `SlideProps`, `BackdropProps`, `TransitionComponent`, `componentsProps`, stale `ListItem button`, typography props), MUI/Icons barrel imports, React 19 removed test APIs, `legacyRoot`, and selected-state-only route assertions.
+
+## Parent Decisions
+
+- Interpret "plugin route groups" as filter-backed plugin groups only for TASK-038. Arbitrary registered plugin view routes remain deferred until explicit DTO projections are designed in later tasks.
+- Adopt Ramanujan's stricter DTO boundary over the current full-page test helper pattern: saved-filter route `ViewHost` props should pass safe page summaries such as `{ id, title }`, not full `MarkdownPage` objects.
+- Require red tests for user-visible route behavior, DTO-only filter props, Quick Capture Inbox trust semantics, forged metadata exclusion, missing/unavailable state redaction, keyboard activation, and static no-drift/no-private-import boundaries before production implementation.
