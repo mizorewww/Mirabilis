@@ -217,6 +217,59 @@ describe("TASK-037 Home workspace editor", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("blocks hosted editors from using openPage to self-authorize a foreign page load", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-session-page", "foreign-page"],
+    });
+    createRuntimePage(runtime, sourcePageTitle, [
+      {
+        blockId: "home-trusted-line",
+        text: "Trusted Home body",
+      },
+    ]);
+    const foreignPage = createRuntimePage(runtime, "Foreign secret page", [
+      {
+        blockId: "foreign-self-authorized-line",
+        text: "Sensitive body after self-authorized open",
+      },
+    ]);
+
+    replaceRegisteredPageEditor(
+      runtime,
+      createForeignOpenThenLoadProbeEditor(foreignPage.id),
+    );
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByText("Foreign self-authorization probe editor"),
+    ).toBeVisible();
+
+    const currentPageStatus = await screen.findByRole("status", {
+      name: /current hosted page/i,
+    });
+    const probeStatus = await screen.findByRole("status", {
+      name: /foreign self-authorization probe/i,
+    });
+
+    await waitFor(() =>
+      expect(probeStatus).not.toHaveTextContent(
+        "foreign self-authorization probe pending",
+      ),
+    );
+    expect(probeStatus).toHaveTextContent("foreign self-authorization blocked");
+    expect(probeStatus).not.toHaveTextContent(/Foreign secret page/u);
+    expect(probeStatus).not.toHaveTextContent(
+      /Sensitive body after self-authorized open/u,
+    );
+    expect(currentPageStatus).toHaveTextContent(
+      "current hosted page: home-session-page",
+    );
+    expect(
+      screen.queryByText(/Sensitive body after self-authorized open/u),
+    ).not.toBeInTheDocument();
+  });
+
   it("lets a user type Markdown, use snippet toolbar buttons, save, and see the saved Home result", async () => {
     const runtime = await createRuntime({
       pageIds: ["home-session-page"],
@@ -699,6 +752,70 @@ function createForeignLoadProbeEditor(
       <section aria-label="Foreign page load probe editor">
         <p>Foreign page load probe editor</p>
         <p aria-label="Foreign page load probe" role="status">
+          {status}
+        </p>
+      </section>
+    );
+  };
+}
+
+function createForeignOpenThenLoadProbeEditor(
+  foreignPageId: string,
+): ComponentType<Record<string, unknown>> {
+  return function ForeignOpenThenLoadProbeEditor(props: Record<string, unknown>) {
+    const bridge = useMarkdownWorkspaceBridge();
+    const currentPageId = readCapturedPageId(props) ?? "missing-page-id";
+    const [status, setStatus] = useState(
+      "foreign self-authorization probe pending",
+    );
+
+    useEffect(() => {
+      let active = true;
+
+      async function trySelfAuthorizedLoad(): Promise<void> {
+        if (bridge === undefined) {
+          if (active) {
+            setStatus("foreign self-authorization blocked");
+          }
+
+          return;
+        }
+
+        try {
+          bridge.openPage(foreignPageId);
+        } catch {
+          // A throwing open request is an acceptable fail-closed signal.
+        }
+
+        try {
+          const page = await bridge.pages.load(foreignPageId);
+
+          if (active) {
+            setStatus(
+              `foreign self-authorized load: ${page.title} ${page.markdown}`,
+            );
+          }
+        } catch {
+          if (active) {
+            setStatus("foreign self-authorization blocked");
+          }
+        }
+      }
+
+      void trySelfAuthorizedLoad();
+
+      return () => {
+        active = false;
+      };
+    }, [bridge, foreignPageId]);
+
+    return (
+      <section aria-label="Foreign self-authorization probe editor">
+        <p>Foreign self-authorization probe editor</p>
+        <p aria-label="Current hosted page" role="status">
+          current hosted page: {currentPageId}
+        </p>
+        <p aria-label="Foreign self-authorization probe" role="status">
           {status}
         </p>
       </section>

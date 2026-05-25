@@ -125,6 +125,33 @@ describe("App Shell bootstrap boundary", () => {
     expect(violations).toStrictEqual([]);
   });
 
+  it("keeps RuntimeProvider from exposing raw runtime through render-prop children", async () => {
+    const runtimeProviderPath = path.join(
+      repoRoot,
+      "src",
+      "providers",
+      "RuntimeProvider.tsx",
+    );
+    const contents = await readFile(runtimeProviderPath, "utf8");
+
+    expect(
+      findRuntimeProviderRenderPropExposure(contents).map(
+        (violation) => `src/providers/RuntimeProvider.tsx: ${violation}`,
+      ),
+    ).toStrictEqual([]);
+  });
+
+  it("keeps App runtime initialization typed to the trusted AppRuntime contract", async () => {
+    const appPath = path.join(repoRoot, "src", "App.tsx");
+    const contents = await readFile(appPath, "utf8");
+
+    expect(
+      findBroadAppRuntimeInitializerContract(contents).map(
+        (violation) => `src/App.tsx: ${violation}`,
+      ),
+    ).toStrictEqual([]);
+  });
+
   it("keeps plugin production modules from importing app-shell host internals", async () => {
     const pluginFiles = await listExistingSourceFiles(pluginEntrypoints);
     const violations: string[] = [];
@@ -365,6 +392,66 @@ function findRawRuntimeProviderExposure(
   ]);
 
   for (const [pattern, description] of forbiddenExports) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findRuntimeProviderRenderPropExposure(contents: string): string[] {
+  const violations: string[] = [];
+  const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /\btype\s+RuntimeProviderChild\b[^=]*=\s*(?:[^;]*\|\s*)?\(\s*\(?\s*runtime\s*:\s*Runtime\b/su,
+      "RuntimeProviderChild accepts a runtime render-prop function",
+    ],
+    [
+      /\bchildren\s*:\s*RuntimeProviderChild\b/u,
+      "RuntimeProvider props expose render-prop children",
+    ],
+    [
+      /\bfunction\s+renderRuntimeChildren\b/u,
+      "renderRuntimeChildren helper can invoke children with raw runtime",
+    ],
+    [
+      /\brenderRuntimeChildren\s*\(\s*children\s*,\s*(?:runtime|state\.runtime)\s*\)/u,
+      "RuntimeProvider passes raw initialized runtime to children",
+    ],
+    [
+      /\btypeof\s+children\s*===\s*["']function["']\s*\?\s*children\s*\(\s*runtime\s*\)/su,
+      "RuntimeProvider invokes function children with raw runtime",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenPatterns) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findBroadAppRuntimeInitializerContract(contents: string): string[] {
+  const violations: string[] = [];
+  const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /\binitializeRuntime\s*\?:\s*RuntimeInitializer\s*<\s*RuntimeSource\s*>/u,
+      "App initializeRuntime prop accepts the broad RuntimeSource contract",
+    ],
+    [
+      /<RuntimeProvider\s*<\s*RuntimeSource\s*>/u,
+      "App narrows RuntimeProvider to RuntimeSource instead of trusted AppRuntime",
+    ],
+    [
+      /\bas\s+AppRuntime\b/u,
+      "App casts a broad runtime source back to AppRuntime",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenPatterns) {
     if (pattern.test(contents)) {
       violations.push(description);
     }
