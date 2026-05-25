@@ -1020,6 +1020,12 @@ Acceptance criteria:
 - `SlotHost` evaluates contribution conditions only with controlled props and fails closed for invalid contributions.
 - No direct business-plugin implementation imports, native/Tauri/Rust/package/capability changes, or persistence/schema work are added.
 
+Delivered/deferred note for the TASK-036 branch:
+
+- Delivered: generic app-shell `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and host exports for registry-owned views and slots; exact-id and unambiguous-type view resolution; explicit accepted-data checks; safe loading, empty, missing, wrong-data, unavailable, thrown, and error states; slot registry ordering and per-contribution isolation; controlled props/data cloning; descriptor-backed `host.action` wrappers for user interactions; prototype-key fail-closed behavior; native/secret alias redaction; recursion budgets; proxy/trap fail-closed behavior; and static guards for no package/native/Tauri/Rust/capability/release drift.
+- Deferred: Home editor route mounting, real route data projections, real command adapters, real `pageFacade` adapters, lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, and responsive polish remain TASK-037+.
+- Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
+
 Test plan:
 
 - RTL component tests for successful view render, missing view, wrong `kind`, thrown view, loading, empty, and error states.

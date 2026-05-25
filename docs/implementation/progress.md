@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 03:30 CST - TASK-036 final docs sync applied
+
+- Branch: `feat/task-036-viewhost-slothost`.
+- Task: Add Generic ViewHost And SlotHost.
+- Final branch validation already passed before this docs-only sync: `bun run build` passed with the known TASK-035 MUI chunk-size warning, and `bun run check:quick` passed with 40 frontend test files / 632 tests, Rust fmt, Rust clippy, and Rust tests.
+- Final review outcome: Bacon, Avicenna, Banach, Linnaeus, and Erdos reported no remaining P0/P1 code or security findings after `5c87e52`. Remaining P1 work was docs sync for the hardened TASK-036 host contract; remaining P2 work covered test-hardening decisions and documentation closeout.
+- Docs sync completed in the working tree: `docs/testing/strategy.md`, `docs/implementation/agent-communication/TASK-036-viewhost-slothost.md`, `docs/implementation/agent-communication/status.md`, `docs/implementation/progress.md`, `docs/implementation/task-index.md`, and `docs/product/07-user-interface-design.md` now record TASK-036 delivered/deferred scope, Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and TASK-037+ deferrals.
+- TASK-036 remains `[~]`: no commit, merge, or push has happened in this docs-only pass. P2 test-hardening/disposition for nested `ViewHost.props` fail-closed behavior, SlotHost unavailable-plugin coverage, and slot `when` mutation/capture isolation is still pending before release-readiness closeout.
+
 ### 2026-05-26 02:58 CST - TASK-036 review fixes committed
 
 - Branch: `feat/task-036-viewhost-slothost`.

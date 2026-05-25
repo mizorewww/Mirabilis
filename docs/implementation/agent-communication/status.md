@@ -8,12 +8,12 @@ Last updated: 2026-05-26 03:35 CST.
 - Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 final review complete; P2 test hardening and docs-sync fixes pending.
+- Current phase: TASK-036 final review complete; docs-sync fixes are applied in the working tree; P2 test hardening and release-readiness closeout remain pending.
 
 ## Active Agents
 
 - None. Final review wave completed and agent slots were closed.
-- Pending: test-only P2 hardening, docs-sync P1 fixes, release-readiness review, final progress closeout.
+- Pending: test-only P2 hardening disposition, release-readiness review, final progress closeout, and merge.
 
 ## Current TASK-036 State
 
@@ -85,13 +85,19 @@ Last updated: 2026-05-26 03:35 CST.
   - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remains a TASK-037+ route/plugin mounting decision.
   - Linnaeus (`test_quality_reviewer`) found no P0/P1 and P2 gaps for SlotHost plugin-unavailable coverage, slot `when` mutation/capture isolation, and brittle static file-split coupling.
   - Erdos (`doc_writer`) found P1 docs-sync gaps in `docs/testing/strategy.md` and the TASK-036 communication doc, plus P2 closeout/status/product/task-index updates.
-- Parent decision: close the low-risk P2 test gaps that improve boundary confidence, keep static guard brittleness and lazy/Suspense as documented deferrals, and delegate docs-sync fixes before release readiness.
+- Docs-sync outcome:
+  - `docs/testing/strategy.md` now records that `src/test/view-slot-hosts.test.tsx` covers ViewHost/SlotHost observable states, descriptor-backed `host.action` wrappers exercised through user-event, prototype-key fail-closed behavior, native/secret alias redaction, recursion budgets, proxy/trap fail-closed paths, and the no package/native/Tauri/Rust drift static guard.
+  - `docs/testing/strategy.md` also records that lazy/Suspense behavior plus real command and `pageFacade` adapters are deferred to TASK-037+.
+  - The TASK-036 task communication doc records Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and the remaining P2 decisions.
+  - The progress ledger records final branch validation, final reviews, docs-sync completion, and the still-pending P2 test-hardening/disposition.
+  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036 while route/editor mounting, real adapters, lazy/Suspense, and actual slot placement remain TASK-037+.
+- Current parent decision: keep TASK-036 `[~]`; this docs-only pass closes the P1 docs-sync findings and P2 documentation closeout items, but does not edit `src/test`. P2 test hardening/disposition remains pending before release-readiness closeout.
 
 ## Received Review Notes
 
 - No remaining P0/P1 code or security findings after commit `5c87e52`.
-- P1 docs-sync findings remain open until `docs/testing/strategy.md` and the task communication doc record the hardened host contract.
-- P2 items to close before final release readiness: nested `ViewHost.props` fail-closed regression, SlotHost unavailable-plugin coverage, and slot `when` mutation/capture isolation coverage.
+- P1 docs-sync findings are addressed in the current working-tree documentation updates.
+- P2 items still needing test-hardening disposition before final release readiness: nested `ViewHost.props` fail-closed behavior, SlotHost unavailable-plugin coverage, and slot `when` mutation/capture isolation coverage.
 - Deferred P2 items: lazy/Suspense support belongs with TASK-037+ route/plugin mounting, and the static host file-split guard can be revisited during later refactors.
 
 ## Current TASK-035 State
@@ -192,7 +198,7 @@ Last updated: 2026-05-26 03:35 CST.
 
 - TASK-034 is complete and merged on `master`.
 - TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
-- TASK-036 is in progress on `feat/task-036-viewhost-slothost`: generic ViewHost/SlotHost tests, implementation, and hardened boundary review fixes are committed and validated; final P2 test hardening and docs-sync fixes are pending.
+- TASK-036 is in progress on `feat/task-036-viewhost-slothost`: generic ViewHost/SlotHost tests, implementation, and hardened boundary review fixes are committed and validated; docs-sync fixes are applied in the working tree; final P2 test hardening/disposition and release-readiness closeout remain pending.
 - TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
 - Next action: run TASK-036 branch validation and re-review.
 
