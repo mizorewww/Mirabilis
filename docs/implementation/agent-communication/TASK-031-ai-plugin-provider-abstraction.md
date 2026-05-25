@@ -58,3 +58,12 @@
   - `docs_researcher` to verify current OpenAI Responses/Structured Outputs/model guidance plus React/Vitest Testing Library implications.
   - `deprecation_auditor` to audit stale AI command ids, provider API assumptions, and absent plugin settings APIs.
   - `security_reviewer` to define secret handling, logging, provider boundary, network/native/package, prompt-injection, and data-exfiltration constraints.
+
+## Pre-Test Guidance Handoff
+
+- Dalton the 2nd (`planner`) started at 2026-05-25 14:29 CST.
+- Banach the 2nd (`docs_researcher`) started at 2026-05-25 14:29 CST.
+- Singer the 2nd (`deprecation_auditor`) started at 2026-05-25 14:29 CST.
+- Faraday the 2nd (`security_reviewer`) started at 2026-05-25 14:29 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.

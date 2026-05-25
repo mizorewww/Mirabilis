@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:28 CST.
+Last updated: 2026-05-25 14:29 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 14:28 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 started; pre-test planning/current-doc/security guidance pending.
+- Current phase: TASK-031 pre-test guidance delegated; waiting for read-only agent outputs.
 
 ## Active Agents
 
-- No active agents yet. Parent is recording TASK-031 start state before delegating pre-test guidance.
+- Dalton the 2nd (`planner`) is defining the smallest safe TASK-031 slice, canonical ids, provider/settings shape, acceptance criteria, and deferred scope.
+- Banach the 2nd (`docs_researcher`) is verifying current official OpenAI Responses/Structured Outputs/model guidance plus React/Vitest testing guidance.
+- Singer the 2nd (`deprecation_auditor`) is checking stale AI ids, absent provider/settings APIs, SDK/package assumptions, and local API risks.
+- Faraday the 2nd (`security_reviewer`) is defining secret handling, provider/network, prompt-injection, data-exfiltration, and logging constraints.
 
 ## Current TASK-031 State
 
@@ -33,7 +36,12 @@ Last updated: 2026-05-25 14:28 CST.
   - Responses uses top-level `instructions`/`input`, can set `store: false`, and uses `text.format` for Structured Outputs.
   - Structured Outputs are recommended over plain JSON mode when schema adherence matters.
 - Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK for config/auth/MCP/reachability with the known `TERM=dumb`, unrestricted sandbox/network notes, and a non-blocking Responses WebSocket timeout while HTTPS reachability remained OK.
-- Next action: delegate pre-test guidance to `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer`.
+- Pre-test guidance delegated:
+  - Dalton the 2nd (`planner`) should define the smallest safe slice, canonical ids, DTOs, settings approach, acceptance criteria, and deferred scope.
+  - Banach the 2nd (`docs_researcher`) should verify current OpenAI official docs plus React/Vitest/Testing Library implications.
+  - Singer the 2nd (`deprecation_auditor`) should audit stale ids, absent settings/provider APIs, and SDK/package assumptions.
+  - Faraday the 2nd (`security_reviewer`) should define secret handling, provider/network, prompt-injection, data-exfiltration, and logging constraints.
+- Next action: wait for pre-test guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
 
 ## Current TASK-030 State
 
