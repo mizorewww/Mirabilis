@@ -192,6 +192,12 @@ function validateEventUnit(unit: unknown): ValidatedEventUnit {
     throw new Error("Invalid sync event unit shape");
   }
 
+  assertExactDataKeys(
+    unit,
+    ["kind", "schemaVersion", "snapshot", "syncKey"],
+    "Invalid sync event unit shape",
+  );
+
   const kind = readDataProperty(unit, "kind");
 
   if (kind !== "sync.unit.event") {
@@ -218,18 +224,18 @@ function validateEventUnit(unit: unknown): ValidatedEventUnit {
     throw new Error("Invalid sync event unit sync key");
   }
 
+  assertExactDataKeys(syncKey, ["id"], "Invalid sync event unit sync key");
+
   const id = readDataProperty(syncKey, "id");
 
   if (typeof id !== "string" || id.length === 0) {
     throw new Error("Invalid sync event unit id");
   }
 
-  for (const key of Object.keys(syncKey)) {
-    const value = readDataProperty(syncKey, key);
+  const snapshotId = readDataProperty(snapshot, "id");
 
-    if (typeof value !== "string" || value.length === 0) {
-      throw new Error("Invalid sync event unit sync key");
-    }
+  if (snapshotId !== id) {
+    throw new Error("Invalid sync event unit id");
   }
 
   return {
@@ -288,6 +294,27 @@ function readDataProperty(
   }
 
   return descriptor.value;
+}
+
+function assertExactDataKeys(
+  value: Record<string, unknown>,
+  expectedKeys: readonly string[],
+  message: string,
+): void {
+  const expected = new Set(expectedKeys);
+  const actual = Reflect.ownKeys(value);
+
+  if (actual.length !== expected.size) {
+    throw new Error(message);
+  }
+
+  for (const key of actual) {
+    if (typeof key !== "string" || !expected.has(key)) {
+      throw new Error(message);
+    }
+
+    readDataProperty(value, key);
+  }
 }
 
 function isArrayIndexKey(value: string): boolean {
