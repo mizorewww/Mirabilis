@@ -246,3 +246,15 @@
   - `7149e5a Averroes(docs)(Add release packaging and local full gate): document local release readiness`
   - `1a83600 Poincare(test-fix)(Add release packaging and local full gate): allow reviewed release surface guards`
 - Parent next action: commit this validation record, then run review agents, including `release_checker`.
+
+## Review Wave Handoff
+
+- Confucius (`pr_explorer`) started at 2026-05-25 21:31 CST.
+- Bernoulli (`reviewer`) started at 2026-05-25 21:31 CST.
+- Dalton (`deprecation_auditor`) started at 2026-05-25 21:31 CST.
+- Aquinas (`security_reviewer`) started at 2026-05-25 21:31 CST.
+- Gibbs (`docs_researcher`) started at 2026-05-25 21:31 CST.
+- Galileo (`test_quality_reviewer`) started at 2026-05-25 21:31 CST.
+- All six agents are read-only and must not edit files, commit, merge, or push.
+- `release_checker` start was delayed because the agent thread limit was reached; parent will start it after a slot opens.
+- Parent next action: wait for review outcomes, start `release_checker` when possible, and fix any P0/P1 findings before merge.
