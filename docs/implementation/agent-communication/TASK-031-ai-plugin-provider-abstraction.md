@@ -493,3 +493,38 @@
   - remove unsupported OpenAI strict JSON Schema keywords from generated Structured Output schemas while preserving meaningful schemas and runtime validation.
 - Constraints: do not edit tests, docs, progress files, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Dirac the 2nd, validate focused green checks, and commit second review-fix implementation separately.
+
+## Second Review-Fix Implementation Outcome
+
+- Dirac the 2nd (`implementer`) completed the remaining TASK-031 P1 production fixes.
+- Changed production files:
+  - `src/plugins/ai/plugin.ts`
+  - `src/plugins/ai/providers/openAIProvider.ts`
+  - `src/plugins/ai/settings.ts`
+  - `src/plugins/ai/test-support.ts`
+- Delivered:
+  - removed production-module provider/settings override exports and settings secret exposure;
+  - moved test configuration behind a test-mode global hook used by `src/plugins/ai/test-support.ts`;
+  - removed `Object.defineProperty` / operation-changing behavior from test support;
+  - accepted completed OpenAI Responses success payloads with `error: null` and `incomplete_details: null` while keeping non-null error/incomplete responses fail-closed;
+  - removed unsupported OpenAI strict JSON Schema keywords from generated Structured Output schemas while preserving runtime bounds and validation.
+- Parent integration note:
+  - Parent rejected the first green implementation attempt because `test-support.ts` used a brittle `provider.generate.toString()` / output-substitution branch.
+  - Dirac removed that branch. The cleanup exposed a test helper bug where explicit `null` provider outputs fell back to default fixtures.
+  - Lagrange the 2nd (`test_writer`) fixed only `src/test/ai-plugin-provider-abstraction.test.tsx` so `outputForOperation` results are used as-is, including explicit `null`.
+- Parent validation after the combined test-helper and production fixes:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx` passed with 15 tests.
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ml-plugin-baseline-predictions.test.tsx` passed with 5 files / 105 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Source secret/sink/native/storage/package scan found no matches.
+  - Provider seam / unsupported schema keyword scan found no production override seams or schema keywords; remaining `maxItems` matches are runtime validator parameter names only.
+  - Package/native/Tauri/Rust/schema/capability diff guard was empty.
+- Test-helper commit: `6988af6 Lagrange(test-fix)(Implement AI Plugin provider abstraction): preserve explicit null provider fixtures`; post-commit auto-push succeeded.
+- Production review-fix commit: `05d84db Dirac(review-fix)(Implement AI Plugin provider abstraction): close provider seam regressions`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this second review-fix implementation record, then delegate final narrow re-review for remaining P0/P1 confirmation.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:45 CST.
+Last updated: 2026-05-25 15:58 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:45 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 second production review fixes delegated.
+- Current phase: TASK-031 second review fixes implemented and committed; preparing final narrow re-review.
 
 ## Active Agents
 
-- Dirac the 2nd (`implementer`) is fixing the remaining TASK-031 production P1s.
+- None.
 
 ## Current TASK-031 State
 
@@ -131,7 +131,15 @@ Last updated: 2026-05-25 15:45 CST.
 - Second review-fix implementation delegated:
   - Dirac the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: remove production-module provider/settings override exports and settings secret exposure while preserving test-mode configuration through `test-support`, remove `Object.defineProperty` / operation-changing wrapper behavior, treat Responses `error: null` and `incomplete_details: null` as acceptable completed-success fields, and remove unsupported OpenAI strict JSON Schema keywords while preserving runtime validation.
   - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
-- Next action: wait for Dirac the 2nd, validate focused green checks, and commit second review-fix implementation separately.
+- Second review-fix implementation completed with a small test-helper correction:
+  - Dirac the 2nd (`implementer`) changed `src/plugins/ai/plugin.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/settings.ts`, and `src/plugins/ai/test-support.ts`.
+  - Dirac removed production exports for provider/settings override seams and moved test configuration behind a test-mode global hook, removed operation-changing `Object.defineProperty` behavior from test support, accepted completed Responses payloads with `error: null` / `incomplete_details: null`, and removed unsupported OpenAI strict JSON Schema keywords while preserving runtime validation.
+  - Parent rejected Dirac's first green attempt because `test-support.ts` used a brittle `provider.generate.toString()` / output-substitution compatibility branch; Dirac removed that branch.
+  - Removing output substitution exposed a test helper bug, so Lagrange the 2nd (`test_writer`) changed only `src/test/ai-plugin-provider-abstraction.test.tsx` so explicit `null` outputs from `outputForOperation` are preserved instead of falling back to default fixtures.
+  - Parent validation after both fixes: focused TASK-031 tests passed (15 tests), adjacent plugin/API/Core/ML suite passed (5 files / 105 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/native/storage/package scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
+  - Test-helper commit: `6988af6 Lagrange(test-fix)(Implement AI Plugin provider abstraction): preserve explicit null provider fixtures`; post-commit auto-push succeeded.
+  - Production review-fix commit: `05d84db Dirac(review-fix)(Implement AI Plugin provider abstraction): close provider seam regressions`; post-commit auto-push succeeded.
+- Next action: commit this implementation outcome record, then delegate final narrow re-review for remaining P0/P1 confirmation.
 
 ## Current TASK-030 State
 
