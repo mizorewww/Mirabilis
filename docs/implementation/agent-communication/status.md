@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:29 CST.
+Last updated: 2026-05-25 14:36 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 14:29 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 pre-test guidance delegated; waiting for read-only agent outputs.
+- Current phase: TASK-031 pre-test guidance completed; parent is recording decisions before test-writer handoff.
 
 ## Active Agents
 
-- Dalton the 2nd (`planner`) is defining the smallest safe TASK-031 slice, canonical ids, provider/settings shape, acceptance criteria, and deferred scope.
-- Banach the 2nd (`docs_researcher`) is verifying current official OpenAI Responses/Structured Outputs/model guidance plus React/Vitest testing guidance.
-- Singer the 2nd (`deprecation_auditor`) is checking stale AI ids, absent provider/settings APIs, SDK/package assumptions, and local API risks.
-- Faraday the 2nd (`security_reviewer`) is defining secret handling, provider/network, prompt-injection, data-exfiltration, and logging constraints.
+- No active agents. Parent is recording pre-test guidance outcomes and decisions.
 
 ## Current TASK-031 State
 
@@ -41,7 +38,18 @@ Last updated: 2026-05-25 14:29 CST.
   - Banach the 2nd (`docs_researcher`) should verify current OpenAI official docs plus React/Vitest/Testing Library implications.
   - Singer the 2nd (`deprecation_auditor`) should audit stale ids, absent settings/provider APIs, and SDK/package assumptions.
   - Faraday the 2nd (`security_reviewer`) should define secret handling, provider/network, prompt-injection, data-exfiltration, and logging constraints.
-- Next action: wait for pre-test guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
+- Pre-test guidance completed:
+  - Dalton the 2nd (`planner`) recommended a TypeScript-only built-in `ai` plugin with canonical kebab-case commands, plugin-local provider abstraction, OpenAI Responses adapter with injected transport, plugin-owned injectable settings store, inert settings panel descriptor, fail-closed views, no durable writes, and no SDK/native/package changes.
+  - Banach the 2nd (`docs_researcher`) verified official OpenAI docs: latest-model guidance currently names `gpt-5.5`; Responses API is recommended for new projects; use `instructions` / `input`, `store: false`, `text.format` for Structured Outputs, and programmatic refusal/error handling.
+  - Singer the 2nd (`deprecation_auditor`) found no P0 blocker for the recommended slice, but confirmed the literal durable plugin-settings acceptance is not implementable with current runtime APIs. It recommended inert `settingsPanels`, an injectable in-memory AI settings store, and explicit deferral of persistent settings/SDK/Tauri HTTP/native work.
+  - Faraday the 2nd (`security_reviewer`) required no real or realistic secrets, no live API calls, no Core provider leakage, no existing data-store key persistence, exact bounded DTOs, no implicit full-workspace exfiltration, redacted errors, and static guards for sinks/native/storage/package changes.
+- Parent decisions after guidance:
+  - Continue TASK-031 without blocking by treating provider settings as an AI-plugin-owned injectable settings abstraction plus inert settings panel descriptor; persistent plugin settings/secret storage are deferred and will be documented.
+  - Canonical runtime IDs use kebab-case only. Product-doc underscore IDs are stale and must not be registered as aliases.
+  - Provider id is `openai`; default model guidance is `gpt-5.5`; OpenAI adapter request shape must be Responses-style with `store: false` and `text.format`.
+  - Tests must use fake provider/transport and placeholder non-secret strings only; no live OpenAI calls or `OPENAI_API_KEY` requirement.
+  - AI commands must consume exact bounded caller-provided projections and return advisory DTOs only. They must not mutate pages, metadata, events, filters, or sibling plugin private data in this task.
+- Next action: commit pre-test guidance decisions, then delegate failing acceptance tests to `test_writer`.
 
 ## Current TASK-030 State
 
