@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:24 CST.
+Last updated: 2026-05-25 10:28 CST.
 
 ## Current Task
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-25 10:24 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 P1 regression test and docs sync delegated.
+- Current phase: TASK-027 P1 production fix delegated; docs sync still active.
 
 ## Active Agents
 
-- Darwin (`test_writer`) is active for the P1 same-day re-check regression test.
 - Ramanujan (`doc_writer`) is active for stale Habit/Heatmap formal documentation sync.
+- Goodall (`implementer`) is active for the P1 same-day re-check production fix.
 
 ## Current TASK-027 State
 
@@ -60,6 +60,11 @@ Last updated: 2026-05-25 10:24 CST.
   - Heisenberg (`deprecation_auditor`) confirmed the same P1 and found no deprecated API blockers; it also flagged stale formal docs for Habit identifiers and Heatmap `date-series` naming.
   - Feynman (`security_reviewer`) found no P0/P1 security or isolation issues; residual low-risk notes were no Heatmap row-count cap and owner-scoped metadata preserving Habit trust after syntax removal.
   - Beauvoir (`docs_researcher`) found no current official-doc P0/P1 changes needed. It verified React 19.2 `createElement`, Testing Library query guidance, Vitest fake-date APIs, W3C ARIA region guidance, and Tauri v2 capabilities guidance, and listed stale local docs for `doc_writer`.
+- P1 regression test completed:
+  - Darwin (`test_writer`) added a focused test for same-day `habit.check-today -> habit.uncheck-today -> habit.check-today`.
+  - Parent validated the expected red signal: focused TASK-027 tests failed with 1 failed / 14 passed because the event stream had only `checked, unchecked` instead of `checked, unchecked, checked`.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/habit-heatmap-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `50bd24d Darwin(test-fix)(Implement Habit and Heatmap plugins): cover same-day habit recheck`; post-commit auto-push succeeded.
 
 ## Completed Recent Task
 
@@ -104,6 +109,6 @@ Last updated: 2026-05-25 10:24 CST.
 
 ## Next Actions
 
-1. Wait for Darwin (`test_writer`) and validate the expected red regression.
-2. Commit regression tests, then spawn `implementer` for the P1 fix.
+1. Wait for Goodall (`implementer`) to finish the P1 fix.
+2. Validate focused green checks and commit the production fix separately.
 3. Integrate Ramanujan's docs sync in a separate docs commit.

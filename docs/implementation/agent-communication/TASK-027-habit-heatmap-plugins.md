@@ -165,3 +165,18 @@
 
 - Darwin (`test_writer`) started at 2026-05-25 10:24 CST. Scope: edit tests only, add a failing same-day `check -> uncheck -> check` regression showing the event stream needs a trailing `checked` after re-check.
 - Ramanujan (`doc_writer`) started at 2026-05-25 10:24 CST. Scope: edit formal docs only, sync stale Habit/Heatmap identifiers and deferred scope notes.
+
+## P1 Regression Outcome
+
+- Darwin (`test_writer`) completed the same-day re-check regression in `src/test/habit-heatmap-plugins.test.tsx`.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` failed as expected with 1 failed / 14 passed.
+  - Failure reason: expected Habit events `checked, unchecked, checked`, but current production emitted only `checked, unchecked`.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/habit-heatmap-plugins.test.tsx --max-warnings=0`.
+  - `.skip/.only` scan.
+  - `git diff --check`.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test-fix commit: `50bd24d Darwin(test-fix)(Implement Habit and Heatmap plugins): cover same-day habit recheck`; post-commit auto-push succeeded.
+- Goodall (`implementer`) started at 2026-05-25 10:28 CST for the P1 production fix. Scope: production code only; expected behavior is duplicate consecutive same-day check remains idempotent, while same-day re-check after uncheck appends a trailing `checked` event.
