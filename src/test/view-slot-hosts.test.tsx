@@ -331,6 +331,52 @@ describe("ViewHost", () => {
     }
   });
 
+  it("fails closed when nested controlled ViewHost props contain prototype-pollution keys", async () => {
+    const { ViewHost } = await loadHosts();
+
+    for (const unsafeKey of unsafePrototypeKeys) {
+      const registry = createInMemoryViewRegistry();
+      const component = vi.fn(() => (
+        <section role="region" aria-label="Nested prototype-polluted prop view">
+          Nested prototype props should not render
+        </section>
+      ));
+
+      registry.register({
+        id: `safe.view.nested-prototype-props.${unsafeKey}`,
+        pluginId: "safe-plugin",
+        type: safeViewType,
+        title: "Nested prototype-polluted prop view",
+        accepts: { kind: safeViewKind },
+        component,
+      });
+
+      const { unmount } = render(
+        <ViewHost
+          registry={registry}
+          viewId={`safe.view.nested-prototype-props.${unsafeKey}`}
+          acceptedData={createSafeViewData("item-1", "Trusted item")}
+          props={createNestedPropsWithUnsafePrototypeKey(unsafeKey)}
+          app={createAppInfo()}
+        />,
+      );
+
+      expectViewUnavailable();
+      expect(component).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole("region", {
+          name: "Nested prototype-polluted prop view",
+        }),
+      ).not.toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent(
+        "Nested prototype props should not render",
+      );
+      expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      unmount();
+    }
+  });
+
   it("redacts documented native aliases from controlled ViewHost props", async () => {
     const { ViewHost } = await loadHosts();
     const registry = createInMemoryViewRegistry();
@@ -1418,6 +1464,59 @@ describe("SlotHost", () => {
     }
   });
 
+  it("skips unavailable plugin contributions while sibling contributions stay visible", async () => {
+    const { SlotHost } = await loadHosts();
+    const registry = createInMemorySlotRegistry();
+    const inactiveWhen = vi.fn(() => true);
+    const inactiveComponent = vi.fn(() => (
+      <section role="region" aria-label="Inactive plugin slot">
+        {unsafeSentinelText}
+      </section>
+    ));
+    const siblingComponent = vi.fn(({ label }: { label?: string }) => (
+      <section role="region" aria-label="Available sibling slot">
+        {label}
+      </section>
+    ));
+
+    registry.register<Record<string, unknown>>({
+      id: "slot.inactive-plugin",
+      pluginId: "inactive-plugin",
+      slot: safeSlotName,
+      order: 0,
+      component: inactiveComponent,
+      when: inactiveWhen,
+    });
+    registry.register<{ label: string }>({
+      id: "slot.available-sibling",
+      pluginId: "safe-plugin",
+      slot: safeSlotName,
+      order: 1,
+      component: siblingComponent,
+    });
+
+    render(
+      <SlotHost
+        registry={registry}
+        slot={safeSlotName}
+        props={{ label: "Visible sibling contribution" }}
+        app={createAppInfo()}
+        isPluginAvailable={(pluginId) => pluginId !== "inactive-plugin"}
+      />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Available sibling slot" }),
+    ).toHaveTextContent("Visible sibling contribution");
+    expect(inactiveWhen).not.toHaveBeenCalled();
+    expect(inactiveComponent).not.toHaveBeenCalled();
+    expect(siblingComponent).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("region", { name: "Inactive plugin slot" }),
+    ).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+  });
+
   it("recovers the same slot contribution id after valid props replace throwing props", async () => {
     const { SlotHost } = await loadHosts();
     const registry = createInMemorySlotRegistry();
@@ -1721,6 +1820,67 @@ describe("SlotHost", () => {
     expect(callerModel).toStrictEqual({ label: "Original label" });
   });
 
+  it("keeps slot condition mutations from changing rendered props or caller data", async () => {
+    const { SlotHost } = await loadHosts();
+    const registry = createInMemorySlotRegistry();
+    const callerModel = { label: "Original label" };
+    const when = vi.fn((props: ModelSlotProps) => {
+      try {
+        (props as unknown as Record<string, unknown>).label = unsafeSentinelText;
+      } catch {
+        // Frozen top-level props are acceptable; visible state must stay unchanged.
+      }
+
+      try {
+        props.model.label = unsafeSentinelText;
+      } catch {
+        // Frozen nested props are acceptable; visible state must stay unchanged.
+      }
+
+      return true;
+    });
+
+    registry.register<ModelSlotProps>({
+      id: "slot.when-mutator",
+      pluginId: "safe-plugin",
+      slot: safeSlotName,
+      component: ({ model }: ModelSlotProps) => (
+        <p role="status" aria-label="When mutation slot data">
+          {model.label}
+        </p>
+      ),
+      when,
+    });
+
+    function SlotWhenMutationProbe() {
+      return (
+        <>
+          <p role="status" aria-label="Caller model data">
+            {callerModel.label}
+          </p>
+          <SlotHost
+            registry={registry}
+            slot={safeSlotName}
+            props={{ model: callerModel }}
+            app={createAppInfo()}
+          />
+        </>
+      );
+    }
+
+    render(<SlotWhenMutationProbe />);
+
+    expect(when).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("status", { name: "When mutation slot data" }),
+    ).toHaveTextContent("Original label");
+    expect(screen.getByRole("status", { name: "Caller model data" })).toHaveTextContent(
+      "Original label",
+    );
+    expect(callerModel).toStrictEqual({ label: "Original label" });
+    expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+  });
+
   it("keeps plugin-rendered useRuntime consumers limited to the frozen copied public app facade", async () => {
     const { SlotHost } = await loadHosts();
     const registry = createInMemorySlotRegistry();
@@ -1877,6 +2037,22 @@ function createPropsWithUnsafePrototypeKey(
   });
 
   return props;
+}
+
+function createNestedPropsWithUnsafePrototypeKey(
+  unsafeKey: (typeof unsafePrototypeKeys)[number],
+): Record<string, unknown> {
+  const model = Object.create(null) as Record<string, unknown>;
+
+  model.label = "Nested safe label";
+  defineEnumerableDataProperty(model, unsafeKey, {
+    polluted: unsafeSentinelText,
+  });
+
+  return {
+    label: "Outer safe label",
+    model,
+  };
 }
 
 function defineEnumerableDataProperty(
