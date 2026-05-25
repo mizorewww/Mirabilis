@@ -251,3 +251,34 @@ type ActiveRoute =
 - Parent decision:
   - accept `1304174` as the final test-hardening baseline;
   - delegate final production polish to Poincare the 2nd (`implementer`) with write scope limited to `src/App.tsx` and `src/plugins/task/components/TaskFilterViews.tsx`.
+
+## Final Production Polish Outcome
+
+- Poincare the 2nd (`implementer`) completed final TASK-038 production polish in commit `9dbbaeb`.
+- Changed production files:
+  - `src/App.tsx`;
+  - `src/plugins/task/components/TaskFilterViews.tsx`.
+- Delivered final polish:
+  - saved-filter rows whose visible labels contain primary route names, such as `Today Review`, remain visible and keep their visible labels as accessible names;
+  - active saved-filter rows continue to expose `aria-current="page"`;
+  - the built-in `task.page-list` view contract requires exact `{ routeToken, title }` page DTOs;
+  - filter result rendering does not use raw page IDs, page bodies, metadata, runtime handles, or native handles.
+- Parent handoff for this docs sync says TASK-038 code and tests are complete and identifies `9dbbaeb` as the last production commit.
+
+## Docs Sync Outcome
+
+- Current docs sync agent updated documentation only, with no production code, tests, package, native, Tauri, Rust, IPC, capability, permission, schema, or release changes.
+- Updated documentation scope:
+  - `docs/product/07-user-interface-design.md`;
+  - `docs/architecture/07-runtime-flows.md`;
+  - `docs/testing/strategy.md`;
+  - `docs/implementation/task-index.md`;
+  - `docs/architecture/04-slots-editor-task.md`;
+  - `docs/development/02-implementation-roadmap-and-constraints.md`;
+  - `docs/implementation/progress.md`;
+  - `docs/implementation/agent-communication/status.md`;
+  - `docs/implementation/agent-communication/TASK-038-sidebar-page-saved-filter-navigation.md`.
+- Docs now record TASK-038 as delivered for MUI Drawer page/saved-filter navigation, public filter execution, route-token DTOs, label-in-name saved filters, active `aria-current`, and fail-closed ownership/view boundaries.
+- Docs keep TASK-039+ deferred for Reports/top-bar dialogs, metadata/timer/timeline/global slots, Calendar/Reports projections, search overlay/result route, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within`, arbitrary plugin view routes without DTO designs, native/package/Tauri/Rust/security surface changes, and branch closeout/merge.
+- Validation: docs-only `git diff --check` passed.
+- Current next action: parent runs release readiness and branch gate, then marks TASK-038 `[x]` only after the gate/merge criteria are satisfied and merges to `master`.

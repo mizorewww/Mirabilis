@@ -106,7 +106,7 @@ TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves t
 - `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
 - `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
 - Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
-- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; lazy/Suspense behavior, non-Home route data, actual product slot placement, and broader command/page adapters remain TASK-038+.
+- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting. Lazy/Suspense behavior, actual product slot placement, and broader command/page adapters remain TASK-039+.
 
 Focused TASK-036 validation:
 
@@ -145,6 +145,31 @@ git diff --check
 ```
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-037 is a TypeScript/React app-shell mounting task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, or release surface.
+
+## TASK-038 Sidebar Page And Saved-Filter Navigation Guidance
+
+TASK-038 coverage lives primarily in `src/test/sidebar-page-filter-navigation.test.tsx`, with supporting static assertions in `src/test/mui-shell-frame.test.tsx`, `src/test/app-shell-boundary.test.ts`, and adjacent route/view tests. It proves MUI Drawer navigation for Home, recent pages, Inbox, Today, All Tasks, and public saved filters without adding package/native/Tauri/Rust/IPC/capability/permission/release drift or persistent navigation storage.
+
+- Use React Testing Library plus `userEvent.setup()` for observable Drawer open/close, route clicks, saved-filter clicks, keyboard tab/enter activation, and route switching. Avoid timing, transition, or pixel-layout assertions.
+- Home and recent page routes should continue rendering registered `markdown.page-editor` / `page.editor` through `ViewHost`; recent pages must remain available on trusted filter routes and must not hide user pages whose titles match primary route labels.
+- Saved-filter route coverage should exercise public filters through user-visible navigation, including `task.filter.all-tasks`, `task.filter.today`, `quick-capture.filter.inbox`, tag-style filters such as `#today`, and label-in-name saved filters such as `Today Review`.
+- Inbox tests should use public Quick Capture semantics: trusted `quick-capture.filter.inbox` and Quick Capture-owned `quick-capture.unprocessed` metadata, never title-only Inbox pages or Quick Capture private internals.
+- Filter result views must receive DTO-only page summaries shaped exactly as `{ routeToken, title }[]`; tests should reject raw page IDs, page bodies, metadata, event data, runtime handles, native handles, and alias keys such as `id`, `key`, or `routeKey`.
+- Fail-closed coverage should include inactive, missing, unowned, or unavailable plugin ownership data; inactive/missing/unowned metadata owner namespaces; unowned metadata filters; and missing registered filter views. Missing view or ownership failures must show a generic unavailable route before empty-state/result rendering.
+- Empty trusted filter results should render `filter.empty_state` through `SlotHost` with minimal props. Active navigation rows should expose `aria-current="page"` while keeping visible saved-filter labels as accessible names.
+- Static guards should keep rejecting direct business-plugin private imports, raw Tauri/native imports, stale MUI/React APIs, package/lockfile/Cargo/Tauri/capability/permission/IPC/release drift, dynamic private imports, and CommonJS private requires in app-shell navigation code.
+
+Focused TASK-038 validation:
+
+```bash
+bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts
+bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-038 is a TypeScript/React/MUI app-shell navigation task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent navigation, or release surface.
 
 ## Focused Test Guidance
 

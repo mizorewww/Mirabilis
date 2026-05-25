@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 06:55 CST - TASK-038 docs sync applied
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Docs sync: updated product UI design, runtime flow, testing strategy, task index, architecture/editor notes, development roadmap constraints, live status, and TASK-038 communication docs to reflect the delivered TASK-038 Drawer page/saved-filter navigation.
+- Scope recorded: Home/recent page routes through the registered editor `ViewHost`; Inbox/Today/All Tasks/public saved filters through public `FilterDefinition`, ownership/view fail-closed checks, active metadata owner reservations, `executeFilterQuery`, `ViewHost`, `SlotHost`, `{ routeToken, title }` DTOs, label-in-name saved filters, and `aria-current`.
+- Deferred scope preserved: Reports/top-bar dialogs, metadata/timer/timeline/global slots, Calendar/Reports projections, search overlay/result routes, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within`, arbitrary plugin view routes without DTO designs, and native/package/Tauri/Rust/IPC/capability/release changes remain TASK-039+ or later.
+- Validation: docs-only `git diff --check` passed. No code, tests, package, native, Tauri, Rust, IPC, capability, permission, schema, or release files were changed.
+- Progress status: TASK-038 remains `[~]`; parent will mark `[x]` only after release readiness, branch gate, final closeout, and merge criteria are satisfied.
+- Next action: parent runs release readiness and branch gate, then handles final progress closeout, merge to `master`, and TASK-039 kickoff.
+
 ### 2026-05-26 06:47 CST - TASK-038 final test hardening committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
