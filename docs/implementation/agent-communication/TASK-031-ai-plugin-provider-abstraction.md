@@ -342,3 +342,19 @@
 ## Current Next Action
 
 - Commit review-fix test record, then delegate production fixes to `implementer`.
+
+## Review-Fix Implementation Handoff
+
+- Rawls the 2nd (`implementer`) started at 2026-05-25 15:33 CST.
+- Scope: production changes only for TASK-031 P1 review fixes.
+- Expected changed files: `src/plugins/ai/**`.
+- Required fixes:
+  - harden or move test-only provider/settings hooks so production public AI exports and production paths cannot override provider/settings;
+  - remove operation-changing getter behavior from test support;
+  - snapshot validated command input before async provider use;
+  - make provider request `input` Responses-compatible instead of an opaque object envelope;
+  - parse raw OpenAI Responses-like success/refusal/error/incomplete/invalid shapes into AI-owned results/errors;
+  - generate meaningful strict `json_schema` property definitions;
+  - reject nested hostile/secret provider output and avoid executing output accessors.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Rawls the 2nd, validate focused green checks, and commit review-fix implementation separately.

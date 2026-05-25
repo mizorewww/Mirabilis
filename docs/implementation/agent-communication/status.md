@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:31 CST.
+Last updated: 2026-05-25 15:33 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:31 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 review-fix tests committed; parent is recording red validation before implementation handoff.
+- Current phase: TASK-031 production review fixes delegated; waiting for `implementer`.
 
 ## Active Agents
 
-- No active agents. Parent is recording Tesla the 2nd's review-fix test outcome before delegating production fixes.
+- Rawls the 2nd (`implementer`) is fixing TASK-031 P1 production issues.
 
 ## Current TASK-031 State
 
@@ -95,7 +95,10 @@ Last updated: 2026-05-25 15:31 CST.
   - Parent validated the expected red signal: focused TASK-031 tests failed with 5 failed / 9 passed. Failure symptoms cover unguarded production test hooks, opaque Responses input object envelope, caller mutation visible after validation, raw OpenAI Responses pass-through, and nested unsafe provider JSON being accepted.
   - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
   - Test-fix commit: `9f36d38 Tesla(test-fix)(Implement AI Plugin provider abstraction): cover ai review regressions`; post-commit auto-push succeeded.
-- Next action: commit review-fix test record, then delegate production review fixes to `implementer`.
+- Review-fix implementation delegated:
+  - Rawls the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: test-hook hardening, sanitized async input snapshots, Responses-compatible provider input, raw Responses parsing/refusal/error handling, meaningful Structured Output schemas, and nested provider output validation/accessor safety.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Rawls the 2nd, validate focused green checks, and commit review-fix implementation separately.
 
 ## Current TASK-030 State
 
