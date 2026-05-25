@@ -8,3 +8,4 @@
 4. [Markdown 编辑器与用户流程](04-editor-and-workflows.md)
 5. [内置插件产品设计](05-built-in-plugins.md)
 6. [View Slot 系统](06-view-slots.md)
+7. [User Interface Design](07-user-interface-design.md)

@@ -75,27 +75,54 @@ Status markers:
 - [x] TASK-032: Implement Sync Plugin skeleton
 - [x] TASK-033: Add release packaging and local full gate
 
-## Milestone M8/M9
+## Milestone M9: MUI user-visible app shell and workspace
 
-- [ ] TASK-034: Replace Startup Card With A Usable Workspace
-- [ ] TASK-035: Add Generic ViewHost And SlotHost
-- [ ] TASK-036: Mount Page Metadata, Timeline, And Floating Timer Slots
-- [ ] TASK-037: Add Sidebar Page And Saved-Filter Navigation
-- [ ] TASK-038: Add Command Palette And Quick Capture Modal
-- [ ] TASK-039: Add Search Overlay And Results Route
-- [ ] TASK-040: Add Calendar And Reporting Routes With Explicit Data Projections
-- [ ] TASK-041: Add Contextual Sidebar Panels For ML And AI
-- [ ] TASK-042: Responsive State And Accessibility Polish
+- [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
+- [ ] TASK-035: Add MUI Substrate And First Shell Frame
+- [ ] TASK-036: Add Generic ViewHost And SlotHost
+- [ ] TASK-037: Mount Home Workspace Editor
+- [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
+- [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
+- [ ] TASK-040: Add Command Palette And Quick Capture Dialog
+- [ ] TASK-041: Add Search Overlay And Results Route
+- [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
+- [ ] TASK-043: Add ML And AI Context Panels
+- [ ] TASK-044: Add Settings And Sync Placeholders
+- [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
 
-### 2026-05-26 00:54 CST - M9 user-visible UI roadmap added
+### 2026-05-26 01:15 CST - TASK-034 completed
+
+- Branch: `docs/task-034-mui-ui-design`.
+- Task: Design MUI Workspace And Audit Unfinished UI.
+- Delivered: added `docs/product/07-user-interface-design.md` as the full MUI UI design, unfinished-work inventory, interaction-flow, responsive/accessibility, testing, package/framework, and architecture/security design document.
+- Delivered: linked the UI design document from `docs/product/README.md`.
+- Delivered: revised M9 so TASK-034 is docs/design/audit and implementation continues through TASK-045, starting with TASK-035 MUI substrate and first shell frame.
+- Delivered: documented that UI tests must use React Testing Library plus `@testing-library/user-event` for realistic typing, clicking, keyboard flows, focus return, and visible outcome assertions.
+- Official docs verified for this design pass: MUI installation, path imports, theming, `CssBaseline`, icons, `AppBar`, `Drawer`, `Dialog`, `Portal`; Testing Library query guidance; `@testing-library/user-event` setup; WAI-ARIA modal dialog pattern.
+- Validation: `git diff --check` passed.
+- Remaining accepted risks: no MUI package/code/test scaffolding is implemented in TASK-034; that work starts in TASK-035.
+- Merge status: ready to merge to `master`; next autonomous task is TASK-035.
+
+### 2026-05-26 01:11 CST - TASK-034 revised to docs/design/audit
+
+- Branch: `docs/task-034-mui-ui-design`.
+- Task: Design MUI Workspace And Audit Unfinished UI.
+- Trigger: user directed that Mirabilis must first create complete documentation design and UI design, use MUI, scaffold later, write tests that simulate real user typing/clicking, split tasks, find all incomplete content, and get all UI work done.
+- Correction: the earlier TASK-034 implementation framing is superseded. TASK-034 is now docs-only design and audit work; TASK-035 becomes the first implementation task for MUI substrate and first shell frame.
+- Source docs read: `docs/product/README.md`, `docs/product/01-vision-and-core.md`, `docs/product/03-plugin-platform.md`, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/product/06-view-slots.md`, `docs/architecture/README.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, `docs/implementation/task-index.md`, `docs/implementation/progress.md`, and TASK-034 agent communication notes.
+- Official docs verified for design notes: MUI installation, path imports, theming, `CssBaseline`, icons, `AppBar`, `Drawer`, `Dialog`, `Portal`; Testing Library query and `user-event` setup guidance; WAI-ARIA modal dialog pattern.
+- Required scope: add `docs/product/07-user-interface-design.md`, link it from product README, revise TASK-034 through TASK-045, update progress and agent communication docs, and run `git diff --check`.
+- Constraints: docs only; no production code, tests, package/Cargo/Tauri files, lockfiles, git metadata, commits, merges, or pushes.
+
+### 2026-05-26 00:54 CST - Initial M9 user-visible UI roadmap added
 
 - The roadmap completion scan was revised after the user pointed out that TASK-001 through TASK-033 delivered the runtime substrate but still left the real app UI as the startup card in `src/App.tsx`.
-- Added M9: User-visible app shell and workspace to `docs/implementation/task-index.md`, with TASK-034 through TASK-042 covering the Markdown-first workbench, generic view/slot hosts, sidebar navigation, command/search/capture surfaces, Calendar/Reports routes, ML/AI panels, and responsive/accessibility polish.
-- No new task is marked in progress; the next roadmap action is to start TASK-034.
+- Added an initial M9: User-visible app shell and workspace split to `docs/implementation/task-index.md`, with TASK-034 through TASK-042 covering the Markdown-first workbench, generic view/slot hosts, sidebar navigation, command/search/capture surfaces, Calendar/Reports routes, ML/AI panels, and responsive/accessibility polish.
+- Superseded by the 2026-05-26 01:11 CST directive: TASK-034 is now docs/design/audit, and implementation is split through TASK-045 starting at TASK-035.
 
 ### 2026-05-26 00:07 CST - Roadmap completion scan
 
