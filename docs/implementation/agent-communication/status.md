@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:32 CST.
+Last updated: 2026-05-25 11:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:32 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 second P1 regression tests delegated.
+- Current phase: TASK-028 second P1 production fix pending.
 
 ## Active Agents
 
-- Sartre (`test_writer`) is adding failing regression tests for the remaining Stats/Chart array inertness P1.
+- No active agents. Next delegation is an `implementer` handoff for the Stats/Chart array inertness P1.
 
 ## Current TASK-028 State
 
@@ -76,6 +76,11 @@ Last updated: 2026-05-25 11:32 CST.
   - Euler (`docs_researcher`) found no P0/P1 accessibility blockers. P2: duplicate optional Chart category `id` values can still duplicate React keys; docs sync is still needed.
   - Nietzsche (`deprecation_auditor`) found no P0/P1 API/deprecation blockers. P2/P3: stale docs and a future time-series table key collision risk.
   - Parent decision: treat Hypatia's array inertness finding as a required P1 and start a second TDD review-fix loop.
+- Second P1 regression tests completed:
+  - Sartre (`test_writer`) added test-only coverage for non-inert Stats and Chart arrays in `src/test/stats-chart-plugins.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-028 tests failed with 5 failed / 18 passed because accessor-backed arrays, overridden array methods, and nested custom iterators invoked sentinels.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `f449039 Sartre(test-fix)(Implement Stats and Chart plugins): cover inert stats chart arrays`; post-commit auto-push succeeded.
 
 ## Current TASK-027 State
 
@@ -183,5 +188,5 @@ Last updated: 2026-05-25 11:32 CST.
 
 ## Next Actions
 
-1. Wait for Sartre (`test_writer`) to finish array inertness regression tests.
-2. Validate the expected red signal, commit tests, then delegate production fixes to `implementer`.
+1. Delegate production fixes for Stats/Chart array inertness to `implementer`.
+2. Validate focused green checks and commit the production fix separately.

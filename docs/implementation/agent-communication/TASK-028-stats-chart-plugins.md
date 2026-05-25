@@ -248,3 +248,28 @@
   - Nested arrays such as Timer segment `tagIds` must not execute custom iterators.
   - Chart must reject or sanitize non-inert series rows before invoking accessor-backed rows or caller-overridden array methods.
 - Parent next action: wait for Sartre, validate the expected red signal, commit the test-only patch, then delegate production fixes to `implementer`.
+
+## Second Review-Fix Test Outcome
+
+- Sartre (`test_writer`) added a test-only patch in `src/test/stats-chart-plugins.test.tsx`.
+- Coverage added:
+  - Stats accessor-backed top-level arrays must not be read before fail-closed handling.
+  - Stats caller-overridden top-level array methods must not be invoked.
+  - Stats nested `tagIds` custom iterators must not be invoked.
+  - Chart accessor-backed category rows must not be read before empty fail-closed rendering.
+  - Chart caller-overridden category-series array methods must not be invoked.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` failed as expected with 5 failed / 18 passed.
+  - Failure symptoms: sentinel assertions expected `0` but observed Stats sentinel counts of `1` and Chart sentinel counts of `2`, proving current production invokes hostile accessor/method/iterator paths.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/stats-chart-plugins.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test-fix commit: `f449039 Sartre(test-fix)(Implement Stats and Chart plugins): cover inert stats chart arrays`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate production fixes to `implementer`.
+- Expected production scope: copy/validate Stats and Chart DTO arrays as inert plain arrays before iteration, avoid caller-overridden array methods and custom iterators, preserve existing valid aggregation/rendering behavior, and keep changes limited to Stats/Chart production files unless the implementer reports a blocker.
