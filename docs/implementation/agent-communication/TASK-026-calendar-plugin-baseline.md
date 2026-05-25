@@ -118,4 +118,20 @@
 
 ## Current Next Action
 
-- Wait for Huygens (`implementer`) to finish, then validate and commit implementation if checks pass.
+- Huygens (`implementer`) completed the initial TASK-026 production implementation in:
+  - `src/bootstrap/built-in-plugins.ts`
+  - `src/plugins/calendar/index.ts`
+  - `src/plugins/calendar/plugin.ts`
+- Implementation summary: registered built-in `calendar`, `calendar.day`, `calendar.week`, and `calendar.open-time-segment`; rendered explicit normalized Timer segment DTOs as UTC day/week calendar blocks; added in-view inert detail rendering; kept manual creation/editing, `calendar.month`, snake_case aliases, cross-plugin event queries, and native/package/Rust/Tauri/schema changes out of scope.
+- Parent validation:
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` passed with 1 file / 8 tests.
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts` passed with 4 files / 86 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri guard from `master` was empty.
+- Commit: `fd65d37` (`Huygens(implementation)(Implement Calendar Plugin baseline): implement calendar views and open command`).
+
+## Current Next Action
+
+- Spawn focused review agents for correctness, security, API/deprecation, test quality, PR exploration, current-doc evidence, and docs sync.

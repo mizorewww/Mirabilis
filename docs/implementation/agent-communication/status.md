@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:56 CST.
+Last updated: 2026-05-25 09:04 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:56 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 production implementation delegated to Huygens (`implementer`).
+- Current phase: TASK-026 implementation committed; focused review handoff pending.
 
 ## Active Agents
 
-- Huygens (`implementer`) is adding the minimum production code needed to satisfy Kant's focused Calendar Plugin baseline tests. Scope is production implementation only; no test edits, docs/progress edits, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
+- None currently active. Next step is focused review across correctness, security, API/deprecation, test quality, PR exploration, current docs, and formal docs sync.
 
 ## Current TASK-026 State
 
@@ -23,6 +23,7 @@ Last updated: 2026-05-25 08:56 CST.
   - Manual segment creation/editing, `calendar.month`, snake_case aliases, app-shell routing, broad cross-plugin event queries, native/Tauri/package/Rust/schema changes, and external calendar sync remain deferred.
 - Pre-test guidance agents Pauli (`planner`), Turing (`docs_researcher`), Cicero (`deprecation_auditor`), and Gauss (`security_reviewer`) completed. Key parent decision: Calendar must not read Timer-owned events through its plugin event facade; tests and implementation use normalized DTO input instead.
 - Kant (`test_writer`) added `src/test/calendar-plugin-baseline.test.tsx`. Parent red validation matched the expected signal: `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` ran 8 tests and all failed because Calendar Plugin built-in registration, views, command, and `src/plugins/calendar/*` production sources do not exist yet. `bun run typecheck`, focused eslint, no `.skip` / `.only` search, `git diff --check`, and native/package/Tauri guard passed. Commit: `acd2648`.
+- Huygens (`implementer`) added the initial TASK-026 production implementation in `src/bootstrap/built-in-plugins.ts`, `src/plugins/calendar/index.ts`, and `src/plugins/calendar/plugin.ts`. It registers built-in `calendar`, day/week views over explicit normalized segment DTOs, and read-only `calendar.open-time-segment` detail behavior without native/package/Rust/Tauri changes. Parent validation passed: focused Calendar tests 8/8, adjacent plugin/API/architecture tests 86/86, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `fd65d37`.
 
 ## Completed Recent Task
 
@@ -163,8 +164,8 @@ Last updated: 2026-05-25 08:56 CST.
 
 ## Next Actions
 
-1. Wait for Huygens (`implementer`) to finish TASK-026 minimum production code.
-2. Validate focused Calendar tests and adjacent checks after Huygens reports.
+1. Spawn focused review agents for TASK-026.
+2. Fix any P0/P1 findings through delegated test/implementation agents before docs/final gate.
 
 ## Current TASK-021 State
 
