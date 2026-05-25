@@ -281,3 +281,24 @@
 - Expected changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
 - Constraints: do not edit tests/docs/progress/package/native/Tauri/Rust/schema files; do not commit, merge, or push.
 - Parent next action: wait for Mill, validate focused green checks, then commit the production fix separately.
+
+## Second Review-Fix Implementation Outcome
+
+- Mill (`implementer`) completed the production-only array inertness fix in `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+- Fix scope:
+  - Descriptor-based plain-array copying before Stats/Chart DTO arrays are iterated or rendered.
+  - Fail-closed handling for accessor-backed arrays, sparse arrays, arrays with custom own methods/properties, custom iterators, and nested hostile `tagIds` arrays.
+  - Replaced Chart DTO `flatMap` validation paths with loops over copied local arrays.
+- Parent validation after Mill's fix:
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` passed with 23 tests.
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/habit-heatmap-plugins.test.tsx src/test/calendar-plugin-baseline.test.tsx` passed with 6 files / 129 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust/schema diff guard was empty.
+- Review-fix commit: `e48380a Mill(review-fix)(Implement Stats and Chart plugins): reject hostile stats chart arrays`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate a narrow re-review to confirm Hypatia's array inertness P1 is closed.
+- If no P0/P1 findings remain, delegate formal docs sync for the stale Stats/Chart docs.

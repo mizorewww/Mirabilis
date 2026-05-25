@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:39 CST.
+Last updated: 2026-05-25 11:44 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:39 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 second P1 production fix delegated.
+- Current phase: TASK-028 second P1 production fix completed; focused security/test re-review next.
 
 ## Active Agents
 
-- Mill (`implementer`) is fixing the Stats/Chart array inertness P1 in production code.
+- No active agents. Next delegation is focused re-review for the Stats/Chart array inertness fix.
 
 ## Current TASK-028 State
 
@@ -81,6 +81,11 @@ Last updated: 2026-05-25 11:39 CST.
   - Parent validated the expected red signal: focused TASK-028 tests failed with 5 failed / 18 passed because accessor-backed arrays, overridden array methods, and nested custom iterators invoked sentinels.
   - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
   - Test-fix commit: `f449039 Sartre(test-fix)(Implement Stats and Chart plugins): cover inert stats chart arrays`; post-commit auto-push succeeded.
+- Second P1 production fix completed:
+  - Mill (`implementer`) added descriptor-based plain-array copying and fail-closed inertness validation in Stats and Chart production code.
+  - Changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+  - Parent validated: focused TASK-028 tests passed (23 tests), adjacent plugin/core suite passed (6 files / 129 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `e48380a Mill(review-fix)(Implement Stats and Chart plugins): reject hostile stats chart arrays`; post-commit auto-push succeeded.
 
 ## Current TASK-027 State
 
@@ -188,5 +193,5 @@ Last updated: 2026-05-25 11:39 CST.
 
 ## Next Actions
 
-1. Wait for Mill (`implementer`) to finish the array inertness production fix.
-2. Validate focused green checks and commit the production fix separately.
+1. Delegate narrow security/test-quality re-review for the array inertness fix.
+2. If no P0/P1 findings remain, delegate formal docs sync to `doc_writer`.
