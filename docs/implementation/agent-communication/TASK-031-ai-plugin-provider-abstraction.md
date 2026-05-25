@@ -407,3 +407,40 @@
   - current OpenAI Responses / Structured Outputs alignment and absence of stale underscore AI aliases;
   - review-fix test coverage for production hook hardening, payload snapshotting, Responses-compatible input, raw Responses paths, schema specificity, nested hostile output, accessor non-execution, and forbidden secret/provider fields across all commands.
 - Parent next action: wait for narrow re-review results, record findings, and fix any remaining P0/P1 before formal docs sync.
+
+## Narrow Re-Review Outcomes
+
+- Bacon the 2nd (`security_reviewer`) found no P0 and one remaining P1:
+  - test-only AI provider/settings override seams are still live in production modules because `src/plugins/ai/plugin.ts` exports `replaceAiProviderForTestRuntime` / `clearAiProviderForTestRuntime`, `src/plugins/ai/settings.ts` exports `replaceAiProviderSettingsForTestRuntime`, and `getAiProviderSettings()` exposes settings including `apiKey`.
+  - The guard in `src/plugins/ai/test-support.ts` protects `configureAiPluginForTests()` but does not protect direct production-module imports.
+  - It also noted as residual risk that `test-support.ts` still installs an operation-changing getter through `Object.defineProperty`.
+- Leibniz the 2nd (`reviewer`) found no P0 and three remaining P1s:
+  - valid OpenAI Responses successes with `error: null` are normalized as provider failures;
+  - strict Structured Output schemas are meaningful but OpenAI-incompatible because they use unsupported JSON Schema keywords such as `maximum`, `minimum`, `maxItems`, and `maxLength`;
+  - test-support / override hardening remains incomplete due the operation-changing getter and directly importable provider/settings override functions.
+  - It also carried one P2: generated-filter output does not yet match Core `neq` / `exists` semantics.
+- Feynman the 2nd (`deprecation_auditor`) found no P0 and one current-API P1:
+  - normal Responses success payloads containing `status: "completed"`, `error: null`, `incomplete_details: null`, and output content are rejected.
+  - It confirmed production registration uses canonical dashed `ai.*` ids only; stale underscore ids are only tested/docs-referenced as rejected aliases.
+  - It found no Chat Completions, `response_format`, Assistants/threads/runs, SDK import, live `fetch`, or stale underscore alias registration.
+- James the 2nd (`test_quality_reviewer`) found no P0 and P1 test gaps:
+  - production test-hook hardening tests miss the renamed override seams;
+  - the operation-getter guard misses `Object.defineProperty`;
+  - the all-nine-command forbidden-field matrix omits `providerId`.
+- Parent official-doc check:
+  - OpenAI Structured Outputs docs confirm `strict: true` requests with unsupported JSON Schema keywords are rejected.
+  - Unsupported keywords include string length keywords, numeric min/max keywords, array min/max item keywords, and composition / conditional / dependent-schema keywords.
+- Interim full gate:
+  - `bun run check:quick` passed with typecheck, lint, 36 frontend test files / 560 tests, Rust fmt, Rust clippy, and Rust tests.
+- Parent decisions:
+  - Add second review-fix tests first, then delegate production fixes to `implementer`.
+  - Required test coverage:
+    - direct production-module import/source guard against provider/settings override seams and settings secret exposure;
+    - no `Object.defineProperty` operation getter or operation-changing wrapper in AI test support;
+    - `providerId` forbidden across all public AI commands;
+    - raw OpenAI Responses success fixture includes `error: null` and `incomplete_details: null`;
+    - strict Structured Output schemas remain meaningful but do not use unsupported OpenAI JSON Schema keywords (`maxLength`, `minLength`, `pattern`, `format`, `minimum`, `maximum`, `multipleOf`, `minItems`, `maxItems`, `allOf`, `not`, `if`, `then`, `else`, `dependentRequired`, `dependentSchemas`, `patternProperties`).
+
+## Current Next Action
+
+- Commit this narrow re-review record, then delegate second review-fix tests to `test_writer`.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:35 CST.
+Last updated: 2026-05-25 15:39 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 15:35 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 narrow re-review delegated after P1 review fixes.
+- Current phase: TASK-031 narrow re-review found remaining P1s; preparing second review-fix test handoff.
 
 ## Active Agents
 
-- Bacon the 2nd (`security_reviewer`) is re-checking TASK-031 AI provider security boundaries.
-- Leibniz the 2nd (`reviewer`) is re-checking TASK-031 correctness and prior P1 fixes.
-- Feynman the 2nd (`deprecation_auditor`) is re-checking TASK-031 current OpenAI Responses / Structured Outputs alignment and stale-id risk.
-- James the 2nd (`test_quality_reviewer`) is re-checking TASK-031 review-fix test coverage.
+- None.
 
 ## Current TASK-031 State
 
@@ -111,7 +108,18 @@ Last updated: 2026-05-25 15:35 CST.
   - Leibniz the 2nd (`reviewer`) should confirm prior correctness P1s are fixed for post-validation mutation, Responses-compatible input, raw Responses normalization, strict schemas, test-support getter hardening, and accessor-safe output validation.
   - Feynman the 2nd (`deprecation_auditor`) should confirm current OpenAI Responses / Structured Outputs alignment and no stale underscore AI aliases.
   - James the 2nd (`test_quality_reviewer`) should confirm review-fix tests cover the P1 regressions meaningfully.
-- Next action: wait for narrow re-review results, record findings, and fix any remaining P0/P1 before formal docs sync.
+- Narrow re-review completed:
+  - Bacon the 2nd (`security_reviewer`) found no P0 and one remaining P1: provider/settings override seams are still exported from production modules, and `getAiProviderSettings()` exposes configured settings including `apiKey`; `test-support` guarding does not protect direct production-module imports. It also noted the operation-changing getter remains in `test-support.ts`.
+  - Leibniz the 2nd (`reviewer`) found no P0 and three remaining P1s: `error: null` OpenAI Responses successes are normalized as failures; strict Structured Output schemas use unsupported OpenAI JSON Schema keywords such as `maximum`, `minimum`, `maxItems`, and `maxLength`; and override/test-support hardening remains incomplete. It also carried one P2 for generated-filter/Core operator parity.
+  - Feynman the 2nd (`deprecation_auditor`) found no P0 and one current-API P1: normal Responses success payloads with `error: null` are rejected. It confirmed canonical dashed AI ids only, no Chat Completions / `response_format` / Assistants / SDK assumptions, and no stale underscore alias registration.
+  - James the 2nd (`test_quality_reviewer`) found no P0 and P1 test gaps: tests miss the renamed override seams, miss the `Object.defineProperty` operation getter, and omit `providerId` from the all-command forbidden-field matrix.
+  - Parent independently re-checked official OpenAI Structured Outputs docs: `strict: true` requests with unsupported JSON Schema keywords are rejected, including unsupported string length, numeric min/max, and array min/max item keywords.
+  - Interim full gate before second review-fix: `bun run check:quick` passed with 36 frontend files / 560 tests, typecheck, lint, Rust fmt, Rust clippy, and Rust tests.
+- Parent decisions after narrow re-review:
+  - Add second review-fix tests first.
+  - Required test coverage: direct import or source guard for production provider/settings override seams; no `Object.defineProperty` operation getter or operation-changing test wrapper; `providerId` forbidden across all public AI commands; OpenAI raw success fixture with `error: null` and `incomplete_details: null`; strict Structured Output schemas contain meaningful supported property shapes while excluding unsupported keywords (`maxLength`, `minLength`, `pattern`, `format`, `minimum`, `maximum`, `multipleOf`, `minItems`, `maxItems`, `allOf`, `not`, `if`, `then`, `else`, `dependentRequired`, `dependentSchemas`, `patternProperties`).
+  - After tests fail red, delegate production fix to `implementer`.
+- Next action: commit narrow re-review record, then delegate second review-fix tests.
 
 ## Current TASK-030 State
 
