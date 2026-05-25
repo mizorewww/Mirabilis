@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 12:01 CST - TASK-028 merged
+
+- Branch: `feat/task-028-stats-chart-plugins`.
+- Merge commit: `8d2ce2b` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 33 frontend test files / 519 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-028 is complete on `master`; next autonomous task is TASK-029.
+
 ### 2026-05-25 11:58 CST - TASK-028 completed
 
 - Branch: `feat/task-028-stats-chart-plugins`.
