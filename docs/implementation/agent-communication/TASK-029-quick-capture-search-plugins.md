@@ -305,3 +305,20 @@
 - Rawls (`security_reviewer`) started at 2026-05-25 12:51 CST to re-check trust-boundary and native/package security surfaces.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for narrow re-review, then proceed to formal docs sync only if no P0/P1 findings remain.
+
+## Narrow Re-Review Outcomes
+
+- Sagan (`test_quality_reviewer`) found no P0/P1/P2/P3 findings for the requested review-fix gaps. It verified hostile Search payload coverage, Search caps, Quick Capture region semantics, Search status summary, save-and-open hostile parity, and static guard hardening.
+- Volta (`docs_researcher`) found no P0/P1 accessibility issues. It verified `quick-capture.modal` now renders a labelled region and `search.results` now includes a status summary while preserving list/listitem semantics. It listed stale formal docs for doc sync.
+- Rawls (`security_reviewer`) found no P0/P1 security issues. It confirmed Search hostile payload/cap coverage and implementation remain strict, no native/package/Tauri/Rust/schema/capability changes were introduced, and no HTML execution sinks/raw imports appeared.
+
+## Current Next Action
+
+- Delegate formal docs sync to `doc_writer`.
+- Expected docs scope:
+  - Replace stale `quick_capture.*` ids with `quick-capture.*`.
+  - Replace stale `inbox.unprocessed` wording with `quick-capture.unprocessed`.
+  - Clarify desktop global shortcut/native entrypoint is deferred and only reviewed/documented in TASK-029.
+  - Clarify Quick Capture preserves Markdown and requires explicit Task/Tag command handoff; it does not auto-create Task pages.
+  - Clarify current views are `quick-capture.modal` / `quick-capture.mobile-input` labelled region/textarea baselines, not rich mobile toolbar mounting.
+  - Clarify Search is on-demand scan, not persistent indexing, in current TASK-029 baseline.

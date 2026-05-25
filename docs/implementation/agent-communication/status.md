@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:51 CST.
+Last updated: 2026-05-25 12:53 CST.
 
 ## Current Task
 
@@ -8,13 +8,11 @@ Last updated: 2026-05-25 12:51 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 narrow re-review running.
+- Current phase: TASK-029 docs sync pending.
 
 ## Active Agents
 
-- Sagan (`test_quality_reviewer`) is re-checking TASK-029 review-fix test coverage.
-- Volta (`docs_researcher`) is re-checking TASK-029 accessibility/current-doc fixes.
-- Rawls (`security_reviewer`) is re-checking TASK-029 trust-boundary fixes.
+- No active agents. Next delegation is `doc_writer` for TASK-029 formal docs sync.
 
 ## Current TASK-029 State
 
@@ -72,6 +70,11 @@ Last updated: 2026-05-25 12:51 CST.
   - Changed files: `src/plugins/quick-capture/plugin.ts` and `src/plugins/search/plugin.ts`.
   - Parent validated: focused TASK-029 tests passed (15 tests), adjacent plugin/API/Task/Tag/Stats suite passed (9 files / 179 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Review-fix commit: `376ab21 Jason(review-fix)(Implement Quick Capture and Search plugins): fix capture search accessibility`; post-commit auto-push succeeded.
+- Narrow re-review completed:
+  - Sagan (`test_quality_reviewer`) found no P0/P1/P2/P3 findings for the review-fix gaps.
+  - Volta (`docs_researcher`) found no P0/P1 accessibility issues; prior Quick Capture dialog and Search status issues are fixed. It listed stale formal docs for doc sync.
+  - Rawls (`security_reviewer`) found no P0/P1 security issues and confirmed Search hostile payload/cap boundaries remain strict.
+  - Parent decision: proceed to formal docs sync.
 
 ## Current TASK-028 State
 
@@ -267,5 +270,5 @@ Last updated: 2026-05-25 12:51 CST.
 
 ## Next Actions
 
-1. Wait for Sagan, Volta, and Rawls.
-2. If no P0/P1 findings remain, delegate formal docs sync to `doc_writer`.
+1. Delegate formal TASK-029 docs sync to `doc_writer`.
+2. Validate docs-only patch and commit separately.
