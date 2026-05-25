@@ -170,7 +170,7 @@ task.resolve-task-block remains unchecked-only
 No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
 ```
 
-点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。TASK-022 当前交付 All Tasks / Today filters 的 data-only execution 和 registered `page.list` rendering slice。TASK-023/024 已交付 reusable MetadataBar slice、Timer Start control 和 global active timer bar；保存后自动扫描/索引、全局 saved-filter navigation、app-shell filter route、完整 metadata editor registry、Time Segment timeline/note flow、rich editor behavior 和 native/package surfaces 仍是后续范围。
+点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。TASK-022 当前交付 All Tasks / Today filters 的 data-only execution 和 registered `page.list` rendering slice。TASK-023 through TASK-025 已交付 reusable MetadataBar slice、Timer Start control、global active timer bar、Time Segment events、Time Segment Note Markdown Pages 和 `page.timeline` segment/note slot；保存后自动扫描/索引、全局 saved-filter navigation、app-shell filter route、完整 metadata editor registry、Timer metadata totals、Calendar/Stats/ML integration、rich editor behavior 和 native/package surfaces 仍是后续范围。
 
 TASK-021 已交付的最小 Tag Plugin baseline：
 
@@ -263,7 +263,7 @@ metadata Start control executes timer.start
 global.floating timer.global-active-bar shows active page title / elapsed / Pause / Resume / Stop
 ```
 
-TASK-025+ 后续：
+TASK-024 时留给 TASK-025+ 的范围：
 
 ```text
 time segment event
@@ -272,6 +272,22 @@ page timeline
 recently worked filter
 unnoted sessions filter
 ```
+
+TASK-025 当前已交付的 Timer slice：
+
+```text
+timer.stop finalizes active timer with timer.stopped then namespace timer/type time_segment_created
+active timer.start and active timer.switch use the same previous-timer finalization path
+time_segment_created payload uses camelCase segmentId/pageId/startAt/endAt/durationSeconds/source timer
+pause/resume duration is excluded from durationSeconds
+timer.add-note creates or updates Markdown Page notes for stopped segments
+timer.add-note appends namespace timer/type time_segment_note_added without mutating original segment events
+timer.page-timeline.segments renders current-page Timer-owned segments and inert Note text
+MetadataBar command execution requires owner-aware descriptor lookup and fails closed without lookup
+PluginHost internal scoped command executor authorizes by descriptor owner, not command id prefix
+```
+
+Still deferred after TASK-025: Timer metadata totals, Calendar/Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence/schema, and Tauri/package/Rust/native changes.
 
 ---
 
@@ -538,13 +554,13 @@ MarkdownEditorPlugin 解析文档
 TaskPlugin 识别 - [ ]
 TaskPlugin 创建任务 Markdown Page
 TagPlugin 通过显式 tag.refresh-tags 识别已保存 #tag
-TimerPlugin 提供 timer.start / stop / pause / resume / switch 和 global active bar
+TimerPlugin 提供 timer.start / stop / pause / resume / switch / add-note、global active bar 和 page timeline segments
 Metadata UI 通过 reusable MetadataBar 组合 plugin-owned page.header.metadata fields
 FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer metadata slot contributions；TASK-024 当前把 Timer slot 接到 `timer.start`，并交付 Timer-owned in-memory active state、lifecycle commands/events 和 `timer.global-active-bar`。仍没有 production app-shell/editor 默认挂载、完整 field renderer/editor registry、Time Segment persistence/note pages、Calendar/Stats integration 或 native/schema changes。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
+这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer metadata slot contributions；TASK-024 当前把 Timer slot 接到 `timer.start`，并交付 Timer-owned in-memory active state、lifecycle commands/events 和 `timer.global-active-bar`。TASK-025 当前追加 Time Segment events、Markdown Page-backed Time Segment Notes、`timer.add-note` 和 `timer.page-timeline.segments`。仍没有 production app-shell/editor 默认挂载、完整 field renderer/editor registry、Timer metadata totals、Calendar/Stats/ML integration 或 native/schema changes。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
 
 当前显式点击导航完成后，用户在任务页继续写：
 

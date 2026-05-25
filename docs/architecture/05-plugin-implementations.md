@@ -104,7 +104,7 @@ TASK-022 delivers compatible generic `page.list` execution/rendering for this sa
 
 Timer Plugin 是另一个核心插件。
 
-TASK-024 当前实现的文件范围很小：
+TASK-025 当前实现的文件范围仍集中在 TypeScript Timer Plugin 和 Plugin Host/MetadataBar command boundary：
 
 ```text
 src/plugins/timer/
@@ -155,7 +155,7 @@ plugins/timer/
 ### 11.1 Timer Plugin 注册内容
 
 Timer manifest 长期会声明 metadata fields、event types、default filters 和 indexers 等 descriptor。
-TASK-024 当前注册 canonical Timer commands、metadata Start control 和 global active bar。它不注册 timer metadata writers、indexers、timeline views、native/Tauri commands 或 schema-backed persistence。
+TASK-025 当前注册 canonical Timer commands、metadata Start control、global active bar 和 page timeline segment slot。它不注册 timer metadata writers、indexers、native/Tauri commands 或 schema-backed persistence。
 
 ```ts
 export const TimerPlugin: AppPlugin = {
@@ -173,6 +173,7 @@ export const TimerPlugin: AppPlugin = {
     ctx.commands.register({ id: "timer.pause", title: "Pause timer", handler: pauseTimer });
     ctx.commands.register({ id: "timer.resume", title: "Resume timer", handler: resumeTimer });
     ctx.commands.register({ id: "timer.switch", title: "Switch timer", handler: switchTimer });
+    ctx.commands.register({ id: "timer.add-note", title: "Add time segment note", handler: addTimeSegmentNote });
 
     ctx.slots.register({
       id: "timer.page-header-metadata.placeholder",
@@ -186,6 +187,13 @@ export const TimerPlugin: AppPlugin = {
       slot: "global.floating",
       order: 100,
       component: TimerGlobalActiveBar
+    });
+
+    ctx.slots.register({
+      id: "timer.page-timeline.segments",
+      slot: "page.timeline",
+      order: 100,
+      component: TimerPageTimeline
     });
   }
 };
@@ -202,6 +210,7 @@ Current commands:
 - `timer.pause()` / exact empty payload
 - `timer.resume()` / exact empty payload
 - `timer.switch({ pageId })`
+- `timer.add-note({ segmentId, markdown })`
 
 `timer.start` and `timer.switch` validate exact payload shape and page existence. Extra keys, missing `pageId`, non-string/blank `pageId`, missing pages, caller-supplied segment/time/event fields, accessors, symbol keys, non-enumerable keys, prototype-carried fields, arrays, class instances, and unsafe `__proto__` / `constructor` / `prototype` keys are rejected. Non-empty null-prototype page payloads are rejected; exact null-prototype empty payloads are allowed only for empty-payload commands.
 
@@ -212,6 +221,7 @@ Command results are narrow DTOs:
 ```ts
 type TimerCommandResult = {
   activeTimer: TimerDto | null;
+  createdSegment?: TimeSegmentDto;
   stoppedTimer?: TimerDto;
 };
 
@@ -223,6 +233,20 @@ type TimerDto = {
   startedAt: string;
   status: "running" | "paused" | "stopped";
   stoppedAt?: string;
+};
+
+type TimeSegmentDto = {
+  durationSeconds: number;
+  endAt: string;
+  pageId: string;
+  segmentId: string;
+  source: "timer";
+  startAt: string;
+  notePageId?: string;
+};
+
+type TimerNoteResult = {
+  notePageId: string;
 };
 ```
 
@@ -249,6 +273,8 @@ started
 paused
 resumed
 stopped
+time_segment_created
+time_segment_note_added
 ```
 
 `timer.started` event payload uses `startAt`; active/stopped DTOs use `startedAt`. Pause/resume/stop event payloads use `pausedAt` / `resumedAt` / `stoppedAt` and elapsed seconds.
@@ -256,62 +282,34 @@ stopped
 Current state transitions:
 
 - `timer.start({ pageId })` starts a running active timer for the page and appends `timer.started`.
-- If another timer is active, `timer.start({ pageId })` first appends `timer.stopped` for the previous timer, then appends `timer.started` for the new timer, and returns `{ activeTimer, stoppedTimer }`. Same-page start is treated as stop then restart.
+- If another timer is active, `timer.start({ pageId })` first appends `timer.stopped` for the previous timer, then appends `namespace: "timer"` / `type: "time_segment_created"` for that stopped timer, then appends `timer.started` for the new timer, and returns `{ activeTimer, stoppedTimer, createdSegment }`. Same-page start is treated as stop then restart.
 - `timer.pause()` requires a running active timer, freezes elapsed time, appends `timer.paused`, and returns `{ activeTimer }`.
 - `timer.resume()` requires a paused active timer, resumes elapsed time, appends `timer.resumed`, and returns `{ activeTimer }`.
-- `timer.stop()` requires a running or paused active timer, appends `timer.stopped`, clears active state, and returns `{ activeTimer: null, stoppedTimer }`.
-- `timer.switch({ pageId })` stops the previous active timer then starts the next page timer. It supports no-active, paused, and same-page cases. If the target page is missing, active state and events are preserved.
+- `timer.stop()` requires a running or paused active timer, appends `timer.stopped`, then appends `time_segment_created`, clears active state, and returns `{ activeTimer: null, stoppedTimer, createdSegment }`.
+- `timer.switch({ pageId })` stops the previous active timer, appends its `time_segment_created`, then starts the next page timer. It supports no-active, paused, and same-page cases. If the target page is missing, active state and events are preserved.
+- `timer.add-note({ segmentId, markdown })` requires a known stopped Time Segment, creates or updates a Markdown Page note, appends `time_segment_note_added`, and returns `{ notePageId }`. It rejects the active timer's segment id and does not mutate the original `time_segment_created` event.
 
-`timer.global-active-bar` reads the registration-scoped active timer store and renders active page title, visible elapsed time, and Pause / Resume / Stop controls. The controls execute exactly `timer.pause`, `timer.resume`, and `timer.stop` with `{}` through Timer-scoped functions. The metadata Start control executes `timer.start` through the scoped command executor passed by `MetadataBar`.
+`time_segment_created` payloads use camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, and `source: "timer"`; absent optional fields are omitted. Pause/resume accounting excludes paused duration from `durationSeconds`.
+
+`timer.global-active-bar` reads the registration-scoped active timer store and renders active page title, visible elapsed time, and Pause / Resume / Stop controls. The controls execute exactly `timer.pause`, `timer.resume`, and `timer.stop` with `{}` through Timer-scoped functions. The metadata Start control executes `timer.start` through the descriptor-owned scoped command executor passed by `MetadataBar`.
+
+`timer.page-timeline.segments` reads Timer-owned `time_segment_created` and `time_segment_note_added` events for the current page, renders segment and Note text inertly, and exposes accessible Add Note / Edit Note controls. Saving a note executes `timer.add-note` through the internal Timer scoped executor.
+
+The internal scoped executor authorizes by registered command descriptor ownership (`descriptor.pluginId === "timer"` for Timer UI), not by command id prefix. Known residual P2: this internal channel uses globally discoverable `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` and is duplicated between Plugin Host and Timer; descriptor-owner checks protect execution, but future API cleanup should replace the hidden symbol channel.
 
 No production fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handler, or broad active-bar command execution behavior belongs in Timer production code. The Vitest-only fake timer cleanup compatibility shim lives in `src/test/setup.ts`.
 
-### 11.4 Time Segment and Note future
+### 11.4 Time Segment and Note current slice
 
-```ts
-async function stopTimer(ctx) {
-  await ctx.transaction.run(async tx => {
-    const activeSegmentId = await readTimerRuntimeState("activeSegmentId");
+TASK-025 implements the narrow event/page slice:
 
-    const startedEvent = tx.events
-      .list({ namespace: "timer" })
-      .find(event => {
-        const payload = event.payload as { segmentId?: string };
+- Timer finalization through `timer.stop`, active `timer.start`, or active `timer.switch` appends `namespace: "timer"`, `type: "time_segment_created"`.
+- `timer.stopped` remains before the segment creation event where an active timer is finalized.
+- Time Segment Note remains a Markdown Page. `timer.add-note` creates the page on first save, updates the same page on later saves, and appends `namespace: "timer"`, `type: "time_segment_note_added"`.
+- The original segment event remains immutable; timeline data derives the latest note page from note-link events.
+- `timer.page-timeline.segments` is the current page timeline contribution. It filters to current-page Timer-owned events and ignores malformed, wrong-owner, wrong-page, or unreadable note data.
 
-        return event.type === "started" && payload.segmentId === activeSegmentId;
-      });
-
-    if (!startedEvent) {
-      throw new Error("No active timer start event");
-    }
-
-    const startedPayload = startedEvent.payload as { startAt: string };
-
-    const notePage = await tx.pages.create({
-      title: "Time Segment Note",
-      body: createEmptyMarkdownDoc()
-    });
-
-    await tx.events.append({
-      pageId: startedEvent.pageId,
-      namespace: "timer",
-      type: "time_segment_created",
-      payload: {
-        segmentId: activeSegmentId,
-        startAt: startedPayload.startAt,
-        endAt: now(),
-        durationSeconds: diffSeconds(startedPayload.startAt, now()),
-        notePageId: notePage.id,
-        source: "timer"
-      }
-    });
-
-    await writeTimerRuntimeState("activeSegmentId", null);
-  });
-}
-```
-
-The sketch above is TASK-025+ future behavior. TASK-024 `timer.stop` does not append `timer.time_segment_created`, create note Markdown Pages, update `timer.total_tracked_time`, update `timer.last_tracked_at`, write `timer.active_segment_id`, populate timelines, or feed Calendar/Stats/ML. Time Segment Note must remain a Markdown Page when TASK-025 implements it.
+Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar/Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
 
 ---
 

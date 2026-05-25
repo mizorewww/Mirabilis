@@ -13,11 +13,20 @@ export type MetadataBarCommandExecutor = {
   execute(commandId: string, input?: unknown): Promise<unknown>;
 };
 
+export type MetadataBarCommandDescriptor = {
+  id: string;
+  pluginId: string;
+};
+
+export type MetadataBarCommandRegistry = MetadataBarCommandExecutor & {
+  get(commandId: string): MetadataBarCommandDescriptor;
+};
+
 export type MetadataBarProps = {
   pageId: string;
   metadata: readonly MetadataRecord[];
   slots: Pick<SlotRegistry, "list">;
-  commands: MetadataBarCommandExecutor;
+  commands: MetadataBarCommandRegistry;
   pluginHost?: {
     listPlugins?(): readonly PluginHostRecord[];
   };
@@ -85,7 +94,7 @@ export function MetadataBar({
 
 function renderContribution(input: {
   activePlugins: ReadonlyMap<string, PluginHostRecord>;
-  commands: MetadataBarCommandExecutor;
+  commands: MetadataBarCommandRegistry;
   contribution: SlotContribution;
   metadata: readonly MetadataRecord[];
   pageId: string;
@@ -263,24 +272,89 @@ function isMetadataValueType(value: string): value is MetadataValueType {
 }
 
 function createScopedCommandExecutor(
-  commands: MetadataBarCommandExecutor,
+  commands: MetadataBarCommandRegistry,
   pluginId: string,
 ): MetadataBarCommandExecutor {
   return {
-    execute(commandId, input) {
-      if (!commandBelongsToPlugin(commandId, pluginId)) {
-        return Promise.reject(
-          new Error(`Metadata field cannot execute command ${commandId}`),
-        );
+    async execute(commandId, input) {
+      const lookup = lookupRegisteredCommandDescriptor(commands, commandId);
+
+      if (lookup.kind === "found") {
+        if (lookup.descriptor.pluginId !== pluginId) {
+          throw new Error(`Metadata field cannot execute command ${commandId}`);
+        }
+
+        return commands.execute(lookup.descriptor.id, input);
       }
 
-      return commands.execute(commandId, input);
+      throw new Error(`Metadata field cannot execute command ${commandId}`);
     },
   };
 }
 
-function commandBelongsToPlugin(commandId: string, pluginId: string): boolean {
-  return commandId === pluginId || commandId.startsWith(`${pluginId}.`);
+type CommandDescriptorLookup =
+  | {
+      kind: "found";
+      descriptor: {
+        id: string;
+        pluginId: string;
+      };
+    }
+  | {
+      kind: "rejected";
+    }
+  | {
+      kind: "unavailable";
+    };
+
+function lookupRegisteredCommandDescriptor(
+  commands: MetadataBarCommandRegistry,
+  commandId: string,
+): CommandDescriptorLookup {
+  const commandRegistry = commands as MetadataBarCommandExecutor & {
+    get?: unknown;
+  };
+
+  if (typeof commandRegistry.get !== "function") {
+    return { kind: "unavailable" };
+  }
+
+  try {
+    const descriptor = commandRegistry.get(commandId);
+
+    if (!isCommandDescriptorOwner(descriptor, commandId)) {
+      return { kind: "rejected" };
+    }
+
+    return {
+      kind: "found",
+      descriptor,
+    };
+  } catch {
+    return { kind: "rejected" };
+  }
+}
+
+function isCommandDescriptorOwner(
+  value: unknown,
+  commandId: string,
+): value is { id: string; pluginId: string } {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const descriptor = value as {
+    id?: unknown;
+    pluginId?: unknown;
+  };
+
+  return (
+    typeof descriptor.id === "string" &&
+    descriptor.id === commandId &&
+    descriptor.id.trim().length > 0 &&
+    typeof descriptor.pluginId === "string" &&
+    descriptor.pluginId.trim().length > 0
+  );
 }
 
 function createMetadataFieldIdentity(input: {

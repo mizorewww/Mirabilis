@@ -240,7 +240,7 @@ Timer Start control through scoped timer.start
 todo · #tag · due · Start
 ```
 
-`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和 Time Segment timeline/note flow 仍是后续范围。
+`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和 Timer tracked-total metadata 仍是后续范围。TASK-025 当前交付 `page.timeline` segment/note slot，但不会默认完成 app-shell/editor broad mounting。
 
 ### Phase 5：Timer Plugin
 
@@ -255,7 +255,7 @@ Switch
 Global Timer
 ```
 
-TASK-024 当前计时行为：
+TASK-025 当前计时行为：
 
 ```text
 timer.start
@@ -263,26 +263,31 @@ timer.stop
 timer.pause
 timer.resume
 timer.switch
+timer.add-note
 timer.global-active-bar
+timer.page-timeline.segments
 ```
 
-TASK-025+ 后续行为：
+TASK-025 当前已交付：
 
 ```text
-Time Segment
-Time Segment Note
-Recently Worked
-Unnoted Sessions
+Time Segment event
+Time Segment Note Markdown Page
+page.timeline segment/note slot
 ```
 
-TASK-024 验收：
+当前验收：
 
 ```text
 任务能计时
 Global Timer 显示 active page title / elapsed / Pause / Resume / Stop
-停止只追加 timer.stopped 并清除 active state
-不生成 Time Segment
+停止追加 timer.stopped，再追加 namespace timer/type time_segment_created，并清除 active state
+active timer.start 和 active timer.switch finalize previous timer before starting the next
+timer.add-note 为 stopped segment 创建或更新 Markdown Page note
+timer.page-timeline.segments 显示当前页面 Timer-owned segments 和 inert Note text
 ```
+
+Recently Worked、Unnoted Sessions、metadata totals、Calendar/Stats/ML integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 ### Phase 6：Calendar Plugin
 
@@ -423,15 +428,15 @@ todo · #plugin · estimate empty · tracked 0m · Start
 Pause · Stop
 ```
 
-TASK-024 当前 Global Timer 可以 Pause / Resume / Stop。Note、Time Segment timeline 和 Calendar/Stats 使用是 TASK-025+ 范围。
+TASK-025 当前 Global Timer 可以 Pause / Resume / Stop；`timer.stop`、active `timer.start` 和 active `timer.switch` 会生成 Timer-owned Time Segment events。Calendar/Stats 使用仍是后续范围。
 
-TASK-025+ 用户写 Note：
+TASK-025 当前用户可在 `page.timeline` 的 `timer.page-timeline.segments` 中为 stopped segment 写 Note：
 
 ```text
 刚想清楚：Core 只负责 Markdown Page、Metadata、Event、Filter、View registry、Command registry。任务、习惯、计时、统计、ML 全部是 Plugin。
 ```
 
-TASK-025+ 用户 Stop 后系统生成 Time Segment：
+用户 Stop 后系统生成 Time Segment event：
 
 ```text
 10:00–10:47
@@ -451,6 +456,8 @@ Stats 显示：
 #plugin 本周 47m
 设计 Plugin 系统 tracked 47m
 ```
+
+Calendar/Stats/ML integration、Timer metadata totals、Recently Worked、Unnoted Sessions、manual segment editing、calendar drag/drop、app-shell broad mounting 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 All Tasks 显示：
 

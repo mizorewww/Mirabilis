@@ -184,6 +184,14 @@ type PluginLifecyclePhase =
 
 type PluginRemovalPhase = "deactivate" | "uninstall";
 
+type PluginScopedCommandExecutor = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
+
+const pluginScopedCommandExecutorKey = Symbol.for(
+  "mirabilis.internal.pluginScopedCommandExecutor",
+);
+
 type PluginContextScope = {
   pluginId: string;
   phase: PluginLifecyclePhase;
@@ -665,7 +673,7 @@ class PluginHostImpl implements PluginHostInstance {
   }
 
   private createPluginContext(scope: PluginContextScope): PluginContext {
-    return {
+    const context: PluginContext = {
       pluginId: scope.pluginId,
       app: cloneAppRuntimeInfo(this.app),
       pages: createPluginPageStore(scope, this.services.pages),
@@ -680,6 +688,31 @@ class PluginHostImpl implements PluginHostInstance {
       views: this.createPluginViewRegistry(scope),
       slots: this.createPluginSlotRegistry(scope),
       transaction: this.createPluginTransactionManager(scope),
+    };
+
+    Object.defineProperty(context, pluginScopedCommandExecutorKey, {
+      enumerable: false,
+      value: this.createPluginScopedCommandExecutor(scope.pluginId),
+    });
+
+    return context;
+  }
+
+  private createPluginScopedCommandExecutor(
+    pluginId: string,
+  ): PluginScopedCommandExecutor {
+    return {
+      execute: async (commandId, input) => {
+        if (typeof commandId !== "string") {
+          throw new Error(
+            `Plugin ${pluginId} cannot execute command ${commandId}`,
+          );
+        }
+
+        const descriptor = this.getOwnedCommandDescriptor(pluginId, commandId);
+
+        return this.registries.commands.execute(descriptor.id, input);
+      },
     };
   }
 

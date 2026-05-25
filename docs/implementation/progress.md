@@ -59,7 +59,7 @@ Status markers:
 
 - [x] TASK-023: Implement Metadata UI Plugin
 - [x] TASK-024: Implement Timer Plugin start/stop/pause/resume/switch
-- [ ] TASK-025: Implement Time Segment and Time Segment Note
+- [x] TASK-025: Implement Time Segment and Time Segment Note
 
 ## Milestone M6: Calendar and reporting
 
@@ -78,6 +78,41 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 08:33 CST - TASK-025 completed
+
+- Branch: `feat/task-025-time-segment-note`.
+- Task: Implement Time Segment and Time Segment Note.
+- Delivered: Timer finalization paths (`timer.stop`, active `timer.start`, active `timer.switch`) create event-backed Time Segments after `timer.stopped`; segment payloads use camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, and `source: "timer"` while excluding paused duration and omitting absent optional fields.
+- Delivered: canonical `timer.add-note({ segmentId, markdown })` creates or updates stopped-segment Markdown Page notes, returns `{ notePageId }`, appends `namespace: "timer"`, `type: "time_segment_note_added"`, and leaves original segment events immutable.
+- Delivered: `timer.page-timeline.segments` renders current-page Timer-owned segments and inert note text on `page.timeline` with accessible Add Note / Edit Note UI. MetadataBar and PluginHost scoped command execution now authorize by registered command descriptor owner and fail closed without descriptor lookup instead of trusting command id prefixes.
+- Validation: focused red tests were added before implementation for segment/note behavior, timeline note UI, PluginHost scoped command ownership, MetadataBar descriptor-owner command ownership, and MetadataBar execute-only fail-closed behavior. All P0/P1 review findings were fixed or cleared.
+- Final branch gates: `bun run check:quick` passed with typecheck, lint, 30 frontend test files / 468 tests, Rust fmt, Rust clippy, and Rust tests. `bun run build` passed.
+- Release readiness: Godel (`release_checker`) found no P0/P1 blockers, confirmed `master` and `origin/master` are ancestors of the branch head, confirmed changed files match TASK-025 scope, and confirmed no package/native/Tauri/Rust/schema/capability/permission/lockfile changes.
+- Remaining accepted risk: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer. Descriptor-owner checks protect execution; future API cleanup should replace the hidden channel.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
+
+### 2026-05-25 08:20 CST - TASK-025 docs sync
+
+- Branch: `feat/task-025-time-segment-note`.
+- Task: Implement Time Segment and Time Segment Note.
+- Documentation sync scope: product, architecture, development, implementation, and testing docs describe current TASK-025 behavior without production/test/package/native changes.
+- Delivered docs sync: Timer finalization paths (`timer.stop`, active `timer.start`, active `timer.switch`) append `namespace: "timer"`, `type: "time_segment_created"` after `timer.stopped`; segment payloads use camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, `source: "timer"` and omit absent optional fields; pause/resume duration is excluded.
+- Delivered docs sync: canonical `timer.add-note` creates or updates stopped-segment Markdown Page notes, appends `namespace: "timer"`, `type: "time_segment_note_added"`, and leaves original segment events immutable; stale underscore command-name wording was removed from formal current behavior.
+- Delivered docs sync: `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and inert note text with accessible Add Note / Edit Note controls; MetadataBar command execution now requires owner-aware command descriptor lookup and fails closed without lookup; PluginHost internal scoped execution authorizes by descriptor owner rather than command id prefix.
+- Deferred scope remains explicit: Timer metadata totals, Calendar/Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, and release/package/native work.
+- Known residual P2 recorded: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` internal channel remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace the hidden channel.
+
+### 2026-05-24 18:56 CST - TASK-025 started
+
+- Branch: `feat/task-025-time-segment-note`.
+- Task: Implement Time Segment and Time Segment Note.
+- Start point: `master` after TASK-024 merge validation commit `22402e2`.
+- Source docs read: `docs/implementation/task-index.md#task-025-implement-time-segment-and-time-segment-note`, `docs/product/05-built-in-plugins.md#183-time-segment`, `docs/product/04-editor-and-workflows.md#264-计时`, `docs/product/06-view-slots.md`, `docs/architecture/05-plugin-implementations.md#114-time-segment-and-note-future`, `docs/architecture/07-runtime-flows.md#188-用户-stop-并写-note`, `docs/development/01-data-roadmap-and-mvp.md#phase-5timer-plugin`, and `docs/development/02-implementation-roadmap-and-constraints.md#phase-5timer-plugin`.
+- Initial scope: stopping a timer creates a `namespace: "timer"`, `type: "time_segment_created"` event with start, end, duration, and page id; Time Segment Note remains a Markdown Page; task page timeline can render that page's segments.
+- Initial out of scope until agents narrow otherwise: Calendar/Stats/ML integration, native/Tauri/package/Rust/schema changes, persistent storage beyond current runtime stores, broad app-shell/editor mounting, Recently Worked and Unnoted Sessions filters, manual segment editing, drag/drop calendar blocks, and broad metadata totals unless acceptance requires a narrow update.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-025-time-segment-note.md`.
 
 ### 2026-05-24 18:54 CST - TASK-024 merged
 

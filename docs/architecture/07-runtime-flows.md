@@ -154,12 +154,19 @@ TimerPlugin registers timer.global-active-bar on global.floating
 Active timer state is Timer-owned, registration-scoped, and in-memory
 Timer lifecycle events use namespace timer and types started / paused / resumed / stopped
 
+TASK-025 当前:
+TimerPlugin registers timer.add-note and timer.page-timeline.segments
+timer.stop, active timer.start, and active timer.switch append namespace timer/type time_segment_created
+timer.add-note creates or updates Markdown Page notes for stopped segments
+timer.page-timeline.segments renders current-page Timer-owned segments and inert Note text
+MetadataBar and PluginHost scoped command execution authorize by registered command descriptor owner
+
 后续：
 编辑器保存后自动扫描 task blocks
 全局 saved-filter navigation / app-shell filter route
 Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
-Time Segment persistence, Note pages, timelines, and Calendar/Stats integration
+Timer metadata totals, Calendar/Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native/schema surfaces
 ```
 
 ### 18.2 用户点击任务文字
@@ -249,19 +256,20 @@ There is no production app-shell filter route yet. Automatic save-time scanning/
 
 ### 18.6 用户点击 Start
 
-TASK-024 当前流程：
+TASK-025 当前流程：
 
 ```text
 Timer start affordance clicked
 → CommandRegistry.execute("timer.start", { pageId })
 → TimerPlugin validates exact payload and page existence
-→ If another active timer exists, TimerPlugin appends timer.stopped for it
+→ If another active timer exists, TimerPlugin appends namespace: "timer", type: "stopped" for it
+→ If another active timer exists, TimerPlugin appends namespace: "timer", type: "time_segment_created" for it
 → TimerPlugin appends namespace: "timer", type: "started" with payload.startAt
 → TimerPlugin stores a running activeTimer DTO internally with startedAt
 → timer.global-active-bar refreshes from registration-scoped in-memory state
 ```
 
-If `timer.start({ pageId })` is called while another timer is active, the returned result is `{ activeTimer, stoppedTimer }`. It does not create a Time Segment.
+If `timer.start({ pageId })` is called while another timer is active, the returned result is `{ activeTimer, stoppedTimer, createdSegment }`. The created segment payload uses camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, and `source: "timer"`.
 
 ### 18.7 用户 Pause / Resume / Stop / Switch
 
@@ -279,31 +287,37 @@ CommandRegistry.execute("timer.resume", {})
 CommandRegistry.execute("timer.stop", {})
 → TimerPlugin requires a running or paused active timer
 → TimerPlugin appends namespace: "timer", type: "stopped"
+→ TimerPlugin appends namespace: "timer", type: "time_segment_created"
 → TimerPlugin clears active state
-→ Result is { activeTimer: null, stoppedTimer }
+→ Result is { activeTimer: null, stoppedTimer, createdSegment }
 
 CommandRegistry.execute("timer.switch", { pageId })
 → TimerPlugin validates exact payload and page existence
-→ TimerPlugin stops any previous active timer
+→ TimerPlugin stops any previous active timer and appends its time_segment_created event
 → TimerPlugin starts the next page timer
 → No-active, paused, and same-page switches are valid
 → Missing page preserves active state and events
 ```
 
-`timer.pause` / `timer.resume` / `timer.stop` accept `undefined`, `{}`, and exact null-prototype empty payloads. Non-empty/caller-owned/prototype/accessor/symbol/non-enumerable unsafe payloads are rejected. Command results remain narrow DTOs. TASK-024 does not append `timer.time_segment_created`, create note pages, update total tracked metadata, create timeline data, or touch native/schema surfaces.
+`timer.pause` / `timer.resume` / `timer.stop` accept `undefined`, `{}`, and exact null-prototype empty payloads. Non-empty/caller-owned/prototype/accessor/symbol/non-enumerable unsafe payloads are rejected. Command results remain narrow DTOs. Paused duration is excluded from `durationSeconds`. TASK-025 still does not update total tracked metadata or touch native/schema surfaces.
 
 ### 18.8 用户 Stop 并写 Note
 
-TASK-025+ future flow:
+TASK-025 current flow:
 
 ```text
-CommandRegistry.execute("timer.stop")
-→ TimerPlugin appends timer.time_segment_created event
-→ TimerPlugin creates note Markdown Page
-→ TimerPlugin updates timer metadata
-→ CalendarPlugin 可读取 time segment
-→ StatsPlugin 可聚合 duration
-→ MLPlugin 可生成 feature
+timer.page-timeline.segments rendered on page.timeline
+→ Timeline filters current-page Timer-owned time_segment_created events
+→ User clicks Add Note or Edit Note
+→ User edits the accessible Note textbox and clicks Save Note
+→ Timer-owned slot UI executes timer.add-note({ segmentId, markdown }) through the internal scoped executor
+→ PluginHost scoped executor resolves the registered command descriptor and requires descriptor.pluginId === "timer"
+→ TimerPlugin creates or updates a Markdown Page titled "Time Segment Note"
+→ TimerPlugin appends namespace: "timer", type: "time_segment_note_added"
+→ Original time_segment_created event remains immutable
+→ Timeline refreshes and renders note text inertly
 ```
+
+`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar/Stats/ML integration, metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
 ---

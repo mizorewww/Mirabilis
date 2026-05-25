@@ -127,12 +127,16 @@ payload: { done_at: "2026-05-19T10:00:00" }
 namespace: timer
 type: time_segment_created
 payload: {
-  start_at: "10:00",
-  end_at: "10:47",
-  duration: 2820,
-  note_page_id: "note_xxx"
+  segmentId: "seg_xxx",
+  pageId: "page_xxx",
+  startAt: "2026-05-19T10:00:00.000Z",
+  endAt: "2026-05-19T10:47:00.000Z",
+  durationSeconds: 2820,
+  source: "timer"
 }
 ```
+
+TASK-025 当前 Timer finalization path 会追加 `namespace: "timer"`、`type: "time_segment_created"` event。Note link 不会回写到原始 segment event；`timer.add-note` 通过 `namespace: "timer"`、`type: "time_segment_note_added"` event 关联 Markdown Page note。
 
 ```text
 namespace: habit
@@ -234,8 +238,12 @@ Command Registry 负责注册命令。
 insert-task-syntax
 open-page
 task.toggle-status
-start-timer
-stop-timer
+timer.start
+timer.stop
+timer.pause
+timer.resume
+timer.switch
+timer.add-note
 tag.refresh-tags
 tag.add-tag
 tag.remove-tag
