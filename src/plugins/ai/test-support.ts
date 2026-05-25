@@ -1,16 +1,21 @@
-import {
-  clearAiProviderForTestRuntime,
-  replaceAiProviderForTestRuntime,
-} from "./plugin";
-import {
-  replaceAiProviderSettingsForTestRuntime,
-  type AiProviderSettings,
-} from "./settings";
+import "./plugin";
 import type {
   AiModelProvider,
-  AiOperation,
   AiProviderBoundaryRequest,
 } from "./providers/modelProvider";
+
+type AiProviderSettings = {
+  apiKey: string;
+  model: string;
+  providerId: "openai";
+};
+
+type AiPluginTestSupportHooks = {
+  configureProvider(provider: AiModelProvider | null): () => void;
+  configureSettings(settings: AiProviderSettings | null): () => void;
+};
+
+const aiTestSupportKey = Symbol.for("mirabilis.ai.test-support");
 
 export function configureAiPluginForTests(options: {
   provider?: AiModelProvider;
@@ -18,14 +23,15 @@ export function configureAiPluginForTests(options: {
 }): () => void {
   assertAiPluginTestMode();
 
+  const hooks = readAiPluginTestSupportHooks();
   const resetProvider =
     options.provider === undefined
-      ? clearAiProviderForTestRuntime()
-      : replaceAiProviderForTestRuntime(wrapAiProviderForTests(options.provider));
+      ? hooks.configureProvider(null)
+      : hooks.configureProvider(wrapAiProviderForTests(options.provider));
   const resetSettings =
     options.settings === undefined
       ? () => undefined
-      : replaceAiProviderSettingsForTestRuntime(options.settings);
+      : hooks.configureSettings(options.settings);
 
   return () => {
     resetSettings();
@@ -39,38 +45,33 @@ function assertAiPluginTestMode(): void {
   }
 }
 
+function readAiPluginTestSupportHooks(): AiPluginTestSupportHooks {
+  const hooks = (globalThis as Record<symbol, unknown>)[aiTestSupportKey];
+
+  if (
+    typeof hooks !== "object" ||
+    hooks === null ||
+    typeof (hooks as Partial<AiPluginTestSupportHooks>).configureProvider !==
+      "function" ||
+    typeof (hooks as Partial<AiPluginTestSupportHooks>).configureSettings !==
+      "function"
+  ) {
+    throw new Error("AI plugin test support is unavailable");
+  }
+
+  return hooks as AiPluginTestSupportHooks;
+}
+
 function wrapAiProviderForTests(provider: AiModelProvider): AiModelProvider {
   return {
     async generate(request) {
-      if (request.operation !== "cleanup-inbox") {
-        return provider.generate(request);
-      }
-
-      let providerActive = true;
-      let operationReads = 0;
-      const wrappedRequest = {
+      const wrappedRequest: AiProviderBoundaryRequest = {
+        operation: request.operation,
         providerId: request.providerId,
         request: request.request,
-      } as AiProviderBoundaryRequest;
+      };
 
-      Object.defineProperty(wrappedRequest, "operation", {
-        enumerable: true,
-        get() {
-          operationReads += 1;
-
-          if (providerActive && operationReads === 2) {
-            return "generate-subtasks" satisfies AiOperation;
-          }
-
-          return request.operation;
-        },
-      });
-
-      try {
-        return await provider.generate(wrappedRequest);
-      } finally {
-        providerActive = false;
-      }
+      return provider.generate(wrappedRequest);
     },
     id: provider.id,
   };

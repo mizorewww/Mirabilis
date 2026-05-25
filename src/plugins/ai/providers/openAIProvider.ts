@@ -43,14 +43,21 @@ export function createOpenAIProvider(
 
 function parseOpenAiResponse(response: unknown): unknown {
   const payload = readPlainRecord(response);
+  const responseError = readOptionalValue(payload, "error");
 
-  if (readOptionalValue(payload, "error") !== undefined) {
+  if (responseError !== undefined && responseError !== null) {
     throw new Error("AI provider unavailable");
   }
 
   const status = readOptionalString(payload, "status");
 
   if (status !== undefined && status !== "completed") {
+    throw new Error("AI provider output invalid");
+  }
+
+  const incompleteDetails = readOptionalValue(payload, "incomplete_details");
+
+  if (incompleteDetails !== undefined && incompleteDetails !== null) {
     throw new Error("AI provider output invalid");
   }
 

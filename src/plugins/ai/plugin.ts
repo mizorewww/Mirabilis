@@ -8,10 +8,7 @@ import {
   type AiSuggestionPanelProps,
   AiSuggestionPanel,
 } from "./views/AiSuggestionPanel";
-import {
-  defaultOpenAiModel,
-  getAiProviderSettings,
-} from "./settings";
+import { defaultOpenAiModel } from "./settings";
 import { createOpenAIProvider } from "./providers/openAIProvider";
 import type {
   AiCommandResult,
@@ -54,6 +51,17 @@ type FieldDescriptor = {
 };
 
 type JsonRecord = Record<string, unknown>;
+
+type AiProviderSettings = {
+  apiKey: string;
+  model: string;
+  providerId: "openai";
+};
+
+type AiPluginTestSupportHooks = {
+  configureProvider(provider: AiModelProvider | null): () => void;
+  configureSettings(settings: AiProviderSettings | null): () => void;
+};
 
 const pluginId = "ai";
 const suggestionPanelViewId = "ai.suggestion-panel";
@@ -122,6 +130,7 @@ const filterKeys = new Set(["name", "query", "viewType"]);
 const filterQueryKeys = new Set(["where"]);
 const filterConditionKeys = new Set(["field", "op", "value"]);
 const filterConditionOptionalKeys = new Set(["value"]);
+const aiTestSupportKey = Symbol.for("mirabilis.ai.test-support");
 const commandSpecs = [
   {
     commandId: "ai.cleanup-inbox",
@@ -221,6 +230,7 @@ const commandSpecs = [
 ] as const satisfies readonly AiCommandSpec[];
 
 let configuredProvider: AiModelProvider = createOpenAIProvider();
+let configuredSettings: AiProviderSettings | null = null;
 
 export const AiPlugin: AppPlugin = {
   manifest: {
@@ -328,23 +338,56 @@ export const AiPlugin: AppPlugin = {
   },
 };
 
-export function replaceAiProviderForTestRuntime(provider: AiModelProvider): () => void {
+installAiTestSupportHooks();
+
+function configureProviderForTests(provider: AiModelProvider | null): () => void {
   const previous = configuredProvider;
 
-  configuredProvider = provider;
+  configuredProvider = provider ?? createOpenAIProvider();
 
   return () => {
     configuredProvider = previous;
   };
 }
 
-export function clearAiProviderForTestRuntime(): () => void {
-  const previous = configuredProvider;
+function configureSettingsForTests(settings: AiProviderSettings | null): () => void {
+  const previous = configuredSettings;
 
-  configuredProvider = createOpenAIProvider();
+  configuredSettings = cloneAiProviderSettings(settings);
 
   return () => {
-    configuredProvider = previous;
+    configuredSettings = previous;
+  };
+}
+
+function installAiTestSupportHooks(): void {
+  if (import.meta.env.MODE !== "test") {
+    return;
+  }
+
+  const globalHooks = globalThis as Record<symbol, unknown>;
+
+  globalHooks[aiTestSupportKey] = {
+    configureProvider: configureProviderForTests,
+    configureSettings: configureSettingsForTests,
+  } satisfies AiPluginTestSupportHooks;
+}
+
+function readAiProviderSettings(): AiProviderSettings | null {
+  return cloneAiProviderSettings(configuredSettings);
+}
+
+function cloneAiProviderSettings(
+  settings: AiProviderSettings | null,
+): AiProviderSettings | null {
+  if (settings === null) {
+    return null;
+  }
+
+  return {
+    apiKey: settings.apiKey,
+    model: settings.model,
+    providerId: settings.providerId,
   };
 }
 
@@ -353,7 +396,7 @@ async function runAiCommand(
   input: unknown,
 ): Promise<AiCommandResult> {
   const payload = snapshotJsonRecord(readCommandInput(spec, input));
-  const settings = getAiProviderSettings();
+  const settings = readAiProviderSettings();
 
   if (
     settings === null ||
@@ -1241,8 +1284,6 @@ function createResponsePropertySchema(
   switch (key) {
     case "confidence":
       return {
-        maximum: 1,
-        minimum: 0,
         type: "number",
       };
     case "filter":
@@ -1274,7 +1315,6 @@ function createResponsePropertySchema(
                   required: ["field", "op", "value"],
                   type: "object",
                 },
-                maxItems: maxAiProjectionItems,
                 type: "array",
               },
             },
@@ -1295,7 +1335,6 @@ function createResponsePropertySchema(
         properties: {
           dueDate: safeStringSchema(),
           estimateMinutes: {
-            minimum: 0,
             type: "number",
           },
         },
@@ -1308,7 +1347,6 @@ function createResponsePropertySchema(
         properties: {
           dueDate: safeStringSchema(),
           estimateMinutes: {
-            minimum: 0,
             type: "number",
           },
           tags: stringArraySchema(),
@@ -1348,7 +1386,6 @@ function createResponsePropertySchema(
 
 function safeStringSchema(): Record<string, unknown> {
   return {
-    maxLength: maxAiTextLength,
     type: "string",
   };
 }
@@ -1356,7 +1393,6 @@ function safeStringSchema(): Record<string, unknown> {
 function stringArraySchema(): Record<string, unknown> {
   return {
     items: safeStringSchema(),
-    maxItems: maxAiProjectionItems,
     type: "array",
   };
 }
