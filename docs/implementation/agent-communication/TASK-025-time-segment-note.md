@@ -536,4 +536,38 @@
 
 ## Current Next Action
 
-- Wait for Avicenna (`doc_writer`) to finish docs sync, then validate targeted scans, typecheck, and diff check.
+## Formal Docs Sync
+
+- Status: completed by Avicenna (`doc_writer`) on 2026-05-25 08:23 CST.
+- Commit: `79c63b1`.
+- Files changed:
+  - `docs/product/02-core-data-model.md`.
+  - `docs/product/03-plugin-platform.md`.
+  - `docs/product/04-editor-and-workflows.md`.
+  - `docs/product/05-built-in-plugins.md`.
+  - `docs/product/06-view-slots.md`.
+  - `docs/architecture/03-plugin-api-and-host.md`.
+  - `docs/architecture/04-slots-editor-task.md`.
+  - `docs/architecture/05-plugin-implementations.md`.
+  - `docs/architecture/07-runtime-flows.md`.
+  - `docs/development/01-data-roadmap-and-mvp.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md`.
+  - `docs/implementation/task-index.md`.
+  - `docs/implementation/progress.md`.
+  - `docs/testing/strategy.md`.
+- Behavior documented:
+  - Timer finalization emits `namespace: "timer"`, `type: "time_segment_created"` after `timer.stopped`.
+  - Segment payloads are camelCase and exclude paused duration.
+  - `timer.add-note` creates/updates Markdown Page notes, returns `{ notePageId }`, and appends `time_segment_note_added` without mutating segment events.
+  - `timer.page-timeline.segments` renders current-page Timer segments and inert note text with Add/Edit Note UI.
+  - MetadataBar and PluginHost scoped command execution authorize by registered descriptor owner, not command ID prefix.
+  - Deferred scope and the hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` P2 residual are recorded.
+- Parent validation:
+  - Targeted stale scans for underscore Timer commands, stale no-segment current claims, namespace-prefix command wording, and dotted segment event drift found no blocking formal-doc drift. Remaining `TASK-025+` hits are historical TASK-024 boundary notes, and `events.timer.time_segment_created within 7 days` remains a future Event query syntax example.
+  - `git diff --check` passed.
+  - `bun run typecheck` passed.
+  - Native/package/Tauri/Rust diff guard against `master` was empty.
+
+## Current Next Action
+
+- Run final branch gates, then update progress to complete, commit, merge to `master`, run merge-result gate, and continue TASK-026.
