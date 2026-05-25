@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:14 CST.
+Last updated: 2026-05-25 17:19 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:14 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 P1 review fixes committed; preparing narrow re-review.
+- Current phase: TASK-032 second review-fix tests pending after narrow re-review P1s.
 
 ## Active Agents
 
@@ -109,7 +109,16 @@ Last updated: 2026-05-25 17:14 CST.
   - Fixes: safe own `__proto__` key preservation via descriptor-based clone writes, recursive Plugin Settings reserved-key rejection after JSON-safe cloning, canonical conflict resolver kind allowlist, and stable-sort object construction that avoids prototype mutation.
   - Parent validated: focused TASK-032 tests passed (1 file / 11 tests), adjacent plugin/API/Core/AI suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
   - Review-fix commit: `45bd231 Archimedes(review-fix)(Implement Sync Plugin skeleton): harden sync DTO boundaries`; post-commit auto-push succeeded and also pushed prior local commits.
-- Next action: commit this review-fix validation record, then run narrow re-review of the P1 fixes.
+- Narrow re-review completed:
+  - Gibbs the 2nd (`deprecation_auditor`) found no P0/P1 and confirmed the top-level conflict resolver stale-id P1 is fixed.
+  - Boole the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed the prior test-quality P1 gaps are covered.
+  - Herschel the 2nd (`reviewer`) found one P1: event conflict arrays still accept stale or mismatched unit DTO kinds because `local`/`remote` units are cast without validating each unit's `kind`.
+  - Zeno the 2nd (`security_reviewer`) found two related P1s: event conflict arrays accept stale/unsupported unit DTO kinds, and `readSyncUnitId()` can invoke an accessor-backed `syncKey` getter before descriptor-safe validation.
+- Parent decisions after narrow re-review:
+  - Add tests first for event conflict `local`/`remote` unit validation: stale DTO kinds, mismatched non-event kinds, unsupported kinds, invalid schema versions/shapes, and accessor-backed `syncKey`/`kind`/`snapshot` fields that must not be invoked.
+  - Then delegate production hardening to `implementer`.
+  - Keep Huygens' docs patch separate and update it after the second P1 fix if needed.
+- Next action: delegate second review-fix tests to `test_writer`.
 
 ## Current TASK-031 State
 

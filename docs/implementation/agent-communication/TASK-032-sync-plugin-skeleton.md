@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Commit review-fix validation record, then run narrow re-review of P1 fixes.
+- Delegate second review-fix tests for event conflict unit validation P1s.
 
 ## Implementation Handoff
 
@@ -273,3 +273,28 @@
 - Review-fix commit: `45bd231 Archimedes(review-fix)(Implement Sync Plugin skeleton): harden sync DTO boundaries`.
 - Push status: post-commit auto-push succeeded and also pushed the prior local review-findings and test-fix commits.
 - Parent next action: commit this validation record, then run narrow re-review focused on the closed P1s.
+
+## Narrow Re-Review Outcomes
+
+- Herschel the 2nd (`reviewer`) found one new P1:
+  - `resolveSyncUnitConflict` validates top-level `input.unitKind`, but event conflict arrays still accept stale or mismatched unit DTO kinds because `readUnitArray()` casts `local`/`remote` without validating each unit's `kind`. A stale DTO such as `{ kind: "sync.page", ... }` can be returned in merged event units.
+- Zeno the 2nd (`security_reviewer`) found two related P1s:
+  - event conflict arrays accept stale/unsupported unit DTO kinds;
+  - `readSyncUnitId()` reads `unit.syncKey.id` directly, so an accessor-backed `syncKey` getter is invoked before descriptor-safe validation.
+- Gibbs the 2nd (`deprecation_auditor`) found no P0/P1 and confirmed the top-level stale-id resolver P1 is fixed.
+- Boole the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed prior P1 test gaps are covered:
+  - Markdown Page unsafe JSON;
+  - safe own `__proto__` preservation;
+  - nested Plugin Settings secret/auth/credential/remote endpoint rejection;
+  - stale/unsupported top-level conflict resolver kinds.
+
+## Parent Decisions After Narrow Re-Review
+
+- Add second review-fix tests first for event conflict array DTO validation:
+  - event `local` and `remote` arrays must reject stale DTO kinds such as `sync.page`;
+  - event arrays must reject mismatched canonical non-event DTO kinds such as `sync.unit.metadata`;
+  - event arrays must reject unsupported kinds, wrong schema versions, and malformed unit shapes;
+  - event arrays must reject accessor-backed conflict unit fields without invoking getters, especially `syncKey`, `kind`, and `snapshot`.
+- Production fix should harden `src/plugins/sync/conflict-policy.ts` only if possible, reusing descriptor-safe JSON validation patterns rather than reading untrusted accessors.
+- Huygens' docs patch remains uncommitted and should be updated only if the second P1 fix changes documented behavior.
+- Parent next action: delegate second review-fix tests to `test_writer`.
