@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:45 CST.
+Last updated: 2026-05-25 13:54 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:45 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review-fix tests delegated.
+- Current phase: TASK-030 review-fix tests committed; production fix handoff pending.
 
 ## Active Agents
 
-- Peirce the 2nd (`test_writer`) is adding TASK-030 review-fix regression tests.
+- No active agents. Parent is recording review-fix test results before delegating production fixes.
 
 ## Current TASK-030 State
 
@@ -88,6 +88,11 @@ Last updated: 2026-05-25 13:45 CST.
   - Peirce the 2nd (`test_writer`) should add focused P1 regression coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
   - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
   - Expected pre-fix result: focused TASK-030 tests fail against current production for the newly covered review findings.
+- Review-fix tests completed:
+  - Peirce the 2nd (`test_writer`) added P1 regression coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-030 tests failed with 5 failed / 7 passed. Failure symptoms: current command still writes ML metadata/events for caller-provided projections, forged provenance still creates ML metadata, similar-history-only fallback confidence/range differs from expected policy, numeric date string `"1"` is accepted, and `PredictionPanel` renders wrong-kind forged DTO data instead of unavailable status.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, production/docs/native/package diff guards.
+  - Test-fix commit: `927029c Peirce(test-fix)(Implement ML Plugin baseline predictions): cover ml review regressions`; post-commit auto-push succeeded.
 
 ## Current TASK-029 State
 

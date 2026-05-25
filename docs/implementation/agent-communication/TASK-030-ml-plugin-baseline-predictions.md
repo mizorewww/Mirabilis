@@ -272,3 +272,31 @@
   - slot rendering parity with the registered view component.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Peirce the 2nd, validate expected red/focused signal, and commit review-fix tests separately.
+
+## Review-Fix Test Outcome
+
+- Peirce the 2nd (`test_writer`) added focused P1 review-fix coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Added/updated coverage:
+  - no durable ML metadata/events from caller-provided Task/Timer/Tag projections, including forged matching provenance;
+  - non-ML runtime state remains unchanged;
+  - similar-history-only and tracked-only fallback branches;
+  - missing/archived current page rejection;
+  - nested metadata/event accessor, non-enumerable, prototype-carried, and over-budget JSON rejection;
+  - exact UTC ISO instant validation for generated/event/timer/note dates;
+  - malformed `ml.prediction-panel` DTO fail-closed behavior;
+  - registered slot component rendering parity with the view.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx` failed as expected with 5 failed / 7 passed.
+  - Failure symptoms: current command still writes ML metadata/events for caller-provided projections, forged provenance still creates ML metadata, similar-history-only fallback confidence/range differs from expected policy, numeric date string `"1"` is accepted, and `PredictionPanel` renders wrong-kind forged DTO data instead of unavailable status.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/ml-plugin-baseline-predictions.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan.
+  - Production/docs/progress/package/native/Tauri/Rust/schema/capability working-tree guard.
+  - Native/package diff guard vs `master`.
+- Test-fix commit: `927029c Peirce(test-fix)(Implement ML Plugin baseline predictions): cover ml review regressions`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate production review fixes to `implementer`.
