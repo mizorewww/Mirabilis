@@ -49,3 +49,12 @@
   - `docs_researcher` to check current React/Vitest/Testing Library and Tauri v2 guidance for capture/search tests and desktop entry-point review.
   - `deprecation_auditor` to audit naming/API/deprecation/stale-doc risks.
   - `security_reviewer` to review capture input, page append/create trust boundaries, search query/index boundaries, and native/Tauri permission impact.
+
+## Pre-Test Guidance Handoff
+
+- Gibbs (`planner`) started at 2026-05-25 12:05 CST.
+- Franklin (`docs_researcher`) started at 2026-05-25 12:05 CST.
+- Hilbert (`deprecation_auditor`) started at 2026-05-25 12:05 CST.
+- Newton (`security_reviewer`) started at 2026-05-25 12:05 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.

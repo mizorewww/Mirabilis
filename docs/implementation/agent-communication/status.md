@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:03 CST.
+Last updated: 2026-05-25 12:05 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 12:03 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 started; pre-test guidance next.
+- Current phase: TASK-029 pre-test guidance running.
 
 ## Active Agents
 
-- No active agents. Next step is TASK-029 pre-test guidance.
+- Gibbs (`planner`) is defining TASK-029 scope, canonical ids, acceptance criteria, and deferred work.
+- Franklin (`docs_researcher`) is checking current React/Vitest/Testing Library and Tauri v2 guidance for capture/search and desktop entry points.
+- Hilbert (`deprecation_auditor`) is auditing naming/API/deprecation risks and current plugin API limitations.
+- Newton (`security_reviewer`) is reviewing capture/search trust boundaries and native/Tauri permission impact.
 
 ## Current TASK-029 State
 
@@ -222,5 +225,5 @@ Last updated: 2026-05-25 12:03 CST.
 
 ## Next Actions
 
-1. Commit TASK-029 start state.
-2. Delegate pre-test planning/current-doc/API/security guidance.
+1. Wait for TASK-029 pre-test guidance agents.
+2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
