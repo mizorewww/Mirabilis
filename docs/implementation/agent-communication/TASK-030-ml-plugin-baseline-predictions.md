@@ -385,3 +385,20 @@
 - Required coverage: tracked-only fallback branch where `trackedSeconds * 2` exceeds the one-hour floor.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Avicenna the 2nd, validate the test-only patch, and commit it separately.
+
+## Narrow Test-Fix Outcome
+
+- Avicenna the 2nd (`test_writer`) extended `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Added coverage: tracked-only fallback with `trackedSeconds = 5,400`, where `trackedSeconds * 2 = 10,800` exceeds the one-hour floor. The test asserts the full deterministic DTO, including `baselineTotalSeconds: 10,800`, range `minSeconds: 2,700` / `maxSeconds: 8,100`, `confidence: 0.5`, reasons, and limitations.
+- Parent validation:
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx` passed with 12 tests.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/ml-plugin-baseline-predictions.test.tsx --max-warnings=0` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Non-test/docs/native/package diff guards were empty.
+- Test-fix commit: `0bfe2e4 Avicenna(test-fix)(Implement ML Plugin baseline predictions): cover tracked-only fallback branch`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Run a narrow test-quality confirmation.
