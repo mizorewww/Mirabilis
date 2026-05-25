@@ -80,7 +80,7 @@ Status markers:
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [x] TASK-036: Add Generic ViewHost And SlotHost
-- [~] TASK-037: Mount Home Workspace Editor
+- [x] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
@@ -93,6 +93,19 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 05:20 CST - TASK-037 completed and ready to merge
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Delivered: the ready Home route creates/selects a session Home Markdown Page and renders registered `markdown.page-editor` / `page.editor` through `ViewHost`; typing, toolbar snippets, save status, task-title open, checkbox toggle, stale async guards, and non-Home placeholder preservation are covered by user-event tests.
+- Boundary hardening: public `useRuntime()` remains frozen `{ app }`; full `AppRuntime` stays shell-private; `RuntimeProvider` does not expose raw runtime through context or render-prop APIs; hosted editor props remain narrow; the provider-scoped Markdown workspace bridge exposes only current-page bounded load/save, inert extension collection, exact command allowlist wrappers, and guarded `openPage`.
+- Review hardening: raw runtime exposure, plugin-to-shell imports, foreign page load/save attempts, foreign `openPage` self-authorization, delayed command-returned open after leaving Home, and command-open authorization lifetime are covered by regression tests. Huygens bound command-open authorization to source page/generation in commit `08dd1d5`.
+- Final reviews: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 after `08dd1d5`; Sartre (`test_quality_reviewer`) found no P0/P1 and P2-only test-hardening suggestions; Darwin (`deprecation_auditor`) found no P0/P1 and one accepted P2 React provider-form migration note; Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required.
+- Docs sync: Euler updated product, architecture, testing, task-index, progress, status, and TASK-037 communication docs in commit `122a0ae`.
+- Branch validation: `bun run build` passed with the known Vite chunk-size warning; `bun run check:quick` passed with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: Vite chunk-size warning remains a known MUI-era P2; TASK-038+ covers sidebar/filter navigation, slot placement, dialogs, non-Home routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, and broader route data.
+- Merge status: ready to merge into `master`; after merge, run merge-result validation and push `master`.
 
 ### 2026-05-26 05:12 CST - TASK-037 third review fix and final re-review clear
 
