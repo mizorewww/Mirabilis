@@ -82,7 +82,7 @@ Status markers:
 - [x] TASK-036: Add Generic ViewHost And SlotHost
 - [x] TASK-037: Mount Home Workspace Editor
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
-- [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
+- [~] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 07:07 CST - TASK-039 started
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Start point: `master` after TASK-038 merge validation commit `1355057`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: mount current-page metadata, timer, and timeline UI into the MUI app shell using existing `MetadataBar`, `SlotHost`, and `Portal`/floating slot paths; keep props page-scoped and controlled; plugin interactions must use Command Registry or documented owner-scoped command facades.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event tests before production code; no direct Timer/Task/Tag business implementation imports into App Shell; no package, lockfile, Tauri, Rust, IPC, capability, permission, persistence schema, release, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feed, or native changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-039 red tests.
 
 ### 2026-05-26 07:06 CST - TASK-038 merged to master
 
