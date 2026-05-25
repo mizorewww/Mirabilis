@@ -234,3 +234,14 @@
 ## Current Next Action
 
 - Commit implementation result record, then delegate review wave.
+
+## Review Wave Handoff
+
+- Jason the 2nd (`pr_explorer`) started at 2026-05-25 15:06 CST.
+- Anscombe the 2nd (`reviewer`) started at 2026-05-25 15:06 CST.
+- Nash the 2nd (`deprecation_auditor`) started at 2026-05-25 15:06 CST.
+- Parfit the 2nd (`security_reviewer`) started at 2026-05-25 15:06 CST.
+- Schrodinger the 2nd (`docs_researcher`) started at 2026-05-25 15:06 CST.
+- Franklin the 2nd (`test_quality_reviewer`) started at 2026-05-25 15:06 CST.
+- All review agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.

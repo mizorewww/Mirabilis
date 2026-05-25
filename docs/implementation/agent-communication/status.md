@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:04 CST.
+Last updated: 2026-05-25 15:06 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-25 15:04 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 production implementation committed; parent is recording implementation results before review wave.
+- Current phase: TASK-031 review wave delegated; waiting for review findings.
 
 ## Active Agents
 
-- No active agents. Parent is recording implementation results before delegating review wave.
+- Jason the 2nd (`pr_explorer`) is mapping changed paths and review surfaces.
+- Anscombe the 2nd (`reviewer`) is reviewing correctness, regressions, edge cases, and missing tests.
+- Nash the 2nd (`deprecation_auditor`) is reviewing stale ids, absent APIs, OpenAI shape, and docs drift.
+- Parfit the 2nd (`security_reviewer`) is reviewing secrets, provider/network boundary, prompt injection, output validation, and test seam safety.
+- Schrodinger the 2nd (`docs_researcher`) is reviewing current-doc alignment, accessibility, and docs drift.
+- Franklin the 2nd (`test_quality_reviewer`) is reviewing acceptance coverage and test quality.
 
 ## Current TASK-031 State
 
@@ -65,7 +70,14 @@ Last updated: 2026-05-25 15:04 CST.
   - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/ai/index.ts`, `src/plugins/ai/plugin.ts`, `src/plugins/ai/settings.ts`, `src/plugins/ai/test-support.ts`, `src/plugins/ai/providers/modelProvider.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/views/AiSuggestionPanel.tsx`, and `src/plugins/ai/views/AiReviewPanel.tsx`.
   - Parent validated: focused TASK-031 tests passed (9 tests), adjacent plugin/API/Core/ML suite passed (5 files / 99 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/import scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
   - Implementation commit: `5461921 Wegener(implementation)(Implement AI Plugin provider abstraction): implement ai provider boundary`; post-commit auto-push succeeded.
-- Next action: commit implementation result record, then delegate review wave.
+- Review wave delegated:
+  - Jason the 2nd (`pr_explorer`) maps changed paths and review surfaces.
+  - Anscombe the 2nd (`reviewer`) checks correctness and behavior gaps.
+  - Nash the 2nd (`deprecation_auditor`) checks stale ids, absent APIs, and current OpenAI shape assumptions.
+  - Parfit the 2nd (`security_reviewer`) checks secrets, provider/network, prompt-injection, output-validation, and test seam risks.
+  - Schrodinger the 2nd (`docs_researcher`) checks current-doc/accessibility alignment and docs drift.
+  - Franklin the 2nd (`test_quality_reviewer`) checks test quality and missing P1 coverage.
+- Next action: wait for review findings; fix P0/P1 before docs sync and final gate.
 
 ## Current TASK-030 State
 
