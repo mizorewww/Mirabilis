@@ -277,6 +277,60 @@ describe("Calendar Plugin baseline", () => {
     expect(within(week).queryByText("Next Monday")).not.toBeInTheDocument();
   });
 
+  it("renders segments that overlap the selected UTC day even when they start the previous day", async () => {
+    const runtime = await createRuntime();
+    const previousDayOverlap = createCalendarSegment({
+      endAt: "2026-05-20T00:30:00.000Z",
+      pageId: "page-day-overlap",
+      pageTitle: "Midnight carryover",
+      segmentId: "segment-day-overlap",
+      startAt: "2026-05-19T23:30:00.000Z",
+    });
+
+    renderCalendarView(runtime, "calendar.day", {
+      data: {
+        kind: "calendar.time-segments",
+        segments: [previousDayOverlap],
+      },
+      date: selectedDay,
+    });
+
+    const day = screen.getByRole("region", { name: "Calendar day" });
+
+    expect(
+      within(day).getByRole("button", {
+        name: /23:30.*00:30.*Midnight carryover/u,
+      }),
+    ).toBeVisible();
+  });
+
+  it("renders segments that overlap the selected UTC week even when they start the previous week", async () => {
+    const runtime = await createRuntime();
+    const previousWeekOverlap = createCalendarSegment({
+      endAt: "2026-05-18T00:30:00.000Z",
+      pageId: "page-week-overlap",
+      pageTitle: "Week boundary carryover",
+      segmentId: "segment-week-overlap",
+      startAt: "2026-05-17T23:30:00.000Z",
+    });
+
+    renderCalendarView(runtime, "calendar.week", {
+      data: {
+        kind: "calendar.time-segments",
+        segments: [previousWeekOverlap],
+      },
+      weekStart: mondayWeekStart,
+    });
+
+    const week = screen.getByRole("region", { name: "Calendar week" });
+
+    expect(
+      within(week).getByRole("button", {
+        name: /23:30.*00:30.*Week boundary carryover/u,
+      }),
+    ).toBeVisible();
+  });
+
   it("ignores malformed or untrusted normalized segment inputs", async () => {
     const runtime = await createRuntime();
     const valid = createCalendarSegment({
@@ -417,6 +471,130 @@ describe("Calendar Plugin baseline", () => {
     }
   });
 
+  it("ignores non-enumerable required segment and provenance fields instead of rendering hidden DTO data", async () => {
+    const runtime = await createRuntime();
+    const valid = createCalendarSegment({
+      endAt: "2026-05-20T12:30:00.000Z",
+      pageId: "page-visible-non-enumerable-guard",
+      pageTitle: "Visible strict DTO segment",
+      segmentId: "segment-visible-non-enumerable-guard",
+      startAt: "2026-05-20T12:00:00.000Z",
+    });
+    const hiddenRequiredSegments = (
+      ["segmentId", "pageId", "startAt", "endAt"] as const
+    ).map((field) =>
+      withNonEnumerableSegmentField(
+        createCalendarSegment({
+          endAt: "2026-05-20T13:30:00.000Z",
+          pageId: `page-hidden-${field}`,
+          pageTitle: `Hidden ${field} segment`,
+          segmentId: `segment-hidden-${field}`,
+          startAt: "2026-05-20T13:00:00.000Z",
+        }),
+        field,
+      ),
+    );
+    const hiddenProvenanceSegments = (
+      ["eventPageId", "namespace", "sourcePluginId", "type"] as const
+    ).map((field) =>
+      withNonEnumerableProvenanceField(
+        createCalendarSegment({
+          endAt: "2026-05-20T14:30:00.000Z",
+          pageId: `page-hidden-provenance-${field}`,
+          pageTitle: `Hidden provenance ${field} segment`,
+          segmentId: `segment-hidden-provenance-${field}`,
+          startAt: "2026-05-20T14:00:00.000Z",
+        }),
+        field,
+      ),
+    );
+
+    renderCalendarView(runtime, "calendar.day", {
+      data: {
+        kind: "calendar.time-segments",
+        segments: [
+          valid,
+          ...toCalendarSegments([
+            ...hiddenRequiredSegments,
+            ...hiddenProvenanceSegments,
+          ]),
+        ],
+      },
+      date: selectedDay,
+    });
+
+    const day = screen.getByRole("region", { name: "Calendar day" });
+    const blocks = within(day).getAllByRole("button");
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toHaveTextContent("Visible strict DTO segment");
+
+    for (const hiddenTitle of [
+      "Hidden segmentId segment",
+      "Hidden pageId segment",
+      "Hidden startAt segment",
+      "Hidden endAt segment",
+      "Hidden provenance eventPageId segment",
+      "Hidden provenance namespace segment",
+      "Hidden provenance sourcePluginId segment",
+      "Hidden provenance type segment",
+    ]) {
+      expect(within(day).queryByText(hiddenTitle)).not.toBeInTheDocument();
+    }
+  });
+
+  it("does not render non-enumerable optional segment text as hidden detail data", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const hiddenNote = "Hidden non-enumerable note";
+    const hiddenDetail = "Hidden non-enumerable detail";
+    const hiddenNoteSegment = withNonEnumerableSegmentField(
+      createCalendarSegment({
+        endAt: "2026-05-20T13:30:00.000Z",
+        note: hiddenNote,
+        pageId: "page-hidden-note",
+        pageTitle: "Hidden note segment",
+        segmentId: "segment-hidden-note",
+        startAt: "2026-05-20T13:00:00.000Z",
+      }),
+      "note",
+    );
+    const hiddenDetailSegment = withNonEnumerableSegmentField(
+      createCalendarSegment({
+        detail: hiddenDetail,
+        endAt: "2026-05-20T14:30:00.000Z",
+        pageId: "page-hidden-detail",
+        pageTitle: "Hidden detail segment",
+        segmentId: "segment-hidden-detail",
+        startAt: "2026-05-20T14:00:00.000Z",
+      }),
+      "detail",
+    );
+
+    renderCalendarView(runtime, "calendar.day", {
+      data: {
+        kind: "calendar.time-segments",
+        segments: toCalendarSegments([hiddenNoteSegment, hiddenDetailSegment]),
+      },
+      date: selectedDay,
+    });
+
+    const day = screen.getByRole("region", { name: "Calendar day" });
+
+    await expectOptionalSegmentTextNotAccepted(
+      user,
+      day,
+      "Hidden note segment",
+      hiddenNote,
+    );
+    await expectOptionalSegmentTextNotAccepted(
+      user,
+      day,
+      "Hidden detail segment",
+      hiddenDetail,
+    );
+  });
+
   it("opens a segment detail region by executing the Calendar command through the registry", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -458,6 +636,51 @@ describe("Calendar Plugin baseline", () => {
     expect(within(detail).getByText(segment.note ?? "")).toBeVisible();
     expect(within(detail).getByText(segment.detail ?? "")).toBeVisible();
     expectNoDangerousDom();
+  });
+
+  it("does not let rendered segment validity leak across Calendar runtime instances or survive unmount", async () => {
+    const sourceRuntime = await createRuntime();
+    const isolatedRuntime = await createRuntime();
+    const segment = createCalendarSegment({
+      endAt: "2026-05-20T15:30:00.000Z",
+      pageId: "page-runtime-isolation",
+      pageTitle: "Runtime isolated segment",
+      segmentId: "segment-runtime-isolation",
+      startAt: "2026-05-20T15:00:00.000Z",
+    });
+    const beforeIsolated = snapshotRuntimeState(isolatedRuntime);
+    const { unmount } = renderCalendarView(sourceRuntime, "calendar.day", {
+      data: { kind: "calendar.time-segments", segments: [segment] },
+      date: selectedDay,
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: /15:00.*15:30.*Runtime isolated segment/u,
+      }),
+    ).toBeVisible();
+
+    await expect(
+      executeCalendarCommand(isolatedRuntime, calendarOpenSegmentCommandId, {
+        pageId: segment.pageId,
+        segmentId: segment.segmentId,
+      }),
+      "a separate runtime must not trust another runtime's rendered segment",
+    ).rejects.toBeInstanceOf(Error);
+    expect(snapshotRuntimeState(isolatedRuntime)).toStrictEqual(beforeIsolated);
+    expect(
+      screen.queryByRole("region", { name: /segment detail/i }),
+    ).not.toBeInTheDocument();
+
+    unmount();
+
+    await expect(
+      executeCalendarCommand(sourceRuntime, calendarOpenSegmentCommandId, {
+        pageId: segment.pageId,
+        segmentId: segment.segmentId,
+      }),
+      "unmount must clear the rendered segment from command validity",
+    ).rejects.toBeInstanceOf(Error);
   });
 
   it("rejects unsafe calendar.open-time-segment payloads without opening detail or mutating stores", async () => {
@@ -515,6 +738,22 @@ describe("Calendar Plugin baseline", () => {
           validSegment.pageId,
         ),
         label: "non-enumerable extra payload",
+      },
+      {
+        input: createNonEnumerableOpenFieldPayload(
+          validSegment.segmentId,
+          validSegment.pageId,
+          "segmentId",
+        ),
+        label: "non-enumerable segmentId payload",
+      },
+      {
+        input: createNonEnumerableOpenFieldPayload(
+          validSegment.segmentId,
+          validSegment.pageId,
+          "pageId",
+        ),
+        label: "non-enumerable pageId payload",
       },
       {
         input: { pageId: validSegment.pageId, segmentId: "" },
@@ -806,6 +1045,32 @@ function omitRequiredSegmentField(
   return clone;
 }
 
+function withNonEnumerableSegmentField(
+  segment: CalendarTimeSegmentInput,
+  field: keyof CalendarTimeSegmentInput,
+): Record<string, unknown> {
+  const clone: Record<string, unknown> = { ...segment };
+
+  makeNonEnumerableOwnValue(clone, field);
+
+  return clone;
+}
+
+function withNonEnumerableProvenanceField(
+  segment: CalendarTimeSegmentInput,
+  field: keyof CalendarTimeSegmentInput["provenance"],
+): Record<string, unknown> {
+  const provenance: Record<string, unknown> = { ...segment.provenance };
+  const clone: Record<string, unknown> = {
+    ...segment,
+    provenance,
+  };
+
+  makeNonEnumerableOwnValue(provenance, field);
+
+  return clone;
+}
+
 function toCalendarSegments(
   segments: readonly Record<string, unknown>[],
 ): readonly CalendarTimeSegmentInput[] {
@@ -976,6 +1241,18 @@ function createNonEnumerableExtraOpenPayload(
   return payload;
 }
 
+function createNonEnumerableOpenFieldPayload(
+  segmentId: string,
+  pageId: string,
+  field: "pageId" | "segmentId",
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { pageId, segmentId };
+
+  makeNonEnumerableOwnValue(payload, field);
+
+  return payload;
+}
+
 function createPrototypeCarriedOpenPayload(
   segmentId: string,
   pageId: string,
@@ -988,6 +1265,44 @@ function createPrototypeCarriedOpenPayload(
   payload.segmentId = segmentId;
 
   return payload;
+}
+
+async function expectOptionalSegmentTextNotAccepted(
+  user: ReturnType<typeof userEvent.setup>,
+  region: HTMLElement,
+  title: string,
+  hiddenText: string,
+): Promise<void> {
+  const button = within(region).queryByRole("button", {
+    name: new RegExp(title, "u"),
+  });
+
+  if (button === null) {
+    expect(within(region).queryByText(title)).not.toBeInTheDocument();
+    expect(screen.queryByText(hiddenText)).not.toBeInTheDocument();
+
+    return;
+  }
+
+  await user.click(button);
+
+  const detail = await screen.findByRole("region", {
+    name: /segment detail/i,
+  });
+
+  expect(within(detail).queryByText(hiddenText)).not.toBeInTheDocument();
+}
+
+function makeNonEnumerableOwnValue(
+  record: Record<PropertyKey, unknown>,
+  key: PropertyKey,
+): void {
+  Object.defineProperty(record, key, {
+    configurable: true,
+    enumerable: false,
+    value: record[key],
+    writable: true,
+  });
 }
 
 function expectNoDangerousDom(): void {
