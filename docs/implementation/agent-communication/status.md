@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:21 CST.
+Last updated: 2026-05-25 16:23 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 16:21 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 started; preparing pre-test guidance delegation.
+- Current phase: TASK-032 pre-test guidance delegated.
 
 ## Active Agents
 
-- None.
+- Linnaeus the 2nd (`planner`) is defining the smallest safe TASK-032 slice.
+- Hilbert the 2nd (`docs_researcher`) is checking current docs for Tauri/native/network/security implications.
+- Carson the 2nd (`deprecation_auditor`) is auditing Sync/runtime/settings API assumptions.
+- Laplace the 2nd (`security_reviewer`) is defining Sync skeleton security constraints.
 
 ## Current TASK-032 State
 
@@ -39,7 +42,12 @@ Last updated: 2026-05-25 16:21 CST.
 - Parent decisions before guidance:
   - Continue TASK-032 as an autonomous task on branch `feat/task-032-sync-plugin-skeleton`.
   - Delegate planning, docs/current API review, deprecation/API audit, and security review before writing tests because Sync touches possible Tauri/native/network/security boundaries and plugin settings semantics.
-- Next action: delegate pre-test guidance agents, record their findings, then delegate failing tests to `test_writer`.
+- Pre-test guidance delegated:
+  - Linnaeus the 2nd (`planner`) should define the smallest safe slice, canonical ids, DTOs, syncable unit definitions, rebuildable-index assumptions, conflict strategy, settings approach, acceptance criteria, and deferred scope.
+  - Hilbert the 2nd (`docs_researcher`) should verify current Tauri v2 / security / permission implications if native or network sync appears relevant, and test guidance for a pure TypeScript skeleton.
+  - Carson the 2nd (`deprecation_auditor`) should audit stale sync assumptions, absent settings/query/background/native APIs, and likely production surfaces.
+  - Laplace the 2nd (`security_reviewer`) should define no-network/no-secret/no-native/capability constraints, data minimization, conflict/privacy risks, and static guard requirements.
+- Next action: wait for guidance, record parent decisions, then delegate failing tests to `test_writer`.
 
 ## Current TASK-031 State
 

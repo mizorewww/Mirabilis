@@ -43,3 +43,12 @@
   - `docs_researcher` to verify current Tauri v2 / security / permission implications only if native or network sync appears relevant, plus current testing implications for pure TypeScript plugin tests.
   - `deprecation_auditor` to audit stale sync assumptions, absent settings/query APIs, and native transport/API assumptions.
   - `security_reviewer` to define no-network/no-secret/no-native/capability constraints, conflict/privacy risks, and static guard requirements.
+
+## Pre-Test Guidance Handoff
+
+- Linnaeus the 2nd (`planner`) started at 2026-05-25 16:23 CST.
+- Hilbert the 2nd (`docs_researcher`) started at 2026-05-25 16:23 CST.
+- Carson the 2nd (`deprecation_auditor`) started at 2026-05-25 16:23 CST.
+- Laplace the 2nd (`security_reviewer`) started at 2026-05-25 16:23 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
