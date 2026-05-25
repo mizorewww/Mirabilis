@@ -443,8 +443,15 @@ describe("ML Plugin baseline predictions", () => {
       runtime,
       createTrackedOnlyPredictionPayload(),
     );
+    const longerResult = await executeMlPrediction(
+      runtime,
+      createLongTrackedOnlyPredictionPayload(),
+    );
 
     expect(result).toStrictEqual(expectedTrackedOnlyPredictionResult());
+    expect(longerResult).toStrictEqual(
+      expectedLongTrackedOnlyPredictionResult(),
+    );
   });
 
   it("rejects hostile or unbounded ml.run-prediction payloads and stale command aliases without mutating stores", async () => {
@@ -1089,6 +1096,24 @@ function createTrackedOnlyPredictionPayload(): MlRunPredictionPayload {
   };
 }
 
+function createLongTrackedOnlyPredictionPayload(): MlRunPredictionPayload {
+  return {
+    algorithmId: mlPredictionAlgorithmId,
+    input: {
+      events: [
+        createTimerSegmentEvent(currentPageId, "segment-tracked-only-long", 5_400, {
+          startAt: "2026-05-25T02:30:00.000Z",
+        }),
+      ],
+      generatedAt,
+      kind: mlPredictionInputKind,
+      metadata: [],
+      pageId: currentPageId,
+      pages: [createPageProjection(currentPageId, "Long tracked only task")],
+    },
+  };
+}
+
 function expectedTrackedOnlyPredictionResult(): MlRemainingTimePredictionResult {
   return {
     algorithmId: mlPredictionAlgorithmId,
@@ -1112,6 +1137,32 @@ function expectedTrackedOnlyPredictionResult(): MlRemainingTimePredictionResult 
     pageId: currentPageId,
     pageTitle: "Tracked only task",
     reasons: ["Tracked Timer work totals 0h 20m."],
+  };
+}
+
+function expectedLongTrackedOnlyPredictionResult(): MlRemainingTimePredictionResult {
+  return {
+    algorithmId: mlPredictionAlgorithmId,
+    confidence: 0.5,
+    features: {
+      baselineTotalSeconds: 10_800,
+      childTasksCompleted: 0,
+      childTasksTotal: 0,
+      similarAverageSeconds: null,
+      similarCompletedTasks: 0,
+      tagIds: [],
+      timerNoteCount: 0,
+      trackedSeconds: 5_400,
+    },
+    generatedAt,
+    kind: mlPredictionResultKind,
+    limitations: expectedAvailableLimitations,
+    maxSeconds: 8_100,
+    minSeconds: 2_700,
+    modelId: mlBaselineModelId,
+    pageId: currentPageId,
+    pageTitle: "Long tracked only task",
+    reasons: ["Tracked Timer work totals 1h 30m."],
   };
 }
 
