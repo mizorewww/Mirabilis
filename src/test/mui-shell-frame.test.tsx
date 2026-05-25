@@ -328,11 +328,8 @@ describe("TASK-035 MUI static and package guards", () => {
       dependencies,
     );
 
-    expect(dependencyDiff.added).toStrictEqual([
-      ...requiredTask035MuiDependencies,
-    ].sort());
-    expect(dependencyDiff.changed).toStrictEqual([]);
-    expect(dependencyDiff.removed).toStrictEqual([]);
+    expect(findTask035MuiDependencyViolations(packageJson)).toStrictEqual([]);
+    expect(findTask035DependencyDiffViolations(dependencyDiff)).toStrictEqual([]);
     expect(packageJson.devDependencies).toStrictEqual(
       basePackageJson.devDependencies,
     );
@@ -682,6 +679,67 @@ function findForbiddenPackageDrift(packageJson: PackageJson): string[] {
   );
 }
 
+function findTask035MuiDependencyViolations(packageJson: PackageJson): string[] {
+  const runtimeDependencies = packageJson.dependencies ?? {};
+  const allDeclaredDependencies = {
+    ...runtimeDependencies,
+    ...(packageJson.devDependencies ?? {}),
+  };
+  const requiredDependencies = new Set<string>(requiredTask035MuiDependencies);
+  const violations = requiredTask035MuiDependencies.flatMap((dependencyName) => {
+    const version = runtimeDependencies[dependencyName];
+
+    if (version === undefined) {
+      return [`missing reviewed runtime dependency: ${dependencyName}`];
+    }
+
+    return isRegistryVersionSpecifier(version)
+      ? []
+      : [`non-registry reviewed dependency specifier: ${dependencyName}`];
+  });
+  const unreviewedMuiDependencies = Object.keys(allDeclaredDependencies)
+    .filter(
+      (dependencyName) =>
+        /^(?:@emotion|@mui)\//u.test(dependencyName) &&
+        !requiredDependencies.has(dependencyName),
+    )
+    .sort();
+
+  return [
+    ...violations,
+    ...unreviewedMuiDependencies.map(
+      (dependencyName) => `unreviewed MUI/Emotion dependency: ${dependencyName}`,
+    ),
+  ];
+}
+
+function findTask035DependencyDiffViolations(diff: {
+  added: string[];
+  changed: string[];
+  removed: string[];
+}): string[] {
+  const violations: string[] = [];
+
+  if (
+    diff.added.length > 0 &&
+    !sameStringSet(diff.added, requiredTask035MuiDependencies)
+  ) {
+    violations.push(
+      `dependency additions must be empty after merge or exactly reviewed TASK-035 MUI dependencies before merge: ${diff.added.join(", ")}`,
+    );
+  }
+
+  if (diff.changed.length > 0) {
+    violations.push(`unreviewed changed dependencies: ${diff.changed.join(", ")}`);
+  }
+
+  if (diff.removed.length > 0) {
+    violations.push(`unreviewed removed dependencies: ${diff.removed.join(", ")}`);
+  }
+
+  return violations;
+}
+
 function diffStringRecordProperties(
   baseRecord: Record<string, string>,
   currentRecord: Record<string, string>,
@@ -701,6 +759,23 @@ function diffStringRecordProperties(
       .filter((key) => !(key in currentRecord))
       .sort(),
   };
+}
+
+function isRegistryVersionSpecifier(value: string): boolean {
+  return (
+    value.trim().length > 0 &&
+    !/^(?:https?:|git(?:\+|:)|file:|link:|portal:|workspace:)/iu.test(value)
+  );
+}
+
+function sameStringSet(
+  actual: readonly string[],
+  expected: readonly string[],
+): boolean {
+  return (
+    actual.length === expected.length &&
+    [...actual].sort().every((value, index) => value === [...expected].sort()[index])
+  );
 }
 
 async function listTask035SurfaceChangesFromMaster(): Promise<string[]> {
