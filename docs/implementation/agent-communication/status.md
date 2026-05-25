@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:54 CST.
+Last updated: 2026-05-25 08:56 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:54 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 failing acceptance tests committed; implementation handoff pending.
+- Current phase: TASK-026 production implementation delegated to Huygens (`implementer`).
 
 ## Active Agents
 
-- None currently active. Next agent should be `implementer` for the minimum production code needed to satisfy Kant's focused Calendar Plugin baseline tests.
+- Huygens (`implementer`) is adding the minimum production code needed to satisfy Kant's focused Calendar Plugin baseline tests. Scope is production implementation only; no test edits, docs/progress edits, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Current TASK-026 State
 
@@ -163,8 +163,8 @@ Last updated: 2026-05-25 08:54 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for TASK-026 minimum production code.
-2. Validate focused Calendar tests and adjacent checks after the implementer finishes.
+1. Wait for Huygens (`implementer`) to finish TASK-026 minimum production code.
+2. Validate focused Calendar tests and adjacent checks after Huygens reports.
 
 ## Current TASK-021 State
 

@@ -112,4 +112,10 @@
 
 ## Current Next Action
 
-- Spawn `implementer` for the minimum Calendar Plugin production implementation needed to pass Kant's focused tests.
+- Huygens (`implementer`) started 2026-05-25 08:56 CST.
+- Scope: minimum production implementation only; no test edits, docs/progress edits, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
+- Required checks: focused Calendar test, `bun run typecheck`, `bun run lint` if green, `git diff --check`, and native/package/Tauri guard.
+
+## Current Next Action
+
+- Wait for Huygens (`implementer`) to finish, then validate and commit implementation if checks pass.
