@@ -161,3 +161,11 @@
 
 - Delegate minimum production implementation to `implementer`.
 - Expected production scope: add built-in ML Plugin files, deterministic feature/model helpers, prediction panel view/slot contribution, `ml.run-prediction` command, and `BUILT_IN_PLUGINS` registration while keeping package/native/Tauri/Rust/schema/capability surfaces unchanged.
+
+## Implementation Handoff
+
+- Dewey (`implementer`) started at 2026-05-25 13:25 CST.
+- Scope: production code only for the TASK-030 ML Plugin baseline.
+- Expected changed files: `src/bootstrap/built-in-plugins.ts` and `src/plugins/ml/*`.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Dewey, validate focused green checks, and commit implementation separately.

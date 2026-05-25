@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:24 CST.
+Last updated: 2026-05-25 13:25 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:24 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 failing tests committed; implementation handoff pending.
+- Current phase: TASK-030 implementation delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording the failing-test result before delegating implementation.
+- Dewey (`implementer`) is writing the minimum TASK-030 production implementation.
 
 ## Current TASK-030 State
 
@@ -55,6 +55,10 @@ Last updated: 2026-05-25 13:24 CST.
   - Parent validated the expected red signal: focused TASK-030 tests failed with 6 failed / 1 passed because the `ml` built-in descriptors, `ml.run-prediction` command, `ml.prediction-panel` view, and `src/plugins/ml/index.ts` production file are missing.
   - Parent static validation passed: `bun run typecheck`, focused ESLint for `src/test/ml-plugin-baseline-predictions.test.tsx`, `git diff --check`, `.skip/.only` scan, production-source diff guard, and package/native/Tauri/Rust/schema diff guard.
   - Test commit: `17bcba4 Aristotle(test)(Implement ML Plugin baseline predictions): add ml prediction acceptance tests`; post-commit auto-push succeeded.
+- Implementation delegated:
+  - Dewey (`implementer`) should add the ML plugin production baseline, expected under `src/plugins/ml/*` plus `src/bootstrap/built-in-plugins.ts`.
+  - Scope: production code only; no test/docs/progress/package/native/Tauri/Rust/schema/capability edits.
+  - Required result: focused TASK-030 tests pass while typecheck/lint stay green and package/native/Tauri/Rust/schema surfaces remain unchanged.
 
 ## Current TASK-029 State
 
