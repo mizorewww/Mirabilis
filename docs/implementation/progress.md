@@ -64,7 +64,7 @@ Status markers:
 ## Milestone M6: Calendar and reporting
 
 - [x] TASK-026: Implement Calendar Plugin baseline
-- [~] TASK-027: Implement Habit and Heatmap plugins
+- [x] TASK-027: Implement Habit and Heatmap plugins
 - [ ] TASK-028: Implement Stats and Chart plugins
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
@@ -78,6 +78,20 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 10:33 CST - TASK-027 completed
+
+- Branch: `feat/task-027-habit-heatmap-plugins`.
+- Task: Implement Habit and Heatmap plugins.
+- Delivered: built-in `HabitPlugin` and `HeatmapPlugin` are registered through `BUILT_IN_PLUGINS` with plugin ids `habit` and `heatmap`.
+- Delivered: Habit Plugin recognizes valid `#habit` syntax through explicit `habit.refresh-habit({ pageId })`, writes Habit-owned `habit.enabled`, `habit.frequency`, `habit.lastCheckedAt`, and `habit.nextDue` metadata, registers canonical commands `habit.refresh-habit`, `habit.check-today`, `habit.uncheck-today`, and `habit.set-frequency`, and saves Habits / Today Habits filters.
+- Delivered: Habit completion appends `namespace: "habit"`, `type: "checked" | "unchecked"` events with `{ habitPageId, date }`; duplicate consecutive same-day checks remain idempotent, while same-day `check -> uncheck -> check` appends the trailing `checked` event required by append-only Heatmap/event consumers.
+- Delivered: Heatmap Plugin registers generic `heatmap.calendar` view with `type: "heatmap"` and accepts caller-provided `kind: "heatmap.date-series"` DTOs. Heatmap validates rows fail-closed, sorts deterministically, renders inert React text/native buttons, does not import Habit internals, and does not read Habit events directly.
+- Review and fixes: review agents found one P1 around same-day re-check event chronology. Darwin added the red regression test and Goodall fixed production behavior. Security/current-doc reviews found no P0/P1 blockers.
+- Documentation sync: product, architecture, and development docs now describe canonical Habit/Heatmap ids, kebab-case commands, camelCase metadata, split Habit event namespace/type, `heatmap.calendar`, `heatmap.date-series`, and deferred scope.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 32 frontend test files / 496 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: Task checkbox auto-bridge, Habit Review, `habit.target`, `habit.streak`, skipped/weekly/monthly recurrence, Calendar/Stats/ML Habit feeds, app-shell Habit/Heatmap route polish, production route/navigation, Heatmap row-count caps, broader `#habit` parser hardening, and native/Tauri/package/Rust/schema persistence changes remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
 
 ### 2026-05-25 09:41 CST - TASK-027 started
 
