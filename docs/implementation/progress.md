@@ -72,12 +72,23 @@ Status markers:
 - [x] TASK-029: Implement Quick Capture and Search plugins
 - [x] TASK-030: Implement ML Plugin baseline predictions
 - [x] TASK-031: Implement AI Plugin provider abstraction
-- [ ] TASK-032: Implement Sync Plugin skeleton
+- [~] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 16:21 CST - TASK-032 started
+
+- Branch: `feat/task-032-sync-plugin-skeleton`.
+- Task: Implement Sync Plugin skeleton.
+- Start point: `master` after TASK-031 merge validation commit `ad583f4`.
+- Source docs read: `docs/implementation/task-index.md#task-032-implement-sync-plugin-skeleton`, `docs/development/01-data-roadmap-and-mvp.md#phase-11sync-plugin`, `docs/architecture/01-overview-and-monorepo.md#11-分层结构`, related Sync references in `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+- Initial scope to narrow through agents: built-in Sync Plugin skeleton, syncable unit definitions for Markdown Page, Metadata, Event, Filter, and Plugin Settings, local index rebuildability assumptions, conflict strategy documentation, and strict no-network/no-native execution without explicit settings and security review.
+- Initial risks and questions: current runtime has manifest settings descriptors and SQLite plugin settings rows but no plugin-facing settings facade; full sync transport belongs to Tauri/native and must not be enabled by default; local plugin indexes should be treated as derived/rebuildable rather than durable sync payloads; conflict model may be documentation-first if no executable transport is in scope.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-032-sync-plugin-skeleton.md`.
 
 ### 2026-05-25 16:18 CST - TASK-031 merged
 

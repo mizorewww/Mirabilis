@@ -1,18 +1,45 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:18 CST.
+Last updated: 2026-05-25 16:21 CST.
 
 ## Current Task
 
-- Task: TASK-031 - Implement AI Plugin provider abstraction.
-- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
+- Task: TASK-032 - Implement Sync Plugin skeleton.
+- Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 merged to `master`; merge-result gate passed.
+- Current phase: TASK-032 started; preparing pre-test guidance delegation.
 
 ## Active Agents
 
 - None.
+
+## Current TASK-032 State
+
+- TASK-032 follows TASK-013 and is the first Sync Plugin skeleton slice:
+  - define syncable units for Markdown Page, Metadata, Event, Filter, and Plugin Settings;
+  - treat local plugin indexes as rebuildable;
+  - document conflict strategy before full implementation;
+  - do not enable network sync without explicit settings and security review.
+- Start point: `master` after TASK-031 merge validation commit `ad583f4`.
+- Initial parent interpretation:
+  - Keep Sync behavior in a built-in plugin, not Core.
+  - Prefer a TypeScript-only skeleton unless agents prove an acceptance-critical need for native/Tauri/Rust/schema/capability changes.
+  - Do not add live network sync, raw `fetch`, sockets, workers, package dependencies, filesystem/native transport, Tauri permissions, or secret storage in this slice.
+  - Model syncable unit definitions and serialization boundaries as plugin-owned descriptors/DTOs over existing core domain concepts.
+  - Treat plugin settings carefully because the current runtime has manifest `settingsPanels` descriptors and SQLite plugin settings rows, but no plugin-facing runtime settings facade yet.
+- Source docs read:
+  - `docs/implementation/task-index.md#task-032-implement-sync-plugin-skeleton`.
+  - `docs/development/01-data-roadmap-and-mvp.md#phase-11sync-plugin`.
+  - `docs/architecture/01-overview-and-monorepo.md#11-分层结构`.
+  - Related Sync / plugin settings / native transport references in `docs/development/02-implementation-roadmap-and-constraints.md`, product, architecture, and testing docs.
+- Agent/config validation passed for orchestration start:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known `TERM=dumb` terminal failure and unrestricted sandbox/network notes.
+- Parent decisions before guidance:
+  - Continue TASK-032 as an autonomous task on branch `feat/task-032-sync-plugin-skeleton`.
+  - Delegate planning, docs/current API review, deprecation/API audit, and security review before writing tests because Sync touches possible Tauri/native/network/security boundaries and plugin settings semantics.
+- Next action: delegate pre-test guidance agents, record their findings, then delegate failing tests to `test_writer`.
 
 ## Current TASK-031 State
 
