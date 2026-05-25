@@ -270,6 +270,106 @@ describe("TASK-037 Home workspace editor", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("ignores delayed hosted openPage calls for old command-returned page ids after leaving Home", async () => {
+    const delayedOpenGate = createDeferred<void>();
+    const openAttempted = createDeferred<void>();
+    const runtime = await createRuntime({
+      pageIds: ["home-session-page", "command-returned-task-page"],
+    });
+    const homePage = createRuntimePage(runtime, sourcePageTitle, [
+      {
+        blockId: "delayed-bridge-open-task",
+        text: "- [ ] Delayed bridge open",
+      },
+    ]);
+    const user = userEvent.setup();
+    const executeSpy = vi.spyOn(runtime.commands, "execute");
+
+    replaceRegisteredPageEditor(
+      runtime,
+      createDelayedCommandReturnedOpenEditor({
+        openAttempted,
+        releaseOpen: delayedOpenGate,
+        sourceBlockId: "delayed-bridge-open-task",
+      }),
+    );
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByText("Delayed command-returned open editor"),
+    ).toBeVisible();
+
+    const probeStatus = await screen.findByRole("status", {
+      name: /delayed command open probe/i,
+    });
+
+    expect(probeStatus).toHaveTextContent("delayed command open ready");
+
+    await user.click(
+      screen.getByRole("button", { name: /prepare delayed task open/i }),
+    );
+
+    await waitFor(() =>
+      expect(executeSpy).toHaveBeenCalledWith(openTaskPageCommandId, {
+        sourcePageId: homePage.id,
+        sourceBlockId: "delayed-bridge-open-task",
+      }),
+    );
+    await waitFor(() =>
+      expect(probeStatus).toHaveTextContent(
+        "command returned: command-returned-task-page",
+      ),
+    );
+
+    runtime.pages.update("command-returned-task-page", {
+      body: structuredDocument([
+        {
+          blockId: "returned-task-body",
+          text: "Returned command page body must stay hidden",
+        },
+      ]),
+    });
+
+    await user.click(
+      within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
+        "button",
+        { name: /today/i },
+      ),
+    );
+
+    const todayMain = await screen.findByRole("main", { name: /today/i });
+
+    expect(
+      within(todayMain).getByText(/^Today filter placeholder$/i),
+    ).toBeVisible();
+    expect(
+      within(todayMain).queryByRole("textbox", { name: /markdown/i }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      delayedOpenGate.resolve(undefined);
+      await openAttempted.promise;
+      await Promise.resolve();
+    });
+
+    const stillTodayMain = screen.getByRole("main", { name: /today/i });
+
+    expect(stillTodayMain).toBeVisible();
+    expect(
+      within(stillTodayMain).getByText(/^Today filter placeholder$/i),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("main", { name: /home/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /markdown/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Returned command page body must stay hidden/u),
+    ).not.toBeInTheDocument();
+  });
+
   it("lets a user type Markdown, use snippet toolbar buttons, save, and see the saved Home result", async () => {
     const runtime = await createRuntime({
       pageIds: ["home-session-page"],
@@ -823,6 +923,72 @@ function createForeignOpenThenLoadProbeEditor(
   };
 }
 
+function createDelayedCommandReturnedOpenEditor({
+  openAttempted,
+  releaseOpen,
+  sourceBlockId,
+}: {
+  openAttempted: Deferred<void>;
+  releaseOpen: Deferred<void>;
+  sourceBlockId: string;
+}): ComponentType<Record<string, unknown>> {
+  return function DelayedCommandReturnedOpenEditor(
+    props: Record<string, unknown>,
+  ) {
+    const bridge = useMarkdownWorkspaceBridge();
+    const currentHomePageId = readCapturedPageId(props) ?? "missing-page-id";
+    const [status, setStatus] = useState("delayed command open ready");
+
+    async function prepareDelayedOpen(): Promise<void> {
+      if (bridge === undefined) {
+        setStatus("delayed command open blocked");
+
+        return;
+      }
+
+      setStatus("delayed command open requesting");
+
+      try {
+        const output = await bridge.commandBus.execute(openTaskPageCommandId, {
+          sourcePageId: currentHomePageId,
+          sourceBlockId,
+        });
+        const returnedPageId = readCommandReturnedPageId(output);
+
+        setStatus(`command returned: ${returnedPageId}`);
+        await releaseOpen.promise;
+
+        try {
+          bridge.openPage(returnedPageId);
+        } catch {
+          // A throwing delayed open is an acceptable fail-closed signal.
+        } finally {
+          openAttempted.resolve(undefined);
+        }
+      } catch {
+        setStatus("delayed command open blocked");
+      }
+    }
+
+    return (
+      <section aria-label="Delayed command-returned open editor">
+        <p>Delayed command-returned open editor</p>
+        <p aria-label="Delayed command open probe" role="status">
+          {status}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            void prepareDelayedOpen();
+          }}
+        >
+          Prepare delayed task open
+        </button>
+      </section>
+    );
+  };
+}
+
 function readCapturedDataKind(props: CapturedEditorProps): string | undefined {
   const data = props.data;
 
@@ -847,6 +1013,18 @@ function readCapturedPageId(props: CapturedEditorProps): string | undefined {
   const page = data.page;
 
   return isRecord(page) && typeof page.id === "string" ? page.id : undefined;
+}
+
+function readCommandReturnedPageId(output: unknown): string {
+  if (
+    isRecord(output) &&
+    typeof output.pageId === "string" &&
+    output.pageId.trim().length > 0
+  ) {
+    return output.pageId;
+  }
+
+  throw new Error("Expected command to return a pageId");
 }
 
 function createRuntimePage(
