@@ -75,9 +75,27 @@ Status markers:
 - [x] TASK-032: Implement Sync Plugin skeleton
 - [x] TASK-033: Add release packaging and local full gate
 
+## Milestone M8/M9
+
+- [ ] TASK-034: Replace Startup Card With A Usable Workspace
+- [ ] TASK-035: Add Generic ViewHost And SlotHost
+- [ ] TASK-036: Mount Page Metadata, Timeline, And Floating Timer Slots
+- [ ] TASK-037: Add Sidebar Page And Saved-Filter Navigation
+- [ ] TASK-038: Add Command Palette And Quick Capture Modal
+- [ ] TASK-039: Add Search Overlay And Results Route
+- [ ] TASK-040: Add Calendar And Reporting Routes With Explicit Data Projections
+- [ ] TASK-041: Add Contextual Sidebar Panels For ML And AI
+- [ ] TASK-042: Responsive State And Accessibility Polish
+
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 00:54 CST - M9 user-visible UI roadmap added
+
+- The roadmap completion scan was revised after the user pointed out that TASK-001 through TASK-033 delivered the runtime substrate but still left the real app UI as the startup card in `src/App.tsx`.
+- Added M9: User-visible app shell and workspace to `docs/implementation/task-index.md`, with TASK-034 through TASK-042 covering the Markdown-first workbench, generic view/slot hosts, sidebar navigation, command/search/capture surfaces, Calendar/Reports routes, ML/AI panels, and responsive/accessibility polish.
+- No new task is marked in progress; the next roadmap action is to start TASK-034.
 
 ### 2026-05-26 00:07 CST - Roadmap completion scan
 

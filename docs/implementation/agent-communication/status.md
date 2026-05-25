@@ -1,20 +1,31 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 00:07 CST.
+Last updated: 2026-05-26 00:54 CST.
 
 ## Current Task
 
-- Task: TASK-033 - Add release packaging and local full gate.
-- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Task: M9 roadmap documentation - User-visible app shell and workspace.
+- Branch: `docs/m9-user-visible-ui-roadmap`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
-- Parent role: orchestration only.
-- Current phase: documented roadmap complete.
+- Parent role: orchestration only; this docs writer is editing roadmap/progress/agent-communication docs directly per handoff.
+- Current phase: M9 UI roadmap planning added after the completed TASK-033 scan exposed missing user-visible app-shell work.
 
 ## Active Agents
 
-- None. Final release readiness, security, deprecation, test-quality, docs re-review, and docs polish agents have completed.
+- None active in this docs-only handoff.
 
-## Current TASK-033 State
+## Current M9 Roadmap State
+
+- Diagnosis accepted from planner/user context: TASK-001 through TASK-033 delivered runtime substrate and plugin-owned capabilities, but `src/App.tsx` still renders only the centered Mirabilis startup/status panel after startup.
+- Missing user-visible work now tracked by M9 includes production app-shell mounting, page routes, saved-filter navigation, view/slot host composition, command palette, Quick Capture modal mounting, Search route, Calendar/Reports feeds, ML/AI contextual panels, and responsive/accessibility polish.
+- Durable docs updated by this handoff:
+  - `docs/implementation/task-index.md` gets the new M9 milestone row and TASK-034 through TASK-042.
+  - `docs/implementation/progress.md` gets the new unstarted TASK-034 through TASK-042 entries and a Run Log correction to the previous roadmap completion scan.
+  - `docs/implementation/agent-communication/status.md` records this current orchestration state.
+- No new M9 task should be marked `[~]` during this docs-only update.
+- Next action after this docs update: start TASK-034 - Replace Startup Card With A Usable Workspace.
+
+## Historical TASK-033 State
 
 - TASK-033 follows TASK-032 and owns the local release/full-gate slice:
   - make `bun run check:full` run quick checks and Tauri build reliably enough for local release readiness;

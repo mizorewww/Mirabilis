@@ -15,6 +15,7 @@ This index converts the product, architecture, and development docs into focused
 | M6: Metadata and timer loop | Metadata bar, timer commands, active timer, time segments, notes, recently worked, and unnoted sessions work. | A user can track time against a task and see the segment/note. |
 | M7: Calendar and reporting | Calendar, habit, heatmap, stats, and chart plugins present events and metadata as views. | Time and habit data are visible in calendar/heatmap/chart views. |
 | M8: ML, AI, sync, and polish | Prediction, AI commands, quick capture, search, sync, packaging, and release readiness land. | Advanced plugins stay plugin-owned and do not pollute Core. |
+| M9: User-visible app shell and workspace | Replace the startup card with a Markdown-first workbench, then mount app-shell UI routes, view hosts, slot hosts, navigation, command/search/capture surfaces, contextual panels, and responsive polish. | The first screen is a usable Markdown workspace with safe route/slot/view composition through existing registries and command execution, without broadening native/Tauri/security surfaces. |
 
 ## Cross-Cutting Risks And Unknowns
 
@@ -908,3 +909,338 @@ Test plan:
 Dependencies:
 
 - TASK-001.
+
+### TASK-034: Replace Startup Card With A Usable Workspace
+
+Source docs:
+
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md#task-015-app-bootstrap-and-runtime-provider-guidance`
+- `src/App.tsx`
+- `src/providers/*`
+- `src/bootstrap/create-app-runtime.ts`
+- `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`
+
+Acceptance criteria:
+
+- Ready app renders a work-focused workbench instead of the centered startup/status card.
+- The first screen creates or selects a session Home Markdown Page when no page is selected.
+- The central workspace renders the `page.editor` registered view through the View Registry, not by directly importing the Markdown editor component into the app shell.
+- Typing, toolbar snippet buttons, save, task-title open, and checkbox toggle continue to work for the selected in-memory session page.
+- `useRuntime()` remains the public `{ app }` facade; full runtime handles stay private to trusted shell composition and are not available to plugin-rendered descendants.
+- No direct Tauri imports, native/Rust/package/capability changes, or direct business-plugin implementation imports are added.
+- Out of scope: metadata bar, saved filters, quick capture, search, calendar/report routes, contextual panels, and persistence beyond the current runtime.
+
+Test plan:
+
+- React Testing Library app-shell workspace tests for ready, loading, failure, Home page creation/selection, editor rendering, edit/save, toolbar snippets, task open, and checkbox toggle.
+- Existing runtime-provider, bootstrap, and app-shell boundary tests.
+- Focused Markdown editor integration tests for the loaded `pageId` / `pageFacade` path.
+
+Dependencies:
+
+- TASK-033.
+
+Docs to verify before implementation:
+
+- Local TASK-015 and TASK-016 guidance in `docs/testing/strategy.md`.
+- Current React and React Testing Library guidance for async rendering and user events.
+
+### TASK-035: Add Generic ViewHost And SlotHost
+
+Source docs:
+
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Add reusable trusted app-shell hosts for rendering View Registry entries by id/type and Slot Registry contributions by slot name.
+- `ViewHost` resolves registered descriptors, passes only explicit controlled props/data, renders safe missing/loading/empty/error states, and fails closed for mismatched accepted data.
+- `SlotHost` renders matching slot contributions in registry order, evaluates contribution conditions with controlled props only, and fails closed for missing or invalid contributions.
+- Plugin-rendered views and slots do not receive full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, filesystem, or path handles.
+- TASK-034 editor mounting is migrated or prepared to use the generic host path without direct editor/business-plugin imports in the shell.
+- No native/Tauri/Rust/package/capability changes are added.
+
+Test plan:
+
+- React Testing Library tests for ViewHost rendering, accepted-data checks, missing/error states, and no full-runtime prop leakage.
+- SlotHost tests for ordering, conditional rendering, controlled props, and fail-closed behavior.
+- Existing View Registry, Slot Registry, RuntimeProvider, and app-shell boundary tests.
+
+Dependencies:
+
+- TASK-034.
+
+Docs to verify before implementation:
+
+- Local MetadataBar and slot guidance in `docs/architecture/04-slots-editor-task.md`.
+- Current React error-boundary and React Testing Library user-event guidance.
+
+### TASK-036: Mount Page Metadata, Timeline, And Floating Timer Slots
+
+Source docs:
+
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Current page header mounts the existing metadata UI path for `page.header.metadata` so Task, Tag, and Timer contributions are visible for the selected page.
+- Current page content mounts the `page.timeline` slot so Timer segment/note UI can render for the selected page.
+- App shell mounts `global.floating` so the Timer active bar can appear while a timer is active.
+- Slot props are current-page scoped and controlled; plugin slot components still execute mutations only through the Command Registry or their existing scoped executors.
+- Empty, unavailable, and plugin-failure states do not leak raw errors, paths, SQL, tokens, or full runtime handles.
+- No direct Timer/Task/Tag business implementation imports, native/Tauri/Rust/package/capability changes, or new persistence/schema work are added.
+- Out of scope: Timer totals, Recently Worked, Unnoted Sessions saved filters, manual segment editing, and Calendar/Stats feed integration.
+
+Test plan:
+
+- React Testing Library workspace tests for visible metadata contributions, tag add/remove controls, timer Start/Pause/Resume/Stop flow, active floating bar, and timeline note rendering.
+- Existing MetadataBar and Timer plugin tests.
+- Static app-shell boundary tests for no direct business-plugin/native imports.
+
+Dependencies:
+
+- TASK-035.
+- TASK-025.
+
+Docs to verify before implementation:
+
+- TASK-023 through TASK-025 guidance in `docs/testing/strategy.md`.
+- Current React Testing Library guidance for accessible controls and async updates.
+
+### TASK-037: Add Sidebar Page And Saved-Filter Navigation
+
+Source docs:
+
+- `docs/product/02-core-data-model.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+
+Acceptance criteria:
+
+- Left sidebar provides Home, Inbox, All Tasks, Today, recent pages, and plugin route groups where the backing page, filter, or view exists in the current runtime.
+- Selecting a page route changes the active workspace page and renders the Markdown page editor through the ViewHost path.
+- Selecting a saved filter route executes the saved filter through the existing filter/query path and renders its registered `viewType` through ViewHost, including `task.page-list` for All Tasks and Today.
+- Inbox navigation uses the existing Quick Capture saved filter/page semantics; it does not hard-code Quick Capture internals beyond public filter/page data.
+- Recent pages come from current page store state and remain scoped to the in-memory session.
+- Empty and missing route states are visible, accessible, and non-leaky.
+- No direct Task/Tag/Quick Capture business implementation imports, native/Tauri/Rust/package/capability changes, or persistent navigation storage are added.
+
+Test plan:
+
+- React Testing Library sidebar tests for page selection, saved-filter selection, All Tasks/Today rendering, Inbox behavior, recent-page ordering, and missing/empty states.
+- Filter executor and `page.list` view integration tests.
+- Static boundary tests for no direct business-plugin/native imports.
+
+Dependencies:
+
+- TASK-035.
+- TASK-022.
+- TASK-029.
+
+Docs to verify before implementation:
+
+- Local filter/query and saved-filter docs in product/development docs.
+- Current React Testing Library guidance for navigation and keyboard interaction tests.
+
+### TASK-038: Add Command Palette And Quick Capture Modal
+
+Source docs:
+
+- `docs/product/03-plugin-platform.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/07-runtime-flows.md`
+
+Acceptance criteria:
+
+- Top app-shell controls include command, search, and capture entry points without replacing the Markdown workspace as the first screen.
+- Command palette lists executable Command Registry descriptors with title/shortcut/context metadata and executes commands only through the Command Registry.
+- Quick Capture entry executes `quick-capture.open`, mounts the registered `quick-capture.modal` view, and saves through `quick-capture.save` / `quick-capture.save-and-open`.
+- Quick Capture modal has accessible dialog behavior, focus return, cancel/close handling, save disabled states, and non-leaky save errors.
+- `save-and-open` navigates to the returned Inbox page through the normal app-shell route state.
+- Native/global shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, and persistence beyond current runtime remain deferred.
+- No native/Tauri/Rust/package/capability changes are added.
+
+Test plan:
+
+- React Testing Library command palette tests for opening, listing, filtering/selecting commands, executing through Command Registry, and closing/focus behavior.
+- Quick Capture modal tests for open/save/save-and-open/cancel/error paths and Inbox navigation.
+- Existing Quick Capture plugin tests and app-shell boundary tests.
+
+Dependencies:
+
+- TASK-035.
+- TASK-037.
+- TASK-029.
+
+Docs to verify before implementation:
+
+- Current WAI-ARIA dialog guidance.
+- Current React Testing Library and `@testing-library/user-event` keyboard/focus guidance.
+
+### TASK-039: Add Search Overlay And Results Route
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Search entry opens an accessible overlay that executes `search.query` through the Command Registry with bounded query input.
+- Results render through the registered `search.results` view and show loading, empty, and error states without exposing full page bodies or raw errors.
+- Selecting a search result navigates to that page through the normal app-shell page route.
+- Search route state stores only bounded result DTO data needed to render the route; it does not create a persistent index or log full page bodies.
+- Command palette and search keyboard flows do not conflict.
+- Persistent Search indexing, search worker, SQLite FTS, native/global search shortcuts, and ranking beyond the existing plugin behavior remain deferred.
+- No native/Tauri/Rust/package/capability changes are added.
+
+Test plan:
+
+- React Testing Library search overlay tests for open/close, query submission, loading/empty/results/error states, keyboard interaction, and result navigation.
+- Existing Search plugin command/view tests.
+- Static no-native/no-indexer/package drift checks.
+
+Dependencies:
+
+- TASK-035.
+- TASK-037.
+- TASK-029.
+
+Docs to verify before implementation:
+
+- Current WAI-ARIA combobox/dialog guidance appropriate to the chosen overlay pattern.
+- Current React Testing Library and user-event guidance for keyboard flows.
+
+### TASK-040: Add Calendar And Reporting Routes With Explicit Data Projections
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Sidebar/plugin routes expose Calendar and Reports surfaces only through registered plugin views/commands.
+- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata and mount `calendar.day` / `calendar.week` through ViewHost.
+- Reporting routes build explicit bounded Stats input projections, execute `stats.run-aggregation` through the Command Registry, and render Chart views through ViewHost when chart DTOs are available.
+- Empty, partial-data, and unavailable states are visible and non-leaky.
+- Projection builders are app-shell owned integration code and do not import plugin private stores, sibling plugin internals, raw Core stores from plugin-rendered UI, or native/SQLite APIs.
+- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, and native/schema changes remain deferred.
+
+Test plan:
+
+- Projection-builder unit tests for time segments, habit/task/tag/stat inputs, bounds, archived-page handling, and malformed data.
+- React Testing Library route tests for Calendar day/week, Reports aggregation, chart rendering, and empty/error states.
+- Existing Calendar, Habit/Heatmap, Stats, and Chart plugin tests.
+- Static boundary tests for no sibling-private/native imports.
+
+Dependencies:
+
+- TASK-035.
+- TASK-037.
+- TASK-026.
+- TASK-028.
+
+Docs to verify before implementation:
+
+- Local Calendar/Stats/Chart guidance in product, architecture, and testing docs.
+- Current React Testing Library guidance for route-like state and async UI tests.
+
+### TASK-041: Add Contextual Sidebar Panels For ML And AI
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Optional right contextual panel can show current-page plugin panels without covering the Markdown workspace.
+- ML panel builds exact bounded current-page projections, executes `ml.run-prediction` through Command Registry, and renders `ml.page-sidebar.prediction-panel` / `ml.prediction-panel` through SlotHost or ViewHost.
+- AI panel renders `ai.suggestion-panel` and `ai.review-panel` with explicit caller-provided DTOs and can execute advisory AI commands with exact bounded projections.
+- AI output remains advisory; no AI command mutates pages, metadata, events, filters, sibling plugin data, or settings from this shell integration.
+- Live provider execution, provider settings UI, secret/keychain storage, and durable AI suggestion acceptance remain deferred unless a later task explicitly adds them with security review.
+- ML/AI panels fail closed for malformed, unavailable, or rejected data and do not expose full workspace data, full runtime handles, provider settings, raw errors, or secrets.
+- No native/Tauri/Rust/package/capability changes are added.
+
+Test plan:
+
+- React Testing Library contextual panel tests for open/close, ML prediction execution/rendering, AI advisory panel rendering, command error states, and page-switch refresh behavior.
+- Projection validation tests for ML/AI input builders.
+- Existing ML and AI plugin tests plus static no-network/no-secret/no-native/no-private-import guards.
+
+Dependencies:
+
+- TASK-040.
+- TASK-030.
+- TASK-031.
+
+Docs to verify before implementation:
+
+- Local TASK-030 and TASK-031 guidance in `docs/testing/strategy.md`.
+- Current OpenAI docs only if the task changes live provider/request behavior; otherwise keep provider execution mocked/injected.
+
+### TASK-042: Responsive State And Accessibility Polish
+
+Source docs:
+
+- `docs/product/README.md`
+- `docs/product/04-editor-and-workflows.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Desktop and narrow layouts keep the Markdown workspace usable with sidebar, top controls, contextual panel, floating surfaces, and modal overlays adapting without incoherent overlap.
+- Sidebar collapse/drawer behavior, command palette, search overlay, quick capture modal, editor, and contextual panel are keyboard reachable with predictable focus return.
+- Loading, empty, unavailable, and error states are consistent across workbench, routes, ViewHost, SlotHost, overlays, and contextual panels, and do not leak raw errors, paths, SQL, tokens, provider details, or full runtime handles.
+- App-shell landmarks, headings, labels, status regions, dialog semantics, and route navigation are accessible from the user's perspective.
+- Visual polish remains work-focused and does not introduce marketing landing-page UI or decorative surfaces in place of the workspace.
+- No native/Tauri/Rust/package/capability changes are added.
+
+Test plan:
+
+- React Testing Library accessibility tests for landmarks, labels, keyboard flows, focus return, status/error states, and narrow-layout controls.
+- App-shell integration tests across page, filter, search, capture, calendar/report, ML/AI, slot, and floating timer surfaces.
+- `bun run check:quick` as the expected local gate for this UI-only polish task.
+
+Dependencies:
+
+- TASK-034.
+- TASK-035.
+- TASK-036.
+- TASK-037.
+- TASK-038.
+- TASK-039.
+- TASK-040.
+- TASK-041.
+
+Docs to verify before implementation:
+
+- Current WAI-ARIA Authoring Practices for dialog, navigation, and command/search patterns.
+- Current React and React Testing Library user-event guidance.
