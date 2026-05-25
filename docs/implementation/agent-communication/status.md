@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:23 CST.
+Last updated: 2026-05-25 10:24 CST.
 
 ## Current Task
 
@@ -8,11 +8,12 @@ Last updated: 2026-05-25 10:23 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 P1 review fix required; regression-test and docs-sync handoff pending.
+- Current phase: TASK-027 P1 regression test and docs sync delegated.
 
 ## Active Agents
 
-- None currently active. Next agents should be `test_writer` for the P1 same-day re-check regression and `doc_writer` for stale Habit/Heatmap documentation.
+- Darwin (`test_writer`) is active for the P1 same-day re-check regression test.
+- Ramanujan (`doc_writer`) is active for stale Habit/Heatmap formal documentation sync.
 
 ## Current TASK-027 State
 
@@ -103,6 +104,6 @@ Last updated: 2026-05-25 10:23 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` to add failing regression coverage for same-day `check -> uncheck -> check`.
-2. Spawn `doc_writer` to sync stale formal Habit/Heatmap docs.
-3. After the regression test is committed red, spawn `implementer` for the P1 fix.
+1. Wait for Darwin (`test_writer`) and validate the expected red regression.
+2. Commit regression tests, then spawn `implementer` for the P1 fix.
+3. Integrate Ramanujan's docs sync in a separate docs commit.

@@ -160,3 +160,8 @@
 - Add a focused failing regression test first through `test_writer`.
 - Then delegate the production fix to `implementer`; the expected behavior is that same-day re-check after uncheck appends a trailing `checked` event so append-only event consumers and Heatmap normalizers see the active completion.
 - Retry `doc_writer` now that review agents have closed; docs sync should cover canonical command ids, metadata keys, event namespace/type split, Heatmap ownership of `heatmap.calendar`, `heatmap.date-series`, and deferred scope.
+
+## P1 Regression And Docs Handoff
+
+- Darwin (`test_writer`) started at 2026-05-25 10:24 CST. Scope: edit tests only, add a failing same-day `check -> uncheck -> check` regression showing the event stream needs a trailing `checked` after re-check.
+- Ramanujan (`doc_writer`) started at 2026-05-25 10:24 CST. Scope: edit formal docs only, sync stale Habit/Heatmap identifiers and deferred scope notes.
