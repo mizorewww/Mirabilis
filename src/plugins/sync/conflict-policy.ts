@@ -188,7 +188,7 @@ function validateEventUnits(input: EventConflictInput): ValidatedEventUnit[] {
 }
 
 function validateEventUnit(unit: unknown): ValidatedEventUnit {
-  if (!isRecord(unit)) {
+  if (!isPlainRecord(unit)) {
     throw new Error("Invalid sync event unit shape");
   }
 
@@ -220,7 +220,7 @@ function validateEventUnit(unit: unknown): ValidatedEventUnit {
 
   const syncKey = readDataProperty(unit, "syncKey");
 
-  if (!isRecord(syncKey)) {
+  if (!isPlainRecord(syncKey)) {
     throw new Error("Invalid sync event unit sync key");
   }
 
@@ -277,6 +277,14 @@ function sortJsonValue(value: ReturnType<typeof cloneSyncJson>): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return Object.getPrototypeOf(value) === Object.prototype;
 }
 
 function readDataProperty(
