@@ -81,7 +81,7 @@ Status markers:
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [x] TASK-036: Add Generic ViewHost And SlotHost
 - [x] TASK-037: Mount Home Workspace Editor
-- [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
+- [~] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
@@ -93,6 +93,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 05:25 CST - TASK-038 started
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Task: Add Sidebar Page And Saved-Filter Navigation.
+- Start point: `master` at `49b4fc4` after TASK-037 merge-validation and push closeout.
+- Source docs read: `docs/implementation/task-index.md#task-038-add-sidebar-page-and-saved-filter-navigation`, `docs/product/07-user-interface-design.md`, `docs/product/02-core-data-model.md`, `docs/product/05-built-in-plugins.md`, `docs/product/06-view-slots.md`, `docs/architecture/07-runtime-flows.md#185-用户打开-all-tasks--today-filter-result`, `docs/architecture/07-runtime-flows.md#1812-user-runs-quick-capture`, `docs/development/01-data-roadmap-and-mvp.md`, and `docs/testing/strategy.md`.
+- Initial scope: replace non-Home navigation placeholders with a real MUI Drawer navigation model for Home, Inbox, All Tasks, Today, recent pages, and public plugin route groups when backing runtime data exists; page routes render editor content through `ViewHost`; saved filters execute existing filter/query paths and render registered `page.list` / `task.page-list` views through `ViewHost`.
+- Test direction: require failing RTL tests first with `userEvent.setup()` and awaited clicks/keyboard for Drawer open/close, page route selection, saved-filter selection, and keyboard navigation; use role/name assertions for navigation, active route, empty/loading/unavailable states, and filter result lists.
+- Initial constraints: parent remains orchestration-only; no direct Task/Tag/Quick Capture private imports; Inbox uses public Quick Capture page/filter semantics; recent pages stay session-scoped; missing/empty/loading/unavailable states must be visible, accessible, and non-leaky; no package, lockfile, native, Tauri, Rust, IPC, capability, permission, persistence schema, or release changes.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with the known non-blocking unrestricted sandbox/network notes and the known `TERM=dumb` terminal failure.
+- Next action: delegate TASK-038 pre-test planning, current-doc research, security, and deprecation guidance before asking `test_writer` for the red acceptance suite.
 
 ### 2026-05-26 05:23 CST - TASK-037 merged
 

@@ -1,22 +1,40 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 05:23 CST.
+Last updated: 2026-05-26 05:25 CST.
 
 ## Current Task
 
-- Task: TASK-037 merged; next task is TASK-038 - Add Sidebar Page And Saved-Filter Navigation.
-- Branch: `master`.
+- Task: TASK-038 - Add Sidebar Page And Saved-Filter Navigation.
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 merge-result validation passed and `master` is pushed; TASK-038 starts from `master`.
+- Current phase: TASK-038 started; pre-test planning/current-doc/security/deprecation guidance pending.
 
 ## Active Agents
 
-- None. TASK-037 code, tests, docs, branch validation, release readiness, merge, and merge-result validation are complete.
-- No code, test, security, correctness, or docs agents are currently active.
-- Completed final re-review: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 findings after Huygens's `08dd1d5` fix.
-- Release readiness: Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required for this UI-only branch.
-- Pending: continue to TASK-038.
+- None yet for TASK-038.
+- Completed stale prior agents Laplace and Epicurus were closed before starting TASK-038.
+- Pending: spawn planner, docs_researcher, deprecation_auditor, and security_reviewer for TASK-038 pre-test guidance.
+
+## Current TASK-038 State
+
+- TASK-038 starts from `master` commit `49b4fc4`, after TASK-037 was merged, merge-result validated, and pushed.
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Initial scope:
+  - use MUI Drawer/List navigation for Home, Inbox, All Tasks, Today, recent pages, and public plugin route groups when backing data exists;
+  - selecting a page route changes the active workspace page and renders the editor through `ViewHost`;
+  - selecting All Tasks / Today / Inbox saved filters uses existing filter/query/public Quick Capture semantics and renders registered `viewType` through `ViewHost`;
+  - recent pages come from the current page store state and remain scoped to the current session;
+  - missing, empty, loading, and unavailable route states are visible, accessible, and non-leaky.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and use RTL plus `userEvent.setup()` for real drawer, route, saved-filter, and keyboard interaction;
+  - no direct Task, Tag, Quick Capture, or other business-plugin private imports in App Shell;
+  - no package, lockfile, Tauri/native, Rust, IPC, capability, permission, persistence schema, or release changes.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Parent decision: collect guidance from planner/current-doc/security/deprecation agents before delegating red tests.
 
 ## Current TASK-037 State
 
