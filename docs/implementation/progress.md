@@ -79,6 +79,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 00:06 CST - TASK-033 merged
+
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Merge commit: `288ae71` on `master`.
+- Merge-result checks: `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Merge-result bundle outputs: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- TASK-033 is complete on `master`; roadmap scan follows to determine whether any further unblocked task remains.
+
 ### 2026-05-26 00:05 CST - TASK-033 completed
 
 - Branch: `feat/task-033-release-packaging-local-full-gate`.

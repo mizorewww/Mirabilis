@@ -357,4 +357,6 @@
   - `app.security.csp: null` remains a pre-existing residual risk; public release, updater, or remote/web-content work needs future CSP hardening/security review.
   - Updater, signing, publishing, GitHub CI, native behavior, capability/permission, IPC contract, and dependency changes remain deferred.
 - Parent progress closeout: TASK-033 is marked `[x]` in `docs/implementation/progress.md` with final delivered scope, checks, commits, residual risks, and merge status.
-- Parent next action: commit the progress closeout, then merge the branch to `master` and rerun the full release gate on the merge result.
+- Merge: local `master` merge commit `288ae71 Merge TASK-033 release packaging local full gate`.
+- Merge-result validation: `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Parent next action: commit merge validation notes, push `master`, and scan for any remaining unblocked roadmap task.
