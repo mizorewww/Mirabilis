@@ -8,7 +8,7 @@ Last updated: 2026-05-26 05:23 CST.
 - Branch: `master`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 merge-result validation passed on `master`; push pending, then TASK-038 starts from `master`.
+- Current phase: TASK-037 merge-result validation passed and `master` is pushed; TASK-038 starts from `master`.
 
 ## Active Agents
 
@@ -16,7 +16,7 @@ Last updated: 2026-05-26 05:23 CST.
 - No code, test, security, correctness, or docs agents are currently active.
 - Completed final re-review: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 findings after Huygens's `08dd1d5` fix.
 - Release readiness: Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required for this UI-only branch.
-- Pending: push `master`, then continue to TASK-038.
+- Pending: continue to TASK-038.
 
 ## Current TASK-037 State
 
@@ -87,7 +87,7 @@ Last updated: 2026-05-26 05:23 CST.
 - Merge closeout:
   - TASK-037 was merged into `master` in merge commit `e871bf0 Merge TASK-037 home workspace editor`.
   - Merge-result validation passed on `master`: `bun run check:quick` with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
-- Parent decision: push `master`, then continue to TASK-038.
+- Parent decision: continue to TASK-038 from pushed `master`.
 
 ## Current TASK-036 State
 

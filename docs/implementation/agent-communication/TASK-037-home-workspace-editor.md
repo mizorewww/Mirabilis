@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- TASK-037 has been merged to `master`; push `master`, then start TASK-038 from `master`.
+- TASK-037 has been merged to `master` and pushed; start TASK-038 from `master`.
 
 ## Pre-Test Guidance Outcomes
 
@@ -228,4 +228,5 @@
   - Remaining accepted P2/risk: the known MUI-era Vite chunk-size warning remains accepted; non-Home routes, slots, dialogs, panels, responsive polish, lazy/Suspense, and broader route data are TASK-038+.
   - Merge commit on `master`: `e871bf0 Merge TASK-037 home workspace editor`.
   - Merge-result validation: `bun run check:quick` passed on `master` with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
-  - Next action: push `master` and continue TASK-038.
+  - Push status: `master` was pushed to `origin/master` by the post-commit hook.
+  - Next action: continue TASK-038.
