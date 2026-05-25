@@ -1,6 +1,6 @@
 # 核心插件实现架构
 
-描述 Tag、Timer、Habit、Heatmap、Stats、Chart、ML 和 AI 插件在代码层的目录与注册方式。
+描述 Tag、Timer、Habit、Heatmap、Stats、Chart、Quick Capture、Search、ML 和 AI 插件在代码层的目录与注册方式。
 
 TASK-010 当前 `PluginContext` 暴露 `pages`、`metadata`、`events`、`filters`、`commands`、`views`、`slots` 和 `transaction`。
 只有 `commands`、`views`、`slots` 有当前 plugin-facing `register/get/list` facade；metadata fields、event types、indexers、algorithms、mobile toolbar items 和 settings panels 目前是 manifest contribution descriptor。
@@ -521,7 +521,7 @@ Rows fail closed when malformed, wrong-owner, extra-field, accessor, symbol-keye
 
 ---
 
-## 13. Stats / Chart / ML 插件架构
+## 13. Stats / Chart / Quick Capture / Search / ML 插件架构
 
 ### 13.1 Stats Plugin
 
@@ -658,7 +658,56 @@ Trust boundary:
 
 Production charting libraries、scatter/timeline/stacked chart polish、dashboard route integration 和 cross-plugin data query 仍是后续范围。
 
-### 13.3 Machine Learning Plugin
+### 13.3 Quick Capture / Search Plugin
+
+Quick Capture 和 Search 是 TASK-029 当前新增的 built-in TypeScript plugins，不是 Core 功能，也没有新增 native/Tauri/package/Cargo/capability/schema surface。
+
+```text
+src/plugins/quick-capture/
+  index.ts
+  plugin.ts
+
+src/plugins/search/
+  index.ts
+  plugin.ts
+```
+
+Quick Capture runtime registration:
+
+```text
+manifest id: quick-capture
+commands:
+  quick-capture.open
+  quick-capture.save
+  quick-capture.save-and-open
+views:
+  quick-capture.modal
+  quick-capture.mobile-input
+metadata field:
+  quick-capture.unprocessed
+filter:
+  quick-capture.filter.inbox
+```
+
+`quick-capture.save({ markdown })` imports bounded nonblank Markdown into structured `markdown.line` blocks, then creates or appends to a trusted plugin-marked title `Inbox` page inside a plugin transaction. Trust comes from `namespace: "quick-capture"`, `key: "unprocessed"`, `value: true`; title-only user Inbox pages are not adopted. The saved Markdown remains inert structured text. Quick Capture does not import Task/Tag internals and does not auto-create Task/Tag pages, metadata, or events; callers must explicitly run public commands such as `tag.refresh-tags`, `task.resolve-task-block`, or `task.open-task-page` for handoff.
+
+The current Quick Capture views render labelled `region` + labelled `textarea` baselines. Real app-shell modal semantics, focus/close behavior, mobile toolbar mounting, native/global shortcuts, notifications, filesystem access, and Tauri permissions are deferred.
+
+Search runtime registration:
+
+```text
+manifest id: search
+command:
+  search.query
+view/data kind:
+  search.results
+```
+
+`search.query({ query, limit? })` validates exact plain payload data, trims blank queries to no results, and performs bounded case-insensitive literal substring scans over unarchived page titles and structured body text. It returns `{ kind: "search.results", query, results }` with capped result count, title, snippet, scanned page count, and body text length. Search results do not include full page bodies. The `search.results` view validates DTOs, renders a `role="status"` summary plus list/listitem output, and uses inert React text.
+
+Persistent Search indexing, background search indexer / worker, SQLite FTS, ranking, app-shell Search route/command-palette polish, and native/package/Rust/schema changes remain deferred.
+
+### 13.4 Machine Learning Plugin
 
 ML Plugin 负责算法。
 

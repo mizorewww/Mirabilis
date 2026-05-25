@@ -125,7 +125,7 @@ Sync transport
 App updater
 ```
 
-Tauri 官方提供全局快捷键插件，前端和 Rust 都能使用；SQL、Store、文件系统等也属于 Tauri 插件生态中的常见 native 能力。([Tauri](https://v2.tauri.app/plugin/global-shortcut/ "Global Shortcut"))
+Tauri 官方提供全局快捷键插件，前端和 Rust 都能使用；SQL、Store、文件系统等也属于 Tauri 插件生态中的常见 native 能力。这里是 native capability landscape reference，不表示当前 baseline 已启用全局快捷键；TASK-029 的 Quick Capture global shortcut 仍是 deferred。([Tauri](https://v2.tauri.app/plugin/global-shortcut/ "Global Shortcut"))
 
 ### 15.2 TypeScript 通过 NativeBridge 访问 Rust
 

@@ -56,7 +56,7 @@ async function createAppRuntime() {
 
 `storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-027 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin` 和 `HeatmapPlugin`。Quick capture、search、stats、chart、ML、AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-029 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin` 和 `SearchPlugin`。ML、AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
@@ -69,6 +69,10 @@ TASK-021 的 `tag.refresh-tags`、`tag.add-tag`、`tag.remove-tag` 和 `tag.crea
 TASK-024 的 `timer.start`、`timer.stop`、`timer.pause`、`timer.resume` 和 `timer.switch` 同样运行在当前 in-memory Core/plugin runtime 内。Timer Plugin 在 `register(ctx)` 中创建 registration-scoped active timer store；Command Registry 调用 Plugin Host 包装过的 Timer handler，handler 通过 plugin-facing transaction 读取 page、append timer lifecycle events，并更新 Timer Plugin-owned in-memory active state。这个流程不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface、persistence schema 或 Core-owned Timer state。
 
 TASK-027 的 `habit.refresh-habit`、`habit.check-today`、`habit.uncheck-today` 和 `habit.set-frequency` 也运行在当前 in-memory Core/plugin runtime 内。Habit Plugin 通过 plugin-facing transaction 读取 page、写 Habit-owned metadata、append `namespace: "habit"` / `type: "checked" | "unchecked"` events，并 upsert Habits / Today Habits filters。Heatmap Plugin 在 register 阶段只注册 `heatmap.calendar` view，消费调用方传入的 `heatmap.date-series` DTO；它不读取 Habit events，不导入 Habit internals，也不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface 或 schema。
+
+TASK-028 的 `stats.run-aggregation`、`chart.bar`、`chart.line` 和 `chart.pie` 同样只运行在 TypeScript plugin/view runtime 内。Stats 消费调用方传入的 normalized DTO，Chart 渲染调用方传入的 chart DTO；二者不读取 sibling plugin internals，也不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface 或 schema。
+
+TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open` 和 `search.query` 也运行在当前 in-memory Core/plugin runtime 内。Quick Capture 通过 plugin-facing transaction 创建或追加 trusted plugin-marked Inbox Page，并写 `quick-capture.unprocessed` metadata / `quick-capture.filter.inbox` filter；Search 每次命令执行时 transient scan 当前未 archived pages 的 title 和 structured body text。二者不新增 NativeBridge/Tauri IPC、global shortcut、filesystem、notification、package/Cargo、Rust surface、schema 或 Tauri capability。
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -179,6 +183,15 @@ StatsPlugin registers stats.run-aggregation and inert algorithm descriptors for 
 StatsPlugin consumes caller-provided normalized DTO inputs from public plugin outputs/events/metadata projections
 ChartPlugin registers chart.bar, chart.line, and chart.pie over chart.category-series, chart.time-series, and chart.comparison-series DTOs
 
+TASK-029 当前:
+QuickCapturePlugin registers quick-capture.open / quick-capture.save / quick-capture.save-and-open
+QuickCapturePlugin registers quick-capture.modal and quick-capture.mobile-input as labelled region/textarea baselines
+QuickCapturePlugin writes quick-capture.unprocessed metadata and quick-capture.filter.inbox
+QuickCapturePlugin creates or appends to a trusted plugin-marked Inbox and preserves captured Markdown as inert structured text
+QuickCapturePlugin does not auto-create Task/Tag metadata, events, or pages; Task/Tag handoff remains explicit command execution
+SearchPlugin registers search.query and search.results
+SearchPlugin performs transient bounded literal title/body scans over unarchived pages; no persistent indexer/native/search worker is present
+
 后续：
 编辑器保存后自动扫描 task blocks
 全局 saved-filter navigation / app-shell filter route
@@ -186,6 +199,7 @@ Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
 Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, ML integration, Recently Worked saved filters, manual segment editing, calendar drag/drop, and native/schema surfaces
+Quick Capture desktop global shortcuts/native entry point, full app-shell modal behavior, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, and app-shell Search route
 ```
 
 ### 18.2 用户点击任务文字
@@ -436,6 +450,73 @@ production charting libraries
 ML/AI insight generation
 broad cross-plugin query/read facade
 app-shell Stats/Chart routes
+```
+
+---
+
+### 18.12 User runs Quick Capture
+
+TASK-029 current flow:
+
+```text
+CommandRegistry.execute("quick-capture.open", {})
+→ QuickCapturePlugin validates exact empty payload
+→ Result is { kind: "quick-capture.open-result", viewId: "quick-capture.modal" }
+→ A caller may resolve quick-capture.modal or quick-capture.mobile-input from ViewRegistry
+→ Current views render labelled region + textarea baselines
+
+CommandRegistry.execute("quick-capture.save", { markdown })
+→ QuickCapturePlugin validates exact bounded nonblank Markdown payload
+→ Markdown is imported to structured markdown.line blocks
+→ Plugin transaction searches for unarchived title "Inbox" pages marked by quick-capture.unprocessed = true
+→ If no trusted Inbox exists, Quick Capture creates title "Inbox" and writes quick-capture.unprocessed metadata
+→ If a trusted Inbox exists, Quick Capture appends captured blocks to its body
+→ Result is { kind: "quick-capture.save-result", pageId, createdInbox, appendedBlockIds }
+
+CommandRegistry.execute("quick-capture.save-and-open", { markdown })
+→ Uses the same save path
+→ Adds openPageId: pageId to the result
+```
+
+Quick Capture does not adopt title-only user Inbox pages without its metadata marker. Captured Markdown remains inert structured text; unsafe-looking HTML, Markdown links, task syntax, and tag syntax are not executed. Quick Capture does not import Task or Tag internals and does not auto-create Task/Tag metadata, events, or pages. A caller must explicitly run public commands such as `tag.refresh-tags`, `task.resolve-task-block`, or `task.open-task-page` if it wants existing Task/Tag plugins to process captured Markdown.
+
+Deferred after TASK-029:
+
+```text
+native/global shortcut entry point
+Tauri permission/capability changes for shortcuts
+full app-shell modal with focus/close/save behavior
+mobile toolbar mounting and syntax buttons
+automatic Task/Tag cleanup or AI inbox processing
+```
+
+### 18.13 User runs Search
+
+TASK-029 current flow:
+
+```text
+CommandRegistry.execute("search.query", { query, limit? })
+→ SearchPlugin validates exact bounded plain payload
+→ Blank trimmed query returns { kind: "search.results", query, results: [] }
+→ Search lists current pages and scans up to the page cap
+→ Archived pages are excluded by the page listing behavior
+→ Page title and structured body text are searched as case-insensitive literal substrings
+→ Results include pageId, capped title, capped snippet, and matchedFields
+→ Caller resolves ViewRegistry id "search.results"
+→ Search results view validates DTO shape and renders status + list/listitem text
+```
+
+Search results do not include full page bodies. Later page edits are visible on the next `search.query` call because there is no persistent index in this slice.
+
+Deferred after TASK-029:
+
+```text
+persistent Search indexing
+background search indexer or worker
+SQLite FTS
+ranking beyond current page-list scan order
+app-shell Search route / command palette polish
+native/Tauri/package/Rust/schema/capability changes
 ```
 
 ---

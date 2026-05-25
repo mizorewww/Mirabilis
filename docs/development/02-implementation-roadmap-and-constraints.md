@@ -476,6 +476,8 @@ AI：AI Plugin
 同步：Sync Plugin
 ```
 
+TASK-029 当前 Quick Capture 和 Search 都是 TypeScript built-in plugin baseline。Quick Capture 注册 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open`、`quick-capture.modal`、`quick-capture.mobile-input`、`quick-capture.unprocessed` 和 `quick-capture.filter.inbox`；Search 注册 `search.query` 和 `search.results`，并在命令执行时按需扫描未 archived pages。这个 slice 没有 package/native/Tauri/Rust/schema/capability 变更，也没有 global shortcut、mobile toolbar mounting、persistent Search indexing、search indexer worker 或 SQLite/FTS。
+
 ---
 
 ## 21. 最终代码架构总结

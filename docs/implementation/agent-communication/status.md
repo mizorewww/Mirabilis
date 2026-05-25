@@ -1,18 +1,88 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:01 CST.
+Last updated: 2026-05-25 13:04 CST.
 
 ## Current Task
 
 - Task: TASK-029 - Implement Quick Capture and Search plugins.
-- Branch: not started yet.
+- Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 merged; TASK-029 selection next.
+- Current phase: TASK-029 final branch gate passed; branch ready to merge.
 
 ## Active Agents
 
-- No active agents. Next step is starting TASK-029 from `master`.
+- No active agents. Parent is committing TASK-029 completion state before merging to `master`.
+
+## Current TASK-029 State
+
+- TASK-029 follows TASK-018 and TASK-021 and owns the first Quick Capture + Search plugin slice:
+  - Quick Capture creates or appends to an Inbox page.
+  - Captured Markdown may include existing Task and Tag syntax, which should remain available for those plugins to process through their existing flows.
+  - Search can query page titles and body text at baseline.
+  - Desktop entry points need documentation and security review for Tauri permission impact.
+- Initial parent interpretation:
+  - Keep Quick Capture and Search behavior in built-in plugins, not Core.
+  - Use existing page store/service, command registry, view registry, and plugin host primitives where possible.
+  - Prefer a no-native baseline unless agents identify an acceptance-critical desktop entry point requiring Tauri capability changes.
+  - Keep package/native/Tauri/Rust/schema changes, persistent full-text indexes, background workers, global shortcuts, app-shell route polish, rich mobile toolbar mounting, ML/AI cleanup commands, sync, and packaging out of scope unless agents identify a blocker.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance completed:
+  - Gibbs (`planner`) recommended the smallest safe slice as pure TypeScript built-in `quick-capture` and `search` plugins. Native/Tauri/global-shortcut wiring is deferred; desktop entry-point acceptance is documentation and static permission-impact review.
+  - Franklin (`docs_researcher`) recommended one focused `src/test/quick-capture-search-plugins.test.tsx` suite, Testing Library role/name/user-event assertions for views, and a native/Tauri/package static guard. Its local-doc examples using `quick_capture.*` were treated as stale because planner/API review and current repo style prefer kebab/dotted ids.
+  - Hilbert (`deprecation_auditor`) found no P0 blockers and required canonical ids over stale underscore aliases. It also noted `PluginContext` has no public command execute API, no native shortcut API, no query facade, and no executable indexer registry.
+  - Newton (`security_reviewer`) required no native/package/Tauri/Rust/schema changes, exact bounded plain payloads, inert Markdown/result text, fixed Inbox target only, no Task/Tag private writes, bounded literal search, capped snippets/results, no raw runtime/store/native imports, and no HTML/Markdown execution sinks.
+- Parent decisions after guidance:
+  - Plugin ids are `quick-capture` and `search`.
+  - Quick Capture commands are `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open`; do not register `quick_capture.*` aliases.
+  - Quick Capture views are `quick-capture.modal` and `quick-capture.mobile-input`.
+  - Quick Capture uses plugin-owned metadata/filter ids `quick-capture.unprocessed` and `quick-capture.filter.inbox`; do not use stale `inbox.unprocessed`.
+  - Search command is `search.query`; Search view and DTO kind are `search.results`.
+  - Quick Capture must create/append only a trusted plugin-marked `Inbox` page. If a title-only Inbox already exists without Quick Capture metadata, leave it alone and create a trusted Inbox.
+  - Quick Capture preserves Markdown as structured text and does not auto-create Task/Tag pages or metadata. Tests may explicitly run existing `tag.refresh-tags` and `task.resolve-task-block` / `task.open-task-page` afterward to prove handoff.
+  - Search is transient/on-demand over unarchived pages only; no persistent index, worker, SQLite/FTS, package, native, Tauri, Rust, schema, or capability changes.
+- Test writer completed:
+  - Aquinas (`test_writer`) added `src/test/quick-capture-search-plugins.test.tsx` with 10 TASK-029 acceptance tests.
+  - Parent validated the expected red signal: focused TASK-029 tests failed with 9 failed / 1 passed because the `quick-capture` and `search` built-ins, commands, views, and plugin files do not exist yet.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint for `src/test/quick-capture-search-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test commit: `8248f65 Aquinas(test)(Implement Quick Capture and Search plugins): add capture search acceptance tests`; post-commit auto-push succeeded.
+- Implementation completed:
+  - Schrodinger (`implementer`) added the Quick Capture and Search production baselines.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/quick-capture/index.ts`, `src/plugins/quick-capture/plugin.ts`, `src/plugins/search/index.ts`, and `src/plugins/search/plugin.ts`.
+  - Parent validated: focused TASK-029 tests passed (10 tests), adjacent plugin/API/Task/Tag/Stats suite passed (9 files / 174 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Implementation commit: `a174efb Schrodinger(implementation)(Implement Quick Capture and Search plugins): implement capture search baselines`; post-commit auto-push succeeded.
+- Review wave completed:
+  - Carson (`pr_explorer`) mapped changed paths and highlighted Quick Capture trust boundary, Search limits/ordering, UI scope, and docs drift as review surfaces.
+  - Confucius (`security_reviewer`) found no P0/P1 issues and confirmed the no-native/no-package/no-Tauri baseline.
+  - Ohm (`test_quality_reviewer`) found P1 test gaps: malformed/hostile `search.query` payloads are not covered, and Search title/scanned page/body caps are not locked by tests.
+  - Dirac (`docs_researcher`) found one P1 accessibility issue: `quick-capture.modal` exposes `role="dialog"` without real dialog semantics. Parent decision: make this baseline a labelled `region`; real modal/focus behavior remains app-shell work.
+  - Herschel (`reviewer`) found no P0/P1 correctness issues. P2: trusted Inbox rename behavior, Search ordering, and Search hostile-payload coverage.
+  - Raman (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2: formal docs still contain stale Quick Capture ids and native shortcut wording.
+  - Parent decision: add review-fix tests first, then delegate production fixes. Include P2 Search status/empty result and `save-and-open` payload parity tests if cheap while touching the suite.
+- Review-fix tests completed:
+  - Lagrange (`test_writer`) added focused review-fix coverage in `src/test/quick-capture-search-plugins.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-029 tests failed with 2 failed / 13 passed because `quick-capture.modal` still exposes `role="dialog"` and `search.results` lacks a `role="status"` summary.
+  - Search hostile payload, Search caps, save-and-open hostile payload parity, and static import guard hardening already pass against the current implementation.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/quick-capture-search-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `8a36751 Lagrange(test-fix)(Implement Quick Capture and Search plugins): cover capture search review gaps`; post-commit auto-push succeeded.
+- Review-fix implementation completed:
+  - Jason (`implementer`) changed `quick-capture.modal` to a labelled region and added Search result status summaries for empty/non-empty results.
+  - Changed files: `src/plugins/quick-capture/plugin.ts` and `src/plugins/search/plugin.ts`.
+  - Parent validated: focused TASK-029 tests passed (15 tests), adjacent plugin/API/Task/Tag/Stats suite passed (9 files / 179 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `376ab21 Jason(review-fix)(Implement Quick Capture and Search plugins): fix capture search accessibility`; post-commit auto-push succeeded.
+- Narrow re-review completed:
+  - Sagan (`test_quality_reviewer`) found no P0/P1/P2/P3 findings for the review-fix gaps.
+  - Volta (`docs_researcher`) found no P0/P1 accessibility issues; prior Quick Capture dialog and Search status issues are fixed. It listed stale formal docs for doc sync.
+  - Rawls (`security_reviewer`) found no P0/P1 security issues and confirmed Search hostile payload/cap boundaries remain strict.
+  - Parent decision: proceed to formal docs sync.
+- Docs sync completed:
+  - McClintock (`doc_writer`) synced formal Quick Capture/Search product, architecture, development, and task-index docs to the TASK-029 implementation.
+  - Changed docs: `docs/product/05-built-in-plugins.md`, `docs/product/03-plugin-platform.md`, `docs/product/06-view-slots.md`, `docs/architecture/01-overview-and-monorepo.md`, `docs/architecture/05-plugin-implementations.md`, `docs/architecture/06-filter-native-database.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md`.
+  - Parent validation: `git diff --check` passed, stale-id scan found no remaining `quick_capture` or `inbox.unprocessed` references, broader deferred-scope scan only found explicit future/deferred native shortcut and Search indexing wording, and source/package/native/Tauri/Rust/schema diff guard was empty.
+  - Docs commit: `b9cdbe7 McClintock(docs)(Implement Quick Capture and Search plugins): sync capture search docs`; post-commit auto-push succeeded.
+- Final branch gate completed:
+  - `bun run check:quick` passed with typecheck, lint, 34 frontend test files / 534 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `docs/implementation/progress.md` marks TASK-029 complete and records the ready-to-merge branch state.
 
 ## Current TASK-028 State
 
@@ -208,5 +278,6 @@ Last updated: 2026-05-25 12:01 CST.
 
 ## Next Actions
 
-1. Commit and push the TASK-028 merge validation update on `master`.
-2. Continue autonomous development with TASK-029.
+1. Commit TASK-029 completion ledger and status updates.
+2. Merge `feat/task-029-quick-capture-search-plugins` to `master`.
+3. Run merge-result `bun run check:quick`, record the result, push `master`, and continue to the next unblocked task.

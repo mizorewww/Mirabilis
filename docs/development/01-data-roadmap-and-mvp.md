@@ -529,6 +529,8 @@ All Tasks 显示：
 给任务计时
 给每段 Time Segment 写 Note
 用 Filter 组织所有页面
+用 Quick Capture 把临时 Markdown 收进 Inbox
+用 Search 临时查询页面标题和正文
 用 Calendar 展示时间段
 用 Heatmap 展示习惯
 用 Stats / Chart 展示统计
@@ -564,5 +566,7 @@ AI：AI Plugin
 同步：Sync Plugin
 搜索：Search Plugin
 ```
+
+TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理，以及 persistent Search indexing / background indexer / SQLite FTS 都是后续范围。
 
 产品开发的中心任务是把 **Plugin Host、Registry、Command、View、Metadata、Event、Filter** 做扎实。只要这套底层抽象稳定，任务、习惯、时间记录、热力图、统计、机器学习和 AI 都可以作为插件不断接入，而不会污染 Core。
