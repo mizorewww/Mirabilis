@@ -1,18 +1,39 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:25 CST.
+Last updated: 2026-05-25 14:28 CST.
 
 ## Current Task
 
-- Task: TASK-030 - Implement ML Plugin baseline predictions.
-- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Task: TASK-031 - Implement AI Plugin provider abstraction.
+- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 merged to `master`; merge validation passed and is being recorded before continuing to TASK-031.
+- Current phase: TASK-031 started; pre-test planning/current-doc/security guidance pending.
 
 ## Active Agents
 
-- No active agents. Parent is recording TASK-030 merge validation before continuing to TASK-031.
+- No active agents yet. Parent is recording TASK-031 start state before delegating pre-test guidance.
+
+## Current TASK-031 State
+
+- TASK-031 follows TASK-030 and owns the first AI plugin provider-abstraction slice:
+  - AI Plugin supports an OpenAI provider abstraction without leaking provider details into Core.
+  - Commands exist for quick capture cleanup, generate subtasks, suggest metadata, generate filters, summarize time notes, weekly review, and explain prediction.
+  - Provider settings are stored as plugin settings.
+  - Secrets are never committed or logged.
+- Initial parent interpretation:
+  - Keep AI behavior in a built-in plugin, not Core.
+  - Use a provider interface so command tests can mock provider calls and production can have an OpenAI provider implementation behind the AI plugin boundary.
+  - Prefer no real API calls, no real credentials, no committed secrets, and no live-network tests.
+  - Treat current `PluginContext` settings support as a risk: `settingsPanels` are manifest descriptors and no runtime plugin settings facade is present yet.
+  - Avoid package/native/Tauri/Rust/schema/capability changes unless agents identify an acceptance-critical need.
+- Official OpenAI docs verified:
+  - Latest model guidance identifies `gpt-5.5` as current latest model guidance.
+  - OpenAI recommends the Responses API for new projects.
+  - Responses uses top-level `instructions`/`input`, can set `store: false`, and uses `text.format` for Structured Outputs.
+  - Structured Outputs are recommended over plain JSON mode when schema adherence matters.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK for config/auth/MCP/reachability with the known `TERM=dumb`, unrestricted sandbox/network notes, and a non-blocking Responses WebSocket timeout while HTTPS reachability remained OK.
+- Next action: delegate pre-test guidance to `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer`.
 
 ## Current TASK-030 State
 

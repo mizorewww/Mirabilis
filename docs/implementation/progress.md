@@ -71,13 +71,25 @@ Status markers:
 
 - [x] TASK-029: Implement Quick Capture and Search plugins
 - [x] TASK-030: Implement ML Plugin baseline predictions
-- [ ] TASK-031: Implement AI Plugin provider abstraction
+- [~] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 14:28 CST - TASK-031 started
+
+- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
+- Task: Implement AI Plugin provider abstraction.
+- Start point: `master` after TASK-030 merge validation commit `01d5c2f`.
+- Source docs read: `docs/implementation/task-index.md#task-031-implement-ai-plugin-provider-abstraction`, `docs/product/05-built-in-plugins.md#22-ai-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-10ai-plugin`, `docs/architecture/05-plugin-implementations.md#14-ai-plugin-架构`, `docs/implementation/agent-workflow.md`, `docs/implementation/autonomous-development.md`, and `docs/testing/strategy.md`.
+- Official docs verified before implementation: OpenAI latest-model guidance says current latest model is `gpt-5.5`; OpenAI recommends the Responses API for new projects and Structured Outputs through `text.format` for schema-shaped model responses.
+- Initial scope to narrow through agents: built-in AI Plugin provider boundary, OpenAI provider abstraction, mocked provider/API tests, command prompt/input shaping for cleanup/subtasks/metadata/filter/time-note/weekly-review/prediction-explanation commands, plugin-owned settings handling, and secret redaction/no-logging constraints.
+- Initial risks and questions: current `PluginContext` has no runtime plugin settings facade and `settingsPanels` are manifest-only; adding package/native/Tauri/Rust/schema/capability/network surfaces may be unnecessary or risky; secrets must not be committed, logged, rendered, or stored in ordinary docs/fixtures.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/reachability OK with known `TERM=dumb`, unrestricted sandbox/network notes, and a non-blocking Responses WebSocket timeout while HTTPS reachability remained OK.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, OpenAI/current-doc research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-031-ai-plugin-provider-abstraction.md`.
 
 ### 2026-05-25 14:25 CST - TASK-030 merged
 
