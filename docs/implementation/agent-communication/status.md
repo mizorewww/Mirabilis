@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 20:48 CST.
+Last updated: 2026-05-25 20:56 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 20:48 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 final docs sync validation pending.
+- Current phase: TASK-032 final branch gate pending.
 
 ## Active Agents
 
@@ -171,7 +171,11 @@ Last updated: 2026-05-25 20:48 CST.
 - Parent decisions after final confirmation:
   - P0/P1 review gate is clear for TASK-032 code and tests.
   - Ask `doc_writer` to review/update the existing Huygens docs patch against final behavior, especially strict event DTO validation and reserved Plugin Settings caveats, then commit docs separately.
-- Next action: delegate final docs sync validation/update to `doc_writer`.
+- Final docs sync completed:
+  - Curie (`doc_writer`) reviewed and updated the existing Sync docs patch against final behavior.
+  - Docs now describe the TypeScript-only `sync` plugin skeleton, syncable DTO descriptors, rebuildable plugin-index policy, Plugin Settings reserved-key rejection, strict event conflict DTO validation, and deferred native/network/settings UI/keychain/conflict UI scope.
+  - Docs commit: `1201a34 Curie(docs)(Implement Sync Plugin skeleton): sync sync plugin docs`; post-commit auto-push succeeded.
+- Next action: record this docs outcome, run final branch `bun run check:quick`, then mark TASK-032 complete if green.
 
 ## Current TASK-031 State
 

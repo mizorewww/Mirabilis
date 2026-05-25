@@ -474,3 +474,31 @@
 - Huygens' docs patch remains uncommitted and must be reviewed/updated against final behavior before docs commit.
 - Final docs sync should mention strict event DTO validation and keep future sync transport/settings/security caveats explicit.
 - Parent next action: delegate final docs sync validation/update to `doc_writer`.
+
+## Final Docs Sync Outcome
+
+- Curie (`doc_writer`) reviewed and updated the existing TASK-032 docs patch against final code behavior.
+- Files changed:
+  - `docs/architecture/01-overview-and-monorepo.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/06-filter-native-database.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/implementation/task-index.md`
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/testing/strategy.md`
+- Documentation now records:
+  - built-in `sync` plugin registration as a TypeScript-only skeleton with no commands, views, settings panel, transport, background jobs, or live sync execution;
+  - canonical syncable units and DTO/key boundaries for Markdown Page, Metadata, Event, Filter, and Plugin Settings;
+  - rebuildable plugin indexes as local derived state that is not durably synced;
+  - Plugin Settings unset-vs-JSON-null semantics and top-level plus nested reserved key rejection for secrets/auth/credentials/remote endpoints, while persistent settings/keychain integration remains deferred;
+  - conflict policy for mutable manual resolution and event append-only union/dedupe/same-id conflict behavior;
+  - strict event conflict DTO validation, including exact keys, plain-record wrappers, plain `syncKey`, descriptor-safe reads, and `snapshot.id === syncKey.id`;
+  - deferred tombstones/deletes, conflict UI, native/network transport, settings UI, credentials/keychain, package/native/Tauri/Rust/schema/capability changes.
+- Parent validation before commit:
+  - `git diff --check` passed.
+  - Changed files were docs only.
+- Docs commit: `1201a34 Curie(docs)(Implement Sync Plugin skeleton): sync sync plugin docs`; post-commit auto-push succeeded.
+- Parent next action: commit this communication update, then run final branch `bun run check:quick`.
