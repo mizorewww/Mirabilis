@@ -22,8 +22,8 @@ type MutableConflictInput = {
 };
 
 type EventConflictInput = {
-  local: readonly SyncUnitDto[];
-  remote: readonly SyncUnitDto[];
+  local: readonly unknown[];
+  remote: readonly unknown[];
   unitKind: "sync.unit.event";
 };
 
@@ -32,6 +32,11 @@ type EventMergeConflict = {
   local: SyncUnitDto;
   reason: "same-id-different-content";
   remote: SyncUnitDto;
+};
+
+type ValidatedEventUnit = {
+  id: string;
+  unit: SyncUnitDto;
 };
 
 const mutableUnitKinds = new Set<MutableConflictInput["unitKind"]>([
@@ -55,24 +60,30 @@ export const SYNC_CONFLICT_POLICY = Object.freeze({
 }) satisfies SyncConflictPolicy;
 
 export function resolveSyncUnitConflict(input: unknown): unknown {
-  if (!isRecord(input) || typeof input.unitKind !== "string") {
+  if (!isRecord(input)) {
     throw new Error("Invalid sync conflict input");
   }
 
-  if (input.unitKind === "sync.unit.event") {
+  const unitKind = readDataProperty(input, "unitKind");
+
+  if (typeof unitKind !== "string") {
+    throw new Error("Invalid sync conflict input");
+  }
+
+  if (unitKind === "sync.unit.event") {
     return resolveEventConflict({
-      local: readUnitArray(input.local),
-      remote: readUnitArray(input.remote),
-      unitKind: input.unitKind,
+      local: readUnitArray(readDataProperty(input, "local")),
+      remote: readUnitArray(readDataProperty(input, "remote")),
+      unitKind,
     });
   }
 
-  if (!isMutableUnitKind(input.unitKind)) {
+  if (!isMutableUnitKind(unitKind)) {
     throw new Error("Unsupported sync unit kind");
   }
 
   return resolveMutableConflict({
-    unitKind: input.unitKind,
+    unitKind,
   });
 }
 
@@ -98,8 +109,7 @@ function resolveEventConflict(input: EventConflictInput): {
   const unitsById = new Map<string, SyncUnitDto>();
   const conflicts: EventMergeConflict[] = [];
 
-  for (const unit of [...input.local, ...input.remote]) {
-    const id = readSyncUnitId(unit);
+  for (const { id, unit } of validateEventUnits(input)) {
     const existing = unitsById.get(id);
 
     if (existing === undefined) {
@@ -137,22 +147,95 @@ function resolveEventConflict(input: EventConflictInput): {
   };
 }
 
-function readUnitArray(value: unknown): readonly SyncUnitDto[] {
+function readUnitArray(value: unknown): readonly unknown[] {
   if (!Array.isArray(value)) {
     throw new Error("Invalid sync conflict unit list");
   }
 
-  return value as readonly SyncUnitDto[];
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key === "symbol") {
+      throw new Error("Invalid sync conflict unit list");
+    }
+
+    if (key === "length") {
+      continue;
+    }
+
+    if (!isArrayIndexKey(key)) {
+      throw new Error("Invalid sync conflict unit list");
+    }
+  }
+
+  return Array.from({ length: value.length }, (_, index) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !("value" in descriptor)
+    ) {
+      throw new Error("Invalid sync conflict unit list");
+    }
+
+    return descriptor.value;
+  });
 }
 
-function readSyncUnitId(unit: SyncUnitDto): string {
-  const id = unit.syncKey.id;
+function validateEventUnits(input: EventConflictInput): ValidatedEventUnit[] {
+  return [...input.local, ...input.remote].map((unit) =>
+    validateEventUnit(unit),
+  );
+}
+
+function validateEventUnit(unit: unknown): ValidatedEventUnit {
+  if (!isRecord(unit)) {
+    throw new Error("Invalid sync event unit shape");
+  }
+
+  const kind = readDataProperty(unit, "kind");
+
+  if (kind !== "sync.unit.event") {
+    throw new Error("Invalid sync event unit kind");
+  }
+
+  const schemaVersion = readDataProperty(unit, "schemaVersion");
+
+  if (schemaVersion !== 1) {
+    throw new Error("Invalid sync event unit schema");
+  }
+
+  const snapshot = readDataProperty(unit, "snapshot");
+
+  if (!isRecord(snapshot)) {
+    throw new Error("Invalid sync event unit snapshot");
+  }
+
+  cloneSyncJson(snapshot);
+
+  const syncKey = readDataProperty(unit, "syncKey");
+
+  if (!isRecord(syncKey)) {
+    throw new Error("Invalid sync event unit sync key");
+  }
+
+  const id = readDataProperty(syncKey, "id");
 
   if (typeof id !== "string" || id.length === 0) {
     throw new Error("Invalid sync event unit id");
   }
 
-  return id;
+  for (const key of Object.keys(syncKey)) {
+    const value = readDataProperty(syncKey, key);
+
+    if (typeof value !== "string" || value.length === 0) {
+      throw new Error("Invalid sync event unit sync key");
+    }
+  }
+
+  return {
+    id,
+    unit: unit as SyncUnitDto,
+  };
 }
 
 function syncUnitsMatch(left: SyncUnitDto, right: SyncUnitDto): boolean {
@@ -188,6 +271,38 @@ function sortJsonValue(value: ReturnType<typeof cloneSyncJson>): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function readDataProperty(
+  value: Record<string, unknown>,
+  key: string,
+): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+
+  if (
+    descriptor === undefined ||
+    !descriptor.enumerable ||
+    !("value" in descriptor)
+  ) {
+    throw new Error("Invalid sync event unit accessor");
+  }
+
+  return descriptor.value;
+}
+
+function isArrayIndexKey(value: string): boolean {
+  if (value.length === 0) {
+    return false;
+  }
+
+  const index = Number(value);
+
+  return (
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index < 2 ** 32 - 1 &&
+    String(index) === value
+  );
 }
 
 function isMutableUnitKind(
