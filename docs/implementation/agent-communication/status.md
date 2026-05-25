@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:22 CST.
+Last updated: 2026-05-25 12:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 12:22 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 implementation delegated.
+- Current phase: TASK-029 implementation completed; review wave next.
 
 ## Active Agents
 
-- Schrodinger (`implementer`) is implementing the TASK-029 production baseline.
+- No active agents. Next delegation is TASK-029 review wave.
 
 ## Current TASK-029 State
 
@@ -46,6 +46,11 @@ Last updated: 2026-05-25 12:22 CST.
   - Parent validated the expected red signal: focused TASK-029 tests failed with 9 failed / 1 passed because the `quick-capture` and `search` built-ins, commands, views, and plugin files do not exist yet.
   - Parent static validation passed: `bun run typecheck`, focused ESLint for `src/test/quick-capture-search-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
   - Test commit: `8248f65 Aquinas(test)(Implement Quick Capture and Search plugins): add capture search acceptance tests`; post-commit auto-push succeeded.
+- Implementation completed:
+  - Schrodinger (`implementer`) added the Quick Capture and Search production baselines.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/quick-capture/index.ts`, `src/plugins/quick-capture/plugin.ts`, `src/plugins/search/index.ts`, and `src/plugins/search/plugin.ts`.
+  - Parent validated: focused TASK-029 tests passed (10 tests), adjacent plugin/API/Task/Tag/Stats suite passed (9 files / 174 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Implementation commit: `a174efb Schrodinger(implementation)(Implement Quick Capture and Search plugins): implement capture search baselines`; post-commit auto-push succeeded.
 
 ## Current TASK-028 State
 
@@ -241,5 +246,5 @@ Last updated: 2026-05-25 12:22 CST.
 
 ## Next Actions
 
-1. Wait for Schrodinger (`implementer`) to finish TASK-029 production code.
-2. Validate focused green checks and commit implementation separately.
+1. Delegate TASK-029 review wave.
+2. Fix P0/P1 findings before docs sync and final branch gate.

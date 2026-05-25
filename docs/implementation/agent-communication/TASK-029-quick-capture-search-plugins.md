@@ -155,3 +155,37 @@
 - Expected changed files: Quick Capture/Search plugin files plus `src/bootstrap/built-in-plugins.ts`.
 - Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability/generated-permission files; do not commit, merge, or push.
 - Parent next action: wait for Schrodinger, validate focused green checks, and commit implementation separately.
+
+## Implementation Outcome
+
+- Schrodinger (`implementer`) completed the TASK-029 production baseline.
+- Changed files:
+  - `src/bootstrap/built-in-plugins.ts`
+  - `src/plugins/quick-capture/index.ts`
+  - `src/plugins/quick-capture/plugin.ts`
+  - `src/plugins/search/index.ts`
+  - `src/plugins/search/plugin.ts`
+- Delivered:
+  - Built-in `quick-capture` and `search` registration.
+  - Quick Capture canonical commands/views, trusted Inbox create/append behavior, save-and-open result, plugin-owned Inbox metadata/filter, exact bounded payload validation, and inert Markdown preservation.
+  - Search canonical command/view, transient title/body scanning, bounded literal query results/snippets, archived exclusion, and inert accessible result rendering.
+  - No package/native/Tauri/Rust/schema/capability changes.
+- Parent validation after implementation:
+  - `bun run test:frontend -- src/test/quick-capture-search-plugins.test.tsx` passed with 10 tests.
+  - `bun run test:frontend -- src/test/quick-capture-search-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/task-plugin-syntax-page-creation.test.ts src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx src/test/tag-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 9 files / 174 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust/schema diff guard was empty.
+- Implementation commit: `a174efb Schrodinger(implementation)(Implement Quick Capture and Search plugins): implement capture search baselines`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate review wave:
+  - `pr_explorer` for changed-path mapping.
+  - `reviewer` for correctness and edge cases.
+  - `deprecation_auditor` for API/deprecation/stale-pattern review.
+  - `security_reviewer` for payload/search/native-boundary review.
+  - `docs_researcher` for current-doc/accessibility/desktop-entry review.
+  - `test_quality_reviewer` for acceptance test quality.
+- Fix P0/P1 findings before docs sync and final branch gate.
