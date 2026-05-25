@@ -415,3 +415,11 @@
 ## Current Next Action
 
 - Delegate formal docs sync to `doc_writer`.
+
+## Docs Sync Handoff
+
+- Erdos the 2nd (`doc_writer`) started at 2026-05-25 14:13 CST.
+- Scope: formal docs only for TASK-030 ML implementation drift.
+- Expected docs: product, architecture, development, task-index, runtime-flow, view-slot, and testing-strategy docs that mention stale ML ids, executable AlgorithmRegistry, direct sibling reads, persistent ML writes, or native/model training/background scope.
+- Constraints: do not edit source, tests, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Erdos the 2nd, validate docs-only patch, and commit separately.

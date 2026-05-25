@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:12 CST.
+Last updated: 2026-05-25 14:13 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 14:12 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 P1 fixes cleared; docs sync pending.
+- Current phase: TASK-030 docs sync delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording final narrow test-quality confirmation before docs sync.
+- Erdos the 2nd (`doc_writer`) is syncing formal TASK-030 ML docs.
 
 ## Current TASK-030 State
 
@@ -125,6 +125,9 @@ Last updated: 2026-05-25 14:12 CST.
   - It confirmed tracked-only fallback now covers both one-hour floor (`trackedSeconds = 1,200`, `baselineTotalSeconds = 3,600`) and longer-input `trackedSeconds * 2` arm (`trackedSeconds = 5,400`, `baselineTotalSeconds = 10,800`).
   - It ran focused TASK-030 tests, which passed with 12 tests.
   - Parent decision: proceed to formal docs sync.
+- Docs sync delegated:
+  - Erdos the 2nd (`doc_writer`) should sync product, architecture, development, implementation task-index, and testing docs to the delivered ML baseline.
+  - Scope: docs only; no source, tests, package/native/Tauri/Rust/schema/capability edits.
 
 ## Current TASK-029 State
 
