@@ -444,3 +444,16 @@
 ## Current Next Action
 
 - Commit this narrow re-review record, then delegate second review-fix tests to `test_writer`.
+
+## Second Review-Fix Test Handoff
+
+- Hypatia the 2nd (`test_writer`) started at 2026-05-25 15:40 CST.
+- Scope: tests only, expected in `src/test/ai-plugin-provider-abstraction.test.tsx`.
+- Required red coverage:
+  - production override seam hardening must fail while `src/plugins/ai/plugin.ts` exports `replaceAiProviderForTestRuntime` / `clearAiProviderForTestRuntime` and `src/plugins/ai/settings.ts` exports `replaceAiProviderSettingsForTestRuntime` or exposes provider settings/secrets to production imports;
+  - AI test support must fail while it uses `Object.defineProperty` or any `operation` getter / operation-changing wrapper;
+  - `providerId` must be included in the forbidden-field matrix across all public AI commands;
+  - direct `createOpenAIProvider` success fixture must include `error: null` and `incomplete_details: null`;
+  - strict Structured Output schemas must stay meaningful while excluding unsupported OpenAI JSON Schema keywords.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Hypatia the 2nd, validate the expected red signal, and commit second review-fix tests separately.

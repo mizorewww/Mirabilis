@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:39 CST.
+Last updated: 2026-05-25 15:40 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:39 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 narrow re-review found remaining P1s; preparing second review-fix test handoff.
+- Current phase: TASK-031 second review-fix tests delegated for remaining P1s.
 
 ## Active Agents
 
-- None.
+- Hypatia the 2nd (`test_writer`) is adding second review-fix red tests for remaining TASK-031 P1s.
 
 ## Current TASK-031 State
 
@@ -119,7 +119,10 @@ Last updated: 2026-05-25 15:39 CST.
   - Add second review-fix tests first.
   - Required test coverage: direct import or source guard for production provider/settings override seams; no `Object.defineProperty` operation getter or operation-changing test wrapper; `providerId` forbidden across all public AI commands; OpenAI raw success fixture with `error: null` and `incomplete_details: null`; strict Structured Output schemas contain meaningful supported property shapes while excluding unsupported keywords (`maxLength`, `minLength`, `pattern`, `format`, `minimum`, `maximum`, `multipleOf`, `minItems`, `maxItems`, `allOf`, `not`, `if`, `then`, `else`, `dependentRequired`, `dependentSchemas`, `patternProperties`).
   - After tests fail red, delegate production fix to `implementer`.
-- Next action: commit narrow re-review record, then delegate second review-fix tests.
+- Second review-fix tests delegated:
+  - Hypatia the 2nd (`test_writer`) should add focused red coverage in `src/test/ai-plugin-provider-abstraction.test.tsx` for production override seam exports/settings exposure, `Object.defineProperty` operation getter behavior in test support, `providerId` forbidden across all commands, Responses success with `error: null` / `incomplete_details: null`, and strict Structured Output schema compatibility with OpenAI-supported keywords.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Hypatia the 2nd, validate expected red signal, and commit second review-fix tests separately.
 
 ## Current TASK-030 State
 
