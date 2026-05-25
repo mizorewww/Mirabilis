@@ -78,7 +78,7 @@ Status markers:
 ## Milestone M9: MUI user-visible app shell and workspace
 
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
-- [ ] TASK-035: Add MUI Substrate And First Shell Frame
+- [~] TASK-035: Add MUI Substrate And First Shell Frame
 - [ ] TASK-036: Add Generic ViewHost And SlotHost
 - [ ] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
@@ -93,6 +93,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 01:16 CST - TASK-035 started
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Start point: `master` after TASK-034 merge validation commit `aa69eaf`.
+- Source docs read: `docs/implementation/task-index.md#task-035-add-mui-substrate-and-first-shell-frame`, `docs/product/07-user-interface-design.md`, `docs/testing/strategy.md#task-015-app-bootstrap-and-runtime-provider-guidance`, `src/App.tsx`, `src/App.css`, `src/providers/*`, and `src/bootstrap/create-app-runtime.ts`.
+- Official/current-doc guidance already gathered for this task: MUI installation, React 19 peer range, Emotion default styling engine, MUI icons, `ThemeProvider`, `CssBaseline`, AppBar/Drawer/Dialog/Portal, path imports, Testing Library queries, and `@testing-library/user-event` setup.
+- Initial scope: add MUI dependencies, wrap the app in MUI theme/baseline, and replace the centered startup/status card with a dense work-focused shell frame with top app bar, left drawer, central main, and placeholder route regions.
+- Initial constraints: parent remains orchestration-only; write failing tests before implementation; tests must simulate user clicks/keyboard through RTL + user-event; preserve public `useRuntime()` facade; no Tauri/native/Rust/capability/permission/IPC/schema/release behavior changes; package/lockfile changes must be limited to reviewed MUI dependencies.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and `TERM=dumb` terminal failure.
 
 ### 2026-05-26 01:17 CST - TASK-034 merged
 

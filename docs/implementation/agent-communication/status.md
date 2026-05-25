@@ -1,18 +1,39 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 01:17 CST.
+Last updated: 2026-05-26 01:16 CST.
 
 ## Current Task
 
-- Task: TASK-034 - Design MUI Workspace And Audit Unfinished UI.
-- Branch: `docs/task-034-mui-ui-design`.
+- Task: TASK-035 - Add MUI Substrate And First Shell Frame.
+- Branch: `feat/task-035-mui-shell-frame`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-034 merged; TASK-035 ready to start.
+- Current phase: TASK-035 started; pre-test guidance pending.
 
 ## Active Agents
 
-- None. TASK-034 doc writer completed.
+- None yet.
+
+## Current TASK-035 State
+
+- TASK-035 is the first MUI implementation task after TASK-034's UI design/audit.
+- Start point: `master` after TASK-034 merge validation commit `aa69eaf`.
+- Initial scope:
+  - add MUI dependencies through Bun;
+  - wrap the app with MUI `ThemeProvider` and `CssBaseline`;
+  - replace the centered startup/status card with a dense work-focused shell frame using top `AppBar`, left `Drawer`, central `main`, and placeholder route regions;
+  - keep ready/loading/failure states visible and redacted.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and simulate real user clicks/keyboard through React Testing Library plus `@testing-library/user-event`;
+  - preserve public `useRuntime()` facade as `{ app }`;
+  - do not expose full runtime handles to plugin-rendered descendants;
+  - do not add Tauri/native/Rust/capability/permission/IPC/schema/release behavior changes;
+  - package/lockfile changes must be limited to reviewed MUI dependencies.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and `TERM=dumb` terminal failure.
+- Next action: run read-only deprecation/security guidance, then delegate failing tests to `test_writer`.
 
 ## Current TASK-034 State
 
