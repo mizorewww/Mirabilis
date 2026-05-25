@@ -520,4 +520,20 @@
 
 ## Current Next Action
 
-- Delegate `doc_writer` to synchronize TASK-025 formal docs.
+## Formal Docs Sync Handoff
+
+- Avicenna (`doc_writer`) started 2026-05-25 08:18 CST.
+- Scope: formal docs only, no production code or tests.
+- Required docs sync:
+  - Current TASK-025 Timer finalization creates `namespace: "timer", type: "time_segment_created"` event records from `timer.stop`, active `timer.start`, and `timer.switch`.
+  - Segment payloads use camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, `source: "timer"`, and omit absent optional fields; pause/resume duration excludes paused time.
+  - `timer.add-note` creates/updates Markdown Page notes for stopped segments and appends `namespace: "timer", type: "time_segment_note_added"` without mutating original segment events.
+  - `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and notes inertly, with accessible Add/Edit Note UI.
+  - MetadataBar command execution requires owner-aware command descriptor lookup and fails closed without descriptor lookup; slot UI still receives a narrow execute facade.
+  - PluginHost internal Timer scoped executor authorizes by registered command descriptor owner, not command ID prefix.
+  - Deferred scope remains explicit: metadata totals, Calendar/Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and broader app-shell mounting if not delivered.
+  - Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` internal channel remains globally discoverable/duplicated between PluginHost and Timer, protected by descriptor-owner checks but a future API cleanup target.
+
+## Current Next Action
+
+- Wait for Avicenna (`doc_writer`) to finish docs sync, then validate targeted scans, typecheck, and diff check.

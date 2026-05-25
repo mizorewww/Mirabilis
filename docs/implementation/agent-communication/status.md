@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:17 CST.
+Last updated: 2026-05-25 08:18 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:17 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar execute-only fail-closed review cleared; formal docs sync pending.
+- Current phase: TASK-025 formal docs sync delegated to Avicenna (`doc_writer`).
 
 ## Active Agents
 
-- None currently running. Next delegation is TASK-025 formal docs sync to `doc_writer`.
+- Avicenna (`doc_writer`) is synchronizing formal TASK-025 docs across product, architecture, development, implementation, and testing docs. Scope is docs only; no production code, tests, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -152,7 +152,7 @@ Last updated: 2026-05-25 08:17 CST.
 
 ## Next Actions
 
-1. Delegate TASK-025 formal docs sync to `doc_writer`.
+1. Wait for Avicenna (`doc_writer`) to finish TASK-025 formal docs sync.
 2. Validate docs scans, typecheck, and diff check before final branch gates.
 
 ## Current TASK-021 State
