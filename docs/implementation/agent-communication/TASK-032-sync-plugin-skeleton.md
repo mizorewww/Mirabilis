@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Delegate third review-fix tests for exact event DTO validation.
+- Commit exact event DTO validation record, then run final confirmation review.
 
 ## Implementation Handoff
 
@@ -364,3 +364,41 @@
   - preserve canonical distinct-id event merge behavior.
 - Production fix should remain focused in `src/plugins/sync/conflict-policy.ts`.
 - Parent next action: delegate third review-fix tests to `test_writer`.
+
+## Third Review-Fix Tests
+
+- Epicurus the 2nd (`test_writer`) added exact event DTO validation tests in `src/test/sync-plugin-skeleton.test.ts`.
+- Coverage added:
+  - reject event units where `snapshot.id !== syncKey.id`;
+  - reject event units with extra top-level DTO keys beyond `kind`, `schemaVersion`, `snapshot`, and `syncKey`;
+  - reject event units with extra `syncKey` keys beyond `id`;
+  - preserve valid serialized distinct-id event merge behavior.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 15 passed.
+  - Failure symptoms: all six malformed-side assertions expected a throw but received none.
+- Parent static validation passed:
+  - `bun run typecheck`;
+  - focused ESLint;
+  - `git diff --check`;
+  - `.skip/.only` scan;
+  - package/native/Tauri/Rust/schema/capability guard.
+- Test-fix commit: `f97c98a Epicurus(test-fix)(Implement Sync Plugin skeleton): cover exact event DTO validation`; post-commit auto-push succeeded.
+
+## Third Review-Fix Implementation Outcome
+
+- Hume the 2nd (`implementer`) fixed exact event DTO validation in `src/plugins/sync/conflict-policy.ts`.
+- Fixes delivered:
+  - event units require exact top-level keys `kind`, `schemaVersion`, `snapshot`, and `syncKey`;
+  - event `syncKey` requires exactly `id`;
+  - event `snapshot.id` must equal `syncKey.id`;
+  - validation remains descriptor-based and does not invoke getters.
+- Parent validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` passed with 1 file / 16 tests.
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ai-plugin-provider-abstraction.test.tsx` passed with 5 files / 109 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
+- Review-fix commit: `1c8cfc8 Hume(review-fix)(Implement Sync Plugin skeleton): require exact event DTOs`; post-commit auto-push succeeded.
+- Parent next action: commit this validation record, then run final confirmation review.

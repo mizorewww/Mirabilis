@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:36 CST.
+Last updated: 2026-05-25 17:43 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:36 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 third review-fix tests pending after final narrow re-review P1.
+- Current phase: TASK-032 exact event DTO fix committed; final confirmation pending.
 
 ## Active Agents
 
@@ -137,7 +137,17 @@ Last updated: 2026-05-25 17:36 CST.
 - Parent decisions after final narrow re-review:
   - Add tests first for exact event unit DTO validation: `snapshot.id` must match `syncKey.id`; top-level unit keys must be exactly `kind`, `schemaVersion`, `snapshot`, and `syncKey`; `syncKey` keys must be exactly `id`; canonical distinct event merge still works.
   - Then delegate production fix to `implementer`.
-- Next action: delegate third review-fix tests to `test_writer`.
+- Third review-fix tests delegated:
+  - Epicurus the 2nd (`test_writer`) added exact event DTO tests in `src/test/sync-plugin-skeleton.test.ts`.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 15 passed. Failure symptoms: event units with `snapshot.id !== syncKey.id`, extra top-level DTO keys, and extra `syncKey` keys were accepted.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `f97c98a Epicurus(test-fix)(Implement Sync Plugin skeleton): cover exact event DTO validation`; post-commit auto-push succeeded.
+- Third review-fix implementation completed:
+  - Hume the 2nd (`implementer`) fixed exact event DTO validation in `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: event units require exact top-level keys `kind`, `schemaVersion`, `snapshot`, `syncKey`; `syncKey` requires exactly `id`; `snapshot.id` must equal `syncKey.id`; validation remains descriptor-safe and getter-free.
+  - Parent validated: focused TASK-032 tests passed (1 file / 16 tests), adjacent plugin/API/Core/AI suite passed (5 files / 109 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `1c8cfc8 Hume(review-fix)(Implement Sync Plugin skeleton): require exact event DTOs`; post-commit auto-push succeeded.
+- Next action: commit this exact DTO validation record, then run final confirmation review.
 
 ## Current TASK-031 State
 
