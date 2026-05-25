@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:26 CST.
+Last updated: 2026-05-25 11:31 CST.
 
 ## Current Task
 
@@ -8,15 +8,11 @@ Last updated: 2026-05-25 11:26 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 focused re-review running.
+- Current phase: TASK-028 second P1 regression tests pending.
 
 ## Active Agents
 
-- Kepler (`reviewer`) is re-checking TASK-028 correctness P1 fixes.
-- Hypatia (`security_reviewer`) is re-checking Stats/Chart DTO trust-boundary hardening.
-- Descartes (`test_quality_reviewer`) is re-checking review-fix test coverage.
-- Euler (`docs_researcher`) is re-checking Chart accessibility/current-doc concerns.
-- Nietzsche (`deprecation_auditor`) is re-checking API/deprecation and stale-pattern risk.
+- No active agents. Next delegation is a `test_writer` handoff for the remaining Stats/Chart array inertness P1.
 
 ## Current TASK-028 State
 
@@ -73,6 +69,13 @@ Last updated: 2026-05-25 11:26 CST.
   - Fix scope: bounded Stats/Chart DTO arrays, trusted label and numeric magnitude checks, aggregate overflow guards, page-identity grouping for same-title pages, canonical Timer note-added event support, accessible Chart table headers, `aria-atomic` status, and stable dynamic child keys.
   - Parent validated: focused TASK-028 tests passed (18 tests), adjacent plugin/core suite passed (6 files / 124 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Review-fix commit: `dc8739d Boyle(review-fix)(Implement Stats and Chart plugins): harden stats chart DTO boundaries`; post-commit auto-push succeeded.
+- Focused re-review completed:
+  - Kepler (`reviewer`) found no P0/P1 correctness regressions. P2: aggregate overflow guards can preserve partial totals when a later addition exceeds the cap.
+  - Hypatia (`security_reviewer`) found one remaining P1: Stats and Chart arrays are only length-bounded, not copied/validated as inert plain data before iteration or method calls, so accessor elements or overridden array methods can execute during command/view handling.
+  - Descartes (`test_quality_reviewer`) found no P0/P1 test-quality blockers. P2/P3: page-identity label assertions and early-rejection tests could be more explicit.
+  - Euler (`docs_researcher`) found no P0/P1 accessibility blockers. P2: duplicate optional Chart category `id` values can still duplicate React keys; docs sync is still needed.
+  - Nietzsche (`deprecation_auditor`) found no P0/P1 API/deprecation blockers. P2/P3: stale docs and a future time-series table key collision risk.
+  - Parent decision: treat Hypatia's array inertness finding as a required P1 and start a second TDD review-fix loop.
 
 ## Current TASK-027 State
 
@@ -180,5 +183,5 @@ Last updated: 2026-05-25 11:26 CST.
 
 ## Next Actions
 
-1. Wait for focused TASK-028 re-review agents.
-2. If no P0/P1 findings remain, delegate docs sync for stale formal Stats/Chart docs.
+1. Delegate failing regression tests for Stats/Chart array inertness to `test_writer`.
+2. After red validation, delegate production fixes to `implementer`.

@@ -220,3 +220,20 @@
   - Euler (`docs_researcher`) for Chart accessibility/current-doc review.
   - Nietzsche (`deprecation_auditor`) for API/deprecation and stale-pattern review.
 - If no P0/P1 findings remain, delegate formal docs sync for stale Stats/Chart docs.
+
+## Focused Re-Review Outcomes
+
+- Kepler (`reviewer`) found no remaining P0/P1 correctness issues. It confirmed page identity grouping, canonical Timer note events, and comparison chart headers. P2: aggregate overflow guards can keep a partial subtotal when a later valid per-item value would exceed the aggregate cap.
+- Hypatia (`security_reviewer`) found one remaining P1: Stats and Chart arrays are only length-bounded, not copied or validated as inert plain data before iteration and array method calls. Accessor-backed elements, custom iterators, or overridden array methods can execute during `stats.run-aggregation` or Chart rendering, keeping the DTO trust-boundary issue open.
+- Descartes (`test_quality_reviewer`) found no P0/P1 test-quality blockers. P2/P3: page identity tests could assert labels more directly, boundary tests are representative rather than exhaustive, and the oversized Stats test proves rejection but not early rejection.
+- Euler (`docs_researcher`) found no remaining P0/P1 accessibility/current-doc issue. It verified comparison tables expose Label, Expected, Actual, Delta, and Error headers. P2: duplicate untrusted optional Chart category `id` values can still duplicate React keys. It listed stale formal docs for doc sync.
+- Nietzsche (`deprecation_auditor`) found no P0/P1 API/deprecation blockers. P2/P3: stale formal Stats/Chart identifiers remain in product docs, and a future table-rendering path for time series could have duplicate child keys.
+
+## Parent Decision After Focused Re-Review
+
+- Hypatia's array inertness finding is a required P1.
+- Start a second review-fix TDD loop:
+  - Delegate failing tests to `test_writer` first.
+  - Required test coverage should prove Stats and Chart reject or sanitize non-inert arrays before invoking accessor elements, custom iterators, or overridden array methods.
+  - The test patch must touch tests only.
+  - After red validation, delegate production fixes to `implementer`.
