@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 13:05 CST - TASK-029 merged
+
+- Branch: `feat/task-029-quick-capture-search-plugins`.
+- Merge commit: `da9a96f` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 34 frontend test files / 534 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-029 is complete on `master`; next autonomous task is TASK-030.
+
 ### 2026-05-25 13:04 CST - TASK-029 completed
 
 - Branch: `feat/task-029-quick-capture-search-plugins`.

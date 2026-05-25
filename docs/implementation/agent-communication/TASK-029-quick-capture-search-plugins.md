@@ -379,3 +379,10 @@
 
 - `docs/implementation/progress.md` marks TASK-029 complete and records branch, delivered behavior, review fixes, docs sync, final branch gate, and remaining deferred scope.
 - Current next action: commit the completion ledger and status updates, merge to `master`, run merge-result `bun run check:quick`, record/push the merge validation, and continue to TASK-030.
+
+## Merge Validation
+
+- TASK-029 merged to `master` in commit `da9a96f Merge TASK-029 quick capture and search plugins`.
+- Parent ran merge-result `bun run check:quick` on `master`.
+- Result: passed with typecheck, lint, 34 frontend test files / 534 tests, Rust fmt, Rust clippy, and Rust tests.
+- Current next action: commit/push this merge validation record on `master`, then select and start TASK-030.
