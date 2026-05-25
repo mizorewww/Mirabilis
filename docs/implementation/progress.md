@@ -73,11 +73,22 @@ Status markers:
 - [x] TASK-030: Implement ML Plugin baseline predictions
 - [x] TASK-031: Implement AI Plugin provider abstraction
 - [x] TASK-032: Implement Sync Plugin skeleton
-- [ ] TASK-033: Add release packaging and local full gate
+- [~] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 21:03 CST - TASK-033 started
+
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Task: Add release packaging and local full gate.
+- Start point: `master` after TASK-032 merge validation commit `dfe0e91`.
+- Source docs read: `docs/implementation/task-index.md#task-033-add-release-packaging-and-local-full-gate`, `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md#21-最终代码架构总结`, current `package.json` scripts, and `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` release packaging surfaces.
+- Initial scope to narrow through agents: make local `bun run check:full` a reliable full gate that runs quick checks plus Tauri build, document packaging/version/changelog expectations, and make `release_checker` able to verify local readiness without GitHub CI.
+- Initial risks and questions: `package.json` already has `check:full = bun run check:quick && bun run tauri build`; current Tauri bundle targets are `all`; earlier TASK-014 full-gate exploration found local AppImage bundling environment/tooling failures on Arch, so agents must decide whether TASK-033 should adjust local full-gate behavior, packaging docs, bundle targets, environment expectations, or release-checker procedure without hiding real release risks.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking notes for unrestricted sandbox/network and `TERM=dumb` terminal failure.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs/current API research, deprecation/API audit, security review, TDD/release-gate test writing, implementation, docs sync, and release readiness review will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-033-release-packaging-local-full-gate.md`.
 
 ### 2026-05-25 21:00 CST - TASK-032 merged
 

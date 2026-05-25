@@ -1,18 +1,51 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:00 CST.
+Last updated: 2026-05-25 21:04 CST.
 
 ## Current Task
 
-- Task: TASK-032 - Implement Sync Plugin skeleton.
-- Branch: `feat/task-032-sync-plugin-skeleton`.
+- Task: TASK-033 - Add release packaging and local full gate.
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 merged and merge-result gate passed; TASK-033 start pending.
+- Current phase: TASK-033 pre-test guidance pending.
 
 ## Active Agents
 
-- None.
+- Boole (`planner`) - TASK-033 pre-test planning guidance.
+- Mendel (`docs_researcher`) - current Tauri/Bun/Vite release packaging docs.
+- Parfit (`deprecation_auditor`) - stale packaging/API/script audit.
+- Descartes (`security_reviewer`) - release packaging and local gate security constraints.
+
+## Current TASK-033 State
+
+- TASK-033 follows TASK-032 and owns the local release/full-gate slice:
+  - make `bun run check:full` run quick checks and Tauri build reliably enough for local release readiness;
+  - document packaging changes and version/changelog expectations;
+  - use `release_checker` as the local readiness gate before merge, without requiring GitHub CI.
+- Start point: `master` after TASK-032 merge validation commit `dfe0e91`.
+- Initial parent interpretation:
+  - `package.json` already defines `check:full` as `bun run check:quick && bun run tauri build`.
+  - Current Tauri bundle config has `bundle.targets = "all"`, which may reproduce the TASK-014 AppImage/local environment failure.
+  - Agents should decide the smallest safe release-gate slice and whether this task needs tests/scripts/docs/config changes, or primarily release documentation and local validation.
+  - Avoid weakening quick checks or hiding real packaging failures; if local Linux packaging limitations remain, document them explicitly and let `release_checker` assess severity.
+- Source docs read:
+  - `docs/implementation/task-index.md#task-033-add-release-packaging-and-local-full-gate`.
+  - `docs/testing/strategy.md`.
+  - `docs/development/02-implementation-roadmap-and-constraints.md#21-最终代码架构总结`.
+  - Current `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`.
+- Agent/config validation passed for orchestration start:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network and `TERM=dumb` terminal failure notes.
+- Parent decisions before guidance:
+  - Continue TASK-033 as an autonomous task on branch `feat/task-033-release-packaging-local-full-gate`.
+  - Delegate planning, docs/current Tauri release guidance, deprecation/API audit, and security review before asking for tests or implementation because TASK-033 touches packaging/release behavior and may change Tauri build/bundle surfaces.
+- Pre-test guidance delegated:
+  - Boole (`planner`) should define the smallest safe TASK-033 slice, acceptance criteria, expected files, tests, local gate semantics, release readiness workflow, and deferred scope.
+  - Mendel (`docs_researcher`) should verify current official Tauri v2 release/build/bundle guidance and any Bun/Vite details needed for local `check:full`.
+  - Parfit (`deprecation_auditor`) should audit stale packaging assumptions, scripts, bundle targets, CLI flags, version/changelog conventions, and prior AppImage failure context.
+  - Descartes (`security_reviewer`) should define release/build security constraints around bundle targets, capabilities, signing/updater absence, filesystem/network permissions, and artifact leakage.
+- Next action: wait for pre-test guidance, record parent decisions, then delegate failing release/full-gate tests if needed.
 
 ## Current TASK-032 State
 
