@@ -748,6 +748,151 @@ describe("Sync Plugin skeleton", () => {
     });
   });
 
+  it("rejects stale, mismatched, and unsupported event conflict unit kinds inside local or remote arrays", async () => {
+    const sync = await loadSyncModule();
+    const validEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-valid-kind" }),
+    );
+    const eventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-invalid-kind" }),
+    );
+
+    for (const kind of [
+      "sync.page",
+      "sync.pages",
+      "sync.markdown_page",
+      "sync.plugin_settings",
+    ] as const) {
+      expectEventConflictUnitRejected(sync, {
+        label: `stale event unit kind ${kind}`,
+        unit: { ...eventUnit, kind },
+        validEventUnit,
+      });
+    }
+
+    for (const kind of [
+      syncUnitMarkdownPage,
+      syncUnitMetadata,
+      syncUnitFilter,
+      syncUnitPluginSettings,
+    ] as const) {
+      expectEventConflictUnitRejected(sync, {
+        label: `mismatched event unit kind ${kind}`,
+        unit: { ...eventUnit, kind },
+        validEventUnit,
+      });
+    }
+
+    expectEventConflictUnitRejected(sync, {
+      label: "unsupported event unit kind",
+      unit: { ...eventUnit, kind: "sync.unit.unsupported" },
+      validEventUnit,
+    });
+  });
+
+  it("rejects malformed event conflict units and wrong schema versions inside local or remote arrays", async () => {
+    const sync = await loadSyncModule();
+    const validEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-valid-shape" }),
+    );
+    const eventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-invalid-shape" }),
+    );
+
+    for (const malformed of [
+      {
+        label: "schema version 0",
+        unit: { ...eventUnit, schemaVersion: 0 },
+      },
+      {
+        label: "schema version 2",
+        unit: { ...eventUnit, schemaVersion: 2 },
+      },
+      {
+        label: "string schema version",
+        unit: { ...eventUnit, schemaVersion: "1" },
+      },
+      {
+        label: "missing kind",
+        unit: {
+          schemaVersion,
+          snapshot: eventUnit.snapshot,
+          syncKey: { id: "event-missing-kind" },
+        },
+      },
+      {
+        label: "missing snapshot",
+        unit: {
+          kind: syncUnitEvent,
+          schemaVersion,
+          syncKey: { id: "event-missing-snapshot" },
+        },
+      },
+      {
+        label: "array snapshot",
+        unit: { ...eventUnit, snapshot: [] },
+      },
+      {
+        label: "missing sync key",
+        unit: {
+          kind: syncUnitEvent,
+          schemaVersion,
+          snapshot: eventUnit.snapshot,
+        },
+      },
+      {
+        label: "non-object unit",
+        unit: "event-unit",
+      },
+    ] as const) {
+      expectEventConflictUnitRejected(sync, {
+        label: malformed.label,
+        unit: malformed.unit,
+        validEventUnit,
+      });
+    }
+  });
+
+  it("rejects accessor-backed event conflict unit fields without invoking getters", async () => {
+    const sync = await loadSyncModule();
+
+    for (const field of [
+      "syncKey",
+      "syncKey.id",
+      "kind",
+      "snapshot",
+    ] as const) {
+      for (const side of ["local", "remote"] as const) {
+        const baseEventUnit = sync.serializeEventSyncUnit(
+          createAppEvent({ id: `event-accessor-${field}-${side}` }),
+        );
+        const validEventUnit = sync.serializeEventSyncUnit(
+          createAppEvent({ id: `event-accessor-valid-${field}-${side}` }),
+        );
+        const accessorUnit = createAccessorEventConflictUnit(
+          baseEventUnit,
+          field,
+        );
+        let thrown: unknown;
+
+        try {
+          sync.resolveSyncUnitConflict(
+            createEventConflictInput(side, accessorUnit.unit, validEventUnit),
+          );
+        } catch (error) {
+          thrown = error;
+        }
+
+        expect.soft(thrown, `${field} ${side}: resolver error`).toBeInstanceOf(
+          Error,
+        );
+        expect
+          .soft(accessorUnit.readCount(), `${field} ${side}: getter reads`)
+          .toBe(0);
+      }
+    }
+  });
+
   it("rejects stale and unsupported sync conflict resolver unit kinds", async () => {
     const sync = await loadSyncModule();
     const basePageUnit = sync.serializeMarkdownPageSyncUnit(createMarkdownPage());
@@ -1028,6 +1173,125 @@ function createAccessorPayload(): {
   return {
     readCount: () => reads,
     value,
+  };
+}
+
+type EventConflictArraySide = "local" | "remote";
+
+type AccessorEventConflictField =
+  | "kind"
+  | "snapshot"
+  | "syncKey"
+  | "syncKey.id";
+
+function expectEventConflictUnitRejected(
+  sync: SyncModule,
+  options: {
+    label: string;
+    unit: unknown;
+    validEventUnit: SyncUnitDto;
+  },
+): void {
+  for (const side of ["local", "remote"] as const) {
+    expect.soft(
+      () =>
+        sync.resolveSyncUnitConflict(
+          createEventConflictInput(
+            side,
+            options.unit,
+            options.validEventUnit,
+          ),
+        ),
+      `${options.label} ${side}`,
+    ).toThrow(
+      /sync|unit|event|kind|schema|invalid|unsupported|stale|shape|accessor/i,
+    );
+  }
+}
+
+function createEventConflictInput(
+  side: EventConflictArraySide,
+  unit: unknown,
+  validEventUnit: SyncUnitDto,
+): {
+  local: readonly unknown[];
+  remote: readonly unknown[];
+  unitKind: typeof syncUnitEvent;
+} {
+  return side === "local"
+    ? {
+        local: [unit],
+        remote: [validEventUnit],
+        unitKind: syncUnitEvent,
+      }
+    : {
+        local: [validEventUnit],
+        remote: [unit],
+        unitKind: syncUnitEvent,
+      };
+}
+
+function createAccessorEventConflictUnit(
+  baseUnit: SyncUnitDto,
+  field: AccessorEventConflictField,
+): {
+  readCount: () => number;
+  unit: Record<string, unknown>;
+} {
+  let reads = 0;
+  const unit: Record<string, unknown> = {
+    ...baseUnit,
+    snapshot: { ...baseUnit.snapshot },
+    syncKey: { ...baseUnit.syncKey },
+  };
+  const recordRead = <Value>(value: Value): Value => {
+    reads += 1;
+
+    return value;
+  };
+
+  switch (field) {
+    case "syncKey":
+      Object.defineProperty(unit, "syncKey", {
+        enumerable: true,
+        get() {
+          return recordRead(baseUnit.syncKey);
+        },
+      });
+      break;
+    case "syncKey.id": {
+      const syncKey: Record<string, unknown> = { ...baseUnit.syncKey };
+
+      Object.defineProperty(syncKey, "id", {
+        enumerable: true,
+        get() {
+          return recordRead(baseUnit.syncKey.id);
+        },
+      });
+      unit.syncKey = syncKey;
+      break;
+    }
+    case "kind":
+      Object.defineProperty(unit, "kind", {
+        enumerable: true,
+        get() {
+          return recordRead(baseUnit.kind);
+        },
+      });
+      break;
+    case "snapshot":
+      Object.defineProperty(unit, "snapshot", {
+        enumerable: true,
+        get() {
+          return recordRead(baseUnit.snapshot);
+        },
+      });
+      break;
+  }
+
+  return {
+    readCount: () => reads,
+    unit,
   };
 }
 
