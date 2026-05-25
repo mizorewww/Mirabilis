@@ -50,5 +50,18 @@
 
 ## Current Next Action
 
-- Delegate read-only deprecation/security guidance.
 - Delegate failing tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Ohm (`deprecation_auditor`) found no P0. It found one P1: the existing native/package guard only recognizes old TASK-033 release diffs and would reject TASK-035's required MUI `package.json` / `bun.lock` changes. It recommended a narrow reviewed exception for only `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`, and generated lockfile changes.
+- Ohm recommended avoiding stale/deprecated MUI patterns: `@material-ui/*`, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, `ListItem button`, deprecated `components/componentsProps`, and old system-prop patterns where `sx` should be used.
+- Ohm recommended moving global reset/font/background behavior into MUI theme / `CssBaseline` where practical and keeping `App.css` for app-specific layout only.
+- Pauli (`security_reviewer`) found no P0. It identified P1 hazards: TASK-035 is not acceptance-ready before implementation, the package/native guard must be tightened for TASK-035, and any trusted shell-internal full-runtime channel must not reuse or export the public provider.
+- Pauli required tests for:
+  - real user clicks/keyboard on shell controls with RTL + `userEvent.setup()`;
+  - `banner`, `navigation`, `main`, visible loading, and redacted failure states;
+  - `useRuntime()` remaining a public `{ app }` facade;
+  - no Tauri/native/business-plugin/Core-owner imports in App Shell;
+  - package/lockfile changes limited to the reviewed MUI dependency quartet and no native/release surface changes.
+- Parent decision: accept the guidance. The test writer should write failing tests first, including the narrowed package/native guard and realistic user interaction tests.

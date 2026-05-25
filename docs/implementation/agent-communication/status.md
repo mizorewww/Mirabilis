@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 01:16 CST.
+Last updated: 2026-05-26 01:21 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-26 01:16 CST.
 - Branch: `feat/task-035-mui-shell-frame`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-035 started; pre-test guidance pending.
+- Current phase: TASK-035 pre-test guidance complete; failing tests pending.
 
 ## Active Agents
 
@@ -33,7 +33,11 @@ Last updated: 2026-05-26 01:16 CST.
 - Agent/config validation:
   - 11 `.codex/agents/*.toml` files parsed.
   - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and `TERM=dumb` terminal failure.
-- Next action: run read-only deprecation/security guidance, then delegate failing tests to `test_writer`.
+- Pre-test guidance:
+  - Ohm (`deprecation_auditor`) found no P0 and one P1: existing native/package guard must allow only reviewed MUI dependency/lockfile changes for TASK-035 while continuing to reject all native/release surface drift.
+  - Ohm warned against stale MUI patterns such as `@material-ui/*`, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, and barrel imports.
+  - Pauli (`security_reviewer`) found no P0 and required realistic user-event shell tests, redacted failure coverage, public `useRuntime()` facade coverage, static boundary coverage, and package/native drift guards.
+- Parent decision: accept guidance and delegate failing tests to `test_writer`.
 
 ## Current TASK-034 State
 
