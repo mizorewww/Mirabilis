@@ -464,4 +464,30 @@
 
 ## Current Next Action
 
-- Wait for Carver (`implementer`) to finish, validate focused tests/checks, and commit implementation if green.
+## MetadataBar Execute-Only Fail-Closed Implementation
+
+- Status: completed by Carver (`implementer`) on 2026-05-25 08:09 CST.
+- Commit: `afba845`.
+- Files changed:
+  - `src/plugins/metadata-ui/components/MetadataBar.tsx`.
+  - `src/plugins/metadata-ui/index.ts`.
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Behavior implemented:
+  - MetadataBar no longer has a prefix-based fallback for execute-only command facades.
+  - MetadataBar dispatches slot commands only after descriptor lookup returns an exact command id owned by the contributing plugin.
+  - Missing, thrown, malformed, or mismatched descriptor lookup fails closed before `commands.execute`.
+  - Slot UI still receives only the narrow `execute()` facade.
+  - Test changes were limited to the secure type contract drift: descriptor-backed mock command facades now expose `get()`, while Lorentz's execute-only regression remains intentionally invalid and blocked.
+- Parent validation:
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx` passed with 1 file / 18 tests.
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/timer-time-segment-note.test.tsx src/test/timer-plugin-runtime.test.tsx` passed with 5 files / 118 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - No `.skip` / `.only` matches in touched MetadataBar/PluginHost/Timer tests.
+  - MetadataBar/Timer/PluginHost forbidden-pattern scan for fake-clock/global timer monkeypatch, eval, `Function(...)`, string timer handlers, dangerous HTML, storage/network, and Tauri API imports was empty.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust diff guard against `master` was empty.
+
+## Current Next Action
+
+- Spawn narrow post-fix review agents to confirm Noether/Dalton's execute-only MetadataBar P1 is closed and no API/security/test-quality regression remains.
