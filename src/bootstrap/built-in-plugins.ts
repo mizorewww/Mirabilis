@@ -1,5 +1,7 @@
 import type { AppPlugin } from "../core";
 import { CalendarPlugin } from "../plugins/calendar";
+import { HabitPlugin } from "../plugins/habit";
+import { HeatmapPlugin } from "../plugins/heatmap";
 import { MarkdownEditorPlugin } from "../plugins/markdown-editor";
 import { MetadataUiPlugin } from "../plugins/metadata-ui";
 import { TagPlugin } from "../plugins/tag";
@@ -13,4 +15,6 @@ export const BUILT_IN_PLUGINS = Object.freeze([
   TagPlugin,
   TimerPlugin,
   CalendarPlugin,
+  HabitPlugin,
+  HeatmapPlugin,
 ]) as readonly AppPlugin[];
