@@ -393,3 +393,17 @@
 ## Current Next Action
 
 - Commit this review-fix implementation record, then delegate narrow re-review for security, correctness/current API shape, and test-quality confirmation before formal docs sync.
+
+## Narrow Re-Review Handoff
+
+- Bacon the 2nd (`security_reviewer`) started at 2026-05-25 15:35 CST.
+- Leibniz the 2nd (`reviewer`) started at 2026-05-25 15:35 CST.
+- Feynman the 2nd (`deprecation_auditor`) started at 2026-05-25 15:35 CST.
+- James the 2nd (`test_quality_reviewer`) started at 2026-05-25 15:35 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Review focus:
+  - security boundaries for provider/settings/test-support seams, secrets, native/package/storage drift, async payload snapshotting, provider output validation, and Core/sibling boundaries;
+  - correctness of prior P1 fixes for post-validation mutation, Responses-compatible input, raw Responses normalization, strict schemas, test-support getter hardening, and accessor-safe output validation;
+  - current OpenAI Responses / Structured Outputs alignment and absence of stale underscore AI aliases;
+  - review-fix test coverage for production hook hardening, payload snapshotting, Responses-compatible input, raw Responses paths, schema specificity, nested hostile output, accessor non-execution, and forbidden secret/provider fields across all commands.
+- Parent next action: wait for narrow re-review results, record findings, and fix any remaining P0/P1 before formal docs sync.

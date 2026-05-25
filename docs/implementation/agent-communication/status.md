@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:34 CST.
+Last updated: 2026-05-25 15:35 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 15:34 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 P1 review fixes implemented and committed; preparing narrow re-review.
+- Current phase: TASK-031 narrow re-review delegated after P1 review fixes.
 
 ## Active Agents
 
-- None.
+- Bacon the 2nd (`security_reviewer`) is re-checking TASK-031 AI provider security boundaries.
+- Leibniz the 2nd (`reviewer`) is re-checking TASK-031 correctness and prior P1 fixes.
+- Feynman the 2nd (`deprecation_auditor`) is re-checking TASK-031 current OpenAI Responses / Structured Outputs alignment and stale-id risk.
+- James the 2nd (`test_quality_reviewer`) is re-checking TASK-031 review-fix test coverage.
 
 ## Current TASK-031 State
 
@@ -103,7 +106,12 @@ Last updated: 2026-05-25 15:34 CST.
   - Fix scope: hard-gated AI test support to test mode, renamed production-adjacent test runtime seams away from public test-hook names, snapshotted validated command inputs before async provider calls, switched provider request input to a Responses-compatible string, parsed raw Responses-like success/refusal/error/incomplete/invalid shapes into redacted AI-owned outcomes, added meaningful strict JSON Schema property definitions, and rejected nested hostile/secret/provider-shaped output without executing accessors.
   - Parent validated: focused TASK-031 tests passed (14 tests), adjacent plugin/API/Core/ML suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/import scans found no matches, sibling/Core leakage scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
   - Review-fix commit: `9aa398f Rawls(review-fix)(Implement AI Plugin provider abstraction): harden ai provider boundary`; post-commit auto-push succeeded.
-- Next action: commit review-fix implementation record, then delegate narrow re-review for remaining P0/P1 confirmation.
+- Narrow re-review delegated:
+  - Bacon the 2nd (`security_reviewer`) should confirm no remaining P0/P1 security issues in provider/settings/test-support seams, secrets, native/package/storage drift, async payload snapshotting, provider output validation, and Core/sibling boundaries.
+  - Leibniz the 2nd (`reviewer`) should confirm prior correctness P1s are fixed for post-validation mutation, Responses-compatible input, raw Responses normalization, strict schemas, test-support getter hardening, and accessor-safe output validation.
+  - Feynman the 2nd (`deprecation_auditor`) should confirm current OpenAI Responses / Structured Outputs alignment and no stale underscore AI aliases.
+  - James the 2nd (`test_quality_reviewer`) should confirm review-fix tests cover the P1 regressions meaningfully.
+- Next action: wait for narrow re-review results, record findings, and fix any remaining P0/P1 before formal docs sync.
 
 ## Current TASK-030 State
 
