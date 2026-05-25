@@ -36,10 +36,7 @@ const reviewedTask033Diffs = new Map<
     "src-tauri/Cargo.toml",
     {
       removed: ['-description = "A Tauri App"', '-authors = ["you"]'],
-      added: [
-        '+description = "Markdown-first local time-management desktop app"',
-        '+authors = ["Mirabilis contributors"]',
-      ],
+      added: ['+description = "Markdown-first local time-management desktop app"'],
     },
   ],
 ]);

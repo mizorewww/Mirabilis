@@ -62,7 +62,7 @@ type TauriConfig = {
 };
 
 type CargoPackageMetadata = {
-  authors: string[];
+  deprecatedAuthors: string[];
   description?: string;
   version?: string;
 };
@@ -75,6 +75,7 @@ describe("release packaging local full gate", () => {
     const tauriBuildIndex = normalizedScript.search(/\btauri\s+build\b/);
     const tauriBuildSegment = extractTauriBuildSegment(checkFullScript);
     const bundleTargets = collectBundleTargets(tauriBuildSegment);
+    const failFastViolations = findFullGateFailFastViolations(checkFullScript);
     const forbiddenBypasses = findForbiddenFullGateBypasses(checkFullScript);
 
     expect(quickIndex, "check:full must run check:quick").toBeGreaterThanOrEqual(0);
@@ -86,6 +87,10 @@ describe("release packaging local full gate", () => {
       "check:full must run check:quick before tauri build",
     ).toBeLessThan(tauriBuildIndex);
     expect(
+      failFastViolations,
+      "check:full must fail fast from check:quick into tauri build with &&",
+    ).toStrictEqual([]);
+    expect(
       commandTokens(tauriBuildSegment),
       "Tauri build must run in unattended CI mode",
     ).toContain("--ci");
@@ -94,6 +99,35 @@ describe("release packaging local full gate", () => {
       "local full gate must build explicit local Linux bundles",
     ).toStrictEqual(["deb", "rpm"]);
     expect(forbiddenBypasses).toStrictEqual([]);
+  });
+
+  it("rejects release gates that can package after quick checks fail", () => {
+    const failFastScript =
+      "bun run check:quick && bun run tauri build --ci --bundles deb,rpm";
+    const nonFailFastScripts = new Map<string, string>([
+      [
+        "semicolon",
+        "bun run check:quick; bun run tauri build --ci --bundles deb,rpm",
+      ],
+      [
+        "fallback",
+        "bun run check:quick || bun run tauri build --ci --bundles deb,rpm",
+      ],
+      [
+        "mixed fallback",
+        "bun run check:quick && echo quick-passed || bun run tauri build --ci --bundles deb,rpm",
+      ],
+      [
+        "interposed command",
+        "bun run check:quick && echo quick-passed && bun run tauri build --ci --bundles deb,rpm",
+      ],
+    ]);
+    const falseNegatives = [...nonFailFastScripts.entries()]
+      .filter(([, script]) => findFullGateFailFastViolations(script).length === 0)
+      .map(([label]) => label);
+
+    expect(findFullGateFailFastViolations(failFastScript)).toStrictEqual([]);
+    expect(falseNegatives).toStrictEqual([]);
   });
 
   it("keeps the Tauri bundle configuration local, active, and backed by checked-in assets", async () => {
@@ -163,13 +197,12 @@ describe("release packaging local full gate", () => {
     expect(cargoMetadata.description?.trim()).toBeTruthy();
     expect(cargoMetadata.description).not.toBe("A Tauri App");
     expect(cargoMetadata.description).not.toMatch(/^tauri app$/i);
-    expect(cargoMetadata.authors).not.toStrictEqual(["you"]);
-    expect(cargoMetadata.authors.map((author) => author.toLowerCase())).not.toContain(
-      "you",
-    );
-    expect(cargoMetadata.authors.every((author) => author.trim().length > 0)).toBe(
-      true,
-    );
+  });
+
+  it("does not depend on deprecated Cargo authors metadata", async () => {
+    const cargoMetadata = await readCargoPackageMetadata();
+
+    expect(cargoMetadata.deprecatedAuthors).toStrictEqual([]);
   });
 
   it("requires a release notes surface that the local release docs and checker can verify", async () => {
@@ -261,7 +294,7 @@ async function readCargoPackageMetadata(): Promise<CargoPackageMetadata> {
   }
 
   return {
-    authors: readTomlStringArray(packageSection, "authors"),
+    deprecatedAuthors: readTomlStringArray(packageSection, "authors"),
     description: readTomlString(packageSection, "description"),
     version: readTomlString(packageSection, "version"),
   };
@@ -329,6 +362,53 @@ function collectBundleTargets(tauriBuildSegment: string): string[] {
   return targets.map((target) => target.toLowerCase()).filter(Boolean);
 }
 
+function findFullGateFailFastViolations(script: string): string[] {
+  const normalizedScript = normalizeShell(script);
+  const quickCommand = "bun run check:quick";
+  const quickIndex = normalizedScript.indexOf(quickCommand);
+  const tauriBuildMatch = /\bbun\s+run\s+tauri\s+build\b|\btauri\s+build\b/.exec(
+    normalizedScript,
+  );
+  const violations: string[] = [];
+
+  if (quickIndex < 0) {
+    violations.push("missing check:quick");
+  }
+
+  if (tauriBuildMatch === null) {
+    violations.push("missing tauri build");
+  }
+
+  if (quickIndex < 0 || tauriBuildMatch === null) {
+    return violations;
+  }
+
+  if (quickIndex >= tauriBuildMatch.index) {
+    return ["tauri build must follow check:quick"];
+  }
+
+  const betweenCommands = normalizedScript.slice(
+    quickIndex + quickCommand.length,
+    tauriBuildMatch.index,
+  );
+  const normalizedConnector = normalizeShell(betweenCommands);
+  const controlOperators: string[] = betweenCommands.match(/&&|\|\||;/g) ?? [];
+
+  if (normalizedConnector !== "&&") {
+    violations.push("check:quick must be chained directly to tauri build with &&");
+  }
+
+  if (controlOperators.includes(";")) {
+    violations.push("semicolon allows tauri build after check:quick failure");
+  }
+
+  if (controlOperators.includes("||")) {
+    violations.push("fallback allows tauri build after check:quick failure");
+  }
+
+  return [...new Set(violations)];
+}
+
 function splitBundleTargetToken(token: string): string[] {
   return token
     .split(",")
@@ -338,6 +418,8 @@ function splitBundleTargetToken(token: string): string[] {
 
 function findForbiddenFullGateBypasses(script: string): string[] {
   const forbiddenPatterns = new Map<RegExp, string>([
+    [/;/, "non-fail-fast command separator"],
+    [/\|\|/, "fallback command separator"],
     [/--no-bundle\b/, "--no-bundle"],
     [/--ignore-version-mismatches\b/, "--ignore-version-mismatches"],
     [/\|\|\s*true\b/, "|| true"],
@@ -493,7 +575,7 @@ async function statIfExists(absolutePath: string) {
 }
 
 function isForbiddenTrackedReleaseFile(filePath: string): boolean {
-  const normalized = filePath.replaceAll("\\", "/").toLowerCase();
+  const normalized = normalizeGitPath(filePath);
 
   return (
     normalized === "dist" ||
@@ -511,7 +593,7 @@ function isForbiddenTrackedReleaseFile(filePath: string): boolean {
 }
 
 function isSigningMaterialPath(filePath: string): boolean {
-  const normalized = filePath.replaceAll("\\", "/").toLowerCase();
+  const normalized = normalizeGitPath(filePath);
 
   return (
     /\.(?:pem|p12|pfx|key|asc|sig)$/i.test(filePath) ||
@@ -520,6 +602,10 @@ function isSigningMaterialPath(filePath: string): boolean {
     normalized.includes("/secrets/") ||
     normalized.includes("/secret/")
   );
+}
+
+function normalizeGitPath(filePath: string): string {
+  return filePath.split("\\").join("/").toLowerCase();
 }
 
 async function readTrackedConfigTexts(
