@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:10 CST.
+Last updated: 2026-05-25 21:11 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 21:10 CST.
 - Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-033 pre-test guidance complete; test handoff pending.
+- Current phase: TASK-033 test writing in progress.
 
 ## Active Agents
 
-- None.
+- Hegel (`test_writer`) - TASK-033 failing release/full-gate tests.
 
 ## Current TASK-033 State
 
@@ -57,7 +57,10 @@ Last updated: 2026-05-25 21:10 CST.
   - Do not use `--no-bundle`, `|| true`, hidden env workarounds, or `--ignore-version-mismatches`.
   - Treat AppImage as not validated by the default local gate in this Arch environment; document it as deferred to a controlled Linux builder and require `release_checker` to call out that status.
   - Add tests for script ordering/flags, bundle target policy, version sync, non-placeholder release metadata, changelog/release notes, packaging file existence, no updater/signing unless explicitly configured, no native/capability broadening, and no tracked release artifacts/secrets.
-- Next action: commit this guidance record, then delegate failing release/full-gate tests to `test_writer`.
+- Test writer delegated:
+  - Hegel (`test_writer`) should add focused failing tests for `check:full` ordering/flags/targets, Tauri bundle config, version sync, non-placeholder release metadata, changelog/release notes, release_checker readiness, AppImage status documentation, artifact/secret leak guards, updater/signing absence, and no native/capability broadening.
+  - Scope: tests only; no production, docs, progress, agent communication, package/config/Cargo/release-checker edits, commits, merges, or pushes.
+- Next action: wait for Hegel, validate expected red signal, then commit the test-only patch.
 
 ## Current TASK-032 State
 

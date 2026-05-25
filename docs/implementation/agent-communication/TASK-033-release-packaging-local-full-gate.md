@@ -105,3 +105,20 @@
   - no tracked release artifacts, secrets, logs, `dist`, or `src-tauri/target`;
   - no unexpected native capability, permission, IPC, package, Cargo dependency, Core, or plugin behavior drift.
 - Parent next action: commit guidance decisions, then delegate failing tests to `test_writer`.
+
+## Test Writer Handoff
+
+- Hegel (`test_writer`) started at 2026-05-25 21:11 CST.
+- Scope: tests only, expected file `src/test/release-packaging-full-gate.test.ts`.
+- Required coverage:
+  - `package.json` `check:full` must run `check:quick` before Tauri build, use unattended/CI mode, and use explicit local bundle targets `deb,rpm`;
+  - `check:full` must not use `--no-bundle`, `--ignore-version-mismatches`, `|| true`, hidden env workarounds, upload/publish/curl/fetch/network commands, or skip quick checks;
+  - Tauri build config must keep bundle active, local frontend dist, localhost-only dev URL, `bun run build` before build, and existing referenced desktop template/icon/custom files;
+  - local gate must not hide AppImage status behind implicit `targets = "all"`;
+  - versions must match across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`;
+  - Cargo release metadata must reject placeholder description/authors;
+  - changelog or release-notes surface must exist and be referenced by release docs;
+  - `release_checker` instructions must verify local gate result, bundle targets/artifacts, version/changelog policy, AppImage controlled-builder/deferred status, and no GitHub CI dependency;
+  - static guards must prove no updater/signing config, tracked artifacts/secrets/logs/dist/target, broad permissions, or unexpected native commands.
+- Expected red signal: current repo lacks explicit `--ci --bundles deb,rpm` in `check:full`, still relies on implicit `all`/AppImage, has placeholder Cargo metadata, has no changelog/release notes, and has a release_checker checklist that is too generic.
+- Parent next action: wait for Hegel, validate red tests and static test-only scope, then commit the test-only patch.
