@@ -457,3 +457,27 @@
   - strict Structured Output schemas must stay meaningful while excluding unsupported OpenAI JSON Schema keywords.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Hypatia the 2nd, validate the expected red signal, and commit second review-fix tests separately.
+
+## Second Review-Fix Test Outcome
+
+- Hypatia the 2nd (`test_writer`) extended `src/test/ai-plugin-provider-abstraction.test.tsx`.
+- Added coverage:
+  - production AI module export guards for `replaceAiProviderForTestRuntime`, `clearAiProviderForTestRuntime`, `replaceAiProviderSettingsForTestRuntime`, `getAiProviderSettings`, and broader `ForTestRuntime` / provider-settings override exports;
+  - static and behavioral guards proving AI test support must not use `Object.defineProperty` / operation getters or change provider request operations while wrapping test providers;
+  - `providerId` in the all-command forbidden-field matrix;
+  - raw OpenAI Responses success fixture with `status: "completed"`, `error: null`, `incomplete_details: null`, and output message `output_text`;
+  - strict Structured Output schema guard excluding unsupported OpenAI JSON Schema keywords while preserving meaningful schema assertions.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx` failed as expected with 4 failed / 11 passed.
+  - Failure symptoms: production override exports still visible, test support changes `cleanup-inbox` to `generate-subtasks` on a second `operation` read, strict schemas still include unsupported keywords, and OpenAI `error: null` success is still treated as provider unavailable.
+- Parent static validation passed:
+  - `./node_modules/.bin/eslint src/test/ai-plugin-provider-abstraction.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan found no matches.
+  - Changed-file guard showed only `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Package/native/Tauri/Rust/schema/capability diff guard was empty.
+- Test-fix commit: `8d37679 Hypatia(test-fix)(Implement AI Plugin provider abstraction): cover remaining ai provider regressions`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this second test outcome record, then delegate production fixes to `implementer`.
