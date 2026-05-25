@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:02 CST.
+Last updated: 2026-05-25 17:14 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:02 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 review-fix tests pending after review P1s.
+- Current phase: TASK-032 P1 review fixes committed; preparing narrow re-review.
 
 ## Active Agents
 
@@ -97,7 +97,19 @@ Last updated: 2026-05-25 17:02 CST.
   - Add review-fix tests first for the P1s: Markdown Page unsafe JSON coverage, `__proto__` own-key snapshot safety, nested Plugin Settings secret/auth/credential/remote setting rejection, and stale/unsupported sync kind rejection in `resolveSyncUnitConflict`.
   - Then delegate production fixes to `implementer`.
   - Keep docs sync as a separate docs commit after production fixes are green; update docs again only if review fixes change documented behavior.
-- Next action: delegate review-fix tests to `test_writer`.
+- Review-fix tests delegated:
+  - Plato the 2nd (`test_writer`) added focused tests for Markdown Page unsafe JSON coverage, safe own `__proto__` key preservation, nested Plugin Settings secret/auth/credential/remote endpoint rejection, stale/unsupported conflict kind rejection, and no-extra Sync manifest contributions.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 8 passed. Failure symptoms: own `__proto__` key dropped, nested Plugin Settings reserved keys accepted, and stale/unsupported resolver kinds accepted.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test-fix commit: `86674a5 Plato(test-fix)(Implement Sync Plugin skeleton): cover sync review regressions`; auto-push failed due to GitHub SSH/remote errors and remains to be retried.
+- Review-fix implementation delegated:
+  - Archimedes the 2nd (`implementer`) should fix production P1s in `src/plugins/sync/syncable-units.ts` and `src/plugins/sync/conflict-policy.ts`, preserving Huygens' docs-only patch and making the focused tests green.
+- Review-fix implementation completed:
+  - Archimedes the 2nd (`implementer`) fixed production P1s in `src/plugins/sync/syncable-units.ts` and `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: safe own `__proto__` key preservation via descriptor-based clone writes, recursive Plugin Settings reserved-key rejection after JSON-safe cloning, canonical conflict resolver kind allowlist, and stable-sort object construction that avoids prototype mutation.
+  - Parent validated: focused TASK-032 tests passed (1 file / 11 tests), adjacent plugin/API/Core/AI suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `45bd231 Archimedes(review-fix)(Implement Sync Plugin skeleton): harden sync DTO boundaries`; post-commit auto-push succeeded and also pushed prior local commits.
+- Next action: commit this review-fix validation record, then run narrow re-review of the P1 fixes.
 
 ## Current TASK-031 State
 

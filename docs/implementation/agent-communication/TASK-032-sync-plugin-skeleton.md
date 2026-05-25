@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Delegate review-fix tests for P1 findings.
+- Commit review-fix validation record, then run narrow re-review of P1 fixes.
 
 ## Implementation Handoff
 
@@ -219,3 +219,57 @@
 - Production fixes should remain in `src/plugins/sync/**`; tests in `src/test/sync-plugin-skeleton.test.ts`; docs patch remains separate.
 - Docs sync will be committed separately after production fixes are green, with any needed updates for strengthened Plugin Settings/resolver behavior.
 - Parent next action: delegate review-fix tests to `test_writer`.
+
+## Review-Fix Tests
+
+- Plato the 2nd (`test_writer`) added review-fix tests in `src/test/sync-plugin-skeleton.test.ts`.
+- Coverage added:
+  - Markdown Page body `attrs` unsafe JSON rejection, including accessors without invoking getters.
+  - Valid own `__proto__` JSON key preservation without prototype mutation or field loss.
+  - Nested Plugin Settings secret/auth/credential/remote endpoint key rejection under a neutral `config` settings key.
+  - Stale and unsupported conflict resolver unit kind rejection while preserving canonical accepted behavior.
+  - No-extra Sync manifest contribution assertions.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 8 passed.
+  - Failure symptoms: own `__proto__` key is dropped, nested Plugin Settings reserved keys are accepted, and stale/unsupported resolver kinds are accepted.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/sync-plugin-skeleton.test.ts --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan found no matches.
+  - Package/native/Tauri/Rust/schema/capability guard was empty.
+- Test-fix commit: `86674a5 Plato(test-fix)(Implement Sync Plugin skeleton): cover sync review regressions`.
+- Push status: post-commit auto-push failed due to GitHub SSH/remote errors and remains to be retried.
+
+## Review-Fix Implementation Handoff
+
+- Archimedes the 2nd (`implementer`) started at 2026-05-25 17:09 CST.
+- Scope: production code only in `src/plugins/sync/syncable-units.ts`, `src/plugins/sync/conflict-policy.ts`, and `src/plugins/sync/index.ts` only if needed.
+- Required fixes:
+  - preserve own `__proto__` JSON keys as data properties without prototype mutation;
+  - reject nested Plugin Settings secret/auth/credential/remote endpoint shapes and common key variants without introducing forbidden production-source literals;
+  - reject stale/unsupported conflict resolver unit kinds while preserving canonical mutable/event behavior.
+- Constraints: do not edit tests, docs, progress, agent-communication, bootstrap, package/native/Tauri/Rust/schema/capability files, or unrelated source; do not commit, merge, or push.
+- Parent next action: wait for Archimedes, validate, then commit if green.
+
+## Review-Fix Implementation Outcome
+
+- Archimedes the 2nd (`implementer`) fixed the TASK-032 production P1s in:
+  - `src/plugins/sync/syncable-units.ts`
+  - `src/plugins/sync/conflict-policy.ts`
+- Fixes delivered:
+  - own `__proto__` JSON keys are cloned as data properties without prototype mutation or field loss;
+  - Plugin Settings JSON values are recursively scanned after safe cloning and reject nested secret/auth/credential/remote endpoint keys and variants;
+  - `resolveSyncUnitConflict` rejects stale, future, and unsupported unit kinds while preserving canonical mutable and event behavior;
+  - stable conflict sorting also writes object keys through descriptors to avoid prototype mutation.
+- Parent validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` passed with 1 file / 11 tests.
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ai-plugin-provider-abstraction.test.tsx` passed with 5 files / 104 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
+- Review-fix commit: `45bd231 Archimedes(review-fix)(Implement Sync Plugin skeleton): harden sync DTO boundaries`.
+- Push status: post-commit auto-push succeeded and also pushed the prior local review-findings and test-fix commits.
+- Parent next action: commit this validation record, then run narrow re-review focused on the closed P1s.
