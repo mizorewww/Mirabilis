@@ -377,3 +377,11 @@
 ## Current Next Action
 
 - Delegate the narrow tracked-only fallback test to `test_writer`.
+
+## Narrow Test-Fix Handoff
+
+- Avicenna the 2nd (`test_writer`) started at 2026-05-25 14:07 CST.
+- Scope: tests only in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Required coverage: tracked-only fallback branch where `trackedSeconds * 2` exceeds the one-hour floor.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Avicenna the 2nd, validate the test-only patch, and commit it separately.

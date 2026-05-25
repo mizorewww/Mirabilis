@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:05 CST.
+Last updated: 2026-05-25 14:07 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 14:05 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 narrow re-review completed; tracked-only test gap pending.
+- Current phase: TASK-030 tracked-only fallback test delegated.
 
 ## Active Agents
 
-- No active agents. Parent is preparing a narrow test-quality fix handoff.
+- Avicenna the 2nd (`test_writer`) is adding the tracked-only `trackedSeconds * 2` fallback test.
 
 ## Current TASK-030 State
 
@@ -113,6 +113,9 @@ Last updated: 2026-05-25 14:05 CST.
 - Parent decision:
   - Add a narrow test-only regression for the tracked-only `trackedSeconds * 2` fallback arm.
   - No production implementation handoff is needed unless the new test fails.
+- Narrow test fix delegated:
+  - Avicenna the 2nd (`test_writer`) should add one focused test or extend the existing tracked-only fallback test to cover longer tracked-only input where `trackedSeconds * 2` exceeds one hour.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
 
 ## Current TASK-029 State
 
