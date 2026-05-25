@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:28 CST.
+Last updated: 2026-05-25 16:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 16:28 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 pre-test guidance completed; preparing test handoff.
+- Current phase: TASK-032 test writer delegated.
 
 ## Active Agents
 
-- None.
+- Sartre the 2nd (`test_writer`) is writing focused red TASK-032 acceptance tests.
 
 ## Current TASK-032 State
 
@@ -58,7 +58,11 @@ Last updated: 2026-05-25 16:28 CST.
   - Local plugin indexes are represented only by `sync.rebuildable.plugin-indexes` policy and excluded from durable sync units.
   - Conflict strategy is a structured exported policy: mutable units require manual resolution on divergent edits; events are append-only with distinct-id union, duplicate identical-id dedupe, and same-id different-content conflict; tombstones/deletes remain deferred.
   - Tests should be pure Vitest/static tests in `src/test/sync-plugin-skeleton.test.ts` and should guard no package/native/Tauri/Rust/schema/capability drift plus no network/storage/native/secret/import sinks.
-- Next action: commit guidance decisions, then delegate failing tests to `test_writer`.
+- Test writer delegated:
+  - Sartre the 2nd (`test_writer`) should add focused failing tests in `src/test/sync-plugin-skeleton.test.ts`.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability, or agent-communication edits; no commit, merge, or push.
+  - Required red signal: missing built-in `sync` plugin, missing `src/plugins/sync/**` exports, missing syncable unit serializers/policies, and missing conflict policy.
+- Next action: wait for Sartre the 2nd, validate expected red signal, and commit the test-only patch.
 
 ## Current TASK-031 State
 

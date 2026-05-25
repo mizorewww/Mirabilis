@@ -88,3 +88,18 @@
 ## Current Next Action
 
 - Commit guidance decisions, then delegate failing acceptance tests to `test_writer`.
+
+## Test Writer Handoff
+
+- Sartre the 2nd (`test_writer`) started at 2026-05-25 16:30 CST.
+- Scope: tests only, expected file `src/test/sync-plugin-skeleton.test.ts`.
+- Required coverage:
+  - built-in `sync` plugin registration with no commands/views/settings panels and no stale ids;
+  - syncable unit descriptors and serializer DTOs for Markdown Page, Metadata, Event, Filter, and Plugin Settings snapshots;
+  - snapshot safety and unsafe JSON rejection for executable/prototype/accessor/cyclic/unsupported nested values;
+  - Plugin Settings unset vs JSON null distinction plus secret/remote endpoint key rejection;
+  - rebuildable plugin index policy and exclusion from durable sync units;
+  - structured conflict policy for mutable manual resolution and event append-only union/dedupe/conflict behavior;
+  - static guards for no package/native/Tauri/Rust/schema/capability, network/storage/native/secret/Core/sibling drift.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files, or agent-communication files; do not commit, merge, or push.
+- Parent next action: wait for Sartre the 2nd, validate the expected red signal, and commit the test-only patch.
