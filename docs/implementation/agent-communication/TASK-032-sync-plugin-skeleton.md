@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Commit this implementation outcome record, then delegate review wave.
+- Wait for review wave outcomes, then start docs sync and/or review-fix agents as needed.
 
 ## Implementation Handoff
 
@@ -164,3 +164,15 @@
   - Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
 - Implementation commit: `23f1b48 Einstein(implementation)(Implement Sync Plugin skeleton): implement sync plugin skeleton`; post-commit auto-push succeeded.
 - Remaining intended deferrals: live sync transport, settings UI, credentials/auth, background jobs, native storage/Tauri/Rust/package changes, tombstones/deletes, and conflict UI.
+
+## Review Wave Handoff
+
+- Heisenberg the 2nd (`pr_explorer`) started at 2026-05-25 16:49 CST.
+- Euler the 2nd (`reviewer`) started at 2026-05-25 16:49 CST.
+- Dewey the 2nd (`deprecation_auditor`) started at 2026-05-25 16:50 CST.
+- Fermat the 2nd (`security_reviewer`) started at 2026-05-25 16:50 CST.
+- Meitner the 2nd (`docs_researcher`) started at 2026-05-25 16:50 CST.
+- Hooke the 2nd (`test_quality_reviewer`) started at 2026-05-25 16:50 CST.
+- All six agents are read-only and must not edit files, commit, merge, or push.
+- `doc_writer` start was delayed because the agent thread limit was reached; parent will start it after a slot opens.
+- Parent next action: wait for review outcomes, record P0/P1 decisions, and delegate review-fix tests or docs sync as needed.
