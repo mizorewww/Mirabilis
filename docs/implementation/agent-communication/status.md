@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:33 CST.
+Last updated: 2026-05-25 15:34 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:33 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 production review fixes delegated; waiting for `implementer`.
+- Current phase: TASK-031 P1 review fixes implemented and committed; preparing narrow re-review.
 
 ## Active Agents
 
-- Rawls the 2nd (`implementer`) is fixing TASK-031 P1 production issues.
+- None.
 
 ## Current TASK-031 State
 
@@ -98,7 +98,12 @@ Last updated: 2026-05-25 15:33 CST.
 - Review-fix implementation delegated:
   - Rawls the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: test-hook hardening, sanitized async input snapshots, Responses-compatible provider input, raw Responses parsing/refusal/error handling, meaningful Structured Output schemas, and nested provider output validation/accessor safety.
   - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
-- Next action: wait for Rawls the 2nd, validate focused green checks, and commit review-fix implementation separately.
+- Review-fix implementation completed:
+  - Rawls the 2nd (`implementer`) fixed TASK-031 P1 production issues in `src/plugins/ai/plugin.ts`, `src/plugins/ai/providers/modelProvider.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/settings.ts`, and `src/plugins/ai/test-support.ts`.
+  - Fix scope: hard-gated AI test support to test mode, renamed production-adjacent test runtime seams away from public test-hook names, snapshotted validated command inputs before async provider calls, switched provider request input to a Responses-compatible string, parsed raw Responses-like success/refusal/error/incomplete/invalid shapes into redacted AI-owned outcomes, added meaningful strict JSON Schema property definitions, and rejected nested hostile/secret/provider-shaped output without executing accessors.
+  - Parent validated: focused TASK-031 tests passed (14 tests), adjacent plugin/API/Core/ML suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/import scans found no matches, sibling/Core leakage scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
+  - Review-fix commit: `9aa398f Rawls(review-fix)(Implement AI Plugin provider abstraction): harden ai provider boundary`; post-commit auto-push succeeded.
+- Next action: commit review-fix implementation record, then delegate narrow re-review for remaining P0/P1 confirmation.
 
 ## Current TASK-030 State
 

@@ -358,3 +358,38 @@
   - reject nested hostile/secret provider output and avoid executing output accessors.
 - Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Rawls the 2nd, validate focused green checks, and commit review-fix implementation separately.
+
+## Review-Fix Implementation Outcome
+
+- Rawls the 2nd (`implementer`) completed the TASK-031 P1 production fixes.
+- Changed files:
+  - `src/plugins/ai/plugin.ts`
+  - `src/plugins/ai/providers/modelProvider.ts`
+  - `src/plugins/ai/providers/openAIProvider.ts`
+  - `src/plugins/ai/settings.ts`
+  - `src/plugins/ai/test-support.ts`
+- Delivered:
+  - hard-gated `src/plugins/ai/test-support.ts` to `import.meta.env.MODE === "test"`;
+  - renamed production-adjacent provider/settings runtime seams away from public test-hook names;
+  - removed the operation-changing getter behavior from test-support request wrapping;
+  - snapshotted validated command inputs before async provider calls;
+  - changed provider request `input` to a Responses-compatible framed text string;
+  - parsed raw OpenAI Responses-like success/refusal/error/incomplete/invalid shapes into AI-owned outputs or redacted failures;
+  - added meaningful strict JSON Schema property definitions for Structured Outputs;
+  - rejected nested hostile strings, unsafe URLs, SQL/prompt-injection text, secret/provider-shaped keys, and accessor-backed provider outputs.
+- Parent validation after review-fix implementation:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx` passed with 14 tests.
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ml-plugin-baseline-predictions.test.tsx` passed with 5 files / 104 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Source secret/sink/import scan found no matches.
+  - Sibling plugin import guard found no matches.
+  - Core AI/provider leakage guard found no matches.
+  - Package/native/Tauri/Rust/schema/capability diff guard was empty.
+- Review-fix commit: `9aa398f Rawls(review-fix)(Implement AI Plugin provider abstraction): harden ai provider boundary`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this review-fix implementation record, then delegate narrow re-review for security, correctness/current API shape, and test-quality confirmation before formal docs sync.
