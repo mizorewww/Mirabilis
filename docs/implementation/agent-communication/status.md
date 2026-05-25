@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:03 CST.
+Last updated: 2026-05-25 08:04 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:03 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar execute-only fail-closed red tests committed; implementation handoff pending.
+- Current phase: TASK-025 MetadataBar execute-only fail-closed implementation delegated to Carver (`implementer`).
 
 ## Active Agents
 
-- None currently running. Next delegation is an `implementer` fix for MetadataBar execute-only fail-closed command execution.
+- Carver (`implementer`) is fixing MetadataBar command execution to fail closed when descriptor lookup is unavailable. Scope is production MetadataBar boundary only; no tests, formal docs, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -152,7 +152,7 @@ Last updated: 2026-05-25 08:03 CST.
 
 ## Next Actions
 
-1. Delegate MetadataBar execute-only fail-closed implementation fix.
+1. Wait for Carver (`implementer`) to finish MetadataBar execute-only fail-closed implementation.
 2. Validate focused tests/checks and commit implementation if green.
 
 ## Current TASK-021 State

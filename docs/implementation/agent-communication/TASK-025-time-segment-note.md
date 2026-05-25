@@ -451,4 +451,17 @@
 
 ## Current Next Action
 
-- Delegate `implementer` to make MetadataBar fail closed when command descriptor lookup is unavailable.
+## MetadataBar Execute-Only Fail-Closed Implementation Handoff
+
+- Carver (`implementer`) started 2026-05-25 08:04 CST.
+- Scope: minimum production MetadataBar fix so command execution fails closed when registered command descriptor lookup is unavailable or invalid.
+- Required behavior:
+  - Remove the prefix-based fallback path for execute-only command facades.
+  - Descriptor-backed `runtime.commands` path still allows same-owner commands.
+  - Descriptor-backed path still rejects foreign-owned matching-prefix commands before dispatch.
+  - Existing MetadataBar fail-closed host ownership semantics and trust boundaries remain intact.
+  - No tests, formal docs, package, native, Tauri, Rust, schema, commits, pushes, or branch changes.
+
+## Current Next Action
+
+- Wait for Carver (`implementer`) to finish, validate focused tests/checks, and commit implementation if green.
