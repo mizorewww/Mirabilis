@@ -617,6 +617,71 @@ describe("Habit and Heatmap plugins", () => {
     ).toBeVisible();
   });
 
+  it("appends a fresh checked event after a same-day uncheck so Heatmap normalizers see the active completion", async () => {
+    useFakeClock(safeMiddayInstant);
+
+    const runtime = await createRuntime({
+      eventIds: [
+        "event-recheck-first-check",
+        "event-recheck-uncheck",
+        "event-recheck-final-check",
+      ],
+      pageIds: ["habit-recheck-page"],
+    });
+    const page = createSourcePage(runtime, "Re-checkable habit #habit", [
+      { blockId: "habit-line", text: "Re-checkable habit #habit" },
+    ]);
+
+    await executeHabitCommand(runtime, "habit.check-today", { pageId: page.id });
+    await executeHabitCommand(runtime, "habit.uncheck-today", {
+      pageId: page.id,
+    });
+
+    await expect(
+      executeHabitCommand(runtime, "habit.check-today", { pageId: page.id }),
+    ).resolves.toStrictEqual({
+      checked: true,
+      date: todayDate,
+      nextDue: tomorrowDate,
+      pageId: page.id,
+    });
+    expectHabitMetadata(runtime, page.id, {
+      enabled: true,
+      frequency: "daily",
+      lastCheckedAt: todayDate,
+      nextDue: tomorrowDate,
+    });
+    expectHabitEvents(runtime, [
+      {
+        date: todayDate,
+        habitPageId: page.id,
+        type: "checked",
+      },
+      {
+        date: todayDate,
+        habitPageId: page.id,
+        type: "unchecked",
+      },
+      {
+        date: todayDate,
+        habitPageId: page.id,
+        type: "checked",
+      },
+    ]);
+
+    renderHeatmapView(runtime, {
+      data: normalizeHabitEventsForHeatmap(runtime, new Map([[page.id, page.title]])),
+    });
+
+    const heatmap = screen.getByRole("region", { name: "Heatmap calendar" });
+
+    expect(
+      within(heatmap).getByRole("button", {
+        name: /2026-05-20.*1 completion.*Re-checkable habit/u,
+      }),
+    ).toBeVisible();
+  });
+
   it("executes Habits and Today Habits filters with Habit owner reservations, archive exclusion, and nextDue reappearance", async () => {
     useFakeClock(safeMiddayInstant);
 
