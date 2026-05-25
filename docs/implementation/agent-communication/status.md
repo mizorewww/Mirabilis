@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:15 CST.
+Last updated: 2026-05-25 09:20 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 09:15 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 review-fix implementation pending for P1 regressions.
+- Current phase: TASK-026 P1 review fixes committed; narrow post-fix review pending.
 
 ## Active Agents
 
-- None currently active. Next agent should be `implementer` for review-fix production changes.
+- None currently active. Next step is narrow post-fix review for the P1 regressions.
 
 ## Current TASK-026 State
 
@@ -32,6 +32,7 @@ Last updated: 2026-05-25 09:15 CST.
   - Faraday (`docs_researcher`) found no current-doc blockers; it confirmed RTL/user-event/region/button/no-grid direction and listed formal docs sync obligations.
 - Popper (`test_quality_reviewer`) found P1: current tests missed segments that overlap a selected day/week but start outside that range. It also found P2 DTO hardening parity gaps, P2 static boundary guard brittleness, P3 command-failure UI coverage, and P3 docs/process coverage for manual segment deferral.
 - Banach (`test_writer`) added review-fix regression tests in `src/test/calendar-plugin-baseline.test.tsx` for cross-runtime command leakage and unmount clearing, non-enumerable required/optional/provenance/command fields, and overlapping day/week segments. Parent red validation matched the expected signal: focused Calendar tests had 6 failures / 7 passes. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --check` passed. Commit: `dd41b35`.
+- Bacon (`implementer`) fixed the review regressions in `src/plugins/calendar/plugin.ts`. It made known segment validation runtime-scoped through `register(ctx)`, rejected non-enumerable allowed DTO/command fields, and switched day/week filtering to UTC interval overlap. Parent validation passed: focused Calendar tests 13/13, adjacent plugin/API/architecture tests 91/91, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `3e5b9fb`.
 
 ## Completed Recent Task
 
@@ -172,8 +173,8 @@ Last updated: 2026-05-25 09:15 CST.
 
 ## Next Actions
 
-1. Spawn `implementer` for review-fix production changes.
-2. Validate focused Calendar tests and adjacent checks after the implementer finishes.
+1. Spawn narrow post-fix review agents for the P1 regression fixes.
+2. If no P0/P1 blockers remain, proceed to docs sync.
 
 ## Current TASK-021 State
 

@@ -173,4 +173,19 @@
 
 ## Current Next Action
 
-- Spawn `implementer` for review-fix production changes, then validate focused Calendar tests and adjacent checks.
+- Bacon (`implementer`) fixed the review regressions in `src/plugins/calendar/plugin.ts`:
+  - `calendar.open-time-segment` known segment validation is now runtime-scoped through `register(ctx)` instead of module-global.
+  - DTO/command exact record validation rejects non-enumerable allowed fields in addition to accessors, symbols, prototype-carried fields, and extras.
+  - Day/week visibility now uses UTC interval overlap so carryover segments that start before the selected range still render.
+- Parent validation:
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` passed with 1 file / 13 tests.
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts` passed with 4 files / 91 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri guard from `master` was empty.
+- Commit: `3e5b9fb` (`Bacon(review-fix)(Implement Calendar Plugin baseline): isolate calendar command validation`).
+
+## Current Next Action
+
+- Spawn narrow post-fix review agents for the P1 regression fixes, then proceed to docs sync if no P0/P1 blockers remain.
