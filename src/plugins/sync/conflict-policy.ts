@@ -34,6 +34,13 @@ type EventMergeConflict = {
   remote: SyncUnitDto;
 };
 
+const mutableUnitKinds = new Set<MutableConflictInput["unitKind"]>([
+  "sync.unit.markdown-page",
+  "sync.unit.metadata",
+  "sync.unit.filter",
+  "sync.unit.plugin-settings",
+]);
+
 export const SYNC_CONFLICT_POLICY = Object.freeze({
   deferred: Object.freeze(["tombstones", "deletes", "conflict-ui"] as const),
   eventUnits: Object.freeze({
@@ -60,8 +67,12 @@ export function resolveSyncUnitConflict(input: unknown): unknown {
     });
   }
 
+  if (!isMutableUnitKind(input.unitKind)) {
+    throw new Error("Unsupported sync unit kind");
+  }
+
   return resolveMutableConflict({
-    unitKind: input.unitKind as MutableConflictInput["unitKind"],
+    unitKind: input.unitKind,
   });
 }
 
@@ -161,7 +172,12 @@ function sortJsonValue(value: ReturnType<typeof cloneSyncJson>): unknown {
     const sorted: Record<string, unknown> = {};
 
     for (const key of Object.keys(value).sort()) {
-      sorted[key] = sortJsonValue(value[key]);
+      Object.defineProperty(sorted, key, {
+        configurable: true,
+        enumerable: true,
+        value: sortJsonValue(value[key]),
+        writable: true,
+      });
     }
 
     return sorted;
@@ -172,4 +188,10 @@ function sortJsonValue(value: ReturnType<typeof cloneSyncJson>): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isMutableUnitKind(
+  unitKind: string,
+): unitKind is MutableConflictInput["unitKind"] {
+  return mutableUnitKinds.has(unitKind as MutableConflictInput["unitKind"]);
 }

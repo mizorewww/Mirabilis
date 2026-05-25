@@ -59,9 +59,15 @@ const maxJsonDepth = 32;
 const maxJsonNodes = 5_000;
 const settingKeyDenyCodes = [
   [97, 112, 105, 107, 101, 121],
+  [97, 99, 99, 101, 115, 115, 107, 101, 121],
   [116, 111, 107, 101, 110],
   [115, 101, 99, 114, 101, 116],
   [112, 97, 115, 115, 119, 111, 114, 100],
+  [99, 114, 101, 100, 101, 110, 116, 105, 97, 108],
+  [97, 117, 116, 104],
+  [111, 97, 117, 116, 104],
+  [98, 101, 97, 114, 101, 114],
+  [114, 101, 109, 111, 116, 101],
   [101, 110, 100, 112, 111, 105, 110, 116],
   [98, 97, 115, 101, 117, 114, 108],
   [117, 114, 108],
@@ -232,6 +238,17 @@ export function serializePluginSettingsSyncUnit(
   settings: PluginSettingsSnapshot,
 ): SyncUnitDto {
   assertDurableSettingsKey(settings.key);
+  const state =
+    settings.state.state === "unset"
+      ? { state: "unset" as const }
+      : {
+          state: "json" as const,
+          value: cloneSyncJson(settings.state.value),
+        };
+
+  if (state.state === "json") {
+    assertDurableSettingsValue(state.value);
+  }
 
   return {
     kind: "sync.unit.plugin-settings",
@@ -239,13 +256,7 @@ export function serializePluginSettingsSyncUnit(
     snapshot: {
       key: cloneSyncJson(settings.key),
       pluginId: cloneSyncJson(settings.pluginId),
-      state:
-        settings.state.state === "unset"
-          ? { state: "unset" }
-          : {
-              state: "json",
-              value: cloneSyncJson(settings.state.value),
-            },
+      state,
       updatedAt: cloneSyncJson(settings.updatedAt),
     },
     syncKey: {
@@ -380,7 +391,12 @@ function clonePlainJsonObject(
 
     const descriptor = assertDataDescriptor(value, key);
 
-    clone[key] = cloneJsonValue(descriptor.value, state, depth + 1);
+    Object.defineProperty(clone, key, {
+      configurable: true,
+      enumerable: true,
+      value: cloneJsonValue(descriptor.value, state, depth + 1),
+      writable: true,
+    });
   }
 
   return clone;
@@ -422,9 +438,33 @@ function isArrayIndexKey(value: string): boolean {
 }
 
 function assertDurableSettingsKey(key: string): void {
-  const normalizedKey = key.toLowerCase();
+  const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/gu, "");
 
   if (settingKeyDenyParts.some((part) => normalizedKey.includes(part))) {
     throw new Error("Sync settings key is not durable");
+  }
+}
+
+function assertDurableSettingsValue(value: MetadataJsonValue): void {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      assertDurableSettingsValue(item);
+    }
+
+    return;
+  }
+
+  if (value === null || typeof value !== "object") {
+    return;
+  }
+
+  for (const [key, item] of Object.entries(value)) {
+    try {
+      assertDurableSettingsKey(key);
+    } catch {
+      throw new Error("Sync settings value is not durable");
+    }
+
+    assertDurableSettingsValue(item);
   }
 }
