@@ -169,3 +169,41 @@
 - Expected changed files: `src/bootstrap/built-in-plugins.ts` and `src/plugins/ml/*`.
 - Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Dewey, validate focused green checks, and commit implementation separately.
+
+## Implementation Outcome
+
+- Dewey (`implementer`) completed the TASK-030 production baseline.
+- Changed files:
+  - `src/bootstrap/built-in-plugins.ts`
+  - `src/plugins/ml/index.ts`
+  - `src/plugins/ml/plugin.ts`
+  - `src/plugins/ml/algorithms/predictRemainingTime.ts`
+  - `src/plugins/ml/features/buildRemainingTimeFeatures.ts`
+  - `src/plugins/ml/views/PredictionPanel.tsx`
+- Delivered:
+  - Built-in `ml` registration.
+  - Canonical descriptors for `ml.predict-remaining-time`, `ml.run-prediction`, `ml.prediction-panel`, `ml.page-sidebar.prediction-panel`, `ml.predictedRemainingTime`, `ml.predictionConfidence`, and `ml.prediction-generated`.
+  - Deterministic remaining-time baseline prediction from exact caller-provided projections.
+  - Strict bounded feature/payload validation, ML-owned metadata/event writes, and inert accessible prediction panel rendering.
+  - No package/native/Tauri/Rust/schema/capability changes.
+- Parent validation after implementation:
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx` passed with 7 tests.
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx src/test/stats-chart-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/tag-plugin-baseline.test.tsx` passed with 8 files / 152 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - Focused ESLint for `src/plugins/ml`, `src/bootstrap/built-in-plugins.ts`, and `src/test/ml-plugin-baseline-predictions.test.tsx` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Package/native/Tauri/Rust/schema diff guard was empty.
+- Implementation commit: `6b0a32f Dewey(implementation)(Implement ML Plugin baseline predictions): implement ml prediction baseline`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate review wave:
+  - `pr_explorer` for changed-path mapping.
+  - `reviewer` for correctness and edge cases.
+  - `deprecation_auditor` for API/deprecation/stale-pattern review.
+  - `security_reviewer` for payload/projection/native-boundary review.
+  - `docs_researcher` for current-doc/accessibility/view review.
+  - `test_quality_reviewer` for acceptance test quality.
+- Fix P0/P1 findings before docs sync and final branch gate.
