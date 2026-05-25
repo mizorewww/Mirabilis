@@ -230,3 +230,24 @@ type ActiveRoute =
 - Parent decision:
   - accept `7b4d5c0`;
   - run final targeted re-review for correctness, security, and test quality before docs sync and branch gate.
+
+## Final Test-Hardening Outcome
+
+- Final targeted re-review after `7b4d5c0`:
+  - Nietzsche the 2nd (`security_reviewer`) found no P0/P1/P2.
+  - Bernoulli the 2nd (`reviewer`) found no P0/P1 and one P2: saved-filter accessible names can diverge from visible labels.
+  - Carver the 2nd (`test_quality_reviewer`) found P1 coverage gaps for exact `{ routeToken, title }` DTOs, the built-in task page-list contract, and unowned metadata namespace fail-closed behavior.
+- Confucius the 2nd (`test_writer`) added test-hardening coverage in commit `1304174`.
+- New coverage:
+  - route result DTO helpers now require `routeToken` plus `title` and reject previous `id`/`key`/`routeKey` aliases;
+  - real built-in `task.page-list` rendering is exercised through All Tasks and Today user routes without leaking raw page IDs or bodies;
+  - `TaskPageListViewProps` must match the route-token DTO contract;
+  - saved filters over unowned metadata namespaces must fail closed without leaking matched page data;
+  - visible saved-filter labels such as `Today Review` must remain available as accessible names.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` failed as expected with 1 failure for `Today Review` label-in-name accessibility.
+  - `bun run typecheck` failed as expected because the task page-list DTO still allowed an optional `routeToken`.
+  - `git diff --check` passed.
+- Parent decision:
+  - accept `1304174` as the final test-hardening baseline;
+  - delegate final production polish to Poincare the 2nd (`implementer`) with write scope limited to `src/App.tsx` and `src/plugins/task/components/TaskFilterViews.tsx`.
