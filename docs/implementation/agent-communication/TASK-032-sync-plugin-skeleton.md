@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Wait for review wave outcomes, then start docs sync and/or review-fix agents as needed.
+- Delegate review-fix tests for P1 findings.
 
 ## Implementation Handoff
 
@@ -176,3 +176,46 @@
 - All six agents are read-only and must not edit files, commit, merge, or push.
 - `doc_writer` start was delayed because the agent thread limit was reached; parent will start it after a slot opens.
 - Parent next action: wait for review outcomes, record P0/P1 decisions, and delegate review-fix tests or docs sync as needed.
+
+## Review Wave Outcomes
+
+- Heisenberg the 2nd (`pr_explorer`) found no P0/P1. It mapped the Sync changed surfaces and flagged two review hotspots for other reviewers: broad conflict resolver input validation and char-code encoding for reserved Plugin Settings keys.
+- Euler the 2nd (`reviewer`) found one P1:
+  - `clonePlainJsonObject` clones into `{}` and assigns keys, so a valid JSON own key named `__proto__` mutates the clone prototype and drops the field from serialized output.
+  - Euler also recorded P2s for unsupported conflict resolver kinds and stale docs.
+- Dewey the 2nd (`deprecation_auditor`) found one P1:
+  - exported `resolveSyncUnitConflict` accepts unsupported or stale non-event sync kinds such as `sync.page` and `sync.plugin_settings`, which conflicts with the canonical-id decision.
+  - It confirmed no executable sync transport, native, permission, package, lockfile, Tauri config, schema, or stale literal alias registration drift, and checked current Tauri/Vitest/Vite guidance.
+- Fermat the 2nd (`security_reviewer`) found one P1:
+  - generic Plugin Settings sync can still carry secrets/auth/credentials or remote endpoint settings through nested JSON or unlisted key variants.
+  - It found no live network/socket/worker/native/Tauri/storage imports, whole-workspace sync commands, sibling plugin imports, or raw Core store/runtime/native bridge access.
+- Meitner the 2nd (`docs_researcher`) found one P1:
+  - long-lived docs must be synced before merge because production now registers `SyncPlugin`, but some docs still treat Sync as future scope and the task requires conflict strategy documentation.
+  - It determined no external official docs are needed for this TypeScript-only skeleton; future network/native sync must re-check Tauri security docs.
+- Hooke the 2nd (`test_quality_reviewer`) found two P1 test gaps:
+  - unsafe JSON rejection does not cover Markdown Page snapshots;
+  - Plugin Settings secret/remote coverage only checks top-level setting keys.
+  - Hooke also listed P2s for broader manifest-contribution assertions, over-specific conflict resolver tests, and branch-topology-sensitive native guard tests.
+- Huygens the 2nd (`doc_writer`) produced a docs-only patch in:
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/architecture/01-overview-and-monorepo.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/06-filter-native-database.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/testing/strategy.md`
+  - `docs/implementation/task-index.md`
+  - Huygens ran `git diff --check`; parent has not committed the docs patch yet.
+
+## Parent Decisions After Review
+
+- P1s require review-fix tests first:
+  - Markdown Page serializer must reject unsafe nested JSON and must be covered by tests.
+  - JSON cloning must preserve safe own `__proto__` keys without prototype mutation or field loss.
+  - Plugin Settings serializer must reject nested secret/auth/credential/remote endpoint shapes and common key variants, not only top-level setting keys.
+  - `resolveSyncUnitConflict` must reject unsupported/stale sync unit kinds and tests must cover stale aliases.
+- Production fixes should remain in `src/plugins/sync/**`; tests in `src/test/sync-plugin-skeleton.test.ts`; docs patch remains separate.
+- Docs sync will be committed separately after production fixes are green, with any needed updates for strengthened Plugin Settings/resolver behavior.
+- Parent next action: delegate review-fix tests to `test_writer`.

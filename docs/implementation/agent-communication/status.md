@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:51 CST.
+Last updated: 2026-05-25 17:02 CST.
 
 ## Current Task
 
@@ -8,17 +8,11 @@ Last updated: 2026-05-25 16:51 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 review wave active.
+- Current phase: TASK-032 review-fix tests pending after review P1s.
 
 ## Active Agents
 
-- Heisenberg the 2nd (`pr_explorer`) is mapping the changed surfaces and review hotspots.
-- Euler the 2nd (`reviewer`) is reviewing correctness and behavior.
-- Dewey the 2nd (`deprecation_auditor`) is auditing stale/current API assumptions.
-- Fermat the 2nd (`security_reviewer`) is reviewing security and privacy boundaries.
-- Meitner the 2nd (`docs_researcher`) is reviewing docs/current-guidance drift.
-- Hooke the 2nd (`test_quality_reviewer`) is reviewing TASK-032 test quality.
-- `doc_writer` is pending because the agent thread limit was reached; parent will start it after a review slot opens.
+- None.
 
 ## Current TASK-032 State
 
@@ -91,7 +85,19 @@ Last updated: 2026-05-25 16:51 CST.
   - Meitner the 2nd (`docs_researcher`) checks current-guidance needs and Mirabilis docs drift.
   - Hooke the 2nd (`test_quality_reviewer`) checks acceptance and regression coverage quality.
   - `doc_writer` could not start yet because the agent thread limit was reached; parent will start docs sync after a slot opens.
-- Next action: wait for review results, record findings, then start doc_writer and/or review-fix agents as needed.
+- Review wave completed:
+  - Heisenberg the 2nd (`pr_explorer`) found no P0/P1 and mapped changed surfaces. It highlighted two review hotspots: broad conflict resolver input validation and char-code encoding for reserved plugin-setting keys.
+  - Euler the 2nd (`reviewer`) found one P1: `clonePlainJsonObject` builds clones with `{}` and assignment, so a valid JSON `__proto__` key mutates the clone prototype and drops the key from serialized output. It also noted P2 resolver validation and docs drift.
+  - Dewey the 2nd (`deprecation_auditor`) found one P1: exported `resolveSyncUnitConflict` implicitly accepts unsupported/stale non-event sync kinds such as `sync.page` or `sync.plugin_settings`, conflicting with the canonical-id decision. It confirmed no native/package/Tauri/API drift and checked current Tauri/Vitest/Vite guidance.
+  - Fermat the 2nd (`security_reviewer`) found one P1: generic Plugin Settings sync can still carry secrets/auth/credentials or remote endpoint settings through nested JSON or unlisted key variants. It found no live network/native/storage/sibling/Core boundary drift.
+  - Meitner the 2nd (`docs_researcher`) found one P1: long-lived docs must be synced before merge because production now registers `SyncPlugin` and the task requires conflict strategy documentation. It determined no external docs were needed for this TypeScript-only skeleton.
+  - Hooke the 2nd (`test_quality_reviewer`) found two P1 test gaps: unsafe JSON rejection does not cover Markdown Page snapshots, and Plugin Settings secret/remote coverage only checks top-level keys.
+  - Huygens the 2nd (`doc_writer`) produced a docs-only patch in product, architecture, development, implementation task-index, and testing docs; it has not been committed yet.
+- Parent decisions after review:
+  - Add review-fix tests first for the P1s: Markdown Page unsafe JSON coverage, `__proto__` own-key snapshot safety, nested Plugin Settings secret/auth/credential/remote setting rejection, and stale/unsupported sync kind rejection in `resolveSyncUnitConflict`.
+  - Then delegate production fixes to `implementer`.
+  - Keep docs sync as a separate docs commit after production fixes are green; update docs again only if review fixes change documented behavior.
+- Next action: delegate review-fix tests to `test_writer`.
 
 ## Current TASK-031 State
 
