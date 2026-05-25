@@ -362,3 +362,20 @@
 - Commit this orchestration status update.
 - Run final TASK-029 branch gate with `bun run check:quick`.
 - If green, mark TASK-029 complete in `docs/implementation/progress.md`, commit the completion ledger, merge to `master`, validate the merge result, and continue to the next unblocked task.
+
+## Final Branch Gate
+
+- Parent ran `bun run check:quick` on branch `feat/task-029-quick-capture-search-plugins`.
+- Result: passed.
+- Coverage in the gate:
+  - `bun run typecheck`
+  - `bun run lint`
+  - `bun run test:frontend` with 34 files / 534 tests passed
+  - `bun run fmt:rust`
+  - `bun run clippy`
+  - `bun run test:rust`
+
+## Completion Ledger
+
+- `docs/implementation/progress.md` marks TASK-029 complete and records branch, delivered behavior, review fixes, docs sync, final branch gate, and remaining deferred scope.
+- Current next action: commit the completion ledger and status updates, merge to `master`, run merge-result `bun run check:quick`, record/push the merge validation, and continue to TASK-030.

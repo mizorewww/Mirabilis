@@ -69,7 +69,7 @@ Status markers:
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
-- [~] TASK-029: Implement Quick Capture and Search plugins
+- [x] TASK-029: Implement Quick Capture and Search plugins
 - [ ] TASK-030: Implement ML Plugin baseline predictions
 - [ ] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
@@ -78,6 +78,20 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 13:04 CST - TASK-029 completed
+
+- Branch: `feat/task-029-quick-capture-search-plugins`.
+- Task: Implement Quick Capture and Search plugins.
+- Delivered: built-in `QuickCapturePlugin` and `SearchPlugin` are registered through `BUILT_IN_PLUGINS` with plugin ids `quick-capture` and `search`.
+- Delivered: Quick Capture registers canonical commands `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open`; views `quick-capture.modal` and `quick-capture.mobile-input`; metadata `quick-capture.unprocessed`; and filter `quick-capture.filter.inbox`.
+- Delivered: Quick Capture creates or appends bounded Markdown captures to a trusted plugin-marked `Inbox`, leaves title-only user Inbox pages alone, preserves captured Markdown as inert structured text, and requires explicit public Task/Tag command handoff for task/tag processing.
+- Delivered: Search registers `search.query` and `search.results`, performs bounded transient case-insensitive literal scans over unarchived page titles/body text, caps scanned pages/body/title/snippet/results, returns no full page bodies, and renders inert accessible results with status/list semantics.
+- Review and fixes: review agents found P1 gaps around hostile Search payload/cap coverage and Quick Capture baseline dialog semantics. Lagrange added red review-fix coverage; Jason changed Quick Capture modal to a labelled region and added Search status summaries. Narrow re-review by Sagan, Volta, and Rawls found no remaining P0/P1 blockers.
+- Documentation sync: product, architecture, development, runtime-flow, and task-index docs now describe canonical Quick Capture/Search ids, trusted Inbox behavior, explicit Task/Tag handoff, Search as transient on-demand scanning, and deferred native/global shortcut/mobile-toolbar/persistent-index scope.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 34 frontend test files / 534 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: native/global shortcut entry point, full app-shell modal focus/close/save behavior, mobile toolbar mounting, automatic Task/Tag cleanup or AI inbox processing, persistent Search indexing, background indexer/worker, SQLite FTS, ranking beyond current page-list scan order, and app-shell Search route/command-palette polish remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
 
 ### 2026-05-25 12:03 CST - TASK-029 started
 
