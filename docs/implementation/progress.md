@@ -71,13 +71,28 @@ Status markers:
 
 - [x] TASK-029: Implement Quick Capture and Search plugins
 - [x] TASK-030: Implement ML Plugin baseline predictions
-- [~] TASK-031: Implement AI Plugin provider abstraction
+- [x] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 16:17 CST - TASK-031 completed
+
+- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
+- Task: Implement AI Plugin provider abstraction.
+- Delivered: built-in `AiPlugin` is registered through `BUILT_IN_PLUGINS` with plugin id `ai`, canonical kebab-case commands `ai.cleanup-inbox`, `ai.turn-text-into-task`, `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, `ai.generate-filter`, `ai.summarize-time-notes`, `ai.generate-weekly-review`, and `ai.explain-prediction`, plus views `ai.suggestion-panel` / `ai.review-panel`, metadata descriptors `ai.summary` / `ai.suggestedTags` / `ai.suggestedEstimate`, event descriptors `ai.suggestion-generated` / `ai.summary-generated`, and inert settings descriptor `ai.provider-settings`.
+- Delivered: AI provider behavior stays under `src/plugins/ai/**`; Core remains AI/provider/model/prompt-free. The plugin-owned `openai` provider boundary uses default model guidance `gpt-5.5`, shapes mocked/injected Responses-style requests with `instructions`, string `input`, `store: false`, and `text.format` strict `json_schema`, and uses runtime validation for exact bounded DTOs, safe text/JSON, redaction, and fail-closed provider output.
+- Delivered: raw Responses normalization accepts completed payloads with `error: null` and `incomplete_details: null`, parses top-level `output_text` and message output text content, and fails closed/redacted for refusals, incomplete/error/invalid responses, invalid JSON, null output, provider failures, and unavailable transport.
+- Delivered: AI commands consume exact bounded caller-provided projections and return advisory DTOs only. They do not mutate pages, metadata, events, filters, sibling plugin private data, or native/package/Tauri/Rust/schema/capability surfaces.
+- Review and fixes: review agents found P1 issues around production test/provider override seams, async input snapshotting, Responses-compatible input/output parsing, strict schema specificity, nested hostile provider output, provider-output accessors, forbidden provider fields across commands, `error: null` Responses success handling, and unsupported OpenAI strict-schema keywords. Tesla, Hypatia, and Lagrange added red regression tests; Wegener, Rawls, and Dirac implemented the production fixes. Final security, correctness, deprecation/current-doc, and test-quality re-review found no remaining P0/P1 blockers.
+- Documentation sync: product, architecture, development, implementation task-index, and testing docs now describe canonical AI ids, stale underscore ids as non-aliases, plugin-owned provider/settings boundaries, OpenAI Responses / Structured Outputs shape, mocked provider/transport testing, advisory-only behavior, and deferred settings/secret/live-provider scope.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 36 frontend test files / 561 tests, Rust fmt, Rust clippy, and Rust tests.
+- Official docs verified: OpenAI latest-model guidance for `gpt-5.5`, Responses API request/response shape, and Structured Outputs supported-schema subset.
+- Remaining accepted risks: persistent plugin settings, settings UI, OS keychain/secret storage, native HTTP/live provider execution, durable AI writes, acceptance UX, stricter raw Responses missing-status parsing, exact public wording preservation for `persist*`, and `ai.generate-filter` parity with broader Core `neq` / `exists` semantics remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
 
 ### 2026-05-25 14:28 CST - TASK-031 started
 
