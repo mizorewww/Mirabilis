@@ -186,13 +186,37 @@ const forbiddenCommandFields = [
   "token",
   "secret",
   "provider",
+  "providerId",
   "model",
 ] as const;
 const forbiddenProviderOverrideExportNames = [
+  "clearAiProviderForTestRuntime",
   "configureAiPluginForTests",
+  "getAiProviderSettings",
+  "replaceAiProviderForTestRuntime",
+  "replaceAiProviderSettingsForTestRuntime",
   "resetAiProviderForTests",
   "setAiProviderForTests",
   "setAiProviderSettingsForTests",
+] as const;
+const unsupportedOpenAiStrictSchemaKeywords = [
+  "maxLength",
+  "minLength",
+  "pattern",
+  "format",
+  "minimum",
+  "maximum",
+  "multipleOf",
+  "minItems",
+  "maxItems",
+  "allOf",
+  "not",
+  "if",
+  "then",
+  "else",
+  "dependentRequired",
+  "dependentSchemas",
+  "patternProperties",
 ] as const;
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -386,10 +410,28 @@ describe("AI Plugin provider abstraction", () => {
     const publicAiExports = Object.keys(
       requireRecord(await import("../plugins/ai"), "AI public exports"),
     );
+    const pluginModuleExports = Object.keys(
+      requireRecord(await import("../plugins/ai/plugin"), "AI plugin exports"),
+    );
+    const settingsModuleExports = Object.keys(
+      requireRecord(
+        await import("../plugins/ai/settings"),
+        "AI settings exports",
+      ),
+    );
     const productionSources = await readProductionSources(["src/plugins/ai"]);
 
-    expect(publicAiExports).not.toEqual(
-      expect.arrayContaining([...forbiddenProviderOverrideExportNames]),
+    expectNoForbiddenProviderOverrideExports(
+      publicAiExports,
+      "AI public package exports",
+    );
+    expectNoForbiddenProviderOverrideExports(
+      pluginModuleExports,
+      "AI production plugin module exports",
+    );
+    expectNoForbiddenProviderOverrideExports(
+      settingsModuleExports,
+      "AI production settings module exports",
     );
 
     for (const { filePath, source } of productionSources) {
@@ -403,15 +445,68 @@ describe("AI Plugin provider abstraction", () => {
         expect(source, `${filePath}: operation-changing getter`).not.toMatch(
           /\bget\s+(?:operation|providerId|request|input)\s*\(/u,
         );
+        expect(
+          source,
+          `${filePath}: Object.defineProperty operation getter`,
+        ).not.toMatch(
+          /\bObject\.defineProperty\s*\(\s*[^,]+,\s*["']operation["'][\s\S]{0,400}\bget\s*\(/u,
+        );
         continue;
       }
 
       expect(
         source,
-        `${filePath}: production override export`,
+        `${filePath}: production legacy test override export`,
       ).not.toMatch(
         /\bexport\s+function\s+(?:configureAiPluginForTests|resetAiProviderForTests|setAiProviderForTests|setAiProviderSettingsForTests)\b/u,
       );
+      expect(
+        source,
+        `${filePath}: production ForTestRuntime seam export`,
+      ).not.toMatch(
+        /\bexport\s+(?:function|const|let|var)\s+\w*ForTestRuntime\b/u,
+      );
+      expect(
+        source,
+        `${filePath}: production provider/settings override export`,
+      ).not.toMatch(
+        /\bexport\s+(?:function|const|let|var)\s+\w*(?:clear|replace|reset|set|override)\w*(?:Provider|Settings)\w*\b/iu,
+      );
+      expect(
+        source,
+        `${filePath}: production provider settings secret exposure`,
+      ).not.toMatch(/\bexport\s+function\s+getAiProviderSettings\b/u);
+    }
+  });
+
+  it("keeps AI test support from changing provider request operations while wrapping test providers", async () => {
+    const support = await loadAiTestSupport();
+    const observedOperations: Array<readonly [AiOperation, AiOperation]> = [];
+    const reset = support.configureAiPluginForTests({
+      provider: {
+        async generate(request) {
+          observedOperations.push([request.operation, request.operation]);
+
+          return cleanupInboxOutput();
+        },
+        id: openAiProviderId,
+      },
+      settings: createConfiguredProviderSettings(),
+    });
+
+    try {
+      const runtime = await createRuntime();
+
+      await expect(
+        runtime.commands.execute("ai.cleanup-inbox", cleanupInboxInput()),
+      ).resolves.toMatchObject({
+        kind: "ai.cleanup-inbox-suggestion",
+      });
+      expect(observedOperations).toStrictEqual([
+        ["cleanup-inbox", "cleanup-inbox"],
+      ]);
+    } finally {
+      reset();
     }
   });
 
@@ -1498,7 +1593,9 @@ function rawOpenAiOutputTextResponse(output: unknown): Record<string, unknown> {
 
 function rawOpenAiMessageContentResponse(output: unknown): Record<string, unknown> {
   return {
+    error: null,
     id: "raw-response-id",
+    incomplete_details: null,
     object: "response",
     output: [
       {
@@ -2174,6 +2271,10 @@ function expectStructuredOutputSchema(
   });
   expect(schema.required, `${commandCase.commandId}: required keys`)
     .toStrictEqual(commandCase.expectedResultKeys);
+  expect(
+    collectUnsupportedOpenAiStrictSchemaKeywordPaths(schema),
+    `${commandCase.commandId}: unsupported OpenAI strict schema keywords`,
+  ).toStrictEqual([]);
 
   for (const key of commandCase.expectedResultKeys) {
     const propertySchema = requireRecord(
@@ -2199,10 +2300,47 @@ function hasMeaningfulJsonSchemaType(schema: Record<string, unknown>): boolean {
     "const",
     "anyOf",
     "oneOf",
-    "allOf",
     "items",
     "properties",
   ].some((key) => Object.prototype.hasOwnProperty.call(schema, key));
+}
+
+function collectUnsupportedOpenAiStrictSchemaKeywordPaths(
+  input: unknown,
+  currentPath = "$",
+): string[] {
+  if (Array.isArray(input)) {
+    return input.flatMap((item, index) =>
+      collectUnsupportedOpenAiStrictSchemaKeywordPaths(
+        item,
+        `${currentPath}[${index}]`,
+      ),
+    );
+  }
+
+  if (typeof input !== "object" || input === null) {
+    return [];
+  }
+
+  const paths: string[] = [];
+
+  for (const [key, value] of Object.entries(input)) {
+    const pathForKey = `${currentPath}.${key}`;
+
+    if (
+      unsupportedOpenAiStrictSchemaKeywords.includes(
+        key as (typeof unsupportedOpenAiStrictSchemaKeywords)[number],
+      )
+    ) {
+      paths.push(pathForKey);
+    }
+
+    paths.push(
+      ...collectUnsupportedOpenAiStrictSchemaKeywordPaths(value, pathForKey),
+    );
+  }
+
+  return paths;
 }
 
 function expectAdvisoryCommandResult(
@@ -2335,6 +2473,17 @@ function requireRecord(input: unknown, label: string): Record<string, unknown> {
   }
 
   return input as Record<string, unknown>;
+}
+
+function expectNoForbiddenProviderOverrideExports(
+  exportNames: readonly string[],
+  label: string,
+): void {
+  for (const exportName of forbiddenProviderOverrideExportNames) {
+    expect.soft(exportNames, `${label}: ${exportName}`).not.toContain(
+      exportName,
+    );
+  }
 }
 
 function escapeRegExp(value: string): string {
