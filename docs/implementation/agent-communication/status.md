@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:23 CST.
+Last updated: 2026-05-25 15:25 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:23 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 review wave completed; P1 findings are being recorded before review-fix tests.
+- Current phase: TASK-031 review-fix tests delegated; waiting for `test_writer`.
 
 ## Active Agents
 
-- No active agents. Parent is recording review findings before review-fix test handoff.
+- Tesla the 2nd (`test_writer`) is adding focused red review-fix tests for TASK-031 P1 findings.
 
 ## Current TASK-031 State
 
@@ -87,7 +87,10 @@ Last updated: 2026-05-25 15:23 CST.
   - Structured Output schemas should use meaningful JSON Schema property types, not empty property schemas.
   - Output validation should reject nested hostile strings, secret/provider-shaped keys, and provider-output accessors without executing them.
   - Forbidden secret/provider override fields should be tested across all public AI commands.
-- Next action: commit review findings record, then delegate review-fix tests to `test_writer`.
+- Review-fix tests delegated:
+  - Tesla the 2nd (`test_writer`) should add focused red tests for production test-hook hardening, post-validation payload snapshotting, Responses-compatible provider input, raw Responses parsing/refusal/error handling, meaningful Structured Output schemas, nested hostile/secret provider JSON rejection, provider-output accessor non-execution, and forbidden secret/provider fields across all nine commands.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Tesla the 2nd, validate expected red tests and static guards, then commit review-fix tests.
 
 ## Current TASK-030 State
 

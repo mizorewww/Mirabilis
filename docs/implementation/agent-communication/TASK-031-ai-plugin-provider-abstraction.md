@@ -297,3 +297,20 @@
 ## Current Next Action
 
 - Commit review findings record, then delegate review-fix tests to `test_writer`.
+
+## Review-Fix Test Handoff
+
+- Tesla the 2nd (`test_writer`) started at 2026-05-25 15:25 CST.
+- Scope: tests only in `src/test/ai-plugin-provider-abstraction.test.tsx` unless an additional test-only helper file is clearly necessary.
+- Required P1 coverage:
+  - production public AI exports do not expose provider/settings override functions, and test-support does not contain operation-changing getter behavior;
+  - async provider sees sanitized snapshots even if the caller mutates the original command payload after `execute()` starts;
+  - provider request `input` is Responses-compatible string or message/item-list shape, not an opaque object envelope;
+  - direct `createOpenAIProvider` mocked-transport tests cover unavailable transport, thrown transport error, raw success, refusal, incomplete/error response, and invalid raw response shape;
+  - Structured Output schemas contain meaningful property type definitions for required keys, not `{}`;
+  - nested provider JSON rejects hostile strings, unsafe URLs, raw SQL, prompt-injection text, and secret/provider-shaped keys;
+  - provider output accessors are not executed at top-level, nested object fields, or array elements;
+  - forbidden secret/provider override fields are rejected across all nine public AI commands before provider execution.
+- Optional if cheap: filter `neq` / `exists` parity, Tag Plugin slug grammar, loading-state view coverage, and production-source secret scan.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Tesla the 2nd, validate the expected red signal, and commit review-fix tests separately.
