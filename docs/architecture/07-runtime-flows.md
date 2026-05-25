@@ -174,13 +174,18 @@ HabitPlugin appends namespace habit/type checked or unchecked events with payloa
 HabitPlugin registers Habits and Today Habits filters
 HeatmapPlugin registers heatmap.calendar and consumes caller-provided kind heatmap.date-series DTOs
 
+TASK-028 当前:
+StatsPlugin registers stats.run-aggregation and inert algorithm descriptors for stats.sum-time-by-tag, stats.sum-time-by-page, stats.estimate-vs-actual, stats.habit-completion-rate, stats.task-switch-count, and stats.unnoted-sessions-count
+StatsPlugin consumes caller-provided normalized DTO inputs from public plugin outputs/events/metadata projections
+ChartPlugin registers chart.bar, chart.line, and chart.pie over chart.category-series, chart.time-series, and chart.comparison-series DTOs
+
 后续：
 编辑器保存后自动扫描 task blocks
 全局 saved-filter navigation / app-shell filter route
 Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
-Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native/schema surfaces
+Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, ML integration, Recently Worked saved filters, manual segment editing, calendar drag/drop, and native/schema surfaces
 ```
 
 ### 18.2 用户点击任务文字
@@ -332,7 +337,7 @@ timer.page-timeline.segments rendered on page.timeline
 → Timeline refreshes and renders note text inertly
 ```
 
-`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Stats/ML integration, metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Timer-to-Stats feed normalization, ML integration, metadata totals, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
 ### 18.9 Caller opens Calendar day/week
 
@@ -398,9 +403,39 @@ Habit Review
 Habit card/list polish
 habit.target / habit.streak
 skipped / weekly / monthly recurrence
-Calendar/Stats/ML Habit feeds
+automatic Calendar/Stats/ML Habit feeds
 app-shell Heatmap route/navigation
 native/Tauri/package/Rust/schema changes
+```
+
+---
+
+### 18.11 Caller runs Stats aggregation and opens Chart view
+
+TASK-028 current flow:
+
+```text
+Caller/view host prepares normalized Stats input from public plugin outputs/events/metadata
+→ CommandRegistry.execute("stats.run-aggregation", { aggregationId, input })
+→ Stats validates exact plain payload, matching input kind, trusted provenance, bounded inert arrays, finite numeric magnitudes, and bounded labels/ids
+→ Stats returns a generic Chart DTO
+→ Caller resolves ViewRegistry id chart.bar, chart.line, or chart.pie
+→ Chart validates the generic DTO as exact inert plain data
+→ Chart renders accessible table/list/status text
+```
+
+Stats does not query Timer/Habit/Task/Tag internals or private stores. Chart does not query Stats internals; it only renders supplied `chart.category-series`, `chart.time-series`, or `chart.comparison-series` DTOs. Both plugins avoid HTML/Markdown execution sinks.
+
+Deferred after TASK-028:
+
+```text
+Stats dashboard and insight views
+Stats saved filters
+persistent stats indexes
+production charting libraries
+ML/AI insight generation
+broad cross-plugin query/read facade
+app-shell Stats/Chart routes
 ```
 
 ---
