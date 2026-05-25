@@ -6,6 +6,7 @@ import {
   type PublicRuntime,
   type RuntimeSource,
 } from "./runtime-context";
+import { RuntimeSourceContext } from "./runtime-source-context";
 
 export type RuntimeInitializer<Runtime extends RuntimeSource = AppRuntime> =
   () => Promise<Runtime>;
@@ -37,9 +38,11 @@ export function RuntimeProvider<Runtime extends RuntimeSource = AppRuntime>({
 }: RuntimeProviderProps<Runtime>) {
   if (runtime !== undefined) {
     return (
-      <RuntimeContext.Provider value={createPublicRuntime(runtime)}>
-        {children}
-      </RuntimeContext.Provider>
+      <RuntimeSourceContext.Provider value={runtime}>
+        <RuntimeContext.Provider value={createPublicRuntime(runtime)}>
+          {children}
+        </RuntimeContext.Provider>
+      </RuntimeSourceContext.Provider>
     );
   }
 
@@ -119,9 +122,11 @@ function RuntimeInitializationBoundary<Runtime extends RuntimeSource = AppRuntim
   }
 
   return (
-    <RuntimeContext.Provider value={createPublicRuntime(state.runtime)}>
-      {children}
-    </RuntimeContext.Provider>
+    <RuntimeSourceContext.Provider value={state.runtime}>
+      <RuntimeContext.Provider value={createPublicRuntime(state.runtime)}>
+        {children}
+      </RuntimeContext.Provider>
+    </RuntimeSourceContext.Provider>
   );
 }
 

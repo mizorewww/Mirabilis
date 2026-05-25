@@ -12,6 +12,7 @@ import {
   type BlockNode,
   type StructuredMarkdownDocument,
 } from "../../../core";
+import { useMarkdownWorkspaceBridge } from "../../../shell/hosts/MarkdownWorkspaceBridgeContext";
 import type { MarkdownInsertTextResult } from "../commands/insert-text";
 import { BaseMarkdownToolbar } from "./BaseMarkdownToolbar";
 
@@ -53,9 +54,21 @@ type LoadedMarkdownPageEditorProps = MarkdownPageEditorBaseProps & {
   pageFacade: MarkdownPageSource;
 };
 
+type HostedMarkdownPageEditorProps = {
+  data: {
+    kind: "markdown-page";
+    pageId?: string;
+    id?: string;
+    page?: {
+      id?: string;
+    };
+  };
+};
+
 export type MarkdownPageEditorProps =
   | DirectMarkdownPageEditorProps
-  | LoadedMarkdownPageEditorProps;
+  | LoadedMarkdownPageEditorProps
+  | HostedMarkdownPageEditorProps;
 
 type EditorState = {
   markdown: string;
@@ -63,6 +76,7 @@ type EditorState = {
   loadedPageId?: string;
   loading: boolean;
   saving: boolean;
+  saveStatus: "idle" | "saved";
 };
 
 type EditorAction =
@@ -105,6 +119,7 @@ const taskLinePattern =
 const fenceLinePattern = /^\s{0,3}(?<fence>`{3,}|~{3,})/u;
 
 export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
+  const bridge = useMarkdownWorkspaceBridge();
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextCaretRef = useRef<MarkdownInsertTextResult | null>(null);
   const contentVersionRef = useRef(0);
@@ -112,7 +127,10 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const loadGenerationRef = useRef(0);
   const pendingToggleKeysRef = useRef<Set<string>>(new Set());
   const pageId = readPageId(props);
-  const pageFacade = readPageFacade(props);
+  const pageFacade = readPageFacade(
+    props,
+    bridge?.pages as MarkdownPageSource | undefined,
+  );
   const initialMarkdown = readInitialMarkdown(props);
   const initialBody = readStructuredBody(props);
   const directPageSignatureRef = useRef(
@@ -123,8 +141,8 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   const directPageBodyRef = useRef(
     pageFacade === undefined ? initialBody : undefined,
   );
-  const commands = props.commands;
-  const extensionSource = readExtensionSource(props);
+  const commands = readCommandBus(props, bridge?.commandBus);
+  const extensionSource = readExtensionSource(props, bridge?.markdownRuntime);
   const [state, dispatch] = useReducer(
     editorStateReducer,
     undefined,
@@ -253,13 +271,19 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     const insertVersion = contentVersionRef.current;
     const selectionStart = textarea?.selectionStart ?? insertMarkdown.length;
     const selectionEnd = textarea?.selectionEnd ?? selectionStart;
-    const output = await commands.execute(insertCommandId, {
-      pageId: insertPageId,
-      markdown: insertMarkdown,
-      text,
-      selectionStart,
-      selectionEnd,
-    });
+    let output: unknown;
+
+    try {
+      output = await commands.execute(insertCommandId, {
+        pageId: insertPageId,
+        markdown: insertMarkdown,
+        text,
+        selectionStart,
+        selectionEnd,
+      });
+    } catch {
+      return;
+    }
 
     if (
       latestPageIdRef.current !== insertPageId ||
@@ -309,6 +333,8 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       applySavedMarkdown =
         latestPageIdRef.current === savePageId &&
         contentVersionRef.current === saveVersion;
+    } catch {
+      applySavedMarkdown = false;
     } finally {
       dispatch({
         type: "save-finished",
@@ -331,10 +357,16 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
   async function openStructuredTaskPage(sourceBlockId: string) {
     const openPageId = pageId;
     const openVersion = contentVersionRef.current;
-    const output = await commands.execute(openTaskPageCommandId, {
-      sourcePageId: openPageId,
-      sourceBlockId,
-    });
+    let output: unknown;
+
+    try {
+      output = await commands.execute(openTaskPageCommandId, {
+        sourcePageId: openPageId,
+        sourceBlockId,
+      });
+    } catch {
+      return;
+    }
 
     if (
       latestPageIdRef.current !== openPageId ||
@@ -343,9 +375,15 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       return;
     }
 
-    const openedPageId = readOpenedPageId(output);
+    let openedPageId: string;
 
-    props.onOpenPage?.(openedPageId);
+    try {
+      openedPageId = readOpenedPageId(output);
+    } catch {
+      return;
+    }
+
+    readOpenPageHandler(props, bridge?.openPage)?.(openedPageId);
   }
 
   async function toggleStructuredTaskStatus(task: StructuredTask) {
@@ -370,10 +408,16 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     const toggleBody = currentStructuredBody;
 
     try {
-      const output = await commands.execute(toggleTaskStatusCommandId, {
-        sourcePageId: togglePageId,
-        sourceBlockId: task.sourceBlockId,
-      });
+      let output: unknown;
+
+      try {
+        output = await commands.execute(toggleTaskStatusCommandId, {
+          sourcePageId: togglePageId,
+          sourceBlockId: task.sourceBlockId,
+        });
+      } catch {
+        return;
+      }
 
       if (
         latestPageIdRef.current !== togglePageId ||
@@ -382,7 +426,16 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
         return;
       }
 
-      const result = readToggleTaskStatusResult(output);
+      let result: {
+        pageId: string;
+        status: "todo" | "done";
+      };
+
+      try {
+        result = readToggleTaskStatusResult(output);
+      } catch {
+        return;
+      }
       const nextBody = createStructuredBodyWithTaskStatus(
         toggleBody,
         task.index,
@@ -437,6 +490,9 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
       >
         Save
       </button>
+      {state.saving || state.saveStatus === "saved" ? (
+        <span role="status">{state.saving ? "Saving" : "Saved"}</span>
+      ) : null}
     </section>
   );
 }
@@ -505,13 +561,26 @@ function TaskTitleButtons({
 }
 
 function readPageId(props: MarkdownPageEditorProps): string {
-  return "pageId" in props ? props.pageId : props.page.id;
+  if ("pageId" in props) {
+    return props.pageId;
+  }
+
+  if ("page" in props) {
+    return props.page.id;
+  }
+
+  return props.data.pageId ?? props.data.id ?? props.data.page?.id ?? "";
 }
 
 function readPageFacade(
   props: MarkdownPageEditorProps,
+  bridgePageFacade: MarkdownPageSource | undefined,
 ): MarkdownPageSource | undefined {
-  return "pageFacade" in props ? props.pageFacade : undefined;
+  if ("pageFacade" in props) {
+    return props.pageFacade;
+  }
+
+  return "data" in props ? bridgePageFacade : undefined;
 }
 
 function readInitialMarkdown(props: MarkdownPageEditorProps): string {
@@ -524,10 +593,45 @@ function readStructuredBody(
   return "page" in props ? props.page.body : undefined;
 }
 
+function readCommandBus(
+  props: MarkdownPageEditorProps,
+  bridgeCommandBus: MarkdownCommandBus | undefined,
+): MarkdownCommandBus {
+  if ("commands" in props) {
+    return props.commands;
+  }
+
+  if (bridgeCommandBus !== undefined) {
+    return bridgeCommandBus;
+  }
+
+  return {
+    async execute() {
+      throw new Error("Markdown command is unavailable");
+    },
+  };
+}
+
 function readExtensionSource(
   props: MarkdownPageEditorProps,
+  bridgeRuntime: MarkdownExtensionSource | undefined,
 ): MarkdownExtensionSource | undefined {
-  return props.markdownRuntime;
+  if ("markdownRuntime" in props) {
+    return props.markdownRuntime;
+  }
+
+  return "data" in props ? bridgeRuntime : undefined;
+}
+
+function readOpenPageHandler(
+  props: MarkdownPageEditorProps,
+  bridgeOpenPage: ((pageId: string) => void) | undefined,
+): ((pageId: string) => void) | undefined {
+  if ("onOpenPage" in props) {
+    return props.onOpenPage;
+  }
+
+  return "data" in props ? bridgeOpenPage : undefined;
 }
 
 function readCurrentStructuredBody(
@@ -553,6 +657,7 @@ function createInitialEditorState(input: {
     loadedPageId: input.loadsFromPageSource ? undefined : input.pageId,
     loading: input.loadsFromPageSource,
     saving: false,
+    saveStatus: "idle",
   };
 }
 
@@ -593,12 +698,14 @@ function editorStateReducer(
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
+        saveStatus: "idle",
       };
     case "load-started":
       return {
         ...state,
         loading: true,
         saving: false,
+        saveStatus: "idle",
       };
     case "load-succeeded":
       return {
@@ -607,23 +714,27 @@ function editorStateReducer(
         loadedPageId: action.pageId,
         loading: false,
         saving: false,
+        saveStatus: "idle",
       };
     case "edit":
       return {
         ...state,
         markdown: action.markdown,
         ...(action.body === undefined ? {} : { body: action.body }),
+        saveStatus: "idle",
       };
     case "save-started":
       return {
         ...state,
         saving: true,
+        saveStatus: "idle",
       };
     case "save-finished":
       if (!action.applySavedMarkdown) {
         return {
           ...state,
           saving: false,
+          saveStatus: "idle",
         };
       }
 
@@ -633,6 +744,7 @@ function editorStateReducer(
         body: action.body,
         loadedPageId: action.pageId,
         saving: false,
+        saveStatus: "saved",
       };
   }
 }

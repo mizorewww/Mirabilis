@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import HomeIcon from "@mui/icons-material/Home";
@@ -28,12 +28,25 @@ import Typography from "@mui/material/Typography";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import { createAppRuntime } from "./bootstrap";
+import type { AppRuntime } from "./bootstrap";
+import {
+  exportStructuredDocumentToMarkdown,
+  importMarkdownToStructuredDocument,
+  type MarkdownPage,
+  type StructuredMarkdownDocument,
+} from "./core";
 import {
   RuntimeProvider,
   useRuntime,
   type RuntimeInitializer,
   type RuntimeSource,
 } from "./providers";
+import { useRuntimeSource } from "./providers/runtime-source-context";
+import {
+  MarkdownWorkspaceBridgeProvider,
+  ViewHost,
+  type MarkdownWorkspaceBridgeValue,
+} from "./shell/hosts";
 import "./App.css";
 
 type AppProps = {
@@ -63,6 +76,25 @@ type ShellTool = {
   label: string;
   icon: typeof KeyboardCommandKeyIcon;
 };
+
+type MarkdownWorkspaceDocument = {
+  id: string;
+  title: string;
+  markdown: string;
+  body?: StructuredMarkdownDocument;
+};
+
+type CurrentPageState = {
+  pageId: string;
+  generation: number;
+};
+
+const sessionHomeTitle = "Home";
+const markdownPageViewId = "markdown.page-editor";
+const pageEditorViewType = "page.editor";
+const markdownInsertCommandId = "markdown.insert-text";
+const openTaskPageCommandId = "task.open-task-page";
+const toggleTaskStatusCommandId = "task.toggle-status";
 
 const mirabilisTheme = createTheme({
   palette: {
@@ -127,13 +159,8 @@ const workspaceRoutes: readonly WorkspaceRoute[] = [
     id: "home",
     label: "Home",
     eyebrow: "Workspace",
-    summary:
-      "Markdown workspace placeholder for the current page, metadata, and timeline regions.",
-    placeholders: [
-      "Page metadata slot placeholder",
-      "Markdown editor view placeholder",
-      "Page timeline slot placeholder",
-    ],
+    summary: "Session Home page",
+    placeholders: [],
     icon: HomeIcon,
   },
   {
@@ -222,14 +249,34 @@ function App({ initializeRuntime = createAppRuntime }: AppProps) {
 
 function MirabilisShell() {
   const runtime = useRuntime();
+  const runtimeSource = useRuntimeSource<AppRuntime>();
+  const homePageId = useSessionHomePageId(runtimeSource);
   const [selectedRouteId, setSelectedRouteId] =
     useState<WorkspaceRouteId>("home");
+  const [selectedPageId, setSelectedPageId] = useState(homePageId);
+  const [currentPageState] = useState<CurrentPageState>(() => ({
+    pageId: homePageId,
+    generation: 0,
+  }));
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeTool, setActiveTool] = useState<ShellToolId>("command");
   const selectedRoute =
     workspaceRoutes.find((route) => route.id === selectedRouteId) ??
     workspaceRoutes[0];
   const workspaceTitleId = `workspace-title-${selectedRoute.id}`;
+  const bridge = useMemo(
+    () =>
+      createMarkdownWorkspaceBridge({
+        currentPageState,
+        runtime: runtimeSource,
+        openPage(pageId) {
+          setCurrentPage(currentPageState, pageId);
+          setSelectedRouteId("home");
+          setSelectedPageId(pageId);
+        },
+      }),
+    [currentPageState, runtimeSource],
+  );
 
   return (
     <Box className="app-shell">
@@ -309,7 +356,14 @@ function MirabilisShell() {
                     <ListItemButton
                       aria-current={isSelected ? "page" : undefined}
                       key={route.id}
-                      onClick={() => setSelectedRouteId(route.id)}
+                      onClick={() => {
+                        setSelectedRouteId(route.id);
+
+                        if (route.id === "home") {
+                          setCurrentPage(currentPageState, homePageId);
+                          setSelectedPageId(homePageId);
+                        }
+                      }}
                       selected={isSelected}
                     >
                       <ListItemIcon>
@@ -349,18 +403,26 @@ function MirabilisShell() {
             </Typography>
           </Stack>
 
-          <Stack
-            aria-label={`${selectedRoute.label} route placeholders`}
-            className="app-shell__workspace-placeholders"
-            component="section"
-            spacing={1}
-          >
-            {selectedRoute.placeholders.map((placeholder) => (
-              <Box className="app-shell__placeholder-row" key={placeholder}>
-                <Typography variant="body2">{placeholder}</Typography>
-              </Box>
-            ))}
-          </Stack>
+          {selectedRoute.id === "home" ? (
+            <HomeWorkspaceEditor
+              bridge={bridge}
+              pageId={selectedPageId}
+              runtime={runtimeSource}
+            />
+          ) : (
+            <Stack
+              aria-label={`${selectedRoute.label} route placeholders`}
+              className="app-shell__workspace-placeholders"
+              component="section"
+              spacing={1}
+            >
+              {selectedRoute.placeholders.map((placeholder) => (
+                <Box className="app-shell__placeholder-row" key={placeholder}>
+                  <Typography variant="body2">{placeholder}</Typography>
+                </Box>
+              ))}
+            </Stack>
+          )}
 
           <Box className="app-shell__tool-status" role="status">
             <Typography variant="body2">
@@ -371,6 +433,283 @@ function MirabilisShell() {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+function HomeWorkspaceEditor({
+  bridge,
+  pageId,
+  runtime,
+}: {
+  bridge: MarkdownWorkspaceBridgeValue;
+  pageId: string;
+  runtime: AppRuntime;
+}) {
+  return (
+    <Box className="app-shell__workspace-editor">
+      <MarkdownWorkspaceBridgeProvider bridge={bridge}>
+        <ViewHost
+          acceptedData={{
+            kind: "markdown-page",
+            pageId,
+          }}
+          isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+          registry={runtime.registries.views}
+          viewId={markdownPageViewId}
+          viewType={pageEditorViewType}
+        />
+      </MarkdownWorkspaceBridgeProvider>
+    </Box>
+  );
+}
+
+function useSessionHomePageId(runtime: AppRuntime): string {
+  const [homePageId] = useState(() => selectOrCreateSessionHomePage(runtime).id);
+
+  return homePageId;
+}
+
+function selectOrCreateSessionHomePage(runtime: AppRuntime): MarkdownPage {
+  const [existingHomePage] = runtime.pages
+    .list()
+    .filter((page) => page.title === sessionHomeTitle);
+
+  if (existingHomePage !== undefined) {
+    return existingHomePage;
+  }
+
+  return runtime.pages.create({
+    title: sessionHomeTitle,
+    body: createEmptyMarkdownDocument(),
+  });
+}
+
+function createMarkdownWorkspaceBridge({
+  currentPageState,
+  openPage,
+  runtime,
+}: {
+  currentPageState: CurrentPageState;
+  openPage(pageId: string): void;
+  runtime: AppRuntime;
+}): MarkdownWorkspaceBridgeValue {
+  return {
+    pages: {
+      async load(pageId) {
+        return loadWorkspacePage(runtime, pageId);
+      },
+      async save(input) {
+        const generation = ensureCurrentPage(currentPageState, input.pageId);
+        const savedPage = saveWorkspacePage(runtime, input);
+
+        ensureCurrentPage(currentPageState, input.pageId, generation);
+
+        return savedPage;
+      },
+    },
+    commandBus: {
+      async execute(commandId, input) {
+        if (commandId === markdownInsertCommandId) {
+          const insertInput = readInsertInput(input);
+          const generation = ensureCurrentPage(
+            currentPageState,
+            insertInput.pageId,
+          );
+          const output = await runtime.commands.execute(commandId, insertInput);
+
+          ensureCurrentPage(currentPageState, insertInput.pageId, generation);
+
+          return output;
+        }
+
+        if (commandId === openTaskPageCommandId) {
+          const openInput = readSourceBlockInput(input);
+          const generation = ensureCurrentPage(
+            currentPageState,
+            openInput.sourcePageId,
+          );
+          const output = await runtime.commands.execute(commandId, openInput);
+
+          ensureCurrentPage(currentPageState, openInput.sourcePageId, generation);
+
+          return output;
+        }
+
+        if (commandId === toggleTaskStatusCommandId) {
+          const toggleInput = readSourceBlockInput(input);
+          const generation = ensureCurrentPage(
+            currentPageState,
+            toggleInput.sourcePageId,
+          );
+          const output = await runtime.commands.execute(commandId, toggleInput);
+
+          ensureCurrentPage(
+            currentPageState,
+            toggleInput.sourcePageId,
+            generation,
+          );
+
+          return output;
+        }
+
+        throw new Error("Command unavailable");
+      },
+    },
+    markdownRuntime: {
+      collectEditorExtensions() {
+        return runtime.markdown.collectEditorExtensions();
+      },
+    },
+    openPage(pageId) {
+      if (pageId.trim().length > 0) {
+        openPage(pageId);
+      }
+    },
+  };
+}
+
+function loadWorkspacePage(
+  runtime: AppRuntime,
+  pageId: string,
+): MarkdownWorkspaceDocument {
+  const page = runtime.pages.get(pageId);
+
+  return {
+    id: page.id,
+    title: page.title,
+    markdown: exportStructuredDocumentToMarkdown(page.body),
+    body: page.body,
+  };
+}
+
+function saveWorkspacePage(
+  runtime: AppRuntime,
+  input: {
+    pageId: string;
+    markdown: string;
+  },
+): MarkdownWorkspaceDocument {
+  const current = runtime.pages.get(input.pageId);
+  const body = importMarkdownToStructuredDocument(input.markdown, {
+    previousDocument: current.body,
+  });
+  const saved = runtime.pages.update(input.pageId, { body });
+
+  return {
+    id: saved.id,
+    title: saved.title,
+    markdown: exportStructuredDocumentToMarkdown(saved.body),
+    body: saved.body,
+  };
+}
+
+function setCurrentPage(currentPageState: CurrentPageState, pageId: string): void {
+  if (currentPageState.pageId !== pageId) {
+    currentPageState.pageId = pageId;
+    currentPageState.generation += 1;
+  }
+}
+
+function ensureCurrentPage(
+  currentPageState: CurrentPageState,
+  pageId: string,
+  generation = currentPageState.generation,
+): number {
+  if (
+    currentPageState.pageId !== pageId ||
+    currentPageState.generation !== generation
+  ) {
+    throw new Error("Page unavailable");
+  }
+
+  return generation;
+}
+
+function readInsertInput(input: unknown): {
+  pageId: string;
+  markdown: string;
+  text: string;
+  selectionStart: number;
+  selectionEnd?: number;
+} {
+  if (!isRecord(input)) {
+    throw new Error("Command unavailable");
+  }
+
+  return {
+    pageId: readNonemptyString(input.pageId),
+    markdown: readString(input.markdown),
+    text: readNonemptyString(input.text),
+    selectionStart: readNumber(input.selectionStart),
+    ...(input.selectionEnd === undefined
+      ? {}
+      : { selectionEnd: readNumber(input.selectionEnd) }),
+  };
+}
+
+function readSourceBlockInput(input: unknown): {
+  sourcePageId: string;
+  sourceBlockId: string;
+} {
+  if (!isRecord(input)) {
+    throw new Error("Command unavailable");
+  }
+
+  return {
+    sourcePageId: readNonemptyString(input.sourcePageId),
+    sourceBlockId: readNonemptyString(input.sourceBlockId),
+  };
+}
+
+function readString(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("Command unavailable");
+  }
+
+  return value;
+}
+
+function readNonemptyString(value: unknown): string {
+  const text = readString(value);
+
+  if (text.length === 0) {
+    throw new Error("Command unavailable");
+  }
+
+  return text;
+}
+
+function readNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error("Command unavailable");
+  }
+
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function createEmptyMarkdownDocument(): StructuredMarkdownDocument {
+  return {
+    type: "doc",
+    content: [],
+  };
+}
+
+function isPluginActive(runtime: AppRuntime, pluginId: string): boolean {
+  const plugins = runtime.pluginHost.listPlugins?.();
+
+  if (plugins === undefined) {
+    return true;
+  }
+
+  return plugins.some(
+    (plugin) =>
+      plugin.id === pluginId &&
+      plugin.enabled === true &&
+      plugin.status === "active",
   );
 }
 
