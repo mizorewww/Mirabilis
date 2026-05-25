@@ -192,3 +192,20 @@ type ActiveRoute =
   - define TASK-040 executable command payload policy before tests;
   - define TASK-042 first Reports aggregation before tests;
   - define TASK-045 matchMedia/responsive testing strategy before tests.
+
+## Final Re-Review Findings And Regression Tests
+
+- Re-review agents after `d58c236` found no deprecated API blockers and no correctness P0/P1, but found remaining P1 gaps:
+  - Helmholtz the 2nd (`test_quality_reviewer`) found that filter routes hid the Recent pages section even though TASK-038 acceptance requires Drawer recent pages to remain available.
+  - Franklin (`security_reviewer`) found incomplete fail-closed behavior for inactive/missing metadata owner namespaces and for runtimes where plugin ownership data is unavailable.
+- P2 cleanup accepted for the same final fix round:
+  - keep saved filter accessible names equal to the visible saved filter names;
+  - align the built-in task page-list view contract with hardened route-token DTOs instead of raw `MarkdownPage[]`.
+- Carson the 2nd (`test_writer`) added failing final regression tests in commit `7454c9c`.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` failed as expected with 17 tests, 3 failed, and 14 passed.
+  - The failures matched Recent pages hidden on a filter route, inactive-owner legacy metadata leaking into a saved-filter result, and missing plugin ownership data failing open.
+  - `bun run typecheck` and `git diff --check` passed.
+- Parent decision:
+  - accept `7454c9c` as the final red baseline;
+  - delegate production fixes to Mendel the 2nd (`implementer`) with write scope limited to `src/App.tsx` and, if needed for DTO contract cleanup, `src/plugins/task/components/TaskFilterViews.tsx`.

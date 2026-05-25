@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 06:29 CST - TASK-038 final review regressions committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Re-review: Helmholtz the 2nd found P1 missing Recent pages coverage/behavior on filter routes; Franklin found P1 fail-closed gaps for inactive/missing metadata owners and missing plugin ownership data; Harvey and Ptolemy the 2nd found no P0/P1; Hume the 2nd found docs-sync P1s; Carson mapped changed-path hotspots and confirmed no package/native/Tauri/Rust/security surface drift.
+- Test writer: Carson the 2nd added final failing review regression coverage in commit `7454c9c`.
+- Parent red validation: `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` failed as expected with 3 failures for hidden Recent pages on filter routes, inactive-owner legacy metadata leakage, and plugin ownership data fail-open; `bun run typecheck` and `git diff --check` passed.
+- Next action: Mendel the 2nd (`implementer`) is fixing final P1 regressions and accepted P2 cleanup, then the parent will validate, commit, re-review, sync docs, run branch gate, merge to `master`, and continue to TASK-039.
+
 ### 2026-05-26 06:21 CST - TASK-038 review fixes committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
