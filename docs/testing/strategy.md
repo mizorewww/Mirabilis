@@ -106,7 +106,7 @@ TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves t
 - `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
 - `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
 - Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
-- TASK-036 deliberately defers lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement to TASK-037+.
+- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; lazy/Suspense behavior, non-Home route data, actual product slot placement, and broader command/page adapters remain TASK-038+.
 
 Focused TASK-036 validation:
 
@@ -119,6 +119,32 @@ bun run check:quick
 ```
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-036 is a TypeScript/React shell-host boundary task and adds no package, native, IPC, Rust, permission, capability, schema, or release surface.
+
+## TASK-037 Home Workspace Editor Guidance
+
+TASK-037 coverage lives primarily in `src/test/home-workspace-editor.test.tsx`, with supporting static and shell assertions in `src/test/app-shell-boundary.test.ts` and `src/test/mui-shell-frame.test.tsx`. It proves the first real Home workspace without adding non-Home routes, dialogs, native behavior, package changes, or release surface.
+
+- Home workspace tests should use React Testing Library plus `userEvent.setup()` for observable typing and clicking: editing the Markdown textbox, toolbar snippet buttons, Save, task-title buttons, checkbox toggles, Home navigation, and non-Home route navigation.
+- The ready first screen should be the editable Home Markdown workspace, not startup copy, a landing page, a hero, or the old Home placeholder. MUI shell assertions should continue proving non-Home routes remain placeholders and that deprecated MUI APIs are not introduced.
+- The Home editor must render registered `markdown.page-editor` / `page.editor` through `ViewHost`. Tests may replace the registered view to prove shell composition uses the registry path rather than directly importing `MarkdownPageEditor`.
+- Hosted editor props must remain narrow and frozen. Boundary tests should reject raw runtime, Core stores, registries, Plugin Host, NativeBridge, filesystem/path, raw command registry, raw page facade, and function leaks into plugin-rendered props.
+- App Shell boundary regressions should keep rejecting direct Markdown editor imports, plugin-private production imports, plugin-to-shell production imports, raw runtime source contexts, raw Tauri/native imports, and package/native/Tauri/Rust/IPC/capability/permission/release drift.
+- The provider-scoped Markdown workspace bridge exposes only current-page bounded `pages.load/save`, exact command allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, inert `collectEditorExtensions()`, and guarded `openPage(pageId)`.
+- Foreign hosted `pages.load` / `pages.save` attempts must fail closed for non-current pages and must not reveal foreign page titles or bodies. Hosted `openPage(foreignPageId)` must not self-authorize a later foreign load.
+- Command-returned page opens are one-shot and source-page/generation bound. Regression coverage should keep the delayed hosted `openPage(returnedPageId)` case after leaving Home on Today: Today stays active, Home does not remount, and the returned page body stays hidden.
+- Stale async work should stay covered for toolbar insert results, task-title open results, checkbox-toggle results, current page load/save, and delayed command-returned open behavior after page switches or content generation changes.
+- The no-drift guard should continue proving TASK-037 does not change package/lockfile, Cargo, Tauri config, capabilities, generated permissions, Rust command registration, IPC command surface, native filesystem/path behavior, or release packaging.
+
+Focused TASK-037 validation:
+
+```bash
+bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-037 is a TypeScript/React app-shell mounting task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, or release surface.
 
 ## Focused Test Guidance
 

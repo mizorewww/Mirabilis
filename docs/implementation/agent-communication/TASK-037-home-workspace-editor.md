@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Ask `implementer` to make the focused Home workspace editor tests pass without expanding the TASK-037 scope or weakening TASK-036 host boundaries.
+- Complete formal docs sync for the accepted TASK-037 implementation and review-fix loops, then hand back for branch gate / closeout. TASK-037 remains in progress on the branch until the parent runs the branch gate and explicitly marks progress complete.
 
 ## Pre-Test Guidance Outcomes
 
@@ -191,3 +191,23 @@
 - Parent decision:
   - accept `fc3d11a`;
   - run security/correctness re-review again before branch-level gate.
+
+## Third Review Regression, Fix, And Final Re-Review Outcome
+
+- Third review follow-up:
+  - Gibbs (`test_writer`) added a delayed command-returned open regression in commit `6a4063f`.
+  - Coverage added: a hosted editor can receive a `task.open-task-page` command result while still on Home, delay the later `bridge.openPage(returnedPageId)` call, navigate away to Today, and then attempt the delayed open. The app must remain on Today, must not remount the Home editor, and must not reveal the command-returned task page body.
+- Review fix:
+  - Huygens (`implementer`) fixed the regression in commit `08dd1d5`.
+  - Fixes: command-returned page authorization is stored as a one-shot page ID authorization bound to the source `pageId` and current page generation. `bridge.openPage(pageId)` only navigates when the authorization still matches the active source page and generation; delayed calls after leaving Home are ignored.
+- Final re-review:
+  - Jason (`security_reviewer`) final re-review found no P0/P1/P2 security findings after `08dd1d5`.
+  - Hooke (`reviewer`) final correctness re-review found no P0/P1/P2 findings after `08dd1d5`.
+  - Raman (`doc_writer`) found P1 docs-sync gaps, addressed by this documentation pass.
+- Current validation state:
+  - Latest recorded implementation validation before the third regression/fix loop remains the focused aggregate frontend suite, `bun run typecheck`, `bun run lint`, and `git diff --check` from the second review-fix round.
+  - This docs-sync pass is docs-only; `git diff --check` passed. No frontend, Rust, package, native, Tauri, IPC, capability, permission, or release validation suite was required for the docs-only patch.
+- Parent decision:
+  - accept Gibbs's regression and Huygens's fix as the final TASK-037 code/security/correctness state;
+  - update formal docs and progress/status only;
+  - leave TASK-037 `[~]` until branch gate / parent closeout marks it complete.

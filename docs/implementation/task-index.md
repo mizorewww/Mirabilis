@@ -1023,7 +1023,8 @@ Acceptance criteria:
 Delivered/deferred note for the TASK-036 branch:
 
 - Delivered: generic app-shell `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and host exports for registry-owned views and slots; exact-id and unambiguous-type view resolution; explicit accepted-data checks; safe loading, empty, missing, wrong-data, unavailable, thrown, and error states; slot registry ordering and per-contribution isolation; controlled props/data cloning; descriptor-backed `host.action` wrappers for user interactions; prototype-key fail-closed behavior; native/secret alias redaction; recursion budgets; proxy/trap fail-closed behavior; and static guards for no package/native/Tauri/Rust/capability/release drift.
-- Deferred: Home editor route mounting, real route data projections, real command adapters, real `pageFacade` adapters, lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, and responsive polish remain TASK-037+.
+- Delivered later by TASK-037: Home editor route mounting plus Home-scoped command and page bridge adapters.
+- Deferred: route data projections outside Home, lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, responsive polish, and broader command/page facade adapters remain TASK-038+ or later.
 - Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
 
 Test plan:
@@ -1065,6 +1066,12 @@ Acceptance criteria:
 - Empty page state remains editable.
 - No metadata/timeline/sidebar/search/capture/calendar/report/ML/AI/settings/sync route scope is added beyond shell placeholders.
 - No native/Tauri/Rust/package/capability changes are added.
+
+Delivered/deferred note for the TASK-037 branch:
+
+- Delivered by branch: the ready Home route creates/selects one session Home Markdown Page and renders registered `markdown.page-editor` / `page.editor` through `ViewHost`; hosted editor props stay narrow and do not expose raw runtime/native/store/registry/command/page facade handles; the provider-scoped Markdown workspace bridge exposes only current-page bounded load/save, inert editor extension collection, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, and guarded page-open navigation; typing, toolbar snippets, save, task-title open, checkbox toggle, stale insert/open guards, foreign load/save/openPage rejection, and non-Home placeholder preservation are covered.
+- Security/correctness hardening delivered by branch: no raw runtime render-prop/public provider exposure, no plugin-to-shell production import, hosted `pages.load/save` remain current-page scoped, hosted `openPage` cannot self-authorize foreign pages, and command-returned page opens are one-shot authorizations bound to the source page generation.
+- Deferred: sidebar page/filter navigation, metadata/timer/timeline slot placement, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, `Portal` floating slots, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-038+ or later.
 
 Test plan:
 

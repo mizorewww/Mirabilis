@@ -94,6 +94,17 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 05:12 CST - TASK-037 third review fix and final re-review clear
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Third review regression: Gibbs added delayed command-returned open coverage in commit `6a4063f`. The red regression covered a hosted editor receiving a trusted `task.open-task-page` result, leaving Home for Today before calling `bridge.openPage(returnedPageId)`, and then attempting the delayed open. Expected behavior: Today remains active, the Home editor does not remount, and the returned task page body stays hidden.
+- Review fix: Huygens bound command-open authorization to the source page and current-page generation in commit `08dd1d5`. `bridge.openPage(pageId)` now consumes a command-returned page authorization only while the source page/generation is still current, so delayed opens after leaving Home are ignored.
+- Final re-review: Jason security re-review and Hooke correctness re-review found no remaining P0/P1/P2 findings after `08dd1d5`.
+- Docs-sync status: Raman found P1 documentation gaps. Formal docs/progress/status sync is complete in the working tree and TASK-037 remains `[~]`; do not mark complete until branch gate / parent closeout explicitly records it.
+- Current validation: docs-only `git diff --check` passed. No frontend/Rust/package/native/Tauri/IPC/capability/permission/release suite is required for the docs-only patch.
+- Next action: hand back for branch gate / parent closeout.
+
 ### 2026-05-26 04:53 CST - TASK-037 second security review fixes committed
 
 - Branch: `feat/task-037-home-workspace-editor`.

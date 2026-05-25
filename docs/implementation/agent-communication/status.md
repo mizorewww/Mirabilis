@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 04:53 CST.
+Last updated: 2026-05-26 05:12 CST.
 
 ## Current Task
 
@@ -8,12 +8,14 @@ Last updated: 2026-05-26 04:53 CST.
 - Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 second security review fixes committed; re-review pending.
+- Current phase: TASK-037 code/security/correctness re-review and docs-sync are clear; branch gate / closeout remains pending.
 
 ## Active Agents
 
-- None. TASK-037 guidance, tests, implementation, initial review, and two review-fix rounds completed.
-- Pending: delegate TASK-037 security/correctness re-review, then remaining docs/test-quality/release agents.
+- None. The Raman-requested TASK-037 docs sync is complete in the working tree with docs/progress/status write scope only.
+- No code, test, security, correctness, or docs agents are currently active.
+- Completed final re-review: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 findings after Huygens's `08dd1d5` fix.
+- Pending: hand back for branch gate / parent closeout. TASK-037 is not complete or merged yet.
 
 ## Current TASK-037 State
 
@@ -66,6 +68,16 @@ Last updated: 2026-05-26 04:53 CST.
   - Hubble fixed the regressions in commit `fc3d11a` by removing `RuntimeProvider` render-prop support, narrowing `App` runtime initialization to `AppRuntime`, adding a shell-private `AppRuntimeBoundary`, removing the cast, gating hosted `openPage` to trusted command-returned page IDs, and handling hosted page load failures generically.
   - Parent validation after Hubble passed: 2-file regression tests / 20 tests, 3-file review tests / 56 tests, focused aggregate / 119 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
 - Parent decision: accept `fc3d11a` and run security/correctness re-review again.
+- Third review regression and fix:
+  - Gibbs (`test_writer`) added delayed command-returned open regression coverage in commit `6a4063f`.
+  - The regression proves a hosted editor cannot use an old command-returned `pageId` to call `bridge.openPage(pageId)` after the user has left Home; Today must stay active and the returned page body must remain hidden.
+  - Huygens (`implementer`) fixed the regression in commit `08dd1d5` by binding command-open authorization to the command source page and current-page generation, and by making `bridge.openPage` consume the authorization only while that source page/generation remains current.
+  - Jason (`security_reviewer`) and Hooke (`reviewer`) final re-reviews found no remaining P0/P1/P2 findings.
+  - Raman (`doc_writer`) found P1 docs-sync gaps. This docs-only closeout updated formal docs, progress, and status before branch gate.
+- Current validation:
+  - Existing code validation recorded through the second review-fix round includes focused regression suites, the focused aggregate frontend suite, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+  - This docs-only pass ran `git diff --check`, which passed. No test suite is required unless later parent branch-gate work requests it.
+- Parent decision: keep TASK-037 `[~]` and unmerged until docs sync and branch gate / parent closeout are complete.
 
 ## Current TASK-036 State
 
@@ -134,15 +146,15 @@ Last updated: 2026-05-26 04:53 CST.
 - Final review outcome:
   - Bacon (`reviewer`) found no P0/P1 and one P2: nested `ViewHost.props` prototype-key clone failures are stripped rather than fail closed.
   - Avicenna (`security_reviewer`) found no P0/P1/P2 and confirmed no package/native/Tauri/Rust/security surface drift. Residual risk: future `actions` callers must remain owner-scoped wrappers, not raw command/native handles.
-  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remains a TASK-037+ route/plugin mounting decision.
+  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remained a later route/plugin mounting decision. After TASK-037's Home editor mounting, this is still deferred to TASK-038+.
   - Linnaeus (`test_quality_reviewer`) found no P0/P1 and P2 gaps for SlotHost plugin-unavailable coverage, slot `when` mutation/capture isolation, and brittle static file-split coupling.
   - Erdos (`doc_writer`) found P1 docs-sync gaps in `docs/testing/strategy.md` and the TASK-036 communication doc, plus P2 closeout/status/product/task-index updates.
 - Docs-sync outcome:
   - `docs/testing/strategy.md` now records that `src/test/view-slot-hosts.test.tsx` covers ViewHost/SlotHost observable states, descriptor-backed `host.action` wrappers exercised through user-event, prototype-key fail-closed behavior, native/secret alias redaction, recursion budgets, proxy/trap fail-closed paths, and the no package/native/Tauri/Rust drift static guard.
-  - `docs/testing/strategy.md` also records that lazy/Suspense behavior plus real command and `pageFacade` adapters are deferred to TASK-037+.
+  - `docs/testing/strategy.md` also records that TASK-037 delivered the Home-scoped Markdown workspace bridge, while lazy/Suspense behavior, non-Home route data, actual slot placement, and broader command/page adapters remain TASK-038+.
   - The TASK-036 task communication doc records Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and the remaining P2 decisions.
   - The progress ledger records final branch validation, final reviews, docs-sync completion, and the still-pending P2 test-hardening/disposition.
-  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036 while route/editor mounting, real adapters, lazy/Suspense, and actual slot placement remain TASK-037+.
+  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036, Home editor mounting and Home-scoped adapters are delivered by TASK-037, and lazy/Suspense plus remaining route/slot/dialog surfaces are TASK-038+ deferrals.
 - Final P2 hardening and release readiness:
   - Lagrange (`test_writer`) added coverage for nested `ViewHost.props` prototype-key fail-closed behavior, SlotHost plugin-unavailable skipping with visible siblings, and slot `when` mutation/capture isolation in commit `f2e8ed7`.
   - Goodall (`implementer`) updated `ViewHost` to fail closed for nested controlled-prop prototype-key clone failures in commit `114008d`.
@@ -155,7 +167,7 @@ Last updated: 2026-05-26 04:53 CST.
 
 - No remaining P0/P1 code, security, docs-sync, or release findings after commits `3187b10` and `114008d`.
 - Final P2 test-hardening items were closed by `f2e8ed7` and `114008d`.
-- Deferred P2 items: lazy/Suspense support belongs with TASK-037+ route/plugin mounting, and the static host file-split guard can be revisited during later refactors.
+- Deferred P2 items: lazy/Suspense support belongs with later route/plugin mounting after TASK-037, and the static host file-split guard can be revisited during later refactors.
 
 ## Current TASK-035 State
 
@@ -256,9 +268,9 @@ Last updated: 2026-05-26 04:53 CST.
 - TASK-034 is complete and merged on `master`.
 - TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
-- TASK-037 is in progress on `feat/task-037-home-workspace-editor`: initial docs/code context has been read, and pre-test guidance is pending.
+- TASK-037 is in progress on `feat/task-037-home-workspace-editor`: Home editor mounting, review-fix loops, delayed command-open regression coverage, Huygens's authorization fix, and final Jason/Hooke security/correctness re-review are complete; Raman docs-sync gaps are being closed before branch gate. It is not complete or merged yet.
 - TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: delegate TASK-037 security/correctness re-review.
+- Next action: hand back for branch gate / parent closeout.
 
 ## Historical TASK-033 State
 

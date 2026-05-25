@@ -187,6 +187,10 @@ Provider 从 full runtime 复制 app info，并发布 frozen `{ app: { version, 
 
 TASK-025 的 `MetadataBar` follows this boundary for `page.header.metadata` slot UI. It receives an owner-aware `MetadataBarCommandRegistry` with descriptor lookup, but plugin-rendered slot UI receives only a narrow `execute()` facade. `MetadataBar` dispatches a slot command only when descriptor lookup returns the exact command id and `descriptor.pluginId` matches the contributing plugin; missing or invalid descriptor lookup fails closed. It does not pass full runtime, Core stores, registries, Plugin Host, NativeBridge, DB, filesystem, path, shell, notification, or shortcut handles.
 
+TASK-037 的 Home workspace editor follows the same provider boundary. App Shell renders the registered `markdown.page-editor` view through `ViewHost`, then supplies a provider-scoped Markdown workspace bridge from the trusted providers layer. The bridge is not Plugin API and is not available through `useRuntime()`. It exposes only current-page bounded `pages.load/save`, inert markdown extension collection, exact command allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, plus guarded `openPage(pageId)`.
+
+TASK-037 `openPage(pageId)` is a one-shot shell authorization, not a general navigation facade. A page ID can be opened only when it was returned by trusted `task.open-task-page` command execution for the current source page and the current page generation still matches. Delayed hosted opens after leaving Home, foreign self-authorization, and non-current page load/save attempts fail closed without exposing raw page bodies or runtime handles.
+
 后续如果插件贡献 view、slot 或其他 plugin-rendered React subtree，这些 subtree 不能通过 `useRuntime()` 获取 full runtime。它们只能接收 `PluginContext`、plugin-scoped facades，或 App Shell 明确传入的 controlled props。
 
 ---

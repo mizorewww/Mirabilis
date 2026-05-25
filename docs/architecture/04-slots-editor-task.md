@@ -184,6 +184,9 @@ export const MarkdownEditorPlugin: AppPlugin = {
 - TASK-019 的 task open flow 在 await command 前 snapshot page id 和内容 generation；command 结果回来时，如果 page 或内容 generation 已变化，结果会被丢弃，避免慢 open result 导航到旧页面。
 - TASK-020 在同一 structured-body 条件下渲染 task checkbox。checkbox 调用 `task.toggle-status({ sourcePageId, sourceBlockId })`，读取 `{ pageId, status }`，将 `todo` 显示为 unchecked、`done` 显示为 checked，并在页面切换或内容 generation 变化后丢弃慢 toggle result。
 - TASK-020 对同一 source block 的 pending checkbox toggle 去重；pending 时 checkbox disabled，避免同一 source block 重复提交。
+- TASK-037 后，App Shell 的 Home route 会创建/选择 session Home Markdown Page，并通过 `ViewHost` 挂载注册的 `markdown.page-editor` / `page.editor` view。这个挂载使用 providers 层的 Markdown workspace bridge，而不是把 raw runtime、NativeBridge、Core stores、registries 或 shell host internals 暴露给插件 UI。
+- TASK-037 workspace bridge 只提供 current-page bounded `pages.load/save`、`collectEditorExtensions()`、`markdown.insert-text` / `task.open-task-page` / `task.toggle-status` exact command allowlist wrappers，以及受保护的 `openPage(pageId)`。hosted editor 对 foreign page 的 load/save/openPage self-authorization 会 fail closed。
+- TASK-037 `openPage(pageId)` 只能消费由 trusted `task.open-task-page` command 返回的 page id，且授权绑定 command 的 source page 和当前 page generation。用户离开 Home 后才发生的 delayed hosted open 会被忽略，不会重新挂载 Home 或泄露 command-returned page body。
 
 TASK-017 已实现稳定 block ID 与内部 Markdown import/export，TASK-019 已实现显式 task-title click/open navigation，TASK-020 已实现 checkbox status toggle，TASK-022 已实现 Task Plugin-owned All Tasks / Today filter definitions 和 `page.list` registered view rendering slice。仍未实现 `@date`、autocomplete、slash menu、tag indexing、page-link navigation、保存时 task 自动扫描/索引、全局 saved-filter navigation、app-shell filter route、rich editor behavior、Tiptap/ProseMirror adaptation、完整 CommonMark AST round-tripping、原生文件系统 Markdown import/export、以及用户可见的 load/save 错误 UX。
 
