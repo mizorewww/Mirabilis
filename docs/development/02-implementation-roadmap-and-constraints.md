@@ -170,7 +170,7 @@ task.resolve-task-block remains unchecked-only
 No new Tauri IPC, permissions, filesystem, package, Rust, or native surface
 ```
 
-点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。TASK-022 当前交付 All Tasks / Today filters 的 data-only execution 和 registered `page.list` rendering slice。TASK-023 through TASK-026 已交付 reusable MetadataBar slice、Timer Start control、global active timer bar、Time Segment events、Time Segment Note Markdown Pages、`page.timeline` segment/note slot，以及 Calendar day/week normalized segment rendering baseline；保存后自动扫描/索引、全局 saved-filter navigation、app-shell filter/Calendar route、完整 metadata editor registry、Timer metadata totals、Calendar cross-plugin feed/query facade、Stats/ML integration、rich editor behavior 和 native/package surfaces 仍是后续范围。
+点击 A 进入 A 页面、A 页面写 `- [ ] B` 后点击 B 进入 B 页面，是 TASK-019 当前显式 click/open 行为。点击 checkbox 切换 source task line 状态并写 metadata/event 是 TASK-020 当前行为。TASK-022 当前交付 All Tasks / Today filters 的 data-only execution 和 registered `page.list` rendering slice。TASK-023 through TASK-027 已交付 reusable MetadataBar slice、Timer Start control、global active timer bar、Time Segment events、Time Segment Note Markdown Pages、`page.timeline` segment/note slot、Calendar day/week normalized segment rendering baseline、Habit commands/filters 和 Heatmap normalized DTO view baseline；保存后自动扫描/索引、全局 saved-filter navigation、app-shell filter/Calendar/Habit/Heatmap route、完整 metadata editor registry、Task checkbox 自动桥接 Habit、Timer metadata totals、Calendar cross-plugin feed/query facade、Stats/ML integration、rich editor behavior 和 native/package surfaces 仍是后续范围。
 
 TASK-021 已交付的最小 Tag Plugin baseline：
 
@@ -330,15 +330,18 @@ stale detail clearing after data/date/week changes
 
 ### Phase 7：Habit + Heatmap Plugins
 
-实现：
+TASK-027 当前实现：
 
 ```text
-#habit
-habit metadata
-habit checked event
-habit filter
-heatmap view
+#habit syntax descriptor and explicit habit.refresh-habit
+habit.enabled / habit.frequency / habit.lastCheckedAt / habit.nextDue metadata
+habit.check-today / habit.uncheck-today / habit.set-frequency commands
+namespace habit/type checked or unchecked events
+Habits and Today Habits filters
+generic heatmap.calendar view over kind heatmap.date-series DTOs
 ```
+
+TASK-027 当前不实现 Task checkbox 自动桥接、Habit Review、habit.target、habit.streak、skipped/weekly/monthly recurrence、Calendar/Stats/ML Habit feeds、app-shell route polish 或 native/Tauri/package/Rust/schema changes。
 
 ---
 
@@ -570,7 +573,7 @@ TASK-015 App Shell 边界：
 - [ ] 任务2
 ```
 
-当前 roadmap state through TASK-026：
+当前 roadmap state through TASK-027：
 
 ```text
 MarkdownEditorPlugin 解析文档
@@ -579,12 +582,14 @@ TaskPlugin 创建任务 Markdown Page
 TagPlugin 通过显式 tag.refresh-tags 识别已保存 #tag
 TimerPlugin 提供 timer.start / stop / pause / resume / switch / add-note、global active bar 和 page timeline segments
 CalendarPlugin 提供 calendar.day / calendar.week 和 calendar.open-time-segment over normalized DTOs
+HabitPlugin 提供 habit.refresh-habit / check-today / uncheck-today / set-frequency、Habit metadata、Habit events 和 Habits / Today Habits filters
+HeatmapPlugin 提供 heatmap.calendar over normalized heatmap.date-series DTOs
 Metadata UI 通过 reusable MetadataBar 组合 plugin-owned page.header.metadata fields
 FilterEngine 聚合任务
 ViewRegistry 渲染视图
 ```
 
-这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer metadata slot contributions；TASK-024 当前把 Timer slot 接到 `timer.start`，并交付 Timer-owned in-memory active state、lifecycle commands/events 和 `timer.global-active-bar`。TASK-025 当前追加 Time Segment events、Markdown Page-backed Time Segment Notes、`timer.add-note` 和 `timer.page-timeline.segments`。TASK-026 当前注册内置 `calendar` plugin、`calendar.day` / `calendar.week` views、`calendar.open-time-segment` command，并渲染调用方提供的 normalized `calendar.time-segments` DTO；Calendar 不直接通过 plugin-facing event facade 读取 Timer-owned events。仍没有 production app-shell/editor 默认挂载、完整 field renderer/editor registry、Timer metadata totals、Calendar route/navigation、broad cross-plugin read/query facade、Stats/ML integration 或 native/schema changes。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
+这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters，但没有保存时自动刷新、global saved-filter navigation 或 production app-shell filter route。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer metadata slot contributions；TASK-024 当前把 Timer slot 接到 `timer.start`，并交付 Timer-owned in-memory active state、lifecycle commands/events 和 `timer.global-active-bar`。TASK-025 当前追加 Time Segment events、Markdown Page-backed Time Segment Notes、`timer.add-note` 和 `timer.page-timeline.segments`。TASK-026 当前注册内置 `calendar` plugin、`calendar.day` / `calendar.week` views、`calendar.open-time-segment` command，并渲染调用方提供的 normalized `calendar.time-segments` DTO；Calendar 不直接通过 plugin-facing event facade 读取 Timer-owned events。TASK-027 当前注册内置 `habit` 和 `heatmap` plugins；Habit 通过显式 commands 识别 `#habit`、写 `habit.enabled` / `habit.frequency` / `habit.lastCheckedAt` / `habit.nextDue` metadata、追加 `namespace: "habit"` / `type: "checked" | "unchecked"` events，并保存 Habits / Today Habits filters；Heatmap 注册 `heatmap.calendar` view 并只消费调用方提供的 normalized `heatmap.date-series` DTO。仍没有 production app-shell/editor 默认挂载、完整 field renderer/editor registry、Task checkbox 自动桥接 Habit、Timer metadata totals、Calendar/Habit/Heatmap route/navigation、broad cross-plugin read/query facade、Stats/ML integration 或 native/schema changes。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。
 
 当前显式点击导航完成后，用户在任务页继续写：
 

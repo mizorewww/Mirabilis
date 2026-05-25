@@ -64,7 +64,7 @@ Status markers:
 ## Milestone M6: Calendar and reporting
 
 - [x] TASK-026: Implement Calendar Plugin baseline
-- [ ] TASK-027: Implement Habit and Heatmap plugins
+- [x] TASK-027: Implement Habit and Heatmap plugins
 - [ ] TASK-028: Implement Stats and Chart plugins
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
@@ -78,6 +78,31 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 10:33 CST - TASK-027 completed
+
+- Branch: `feat/task-027-habit-heatmap-plugins`.
+- Task: Implement Habit and Heatmap plugins.
+- Delivered: built-in `HabitPlugin` and `HeatmapPlugin` are registered through `BUILT_IN_PLUGINS` with plugin ids `habit` and `heatmap`.
+- Delivered: Habit Plugin recognizes valid `#habit` syntax through explicit `habit.refresh-habit({ pageId })`, writes Habit-owned `habit.enabled`, `habit.frequency`, `habit.lastCheckedAt`, and `habit.nextDue` metadata, registers canonical commands `habit.refresh-habit`, `habit.check-today`, `habit.uncheck-today`, and `habit.set-frequency`, and saves Habits / Today Habits filters.
+- Delivered: Habit completion appends `namespace: "habit"`, `type: "checked" | "unchecked"` events with `{ habitPageId, date }`; duplicate consecutive same-day checks remain idempotent, while same-day `check -> uncheck -> check` appends the trailing `checked` event required by append-only Heatmap/event consumers.
+- Delivered: Heatmap Plugin registers generic `heatmap.calendar` view with `type: "heatmap"` and accepts caller-provided `kind: "heatmap.date-series"` DTOs. Heatmap validates rows fail-closed, sorts deterministically, renders inert React text/native buttons, does not import Habit internals, and does not read Habit events directly.
+- Review and fixes: review agents found one P1 around same-day re-check event chronology. Darwin added the red regression test and Goodall fixed production behavior. Security/current-doc reviews found no P0/P1 blockers.
+- Documentation sync: product, architecture, and development docs now describe canonical Habit/Heatmap ids, kebab-case commands, camelCase metadata, split Habit event namespace/type, `heatmap.calendar`, `heatmap.date-series`, and deferred scope.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 32 frontend test files / 496 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: Task checkbox auto-bridge, Habit Review, `habit.target`, `habit.streak`, skipped/weekly/monthly recurrence, Calendar/Stats/ML Habit feeds, app-shell Habit/Heatmap route polish, production route/navigation, Heatmap row-count caps, broader `#habit` parser hardening, and native/Tauri/package/Rust/schema persistence changes remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
+
+### 2026-05-25 09:41 CST - TASK-027 started
+
+- Branch: `feat/task-027-habit-heatmap-plugins`.
+- Task: Implement Habit and Heatmap plugins.
+- Start point: `master` after TASK-026 merge validation commit `b898ca3`.
+- Source docs read: `docs/implementation/task-index.md#task-027-implement-habit-and-heatmap-plugins`, `docs/product/05-built-in-plugins.md#17-habit-plugin`, `docs/architecture/05-plugin-implementations.md#12-habit--heatmap-插件架构`, `docs/development/01-data-roadmap-and-mvp.md#phase-7habit-plugin--heatmap-view-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-7habit--heatmap-plugins`, plus related Habit/Heatmap references in product, architecture, development, and testing docs.
+- Initial scope: built-in Habit Plugin and Heatmap Plugin baseline with `#habit` or habit metadata identifying habit pages, habit completion events, Habits / Today Habits filters, and heatmap view rendering habit completion date series.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package/Rust/schema changes, persistent habit storage beyond current core stores, broad app-shell navigation, Stats/ML aggregation, Calendar scheduled feeds, external sync, release packaging, and any Core business behavior for habits or heatmaps.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-027-habit-heatmap-plugins.md`.
 
 ### 2026-05-25 09:39 CST - TASK-026 merged
 

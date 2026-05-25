@@ -399,66 +399,85 @@ Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snak
 ### 12.1 Habit Plugin
 
 ```text
-plugins/habit/
-  src/
-    manifest.ts
-    plugin.ts
-    metadata/
-      habitFields.ts
-    commands/
-      checkHabit.ts
-      uncheckHabit.ts
-      setHabitFrequency.ts
-    events/
-      habitEventTypes.ts
-    filters/
-      habits.ts
-      todayHabits.ts
-    views/
-      HabitListView.tsx
-      HabitCard.tsx
-    slots/
-      HabitMetadataSlot.tsx
+src/plugins/habit/
+  index.ts
+  plugin.ts
 ```
 
-Habit Plugin 只提供 habit 数据语义。
-当前 TASK-010 通过 manifest descriptor 声明 metadata field；renderer / editor 注册是后续 UI runtime facade。
+TASK-027 当前 Habit Plugin 只提供 daily habit 数据语义：manifest descriptors、command handlers、Habit-owned metadata/events 和 default filters。它不提供 Habit list/card view、不挂载 app-shell route、不桥接 Task checkbox，也不改 native/Tauri/package/Rust/schema surface。
 
 ```ts
-export const habitManifest: PluginManifest = {
-  id: "habit",
-  name: "Habit Plugin",
-  version: "0.1.0",
-  minAppVersion: "0.1.0",
-  contributes: {
-    metadataFields: [
-      {
-        id: "habit.enabled",
-        namespace: "habit",
-        key: "enabled",
-        name: "Habit enabled",
-        valueType: "boolean"
-      }
-    ]
+export const HabitPlugin: AppPlugin = {
+  manifest: {
+    id: "habit",
+    name: "Habit Plugin",
+    version: "1.0.0",
+    contributes: {
+      markdownSyntax: [
+        { id: "habit.hashtag", name: "Habit hashtag", syntax: "#habit" }
+      ],
+      metadataFields: [
+        { id: "habit.enabled", namespace: "habit", key: "enabled", valueType: "boolean" },
+        { id: "habit.frequency", namespace: "habit", key: "frequency", valueType: "string" },
+        { id: "habit.lastCheckedAt", namespace: "habit", key: "lastCheckedAt", valueType: "date" },
+        { id: "habit.nextDue", namespace: "habit", key: "nextDue", valueType: "date" }
+      ]
+    }
+  },
+  register(ctx) {
+    ctx.commands.register({ id: "habit.refresh-habit", title: "Refresh habit" });
+    ctx.commands.register({ id: "habit.check-today", title: "Check today" });
+    ctx.commands.register({ id: "habit.uncheck-today", title: "Uncheck today" });
+    ctx.commands.register({ id: "habit.set-frequency", title: "Set frequency" });
   }
 };
 ```
+
+`habit.refresh-habit({ pageId })` recognizes valid `#habit` syntax in title or saved `markdown.line` body and writes:
+
+```text
+namespace habit/key enabled/value true/valueType boolean
+namespace habit/key frequency/value daily/valueType string
+namespace habit/key nextDue/value local YYYY-MM-DD/valueType date
+```
+
+`habit.check-today({ pageId })` and `habit.uncheck-today({ pageId })` require an exact `{ pageId }` payload and a trusted Habit page. Completion appends Habit-owned events with split namespace/type:
+
+```text
+namespace: habit
+type: checked | unchecked
+payload: { habitPageId, date }
+```
+
+`habit.set-frequency({ pageId, frequency: "daily" })` is the only accepted frequency change in this slice. `habit.target`, `habit.streak`, skipped events, weekly/monthly recurrence, snake_case command aliases, Task checkbox auto-bridge, Habit Review, Habit card/list UI, Stats/ML/Calendar feeds, and persistence/native changes remain deferred.
+
+Current filters:
+
+```text
+habit.filter.habits
+  name: Habits
+  viewType: page.list
+  query: metadata.habit.enabled eq true
+
+habit.filter.today-habits
+  name: Today Habits
+  viewType: page.list
+  query:
+    metadata.habit.enabled eq true
+    metadata.habit.frequency eq daily
+    and (metadata.habit.nextDue eq today or metadata.habit.nextDue lt today)
+```
+
+The `lt today` branch exists because the current filter executor has no `lte` operator.
 
 ### 12.2 Heatmap Plugin
 
 Heatmap 是独立 View Plugin。
 
 ```text
-plugins/heatmap/
-  src/
-    manifest.ts
-    plugin.ts
-    views/
-      HeatmapView.tsx
-      HeatmapCell.tsx
-    adapters/
-      habitEventsToHeatmap.ts
-      timeSegmentsToHeatmap.ts
+src/plugins/heatmap/
+  index.ts
+  plugin.ts
 ```
 
 Heatmap Plugin 注册通用 heatmap view：
@@ -470,14 +489,35 @@ ctx.views.register({
   title: "Heatmap calendar",
   component: HeatmapView,
   accepts: {
-    kind: "date-series"
+    kind: "heatmap.date-series"
   }
 });
 ```
 
-Habit Plugin 可以把 habit checked events 转成 date-series。
-Timer Plugin 也可以把 daily tracked duration 转成 date-series。
-Heatmap Plugin 不需要知道什么是 habit 或 timer。
+Current DTO shape:
+
+```ts
+type HeatmapDateSeriesData = {
+  kind: "heatmap.date-series";
+  rows: readonly HeatmapDateSeriesRow[];
+};
+
+type HeatmapDateSeriesRow = {
+  count: number;
+  date: string;
+  label: string;
+  sourcePluginId: string;
+  source: {
+    namespace: string;
+    sourcePluginId: string;
+    type: string;
+  };
+};
+```
+
+Heatmap consumes normalized DTOs supplied by a caller or view host. It does not import Habit internals, does not read Habit events through `ctx.events`, and does not know what a habit or timer is. A caller/view host may normalize public Habit `namespace: "habit"` / `type: "checked" | "unchecked"` events into `heatmap.date-series` rows; that adapter is not inside Heatmap in TASK-027.
+
+Rows fail closed when malformed, wrong-owner, extra-field, accessor, symbol-keyed, prototype-carried, non-enumerable, non-date-only, non-positive count, or mismatched source/sourcePluginId. Rendering uses inert React text and native buttons.
 
 ---
 
