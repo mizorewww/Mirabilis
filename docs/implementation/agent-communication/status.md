@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 04:20 CST.
+Last updated: 2026-05-26 04:38 CST.
 
 ## Current Task
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-26 04:20 CST.
 - Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 implementation committed; review pending.
+- Current phase: TASK-037 initial review fixes committed; re-review pending.
 
 ## Active Agents
 
-- None. TASK-037 guidance, test writer, and implementation agents completed.
-- Pending: delegate TASK-037 review agents.
+- None. TASK-037 guidance, tests, implementation, initial review, and review-fix agents completed.
+- Pending: delegate TASK-037 re-review and remaining docs/deprecation/test-quality agents.
 
 ## Current TASK-037 State
 
@@ -50,6 +50,15 @@ Last updated: 2026-05-26 04:20 CST.
   - Delivered a session Home Markdown Page, `ViewHost` rendering of the registered `markdown.page-editor`, a shell-internal current-page bounded workspace bridge, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, save status, Home navigation from task pages, and non-Home placeholder preservation.
   - Parent validation passed: focused aggregate frontend tests with 8 files / 112 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
 - Parent decision: commit implementation accepted; run review agents next.
+- Initial review and review-fix outcome:
+  - Russell and Beauvoir found a P1 raw-runtime exposure through `RuntimeSourceContext` wrapping plugin-rendered descendants.
+  - Russell found a P1 hosted `pages.load` current-page scoping gap.
+  - Poincare and Beauvoir found a P1 stale task-open gap after switching away from Home.
+  - Beauvoir found a P2 plugin-to-shell dependency from `MarkdownPageEditor` importing shell host internals.
+  - Zeno added failing review regression tests in commit `1a8cb82` for raw runtime exposure, plugin-to-shell imports, non-current hosted page loads, and stale task-open after switching to Today.
+  - Tesla fixed the regressions in commit `2a232d8` by removing raw runtime source context, using a trusted `RuntimeProvider` render-prop path for shell-owned runtime access, moving the workspace bridge into providers, removing shell-host bridge modules/imports, scoping hosted page loads, and invalidating current-page generation on non-Home navigation.
+  - Parent validation after Tesla passed: review regression tests with 3 files / 53 tests, focused aggregate tests with 8 files / 116 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
+- Parent decision: run re-review and remaining review/doc/deprecation/test-quality agents before branch-level gate.
 
 ## Current TASK-036 State
 
@@ -242,7 +251,7 @@ Last updated: 2026-05-26 04:20 CST.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
 - TASK-037 is in progress on `feat/task-037-home-workspace-editor`: initial docs/code context has been read, and pre-test guidance is pending.
 - TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: delegate TASK-037 review agents.
+- Next action: delegate TASK-037 re-review and remaining review agents.
 
 ## Historical TASK-033 State
 

@@ -139,3 +139,28 @@
 - Parent decision:
   - accept `11fd2a3` as the implementation commit;
   - proceed to review agents before branch-level gate and closeout.
+
+## Initial Review And Review-Fix Outcome
+
+- Initial review findings:
+  - Russell (`security_reviewer`) found two P1 issues: raw `AppRuntime` exposure through an importable runtime source context wrapping plugin-rendered descendants, and unscoped hosted `pages.load` access to non-current pages. It also noted a P2 risk that the bridge API remained stringly typed and broadly exported.
+  - Poincare (`pr_explorer`) found one P1: route switches away from Home did not invalidate the current-page generation, so delayed `task.open-task-page` completions could pull the user back to Home. It also noted P2 risks around generic runtime initializer typing and bridge context exposure.
+  - Beauvoir (`reviewer`) confirmed the raw runtime context P1 and stale task-open P1, and added a P2 dependency-direction concern: Markdown editor plugin code imported shell host internals.
+- Parent decision:
+  - require failing regression tests before production fixes.
+- Regression tests:
+  - Zeno (`test_writer`) added review regression tests in commit `1a8cb82`.
+  - Coverage added: no importable raw runtime source provider context, no plugin production import of `src/shell/**`, hosted editor load cannot reveal non-current pages, and delayed task-title open after switching to Today cannot return the app to Home.
+  - Parent red validation failed as expected with 4 failures / 49 passed for `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx`; `bun run typecheck` and `git diff --check` passed.
+- Review fixes:
+  - Tesla (`implementer`) fixed the review regressions in commit `2a232d8`.
+  - Fixes: removed `src/providers/runtime-source-context.ts`, stopped wrapping plugin descendants in raw runtime context, changed `RuntimeProvider` to give trusted shell code the initialized runtime through a render-prop path, moved the Markdown workspace bridge into `src/providers/MarkdownWorkspaceBridgeContext.ts`, removed shell-host bridge modules, scoped hosted `pages.load` through `ensureCurrentPage`, invalidated current-page generation on non-Home route switches, and removed the Markdown plugin's shell-host import.
+  - Tesla made one test-only lint fix in `src/test/home-workspace-editor.test.tsx` without changing assertions.
+- Parent validation after Tesla:
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx` passed with 3 files / 53 tests.
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx` passed with 8 files / 116 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+  - Package, native, Tauri, IPC, capability, permission, and release files had no diff.
+- Parent decision:
+  - accept `2a232d8`;
+  - run re-review and remaining review/doc/deprecation/test-quality agents before closeout.

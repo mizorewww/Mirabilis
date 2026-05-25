@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 04:38 CST - TASK-037 review fixes committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Initial review: Russell, Poincare, and Beauvoir found P1 issues around raw runtime context exposure to plugin-rendered descendants, hosted `pages.load` not being current-page scoped, and stale task-open completions after switching away from Home. Beauvoir also noted a P2 plugin-to-shell dependency in the Markdown editor component.
+- Regression tests: Zeno added failing tests for raw runtime exposure, plugin-to-shell imports, non-current hosted page loads, and stale task-open after navigating to Today in commit `1a8cb82`. Parent red validation failed as expected with 4 failures / 49 passed; `bun run typecheck` and `git diff --check` passed.
+- Review fixes: Tesla removed the raw runtime source context, changed trusted runtime access to a `RuntimeProvider` render-prop path, moved the Markdown workspace bridge into providers, removed shell-host bridge modules/imports, scoped hosted page loads through current-page validation, and invalidated current-page generation on non-Home route switches in commit `2a232d8`.
+- Parent validation after Tesla: review regression tests passed with 3 files / 53 tests; focused aggregate tests passed with 8 files / 116 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: run re-review and remaining deprecation/test-quality/docs agents.
+
 ### 2026-05-26 04:20 CST - TASK-037 implementation committed
 
 - Branch: `feat/task-037-home-workspace-editor`.
