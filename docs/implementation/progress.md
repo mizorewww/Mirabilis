@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 07:15 CST - TASK-039 pre-test guidance complete
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Agents: Averroes the 2nd (`planner`), Russell the 2nd (`docs_researcher`), Leibniz the 2nd (`security_reviewer`), and Mencius the 2nd (`deprecation_auditor`) completed pre-test guidance.
+- Guidance summary: mount `page.header.metadata` only on page routes through `MetadataBar`; mount `page.timeline` only on page routes through `SlotHost` with `{ page: { id, title } }`; mount `global.floating` through MUI `Portal` using a timer-owner-scoped command facade or host-owned callback path, not raw `runtime.commands`.
+- Security/API constraints: app-shell plugin props must remain controlled and page-scoped; no raw runtime/stores/registries/pluginHost/native/filesystem/path/SQL/tokens/provider details; `MetadataBar` needs a failure boundary when mounted in App Shell; generic `SlotHost` must not be widened for raw command objects; direct Task/Tag/Timer/plugin-private/native imports remain forbidden.
+- Current docs verified: MUI v9.0.1 path imports and Portal, React `createPortal`, Testing Library/user-event fake-timer guidance, Vitest fake timers, and current local TASK-023/TASK-025 slot/timer docs.
+- Next action: delegate `test_writer` to add failing TASK-039 acceptance and boundary tests using RTL plus `userEvent.setup()`.
+
 ### 2026-05-26 07:07 CST - TASK-039 started
 
 - Branch: `feat/task-039-metadata-timer-timeline-slots`.
