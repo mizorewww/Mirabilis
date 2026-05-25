@@ -58,3 +58,60 @@
 - Newton (`security_reviewer`) started at 2026-05-25 12:05 CST.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Gibbs (`planner`) recommended the smallest safe slice as built-in `quick-capture` and `search` plugins implemented entirely in TypeScript plugin/runtime/view space. It recommended deferring native/Tauri/global-shortcut wiring, package changes, Rust setup, capabilities, persistent indexes, background workers, app-shell routes, and Task/Tag auto-processing.
+- Franklin (`docs_researcher`) recommended one focused `src/test/quick-capture-search-plugins.test.tsx` suite, Testing Library role/name/user-event assertions, React dynamic children with stable keys, and static guards for no Tauri/package/native changes. Its local-doc examples still used `quick_capture.*`; parent treats those as stale and follows the planner/API naming below.
+- Hilbert (`deprecation_auditor`) found no P0 blockers and recommended canonical kebab/dotted ids. It warned that `PluginContext` currently has no public command execution API, no native shortcut API, no query facade, and no executable indexer registry; therefore Quick Capture must preserve Markdown and Search must scan pages directly/on demand.
+- Newton (`security_reviewer`) required a no-native baseline, exact bounded plain payloads, inert React text for captured Markdown and search results, fixed Inbox target only, no Task/Tag private writes/imports, bounded literal search, capped snippets/results, and no raw runtime/store/native imports or HTML/Markdown execution sinks.
+
+## Parent Decisions After Guidance
+
+- Plugin ids:
+  - `quick-capture`
+  - `search`
+- Quick Capture command ids:
+  - `quick-capture.open`
+  - `quick-capture.save`
+  - `quick-capture.save-and-open`
+- Quick Capture view ids:
+  - `quick-capture.modal`
+  - `quick-capture.mobile-input`
+- Quick Capture metadata/filter ids:
+  - `quick-capture.unprocessed` with `namespace: "quick-capture"` and `key: "unprocessed"`.
+  - `quick-capture.filter.inbox`.
+- Search ids:
+  - Command: `search.query`.
+  - View/data kind: `search.results`.
+- Do not register stale underscore aliases such as `quick_capture.open`, `quick_capture.save`, or `quick_capture.save_and_open`.
+- Quick Capture creates a trusted plugin-marked `Inbox` page on first save and appends later captures to that same trusted Inbox. If a title-only Inbox exists without Quick Capture metadata, do not adopt it implicitly.
+- Captured Markdown is preserved as structured inert text. Quick Capture does not import Task/Tag internals and does not auto-create task pages, tag metadata, Task events, or Tag events.
+- Interop/handoff tests may explicitly run existing public commands after capture:
+  - `tag.refresh-tags({ pageId })`
+  - `task.resolve-task-block({ sourcePageId, sourceBlockId })`
+  - `task.open-task-page({ sourcePageId, sourceBlockId })`
+- `quick-capture.save` returns `{ kind: "quick-capture.save-result", pageId, createdInbox, appendedBlockIds }`.
+- `quick-capture.save-and-open` shares save semantics and returns the same result plus `openPageId: pageId`; it does not navigate.
+- `search.query({ query, limit? })` performs bounded, case-insensitive, literal substring search over unarchived page titles and structured Markdown body text.
+- Search returns `{ kind: "search.results", query, results: [{ pageId, title, snippet, matchedFields }] }` with capped result count, title length, snippet length, scanned pages/body size, and no full page bodies.
+- Desktop entry-point acceptance for this slice is satisfied by docs/security review plus static guards proving no package/native/Tauri/Rust/schema/capability surfaces changed. Real global shortcuts remain deferred.
+- No package/native/Tauri/Rust/schema/dependency/capability/generated-permission changes in this slice.
+
+## Test Writer Handoff
+
+- Next agent: `test_writer`.
+- Required red tests:
+  - Built-ins include `quick-capture` and `search`.
+  - Quick Capture registers the canonical commands/views/metadata/filter and omits stale underscore aliases.
+  - Search registers `search.query` and `search.results`.
+  - `quick-capture.save` creates a trusted Inbox when absent and returns an exact save-result DTO.
+  - Later saves append to the trusted Inbox without replacing prior captured Markdown.
+  - Title-only untrusted Inbox pages are not adopted.
+  - Captured Markdown such as `- [ ] Draft roadmap #architecture` and unsafe-looking text like `<script>`, `<img onerror>`, and `javascript:` remains inert structured text.
+  - Explicit existing Task/Tag command flows can process the preserved Inbox body; Quick Capture itself creates no Task/Tag metadata/events/pages.
+  - Quick Capture rejects blank, oversized, extra-field, target page/path/title, ownership-spoofing, accessor-backed, symbol-keyed, prototype-carried, or non-enumerable payloads without mutating pages/metadata.
+  - `quick-capture.save-and-open` shares save semantics and returns `openPageId` without navigation/native calls.
+  - `search.query` finds title and body matches, excludes archived pages, treats regex-looking input literally, caps limits/results/snippets, updates on later page edits, and returns no results for blank queries.
+  - Search result view renders unsafe titles/snippets as inert text with accessible list/listitem semantics.
+  - Static guard: no forbidden imports/sinks in new Quick Capture/Search plugin files; no package/native/Tauri/Rust/schema/capability/generated-permission diffs.

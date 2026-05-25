@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:05 CST.
+Last updated: 2026-05-25 12:10 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 12:05 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 pre-test guidance running.
+- Current phase: TASK-029 pre-test guidance completed; test handoff next.
 
 ## Active Agents
 
-- Gibbs (`planner`) is defining TASK-029 scope, canonical ids, acceptance criteria, and deferred work.
-- Franklin (`docs_researcher`) is checking current React/Vitest/Testing Library and Tauri v2 guidance for capture/search and desktop entry points.
-- Hilbert (`deprecation_auditor`) is auditing naming/API/deprecation risks and current plugin API limitations.
-- Newton (`security_reviewer`) is reviewing capture/search trust boundaries and native/Tauri permission impact.
+- No active agents. Next delegation is `test_writer` for failing TASK-029 acceptance tests.
 
 ## Current TASK-029 State
 
@@ -30,6 +27,20 @@ Last updated: 2026-05-25 12:05 CST.
   - Prefer a no-native baseline unless agents identify an acceptance-critical desktop entry point requiring Tauri capability changes.
   - Keep package/native/Tauri/Rust/schema changes, persistent full-text indexes, background workers, global shortcuts, app-shell route polish, rich mobile toolbar mounting, ML/AI cleanup commands, sync, and packaging out of scope unless agents identify a blocker.
 - Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance completed:
+  - Gibbs (`planner`) recommended the smallest safe slice as pure TypeScript built-in `quick-capture` and `search` plugins. Native/Tauri/global-shortcut wiring is deferred; desktop entry-point acceptance is documentation and static permission-impact review.
+  - Franklin (`docs_researcher`) recommended one focused `src/test/quick-capture-search-plugins.test.tsx` suite, Testing Library role/name/user-event assertions for views, and a native/Tauri/package static guard. Its local-doc examples using `quick_capture.*` were treated as stale because planner/API review and current repo style prefer kebab/dotted ids.
+  - Hilbert (`deprecation_auditor`) found no P0 blockers and required canonical ids over stale underscore aliases. It also noted `PluginContext` has no public command execute API, no native shortcut API, no query facade, and no executable indexer registry.
+  - Newton (`security_reviewer`) required no native/package/Tauri/Rust/schema changes, exact bounded plain payloads, inert Markdown/result text, fixed Inbox target only, no Task/Tag private writes, bounded literal search, capped snippets/results, no raw runtime/store/native imports, and no HTML/Markdown execution sinks.
+- Parent decisions after guidance:
+  - Plugin ids are `quick-capture` and `search`.
+  - Quick Capture commands are `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open`; do not register `quick_capture.*` aliases.
+  - Quick Capture views are `quick-capture.modal` and `quick-capture.mobile-input`.
+  - Quick Capture uses plugin-owned metadata/filter ids `quick-capture.unprocessed` and `quick-capture.filter.inbox`; do not use stale `inbox.unprocessed`.
+  - Search command is `search.query`; Search view and DTO kind are `search.results`.
+  - Quick Capture must create/append only a trusted plugin-marked `Inbox` page. If a title-only Inbox already exists without Quick Capture metadata, leave it alone and create a trusted Inbox.
+  - Quick Capture preserves Markdown as structured text and does not auto-create Task/Tag pages or metadata. Tests may explicitly run existing `tag.refresh-tags` and `task.resolve-task-block` / `task.open-task-page` afterward to prove handoff.
+  - Search is transient/on-demand over unarchived pages only; no persistent index, worker, SQLite/FTS, package, native, Tauri, Rust, schema, or capability changes.
 
 ## Current TASK-028 State
 
@@ -225,5 +236,5 @@ Last updated: 2026-05-25 12:05 CST.
 
 ## Next Actions
 
-1. Wait for TASK-029 pre-test guidance agents.
-2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
+1. Delegate failing TASK-029 acceptance tests to `test_writer`.
+2. Validate expected red signal, then commit tests separately.
