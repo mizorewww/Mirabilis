@@ -121,5 +121,18 @@
 
 ## Current Next Action
 
-- Halley (`implementer`) started at 2026-05-25 10:10 CST for minimum production code. It owns production plugin/bootstrap changes only and must not edit tests, docs, progress, branch state, commits, or pushes.
-- Parent next action: wait for Halley, validate focused green checks, and commit implementation if acceptable.
+- Halley (`implementer`) completed minimum production code and parent committed it as `b44bf7a Halley(implementation)(Implement Habit and Heatmap plugins): implement habit and heatmap plugin baselines`.
+- Files changed by implementation:
+  - `src/bootstrap/built-in-plugins.ts`
+  - `src/plugins/habit/index.ts`
+  - `src/plugins/habit/plugin.ts`
+  - `src/plugins/heatmap/index.ts`
+  - `src/plugins/heatmap/plugin.ts`
+- Parent validation after implementation:
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` passed with 14 tests.
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/task-filters-view-rendering.test.tsx src/test/tag-plugin-baseline.test.tsx` passed with 6 files / 116 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust/schema diff guard was empty.
+- Parent next action: spawn parallel review/docs agents and address P0/P1 findings before the final local gate.
