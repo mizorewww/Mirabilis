@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 01:21 CST.
+Last updated: 2026-05-26 01:39 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-26 01:21 CST.
 - Branch: `feat/task-035-mui-shell-frame`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-035 pre-test guidance complete; failing tests pending.
+- Current phase: TASK-035 implementation committed; review wave pending.
 
 ## Active Agents
 
@@ -38,6 +38,17 @@ Last updated: 2026-05-26 01:21 CST.
   - Ohm warned against stale MUI patterns such as `@material-ui/*`, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, and barrel imports.
   - Pauli (`security_reviewer`) found no P0 and required realistic user-event shell tests, redacted failure coverage, public `useRuntime()` facade coverage, static boundary coverage, and package/native drift guards.
 - Parent decision: accept guidance and delegate failing tests to `test_writer`.
+- Test writer outcome:
+  - Boyle (`test_writer`) added `src/test/mui-shell-frame.test.tsx` and updated the shared native/package guard helper for the reviewed TASK-035 MUI dependency/lockfile surface.
+  - Parent red validation: `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` failed as expected while the existing startup card lacked the MUI shell frame and reviewed package changes.
+  - Test commit: `71999fa Boyle(test)(Add MUI Substrate And First Shell Frame): add MUI shell acceptance tests`.
+- Implementation outcome:
+  - Turing (`implementer`) installed the reviewed MUI runtime dependencies and replaced the ready-state startup card with a themed MUI shell frame.
+  - Changed files: `package.json`, `bun.lock`, `src/App.tsx`, `src/App.css`, and `src/test/mui-shell-frame.test.tsx`.
+  - Parent validation passed: focused TASK-035 frontend tests, `bun run typecheck`, `bun run lint`, `git diff --check`, `bun run build`, and `bun run check:quick`.
+  - Build note: `bun run build` succeeds but emits the existing Vite/Rollup warning that the generated JS chunk is larger than 500 kB after adding MUI.
+  - Implementation commit: `b9cb0e7 Turing(implementation)(Add MUI Substrate And First Shell Frame): implement MUI shell frame`.
+- Parent decision: commit the implementation and delegate review/release-readiness agents before marking TASK-035 complete.
 
 ## Current TASK-034 State
 

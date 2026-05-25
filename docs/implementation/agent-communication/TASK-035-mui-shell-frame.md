@@ -50,7 +50,7 @@
 
 ## Current Next Action
 
-- Delegate failing tests to `test_writer`.
+- Delegate review agents for TASK-035.
 
 ## Pre-Test Guidance Outcomes
 
@@ -65,3 +65,44 @@
   - no Tauri/native/business-plugin/Core-owner imports in App Shell;
   - package/lockfile changes limited to the reviewed MUI dependency quartet and no native/release surface changes.
 - Parent decision: accept the guidance. The test writer should write failing tests first, including the narrowed package/native guard and realistic user interaction tests.
+
+## Test Writer Outcome
+
+- Boyle (`test_writer`) added failing shell acceptance tests before implementation.
+- Files changed by Boyle:
+  - `src/test/mui-shell-frame.test.tsx`;
+  - `src/test/native-surface-guard.ts`.
+- Parent red validation: `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` failed as expected because the existing app still rendered the startup card and did not yet include the reviewed MUI dependencies/path imports.
+- Test commit: `71999fa Boyle(test)(Add MUI Substrate And First Shell Frame): add MUI shell acceptance tests`.
+
+## Implementation Outcome
+
+- Turing (`implementer`) installed the reviewed MUI dependency quartet with Bun:
+  - `@mui/material`;
+  - `@emotion/react`;
+  - `@emotion/styled`;
+  - `@mui/icons-material`.
+- Turing replaced the ready-state startup card with a MUI themed shell using `ThemeProvider`, `CssBaseline`, a named `banner`, named workspace `navigation`, central named `main`, top-bar action buttons, placeholder route regions, and a minimal drawer/nav interaction.
+- Loading and startup failure states remain visible and redacted.
+- `useRuntime()` still exposes the public frozen `{ app }` facade.
+- Files changed by Turing:
+  - `package.json`;
+  - `bun.lock`;
+  - `src/App.tsx`;
+  - `src/App.css`;
+  - `src/test/mui-shell-frame.test.tsx`.
+- Turing reported these checks passing:
+  - `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx`;
+  - `bun run typecheck`;
+  - `bun run lint`;
+  - `bun run build`;
+  - `git diff --check`.
+- Parent validation passed:
+  - `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 20 tests;
+  - `bun run typecheck`;
+  - `bun run lint`;
+  - `git diff --check`;
+  - `bun run build`;
+  - `bun run check:quick` passed with 39 frontend test files / 597 tests, Rust fmt, Rust clippy, and Rust tests.
+- Build note: `bun run build` succeeds but emits the existing Vite/Rollup warning that the generated JS chunk is larger than 500 kB after adding MUI.
+- Implementation commit: `b9cb0e7 Turing(implementation)(Add MUI Substrate And First Shell Frame): implement MUI shell frame`.
