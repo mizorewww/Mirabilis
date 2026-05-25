@@ -57,3 +57,51 @@
 - Descartes (`security_reviewer`) started at 2026-05-25 21:04 CST.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for guidance, record parent decisions, then delegate failing tests or a release-gate validation plan as appropriate.
+
+## Pre-Test Guidance Outcomes
+
+- Boole (`planner`) recommended the smallest safe TASK-033 slice:
+  - release-gate/config/docs only, with no Core/plugin/IPC/permission/SQLite/app behavior changes;
+  - tests first for `check:full` ordering, version synchronization, bundle target policy, referenced packaging assets, release docs, changelog expectations, release_checker readiness, and AppImage decision;
+  - make the gate honest by validating explicit local targets, likely deb/rpm, while documenting AppImage as deferred or controlled-environment-only if not fixed now.
+- Mendel (`docs_researcher`) verified current official docs:
+  - Tauri v2 `tauri build` is current and uses `frontendDist`, `beforeBuildCommand`, configured bundles, and optional `beforeBundleCommand`;
+  - current Linux `--bundles` values include `deb`, `rpm`, and `appimage`; `--ci` is current; `--ignore-version-mismatches` exists but should not be used as a normal release gate;
+  - `bundle.targets = "all"` is current, but actual outputs are platform/toolchain dependent;
+  - Tauri recommends managing app version in `tauri.conf.json`, and the current package/Tauri/Cargo versions all read `0.1.0`;
+  - Linux package compatibility depends on host packages and glibc baseline, with Ubuntu 22.04 / Debian 12 named as suitable old-base examples for Linux package builds;
+  - updater/signing is not configured and should remain deferred unless explicitly added with secret-safe signing policy.
+- Parfit (`deprecation_auditor`) found no P0 and three P1s:
+  - current `check:full` uses valid Tauri API but is stale as a reliable local full gate because `bundle.targets = "all"` includes the known-failing AppImage path;
+  - release metadata is not ready because `src-tauri/Cargo.toml` still has placeholder `description = "A Tauri App"` and `authors = ["you"]`;
+  - version/changelog expectations are acceptance criteria but not guarded or documented beyond the task text.
+- Descartes (`security_reviewer`) found release-gate P1s:
+  - TASK-033 must not fake release readiness using `--no-bundle`, `|| true`, hidden env workarounds, or skipped bundle checks;
+  - signing/updater absence must be explicitly scoped as local-only developer artifacts;
+  - capabilities, Rust invoke handlers, dormant native bridge commands, CSP-null status, and bundle resources/files must not broaden accidentally;
+  - tracked release artifacts, `.env`, signing keys, packaged databases, logs, `dist`, or `src-tauri/target` would be P0.
+- Parent baseline validation:
+  - `bun run check:full` passed `check:quick`, frontend production build, Rust release build, deb bundling, and rpm bundling.
+  - It failed at AppImage bundling with `failed to run linuxdeploy`, matching the prior TASK-014 local AppImage failure pattern.
+  - Generated deb/rpm artifacts were under ignored `src-tauri/target/release/bundle/**`; the git working tree remained clean except orchestration docs.
+
+## Parent Decisions After Guidance
+
+- Use a local release-gate/config/docs slice for TASK-033.
+- Keep `check:quick` unchanged.
+- Change or wrap `check:full` so it is explicit, unattended, and honest:
+  - it must run `bun run check:quick` first;
+  - it must run Tauri build in CI mode;
+  - the default local bundle targets should be explicit local Linux targets expected to pass here, currently `deb,rpm`;
+  - it must not use `--no-bundle`, `|| true`, hidden env workarounds, or `--ignore-version-mismatches`.
+- AppImage is not validated by the default local gate in this Arch environment. Document it as deferred to a controlled Linux builder, such as Ubuntu 22.04 or Debian 12, and require release readiness review to state that AppImage has not passed locally unless a future branch adds that controlled path.
+- Require tests for:
+  - `package.json` script ordering and forbidden bypass flags/patterns;
+  - Tauri bundle policy and referenced bundle files/templates/icons;
+  - version synchronization across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`;
+  - non-placeholder Cargo release metadata;
+  - changelog/release-notes presence and documented version/changelog expectations;
+  - no updater/signing config or signing key material unless explicitly scoped;
+  - no tracked release artifacts, secrets, logs, `dist`, or `src-tauri/target`;
+  - no unexpected native capability, permission, IPC, package, Cargo dependency, Core, or plugin behavior drift.
+- Parent next action: commit guidance decisions, then delegate failing tests to `test_writer`.

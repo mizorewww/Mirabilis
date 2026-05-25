@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:04 CST.
+Last updated: 2026-05-25 21:10 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 21:04 CST.
 - Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-033 pre-test guidance pending.
+- Current phase: TASK-033 pre-test guidance complete; test handoff pending.
 
 ## Active Agents
 
-- Boole (`planner`) - TASK-033 pre-test planning guidance.
-- Mendel (`docs_researcher`) - current Tauri/Bun/Vite release packaging docs.
-- Parfit (`deprecation_auditor`) - stale packaging/API/script audit.
-- Descartes (`security_reviewer`) - release packaging and local gate security constraints.
+- None.
 
 ## Current TASK-033 State
 
@@ -45,7 +42,22 @@ Last updated: 2026-05-25 21:04 CST.
   - Mendel (`docs_researcher`) should verify current official Tauri v2 release/build/bundle guidance and any Bun/Vite details needed for local `check:full`.
   - Parfit (`deprecation_auditor`) should audit stale packaging assumptions, scripts, bundle targets, CLI flags, version/changelog conventions, and prior AppImage failure context.
   - Descartes (`security_reviewer`) should define release/build security constraints around bundle targets, capabilities, signing/updater absence, filesystem/network permissions, and artifact leakage.
-- Next action: wait for pre-test guidance, record parent decisions, then delegate failing release/full-gate tests if needed.
+- Pre-test guidance completed:
+  - Boole (`planner`) recommended a release-gate/config/docs slice only, with tests first. It recommended making the local full gate honest by validating explicit local targets, likely deb/rpm, and documenting AppImage as deferred to a controlled Linux builder if not fixed in this task.
+  - Mendel (`docs_researcher`) verified current Tauri v2 docs: `tauri build`, `--bundles`, `--ci`, `bundle.targets`, `beforeBuildCommand`, and `frontendDist` remain current. It confirmed `bundle.targets = "all"` is valid but platform/toolchain dependent, and Tauri recommends older controlled Linux bases such as Ubuntu 22.04 / Debian 12 for Linux package compatibility.
+  - Parfit (`deprecation_auditor`) found P1s: existing `check:full` is current API usage but stale as a reliable local gate because `all` includes known-failing AppImage, Cargo metadata still has placeholder description/authors, and version/changelog expectations lack tests/docs.
+  - Descartes (`security_reviewer`) found P1s: the local full gate is not reliable yet, signing/updater absence must be explicitly scoped, capabilities/IPC must not broaden, dormant native bridge commands must stay dormant, CSP-null must stay documented as local-only residual risk, and release artifacts/secrets must not be tracked.
+- Parent baseline validation:
+  - Current `bun run check:full` failed after passing `check:quick`, frontend production build, Rust release build, and deb/rpm bundling.
+  - Failure point: AppImage bundling via `linuxdeploy`, matching the prior TASK-014 local environment failure pattern.
+- Parent decisions after guidance:
+  - Use the smallest safe local release-gate slice.
+  - Keep `check:quick` unchanged.
+  - Make `check:full` explicit and unattended: it must run `check:quick` first and then run Tauri build in CI mode for locally supported Linux bundles, expected `deb,rpm`.
+  - Do not use `--no-bundle`, `|| true`, hidden env workarounds, or `--ignore-version-mismatches`.
+  - Treat AppImage as not validated by the default local gate in this Arch environment; document it as deferred to a controlled Linux builder and require `release_checker` to call out that status.
+  - Add tests for script ordering/flags, bundle target policy, version sync, non-placeholder release metadata, changelog/release notes, packaging file existence, no updater/signing unless explicitly configured, no native/capability broadening, and no tracked release artifacts/secrets.
+- Next action: commit this guidance record, then delegate failing release/full-gate tests to `test_writer`.
 
 ## Current TASK-032 State
 
