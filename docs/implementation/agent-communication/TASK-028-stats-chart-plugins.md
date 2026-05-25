@@ -109,5 +109,26 @@
 
 ## Current Next Action
 
-- Locke (`test_writer`) started at 2026-05-25 10:45 CST for failing TASK-028 acceptance tests.
-- Parent next action: wait for Locke, validate the expected red signal, and commit tests before delegating implementation.
+- Locke (`test_writer`) completed failing TASK-028 acceptance tests in `src/test/stats-chart-plugins.test.tsx`.
+- Scope covered:
+  - Built-in `stats` / `chart` registration and canonical ids.
+  - Six inert Stats algorithm descriptors and canonical `stats.run-aggregation` only.
+  - Chart views `chart.bar`, `chart.line`, `chart.pie` and namespaced DTO kinds.
+  - Stale snake_case/stale command absence.
+  - Strict command payload validation and store non-mutation.
+  - Aggregation fixtures for time by tag/page, estimate vs actual, habit completion, task switching, and unnoted sessions.
+  - Forged/malformed/wrong-owner record filtering.
+  - Accessible inert Chart rendering, loading, empty states, Stats-to-Chart DTO integration, and static boundary guards.
+- Parent red validation passed:
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` failed as expected with 10 failed / 1 passed because the production Stats and Chart plugin surfaces do not exist yet.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/stats-chart-plugins.test.tsx --max-warnings=0`.
+  - `.skip/.only` scan.
+  - `git diff --check`.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test commit: `bbe138e Locke(test)(Implement Stats and Chart plugins): add stats chart acceptance tests`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Spawn `implementer` for minimum production code. The implementer owns production plugin/bootstrap changes only and must not edit tests, docs, progress, branch state, commits, or pushes.

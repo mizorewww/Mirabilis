@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:45 CST.
+Last updated: 2026-05-25 10:54 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 10:45 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 failing acceptance tests delegated.
+- Current phase: TASK-028 failing acceptance tests committed; implementation handoff pending.
 
 ## Active Agents
 
-- Locke (`test_writer`) is active for TASK-028 failing acceptance tests.
+- None currently active. Next agent should be `implementer` for minimum production code.
 
 ## Current TASK-028 State
 
@@ -41,6 +41,11 @@ Last updated: 2026-05-25 10:45 CST.
   - No snake_case aliases such as `sum_time_by_tag`, `bar_chart`, `line_chart`, or `pie_chart`.
   - Aggregations consume caller-provided normalized DTO fixtures and must not directly read Timer/Habit/Task/Tag internals or private data through plugin facades.
   - Output maps to Chart DTOs: time-by-tag/page, habit completion, task switching, and unnoted sessions return category series; estimate-vs-actual returns comparison series.
+- Test writer completed:
+  - Locke (`test_writer`) added `src/test/stats-chart-plugins.test.tsx` with 11 TASK-028 acceptance tests and did not edit production code, docs, progress, branch state, commits, or pushes.
+  - Parent validated the expected red signal: `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` failed with 10 failed / 1 passed because the Stats and Chart production surfaces are intentionally missing.
+  - Parent validated static green checks: `bun run typecheck`, focused ESLint for the new test file, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test commit: `bbe138e Locke(test)(Implement Stats and Chart plugins): add stats chart acceptance tests`; post-commit auto-push succeeded.
 
 ## Current TASK-027 State
 
@@ -148,5 +153,5 @@ Last updated: 2026-05-25 10:45 CST.
 
 ## Next Actions
 
-1. Wait for Locke (`test_writer`) to finish failing acceptance tests.
-2. Validate the expected red signal and commit tests before delegating implementation.
+1. Spawn `implementer` for the minimum production implementation that makes `src/test/stats-chart-plugins.test.tsx` pass.
+2. Validate focused green checks, then commit implementation separately from the test commit.
