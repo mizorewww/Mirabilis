@@ -1,5 +1,5 @@
 export type TaskPageListItem = {
-  routeToken?: string;
+  routeToken: string;
   title: string;
 };
 
@@ -14,18 +14,11 @@ export type TaskFilterEmptyStateProps = {
 export function TaskPageListView({ pages }: TaskPageListViewProps) {
   return (
     <ul aria-label="Task pages">
-      {pages.map((page, index) => (
-        <li key={getTaskPageListItemKey(page, index)}>{page.title}</li>
+      {pages.map((page) => (
+        <li key={page.routeToken}>{page.title}</li>
       ))}
     </ul>
   );
-}
-
-function getTaskPageListItemKey(
-  page: TaskPageListItem,
-  index: number,
-): string {
-  return page.routeToken?.trim() || `task-page-result-${index + 1}`;
 }
 
 export function TaskFilterEmptyState({

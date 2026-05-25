@@ -159,13 +159,6 @@ const toggleTaskStatusCommandId = "task.toggle-status";
 const filterResultViewKind = "filter-results.markdown-pages";
 const filterEmptyStateSlot = "filter.empty_state";
 const metadataSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
-const savedFilterRouteLabelAliases = new Map([
-  ["all tasks", "Task index"],
-  ["home", "Start"],
-  ["inbox", "Capture box"],
-  ["reports", "Review charts"],
-  ["today", "Current day"],
-]);
 const primaryRouteLabels = new Set([
   "all tasks",
   "home",
@@ -536,55 +529,96 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
       <Box className="app-shell__frame">
         <Box
-          aria-label="Workspace"
           className="app-shell__navigation"
-          component="nav"
           hidden={!navigationOpen}
           id="workspace-navigation"
         >
           <Drawer open variant="permanent">
             <Toolbar />
             <Box className="app-shell__nav-content">
-              <Typography className="app-shell__nav-heading" variant="overline">
-                Workspace
-              </Typography>
-              <List aria-label="Workspace routes" dense>
-                {primaryNavigationRoutes.map((route) => {
-                  const RouteIcon = route.icon;
-                  const isSelected = primaryRouteIsActive(
-                    route,
-                    activeRoute,
-                    homePageId,
-                  );
+              <Box aria-label="Workspace" component="nav">
+                <Typography className="app-shell__nav-heading" variant="overline">
+                  Workspace
+                </Typography>
+                <List aria-label="Workspace routes" dense>
+                  {primaryNavigationRoutes.map((route) => {
+                    const RouteIcon = route.icon;
+                    const isSelected = primaryRouteIsActive(
+                      route,
+                      activeRoute,
+                      homePageId,
+                    );
 
-                  return (
-                    <ListItemButton
-                      aria-current={isSelected ? "page" : undefined}
-                      key={`${route.kind}:${route.label}`}
-                      onClick={() => {
-                        if (route.kind === "page") {
-                          selectPageRoute(homePageId, route.role);
-                        } else if (route.kind === "filter") {
-                          selectFilterRoute(route.filterId, route.role);
-                        } else {
-                          selectPlaceholderRoute(route.routeId);
-                        }
-                      }}
-                      selected={isSelected}
+                    return (
+                      <ListItemButton
+                        aria-current={isSelected ? "page" : undefined}
+                        key={`${route.kind}:${route.label}`}
+                        onClick={() => {
+                          if (route.kind === "page") {
+                            selectPageRoute(homePageId, route.role);
+                          } else if (route.kind === "filter") {
+                            selectFilterRoute(route.filterId, route.role);
+                          } else {
+                            selectPlaceholderRoute(route.routeId);
+                          }
+                        }}
+                        selected={isSelected}
+                      >
+                        <ListItemIcon>
+                          <RouteIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={route.label}
+                          secondary={route.eyebrow}
+                        />
+                      </ListItemButton>
+                    );
+                  })}
+                </List>
+                {recentPages.length > 0 ? (
+                  <>
+                    <Divider />
+                    <Typography
+                      className="app-shell__nav-heading app-shell__nav-heading--section"
+                      variant="overline"
                     >
-                      <ListItemIcon>
-                        <RouteIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={route.label}
-                        secondary={route.eyebrow}
-                      />
-                    </ListItemButton>
-                  );
-                })}
-              </List>
+                      Recent pages
+                    </Typography>
+                    <List aria-label="Recent pages" dense>
+                      {recentPages.map((page) => {
+                        const isSelected =
+                          activeRoute.kind === "page" &&
+                          activeRoute.pageId === page.id &&
+                          activeRoute.role !== "home";
+
+                        return (
+                          <ListItemButton
+                            aria-label={
+                              page.accessibleLabel === page.title
+                                ? undefined
+                                : page.accessibleLabel
+                            }
+                            aria-current={isSelected ? "page" : undefined}
+                            key={page.id}
+                            onClick={() => selectPageRoute(page.id, "recent")}
+                            selected={isSelected}
+                          >
+                            <ListItemIcon>
+                              <ArticleIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={page.title}
+                              secondary="Recent page"
+                            />
+                          </ListItemButton>
+                        );
+                      })}
+                    </List>
+                  </>
+                ) : null}
+              </Box>
               {savedFilterRoutes.length > 0 ? (
-                <>
+                <Box component="section">
                   <Divider />
                   <Typography
                     className="app-shell__nav-heading app-shell__nav-heading--section"
@@ -600,7 +634,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
                       return (
                         <ListItemButton
-                          aria-label={route.accessibleLabel}
+                          aria-label={route.label}
                           aria-current={isSelected ? "page" : undefined}
                           key={route.filterId}
                           onClick={() =>
@@ -619,48 +653,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                       );
                     })}
                   </List>
-                </>
-              ) : null}
-              {recentPages.length > 0 ? (
-                <>
-                  <Divider />
-                  <Typography
-                    className="app-shell__nav-heading app-shell__nav-heading--section"
-                    variant="overline"
-                  >
-                    Recent pages
-                  </Typography>
-                  <List aria-label="Recent pages" dense>
-                    {recentPages.map((page) => {
-                      const isSelected =
-                        activeRoute.kind === "page" &&
-                        activeRoute.pageId === page.id &&
-                        activeRoute.role !== "home";
-
-                      return (
-                        <ListItemButton
-                          aria-label={
-                            page.accessibleLabel === page.title
-                              ? undefined
-                              : page.accessibleLabel
-                          }
-                          aria-current={isSelected ? "page" : undefined}
-                          key={page.id}
-                          onClick={() => selectPageRoute(page.id, "recent")}
-                          selected={isSelected}
-                        >
-                          <ListItemIcon>
-                            <ArticleIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={page.title}
-                            secondary="Recent page"
-                          />
-                        </ListItemButton>
-                      );
-                    })}
-                  </List>
-                </>
+                </Box>
               ) : null}
               <Divider />
               <Box className="app-shell__nav-footer">
@@ -982,7 +975,6 @@ function activeRouteCanShowRecentPages(
 function listSavedFilterRoutes(
   runtime: AppRuntime,
 ): Array<{
-  accessibleLabel: string;
   filterId: string;
   label: string;
 }> {
@@ -1001,31 +993,9 @@ function listSavedFilterRoutes(
         filterViewIsAvailable(runtime, filter),
     )
     .map((filter) => ({
-      accessibleLabel: toSavedFilterAccessibleLabel(filter.name),
       filterId: filter.id,
       label: filter.name,
     }));
-}
-
-function toSavedFilterAccessibleLabel(filterName: string): string {
-  if (filterName.startsWith("#")) {
-    return filterName;
-  }
-
-  let accessibleLabel = filterName;
-
-  for (const [routeLabel, alias] of savedFilterRouteLabelAliases) {
-    accessibleLabel = accessibleLabel.replace(
-      new RegExp(`\\b${escapeRegExp(routeLabel)}\\b`, "giu"),
-      alias,
-    );
-  }
-
-  return accessibleLabel;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function getRoutePage(
