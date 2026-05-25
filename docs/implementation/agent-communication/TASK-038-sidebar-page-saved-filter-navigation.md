@@ -47,7 +47,7 @@
 
 ## Current Next Action
 
-- Delegate review agents for correctness, security, deprecation/API, test quality, docs sync, changed-path exploration, and release readiness.
+- Wait for Herschel (`implementer`) to fix the committed review regressions, then run focused and adjacent validation before re-review.
 
 ## Pre-Test Guidance Outcomes
 
@@ -141,3 +141,17 @@ type ActiveRoute =
 - Parent decision:
   - accept implementation and test-sync commits;
   - run review agents before branch gate and closeout.
+
+## Review And Regression-Test Outcome
+
+- Review agents found no deprecated API blockers, but did find TASK-038 follow-ups that must close before branch gate:
+  - filter result route props still exposed raw Markdown page IDs instead of opaque route tokens;
+  - public saved filters such as `#today` could be hidden when their names contained primary route labels;
+  - missing filter views could fall through to empty-state slots when result sets were empty;
+  - metadata owner reservations were derived only from active plugins, leaving inactive/missing owner namespaces too open;
+  - Recent pages title filtering hid user pages named like primary routes.
+- Helmholtz (`test_writer`) added failing regression coverage in commit `a3e7b94`.
+- Parent red validation confirmed the review regressions are red for the expected reasons, while adjacent MUI shell and app-shell boundary tests still pass.
+- Parent decision:
+  - keep the red tests as the new review-fix baseline;
+  - delegate production fixes to Herschel (`implementer`) with write scope focused on `src/App.tsx` and no package/native/Tauri/Rust/release changes.

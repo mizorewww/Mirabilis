@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 06:15 CST - TASK-038 review regressions committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Test writer: Helmholtz added `src/test/sidebar-page-filter-navigation.test.tsx` regression coverage in commit `a3e7b94`.
+- Coverage added: saved-filter view props must not expose raw page IDs/filter IDs/page bodies/metadata; public plugin filters such as `#today` remain visible even when their names contain primary route labels; missing saved-filter views show generic unavailable states before empty-state slots; inactive plugin metadata owner reservations fail closed; recent pages include user pages titled like primary routes; active Inbox/Today routes expose `aria-current="page"`; static guards now catch dynamic imports and CommonJS requires.
+- Parent red validation: the focused TASK-038 command fails for the expected eight review regressions while adjacent MUI shell and app-shell boundary files pass.
+- Current unfinished UI roadmap: TASK-038 is still `[~]`; TASK-039 through TASK-045 remain `[ ]` and cover metadata/timer/timeline slots, command palette and Quick Capture dialog, search overlay/results, calendar/reporting projections, ML/AI panels, settings/sync placeholders, and responsive/accessibility polish.
+- Next action: Herschel (`implementer`) is fixing the review regressions in production code, after which the parent will validate, commit, re-review, sync docs, run the local gate, merge to `master`, and continue to TASK-039.
+
 ### 2026-05-26 05:59 CST - TASK-038 implementation committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.

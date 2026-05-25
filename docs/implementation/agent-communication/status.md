@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 05:59 CST.
+Last updated: 2026-05-26 06:15 CST.
 
 ## Current Task
 
@@ -8,16 +8,18 @@ Last updated: 2026-05-26 05:59 CST.
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-038 implementation committed and parent-validated; review agents are next.
+- Current phase: TASK-038 review regression tests are committed; implementation review fixes are delegated.
 
 ## Active Agents
 
-- None currently active.
+- Herschel (`implementer`) is active on TASK-038 review fixes for opaque filter DTO route tokens, saved-filter visibility, missing-view empty-state ordering, inactive metadata reservations, and recent page title collisions.
 - Kierkegaard (`planner`), Anscombe (`docs_researcher`), Ramanujan (`security_reviewer`), and Mill (`deprecation_auditor`) completed TASK-038 pre-test guidance and were closed.
 - Heisenberg (`test_writer`) added failing TASK-038 acceptance and boundary tests in commit `87d483a`.
 - Hypatia (`implementer`) completed production implementation in commit `84eac3d` and test lint cleanup in commit `1c31a8c`.
 - Locke (`test_writer`) synced stale TASK-037 route assertions in commit `f43b109`.
-- Pending: spawn review/security/deprecation/test-quality/docs/pr/release agents.
+- Kant (`doc_writer`), Feynman (`test_quality_reviewer`), Euclid (`deprecation_auditor`), Einstein (`pr_explorer`), Archimedes (`security_reviewer`), and Dalton (`reviewer`) completed TASK-038 review and found docs-sync, test-quality, security, and correctness follow-ups.
+- Helmholtz (`test_writer`) added failing review regression tests in commit `a3e7b94`.
+- Pending: wait for Herschel's implementation fix, run parent validation, then re-run review/security/test-quality/docs/release agents.
 
 ## Current TASK-038 State
 
