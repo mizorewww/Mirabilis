@@ -100,4 +100,16 @@
 
 ## Current Next Action
 
-- Wait for Kant (`test_writer`) to finish, validate the expected red signal, and commit tests.
+- Kant (`test_writer`) completed failing acceptance tests in `src/test/calendar-plugin-baseline.test.tsx`.
+- Parent validation of Kant's tests:
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` produced the expected red signal: 8 tests failed because Calendar Plugin built-in registration, `calendar.day`, `calendar.week`, `calendar.open-time-segment`, and `src/plugins/calendar/*` production sources are not implemented yet.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/calendar-plugin-baseline.test.tsx --max-warnings=0` passed.
+  - `rg -n "\\.(skip|only)\\(" src/test/calendar-plugin-baseline.test.tsx` returned no matches.
+  - `git diff --check` passed.
+  - Native/package/Tauri guard from `master` was empty.
+- Commit: `acd2648` (`Kant(test)(Implement Calendar Plugin baseline): add calendar baseline acceptance tests`).
+
+## Current Next Action
+
+- Spawn `implementer` for the minimum Calendar Plugin production implementation needed to pass Kant's focused tests.

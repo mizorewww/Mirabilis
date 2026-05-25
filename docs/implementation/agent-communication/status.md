@@ -8,11 +8,21 @@ Last updated: 2026-05-25 08:54 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 failing acceptance tests delegated to Kant (`test_writer`).
+- Current phase: TASK-026 failing acceptance tests committed; implementation handoff pending.
 
 ## Active Agents
 
-- Kant (`test_writer`) is adding failing TASK-026 Calendar Plugin baseline tests. Scope is tests only; no production code, docs, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
+- None currently active. Next agent should be `implementer` for the minimum production code needed to satisfy Kant's focused Calendar Plugin baseline tests.
+
+## Current TASK-026 State
+
+- TASK-026 current scope is the first Calendar Plugin baseline:
+  - Built-in plugin id `calendar`.
+  - Views `calendar.day` and `calendar.week` consume explicit normalized `{ kind: "calendar.time-segments" }` data.
+  - Command `calendar.open-time-segment` opens read-only in-view detail state.
+  - Manual segment creation/editing, `calendar.month`, snake_case aliases, app-shell routing, broad cross-plugin event queries, native/Tauri/package/Rust/schema changes, and external calendar sync remain deferred.
+- Pre-test guidance agents Pauli (`planner`), Turing (`docs_researcher`), Cicero (`deprecation_auditor`), and Gauss (`security_reviewer`) completed. Key parent decision: Calendar must not read Timer-owned events through its plugin event facade; tests and implementation use normalized DTO input instead.
+- Kant (`test_writer`) added `src/test/calendar-plugin-baseline.test.tsx`. Parent red validation matched the expected signal: `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` ran 8 tests and all failed because Calendar Plugin built-in registration, views, command, and `src/plugins/calendar/*` production sources do not exist yet. `bun run typecheck`, focused eslint, no `.skip` / `.only` search, `git diff --check`, and native/package/Tauri guard passed. Commit: `acd2648`.
 
 ## Completed Recent Task
 
@@ -153,8 +163,8 @@ Last updated: 2026-05-25 08:54 CST.
 
 ## Next Actions
 
-1. Wait for Kant (`test_writer`) to finish failing Calendar Plugin baseline tests.
-2. Validate the expected red signal and commit tests.
+1. Spawn `implementer` for TASK-026 minimum production code.
+2. Validate focused Calendar tests and adjacent checks after the implementer finishes.
 
 ## Current TASK-021 State
 
