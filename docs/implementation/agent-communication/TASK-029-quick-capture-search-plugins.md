@@ -228,3 +228,11 @@
   - `search.query` rejects malformed/hostile payloads without mutation: non-object/null/array, non-string or oversized `query`, extra target/path/plugin ownership fields, accessor/prototype/symbol/non-enumerable fields, and invalid `limit` values.
   - Search caps title length and scanned page/body inputs; tests should fail if overlong titles are returned or if matches beyond scan caps leak into results.
   - If cheap, add Search status/empty-result assertions and `quick-capture.save-and-open` hostile-payload parity.
+
+## Review-Fix Test Handoff
+
+- Lagrange (`test_writer`) started at 2026-05-25 12:39 CST.
+- Scope: add focused review-fix tests only in `src/test/quick-capture-search-plugins.test.tsx`.
+- Required coverage: Quick Capture modal baseline region semantics, hostile `search.query` payload rejection/no-mutation, Search title/scanned page/body caps, and optional focused P2 Search status / save-and-open parity / static import guard hardening.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Lagrange, validate expected red/focused signal, and commit tests separately.
