@@ -67,7 +67,6 @@ const requiredTask035MuiPathImports = [
   "@mui/material/CssBaseline",
   "@mui/material/Drawer",
   "@mui/material/styles",
-  "@mui/icons-material/Menu",
 ] as const;
 
 const sourceExtensions = new Set([".ts", ".tsx"]);
@@ -88,7 +87,22 @@ describe("TASK-035 MUI shell frame", () => {
     expect(navigation).toBeVisible();
     expect(main).toBeVisible();
     expect(screen.getByText(/0\.1\.0-shell/i)).toBeVisible();
-    expect(main).toHaveTextContent(/workspace|home|markdown|placeholder/i);
+    expect(
+      within(main).getByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+    const placeholders = within(main).getByRole("region", {
+      name: /^Home route placeholders$/i,
+    });
+
+    expect(
+      within(placeholders).getByText(/^Page metadata slot placeholder$/i),
+    ).toBeVisible();
+    expect(
+      within(placeholders).getByText(/^Markdown editor view placeholder$/i),
+    ).toBeVisible();
+    expect(
+      within(placeholders).getByText(/^Page timeline slot placeholder$/i),
+    ).toBeVisible();
     expect(screen.queryByText(/^Runtime 0\.1\.0-shell$/i)).not.toBeInTheDocument();
 
     const topBar = within(banner);
@@ -99,6 +113,83 @@ describe("TASK-035 MUI shell frame", () => {
       topBar.getByRole("button", { name: /quick capture|capture/i }),
     ).toBeVisible();
     expect(topBar.getByRole("button", { name: /settings/i })).toBeVisible();
+  });
+
+  it("hides and restores the workspace navigation through the drawer toggle", async () => {
+    const user = userEvent.setup();
+
+    renderReadyApp("0.1.0-drawer");
+
+    expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
+
+    const toggle = screen.getByRole("button", {
+      name: /^Workspace navigation$/i,
+    });
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("navigation", { name: /^Workspace$/i }),
+    ).toBeVisible();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("navigation", { name: /^Workspace$/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("navigation", { name: /^Workspace$/i }),
+    ).toBeVisible();
+  });
+
+  it("updates top-bar action pressed state and status through real user clicks", async () => {
+    const user = userEvent.setup();
+
+    renderReadyApp("0.1.0-actions");
+
+    expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
+
+    const topBar = within(screen.getByRole("banner", { name: /mirabilis/i }));
+    const status = screen.getByRole("status");
+    const actionChecks = [
+      {
+        name: /^Command$/i,
+        status: /^Command surface placeholder$/i,
+      },
+      {
+        name: /^Search$/i,
+        status: /^Search surface placeholder$/i,
+      },
+      {
+        name: /^Quick Capture$/i,
+        status: /^Quick Capture surface placeholder$/i,
+      },
+      {
+        name: /^Settings$/i,
+        status: /^Settings surface placeholder$/i,
+      },
+    ] as const;
+
+    for (const action of actionChecks) {
+      const activeButton = topBar.getByRole("button", { name: action.name });
+
+      await user.click(activeButton);
+
+      expect(activeButton).toHaveAttribute("aria-pressed", "true");
+      expect(status).toHaveTextContent(action.status);
+
+      for (const otherAction of actionChecks.filter(
+        (candidate) => candidate !== action,
+      )) {
+        expect(
+          topBar.getByRole("button", { name: otherAction.name }),
+        ).toHaveAttribute("aria-pressed", "false");
+      }
+    }
   });
 
   it("changes the visible shell route through real user navigation", async () => {
@@ -249,6 +340,9 @@ describe("TASK-035 MUI static and package guards", () => {
     const missingRequiredImports = requiredTask035MuiPathImports.filter(
       (moduleSpecifier) => !importSpecifiers.includes(moduleSpecifier),
     );
+    const iconPathImports = importSpecifiers.filter((moduleSpecifier) =>
+      /^@mui\/icons-material\/[^/]+$/u.test(moduleSpecifier),
+    );
     const importViolations = imports.flatMap(({ filePath, moduleSpecifier }) => {
       const violation = findForbiddenMuiImport(moduleSpecifier);
 
@@ -261,15 +355,13 @@ describe("TASK-035 MUI static and package guards", () => {
     );
 
     expect(
-      [
-        "@mui/material/AppBar",
-        "@mui/material/styles",
-        "@mui/icons-material/Menu",
-      ].map(findForbiddenMuiImport),
-    ).toStrictEqual([undefined, undefined, undefined]);
+      ["@mui/material/AppBar", "@mui/material/styles"].map(findForbiddenMuiImport),
+    ).toStrictEqual([undefined, undefined]);
     expect(missingRequiredImports).toStrictEqual([]);
+    expect(iconPathImports.length).toBeGreaterThan(0);
     expect(importViolations).toStrictEqual([]);
     expect(deprecatedApiViolations).toStrictEqual([]);
+    expect(findMuiSubstrateViolations(sources)).toStrictEqual([]);
   });
 
   it("keeps TASK-035 package, lockfile, and native-surface changes within the reviewed MUI-only boundary", async () => {
@@ -525,6 +617,33 @@ function findDeprecatedMuiApiPatterns({
         .filter(([pattern]) => pattern.test(source))
         .map(([, label]) => `${filePath}: ${label}`),
     );
+  }
+
+  return violations;
+}
+
+function findMuiSubstrateViolations(sources: readonly SourceFile[]): string[] {
+  const combinedSource = sources.map(({ source }) => source).join("\n");
+  const appSource =
+    sources.find(({ filePath }) => filePath === "src/App.tsx")?.source ?? "";
+  const requiredSubstratePatterns = new Map<RegExp, string>([
+    [/\bcreateTheme\s*\(/u, "createTheme"],
+    [/<ThemeProvider\b/u, "ThemeProvider"],
+    [/<CssBaseline\s*\/?>/u, "CssBaseline"],
+  ]);
+  const violations = [...requiredSubstratePatterns.entries()]
+    .filter(([pattern]) => !pattern.test(appSource))
+    .map(([, label]) => `src/App.tsx: missing ${label}`);
+
+  if (
+    !/\bfontFamily\s*:/u.test(appSource) ||
+    !/\b(?:ui-sans-serif|system-ui|-apple-system|Segoe UI)\b/u.test(appSource)
+  ) {
+    violations.push("src/App.tsx: missing local/system font tokens");
+  }
+
+  if (/(?:fonts\.googleapis|fonts\.gstatic|@import\s+["']https?:)/iu.test(combinedSource)) {
+    violations.push("production source: external font dependency");
   }
 
   return violations;
