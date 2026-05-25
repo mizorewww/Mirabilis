@@ -490,4 +490,13 @@
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents to confirm Noether/Dalton's execute-only MetadataBar P1 is closed and no API/security/test-quality regression remains.
+## MetadataBar Execute-Only Narrow Re-Review Handoff
+
+- Wegener (`reviewer`) started 2026-05-25 08:11 CST to review Carver's MetadataBar execute-only fail-closed correctness.
+- James (`security_reviewer`) started 2026-05-25 08:11 CST to review Carver's MetadataBar command-execution security boundary.
+- Plato (`test_quality_reviewer`) started 2026-05-25 08:11 CST to review MetadataBar command-ownership regression coverage.
+- Pascal (`deprecation_auditor`) started 2026-05-25 08:11 CST to audit Carver's MetadataBar type/API contract and docs handoff.
+
+## Current Next Action
+
+- Wait for MetadataBar execute-only narrow post-fix review agents. If no P0/P1 remains, delegate TASK-025 formal docs sync.
