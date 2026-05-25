@@ -327,3 +327,28 @@
 - Scope: formal docs only for TASK-028 Stats/Chart implementation drift.
 - Expected files include product, architecture, runtime-flow, and development docs; source, tests, progress, package/native/Tauri/Rust/schema files are out of scope.
 - Parent next action: wait for Maxwell, validate the docs-only patch, and commit it separately.
+
+## Docs Sync Outcome
+
+- Maxwell (`doc_writer`) completed a docs-only sync.
+- Changed files:
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/04-editor-and-workflows.md`
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/architecture/04-slots-editor-task.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/implementation/task-index.md`
+- Docs synced canonical `stats.run-aggregation`, Stats kebab/dotted aggregation ids, Chart views `chart.bar` / `chart.line` / `chart.pie`, Chart DTO kinds, deferred Stats views/filters/indexes/routes/charting-library/ML-AI scope, and trust-boundary validation.
+- Parent validation:
+  - `git diff --check` passed.
+  - Stale-id scan reported only historical agent communication notes.
+  - Source/package/native/Tauri/Rust/schema diff guard was empty.
+- Docs commit: `19b9488 Maxwell(docs)(Implement Stats and Chart plugins): sync stats chart docs`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Run final branch gate with `bun run check:quick`.
+- If green, mark TASK-028 complete in `docs/implementation/progress.md`, commit progress, then merge to `master`.
