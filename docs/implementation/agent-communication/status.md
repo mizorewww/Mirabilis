@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:09 CST.
+Last updated: 2026-05-25 09:15 CST.
 
 ## Current Task
 
@@ -8,12 +8,11 @@ Last updated: 2026-05-25 09:09 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 review-fix TDD pending for P1 findings.
+- Current phase: TASK-026 review-fix implementation pending for P1 regressions.
 
 ## Active Agents
 
-- Popper (`test_quality_reviewer`) is reviewing TASK-026 test quality.
-- Pending after P1 regression tests are committed: `doc_writer`.
+- None currently active. Next agent should be `implementer` for review-fix production changes.
 
 ## Current TASK-026 State
 
@@ -31,6 +30,8 @@ Last updated: 2026-05-25 09:09 CST.
   - Curie (`security_reviewer`) found P1: non-enumerable allowed DTO/command fields are accepted instead of failing closed. It also found P2 strict UTC/duration validation gaps and P3 module-scoped visibility state.
   - Peirce (`deprecation_auditor`) found no deprecated React/API blockers, but noted the module-global command state as a P2 API contract risk and asked docs to clarify that exported `note`/`detail` are normalized projection fields.
   - Faraday (`docs_researcher`) found no current-doc blockers; it confirmed RTL/user-event/region/button/no-grid direction and listed formal docs sync obligations.
+- Popper (`test_quality_reviewer`) found P1: current tests missed segments that overlap a selected day/week but start outside that range. It also found P2 DTO hardening parity gaps, P2 static boundary guard brittleness, P3 command-failure UI coverage, and P3 docs/process coverage for manual segment deferral.
+- Banach (`test_writer`) added review-fix regression tests in `src/test/calendar-plugin-baseline.test.tsx` for cross-runtime command leakage and unmount clearing, non-enumerable required/optional/provenance/command fields, and overlapping day/week segments. Parent red validation matched the expected signal: focused Calendar tests had 6 failures / 7 passes. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --check` passed. Commit: `dd41b35`.
 
 ## Completed Recent Task
 
@@ -171,8 +172,8 @@ Last updated: 2026-05-25 09:09 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for review-fix regression tests covering the P1 findings.
-2. Validate the expected red signal and commit tests, then delegate implementation fix.
+1. Spawn `implementer` for review-fix production changes.
+2. Validate focused Calendar tests and adjacent checks after the implementer finishes.
 
 ## Current TASK-021 State
 

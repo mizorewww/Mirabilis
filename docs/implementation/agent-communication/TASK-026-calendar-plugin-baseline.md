@@ -158,4 +158,19 @@
 
 ## Current Next Action
 
-- Spawn `test_writer` for P1 review-fix regression tests, validate expected red signal, and commit tests before delegating implementation.
+- Popper (`test_quality_reviewer`) found P1: existing tests missed segments that overlap a selected day/week but start outside that range, while production filtered solely by start time. It also listed P2/P3 follow-ups for DTO hardening parity, static boundary guard brittleness, command-failure UI coverage, and docs/process coverage for manual segment deferral.
+- Banach (`test_writer`) added review-fix regression tests in `src/test/calendar-plugin-baseline.test.tsx` for:
+  - Cross-runtime `calendar.open-time-segment` validity leakage and unmount clearing.
+  - Non-enumerable required segment fields, provenance fields, optional note/detail fields, and command fields.
+  - Day/week segments that overlap the selected range while starting before it.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` produced the expected red signal: 13 tests, 6 failed and 7 passed.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/calendar-plugin-baseline.test.tsx --max-warnings=0` passed.
+  - `rg -n "\\.(skip|only)\\(" src/test/calendar-plugin-baseline.test.tsx` returned no matches.
+  - `git diff --check` passed.
+- Commit: `dd41b35` (`Banach(test-fix)(Implement Calendar Plugin baseline): add calendar review regression tests`).
+
+## Current Next Action
+
+- Spawn `implementer` for review-fix production changes, then validate focused Calendar tests and adjacent checks.
