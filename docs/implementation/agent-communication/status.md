@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:30 CST.
+Last updated: 2026-05-25 12:32 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-25 12:30 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 implementation completed; review wave next.
+- Current phase: TASK-029 review wave running.
 
 ## Active Agents
 
-- No active agents. Next delegation is TASK-029 review wave.
+- Carson (`pr_explorer`) is mapping changed paths and risk surfaces.
+- Herschel (`reviewer`) is reviewing correctness and edge cases.
+- Raman (`deprecation_auditor`) is auditing API/deprecation and stale-pattern risk.
+- Confucius (`security_reviewer`) is reviewing payload/search/native trust boundaries.
+- Dirac (`docs_researcher`) is reviewing current docs/accessibility and formal docs drift.
+- Ohm (`test_quality_reviewer`) is reviewing TASK-029 test quality.
 
 ## Current TASK-029 State
 
@@ -246,5 +251,5 @@ Last updated: 2026-05-25 12:30 CST.
 
 ## Next Actions
 
-1. Delegate TASK-029 review wave.
+1. Wait for TASK-029 review agents.
 2. Fix P0/P1 findings before docs sync and final branch gate.

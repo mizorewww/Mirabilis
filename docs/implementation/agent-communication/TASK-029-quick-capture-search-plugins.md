@@ -189,3 +189,14 @@
   - `docs_researcher` for current-doc/accessibility/desktop-entry review.
   - `test_quality_reviewer` for acceptance test quality.
 - Fix P0/P1 findings before docs sync and final branch gate.
+
+## Review Wave Handoff
+
+- Carson (`pr_explorer`) started at 2026-05-25 12:32 CST.
+- Herschel (`reviewer`) started at 2026-05-25 12:32 CST.
+- Raman (`deprecation_auditor`) started at 2026-05-25 12:32 CST.
+- Confucius (`security_reviewer`) started at 2026-05-25 12:32 CST.
+- Dirac (`docs_researcher`) started at 2026-05-25 12:32 CST.
+- Ohm (`test_quality_reviewer`) started at 2026-05-25 12:32 CST.
+- All review agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.
