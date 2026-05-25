@@ -266,3 +266,11 @@
   - Change `quick-capture.modal` baseline to a labelled `region` with accessible textbox semantics.
   - Add `role="status"` summary output to `search.results` for non-empty and empty results.
   - Keep package/native/Tauri/Rust/schema/capability surfaces unchanged.
+
+## Review-Fix Implementation Handoff
+
+- Jason (`implementer`) started at 2026-05-25 12:47 CST.
+- Scope: production changes only for Quick Capture modal region semantics and Search status summary.
+- Expected changed files: `src/plugins/quick-capture/plugin.ts` and `src/plugins/search/plugin.ts`.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Jason, validate focused green checks, and commit review-fix implementation separately.
