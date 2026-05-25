@@ -56,7 +56,7 @@ async function createAppRuntime() {
 
 `storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-031 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin`、`MlPlugin` 和 `AiPlugin`。Sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-032 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin`、`MlPlugin`、`AiPlugin` 和 `SyncPlugin`。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
@@ -77,6 +77,8 @@ TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-a
 TASK-030 的 `ml.run-prediction` 同样只运行在 TypeScript plugin/runtime 内。`ml.predict-remaining-time` 是 inert algorithm descriptor；Command Registry 是当前 runtime execution entry。ML 消费 caller-provided exact bounded page/metadata/event projections，返回 deterministic `ml.remaining-time-prediction` DTO，不读取 sibling plugin private stores/facades，不持久化 caller-provided projection evidence 为 ML metadata/events，也不新增 NativeBridge/Tauri IPC、network、filesystem、worker、model storage/training、package/Cargo、Rust surface、schema 或 Tauri capability。
 
 TASK-031 的 `ai.cleanup-inbox`、`ai.turn-text-into-task`、`ai.suggest-tags`、`ai.suggest-due-date`、`ai.generate-subtasks`、`ai.generate-filter`、`ai.summarize-time-notes`、`ai.generate-weekly-review` 和 `ai.explain-prediction` 也只运行在 TypeScript plugin/runtime 内。AI Plugin 消费 exact bounded caller-provided projections，通过 `src/plugins/ai/**` owned `openai` provider boundary 形成 Responses-style request DTOs（`instructions`、string `input`、`store: false`、strict `text.format` / `json_schema`），并返回 advisory DTOs。当前 provider/settings are injectable/mocked and default to unconfigured; no live OpenAI call, OpenAI SDK, raw network API, NativeBridge/Tauri IPC, filesystem, worker, package/Cargo/Rust surface, persistence schema, keychain, or Tauri capability is added.
+
+TASK-032 的 SyncPlugin 也只作为 TypeScript built-in plugin skeleton 加载。它的 manifest id 是 `sync`，`register()` 不注册 runtime commands、views、slots、settings panels、indexers 或 algorithms；当前 runtime 没有 `sync.start` / `sync.push` / `sync.pull` / transport command，也没有 settings UI。`src/plugins/sync/**` 只导出 syncable unit descriptors/serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings DTO snapshots, plus a rebuildable local plugin-index policy and conflict-policy helper. Plugin Settings snapshots reject top-level/nested secret/auth/credential/remote-endpoint-like keys, and the event conflict helper rejects stale, mismatched, non-plain, malformed, or getter-backed event DTOs before union/dedupe/conflict classification. No NativeBridge/Tauri IPC, filesystem, storage adapter, package/Cargo/Rust surface, schema, keychain, remote endpoint, network transport, or Tauri capability is added for Sync in TASK-032.
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -562,8 +564,6 @@ network/filesystem/workers/model storage/training/background jobs
 native/Tauri/package/Rust/schema/capability changes
 ```
 
----
-
 ### 18.15 User runs AI advisory command
 
 TASK-031 current flow:
@@ -593,6 +593,36 @@ app-shell AI route/sidebar mounting polish
 raw Responses missing-status stricter parsing
 exact preservation of public result words matching persist*
 generate-filter parity with broader Core filter operators such as neq / exists
+native/Tauri/package/Rust/schema/capability changes
+```
+
+---
+
+### 18.16 Sync skeleton contract
+
+TASK-032 current flow is definition-only:
+
+```text
+App bootstrap loads SyncPlugin from BUILT_IN_PLUGINS
+→ Plugin Host installs/activates manifest id sync
+→ SyncPlugin.register() does not add runtime commands or views
+→ syncable unit serializers can be imported by tests/future sync code
+→ conflict policy helper can classify mutable-unit and event-unit conflicts
+```
+
+Current Sync code does not execute a sync job, read/write stores through a command, persist plugin settings, open a network connection, call NativeBridge/Tauri IPC, or resolve a user-facing conflict. Durable payload candidates are DTO snapshots for Markdown Page, Metadata, Event, Filter, and Plugin Settings; local plugin indexes are marked rebuildable and excluded from durable sync payloads. Event conflict classification first validates strict event DTO shape: event units and `syncKey` must be exact plain data records, accessors are rejected without getter reads, and `snapshot.id` must match `syncKey.id`.
+
+Deferred after TASK-032:
+
+```text
+settings UI / persistent plugin settings facade
+secret storage / OS keychain
+remote account or endpoint configuration
+network/native sync transport
+background jobs / workers
+delete/tombstone model
+conflict UI and user resolution workflow
+schema-backed sync state
 native/Tauri/package/Rust/schema/capability changes
 ```
 

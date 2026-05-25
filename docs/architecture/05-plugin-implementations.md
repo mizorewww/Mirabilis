@@ -392,8 +392,6 @@ Current behavior:
 
 Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route/navigation, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, Stats app-shell/feed integration, ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
 
----
-
 ## 12. Habit / Heatmap 插件架构
 
 ### 12.1 Habit Plugin
@@ -808,8 +806,6 @@ network/filesystem/workers/model storage/training/background jobs
 native/package/Rust/schema/Tauri capability changes
 ```
 
----
-
 ## 14. AI Plugin 架构
 
 AI Plugin 负责 AI/provider behavior；Core 不包含 AI business logic、OpenAI model/prompt details、provider settings, network code, or secret handling. TASK-031 当前只交付 TypeScript app-runtime provider abstraction baseline，plugin id 是 `ai`。
@@ -954,5 +950,100 @@ exact preservation of public result words matching persist*
 generate-filter parity with broader Core filter operators such as neq / exists
 native/package/Rust/schema/Tauri capability changes
 ```
+
+---
+
+## 15. Sync Plugin 架构
+
+Sync Plugin 负责 future sync contract ownership；Core 不包含 Sync business logic、transport code、remote endpoint settings, network code, or conflict UI. TASK-032 当前只交付 TypeScript app-runtime skeleton，plugin id 是 `sync`。
+
+### 15.1 Registration and Runtime Surface
+
+Current TASK-032 ids:
+
+```text
+Built-in plugin:
+SyncPlugin
+
+Plugin id:
+sync
+
+Runtime commands:
+none
+
+Views:
+none
+
+Settings panels:
+none
+
+Transport:
+none
+```
+
+`SyncPlugin.register()` does not register runtime commands, views, slots, settings panels, indexers, algorithms, or mobile toolbar items. Stale or future ids such as `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, `sync.configure-remote`, `sync.page`, `sync.pages`, `sync.plugin_settings`, and `sync.indexer` are not aliases.
+
+### 15.2 Syncable Units
+
+`src/plugins/sync/syncable-units.ts` exports `SYNCABLE_UNIT_DESCRIPTORS` with schema version `1` for the durable units Sync can eventually exchange:
+
+```text
+sync.unit.markdown-page     key: id
+sync.unit.metadata          key: pageId + namespace + key
+sync.unit.event             key: id
+sync.unit.filter            key: id
+sync.unit.plugin-settings   key: pluginId + key
+```
+
+The serializers produce deterministic DTO snapshots:
+
+```text
+serializeMarkdownPageSyncUnit(page)
+serializeMetadataSyncUnit(metadata)
+serializeEventSyncUnit(event)
+serializeFilterSyncUnit(filter)
+serializePluginSettingsSyncUnit(settings)
+```
+
+The Plugin Settings unit is only a DTO snapshot shape. TASK-032 does not add settings persistence, a settings UI, a Core settings facade, OS keychain/secret storage, or a remote configuration store. The snapshot distinguishes `{ state: "unset" }` from `{ state: "json", value: null }`, and top-level or nested secret/auth/credential/remote-endpoint-like keys are rejected rather than treated as durable sync data. Future settings sync should use explicit per-plugin allowlists and keep secrets/remote credentials in a separate keychain-backed path.
+
+Serializer output clones JSON-compatible data and rejects non-JSON runtime or executable shapes such as functions, symbols, bigint, non-finite numbers, cycles, non-plain objects, sparse/custom arrays, accessors, non-enumerable fields, oversized data, and over-deep data. The clone is a payload boundary for future durable exchange, not a live store handle.
+
+### 15.3 Rebuildable Indexes
+
+`SYNC_REBUILDABLE_INDEX_POLICY` marks local plugin indexes as rebuildable derived data:
+
+```text
+marker: sync.rebuildable.plugin-indexes
+durable: false
+syncable: false
+reason: Local plugin indexes are derived and rebuilt from durable units.
+```
+
+`core_plugin_indexes` remains a local registry for plugin-owned index metadata. Sync payloads do not include a durable `sync.plugin-index` unit; facts still live in Markdown Pages, Metadata, Events, Filters, and explicit Plugin Settings snapshots.
+
+### 15.4 Conflict Policy and Deferred Scope
+
+`src/plugins/sync/conflict-policy.ts` exports `SYNC_CONFLICT_POLICY` and `resolveSyncUnitConflict()` for the current documented policy:
+
+```text
+mutable units:
+  markdown-page / metadata / filter / plugin-settings divergent edits -> manual-resolution-required
+
+event units:
+  append-only: true
+  distinct ids -> union
+  identical duplicate id/content -> dedupe
+  same id with different content -> manual-resolution-required
+
+deferred:
+  tombstones
+  deletes
+  conflict-ui
+```
+
+The event conflict helper accepts only strict event DTOs. Event units and `syncKey` must be plain records with exact data keys, descriptor-safe properties, and no getter invocation; `snapshot.id` must equal `syncKey.id`; stale unit kinds, mismatched non-event units, non-plain records, malformed DTOs, bad schema versions, extra keys, and malformed event-unit arrays are rejected before merge classification.
+
+TASK-032 does not add network sync, native sync transport, filesystem access, background workers, remote endpoint settings, package/Cargo dependencies, Rust commands, Tauri permissions/capabilities, schema changes, keychain storage, or conflict UI. Any future network/native Sync work requires explicit settings and security review before it can be enabled.
 
 ---
