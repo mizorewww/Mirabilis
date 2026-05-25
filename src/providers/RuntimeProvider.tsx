@@ -10,14 +10,10 @@ import {
 export type RuntimeInitializer<Runtime extends RuntimeSource = AppRuntime> =
   () => Promise<Runtime>;
 
-type RuntimeProviderChild<Runtime extends RuntimeSource> =
-  | ReactNode
-  | ((runtime: Runtime) => ReactNode);
-
 export type RuntimeProviderProps<Runtime extends RuntimeSource = AppRuntime> = {
   runtime?: Runtime;
   initializeRuntime?: RuntimeInitializer<Runtime>;
-  children: RuntimeProviderChild<Runtime>;
+  children: ReactNode;
   loadingFallback?: ReactNode;
   failureFallback?: ReactNode;
 };
@@ -42,7 +38,7 @@ export function RuntimeProvider<Runtime extends RuntimeSource = AppRuntime>({
   if (runtime !== undefined) {
     return (
       <RuntimeContext.Provider value={createPublicRuntime(runtime)}>
-        {renderRuntimeChildren(children, runtime)}
+        {children}
       </RuntimeContext.Provider>
     );
   }
@@ -67,7 +63,7 @@ function RuntimeInitializationBoundary<Runtime extends RuntimeSource = AppRuntim
   failureFallback,
 }: {
   initializeRuntime: RuntimeInitializer<Runtime>;
-  children: RuntimeProviderChild<Runtime>;
+  children: ReactNode;
   loadingFallback?: ReactNode;
   failureFallback?: ReactNode;
 }) {
@@ -124,7 +120,7 @@ function RuntimeInitializationBoundary<Runtime extends RuntimeSource = AppRuntim
 
   return (
     <RuntimeContext.Provider value={createPublicRuntime(state.runtime)}>
-      {renderRuntimeChildren(children, state.runtime)}
+      {children}
     </RuntimeContext.Provider>
   );
 }
@@ -166,11 +162,4 @@ function createPublicRuntime(runtime: RuntimeSource): PublicRuntime {
   return Object.freeze({
     app: Object.freeze(app),
   });
-}
-
-function renderRuntimeChildren<Runtime extends RuntimeSource>(
-  children: RuntimeProviderChild<Runtime>,
-  runtime: Runtime,
-): ReactNode {
-  return typeof children === "function" ? children(runtime) : children;
 }

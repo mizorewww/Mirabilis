@@ -247,7 +247,9 @@ describe("TASK-035 MUI shell frame", () => {
   });
 
   it("keeps startup loading visible without rendering a fake ready workspace", () => {
-    const initializeRuntime = vi.fn(() => new Promise<RuntimeLike>(() => {}));
+    const initializeRuntime = vi.fn(
+      () => new Promise<AppRuntime>(() => {}),
+    );
 
     render(<App initializeRuntime={initializeRuntime} />);
 
@@ -259,7 +261,7 @@ describe("TASK-035 MUI shell frame", () => {
 
   it("keeps startup failures visible and redacted from raw runtime details", async () => {
     const initializeRuntime = vi
-      .fn<() => Promise<RuntimeLike>>()
+      .fn<() => Promise<AppRuntime>>()
       .mockRejectedValue(createSensitiveTask035StartupError());
 
     render(<App initializeRuntime={initializeRuntime} />);

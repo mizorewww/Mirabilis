@@ -96,6 +96,9 @@ type EditorAction =
       body?: StructuredMarkdownDocument;
     }
   | {
+      type: "load-failed";
+    }
+  | {
       type: "edit";
       markdown: string;
       body?: StructuredMarkdownDocument;
@@ -221,19 +224,28 @@ export function MarkdownPageEditor(props: MarkdownPageEditorProps) {
     loadGenerationRef.current = loadGeneration;
     contentVersionRef.current += 1;
     dispatch({ type: "load-started" });
-    void pageFacade.load(pageId).then((page) => {
-      if (!isCurrent || loadGenerationRef.current !== loadGeneration) {
-        return;
-      }
+    void pageFacade.load(pageId).then(
+      (page) => {
+        if (!isCurrent || loadGenerationRef.current !== loadGeneration) {
+          return;
+        }
 
-      contentVersionRef.current += 1;
-      dispatch({
-        type: "load-succeeded",
-        pageId,
-        markdown: page.markdown,
-        body: page.body,
-      });
-    });
+        contentVersionRef.current += 1;
+        dispatch({
+          type: "load-succeeded",
+          pageId,
+          markdown: page.markdown,
+          body: page.body,
+        });
+      },
+      () => {
+        if (!isCurrent || loadGenerationRef.current !== loadGeneration) {
+          return;
+        }
+
+        dispatch({ type: "load-failed" });
+      },
+    );
 
     return () => {
       isCurrent = false;
@@ -712,6 +724,13 @@ function editorStateReducer(
         markdown: action.markdown,
         body: action.body,
         loadedPageId: action.pageId,
+        loading: false,
+        saving: false,
+        saveStatus: "idle",
+      };
+    case "load-failed":
+      return {
+        ...state,
         loading: false,
         saving: false,
         saveStatus: "idle",

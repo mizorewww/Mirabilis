@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import HomeIcon from "@mui/icons-material/Home";
@@ -41,13 +41,12 @@ import {
   useRuntime,
   type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
-  type RuntimeSource,
 } from "./providers";
 import { ViewHost } from "./shell/hosts";
 import "./App.css";
 
 type AppProps = {
-  initializeRuntime?: RuntimeInitializer<RuntimeSource>;
+  initializeRuntime?: RuntimeInitializer<AppRuntime>;
 };
 
 type WorkspaceRouteId =
@@ -86,12 +85,21 @@ type CurrentPageState = {
   generation: number;
 };
 
+type AppRuntimeState =
+  | { status: "loading" }
+  | { status: "ready"; runtime: AppRuntime }
+  | { status: "failed" };
+
 const sessionHomeTitle = "Home";
 const markdownPageViewId = "markdown.page-editor";
 const pageEditorViewType = "page.editor";
 const markdownInsertCommandId = "markdown.insert-text";
 const openTaskPageCommandId = "task.open-task-page";
 const toggleTaskStatusCommandId = "task.toggle-status";
+const appInitializationPromises = new WeakMap<
+  RuntimeInitializer<AppRuntime>,
+  Promise<AppRuntime>
+>();
 
 const mirabilisTheme = createTheme({
   palette: {
@@ -233,17 +241,96 @@ const shellTools: readonly ShellTool[] = [
   },
 ];
 
-function App({ initializeRuntime = createAppRuntime }: AppProps) {
+function App({ initializeRuntime = createDefaultAppRuntime }: AppProps) {
   return (
     <ThemeProvider theme={mirabilisTheme}>
       <CssBaseline />
-      <RuntimeProvider<RuntimeSource> initializeRuntime={initializeRuntime}>
-        {(runtimeSource) => (
-          <MirabilisShell runtimeSource={runtimeSource as AppRuntime} />
-        )}
-      </RuntimeProvider>
+      <AppRuntimeBoundary initializeRuntime={initializeRuntime} />
     </ThemeProvider>
   );
+}
+
+function AppRuntimeBoundary({
+  initializeRuntime,
+}: {
+  initializeRuntime: RuntimeInitializer<AppRuntime>;
+}) {
+  const initializeRuntimeRef = useRef(initializeRuntime);
+  const [state, setState] = useState<AppRuntimeState>(() => ({
+    status: "loading",
+  }));
+
+  useEffect(() => {
+    let active = true;
+
+    getAppInitializationPromise(initializeRuntimeRef.current)
+      .then((runtime) => {
+        if (active) {
+          setState({ status: "ready", runtime });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setState({ status: "failed" });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (state.status === "failed") {
+    return (
+      <main className="app-startup app-startup--failed">
+        <div className="app-startup__message" role="alert">
+          Mirabilis could not start. Close and reopen the app.
+        </div>
+      </main>
+    );
+  }
+
+  if (state.status === "loading") {
+    return (
+      <main className="app-startup" aria-busy="true">
+        <p className="app-startup__message">Starting Mirabilis</p>
+      </main>
+    );
+  }
+
+  return (
+    <RuntimeProvider runtime={state.runtime}>
+      <MirabilisShell runtimeSource={state.runtime} />
+    </RuntimeProvider>
+  );
+}
+
+function createDefaultAppRuntime(): Promise<AppRuntime> {
+  return createAppRuntime();
+}
+
+function getAppInitializationPromise(
+  initializeRuntime: RuntimeInitializer<AppRuntime>,
+): Promise<AppRuntime> {
+  const existingPromise = appInitializationPromises.get(initializeRuntime);
+
+  if (existingPromise !== undefined) {
+    return existingPromise;
+  }
+
+  const promise = Promise.resolve()
+    .then(initializeRuntime)
+    .catch((error: unknown) => {
+      if (appInitializationPromises.get(initializeRuntime) === promise) {
+        appInitializationPromises.delete(initializeRuntime);
+      }
+
+      throw error;
+    });
+
+  appInitializationPromises.set(initializeRuntime, promise);
+
+  return promise;
 }
 
 function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
@@ -493,6 +580,8 @@ function createMarkdownWorkspaceBridge({
   openPage(pageId: string): void;
   runtime: AppRuntime;
 }): MarkdownWorkspaceBridgeValue {
+  const commandOpenedPageIds = new Set<string>();
+
   return {
     pages: {
       async load(pageId) {
@@ -536,6 +625,7 @@ function createMarkdownWorkspaceBridge({
           const output = await runtime.commands.execute(commandId, openInput);
 
           ensureCurrentPage(currentPageState, openInput.sourcePageId, generation);
+          allowCommandOpenedPageId(commandOpenedPageIds, output);
 
           return output;
         }
@@ -566,11 +656,26 @@ function createMarkdownWorkspaceBridge({
       },
     },
     openPage(pageId) {
-      if (pageId.trim().length > 0) {
+      if (commandOpenedPageIds.delete(pageId)) {
         openPage(pageId);
       }
     },
   };
+}
+
+function allowCommandOpenedPageId(
+  commandOpenedPageIds: Set<string>,
+  output: unknown,
+): void {
+  if (!isRecord(output) || typeof output.pageId !== "string") {
+    return;
+  }
+
+  const pageId = output.pageId.trim();
+
+  if (pageId.length > 0) {
+    commandOpenedPageIds.add(pageId);
+  }
 }
 
 function loadWorkspacePage(

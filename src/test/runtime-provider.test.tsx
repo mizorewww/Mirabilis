@@ -3,6 +3,7 @@ import { StrictMode, type ComponentType, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import App from "../App";
+import type { AppRuntime } from "../bootstrap";
 
 type RuntimeLike = {
   app: {
@@ -233,10 +234,10 @@ describe("runtime provider", () => {
 describe("startup failure UI", () => {
   it("renders a generic visible alert without leaking raw bootstrap details", async () => {
     const initializeRuntime = vi
-      .fn<() => Promise<RuntimeLike>>()
+      .fn<() => Promise<AppRuntime>>()
       .mockRejectedValue(createSensitiveBootstrapError());
     const AppWithRuntimeInjection = App as ComponentType<{
-      initializeRuntime: () => Promise<RuntimeLike>;
+      initializeRuntime: () => Promise<AppRuntime>;
     }>;
 
     render(<AppWithRuntimeInjection initializeRuntime={initializeRuntime} />);

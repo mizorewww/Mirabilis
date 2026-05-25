@@ -807,7 +807,7 @@ function createForeignOpenThenLoadProbeEditor(
       return () => {
         active = false;
       };
-    }, [bridge, foreignPageId]);
+    }, [bridge]);
 
     return (
       <section aria-label="Foreign self-authorization probe editor">
