@@ -57,3 +57,63 @@
 - Hegel (`security_reviewer`) started at 2026-05-25 13:09 CST.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Pasteur (`planner`) recommended the smallest safe slice as built-in `ml` remaining-time prediction only:
+  - register `ml` in `BUILT_IN_PLUGINS`;
+  - expose one inert algorithm descriptor and one executable command wrapper;
+  - build features from caller-provided page/metadata/event projections, not direct Task/Timer/Tag/Habit/Stats internals;
+  - use a deterministic baseline model;
+  - render a prediction panel as a view and sidebar slot contribution;
+  - use only ML-owned metadata/event writes.
+- Averroes (`docs_researcher`) verified current official docs for Vitest, React 19, Testing Library, WAI-ARIA 1.2, Tauri v2, and Vite 7. It recommended deterministic fixed DTO fixture tests, `test.each` where useful, React Testing Library role/name queries, semantic `region`/`status`/`list` or table UI, and no package/native/Rust/Tauri changes for the TypeScript-only baseline.
+- Chandrasekhar (`deprecation_auditor`) found no P0 blockers and identified P1 pre-test hazards:
+  - `AlgorithmContribution` is currently an inert manifest descriptor; there is no executable AlgorithmRegistry facade to test or implement.
+  - `PluginContext.metadata` and `PluginContext.events` are filtered to the current plugin owner, so ML cannot directly read Task/Timer/Tag/Habit private records through plugin facades.
+- Hegel (`security_reviewer`) found no current P0/P1 blocker and required exact bounded plain DTOs, inert React text rendering, baseline/heuristic confidence wording plus limitations, static guards against raw runtime/store/native/sibling plugin imports, and no package/native/Tauri/Rust/schema/capability surface changes.
+
+## Parent Decisions After Guidance
+
+- Plugin id: `ml`.
+- Inert algorithm descriptor id: `ml.predict-remaining-time`.
+- Runtime command id: `ml.run-prediction`.
+- Do not register stale aliases: `ml.predict_remaining_time`, `ml.predict_task_remaining_time`, `ml.prediction_panel`, `ml.run_prediction`, or `ml.refresh_models`.
+- Do not test or implement executable AlgorithmRegistry behavior; command registry is the runtime execution entry for this slice.
+- Command payload shape:
+
+```ts
+{
+  algorithmId: "ml.predict-remaining-time";
+  input: {
+    kind: "ml.remaining-time-prediction-input";
+    pageId: string;
+    generatedAt: string;
+    pages: PageProjection[];
+    metadata: MetadataProjection[];
+    events: EventProjection[];
+  };
+}
+```
+
+- Projections are exact caller-provided public data. ML must reject malformed, wrong-owner, forged-provenance, accessor-backed, symbol-keyed, prototype-carried, sparse/custom-array, oversized, or non-finite inputs instead of trying to read sibling private stores.
+- Output/view data kind: `ml.remaining-time-prediction`.
+- Output includes `algorithmId`, `modelId: "ml.remaining-time-baseline.v1"`, `pageId`, `generatedAt`, `minSeconds`, `maxSeconds`, `confidence`, bounded `features`, `reasons`, and `limitations`.
+- Deterministic baseline model:
+  - `baselineTotalSeconds = task estimate || similar completed task average || max(trackedSeconds * 2, 3600)`.
+  - `timeRemaining = max(0, baselineTotalSeconds - trackedSeconds)`.
+  - If child tasks exist, compute `childRemaining = baselineTotalSeconds * (1 - completed / total)` and use `min(timeRemaining, childRemaining)`.
+  - Confidence starts at `0.35`, adds estimate/tracked/child/similar-history evidence, and is clamped to `0.90`.
+  - Range spread is tied to confidence so fixed fixtures are deterministic.
+- View id/type: `ml.prediction-panel`.
+- Slot contribution id: `ml.page-sidebar.prediction-panel` targeting `page.sidebar.panel`.
+- Metadata descriptors:
+  - `ml.predictedRemainingTime` with `namespace: "ml"`, `key: "predictedRemainingTime"`, `valueType: "json"`.
+  - `ml.predictionConfidence` with `namespace: "ml"`, `key: "predictionConfidence"`, `valueType: "number"`.
+- Event descriptor: `ml.prediction-generated` with `namespace: "ml"` and `type: "prediction-generated"`.
+- Expected production files: `src/plugins/ml/index.ts`, `src/plugins/ml/plugin.ts`, `src/plugins/ml/features/buildRemainingTimeFeatures.ts`, `src/plugins/ml/algorithms/predictRemainingTime.ts`, `src/plugins/ml/views/PredictionPanel.tsx`, and `src/bootstrap/built-in-plugins.ts`.
+- Deferred: executable AlgorithmRegistry, real model training, background refresh jobs, persistent ML indexes, recommendation/best-work-time/bias/clustering/ranking, AI explanation, app-shell sidebar mounting, broad query/feed facade, direct cross-plugin private reads, Task estimate UI, Timer total metadata, native integration, sync, package changes, Rust/schema/capability changes.
+
+## Current Next Action
+
+- Delegate failing acceptance tests to `test_writer`.

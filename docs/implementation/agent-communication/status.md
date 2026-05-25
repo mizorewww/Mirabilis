@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:09 CST.
+Last updated: 2026-05-25 13:14 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 13:09 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 pre-test guidance delegated.
+- Current phase: TASK-030 pre-test guidance completed; test handoff pending.
 
 ## Active Agents
 
-- Pasteur (`planner`) is defining the smallest safe TASK-030 slice.
-- Averroes (`docs_researcher`) is checking current React/Vitest/Testing Library and Tauri guidance.
-- Chandrasekhar (`deprecation_auditor`) is auditing stale ML API/runtime assumptions.
-- Hegel (`security_reviewer`) is reviewing ML feature/prediction trust boundaries.
+- No active agents. Parent is recording TASK-030 pre-test guidance before delegating failing tests.
 
 ## Current TASK-030 State
 
@@ -35,6 +32,20 @@ Last updated: 2026-05-25 13:09 CST.
   - Averroes (`docs_researcher`) should verify current official docs for deterministic Vitest tests, React/Testing Library accessible prediction panel rendering, and Tauri no-native implications.
   - Chandrasekhar (`deprecation_auditor`) should check whether ML algorithm descriptors are inert and identify stale ids/API assumptions.
   - Hegel (`security_reviewer`) should define payload, feature, prediction, rendering, and static-guard constraints.
+- Pre-test guidance completed:
+  - Pasteur (`planner`) recommended the smallest slice as a built-in `ml` plugin with one inert algorithm descriptor, one executable `ml.run-prediction` command, deterministic remaining-time baseline, caller-provided public projections, prediction view, sidebar slot contribution, and ML-owned metadata/event writes only.
+  - Averroes (`docs_researcher`) verified current React 19, Testing Library, Vitest, WAI-ARIA, Vite 7, and Tauri v2 guidance. It recommended pure fixture tests, React Testing Library semantic role queries, and no package/native/Rust/Tauri changes for a TypeScript-only baseline.
+  - Chandrasekhar (`deprecation_auditor`) found no P0 blockers and identified two P1 pre-test hazards to avoid: there is no executable AlgorithmRegistry, and `PluginContext` metadata/events are owner-scoped, so ML cannot directly read Task/Timer/Tag/Habit private records. Use explicit normalized DTO input instead.
+  - Hegel (`security_reviewer`) found no current P0/P1 blocker and required exact bounded plain DTOs, inert rendering, misleading-confidence guardrails, no sibling plugin/private store/native imports, and static guards for no package/native/Tauri/Rust/schema/capability changes.
+- Parent decisions after guidance:
+  - Plugin id: `ml`.
+  - Inert algorithm descriptor: `ml.predict-remaining-time`.
+  - Runtime command: `ml.run-prediction`; no `ml.run_prediction` or AlgorithmRegistry execution tests.
+  - Input kind: `ml.remaining-time-prediction-input`; output/view data kind: `ml.remaining-time-prediction`.
+  - View id/type: `ml.prediction-panel`; slot contribution: `ml.page-sidebar.prediction-panel` targeting `page.sidebar.panel`.
+  - Metadata descriptors: `ml.predictedRemainingTime` (`namespace: "ml"`, `key: "predictedRemainingTime"`, `valueType: "json"`) and `ml.predictionConfidence` (`namespace: "ml"`, `key: "predictionConfidence"`, `valueType: "number"`).
+  - Event descriptor: `ml.prediction-generated` with `namespace: "ml"` and `type: "prediction-generated"`.
+  - Feature input comes from exact caller-provided page/metadata/event projections; ML must not import sibling plugin internals or use raw stores/private query paths.
 
 ## Current TASK-029 State
 
