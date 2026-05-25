@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:32 CST.
+Last updated: 2026-05-25 12:37 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-25 12:32 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 review wave running.
+- Current phase: TASK-029 review-fix tests pending.
 
 ## Active Agents
 
-- Carson (`pr_explorer`) is mapping changed paths and risk surfaces.
-- Herschel (`reviewer`) is reviewing correctness and edge cases.
-- Raman (`deprecation_auditor`) is auditing API/deprecation and stale-pattern risk.
-- Confucius (`security_reviewer`) is reviewing payload/search/native trust boundaries.
-- Dirac (`docs_researcher`) is reviewing current docs/accessibility and formal docs drift.
-- Ohm (`test_quality_reviewer`) is reviewing TASK-029 test quality.
+- No active agents. Next delegation is `test_writer` for TASK-029 review-fix coverage.
 
 ## Current TASK-029 State
 
@@ -56,6 +51,14 @@ Last updated: 2026-05-25 12:32 CST.
   - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/quick-capture/index.ts`, `src/plugins/quick-capture/plugin.ts`, `src/plugins/search/index.ts`, and `src/plugins/search/plugin.ts`.
   - Parent validated: focused TASK-029 tests passed (10 tests), adjacent plugin/API/Task/Tag/Stats suite passed (9 files / 174 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Implementation commit: `a174efb Schrodinger(implementation)(Implement Quick Capture and Search plugins): implement capture search baselines`; post-commit auto-push succeeded.
+- Review wave completed:
+  - Carson (`pr_explorer`) mapped changed paths and highlighted Quick Capture trust boundary, Search limits/ordering, UI scope, and docs drift as review surfaces.
+  - Confucius (`security_reviewer`) found no P0/P1 issues and confirmed the no-native/no-package/no-Tauri baseline.
+  - Ohm (`test_quality_reviewer`) found P1 test gaps: malformed/hostile `search.query` payloads are not covered, and Search title/scanned page/body caps are not locked by tests.
+  - Dirac (`docs_researcher`) found one P1 accessibility issue: `quick-capture.modal` exposes `role="dialog"` without real dialog semantics. Parent decision: make this baseline a labelled `region`; real modal/focus behavior remains app-shell work.
+  - Herschel (`reviewer`) found no P0/P1 correctness issues. P2: trusted Inbox rename behavior, Search ordering, and Search hostile-payload coverage.
+  - Raman (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2: formal docs still contain stale Quick Capture ids and native shortcut wording.
+  - Parent decision: add review-fix tests first, then delegate production fixes. Include P2 Search status/empty result and `save-and-open` payload parity tests if cheap while touching the suite.
 
 ## Current TASK-028 State
 
@@ -251,5 +254,5 @@ Last updated: 2026-05-25 12:32 CST.
 
 ## Next Actions
 
-1. Wait for TASK-029 review agents.
-2. Fix P0/P1 findings before docs sync and final branch gate.
+1. Delegate review-fix tests to `test_writer`.
+2. Validate expected red/focused signal, then commit tests separately.

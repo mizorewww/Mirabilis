@@ -200,3 +200,31 @@
 - Ohm (`test_quality_reviewer`) started at 2026-05-25 12:32 CST.
 - All review agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.
+
+## Review Wave Outcomes
+
+- Carson (`pr_explorer`) mapped changed paths and risk surfaces. It found no blocker; review focus areas are Quick Capture trust boundary, Search limits/ordering, UI scope, and formal docs drift.
+- Confucius (`security_reviewer`) found no P0/P1 issues. It confirmed exact Quick Capture payload validation, plugin-owned trusted Inbox behavior, inert structured Markdown, bounded/literal Search, inert Search rendering, no Task/Tag private mutation, no native entry-point broadening, and empty native/package/Tauri/Rust/schema diffs.
+- Ohm (`test_quality_reviewer`) found two P1 test gaps:
+  - `search.query` hostile/malformed payloads are not covered.
+  - Search title-length and scanned page/body caps are not locked by tests.
+- Dirac (`docs_researcher`) found one P1 accessibility issue:
+  - `quick-capture.modal` currently exposes `role="dialog"` without real dialog semantics such as visible title, close/save controls, focus containment, close behavior, or app-shell modal ownership.
+- Herschel (`reviewer`) found no P0/P1 correctness issues. P2: trusted Inbox rename behavior, Search ordering contract, and Search hostile-payload coverage.
+- Raman (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2: formal docs still contain stale `quick_capture.*`, `inbox.unprocessed`, mobile toolbar, and desktop shortcut wording.
+
+## Parent Decisions After Review
+
+- Treat Ohm's two Search test gaps and Dirac's Quick Capture modal semantics issue as required P1s.
+- Quick Capture modal baseline should not claim real modal/dialog behavior in TASK-029. Use a labelled `region` for `quick-capture.modal` until app shell owns a real modal wrapper with focus/close behavior.
+- Add red/focused review-fix tests first via `test_writer`, then delegate production fixes to `implementer`.
+- While touching tests, also cover Search status/empty-result accessibility and `quick-capture.save-and-open` hostile-payload parity if that stays focused.
+
+## Current Next Action
+
+- Delegate review-fix tests to `test_writer`.
+- Required coverage:
+  - `quick-capture.modal` renders as a labelled `region`, not a bare `dialog`.
+  - `search.query` rejects malformed/hostile payloads without mutation: non-object/null/array, non-string or oversized `query`, extra target/path/plugin ownership fields, accessor/prototype/symbol/non-enumerable fields, and invalid `limit` values.
+  - Search caps title length and scanned page/body inputs; tests should fail if overlong titles are returned or if matches beyond scan caps leak into results.
+  - If cheap, add Search status/empty-result assertions and `quick-capture.save-and-open` hostile-payload parity.
