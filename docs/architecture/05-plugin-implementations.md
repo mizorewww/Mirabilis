@@ -309,7 +309,7 @@ TASK-025 implements the narrow event/page slice:
 - The original segment event remains immutable; timeline data derives the latest note page from note-link events.
 - `timer.page-timeline.segments` is the current page timeline contribution. It filters to current-page Timer-owned events and ignores malformed, wrong-owner, wrong-page, or unreadable note data.
 
-Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, ML integration, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
+Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
 
 ### 11.5 Calendar Plugin baseline
 
@@ -709,74 +709,103 @@ Persistent Search indexing, background search indexer / worker, SQLite FTS, rank
 
 ### 13.4 Machine Learning Plugin
 
-ML Plugin 负责算法。
+ML Plugin 负责 ML/prediction behavior；Core 不包含 ML business logic。TASK-030 当前只交付 TypeScript app-runtime baseline prediction，plugin id 是 `ml`。
 
 ```text
-plugins/ml/
-  src/
-    algorithms/
-      predictRemainingTime.ts
-      recommendNextTask.ts
-      detectBestWorkTime.ts
-      detectEstimateBias.ts
-      clusterSimilarTasks.ts
-    features/
-      buildTaskFeatures.ts
-      buildTimeFeatures.ts
-      buildHabitFeatures.ts
-    views/
-      PredictionPanel.tsx
-      RecommendationCard.tsx
-    jobs/
-      refreshPredictions.ts
+src/plugins/ml/
+  algorithms/
+    predictRemainingTime.ts
+  features/
+    buildRemainingTimeFeatures.ts
+  views/
+    PredictionPanel.tsx
+  index.ts
+  plugin.ts
 ```
 
-ML Plugin 通过 manifest descriptor 声明 algorithm；可执行 algorithm handler 绑定是后续 runtime facade。
+Canonical TASK-030 ids:
+
+```text
+algorithm descriptor: ml.predict-remaining-time
+runtime command: ml.run-prediction
+input kind: ml.remaining-time-prediction-input
+result kind: ml.remaining-time-prediction
+view/type: ml.prediction-panel
+slot contribution: ml.page-sidebar.prediction-panel -> page.sidebar.panel
+metadata descriptors: ml.predictedRemainingTime, ml.predictionConfidence
+event descriptor: ml.prediction-generated
+```
+
+`ml.predict-remaining-time` 是 inert manifest descriptor。TASK-030 没有 executable AlgorithmRegistry、runtime algorithm handler、worker, model storage, model training, or background refresh. Runtime execution goes through Command Registry:
 
 ```ts
-export const mlManifest: PluginManifest = {
-  id: "ml",
-  name: "Machine Learning Plugin",
-  version: "0.1.0",
-  minAppVersion: "0.1.0",
-  contributes: {
-    algorithms: [
-      {
-        id: "ml.predict-remaining-time",
-        name: "Predict remaining time",
-        inputSchema: PredictRemainingInput,
-        outputSchema: PredictRemainingOutput
-      }
-    ]
+runtime.commands.execute("ml.run-prediction", {
+  algorithmId: "ml.predict-remaining-time",
+  input: {
+    kind: "ml.remaining-time-prediction-input",
+    pageId,
+    generatedAt,
+    pages,
+    metadata,
+    events
   }
-};
-```
-
-预测结果写入 Metadata：
-
-```ts
-await ctx.metadata.set({
-  pageId,
-  namespace: "ml",
-  key: "predictedRemainingTime",
-  value: {
-    minHours: 6,
-    maxHours: 9,
-    confidence: 0.72
-  },
-  valueType: "json"
 });
 ```
 
-ML Panel 通过 Slot 渲染在页面侧边：
+The input is exact bounded caller-provided page/metadata/event projections. ML validates plain-object/plain-array shape, bounds, exact UTC instants, numeric magnitude, current-page presence, and trusted provenance fields in those projections. It does not import Task/Timer/Tag/Habit/Stats internals and does not read sibling plugin private stores or facades.
+
+`ml.run-prediction` returns a deterministic `ml.remaining-time-prediction` DTO only. It does not persist ML metadata/events from caller-provided projections in TASK-030. The manifest still declares `ml.predictedRemainingTime`, `ml.predictionConfidence`, and `ml.prediction-generated` so ownership ids are reserved for future trusted write paths; durable prediction records are deferred until a trusted query/feed/projection source exists.
+
+Baseline model:
+
+```text
+baselineTotalSeconds =
+  task estimate
+  or similar completed task average
+  or max(trackedSeconds * 2, 3600)
+
+remaining =
+  max(0, baselineTotalSeconds - trackedSeconds)
+  optionally capped by child task completion ratio
+
+confidence =
+  heuristic evidence score starting at 0.35
+  + estimate/tracking/child/similar-history evidence
+  clamped to 0.90
+```
+
+This confidence is not trained/calibrated model confidence. Insufficient trusted evidence returns a low-confidence unavailable DTO with limitations.
+
+ML Panel registers both a view and slot contribution:
 
 ```ts
+ctx.views.register({
+  id: "ml.prediction-panel",
+  type: "ml.prediction-panel",
+  accepts: { kind: "ml.remaining-time-prediction" },
+  component: PredictionPanel
+});
+
 ctx.slots.register({
   id: "ml.page-sidebar.prediction-panel",
   slot: "page.sidebar.panel",
-  component: PredictionPanel,
-  when: ({ pageId }) => isTaskPage(pageId)
+  component: PredictionPanel
 });
+```
+
+`PredictionPanel` validates runtime DTOs before rendering and fails closed to an inert unavailable state for wrong-kind, malformed, forged, or unbounded data. It renders through React text sinks and avoids Markdown/HTML/code execution sinks.
+
+Deferred after TASK-030:
+
+```text
+executable AlgorithmRegistry / runtime algorithm handler
+trusted cross-plugin query/feed facade
+persistent prediction metadata/events and model refresh
+recommendation / best work time / estimate bias / clustering / ranking
+AI explanation
+app-shell/sidebar mounting polish
+network/filesystem/workers/model storage/training/background jobs
+native/package/Rust/schema/Tauri capability changes
 ```
 
 ---

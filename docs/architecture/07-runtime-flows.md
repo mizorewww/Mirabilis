@@ -56,7 +56,7 @@ async function createAppRuntime() {
 
 `storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-029 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin` 和 `SearchPlugin`。ML、AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-030 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin` 和 `MlPlugin`。AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
@@ -73,6 +73,8 @@ TASK-027 的 `habit.refresh-habit`、`habit.check-today`、`habit.uncheck-today`
 TASK-028 的 `stats.run-aggregation`、`chart.bar`、`chart.line` 和 `chart.pie` 同样只运行在 TypeScript plugin/view runtime 内。Stats 消费调用方传入的 normalized DTO，Chart 渲染调用方传入的 chart DTO；二者不读取 sibling plugin internals，也不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface 或 schema。
 
 TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open` 和 `search.query` 也运行在当前 in-memory Core/plugin runtime 内。Quick Capture 通过 plugin-facing transaction 创建或追加 trusted plugin-marked Inbox Page，并写 `quick-capture.unprocessed` metadata / `quick-capture.filter.inbox` filter；Search 每次命令执行时 transient scan 当前未 archived pages 的 title 和 structured body text。二者不新增 NativeBridge/Tauri IPC、global shortcut、filesystem、notification、package/Cargo、Rust surface、schema 或 Tauri capability。
+
+TASK-030 的 `ml.run-prediction` 同样只运行在 TypeScript plugin/runtime 内。`ml.predict-remaining-time` 是 inert algorithm descriptor；Command Registry 是当前 runtime execution entry。ML 消费 caller-provided exact bounded page/metadata/event projections，返回 deterministic `ml.remaining-time-prediction` DTO，不读取 sibling plugin private stores/facades，不持久化 caller-provided projection evidence 为 ML metadata/events，也不新增 NativeBridge/Tauri IPC、network、filesystem、worker、model storage/training、package/Cargo、Rust surface、schema 或 Tauri capability。
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -192,13 +194,20 @@ QuickCapturePlugin does not auto-create Task/Tag metadata, events, or pages; Tas
 SearchPlugin registers search.query and search.results
 SearchPlugin performs transient bounded literal title/body scans over unarchived pages; no persistent indexer/native/search worker is present
 
+TASK-030 当前:
+MlPlugin registers ml.run-prediction, ml.prediction-panel, and ml.page-sidebar.prediction-panel
+MlPlugin contributes inert algorithm descriptor ml.predict-remaining-time, metadata descriptors ml.predictedRemainingTime / ml.predictionConfidence, and event descriptor ml.prediction-generated
+ml.run-prediction accepts kind ml.remaining-time-prediction-input with exact bounded caller-provided pages/metadata/events projections
+MlPlugin returns kind ml.remaining-time-prediction deterministic baseline DTO only and does not persist ML metadata/events from caller-provided projections
+PredictionPanel validates DTOs and fails closed/inertly for malformed or wrong-kind data
+
 后续：
 编辑器保存后自动扫描 task blocks
 全局 saved-filter navigation / app-shell filter route
 Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
-Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, ML integration, Recently Worked saved filters, manual segment editing, calendar drag/drop, and native/schema surfaces
+Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, manual segment editing, calendar drag/drop, and native/schema surfaces
 Quick Capture desktop global shortcuts/native entry point, full app-shell modal behavior, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, and app-shell Search route
 ```
 
@@ -351,7 +360,7 @@ timer.page-timeline.segments rendered on page.timeline
 → Timeline refreshes and renders note text inertly
 ```
 
-`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Timer-to-Stats feed normalization, ML integration, metadata totals, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, metadata totals, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
 ### 18.9 Caller opens Calendar day/week
 
@@ -516,6 +525,38 @@ background search indexer or worker
 SQLite FTS
 ranking beyond current page-list scan order
 app-shell Search route / command palette polish
+native/Tauri/package/Rust/schema/capability changes
+```
+
+### 18.14 User runs ML prediction
+
+TASK-030 current flow:
+
+```text
+Caller/view host prepares exact bounded page/metadata/event projections
+→ CommandRegistry.execute("ml.run-prediction", { algorithmId, input })
+→ Plugin Host creates command-time PluginContext for MlPlugin
+→ MlPlugin validates algorithmId = "ml.predict-remaining-time"
+→ MlPlugin validates input kind = "ml.remaining-time-prediction-input"
+→ Feature builder validates inert arrays/plain records, bounded values, current page presence, and exact UTC instants
+→ Feature builder extracts task estimate/status, Timer tracking/note evidence, Tag ids, child completion, and similar completed task history from the provided projections only
+→ Deterministic baseline returns kind "ml.remaining-time-prediction"
+→ Caller may resolve ViewRegistry id "ml.prediction-panel" or SlotRegistry id "ml.page-sidebar.prediction-panel"
+→ PredictionPanel validates the DTO and renders inert text, or fails closed to unavailable status
+```
+
+`ml.predict-remaining-time` is a manifest algorithm descriptor only. There is no executable AlgorithmRegistry/runtime algorithm handler in TASK-030. `ml.run-prediction` does not read Task/Timer/Tag/Habit/Stats private stores or facades and does not import sibling plugin internals. It returns a deterministic DTO only; it does not persist `ml.predictedRemainingTime`, `ml.predictionConfidence`, or `ml.prediction-generated` records from caller-provided projections.
+
+Deferred after TASK-030:
+
+```text
+executable AlgorithmRegistry / runtime algorithm handler
+trusted cross-plugin query/feed facade
+persistent ML prediction metadata/events and model refresh
+recommend next task / best work time / estimate bias / clustering / ranking
+AI explanation
+app-shell/sidebar mounting polish
+network/filesystem/workers/model storage/training/background jobs
 native/Tauri/package/Rust/schema/capability changes
 ```
 

@@ -357,7 +357,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-025 Time Segment and Note Guidance
 
-TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar app-shell feed/routing, Stats/ML integration, native/Tauri/package/Rust changes, or schema-backed storage:
+TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar app-shell feed/routing, Stats/trusted ML feed integration, native/Tauri/package/Rust changes, or schema-backed storage:
 
 - Registration coverage should assert built-in `timer` registers canonical commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, `timer.switch`, and `timer.add-note`; legacy underscore aliases should be rejected or absent.
 - Finalization coverage should assert `timer.stop`, active `timer.start`, and active `timer.switch` append `namespace: "timer"`, `type: "time_segment_created"` for the finalized timer, with `timer.stopped` before segment creation where applicable.
@@ -405,6 +405,33 @@ git diff --check
 ```
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Calendar storage. TASK-026 is TypeScript plugin/view/command behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface.
+
+## TASK-030 ML Plugin Baseline Prediction Guidance
+
+TASK-030 tests cover the built-in `ml` plugin baseline without adding native/Tauri/package/Rust/schema/capability changes, executable AlgorithmRegistry behavior, model storage/training, network/filesystem/worker use, background refresh, or trusted cross-plugin query/feed persistence:
+
+- Registration coverage should assert built-in plugin id `ml`, inert algorithm descriptor `ml.predict-remaining-time`, command `ml.run-prediction`, input kind `ml.remaining-time-prediction-input`, result kind `ml.remaining-time-prediction`, view/type `ml.prediction-panel`, slot `ml.page-sidebar.prediction-panel`, metadata descriptors `ml.predictedRemainingTime` / `ml.predictionConfidence`, and event descriptor `ml.prediction-generated`.
+- Stale-id coverage should prove `ml.predict_remaining_time`, `ml.run_prediction`, `ml.prediction_panel`, `ml.predicted_remaining_time`, `ml.prediction_confidence`, `ml.prediction_generated`, and generic `run-ml-prediction` are not current aliases.
+- Runtime coverage should execute `ml.run-prediction` through the real Command Registry with `{ algorithmId: "ml.predict-remaining-time", input }`. Tests should not call an AlgorithmRegistry or plugin internals as the runtime entry.
+- Input coverage should use exact bounded caller-provided `pages`, `metadata`, and `events` projections with kind `ml.remaining-time-prediction-input`; ML must not read sibling plugin private stores/facades or import Task/Timer/Tag/Habit/Stats internals.
+- Baseline coverage should assert fixed deterministic DTOs for task estimate, Timer tracking, Timer notes, child completion, tags, similar completed history, insufficient evidence, similar-history-only fallback, tracked-only one-hour floor, and tracked-only `trackedSeconds * 2` fallback.
+- Confidence coverage should treat confidence as non-trained heuristic evidence strength, including low-confidence unavailable output and clamp/spread behavior, not a calibrated model probability.
+- Mutation coverage should assert `ml.run-prediction` returns the DTO only and does not persist ML metadata/events from caller-provided projections, including forged matching provenance.
+- Boundary coverage should reject malformed, extra-field, wrong-kind, missing-current-page, archived-current-page, accessor-backed, symbol-keyed, non-enumerable, prototype-carried, sparse/custom-array, oversized, non-finite, over-depth, over-node-budget, and non-exact UTC instant projection data without mutating runtime stores.
+- UI coverage should render both the registered `ml.prediction-panel` view and `ml.page-sidebar.prediction-panel` slot with accessible `region` / `status` / list output, inert text, loading/unavailable states, and fail-closed behavior for malformed or wrong-kind DTOs.
+- Security/static coverage should keep Core production code free of ML business behavior, keep `src/plugins/ml/**` free of sibling plugin internals, raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, filesystem/network/storage/worker APIs, HTML/Markdown/code execution sinks, and package/native/Tauri/Rust/schema/capability diffs.
+
+TASK-030 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx
+bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx src/test/stats-chart-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/tag-plugin-baseline.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, model storage/training, or schema-backed ML persistence. TASK-030 itself is TypeScript plugin/runtime/view/slot behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, network, worker, or persistent model surface.
 
 ## Merge Gate
 

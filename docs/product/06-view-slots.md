@@ -47,7 +47,7 @@ Tag Plugin 在 page.header.metadata 放 #tag display / add-remove controls
 Timer Plugin 在 page.header.metadata 放 enabled Start timer control
 Timer Plugin 后续可在 page.header.actions 放更完整 Start / Switch actions
 Timer Plugin 在 page.timeline 放 timer.page-timeline.segments Time Segments
-ML Plugin 在 sidebar 放 prediction panel
+ML Plugin 在 page.sidebar.panel 放 ml.page-sidebar.prediction-panel
 ```
 
 TASK-025 当前 slot 行为：
@@ -63,6 +63,8 @@ timer.page-timeline.segments renders current-page Timer-owned segments and inert
 ```
 
 `MetadataBar` 是 reusable slice；production app-shell/editor 默认 mounting 仍是后续 integration，除非调用方已经显式挂载它。Manifest `metadataFields` 仍是 ownership descriptors/reservation inputs，不是 executable renderer/editor declarations。`timer.page-timeline.segments` 提供 accessible Add Note / Edit Note UI，并通过 `timer.add-note` 创建或更新 Markdown Page note；slot 渲染的 segment 和 note 文本保持 inert。
+
+TASK-030 当前 `ml.page-sidebar.prediction-panel` 使用与 `ml.prediction-panel` view 相同的 validated React component，只渲染调用方提供的 `ml.remaining-time-prediction` DTO。Malformed、wrong-kind 或 unbounded DTO fail closed to an inert unavailable state；app-shell/sidebar broad mounting remains deferred.
 
 ### 25.3 全局插槽
 

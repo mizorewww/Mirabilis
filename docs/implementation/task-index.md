@@ -654,7 +654,7 @@ Acceptance criteria:
 - `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and note text inertly, with accessible Add Note / Edit Note UI that saves through `timer.add-note`.
 - MetadataBar command execution requires owner-aware `MetadataBarCommandRegistry` descriptor lookup and fails closed without lookup; slot UI still receives only a narrow `execute()` facade.
 - PluginHost's internal scoped command executor authorizes by registered command descriptor owner, not command ID prefix.
-- Metadata totals, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
+- Metadata totals, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
 - Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace it.
 
 Test plan:
@@ -772,20 +772,24 @@ Dependencies:
 Source docs:
 
 - `docs/product/05-built-in-plugins.md#21-machine-learning-plugin`
-- `docs/architecture/05-plugin-implementations.md#123-machine-learning-plugin`
+- `docs/architecture/05-plugin-implementations.md#134-machine-learning-plugin`
 
 Acceptance criteria:
 
-- ML Plugin builds features from pages, metadata, and events.
-- Remaining-time prediction has a deterministic baseline model.
-- Prediction panel renders as a plugin view or slot contribution.
-- Model limitations and confidence are documented.
+- Built-in TypeScript-only `ml` plugin is registered with canonical descriptors for `ml.predict-remaining-time`, `ml.run-prediction`, `ml.remaining-time-prediction-input`, `ml.remaining-time-prediction`, `ml.prediction-panel`, `ml.page-sidebar.prediction-panel`, `ml.predictedRemainingTime`, `ml.predictionConfidence`, and `ml.prediction-generated`.
+- `ml.predict-remaining-time` remains an inert manifest algorithm descriptor; `ml.run-prediction` is the Command Registry runtime entry and there is no executable AlgorithmRegistry/runtime algorithm handler in this task.
+- ML feature building consumes exact bounded caller-provided page/metadata/event projections only, without importing or reading sibling plugin private stores/facades.
+- Remaining-time prediction returns a deterministic baseline DTO with documented limitations/confidence and does not persist ML metadata/events from caller-provided projections.
+- Prediction panel renders the validated DTO through both the registered view and sidebar slot, failing closed/inertly for malformed or wrong-kind data.
+- No package/native/Tauri/Rust/schema/capability, network, filesystem, worker, model storage, training, or background refresh changes.
 
 Test plan:
 
-- Feature builder unit tests.
-- Prediction baseline tests with fixed fixtures.
-- UI tests for prediction panel display.
+- Built-in registration and stale-id absence tests.
+- Command Registry `ml.run-prediction` contract tests with fixed projection fixtures and deterministic fallback branches.
+- Hostile/bounded projection validation and no durable ML write tests.
+- UI tests for inert/fail-closed `ml.prediction-panel` view and `ml.page-sidebar.prediction-panel` slot rendering.
+- Static guards for Core isolation, sibling/private imports, execution/rendering sinks, and package/native/Tauri/Rust/schema/capability diffs.
 
 Dependencies:
 

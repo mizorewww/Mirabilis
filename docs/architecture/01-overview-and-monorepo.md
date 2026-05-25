@@ -73,7 +73,7 @@ Native Layer
 
 Tauri 负责桌面壳和本地系统能力。Tauri v2 的架构本身就是 Rust + WebView，通过消息传递让前端控制系统能力；Tauri 插件可以接入生命周期、暴露 Rust 命令和系统能力，适合承载全局快捷键、文件系统、SQLite、通知等 native 能力。([Tauri](https://v2.tauri.app/concept/architecture/ "Tauri Architecture"))
 
-TASK-029 当前已经落地的 built-in plugin baseline 是 TypeScript app runtime 内的显式插件对象：Markdown Editor、Metadata UI、Task、Tag、Timer、Calendar、Habit、Heatmap、Stats、Chart、Quick Capture 和 Search。Quick Capture 的 native/global shortcut adapter、Search persistent indexers、ML、AI、Sync 和完整 release/native wiring 仍是后续范围。
+TASK-030 当前已经落地的 built-in plugin baseline 是 TypeScript app runtime 内的显式插件对象：Markdown Editor、Metadata UI、Task、Tag、Timer、Calendar、Habit、Heatmap、Stats、Chart、Quick Capture、Search 和 ML。Quick Capture 的 native/global shortcut adapter、Search persistent indexers、ML trusted query/feed/persistence/model-refresh scope、AI、Sync 和完整 release/native wiring 仍是后续范围。
 
 ---
 
@@ -81,7 +81,7 @@ TASK-029 当前已经落地的 built-in plugin baseline 是 TypeScript app runti
 
 建议一开始就用 monorepo。
 
-当前仓库在 TASK-029 仍是 flat layout，而不是下面的最终 monorepo 目录。当前已落地的 App bootstrap / provider / built-in plugin 路径是：
+当前仓库在 TASK-030 仍是 flat layout，而不是下面的最终 monorepo 目录。当前已落地的 App bootstrap / provider / built-in plugin 路径是：
 
 ```text
 src/
