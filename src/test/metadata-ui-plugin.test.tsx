@@ -26,18 +26,27 @@ type NativeBridgeTransactionResult<Response> =
       : Response
     : Array<Response>;
 
+type MetadataBarCommandExecutor = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
+
+type MetadataBarCommandRegistry = MetadataBarCommandExecutor & {
+  get(commandId: string): {
+    id: string;
+    pluginId: string;
+  };
+};
+
 type MetadataBarProps = {
   pageId: string;
   metadata: readonly MetadataRecord[];
   slots: AppRuntime["registries"]["slots"];
-  commands: {
-    execute(commandId: string, input?: unknown): Promise<unknown>;
-  };
+  commands: MetadataBarCommandRegistry;
   pluginHost?: Pick<AppRuntime["pluginHost"], "listPlugins">;
 };
 
 type TimerGlobalActiveBarProps = {
-  commands: MetadataBarProps["commands"];
+  commands: MetadataBarCommandExecutor;
 };
 
 type MetadataUiModule = {
@@ -232,7 +241,11 @@ describe("Metadata UI Plugin", () => {
       valueType: "json",
       sourcePluginId: tagPluginId,
     });
-    render(await createMetadataBar(runtime, page.id, { commands: { execute } }));
+    render(
+      await createMetadataBar(runtime, page.id, {
+        commands: createDescriptorBackedCommands(runtime, execute),
+      }),
+    );
 
     expect(screen.getByRole("region", { name: /page metadata/i })).toBeVisible();
     expect(screen.getByText("#architecture")).toBeVisible();
@@ -375,7 +388,11 @@ describe("Metadata UI Plugin", () => {
       tags: ["escape"],
     }));
 
-    render(await createMetadataBar(runtime, page.id, { commands: { execute } }));
+    render(
+      await createMetadataBar(runtime, page.id, {
+        commands: createDescriptorBackedCommands(runtime, execute),
+      }),
+    );
 
     await user.click(
       screen.getByRole("button", { name: /try foreign command/i }),
@@ -648,7 +665,7 @@ describe("Metadata UI Plugin", () => {
 
     render(
       await createMetadataBar(runtime, page.id, {
-        commands: { execute },
+        commands: { execute } as unknown as MetadataBarCommandRegistry,
       }),
     );
 
@@ -729,9 +746,11 @@ describe("Metadata UI Plugin", () => {
     });
     render(
       <>
-        {await createMetadataBar(runtime, firstPage.id, { commands: { execute } })}
+        {await createMetadataBar(runtime, firstPage.id, {
+          commands: createDescriptorBackedCommands(runtime, execute),
+        })}
         {await createMetadataBar(runtime, secondPage.id, {
-          commands: { execute },
+          commands: createDescriptorBackedCommands(runtime, execute),
         })}
       </>,
     );
@@ -784,7 +803,11 @@ describe("Metadata UI Plugin", () => {
       scheduled: "2026-05-21",
       due: "2026-05-22",
     });
-    render(await createMetadataBar(runtime, page.id, { commands: { execute } }));
+    render(
+      await createMetadataBar(runtime, page.id, {
+        commands: createDescriptorBackedCommands(runtime, execute),
+      }),
+    );
 
     expectTaskHeaderContributions(runtime);
     expectTimerStartContribution(runtime);
@@ -1290,7 +1313,11 @@ describe("Metadata UI Plugin", () => {
       valueType: "json",
       sourcePluginId: tagPluginId,
     });
-    render(await createMetadataBar(runtime, page.id, { commands: { execute } }));
+    render(
+      await createMetadataBar(runtime, page.id, {
+        commands: createDescriptorBackedCommands(runtime, execute),
+      }),
+    );
 
     expect(screen.getByText("#safe")).toBeVisible();
     expect(screen.queryByText(/\bdone\b/i)).not.toBeInTheDocument();
@@ -1354,6 +1381,24 @@ async function createMetadataBar(
       pluginHost={props.pluginHost ?? runtime.pluginHost}
     />
   );
+}
+
+function createDescriptorBackedCommands(
+  runtime: AppRuntime,
+  execute: MetadataBarCommandExecutor["execute"] = (commandId, input) =>
+    runtime.commands.execute(commandId, input),
+): MetadataBarCommandRegistry {
+  return {
+    execute,
+    get: (commandId) => {
+      const descriptor = runtime.registries.commands.get(commandId);
+
+      return {
+        id: descriptor.id,
+        pluginId: descriptor.pluginId,
+      };
+    },
+  };
 }
 
 async function createRuntime(
@@ -1757,12 +1802,12 @@ function readCapturedValues(
   return values;
 }
 
-function readCommandExecutor(value: unknown): MetadataBarProps["commands"] | null {
+function readCommandExecutor(value: unknown): MetadataBarCommandExecutor | null {
   if (!isRecord(value) || typeof value.execute !== "function") {
     return null;
   }
 
-  return value as MetadataBarProps["commands"];
+  return value as MetadataBarCommandExecutor;
 }
 
 function containsDeepValue(value: unknown, expected: string): boolean {
