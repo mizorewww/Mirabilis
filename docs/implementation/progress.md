@@ -79,7 +79,7 @@ Status markers:
 
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
-- [ ] TASK-036: Add Generic ViewHost And SlotHost
+- [~] TASK-036: Add Generic ViewHost And SlotHost
 - [ ] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
@@ -93,6 +93,18 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 02:05 CST - TASK-036 started
+
+- Branch: `feat/task-036-viewhost-slothost`.
+- Task: Add Generic ViewHost And SlotHost.
+- Start point: `master` after TASK-035 merge validation commit `739b0db`.
+- Source docs read: `docs/implementation/task-index.md#task-036-add-generic-viewhost-and-slothost`, `docs/product/07-user-interface-design.md`, `docs/product/06-view-slots.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`.
+- Code context read: `src/core/registries/view-registry.ts`, `src/core/registries/slot-registry.ts`, and current view/slot registration usages across built-in plugins and tests.
+- Initial scope: add trusted app-shell `ViewHost` and `SlotHost` rendering helpers for registry-owned views/slots with explicit accepted data, controlled props, safe empty/loading/error/missing states, slot ordering, condition fail-closed behavior, and plugin render isolation.
+- Initial constraints: parent remains orchestration-only; write failing tests before implementation; no full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, filesystem, path, provider settings, or secrets may be passed to plugin-rendered UI; no business-plugin private imports; no Tauri/native/Rust/package/capability/permission/IPC/schema/release behavior changes.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Next action: collect current React/Testing Library/security/deprecation guidance, then delegate failing tests to `test_writer`.
 
 ### 2026-05-26 02:04 CST - TASK-035 merged
 

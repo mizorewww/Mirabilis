@@ -1,18 +1,37 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 02:04 CST.
+Last updated: 2026-05-26 02:05 CST.
 
 ## Current Task
 
-- Task: TASK-035 - Add MUI Substrate And First Shell Frame.
-- Branch: `feat/task-035-mui-shell-frame`.
+- Task: TASK-036 - Add Generic ViewHost And SlotHost.
+- Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-035 merged locally; merge-result validation passed; master push pending.
+- Current phase: TASK-036 started; pre-test guidance pending.
 
 ## Active Agents
 
-- None. All TASK-035 review and fix agents have completed.
+- None yet for TASK-036.
+
+## Current TASK-036 State
+
+- TASK-036 follows the merged TASK-035 MUI shell frame and owns generic trusted view/slot rendering helpers.
+- Start point: `master` after TASK-035 merge validation commit `739b0db`.
+- Initial scope:
+  - add trusted app-shell `ViewHost` for rendering View Registry entries by id/type with explicit accepted data;
+  - add trusted app-shell `SlotHost` for rendering Slot Registry contributions by slot name in registry order;
+  - render safe loading, empty, missing, wrong-data, error, thrown-render, invalid-contribution, and plugin-unavailable states;
+  - keep plugin-rendered UI behind narrow controlled props only.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and use React Testing Library/user-event for observable behavior;
+  - hosts must never pass full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, filesystem, path, provider settings, or secrets to plugin-rendered UI;
+  - no business-plugin private imports, native/Tauri/Rust/package/capability/permission/IPC/schema/release changes.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Parent decision: collect current React/Testing Library/deprecation/security guidance before delegating failing tests.
 
 ## Received Review Notes
 
