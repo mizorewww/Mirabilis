@@ -78,7 +78,7 @@ Status markers:
 ## Milestone M9: MUI user-visible app shell and workspace
 
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
-- [ ] TASK-035: Add MUI Substrate And First Shell Frame
+- [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [ ] TASK-036: Add Generic ViewHost And SlotHost
 - [ ] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
@@ -93,6 +93,41 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 01:57 CST - TASK-035 completed and ready to merge
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Delivered: reviewed MUI runtime dependencies through Bun (`@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`); MUI `ThemeProvider` / `CssBaseline`; dense app shell with named `banner`, workspace `navigation`, central `main`, top `AppBar`, left `Drawer`, placeholder Home/Inbox/Today/All Tasks/Reports route regions, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Tests and review fixes: Boyle added failing shell/package/native-guard tests first; Turing implemented the MUI shell; Carver tightened realistic shell interaction and exact reviewed `bun.lock` graph guards; Peirce synchronized docs; Plato added final coverage proving Command can be reactivated from an inactive state.
+- Boundary scope: loading and startup failure states remain visible and redacted; `useRuntime()` remains the public copied/frozen `{ app }` facade; App Shell reads only public app version plus local UI state; no trusted full-runtime channel, business plugin import, IPC, Tauri/native, Rust, capability, permission, schema, packaging, or release behavior changed.
+- Validation: `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 22 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and `bun run build` passed; final `bun run check:quick` passed with 39 frontend test files / 599 tests, Rust fmt, Rust clippy, and Rust tests.
+- Review status: PR scope, correctness, deprecation/API, security, docs/current-guidance, test-quality, docs-sync, and release-readiness reviews found no remaining P0/P1 blockers. P2 bundle-size warning is accepted and deferred.
+- Build note: `bun run build` succeeds but emits the Vite/Rollup warning that the generated JavaScript chunk is larger than 500 kB after adding MUI. Later route/view mounting should track code splitting with current Vite 7 guidance rather than old Rollup-first assumptions.
+- Commits: `1856a4e`, `323365d`, `71999fa`, `b9cb0e7`, `26462a3`, `695ec5c`, `291adb0`, and `2889f84`.
+- Merge status: ready to merge into `master`; merge-result validation will run after merge.
+
+### 2026-05-26 01:47 CST - TASK-035 implementation validation and review pending
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Delivered so far: reviewed MUI runtime dependencies (`@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`); MUI `ThemeProvider` and `CssBaseline`; a dense shell frame with top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports route regions, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Boundary scope: ready/loading/startup-failure states stay visible and redacted; `useRuntime()` remains the public copied/frozen `{ app }` facade; no trusted full-runtime channel was introduced; no Tauri/native/Rust/capability/permission/IPC/schema/release behavior changed.
+- Deferred scope: generic `ViewHost`/`SlotHost`, Home editor mounting, dialog implementations, `Portal` floating slots, responsive polish, and real route data remain TASK-036+ work.
+- Validation: focused TASK-035 validation passed with `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` (3 files / 20 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `bun run build`, and `bun run check:quick` (39 frontend test files / 597 tests, Rust fmt, Rust clippy, and Rust tests).
+- Build note: `bun run build` succeeds but emits the Vite/Rollup warning that a generated JavaScript chunk is larger than 500 kB after adding MUI.
+- Review status: test commit `71999fa` and implementation commit `b9cb0e7` are on the branch. Nash reported P1/P2 documentation-sync findings after implementation validation; docs-only fix work is active. Keep TASK-035 `[~]` until review fixes are validated and the final merge closeout is recorded.
+
+### 2026-05-26 01:16 CST - TASK-035 started
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Start point: `master` after TASK-034 merge validation commit `aa69eaf`.
+- Source docs read: `docs/implementation/task-index.md#task-035-add-mui-substrate-and-first-shell-frame`, `docs/product/07-user-interface-design.md`, `docs/testing/strategy.md#task-015-app-bootstrap-and-runtime-provider-guidance`, `src/App.tsx`, `src/App.css`, `src/providers/*`, and `src/bootstrap/create-app-runtime.ts`.
+- Official/current-doc guidance already gathered for this task: MUI installation, React 19 peer range, Emotion default styling engine, MUI icons, `ThemeProvider`, `CssBaseline`, AppBar/Drawer/Dialog/Portal, path imports, Testing Library queries, and `@testing-library/user-event` setup.
+- Initial scope: add MUI dependencies, wrap the app in MUI theme/baseline, and replace the centered startup/status card with a dense work-focused shell frame with top app bar, left drawer, central main, and placeholder route regions.
+- Initial constraints: parent remains orchestration-only; write failing tests before implementation; tests must simulate user clicks/keyboard through RTL + user-event; preserve public `useRuntime()` facade; no Tauri/native/Rust/capability/permission/IPC/schema/release behavior changes; package/lockfile changes must be limited to reviewed MUI dependencies.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and `TERM=dumb` terminal failure.
 
 ### 2026-05-26 01:17 CST - TASK-034 merged
 

@@ -1,18 +1,78 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 01:17 CST.
+Last updated: 2026-05-26 01:57 CST.
 
 ## Current Task
 
-- Task: TASK-034 - Design MUI Workspace And Audit Unfinished UI.
-- Branch: `docs/task-034-mui-ui-design`.
+- Task: TASK-035 - Add MUI Substrate And First Shell Frame.
+- Branch: `feat/task-035-mui-shell-frame`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-034 merged; TASK-035 ready to start.
+- Current phase: TASK-035 complete on branch and ready to merge to `master`.
 
 ## Active Agents
 
-- None. TASK-034 doc writer completed.
+- None. All TASK-035 review and fix agents have completed.
+
+## Received Review Notes
+
+- Nash P1: `docs/implementation/progress.md` only recorded the TASK-035 start state; it needs an implementation validation / review-pending run-log entry with delivered scope, checks, build chunk warning, and review status while keeping TASK-035 `[~]`.
+- Nash P1: `docs/implementation/agent-communication/status.md` was stale; it needs the current phase, received review notes, corrected M9 snapshot, and accurate active/pending fix work.
+- Nash P2: `docs/product/07-user-interface-design.md` still read entirely pre-scaffold; it needs a current-status note for the TASK-035 baseline MUI substrate and TASK-036+ deferred shell work.
+- Nash P2: `docs/implementation/task-index.md` needs a concise TASK-035 delivered/deferred note covering the MUI quartet, theme/baseline, shell frame, placeholder routes/tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
+- Nash P2: `docs/testing/strategy.md` needs TASK-035 testing guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
+- Parent decision: accepted and fixed Nash's docs findings through Peirce's docs-only commit `291adb0`.
+- Test-quality/security review fixes:
+  - Carver closed the P1 `bun.lock` guard precision finding and shell interaction coverage gap in commit `695ec5c`.
+  - Plato closed the final Command inactive-to-active coverage P2 in commit `2889f84`.
+  - Socrates confirmed the package/lock/native boundary is closed with no remaining P0/P1/P2 findings.
+  - Gauss confirmed test-quality P0/P1 findings are closed; the final Command P2 was fixed afterward.
+- Release readiness: Dirac found no P0/P1 blocker, confirmed `check:full` is not required for TASK-035, and accepted the Vite/Rollup chunk-size warning as a deferred P2.
+
+## Current TASK-035 State
+
+- TASK-035 is the first MUI implementation task after TASK-034's UI design/audit.
+- Start point: `master` after TASK-034 merge validation commit `aa69eaf`.
+- Initial scope:
+  - add MUI dependencies through Bun;
+  - wrap the app with MUI `ThemeProvider` and `CssBaseline`;
+  - replace the centered startup/status card with a dense work-focused shell frame using top `AppBar`, left `Drawer`, central `main`, and placeholder route regions;
+  - keep ready/loading/failure states visible and redacted.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and simulate real user clicks/keyboard through React Testing Library plus `@testing-library/user-event`;
+  - preserve public `useRuntime()` facade as `{ app }`;
+  - do not expose full runtime handles to plugin-rendered descendants;
+  - do not add Tauri/native/Rust/capability/permission/IPC/schema/release behavior changes;
+  - package/lockfile changes must be limited to reviewed MUI dependencies.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and `TERM=dumb` terminal failure.
+- Pre-test guidance:
+  - Ohm (`deprecation_auditor`) found no P0 and one P1: existing native/package guard must allow only reviewed MUI dependency/lockfile changes for TASK-035 while continuing to reject all native/release surface drift.
+  - Ohm warned against stale MUI patterns such as `@material-ui/*`, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, and barrel imports.
+  - Pauli (`security_reviewer`) found no P0 and required realistic user-event shell tests, redacted failure coverage, public `useRuntime()` facade coverage, static boundary coverage, and package/native drift guards.
+- Parent decision: accept guidance and delegate failing tests to `test_writer`.
+- Test writer outcome:
+  - Boyle (`test_writer`) added `src/test/mui-shell-frame.test.tsx` and updated the shared native/package guard helper for the reviewed TASK-035 MUI dependency/lockfile surface.
+  - Parent red validation: `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` failed as expected while the existing startup card lacked the MUI shell frame and reviewed package changes.
+  - Test commit: `71999fa Boyle(test)(Add MUI Substrate And First Shell Frame): add MUI shell acceptance tests`.
+- Implementation outcome:
+  - Turing (`implementer`) installed the reviewed MUI runtime dependencies and replaced the ready-state startup card with a themed MUI shell frame.
+  - Changed files: `package.json`, `bun.lock`, `src/App.tsx`, `src/App.css`, and `src/test/mui-shell-frame.test.tsx`.
+  - Parent validation passed: focused TASK-035 frontend tests, `bun run typecheck`, `bun run lint`, `git diff --check`, `bun run build`, and `bun run check:quick`.
+  - Build note: `bun run build` succeeds but emits the existing Vite/Rollup warning that the generated JS chunk is larger than 500 kB after adding MUI.
+  - Implementation commit: `b9cb0e7 Turing(implementation)(Add MUI Substrate And First Shell Frame): implement MUI shell frame`.
+- Review state:
+  - Nash documentation-sync findings are closed.
+  - Carver and Plato test-quality fixes are committed and validated.
+  - Socrates security/boundary re-review found no remaining P0/P1/P2 findings.
+  - Dirac release readiness review found no P0/P1 blockers and confirmed `check:full` is not required for this frontend package task.
+- Final validation:
+  - `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 22 tests.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, and `bun run build` passed.
+  - `bun run check:quick` passed with 39 frontend test files / 599 tests, Rust fmt, Rust clippy, and Rust tests.
+- Parent decision: mark TASK-035 complete, commit closeout, merge to `master`, validate the merge result, then continue to TASK-036.
 
 ## Current TASK-034 State
 
@@ -59,10 +119,10 @@ Last updated: 2026-05-26 01:17 CST.
 
 ## Current M9 Roadmap State
 
-- Diagnosis accepted from planner/user context: TASK-001 through TASK-033 delivered runtime substrate and plugin-owned capabilities, but `src/App.tsx` still renders only the centered Mirabilis startup/status panel after startup.
-- Missing user-visible work now tracked by M9 includes MUI substrate, ViewHost/SlotHost, Home workspace editor, sidebar navigation, metadata/timer/timeline mounting, command palette, Quick Capture, search, Calendar/Reports, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- `docs/implementation/progress.md` marks TASK-034 `[~]` and TASK-035 through TASK-045 `[ ]`.
-- Next implementation task after docs validation is TASK-035, not TASK-034.
+- TASK-034 is complete and merged on `master`.
+- TASK-035 is complete on `feat/task-035-mui-shell-frame`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and ready to merge.
+- TASK-036 through TASK-045 remain `[ ]` and cover generic ViewHost/SlotHost, Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: merge TASK-035 into `master`, run merge-result validation, and start TASK-036.
 
 ## Historical TASK-033 State
 

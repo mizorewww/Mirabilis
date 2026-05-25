@@ -77,6 +77,28 @@ Release readiness also requires synchronized versions across `package.json`, `sr
 
 TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `app.security.csp: null`; public release claims, updater enablement, or remote/web-content work require a future CSP hardening and security review.
 
+## TASK-035 MUI Shell Frame Guidance
+
+TASK-035 shell coverage lives in `src/test/mui-shell-frame.test.tsx`, alongside existing app-shell boundary and runtime-provider tests. It should prove the baseline MUI shell behavior without treating placeholder route content as real ViewHost/SlotHost/editor implementation:
+
+- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar placeholder tools.
+- Prefer role/name queries for `banner`, `navigation`, `main`, buttons, startup loading, startup failure, and route status output.
+- Keep runtime boundary assertions explicit: `useRuntime()` exposes only a copied/frozen `{ app }` facade, startup failures stay visible and redacted, and raw runtime/native/plugin internals do not leak into the public provider or failure UI.
+- Keep static MUI guards narrow: use supported MUI path imports, require the TASK-035 MUI substrate imports, and reject stale/deprecated patterns such as `@material-ui/*`, MUI barrel imports, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, `ListItem button`, and deprecated `components` / `componentsProps` slot props.
+- The native/package guard has a narrow TASK-035 exception for `package.json` and `bun.lock` only, and only for the reviewed MUI dependency quartet: `@mui/material`, `@emotion/react`, `@emotion/styled`, and `@mui/icons-material`. It should still reject script/dev-dependency drift, MUI X/font/network/SQL/provider dependencies, Cargo/Tauri/capability/permission/IPC/release changes, and unreviewed lockfile changes.
+
+Focused TASK-035 validation:
+
+```bash
+bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx
+bun run typecheck
+bun run lint
+bun run build
+bun run check:quick
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-035 changes the frontend package/lock surface only for reviewed MUI dependencies and adds no native runtime surface.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:
