@@ -21,7 +21,7 @@ export function getAiProviderSettings(): AiProviderSettings | null {
   };
 }
 
-export function setAiProviderSettingsForTests(
+export function replaceAiProviderSettingsForTestRuntime(
   settings: AiProviderSettings | null,
 ): () => void {
   const previous = configuredSettings;

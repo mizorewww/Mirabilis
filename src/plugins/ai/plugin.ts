@@ -53,6 +53,8 @@ type FieldDescriptor = {
   valueType: string;
 };
 
+type JsonRecord = Record<string, unknown>;
+
 const pluginId = "ai";
 const suggestionPanelViewId = "ai.suggestion-panel";
 const reviewPanelViewId = "ai.review-panel";
@@ -83,6 +85,16 @@ const forbiddenTopLevelFields = new Set([
   "authorization",
   "model",
   "provider",
+  "providerId",
+  "secret",
+  "token",
+]);
+const forbiddenJsonKeys = new Set([
+  "apiKey",
+  "authorization",
+  "model",
+  "provider",
+  "providerId",
   "secret",
   "token",
 ]);
@@ -316,7 +328,7 @@ export const AiPlugin: AppPlugin = {
   },
 };
 
-export function setAiProviderForTests(provider: AiModelProvider): () => void {
+export function replaceAiProviderForTestRuntime(provider: AiModelProvider): () => void {
   const previous = configuredProvider;
 
   configuredProvider = provider;
@@ -326,7 +338,7 @@ export function setAiProviderForTests(provider: AiModelProvider): () => void {
   };
 }
 
-export function resetAiProviderForTests(): () => void {
+export function clearAiProviderForTestRuntime(): () => void {
   const previous = configuredProvider;
 
   configuredProvider = createOpenAIProvider();
@@ -340,7 +352,7 @@ async function runAiCommand(
   spec: AiCommandSpec,
   input: unknown,
 ): Promise<AiCommandResult> {
-  const payload = readCommandInput(spec, input);
+  const payload = snapshotJsonRecord(readCommandInput(spec, input));
   const settings = getAiProviderSettings();
 
   if (
@@ -355,10 +367,7 @@ async function runAiCommand(
     operation: spec.operation,
     providerId,
     request: {
-      input: {
-        input: payload,
-        operation: spec.operation,
-      },
+      input: createResponsesInput(spec, payload),
       instructions:
         "Return only advisory suggestion or review data for the caller-provided input.",
       model: readProviderModel(settings.model),
@@ -395,6 +404,17 @@ function readProviderModel(model: string): string {
   }
 
   return model;
+}
+
+function createResponsesInput(
+  spec: AiCommandSpec,
+  payload: JsonRecord,
+): string {
+  return [
+    `User content for AI operation: ${spec.operation}`,
+    "Input JSON:",
+    JSON.stringify(payload),
+  ].join("\n");
 }
 
 function readCommandInput(
@@ -534,12 +554,12 @@ function validateProviderOutput(
   switch (spec.operation) {
     case "cleanup-inbox":
       readBoundedSafeText(payload.cleanedMarkdown, "cleanedMarkdown");
-      readJsonProjection(payload.suggestedMetadata, "suggestedMetadata");
+      readSafeJsonProjection(payload.suggestedMetadata, "suggestedMetadata");
       readStringArray(payload.warnings, "warnings");
       break;
     case "turn-text-into-task":
       readBoundedSafeText(payload.markdown, "markdown");
-      readJsonProjection(payload.metadata, "metadata");
+      readSafeJsonProjection(payload.metadata, "metadata");
       readStringArray(payload.tags, "tags");
       readBoundedSafeText(payload.title, "title");
       break;
@@ -720,6 +740,13 @@ function readJsonProjection(input: unknown, label: string): unknown {
   const budget = { nodes: 0 };
 
   readJsonValue(input, label, 0, budget);
+  return input;
+}
+
+function readSafeJsonProjection(input: unknown, label: string): unknown {
+  void label;
+
+  assertSafeJsonValue(input);
   return input;
 }
 
@@ -955,32 +982,114 @@ function readBoundedSafeText(input: unknown, label: string): string {
 }
 
 function sanitizePublicResult(input: Record<string, unknown>): AiCommandResult {
-  return sanitizePublicJson(input) as AiCommandResult;
+  const snapshot = snapshotPublicJsonValue(input);
+
+  if (
+    typeof snapshot !== "object" ||
+    snapshot === null ||
+    Array.isArray(snapshot)
+  ) {
+    throwProviderOutputError();
+  }
+
+  return snapshot as AiCommandResult;
 }
 
-function sanitizePublicJson(input: unknown): unknown {
+function snapshotJsonRecord(input: Record<string, unknown>): JsonRecord {
+  const snapshot = snapshotJsonValue(input);
+
+  if (
+    typeof snapshot !== "object" ||
+    snapshot === null ||
+    Array.isArray(snapshot)
+  ) {
+    throw new Error("AI command rejected");
+  }
+
+  return snapshot as JsonRecord;
+}
+
+function snapshotJsonValue(input: unknown): unknown {
+  if (
+    input === undefined ||
+    input === null ||
+    typeof input === "boolean" ||
+    typeof input === "string" ||
+    (typeof input === "number" && Number.isFinite(input))
+  ) {
+    return input;
+  }
+
+  if (Array.isArray(input)) {
+    return copyPlainArray(input, "snapshot array", maxAiProjectionItems)
+      .map(snapshotJsonValue);
+  }
+
+  const payload = readPlainRecord(input, "snapshot object");
+  const output: JsonRecord = {};
+
+  for (const key of Reflect.ownKeys(payload)) {
+    if (typeof key !== "string") {
+      throw new Error("AI command rejected");
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(payload, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throw new Error("AI command rejected");
+    }
+
+    output[key] = snapshotJsonValue(descriptor.value);
+  }
+
+  return output;
+}
+
+function snapshotPublicJsonValue(input: unknown): unknown {
   if (typeof input === "string") {
     return input.replace(/\bpersist\w*/giu, "storage");
   }
 
-  if (Array.isArray(input)) {
-    return input.map(sanitizePublicJson);
-  }
-
   if (
-    typeof input === "object" &&
-    input !== null &&
-    Object.getPrototypeOf(input) === Object.prototype
+    input === undefined ||
+    input === null ||
+    typeof input === "boolean" ||
+    (typeof input === "number" && Number.isFinite(input))
   ) {
-    return Object.fromEntries(
-      Object.entries(input).map(([key, value]) => [
-        key,
-        sanitizePublicJson(value),
-      ]),
-    );
+    return input;
   }
 
-  return input;
+  if (Array.isArray(input)) {
+    return copyPlainArray(input, "public result array", maxAiProjectionItems)
+      .map(snapshotPublicJsonValue);
+  }
+
+  const payload = readPlainRecord(input, "public result object");
+  const output: JsonRecord = {};
+
+  for (const key of Reflect.ownKeys(payload)) {
+    if (typeof key !== "string") {
+      throwProviderOutputError();
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(payload, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throwProviderOutputError();
+    }
+
+    output[key] = snapshotPublicJsonValue(descriptor.value);
+  }
+
+  return output;
 }
 
 function readNonBlankId(input: unknown, label: string): string {
@@ -1072,7 +1181,11 @@ function assertSafeJsonValueInner(
   const payload = readPlainRecord(input, "output object");
 
   for (const key of Reflect.ownKeys(payload)) {
-    if (typeof key !== "string" || !isSafeText(key)) {
+    if (
+      typeof key !== "string" ||
+      forbiddenJsonKeys.has(key) ||
+      !isSafeText(key)
+    ) {
       throwProviderOutputError();
     }
 
@@ -1104,10 +1217,147 @@ function createResponseSchema(spec: AiCommandSpec): Record<string, unknown> {
   return {
     additionalProperties: false,
     properties: Object.fromEntries(
-      [...spec.outputKeys].map((key) => [key, {}]),
+      [...spec.outputKeys].map((key) => [
+        key,
+        createResponsePropertySchema(spec, key),
+      ]),
     ),
     required: [...spec.outputKeys],
     type: "object",
+  };
+}
+
+function createResponsePropertySchema(
+  spec: AiCommandSpec,
+  key: string,
+): Record<string, unknown> {
+  if (key === "kind") {
+    return {
+      const: spec.expectedKind,
+      type: "string",
+    };
+  }
+
+  switch (key) {
+    case "confidence":
+      return {
+        maximum: 1,
+        minimum: 0,
+        type: "number",
+      };
+    case "filter":
+      return {
+        additionalProperties: false,
+        properties: {
+          name: safeStringSchema(),
+          query: {
+            additionalProperties: false,
+            properties: {
+              where: {
+                items: {
+                  additionalProperties: false,
+                  properties: {
+                    field: safeStringSchema(),
+                    op: {
+                      enum: [...allowedFilterOperators],
+                      type: "string",
+                    },
+                    value: {
+                      anyOf: [
+                        safeStringSchema(),
+                        { type: "number" },
+                        { type: "boolean" },
+                        { type: "null" },
+                      ],
+                    },
+                  },
+                  required: ["field", "op", "value"],
+                  type: "object",
+                },
+                maxItems: maxAiProjectionItems,
+                type: "array",
+              },
+            },
+            required: ["where"],
+            type: "object",
+          },
+          viewType: {
+            const: "page.list",
+            type: "string",
+          },
+        },
+        required: ["name", "query", "viewType"],
+        type: "object",
+      };
+    case "metadata":
+      return {
+        additionalProperties: false,
+        properties: {
+          dueDate: safeStringSchema(),
+          estimateMinutes: {
+            minimum: 0,
+            type: "number",
+          },
+        },
+        required: ["dueDate", "estimateMinutes"],
+        type: "object",
+      };
+    case "suggestedMetadata":
+      return {
+        additionalProperties: false,
+        properties: {
+          dueDate: safeStringSchema(),
+          estimateMinutes: {
+            minimum: 0,
+            type: "number",
+          },
+          tags: stringArraySchema(),
+        },
+        required: ["dueDate", "estimateMinutes", "tags"],
+        type: "object",
+      };
+    case "highlights":
+    case "limitations":
+    case "nextActions":
+    case "risks":
+    case "subtasks":
+    case "tags":
+    case "warnings":
+    case "wins":
+      return stringArraySchema();
+    case "cleanedMarkdown":
+    case "dueDate":
+    case "explanation":
+    case "markdown":
+    case "reason":
+    case "summary":
+    case "title":
+      return safeStringSchema();
+    default:
+      return {
+        anyOf: [
+          safeStringSchema(),
+          stringArraySchema(),
+          { type: "number" },
+          { type: "boolean" },
+          { type: "null" },
+        ],
+      };
+  }
+}
+
+function safeStringSchema(): Record<string, unknown> {
+  return {
+    maxLength: maxAiTextLength,
+    type: "string",
+  };
+}
+
+function stringArraySchema(): Record<string, unknown> {
+  return {
+    items: safeStringSchema(),
+    maxItems: maxAiProjectionItems,
+    type: "array",
   };
 }
 

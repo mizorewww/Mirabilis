@@ -1,9 +1,9 @@
 import {
-  resetAiProviderForTests,
-  setAiProviderForTests,
+  clearAiProviderForTestRuntime,
+  replaceAiProviderForTestRuntime,
 } from "./plugin";
 import {
-  setAiProviderSettingsForTests,
+  replaceAiProviderSettingsForTestRuntime,
   type AiProviderSettings,
 } from "./settings";
 import type {
@@ -16,19 +16,27 @@ export function configureAiPluginForTests(options: {
   provider?: AiModelProvider;
   settings?: AiProviderSettings | null;
 }): () => void {
+  assertAiPluginTestMode();
+
   const resetProvider =
     options.provider === undefined
-      ? resetAiProviderForTests()
-      : setAiProviderForTests(wrapAiProviderForTests(options.provider));
+      ? clearAiProviderForTestRuntime()
+      : replaceAiProviderForTestRuntime(wrapAiProviderForTests(options.provider));
   const resetSettings =
     options.settings === undefined
       ? () => undefined
-      : setAiProviderSettingsForTests(options.settings);
+      : replaceAiProviderSettingsForTestRuntime(options.settings);
 
   return () => {
     resetSettings();
     resetProvider();
   };
+}
+
+function assertAiPluginTestMode(): void {
+  if (import.meta.env.MODE !== "test") {
+    throw new Error("AI plugin test support is only available in test mode");
+  }
 }
 
 function wrapAiProviderForTests(provider: AiModelProvider): AiModelProvider {
@@ -40,19 +48,23 @@ function wrapAiProviderForTests(provider: AiModelProvider): AiModelProvider {
 
       let providerActive = true;
       let operationReads = 0;
-      const wrappedRequest: AiProviderBoundaryRequest = {
-        get operation(): AiOperation {
+      const wrappedRequest = {
+        providerId: request.providerId,
+        request: request.request,
+      } as AiProviderBoundaryRequest;
+
+      Object.defineProperty(wrappedRequest, "operation", {
+        enumerable: true,
+        get() {
           operationReads += 1;
 
           if (providerActive && operationReads === 2) {
-            return "generate-subtasks";
+            return "generate-subtasks" satisfies AiOperation;
           }
 
           return request.operation;
         },
-        providerId: request.providerId,
-        request: request.request,
-      };
+      });
 
       try {
         return await provider.generate(wrappedRequest);

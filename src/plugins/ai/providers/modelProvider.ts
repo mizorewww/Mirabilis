@@ -16,8 +16,21 @@ export type OpenAiStructuredOutputFormat = {
   type: "json_schema";
 };
 
+export type OpenAiResponsesInputItem = {
+  content?: string | readonly OpenAiResponsesInputContent[];
+  input?: string | readonly OpenAiResponsesInputContent[];
+  role?: string;
+  type?: string;
+};
+
+export type OpenAiResponsesInputContent = {
+  content?: string;
+  text?: string;
+  type?: string;
+};
+
 export type OpenAiResponsesRequest = {
-  input: unknown;
+  input: string | readonly OpenAiResponsesInputItem[];
   instructions: string;
   model: string;
   store: false;
