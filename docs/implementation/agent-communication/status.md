@@ -1,18 +1,32 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:01 CST.
+Last updated: 2026-05-25 12:03 CST.
 
 ## Current Task
 
 - Task: TASK-029 - Implement Quick Capture and Search plugins.
-- Branch: not started yet.
+- Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 merged; TASK-029 selection next.
+- Current phase: TASK-029 started; pre-test guidance next.
 
 ## Active Agents
 
-- No active agents. Next step is starting TASK-029 from `master`.
+- No active agents. Next step is TASK-029 pre-test guidance.
+
+## Current TASK-029 State
+
+- TASK-029 follows TASK-018 and TASK-021 and owns the first Quick Capture + Search plugin slice:
+  - Quick Capture creates or appends to an Inbox page.
+  - Captured Markdown may include existing Task and Tag syntax, which should remain available for those plugins to process through their existing flows.
+  - Search can query page titles and body text at baseline.
+  - Desktop entry points need documentation and security review for Tauri permission impact.
+- Initial parent interpretation:
+  - Keep Quick Capture and Search behavior in built-in plugins, not Core.
+  - Use existing page store/service, command registry, view registry, and plugin host primitives where possible.
+  - Prefer a no-native baseline unless agents identify an acceptance-critical desktop entry point requiring Tauri capability changes.
+  - Keep package/native/Tauri/Rust/schema changes, persistent full-text indexes, background workers, global shortcuts, app-shell route polish, rich mobile toolbar mounting, ML/AI cleanup commands, sync, and packaging out of scope unless agents identify a blocker.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
 
 ## Current TASK-028 State
 
@@ -208,5 +222,5 @@ Last updated: 2026-05-25 12:01 CST.
 
 ## Next Actions
 
-1. Commit and push the TASK-028 merge validation update on `master`.
-2. Continue autonomous development with TASK-029.
+1. Commit TASK-029 start state.
+2. Delegate pre-test planning/current-doc/API/security guidance.

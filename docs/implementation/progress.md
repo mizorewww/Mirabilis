@@ -69,7 +69,7 @@ Status markers:
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
-- [ ] TASK-029: Implement Quick Capture and Search plugins
+- [~] TASK-029: Implement Quick Capture and Search plugins
 - [ ] TASK-030: Implement ML Plugin baseline predictions
 - [ ] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 12:03 CST - TASK-029 started
+
+- Branch: `feat/task-029-quick-capture-search-plugins`.
+- Task: Implement Quick Capture and Search plugins.
+- Start point: `master` after TASK-028 merge validation commit `5f1f04b`.
+- Source docs read: `docs/implementation/task-index.md#task-029-implement-quick-capture-and-search-plugins`, `docs/product/05-built-in-plugins.md#24-quick-capture-plugin`, `docs/product/03-plugin-platform.md`, `docs/product/06-view-slots.md`, `docs/development/01-data-roadmap-and-mvp.md#30-最终系统形态`, `docs/development/02-implementation-roadmap-and-constraints.md#20-5-所有高级能力都注册为-plugin`, `docs/architecture/01-overview-and-monorepo.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`.
+- Initial scope: built-in Quick Capture and Search plugin baselines. Quick Capture should create or append to an Inbox page while preserving captured Markdown for existing Task/Tag syntax processing; Search should query page titles and body text at baseline.
+- Initial out of scope until agents narrow otherwise: native desktop global shortcut wiring, Tauri permission/capability changes, filesystem/index persistence, background search workers, app-shell route/navigation polish, rich mobile toolbar mounting, ML/AI cleanup commands, sync, packaging, and Core business behavior for capture/search.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-029-quick-capture-search-plugins.md`.
 
 ### 2026-05-25 12:01 CST - TASK-028 merged
 
