@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { StrictMode, type ComponentType } from "react";
+import { StrictMode, useEffect, useState, type ComponentType } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../App";
@@ -20,6 +20,7 @@ import {
   type NativeBridge,
   type StructuredMarkdownDocument,
 } from "../core";
+import { useMarkdownWorkspaceBridge } from "../shell/hosts";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -179,6 +180,41 @@ describe("TASK-037 Home workspace editor", () => {
     });
     expect(collectForbiddenLeakPaths(latestProps)).toStrictEqual([]);
     expect(collectFunctionValuePaths(latestProps)).toStrictEqual([]);
+  });
+
+  it("keeps hosted editor page loads scoped to the current Home page", async () => {
+    const runtime = await createRuntime();
+    const foreignPage = createRuntimePage(runtime, "Foreign secret page", [
+      {
+        blockId: "foreign-secret-line",
+        text: "Sensitive non-current page body",
+      },
+    ]);
+
+    replaceRegisteredPageEditor(
+      runtime,
+      createForeignLoadProbeEditor(foreignPage.id),
+    );
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByText("Foreign page load probe editor"),
+    ).toBeVisible();
+
+    const probeStatus = await screen.findByRole("status", {
+      name: /foreign page load probe/i,
+    });
+
+    await waitFor(() =>
+      expect(probeStatus).not.toHaveTextContent("foreign page probe pending"),
+    );
+    expect(probeStatus).toHaveTextContent("foreign page blocked");
+    expect(probeStatus).not.toHaveTextContent(/Foreign secret page/u);
+    expect(probeStatus).not.toHaveTextContent(/Sensitive non-current page body/u);
+    expect(
+      screen.queryByText(/Sensitive non-current page body/u),
+    ).not.toBeInTheDocument();
   });
 
   it("lets a user type Markdown, use snippet toolbar buttons, save, and see the saved Home result", async () => {
@@ -384,6 +420,73 @@ describe("TASK-037 Home workspace editor", () => {
     ).toHaveValue("Original Home text");
   });
 
+  it("ignores a stale task title open after switching away from Home", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-session-page", "delayed-task-page"],
+    });
+    const homePage = createRuntimePage(runtime, sourcePageTitle, [
+      {
+        blockId: "delayed-task-block",
+        text: "- [ ] Delayed open",
+      },
+    ]);
+    const returnedTaskPage = createRuntimePage(runtime, "Delayed task page", []);
+    const user = userEvent.setup();
+    const openCompletion = createDeferred<{ pageId: string }>();
+    const originalExecute = runtime.commands.execute.bind(runtime.commands);
+    const openCalls: unknown[] = [];
+
+    vi.spyOn(runtime.commands, "execute").mockImplementation(
+      (commandId: string, input?: unknown) => {
+        if (commandId === openTaskPageCommandId) {
+          openCalls.push(input);
+
+          return openCompletion.promise;
+        }
+
+        return originalExecute(commandId, input);
+      },
+    );
+
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: "Delayed open" }));
+    await waitFor(() =>
+      expect(openCalls).toStrictEqual([
+        {
+          sourcePageId: homePage.id,
+          sourceBlockId: "delayed-task-block",
+        },
+      ]),
+    );
+    await user.click(
+      within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
+        "button",
+        { name: /today/i },
+      ),
+    );
+
+    const todayMain = await screen.findByRole("main", { name: /today/i });
+
+    expect(
+      within(todayMain).queryByRole("textbox", { name: /markdown/i }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      openCompletion.resolve({ pageId: returnedTaskPage.id });
+      await openCompletion.promise;
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole("main", { name: /today/i })).toBeVisible();
+    expect(
+      screen.queryByRole("textbox", { name: /markdown/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("main", { name: /home/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps non-Home routes as placeholders without mounting the Markdown editor", async () => {
     const runtime = await createRuntime({
       pageIds: ["home-session-page"],
@@ -550,6 +653,53 @@ function createCapturingEditor(
         </p>
         <p data-testid="registered-editor-page-id">
           {readCapturedPageId(props) ?? "missing-page-id"}
+        </p>
+      </section>
+    );
+  };
+}
+
+function createForeignLoadProbeEditor(
+  foreignPageId: string,
+): ComponentType<Record<string, unknown>> {
+  return function ForeignLoadProbeEditor() {
+    const bridge = useMarkdownWorkspaceBridge();
+    const [status, setStatus] = useState("foreign page probe pending");
+
+    useEffect(() => {
+      let active = true;
+
+      if (bridge === undefined) {
+        setStatus("foreign page blocked");
+
+        return () => {
+          active = false;
+        };
+      }
+
+      void bridge.pages.load(foreignPageId).then(
+        (page) => {
+          if (active) {
+            setStatus(`foreign page loaded: ${page.title} ${page.markdown}`);
+          }
+        },
+        () => {
+          if (active) {
+            setStatus("foreign page blocked");
+          }
+        },
+      );
+
+      return () => {
+        active = false;
+      };
+    }, [bridge, foreignPageId]);
+
+    return (
+      <section aria-label="Foreign page load probe editor">
+        <p>Foreign page load probe editor</p>
+        <p aria-label="Foreign page load probe" role="status">
+          {status}
         </p>
       </section>
     );

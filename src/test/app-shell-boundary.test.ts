@@ -20,6 +20,8 @@ const appShellEntrypoints = [
   "src/shell",
   "src/providers",
 ];
+const providerEntrypoints = ["src/providers"];
+const pluginEntrypoints = ["src/plugins"];
 
 const tauriBoundaryFiles = [
   "src-tauri/tauri.conf.json",
@@ -97,6 +99,48 @@ describe("App Shell bootstrap boundary", () => {
         if (forbiddenBoundary !== undefined) {
           violations.push(
             `${path.relative(repoRoot, filePath)} -> ${moduleSpecifier}: ${forbiddenBoundary}`,
+          );
+        }
+      }
+    }
+
+    expect(violations).toStrictEqual([]);
+  });
+
+  it("keeps provider modules from exposing an importable raw runtime source context", async () => {
+    const providerFiles = await listExistingSourceFiles(providerEntrypoints);
+    const violations: string[] = [];
+
+    for (const filePath of providerFiles) {
+      const relativePath = toRepoRelativePath(filePath);
+      const contents = await readFile(filePath, "utf8");
+
+      violations.push(
+        ...findRawRuntimeProviderExposure(relativePath, contents).map(
+          (violation) => `${relativePath}: ${violation}`,
+        ),
+      );
+    }
+
+    expect(violations).toStrictEqual([]);
+  });
+
+  it("keeps plugin production modules from importing app-shell host internals", async () => {
+    const pluginFiles = await listExistingSourceFiles(pluginEntrypoints);
+    const violations: string[] = [];
+
+    for (const filePath of pluginFiles) {
+      const contents = await readFile(filePath, "utf8");
+
+      for (const moduleSpecifier of collectStaticModuleSpecifiers(contents)) {
+        const forbiddenImport = findForbiddenPluginShellImport(
+          filePath,
+          moduleSpecifier,
+        );
+
+        if (forbiddenImport !== undefined) {
+          violations.push(
+            `${toRepoRelativePath(filePath)} -> ${moduleSpecifier}: ${forbiddenImport}`,
           );
         }
       }
@@ -295,6 +339,69 @@ function findForbiddenAppShellImport(moduleSpecifier: string): string | undefine
   return undefined;
 }
 
+function findRawRuntimeProviderExposure(
+  relativePath: string,
+  contents: string,
+): string[] {
+  const violations: string[] = [];
+
+  if (/^src\/providers\/runtime-source-context\.tsx?$/u.test(relativePath)) {
+    violations.push("raw runtime source context module is importable");
+  }
+
+  const forbiddenExports = new Map<RegExp, string>([
+    [
+      /\bexport\s+const\s+RuntimeSourceContext\b/u,
+      "exports raw RuntimeSourceContext",
+    ],
+    [
+      /\bexport\s+function\s+useRuntimeSource\b/u,
+      "exports raw useRuntimeSource hook",
+    ],
+    [
+      /\bexport\s*\{[^}]*\b(?:RuntimeSourceContext|useRuntimeSource)\b[^}]*\}/su,
+      "re-exports raw runtime source context or hook",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenExports) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findForbiddenPluginShellImport(
+  importerPath: string,
+  moduleSpecifier: string,
+): string | undefined {
+  const resolvedPath = resolveModuleSpecifier(importerPath, moduleSpecifier);
+
+  if (
+    resolvedPath === "src/shell" ||
+    resolvedPath.startsWith("src/shell/")
+  ) {
+    return "app-shell host internals";
+  }
+
+  return undefined;
+}
+
+function resolveModuleSpecifier(
+  importerPath: string,
+  moduleSpecifier: string,
+): string {
+  if (!moduleSpecifier.startsWith(".")) {
+    return moduleSpecifier.replace(/\\/gu, "/");
+  }
+
+  return path
+    .relative(repoRoot, path.resolve(path.dirname(importerPath), moduleSpecifier))
+    .replace(/\\/gu, "/");
+}
+
 function findBootstrapNativeExpansionPatterns(contents: string): string[] {
   const patterns = new Map<RegExp, string>([
     [
@@ -366,6 +473,10 @@ async function findForbiddenTask017AllowedNativeChange(
   }
 
   return undefined;
+}
+
+function toRepoRelativePath(filePath: string): string {
+  return path.relative(repoRoot, filePath).replace(/\\/gu, "/");
 }
 
 async function runGitLines(args: readonly string[]): Promise<string[]> {
