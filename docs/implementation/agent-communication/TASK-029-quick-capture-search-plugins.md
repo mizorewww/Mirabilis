@@ -330,3 +330,35 @@
 - Expected docs: product, architecture, development, and task-index docs that mention stale Quick Capture ids, Inbox metadata, native shortcut behavior, mobile toolbar behavior, automatic Task creation, or Search indexing.
 - Constraints: do not edit source, tests, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for McClintock, validate docs-only patch, and commit separately.
+
+## Docs Sync Outcome
+
+- McClintock (`doc_writer`) completed the formal docs sync.
+- Changed files:
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/06-view-slots.md`
+  - `docs/architecture/01-overview-and-monorepo.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/06-filter-native-database.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/implementation/task-index.md`
+- Delivered:
+  - Replaced stale `quick_capture.*` and `inbox.unprocessed` wording with canonical `quick-capture.*`, `quick-capture.unprocessed`, and `quick-capture.filter.inbox`.
+  - Documented trusted plugin-marked Inbox behavior, inert Markdown preservation, explicit Task/Tag public-command handoff, labelled region/textarea baselines, and deferred native/global shortcut/mobile toolbar scope.
+  - Documented Search `search.query` / `search.results` as bounded transient on-demand page scans, not persistent indexing or SQLite/FTS.
+  - Synced architecture and development docs to confirm no package/native/Tauri/Rust/schema/capability surface changes in TASK-029.
+- Parent validation:
+  - `git diff --check` passed.
+  - Exact stale-id scan found no remaining `quick_capture` or `inbox.unprocessed` references.
+  - Broader deferred-scope scan only found explicit future/deferred global shortcut/Search indexing wording and historical native-capability context.
+  - Source/package/native/Tauri/Rust/schema diff guard was empty.
+- Docs commit: `b9cdbe7 McClintock(docs)(Implement Quick Capture and Search plugins): sync capture search docs`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this orchestration status update.
+- Run final TASK-029 branch gate with `bun run check:quick`.
+- If green, mark TASK-029 complete in `docs/implementation/progress.md`, commit the completion ledger, merge to `master`, validate the merge result, and continue to the next unblocked task.
