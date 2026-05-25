@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:18 CST.
+Last updated: 2026-05-25 21:30 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 21:18 CST.
 - Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-033 implementation in progress.
+- Current phase: TASK-033 implementation and guard tests committed; review wave pending.
 
 ## Active Agents
 
-- Averroes (`implementer`) - TASK-033 release gate config/docs implementation.
+- None.
 
 ## Current TASK-033 State
 
@@ -71,6 +71,30 @@ Last updated: 2026-05-25 21:18 CST.
   - Expected write scope: `package.json`, `src-tauri/Cargo.toml`, `.codex/agents/release-checker.toml`, release notes/changelog surface, and relevant release docs such as `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md` if needed.
   - Constraints: no tests, progress, agent communication, Core/plugin behavior, IPC, capabilities, Rust commands, dependencies, updater/signing config, CSP, filesystem/network permissions, or broad bundle resources; no commit, merge, or push.
 - Next action: wait for Averroes, validate focused tests and release-surface guards, then commit if green.
+- Implementation completed:
+  - Averroes (`implementer`) updated the local release gate and release metadata/docs without editing tests.
+  - Changed files: `package.json`, `src-tauri/Cargo.toml`, `CHANGELOG.md`, `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `.codex/agents/release-checker.toml`, and `tsconfig.json`.
+  - Parent validation passed for focused TASK-033 test, `bun run typecheck`, `bun run lint`, `git diff --check`, and release-checker TOML parse.
+  - Parent `bun run check:full` validation failed during frontend tests because 16 historical native-surface guards still expected no package/Cargo diff from `master`, while TASK-033 intentionally changes `package.json` and `src-tauri/Cargo.toml`.
+- Parent decisions after full-gate validation failure:
+  - Treat the failure as stale historical test guard scope, not a release-gate implementation failure.
+  - Delegate a tests-only fix so historical guards still forbid unreviewed native/capability/IPC/package drift, while allowing no diff after merge or the exact reviewed TASK-033 release files before merge.
+  - Do not commit Averroes' implementation until the tests-only guard fix is validated.
+- Test-fix delegated:
+  - Poincare (`test_writer`) should update affected historical tests only.
+  - Allowed behavior: native-surface changes are `[]` or a subset of `package.json` and `src-tauri/Cargo.toml`; any other native/package/Tauri/capability/command/dependency drift still fails.
+- Historical guard test-fix completed:
+  - Poincare (`test_writer`) added `src/test/native-surface-guard.ts` and updated 16 historical native-surface guard tests to use it.
+  - Guards now accept no diff after merge or the exact reviewed TASK-033 `package.json` / `src-tauri/Cargo.toml` diffs before merge; unreviewed edits inside those files or any other native/package/Tauri/capability/permission/command/lockfile drift still fail.
+- Final validation after implementation/test-fix:
+  - `bun run check:full` passed with typecheck, lint, 38 frontend test files / 587 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+  - Bundle outputs: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+  - Tracked artifact/secret scan found no tracked release artifacts, secrets, logs, `dist`, or `src-tauri/target` output.
+- Commits:
+  - `b5629a5 Averroes(implementation)(Add release packaging and local full gate): implement local release gate`
+  - `7149e5a Averroes(docs)(Add release packaging and local full gate): document local release readiness`
+  - `1a83600 Poincare(test-fix)(Add release packaging and local full gate): allow reviewed release surface guards`
+- Next action: commit this validation record, then run review agents including `release_checker`.
 
 ## Current TASK-032 State
 

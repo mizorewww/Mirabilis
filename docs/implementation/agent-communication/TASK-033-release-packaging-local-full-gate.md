@@ -165,3 +165,84 @@
   - avoid any native/capability/IPC/updater/signing/dependency/Core/plugin behavior expansion.
 - Constraints: do not edit tests, progress, agent-communication, commits, merges, or pushes.
 - Parent next action: wait for Averroes, validate focused green tests and release-surface guards, then commit if green.
+
+## Implementation Outcome
+
+- Averroes (`implementer`) completed the focused TASK-033 release-gate implementation.
+- Files changed:
+  - `package.json`
+  - `src-tauri/Cargo.toml`
+  - `CHANGELOG.md`
+  - `docs/testing/strategy.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `.codex/agents/release-checker.toml`
+  - `tsconfig.json`
+- Delivered:
+  - `check:full` now runs `check:quick` before `tauri build --ci --bundles deb,rpm`;
+  - Cargo release metadata is no longer placeholder and version remains `0.1.0`;
+  - `CHANGELOG.md` is the release notes surface;
+  - release docs document local deb/rpm gate, AppImage controlled-builder deferral, version sync, and changelog expectations;
+  - `release_checker` instructions now verify local gate, artifacts, version/changelog policy, AppImage status, no GitHub CI dependency, no tracked artifacts/secrets, and no unexpected native/capability/IPC/updater/signing broadening.
+- Parent validation:
+  - `bun run test:frontend -- src/test/release-packaging-full-gate.test.ts` passed with 9 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.codex/agents/release-checker.toml` parsed as TOML.
+- Full-gate validation attempt:
+  - `bun run check:full` ran `check:quick && tauri build --ci --bundles deb,rpm`.
+  - It failed during the frontend test suite before Tauri build because 16 historical task tests still assert no package/Cargo/native-surface diff from `master`.
+  - Failure symptoms: historical guards reported `package.json` and/or `src-tauri/Cargo.toml`, which are the reviewed TASK-033 release-surface files.
+
+## Parent Decisions After Full-Gate Validation Failure
+
+- Treat the full-gate failure as stale historical test-guard scope because TASK-033 intentionally changes `package.json` and `src-tauri/Cargo.toml`.
+- Do not weaken native-surface checks broadly.
+- Delegate a tests-only fix so historical guards pass when changed native-surface files are either `[]` after merge or a subset of the reviewed TASK-033 release files before merge, while still failing for Tauri config, capabilities, generated permissions, Rust commands, dependency changes, or other package/native drift.
+
+## Historical Guard Test-Fix Handoff
+
+- Poincare (`test_writer`) started at 2026-05-25 21:23 CST.
+- Scope: tests only.
+- Likely affected files: historical `listNativeSurfaceChangesFromMaster()` guards in plugin/core task tests that currently expect `[]`.
+- Required behavior:
+  - allow `[]`;
+  - allow a subset of `package.json` and `src-tauri/Cargo.toml` for reviewed TASK-033 release metadata/script changes;
+  - continue failing on any other native/package/Tauri config/capability/permission/Rust command/dependency drift.
+- Constraints: do not edit production source, `package.json`, Cargo/Tauri config, docs, progress, agent-communication, release-checker config, commits, merges, or pushes.
+- Parent next action: wait for Poincare, validate full frontend tests and static checks, then commit implementation and test-fix in atomic commits if green.
+
+## Historical Guard Test-Fix Outcome
+
+- Poincare (`test_writer`) completed the tests-only guard fix.
+- Files changed:
+  - added `src/test/native-surface-guard.ts`;
+  - updated 16 historical native-surface guard tests to use the helper.
+- Guard behavior:
+  - accepts `[]`, which is the expected state after TASK-033 merges to `master`;
+  - accepts the exact reviewed TASK-033 diffs in `package.json` and `src-tauri/Cargo.toml` before merge;
+  - fails for unreviewed edits inside those allowed files;
+  - fails for any other native/package/Tauri config/capability/permission/Rust command/lockfile drift.
+- Poincare validation:
+  - `bun run test:frontend -- <16 affected files>` passed with 16 files / 225 tests.
+  - `bun run test:frontend` passed with 38 files / 587 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+
+## Branch Validation After Implementation
+
+- Parent validation:
+  - `bun run check:full` passed after the implementation and guard test-fix.
+  - The gate ran `check:quick`, then `tauri build --ci --bundles deb,rpm`.
+  - Frontend tests passed with 38 files / 587 tests.
+  - Rust fmt, Rust clippy, and Rust tests passed.
+  - Tauri release build passed and produced:
+    - `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb`
+    - `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`
+  - Tracked artifact/secret scan found no tracked release artifacts, secrets, logs, `dist`, or `src-tauri/target` output.
+- Commits:
+  - `b5629a5 Averroes(implementation)(Add release packaging and local full gate): implement local release gate`
+  - `7149e5a Averroes(docs)(Add release packaging and local full gate): document local release readiness`
+  - `1a83600 Poincare(test-fix)(Add release packaging and local full gate): allow reviewed release surface guards`
+- Parent next action: commit this validation record, then run review agents, including `release_checker`.
