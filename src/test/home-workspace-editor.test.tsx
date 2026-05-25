@@ -693,7 +693,7 @@ function createForeignLoadProbeEditor(
       return () => {
         active = false;
       };
-    }, [bridge, foreignPageId]);
+    }, [bridge]);
 
     return (
       <section aria-label="Foreign page load probe editor">

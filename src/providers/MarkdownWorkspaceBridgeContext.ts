@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, createElement, useContext, type ReactNode } from "react";
 
 export type MarkdownWorkspaceDocument = {
   id: string;
@@ -30,8 +30,22 @@ export type MarkdownWorkspaceBridgeValue = {
   openPage(pageId: string): void;
 };
 
-export const MarkdownWorkspaceBridgeContext =
+const MarkdownWorkspaceBridgeContext =
   createContext<MarkdownWorkspaceBridgeValue | null>(null);
+
+export function MarkdownWorkspaceBridgeProvider({
+  bridge,
+  children,
+}: {
+  bridge: MarkdownWorkspaceBridgeValue;
+  children: ReactNode;
+}) {
+  return createElement(
+    MarkdownWorkspaceBridgeContext.Provider,
+    { value: bridge },
+    children,
+  );
+}
 
 export function useMarkdownWorkspaceBridge():
   | MarkdownWorkspaceBridgeValue

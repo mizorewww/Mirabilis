@@ -36,17 +36,14 @@ import {
   type StructuredMarkdownDocument,
 } from "./core";
 import {
+  MarkdownWorkspaceBridgeProvider,
   RuntimeProvider,
   useRuntime,
+  type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
   type RuntimeSource,
 } from "./providers";
-import { useRuntimeSource } from "./providers/runtime-source-context";
-import {
-  MarkdownWorkspaceBridgeProvider,
-  ViewHost,
-  type MarkdownWorkspaceBridgeValue,
-} from "./shell/hosts";
+import { ViewHost } from "./shell/hosts";
 import "./App.css";
 
 type AppProps = {
@@ -240,16 +237,17 @@ function App({ initializeRuntime = createAppRuntime }: AppProps) {
   return (
     <ThemeProvider theme={mirabilisTheme}>
       <CssBaseline />
-      <RuntimeProvider initializeRuntime={initializeRuntime}>
-        <MirabilisShell />
+      <RuntimeProvider<RuntimeSource> initializeRuntime={initializeRuntime}>
+        {(runtimeSource) => (
+          <MirabilisShell runtimeSource={runtimeSource as AppRuntime} />
+        )}
       </RuntimeProvider>
     </ThemeProvider>
   );
 }
 
-function MirabilisShell() {
+function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const runtime = useRuntime();
-  const runtimeSource = useRuntimeSource<AppRuntime>();
   const homePageId = useSessionHomePageId(runtimeSource);
   const [selectedRouteId, setSelectedRouteId] =
     useState<WorkspaceRouteId>("home");
@@ -362,6 +360,8 @@ function MirabilisShell() {
                         if (route.id === "home") {
                           setCurrentPage(currentPageState, homePageId);
                           setSelectedPageId(homePageId);
+                        } else {
+                          unsetCurrentPage(currentPageState);
                         }
                       }}
                       selected={isSelected}
@@ -496,7 +496,12 @@ function createMarkdownWorkspaceBridge({
   return {
     pages: {
       async load(pageId) {
-        return loadWorkspacePage(runtime, pageId);
+        const generation = ensureCurrentPage(currentPageState, pageId);
+        const page = loadWorkspacePage(runtime, pageId);
+
+        ensureCurrentPage(currentPageState, pageId, generation);
+
+        return page;
       },
       async save(input) {
         const generation = ensureCurrentPage(currentPageState, input.pageId);
@@ -606,6 +611,13 @@ function saveWorkspacePage(
 function setCurrentPage(currentPageState: CurrentPageState, pageId: string): void {
   if (currentPageState.pageId !== pageId) {
     currentPageState.pageId = pageId;
+    currentPageState.generation += 1;
+  }
+}
+
+function unsetCurrentPage(currentPageState: CurrentPageState): void {
+  if (currentPageState.pageId !== "") {
+    currentPageState.pageId = "";
     currentPageState.generation += 1;
   }
 }

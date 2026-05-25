@@ -12,7 +12,7 @@ import {
   type BlockNode,
   type StructuredMarkdownDocument,
 } from "../../../core";
-import { useMarkdownWorkspaceBridge } from "../../../shell/hosts/MarkdownWorkspaceBridgeContext";
+import { useMarkdownWorkspaceBridge } from "../../../providers";
 import type { MarkdownInsertTextResult } from "../commands/insert-text";
 import { BaseMarkdownToolbar } from "./BaseMarkdownToolbar";
 
