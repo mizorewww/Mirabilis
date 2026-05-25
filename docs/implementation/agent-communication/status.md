@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:44 CST.
+Last updated: 2026-05-25 15:45 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 15:44 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 second review-fix tests completed; preparing second production fix handoff.
+- Current phase: TASK-031 second production review fixes delegated.
 
 ## Active Agents
 
-- None.
+- Dirac the 2nd (`implementer`) is fixing the remaining TASK-031 production P1s.
 
 ## Current TASK-031 State
 
@@ -128,7 +128,10 @@ Last updated: 2026-05-25 15:44 CST.
   - Parent red validation: focused TASK-031 tests failed as expected with 4 failed / 11 passed. Failures cover production override exports, test-support changing `cleanup-inbox` to `generate-subtasks` on a second operation read, unsupported strict schema keywords, and `error: null` Responses success treated as provider unavailable.
   - Parent static validation passed: focused ESLint, `git diff --check`, `.skip/.only` scan, tests-only changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
   - Test-fix commit: `8d37679 Hypatia(test-fix)(Implement AI Plugin provider abstraction): cover remaining ai provider regressions`; post-commit auto-push succeeded.
-- Next action: commit this test outcome record, then delegate second production review-fix implementation.
+- Second review-fix implementation delegated:
+  - Dirac the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: remove production-module provider/settings override exports and settings secret exposure while preserving test-mode configuration through `test-support`, remove `Object.defineProperty` / operation-changing wrapper behavior, treat Responses `error: null` and `incomplete_details: null` as acceptable completed-success fields, and remove unsupported OpenAI strict JSON Schema keywords while preserving runtime validation.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Dirac the 2nd, validate focused green checks, and commit second review-fix implementation separately.
 
 ## Current TASK-030 State
 

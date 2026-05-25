@@ -481,3 +481,15 @@
 ## Current Next Action
 
 - Commit this second test outcome record, then delegate production fixes to `implementer`.
+
+## Second Review-Fix Implementation Handoff
+
+- Dirac the 2nd (`implementer`) started at 2026-05-25 15:45 CST.
+- Scope: production code only, expected under `src/plugins/ai/**`.
+- Required fixes:
+  - remove production-module provider/settings override exports and settings secret exposure while preserving test-mode configuration through `src/plugins/ai/test-support.ts`;
+  - remove `Object.defineProperty` / operation getter behavior and any operation-changing wrapper from test support;
+  - treat OpenAI Responses `error: null` and `incomplete_details: null` as acceptable completed-success fields while keeping non-null errors and incomplete/non-completed responses fail-closed;
+  - remove unsupported OpenAI strict JSON Schema keywords from generated Structured Output schemas while preserving meaningful schemas and runtime validation.
+- Constraints: do not edit tests, docs, progress files, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Dirac the 2nd, validate focused green checks, and commit second review-fix implementation separately.
