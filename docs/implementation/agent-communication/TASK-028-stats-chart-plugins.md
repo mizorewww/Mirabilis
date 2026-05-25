@@ -178,5 +178,15 @@
 
 ## Current Next Action
 
-- Planck (`test_writer`) started at 2026-05-25 11:08 CST for failing review-fix regression tests.
-- Parent next action: wait for Planck, validate the expected red signal, and commit tests.
+- Planck (`test_writer`) completed failing review-fix regression tests in `src/test/stats-chart-plugins.test.tsx`.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` failed as expected with 8 failed / 10 passed.
+  - Failure coverage: oversized Stats arrays resolve instead of rejecting; huge finite Stats values and overlong labels are not ignored; time-by-page collapses same-title pages; canonical Timer note events are not recognized; unnoted sessions collapse same-title pages; oversized Chart rows/points/comparisons render instead of emptying; Chart overlong labels/huge values render; comparison chart lacks Label/Expected/Actual/Delta/Error headers.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/stats-chart-plugins.test.tsx --max-warnings=0`.
+  - `.skip/.only` scan.
+  - `git diff --check`.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test-fix commit: `9106bb4 Planck(test-fix)(Implement Stats and Chart plugins): cover stats chart review regressions`; post-commit auto-push succeeded.
+- Boyle (`implementer`) started at 2026-05-25 11:15 CST for the P1 production fixes. Scope: production code only; expected fixes are bounded Stats/Chart DTOs, page identity grouping, canonical Timer note support, and accessible comparison chart headers.

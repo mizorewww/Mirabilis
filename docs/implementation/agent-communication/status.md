@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:08 CST.
+Last updated: 2026-05-25 11:15 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:08 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 P1 regression tests delegated.
+- Current phase: TASK-028 P1 production fixes delegated.
 
 ## Active Agents
 
-- Planck (`test_writer`) is active for review-found P1 regression tests.
+- Boyle (`implementer`) is active for review-found P1 production fixes.
 
 ## Current TASK-028 State
 
@@ -58,6 +58,11 @@ Last updated: 2026-05-25 11:08 CST.
   - Ptolemy (`reviewer`) found two P1 correctness issues: `sum-time-by-page` and `unnoted-sessions` group by page title rather than page identity, collapsing distinct pages with the same title; and `readTimerNote` rejects canonical Timer note events from the Timer Plugin shape.
   - Parfit (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2 follow-ups: stale docs, Stats helper export note drift, and React dynamic children/duplicate key cleanup.
   - Arendt (`docs_researcher`) found one P1 accessibility issue: comparison chart output uses unlabeled positional table cells without programmatically clear column labels. It also recommended explicit `aria-atomic` on status and React dynamic-child cleanup as non-blocking improvements.
+- Review-fix regression tests completed:
+  - Planck (`test_writer`) added focused tests for bounded Stats arrays, bounded Stats numbers/labels, page identity grouping, canonical Timer note shape, bounded Chart DTOs, bounded Chart rows, and comparison chart headers.
+  - Parent validated the expected red signal: focused TASK-028 tests failed with 8 failed / 10 passed.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `9106bb4 Planck(test-fix)(Implement Stats and Chart plugins): cover stats chart review regressions`; post-commit auto-push succeeded.
 
 ## Current TASK-027 State
 
@@ -165,5 +170,5 @@ Last updated: 2026-05-25 11:08 CST.
 
 ## Next Actions
 
-1. Wait for Planck (`test_writer`) and validate the expected red regressions.
-2. Commit regression tests, then spawn `implementer` for bounded-input, page identity, canonical Timer note, and comparison accessibility fixes.
+1. Wait for Boyle (`implementer`) to finish the P1 production fixes.
+2. Validate focused green checks and commit the production fix separately.
