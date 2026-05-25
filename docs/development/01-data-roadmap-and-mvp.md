@@ -324,15 +324,27 @@ stale detail clearing after data/date/week changes
 
 ### Phase 7：Habit Plugin + Heatmap View Plugin
 
-实现：
+TASK-027 当前实现：
 
 ```text
-#habit
-habit metadata
-habit checked event
-Habits Filter
-Today Habits
-Heatmap View
+#habit syntax descriptor and explicit habit.refresh-habit
+habit.enabled / habit.frequency / habit.lastCheckedAt / habit.nextDue metadata
+habit.check-today / habit.uncheck-today / habit.set-frequency commands
+namespace habit/type checked or unchecked events
+Habits and Today Habits filters
+generic heatmap.calendar view over kind heatmap.date-series DTOs
+```
+
+仍后续：
+
+```text
+Task checkbox auto-bridge
+Habit Review
+habit.target / habit.streak
+skipped / weekly / monthly recurrence
+Calendar/Stats/ML Habit feeds
+app-shell Habit/Heatmap route polish
+native/Tauri/package/Rust/schema changes
 ```
 
 ### Phase 8：Stats / Chart Plugin

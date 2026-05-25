@@ -351,9 +351,9 @@ TASK-022 filters 和 task `page.list` view 已实现为 data-only / registered-v
 
 ## 17. Habit Plugin
 
-Habit Plugin 是插件。
+Habit Plugin 是内置插件，manifest id 是 `habit`。TASK-027 当前交付的是 daily Habit baseline 和 generic Heatmap Plugin baseline，不是 Task checkbox 自动桥接、Habit Review、完整 recurrence/streak 算法或 app-shell route polish。
 
-它不进入 Core。
+Habit Plugin 不进入 Core。Core 只保存 Markdown Page、metadata、event、filter 和 registry 数据；habit 语义由 `habit` plugin 通过 PluginContext facade 维护。
 
 ### 17.1 创建习惯
 
@@ -363,73 +363,120 @@ Habit Plugin 是插件。
 - [ ] 每天复盘 10 分钟 #habit
 ```
 
-Habit Plugin 识别 `#habit`，写入：
+调用方显式执行：
+
+```ts
+runtime.commands.execute("habit.refresh-habit", { pageId });
+```
+
+Habit Plugin 识别 title 或 saved `markdown.line` body 中的有效 `#habit`，并写入 Habit-owned metadata：
 
 ```text
 habit.enabled = true
 habit.frequency = daily
+habit.nextDue = local today
 ```
 
-这个页面仍然是任务页面。
+escaped hash、joined token、HTML-like fragment 和 fenced code 中的 `#habit` 保持 inert。这个页面仍然是 Markdown Page；如果页面同时来自 Task syntax，checkbox/source relation 仍由 Task Plugin 拥有。
 
 ### 17.2 注册能力
 
 Habit Plugin 注册：
 
 ```text
+Plugin id:
+habit
+
+Markdown Syntax:
+habit.hashtag
+syntax: #habit
+
 Metadata:
 habit.enabled
 habit.frequency
-habit.target
-habit.streak
-habit.last_checked_at
+habit.lastCheckedAt
+habit.nextDue
 
 Events:
-habit.checked
-habit.unchecked
-habit.skipped
+namespace: habit, type: checked
+namespace: habit, type: unchecked
 
 Commands:
-habit.check_today
-habit.uncheck_today
-habit.set_frequency
+habit.refresh-habit
+habit.check-today
+habit.uncheck-today
+habit.set-frequency
 
 Filters:
-Habits
-Today Habits
-Habit Review
-
-Views:
-habit.list
-habit.heatmap
-habit.card
+habit.filter.habits
+habit.filter.today-habits
 ```
+
+`habit.set-frequency` 当前只接受 `frequency: "daily"`。`habit.target`、`habit.streak`、skipped events、weekly/monthly recurrence、Habit Review、Habit card/list polish 和 snake_case command aliases 都是后续范围。
 
 ### 17.3 习惯完成
 
-用户点击 habit 任务的 checkbox。
+TASK-027 当前完成路径是显式 command，不是 Task checkbox 自动桥接：
 
-Habit Plugin 处理：
-
-```text
-Event: habit.checked
-Payload: { date: today }
+```ts
+runtime.commands.execute("habit.check-today", { pageId });
 ```
 
-第二天：
+Habit Plugin 验证 page 存在且是 trusted Habit page，然后写入：
 
 ```text
-Today Habits Filter 重新显示该 habit 为待完成
+Metadata:
+habit.lastCheckedAt = local today
+habit.nextDue = local tomorrow
+
+Event:
+namespace: habit
+type: checked
+payload: { habitPageId, date }
 ```
+
+取消今天完成：
+
+```ts
+runtime.commands.execute("habit.uncheck-today", { pageId });
+```
+
+会追加 `namespace: "habit"`、`type: "unchecked"` event，payload 同样是 `{ habitPageId, date }`，并把 `habit.nextDue` 设回 today。
+
+`Today Habits` filter 使用 Habit-owned metadata 查询 daily habits whose `habit.nextDue` equals today or is earlier than today；当前 filter executor 没有 `lte` operator，所以 query 使用 `eq today OR lt today`。
 
 ### 17.4 热力图
 
 热力图不是 Core 功能。
-热力图由 Habit Plugin 或 Heatmap Plugin 注册 View。
+TASK-027 中由独立 `heatmap` plugin 注册 generic view：
 
 ```text
-View: habit.heatmap
-Data: habit.checked events
+Plugin id:
+heatmap
+
+View:
+heatmap.calendar
+
+View type:
+heatmap
+
+Accepted data:
+kind: "heatmap.date-series"
+```
+
+Heatmap Plugin 消费调用方或 view host 提供的 normalized DTO，不导入 Habit internals，也不直接读取 Habit events。测试 harness 可以把 public Habit `checked` / `unchecked` events 规范化为 `heatmap.date-series` rows；这种规范化属于 caller/view-host 行为。Heatmap 渲染 inert text/native button UI，malformed/wrong-owner/accessor/prototype/symbol/non-enumerable rows fail closed。
+
+Deferred after TASK-027:
+
+```text
+Task checkbox auto-bridge
+Habit Review
+Habit card/list polish
+habit.target / habit.streak
+skipped / weekly / monthly recurrence
+Stats/ML/Calendar feeds
+app-shell route/navigation polish
+native/Tauri/package/Rust/schema persistence changes
 ```
 
 ---

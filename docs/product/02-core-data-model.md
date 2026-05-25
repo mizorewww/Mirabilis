@@ -141,7 +141,10 @@ TASK-025 当前 Timer finalization path 会追加 `namespace: "timer"`、`type: 
 ```text
 namespace: habit
 type: checked
-payload: { date: "2026-05-19" }
+payload: {
+  habitPageId: "page_xxx",
+  date: "2026-05-19"
+}
 ```
 
 Core 只记录 event。
@@ -215,7 +218,7 @@ View 本身由插件提供。
 例如：
 
 ```text
-Habit Plugin 注册 heatmap view
+Heatmap Plugin 注册 heatmap view
 Timer Plugin 注册 timeline view
 Calendar Plugin 注册 calendar view
 Stats Plugin 注册 chart view
