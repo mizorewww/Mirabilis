@@ -81,7 +81,7 @@ Status markers:
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [x] TASK-036: Add Generic ViewHost And SlotHost
 - [x] TASK-037: Mount Home Workspace Editor
-- [~] TASK-038: Add Sidebar Page And Saved-Filter Navigation
+- [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 07:04 CST - TASK-038 branch gate passed and task closed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Final production commit: `9dbbaeb` completed saved-filter label-in-name accessibility and required route-token DTOs for the built-in task page-list view.
+- Docs sync commit: `2c33021` updated product, architecture, testing, task-index, development, progress, and agent-communication docs for the delivered MUI Drawer page/saved-filter navigation and TASK-039+ deferrals.
+- Release readiness: Kant the 2nd found no P0/P1/P2 release blockers, confirmed no package/lockfile/native/Tauri/Rust/IPC/capability/permission/schema/release drift, and confirmed `check:full` is not required for this TypeScript/React/MUI app-shell navigation task.
+- Branch gate: `bun run build` passed with the known Vite chunk-size warning; `bun run check:quick` passed with 42 frontend test files / 672 tests, Rust fmt, Rust clippy, and Rust tests.
+- Final status: TASK-038 is marked `[x]`. Next action is merge to `master`, validate merge result, push `master`, then continue to TASK-039.
 
 ### 2026-05-26 06:55 CST - TASK-038 docs sync applied
 

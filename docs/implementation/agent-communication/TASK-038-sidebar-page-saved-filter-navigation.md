@@ -252,6 +252,20 @@ type ActiveRoute =
   - accept `1304174` as the final test-hardening baseline;
   - delegate final production polish to Poincare the 2nd (`implementer`) with write scope limited to `src/App.tsx` and `src/plugins/task/components/TaskFilterViews.tsx`.
 
+## Branch Gate And Closeout
+
+- Poincare the 2nd (`implementer`) completed final production polish in commit `9dbbaeb`.
+- Franklin the 2nd (`doc_writer`) completed TASK-038 docs sync in commit `2c33021`.
+- Kant the 2nd (`release_checker`) found no P0/P1/P2 release blockers, confirmed no package, lockfile, native, Tauri, Rust, IPC, capability, permission, schema, or release drift, and confirmed `check:full` is not required for TASK-038.
+- Parent branch gate:
+  - `bun run build` passed with the known Vite chunk-size warning.
+  - `bun run check:quick` passed with 42 frontend test files / 672 tests, Rust fmt, Rust clippy, and Rust tests.
+- Parent decision:
+  - mark TASK-038 `[x]`;
+  - merge the branch to `master`;
+  - validate the merge result on `master`;
+  - continue to TASK-039.
+
 ## Final Production Polish Outcome
 
 - Poincare the 2nd (`implementer`) completed final TASK-038 production polish in commit `9dbbaeb`.
