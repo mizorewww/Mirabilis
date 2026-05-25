@@ -238,7 +238,7 @@ habit.refresh-habit
 habit.check-today
 habit.uncheck-today
 habit.set-frequency
-stats.open_review
+stats.run-aggregation
 ml.predict_remaining_time
 ai.generate_subtasks
 ```
@@ -260,8 +260,9 @@ default_filter
 ```text
 calendar.week
 heatmap.calendar
-stats.bar_chart
-stats.line_chart
+chart.bar
+chart.line
+chart.pie
 timer.timeline
 ml.prediction_panel
 ```
@@ -394,6 +395,7 @@ Task Plugin
 Habit Plugin
 Timer Plugin
 Stats Plugin
+Chart Plugin
 Machine Learning Plugin
 AI Plugin
 Calendar Plugin

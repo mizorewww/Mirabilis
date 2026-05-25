@@ -309,7 +309,7 @@ TASK-025 implements the narrow event/page slice:
 - The original segment event remains immutable; timeline data derives the latest note page from note-link events.
 - `timer.page-timeline.segments` is the current page timeline contribution. It filters to current-page Timer-owned events and ignores malformed, wrong-owner, wrong-page, or unreadable note data.
 
-Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
+Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, ML integration, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
 
 ### 11.5 Calendar Plugin baseline
 
@@ -390,7 +390,7 @@ Current behavior:
 - DTO and command inputs fail closed for malformed, wrong-owner, extra-field, accessor, symbol, prototype-carried, and non-enumerable shapes.
 - Command validity is scoped to the current `register(ctx)` runtime and to currently mounted/visible segments; unmount clears visibility.
 
-Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route/navigation, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
+Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route/navigation, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, Stats app-shell/feed integration, ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
 
 ---
 
@@ -449,7 +449,7 @@ type: checked | unchecked
 payload: { habitPageId, date }
 ```
 
-`habit.set-frequency({ pageId, frequency: "daily" })` is the only accepted frequency change in this slice. `habit.target`, `habit.streak`, skipped events, weekly/monthly recurrence, snake_case command aliases, Task checkbox auto-bridge, Habit Review, Habit card/list UI, Stats/ML/Calendar feeds, and persistence/native changes remain deferred.
+`habit.set-frequency({ pageId, frequency: "daily" })` is the only accepted frequency change in this slice. `habit.target`, `habit.streak`, skipped events, weekly/monthly recurrence, snake_case command aliases, Task checkbox auto-bridge, Habit Review, Habit card/list UI, automatic Stats/ML/Calendar feeds, and persistence/native changes remain deferred.
 
 Current filters:
 
@@ -525,59 +525,97 @@ Rows fail closed when malformed, wrong-owner, extra-field, accessor, symbol-keye
 
 ### 13.1 Stats Plugin
 
-Stats Plugin 负责聚合数据。
+Stats Plugin 负责聚合 normalized reporting DTO。Stats 是内置插件，不是 Core 业务逻辑。
 
 ```text
-plugins/stats/
-  src/
-    aggregations/
-      sumTimeByTag.ts
-      sumTimeByPage.ts
-      estimateVsActual.ts
-      habitCompletionRate.ts
-      taskSwitchCount.ts
-    filters/
-      planningReview.ts
-      recentlyStalled.ts
-    views/
-      StatsDashboard.tsx
-      InsightCard.tsx
+src/plugins/stats/
+  index.ts
+  plugin.ts
 ```
 
 Stats Plugin 通过 manifest descriptor 声明 aggregation。
-可执行 algorithm registry 和 handler 绑定是后续 Plugin Platform 工作，不是 TASK-010 当前 runtime facade。
+TASK-028 当前没有 executable AlgorithmRegistry；这些 descriptor 是 inert metadata。runtime 执行入口是 Command Registry 中的 `stats.run-aggregation`。
 
 ```ts
 export const statsManifest: PluginManifest = {
   id: "stats",
   name: "Stats Plugin",
-  version: "0.1.0",
+  version: "1.0.0",
   minAppVersion: "0.1.0",
   contributes: {
     algorithms: [
       {
         id: "stats.sum-time-by-tag",
-        name: "Sum time by tag",
-        inputSchema: SumTimeByTagInput,
-        outputSchema: SumTimeByTagOutput
+        name: "Sum time by tag"
       }
     ]
   }
 };
 ```
 
-### 13.2 Chart Plugin
-
-Chart Plugin 负责图表视图。
+当前 canonical aggregation ids：
 
 ```text
-plugins/chart/
-  src/
-    views/
-      BarChartView.tsx
-      LineChartView.tsx
-      ScatterChartView.tsx
-      PieChartView.tsx
+stats.sum-time-by-tag
+stats.sum-time-by-page
+stats.estimate-vs-actual
+stats.habit-completion-rate
+stats.task-switch-count
+stats.unnoted-sessions-count
+```
+
+当前 command：
+
+```ts
+ctx.commands.register({
+  id: "stats.run-aggregation",
+  title: "Run aggregation",
+  handler: runAggregation
+});
+```
+
+`stats.run-aggregation({ aggregationId, input })` 只接受匹配 aggregation 的 input kind：
+
+```text
+stats.time-by-tag-input
+stats.time-by-page-input
+stats.estimate-vs-actual-input
+stats.habit-completion-input
+stats.task-switch-count-input
+stats.unnoted-sessions-input
+```
+
+Stats 输入来自调用方或 view host 准备的公开 DTO 投影，例如 Timer `time_segment_created` / `time_segment_note_added` events、Tag metadata、Task estimate metadata、Habit checked/unchecked events 和 habit summary。Stats 不读取 Timer/Habit/Task/Tag private data，不直接访问其他插件 store，也不在 Core 中放置统计业务逻辑。
+
+输出使用 Chart DTO：
+
+```text
+time by tag -> chart.category-series
+time by page -> chart.category-series
+estimate vs actual -> chart.comparison-series
+habit completion -> chart.category-series
+task switching -> chart.category-series
+unnoted sessions -> chart.category-series
+```
+
+Trust boundary:
+
+- `stats.run-aggregation` payload 必须是 exact plain data。
+- Arrays 会先通过 descriptor inspection 复制成 inert plain arrays；accessor、symbol key、prototype-carried、non-enumerable、sparse、custom iterator 和 caller-overridden array method 都 fail closed。
+- Top-level Stats arrays 当前最多 1,000 items。
+- Labels/ids/titles 必须是 bounded trusted strings；numeric values 必须 finite 且 magnitude capped。
+- Timer/Tag/Task/Habit DTO rows 必须带匹配 `sourcePluginId`、`namespace`、`type` 和 provenance；伪造 owner 或 malformed row 被忽略。
+
+Stats dashboard、insight card views、saved filters、persistent indexes、ML/AI insight generation、broad cross-plugin query facade 和 app-shell routes 仍是后续范围。
+
+### 13.2 Chart Plugin
+
+Chart Plugin 负责 generic chart DTO 的可访问渲染。Chart 是内置插件，不是 Stats 子模块，也不查询 Stats internals。
+
+```text
+src/plugins/chart/
+  index.ts
+  plugin.ts
 ```
 
 Chart Plugin 注册：
@@ -588,11 +626,37 @@ ctx.views.register({
   type: "chart.bar",
   title: "Bar chart",
   component: BarChartView,
-  accepts: { kind: "series" }
+  accepts: { kinds: ["chart.category-series", "chart.comparison-series"] }
 });
 ```
 
-Stats 产出数据，Chart 负责渲染。
+当前 registered views：
+
+```text
+chart.bar: accepts chart.category-series and chart.comparison-series
+chart.line: accepts chart.time-series
+chart.pie: accepts chart.category-series
+```
+
+当前 Chart DTO kinds：
+
+```text
+chart.category-series
+chart.time-series
+chart.comparison-series
+```
+
+Chart baseline 使用 React text/table/list/status markup，提供 loading (`role="status"`, `aria-busy`) 和 empty state (`No chart data`)。Comparison chart table exposes `Label`, `Expected`, `Actual`, `Delta`, and `Error` headers. TASK-028 没有生产 charting-library dependency，也没有 SVG/canvas geometry contract。
+
+Trust boundary:
+
+- DTO 必须是 exact plain object，rows 必须是 bounded inert plain arrays。
+- Chart rows 当前最多 200 items。
+- Labels/ids/titles 和 numeric magnitudes 使用同一类 trusted string / finite magnitude cap。
+- Invalid DTOs fail closed to empty chart state。
+- Chart 不执行 HTML、Markdown 或 caller-provided rendering code。
+
+Production charting libraries、scatter/timeline/stacked chart polish、dashboard route integration 和 cross-plugin data query 仍是后续范围。
 
 ### 13.3 Machine Learning Plugin
 

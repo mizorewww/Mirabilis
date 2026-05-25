@@ -654,7 +654,7 @@ Acceptance criteria:
 - `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and note text inertly, with accessible Add Note / Edit Note UI that saves through `timer.add-note`.
 - MetadataBar command execution requires owner-aware `MetadataBarCommandRegistry` descriptor lookup and fails closed without lookup; slot UI still receives only a narrow `execute()` facade.
 - PluginHost's internal scoped command executor authorizes by registered command descriptor owner, not command ID prefix.
-- Metadata totals, Calendar app-shell feed/routing, Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
+- Metadata totals, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
 - Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace it.
 
 Test plan:
@@ -725,7 +725,7 @@ Dependencies:
 Source docs:
 
 - `docs/product/05-built-in-plugins.md#20-stats-plugin-与-chart-plugin`
-- `docs/architecture/05-plugin-implementations.md#12-stats--chart--ml-插件架构`
+- `docs/architecture/05-plugin-implementations.md#13-stats--chart--ml-插件架构`
 
 Acceptance criteria:
 

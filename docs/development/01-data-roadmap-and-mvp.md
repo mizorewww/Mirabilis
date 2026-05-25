@@ -287,7 +287,7 @@ timer.add-note 为 stopped segment 创建或更新 Markdown Page note
 timer.page-timeline.segments 显示当前页面 Timer-owned segments 和 inert Note text
 ```
 
-Recently Worked、Unnoted Sessions、metadata totals、Calendar app-shell feed/routing、Stats/ML integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+Recently Worked / Unnoted Sessions saved filters、metadata totals、Calendar app-shell feed/routing、Timer-to-Stats feed normalization、ML integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 ### Phase 6：Calendar Plugin
 
@@ -349,17 +349,21 @@ native/Tauri/package/Rust/schema changes
 
 ### Phase 8：Stats / Chart Plugin
 
-实现：
+TASK-028 当前实现：
 
 ```text
-time by tag
-time by page
-estimate vs actual
-habit completion
-task switching
-unnoted sessions
-chart views
+stats.run-aggregation({ aggregationId, input })
+stats.sum-time-by-tag
+stats.sum-time-by-page
+stats.estimate-vs-actual
+stats.habit-completion-rate
+stats.task-switch-count
+stats.unnoted-sessions-count
+chart.bar / chart.line / chart.pie
+chart.category-series / chart.time-series / chart.comparison-series
 ```
+
+Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 plugin output/event/metadata 投影；Chart 当前渲染 generic Chart DTO，不读取 Stats internals。Unnoted sessions 已作为 aggregation 覆盖，saved filter / dashboard / insight view / app-shell route 仍是后续范围。
 
 ### Phase 9：ML Plugin
 
@@ -460,7 +464,7 @@ todo · #plugin · estimate empty · tracked 0m · Start
 Pause · Stop
 ```
 
-TASK-025 当前 Global Timer 可以 Pause / Resume / Stop；`timer.stop`、active `timer.start` 和 active `timer.switch` 会生成 Timer-owned Time Segment events。TASK-026 当前 Calendar day/week 可以渲染调用方传入的 normalized `calendar.time-segments` DTO；Calendar 不直接通过 plugin-facing event facade 读取 Timer-owned events。Stats 使用仍是后续范围。
+TASK-025 当前 Global Timer 可以 Pause / Resume / Stop；`timer.stop`、active `timer.start` 和 active `timer.switch` 会生成 Timer-owned Time Segment events。TASK-026 当前 Calendar day/week 可以渲染调用方传入的 normalized `calendar.time-segments` DTO；Calendar 不直接通过 plugin-facing event facade 读取 Timer-owned events。TASK-028 当前 Stats 可以通过 `stats.run-aggregation` 聚合调用方传入的 normalized Timer/Habit/Task/Tag DTO。
 
 TASK-025 当前用户可在 `page.timeline` 的 `timer.page-timeline.segments` 中为 stopped segment 写 Note：
 
@@ -482,14 +486,14 @@ Note: 刚想清楚...
 10:00–10:47 设计 Plugin 系统
 ```
 
-Stats 显示：
+调用方把 Timer/Tag metadata 规范化为 Stats input 后，Stats / Chart 可以显示：
 
 ```text
 #plugin 本周 47m
 设计 Plugin 系统 tracked 47m
 ```
 
-Calendar app-shell route/navigation、broad cross-plugin event query/read facade、Stats/ML integration、Timer metadata totals、Recently Worked、Unnoted Sessions、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+Calendar app-shell route/navigation、broad cross-plugin event query/read facade、Stats app-shell/feed integration、ML integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 All Tasks 显示：
 

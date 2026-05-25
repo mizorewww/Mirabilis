@@ -1,18 +1,103 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:35 CST.
+Last updated: 2026-05-25 11:59 CST.
 
 ## Current Task
 
-- Task: TASK-027 - Implement Habit and Heatmap plugins.
-- Branch: `master` after merge commit `2f03864`.
+- Task: TASK-028 - Implement Stats and Chart plugins.
+- Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 merged and merge-result gate passed; next task selection pending.
+- Current phase: TASK-028 branch ready to merge.
 
 ## Active Agents
 
-- None currently active.
+- No active agents. Next step is merging TASK-028 to `master`.
+
+## Current TASK-028 State
+
+- TASK-028 follows TASK-025 and TASK-027 and owns the first Stats + Chart plugin slice:
+  - Stats Plugin can aggregate time by tag, time by page, estimate vs actual, habit completion, task switching, and unnoted sessions.
+  - Chart Plugin registers plugin-owned chart views for supported data shapes.
+  - Empty and loading states are handled.
+- Initial parent interpretation:
+  - Keep Stats/Chart business behavior in built-in plugins, not Core.
+  - Prefer explicit normalized DTOs and command/view registry primitives already used by Calendar and Heatmap.
+  - Keep native/Tauri/package/Rust/schema changes, persistent indexes, app-shell dashboard routing, ML/AI insight generation, sync, release packaging, and broad cross-plugin query facade out of scope unless agents identify an acceptance-critical dependency.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance completed:
+  - Hume (`planner`) recommended the smallest safe slice as built-in `stats` and `chart` plugins only: Stats owns aggregation, Chart owns rendering, Core/native/package/Rust/schema remain unchanged, Stats views/filters and production charting libraries are deferred.
+  - Lovelace (`docs_researcher`) recommended one focused `src/test/stats-chart-plugins.test.tsx` suite using semantic RTL queries, no snapshots/color/SVG geometry assertions, accessible chart regions/tables/lists/status states, deterministic aggregation fixtures, and no charting library in the baseline.
+  - Mencius (`deprecation_auditor`) confirmed no current API/deprecation blocker. It warned not to test against a runtime AlgorithmRegistry, because manifest `contributes.algorithms` is inert today, and recommended namespaced DTO kinds plus stale-doc cleanup later.
+  - Socrates (`security_reviewer`) required PluginContext/DTO boundaries only, no raw runtime/store/registry/native imports, exact DTO validation, forged provenance rejection, bounded chart inputs, no HTML/Markdown sinks, and no package/native/Tauri/Rust/schema changes.
+- Parent decisions after guidance:
+  - Use plugin ids `stats` and `chart`.
+  - Stats runtime command is `stats.run-aggregation({ aggregationId, input })`; do not add per-aggregation commands or `stats.open_review`.
+  - Stats manifest includes inert algorithm descriptors: `stats.sum-time-by-tag`, `stats.sum-time-by-page`, `stats.estimate-vs-actual`, `stats.habit-completion-rate`, `stats.task-switch-count`, and `stats.unnoted-sessions-count`.
+  - Stats exports pure aggregation helpers for implementation/test reuse, but tests must preserve green typecheck while production files are absent.
+  - Stats does not register views or filters in this slice.
+  - Chart views are `chart.bar`, `chart.line`, and `chart.pie`; Chart DTO kinds are `chart.category-series`, `chart.time-series`, and `chart.comparison-series`.
+  - `chart.bar` may render category and comparison series; `chart.line` renders time series; `chart.pie` renders category series.
+  - No snake_case aliases such as `sum_time_by_tag`, `bar_chart`, `line_chart`, or `pie_chart`.
+  - Aggregations consume caller-provided normalized DTO fixtures and must not directly read Timer/Habit/Task/Tag internals or private data through plugin facades.
+  - Output maps to Chart DTOs: time-by-tag/page, habit completion, task switching, and unnoted sessions return category series; estimate-vs-actual returns comparison series.
+- Test writer completed:
+  - Locke (`test_writer`) added `src/test/stats-chart-plugins.test.tsx` with 11 TASK-028 acceptance tests and did not edit production code, docs, progress, branch state, commits, or pushes.
+  - Parent validated the expected red signal: `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` failed with 10 failed / 1 passed because the Stats and Chart production surfaces are intentionally missing.
+  - Parent validated static green checks: `bun run typecheck`, focused ESLint for the new test file, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test commit: `bbe138e Locke(test)(Implement Stats and Chart plugins): add stats chart acceptance tests`; post-commit auto-push succeeded.
+- Implementation completed:
+  - Galileo (`implementer`) added built-in Stats and Chart plugin baselines in production code only.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/stats/index.ts`, `src/plugins/stats/plugin.ts`, `src/plugins/chart/index.ts`, and `src/plugins/chart/plugin.ts`.
+  - Parent validated: focused TASK-028 tests passed (11 tests), adjacent plugin/core suite passed (6 files / 117 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Implementation commit: `d17f954 Galileo(implementation)(Implement Stats and Chart plugins): implement stats chart baselines`; post-commit auto-push succeeded.
+- Review wave outcomes:
+  - Anscombe (`pr_explorer`) mapped changed files and highlighted input budgets, aggregation semantics, chart accessibility, boundary guard coupling, and type drift as review risk surfaces.
+  - Tesla (`security_reviewer`) found one P1: Stats/Chart DTOs lack bounded array, label, and numeric magnitude handling, allowing large allocation/render/sort work or aggregate overflow at command/view trust boundaries.
+  - Epicurus (`test_quality_reviewer`) confirmed the bounded-input issue as a P1 test gap.
+  - Ptolemy (`reviewer`) found two P1 correctness issues: `sum-time-by-page` and `unnoted-sessions` group by page title rather than page identity, collapsing distinct pages with the same title; and `readTimerNote` rejects canonical Timer note events from the Timer Plugin shape.
+  - Parfit (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2 follow-ups: stale docs, Stats helper export note drift, and React dynamic children/duplicate key cleanup.
+  - Arendt (`docs_researcher`) found one P1 accessibility issue: comparison chart output uses unlabeled positional table cells without programmatically clear column labels. It also recommended explicit `aria-atomic` on status and React dynamic-child cleanup as non-blocking improvements.
+- Review-fix regression tests completed:
+  - Planck (`test_writer`) added focused tests for bounded Stats arrays, bounded Stats numbers/labels, page identity grouping, canonical Timer note shape, bounded Chart DTOs, bounded Chart rows, and comparison chart headers.
+  - Parent validated the expected red signal: focused TASK-028 tests failed with 8 failed / 10 passed.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `9106bb4 Planck(test-fix)(Implement Stats and Chart plugins): cover stats chart review regressions`; post-commit auto-push succeeded.
+- P1 production fixes completed:
+  - Boyle (`implementer`) hardened Stats and Chart trust boundaries in production code only.
+  - Changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+  - Fix scope: bounded Stats/Chart DTO arrays, trusted label and numeric magnitude checks, aggregate overflow guards, page-identity grouping for same-title pages, canonical Timer note-added event support, accessible Chart table headers, `aria-atomic` status, and stable dynamic child keys.
+  - Parent validated: focused TASK-028 tests passed (18 tests), adjacent plugin/core suite passed (6 files / 124 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `dc8739d Boyle(review-fix)(Implement Stats and Chart plugins): harden stats chart DTO boundaries`; post-commit auto-push succeeded.
+- Focused re-review completed:
+  - Kepler (`reviewer`) found no P0/P1 correctness regressions. P2: aggregate overflow guards can preserve partial totals when a later addition exceeds the cap.
+  - Hypatia (`security_reviewer`) found one remaining P1: Stats and Chart arrays are only length-bounded, not copied/validated as inert plain data before iteration or method calls, so accessor elements or overridden array methods can execute during command/view handling.
+  - Descartes (`test_quality_reviewer`) found no P0/P1 test-quality blockers. P2/P3: page-identity label assertions and early-rejection tests could be more explicit.
+  - Euler (`docs_researcher`) found no P0/P1 accessibility blockers. P2: duplicate optional Chart category `id` values can still duplicate React keys; docs sync is still needed.
+  - Nietzsche (`deprecation_auditor`) found no P0/P1 API/deprecation blockers. P2/P3: stale docs and a future time-series table key collision risk.
+  - Parent decision: treat Hypatia's array inertness finding as a required P1 and start a second TDD review-fix loop.
+- Second P1 regression tests completed:
+  - Sartre (`test_writer`) added test-only coverage for non-inert Stats and Chart arrays in `src/test/stats-chart-plugins.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-028 tests failed with 5 failed / 18 passed because accessor-backed arrays, overridden array methods, and nested custom iterators invoked sentinels.
+  - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test-fix commit: `f449039 Sartre(test-fix)(Implement Stats and Chart plugins): cover inert stats chart arrays`; post-commit auto-push succeeded.
+- Second P1 production fix completed:
+  - Mill (`implementer`) added descriptor-based plain-array copying and fail-closed inertness validation in Stats and Chart production code.
+  - Changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+  - Parent validated: focused TASK-028 tests passed (23 tests), adjacent plugin/core suite passed (6 files / 129 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `e48380a Mill(review-fix)(Implement Stats and Chart plugins): reject hostile stats chart arrays`; post-commit auto-push succeeded.
+- Narrow array inertness re-review completed:
+  - Hubble (`security_reviewer`) found no P0/P1 issues and confirmed Hypatia's array-inertness P1 is closed. Residual note: Proxy-backed arrays/objects are not specifically covered by the narrow test set.
+  - Kuhn (`test_quality_reviewer`) found no P0/P1 test-quality blockers. P2: array-method coverage is representative rather than exhaustive; Stats does not separately cover `sort`, Chart does not separately cover `map`, and top-level accessor coverage uses `segments` as the shared-reader representative.
+  - Parent decision: proceed to formal docs sync before final branch gate.
+- Docs sync completed:
+  - Maxwell (`doc_writer`) synced formal Stats/Chart docs to the TASK-028 implementation.
+  - Changed docs: product plugin platform, editor/workflows, built-in plugins, architecture slots/editor/task, plugin implementations, runtime flows, development roadmap docs, and the task index.
+  - Parent validation: `git diff --check` passed, stale-id scan reported only historical agent-communication notes, and source/package/native/Tauri/Rust/schema diff guard was empty.
+  - Docs commit: `19b9488 Maxwell(docs)(Implement Stats and Chart plugins): sync stats chart docs`; post-commit auto-push succeeded.
+- Final branch gate completed:
+  - `bun run check:quick` passed with typecheck, lint, 33 frontend test files / 519 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `docs/implementation/progress.md` marks TASK-028 complete and records the ready-to-merge branch state.
 
 ## Current TASK-027 State
 
@@ -120,5 +205,5 @@ Last updated: 2026-05-25 10:35 CST.
 
 ## Next Actions
 
-1. Commit merge validation on `master` and push.
-2. Select and start the next unblocked roadmap task.
+1. Commit the TASK-028 completion progress update.
+2. Merge `feat/task-028-stats-chart-plugins` to `master` and run the merge-result gate.
