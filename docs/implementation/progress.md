@@ -63,7 +63,7 @@ Status markers:
 
 ## Milestone M6: Calendar and reporting
 
-- [ ] TASK-026: Implement Calendar Plugin baseline
+- [~] TASK-026: Implement Calendar Plugin baseline
 - [ ] TASK-027: Implement Habit and Heatmap plugins
 - [ ] TASK-028: Implement Stats and Chart plugins
 
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 08:39 CST - TASK-026 started
+
+- Branch: `feat/task-026-calendar-plugin-baseline`.
+- Task: Implement Calendar Plugin baseline.
+- Start point: `master` after TASK-025 merge validation commit `520d280`.
+- Source docs read: `docs/implementation/task-index.md#task-026-implement-calendar-plugin-baseline`, `docs/product/05-built-in-plugins.md#19-calendar-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-6calendar-plugin`, `docs/development/01-data-roadmap-and-mvp.md#phase-6calendar-plugin`, plus related Calendar/Time Segment references in product, architecture, development, and testing docs.
+- Initial scope: built-in Calendar Plugin baseline with day/week views, rendering TASK-025 Timer-owned Time Segment events as calendar blocks, clicking a block opening segment detail, and manual segment creation either implemented narrowly or explicitly deferred by agent guidance.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package/Rust/schema changes, persistent calendar storage, broad app-shell calendar navigation, Calendar drag/drop, Timer metadata totals, Stats/ML aggregation, Habit/Heatmap behavior, recurring events, external calendar sync, and release packaging.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-026-calendar-plugin-baseline.md`.
 
 ### 2026-05-25 08:35 CST - TASK-025 merged
 

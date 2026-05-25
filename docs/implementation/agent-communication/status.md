@@ -1,18 +1,18 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:35 CST.
+Last updated: 2026-05-25 08:39 CST.
 
 ## Current Task
 
-- Task: TASK-025 - Implement Time Segment and Time Segment Note.
-- Branch: `master`.
+- Task: TASK-026 - Implement Calendar Plugin baseline.
+- Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 merged; merge-result check passed; TASK-026 start pending.
+- Current phase: TASK-026 started; pre-test planning/current-doc/security/deprecation guidance pending.
 
 ## Active Agents
 
-- None currently running. Next action is selecting and starting TASK-026.
+- None currently running. Next action is delegating TASK-026 pre-test guidance agents.
 
 ## Completed Recent Task
 
@@ -153,8 +153,8 @@ Last updated: 2026-05-25 08:35 CST.
 
 ## Next Actions
 
-1. Start TASK-026 - Implement Calendar Plugin baseline from `master`.
-2. Validate agent config and delegate pre-test planning/current-doc/security/deprecation guidance.
+1. Spawn TASK-026 pre-test guidance agents: `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer`.
+2. Summarize guidance, decide smallest safe scope, then delegate `test_writer`.
 
 ## Current TASK-021 State
 
