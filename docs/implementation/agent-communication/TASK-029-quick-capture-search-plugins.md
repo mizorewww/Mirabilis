@@ -297,3 +297,11 @@
 
 - Delegate narrow re-review for the TASK-029 P1 fixes.
 - If no P0/P1 findings remain, delegate formal docs sync.
+
+## Narrow Re-Review Handoff
+
+- Sagan (`test_quality_reviewer`) started at 2026-05-25 12:51 CST to re-check review-fix test coverage.
+- Volta (`docs_researcher`) started at 2026-05-25 12:51 CST to re-check accessibility/current-doc fixes.
+- Rawls (`security_reviewer`) started at 2026-05-25 12:51 CST to re-check trust-boundary and native/package security surfaces.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for narrow re-review, then proceed to formal docs sync only if no P0/P1 findings remain.

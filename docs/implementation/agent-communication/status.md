@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:49 CST.
+Last updated: 2026-05-25 12:51 CST.
 
 ## Current Task
 
@@ -8,11 +8,13 @@ Last updated: 2026-05-25 12:49 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 review fixes completed; narrow re-review next.
+- Current phase: TASK-029 narrow re-review running.
 
 ## Active Agents
 
-- No active agents. Next delegation is narrow TASK-029 re-review.
+- Sagan (`test_quality_reviewer`) is re-checking TASK-029 review-fix test coverage.
+- Volta (`docs_researcher`) is re-checking TASK-029 accessibility/current-doc fixes.
+- Rawls (`security_reviewer`) is re-checking TASK-029 trust-boundary fixes.
 
 ## Current TASK-029 State
 
@@ -265,5 +267,5 @@ Last updated: 2026-05-25 12:49 CST.
 
 ## Next Actions
 
-1. Delegate narrow re-review for the TASK-029 P1 fixes.
+1. Wait for Sagan, Volta, and Rawls.
 2. If no P0/P1 findings remain, delegate formal docs sync to `doc_writer`.
