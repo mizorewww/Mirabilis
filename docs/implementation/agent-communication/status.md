@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:54 CST.
+Last updated: 2026-05-25 10:09 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 09:54 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 pre-test guidance complete; failing test handoff pending.
+- Current phase: TASK-027 failing acceptance tests committed; implementation handoff pending.
 
 ## Active Agents
 
-- None currently active. Next agent should be `test_writer` for TASK-027 failing acceptance tests.
+- None currently active. Next agent should be `implementer` for minimum production code.
 
 ## Current TASK-027 State
 
@@ -42,6 +42,11 @@ Last updated: 2026-05-25 09:54 CST.
   - `habit.uncheck-today({ pageId })` appends `unchecked`, removes today's completion state, and sets `nextDue` back to today.
   - Habits filter id is `habit.filter.habits`; Today Habits filter id is `habit.filter.today-habits`. Today Habits uses `metadata.habit.nextDue eq today OR metadata.habit.nextDue lt today` because the current filter engine has no `lte` operator.
   - Heatmap registers generic view `heatmap.calendar` with `type: "heatmap"` and accepts `{ kind: "heatmap.date-series" }`. Heatmap does not import Habit internals or read Habit events directly; tests may normalize public Habit events into DTOs in the harness.
+- Test writer completed:
+  - Copernicus (`test_writer`) added `src/test/habit-heatmap-plugins.test.tsx` with 14 TASK-027 acceptance tests and did not edit production code, docs, progress, branch state, or commits.
+  - Parent validated the expected red signal: `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` failed with 13 failed / 1 passed because the Habit and Heatmap production surfaces are intentionally missing.
+  - Parent validated static green checks: `bun run typecheck`, focused ESLint for the new test file, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test commit: `8fe0812 Copernicus(test)(Implement Habit and Heatmap plugins): add habit heatmap acceptance tests`; post-commit auto-push succeeded.
 
 ## Completed Recent Task
 
@@ -64,6 +69,12 @@ Last updated: 2026-05-25 09:54 CST.
 
 - `.codex/agents/*.toml` parsed successfully with 11 files.
 - `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/WebSocket/reachability OK; non-blocking notes were unrestricted sandbox/network and the known `TERM=dumb` terminal failure.
+- `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` failed as expected before implementation with missing `habit` / `heatmap` built-ins, commands, filters, view, and production plugin files.
+- `bun run typecheck` passed after the new tests.
+- `./node_modules/.bin/eslint src/test/habit-heatmap-plugins.test.tsx --max-warnings=0` passed.
+- `rg -n "\.(skip|only)\(" src/test/habit-heatmap-plugins.test.tsx` found no matches.
+- `git diff --check` passed.
+- Native/package/Tauri/Rust/schema diff guard was empty.
 
 ## Parent Decisions At TASK-027 Start
 
@@ -74,5 +85,5 @@ Last updated: 2026-05-25 09:54 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for TASK-027 failing acceptance tests.
-2. Validate the expected red signal and commit tests before delegating implementation.
+1. Spawn `implementer` for the minimum production implementation that makes `src/test/habit-heatmap-plugins.test.tsx` pass.
+2. Validate focused green checks, then commit implementation separately from the test commit.

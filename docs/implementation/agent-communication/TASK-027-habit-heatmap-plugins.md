@@ -99,6 +99,26 @@
   - Integration-style test normalizes public Habit `checked` events in the test harness before rendering Heatmap; Heatmap must not read Habit events itself.
   - Static boundary/native guard: no Core habit/heatmap business terms, no raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, no Habit internals imported by generic Heatmap view, no HTML/Markdown sinks, and no package/native/Tauri/Rust/schema diffs.
 
+## Test Writer Outcome
+
+- Copernicus (`test_writer`) completed TASK-027 failing tests in `src/test/habit-heatmap-plugins.test.tsx`.
+- Scope covered:
+  - Built-in `habit` and `heatmap` registration, manifests, canonical commands, stale alias absence.
+  - Habit `#habit` refresh, trusted-page behavior, strict payload validation, deterministic daily check/uncheck metadata/events, idempotency, and no Task/Tag/source Markdown mutation.
+  - Habits and Today Habits filters through `executeFilterQuery` with Habit owner reservation trust boundaries.
+  - Generic `heatmap.calendar` rendering from normalized `heatmap.date-series` DTOs, invalid row rejection, inert rendering, and empty state.
+  - Integration harness normalization of public Habit `checked` events into Heatmap date-series data.
+  - Static guards for Core business leakage, plugin isolation, no Habit internals in Heatmap, no HTML/Markdown sinks, and no native/package/schema diffs.
+- Parent red validation passed:
+  - `bun run test:frontend -- src/test/habit-heatmap-plugins.test.tsx` failed as expected with 13 failed / 1 passed because the production Habit and Heatmap plugin surfaces do not exist yet.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/habit-heatmap-plugins.test.tsx --max-warnings=0`.
+  - `.skip/.only` scan.
+  - `git diff --check`.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test commit: `8fe0812 Copernicus(test)(Implement Habit and Heatmap plugins): add habit heatmap acceptance tests`; post-commit auto-push succeeded.
+
 ## Current Next Action
 
-- Spawn `test_writer` for failing TASK-027 acceptance tests, validate the expected red signal, and commit tests.
+- Spawn `implementer` for minimum production code. The implementer owns production plugin/bootstrap changes only and must not edit tests, docs, progress, branch state, commits, or pushes.
