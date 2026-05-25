@@ -132,3 +132,21 @@
 ## Current Next Action
 
 - Commit pre-test guidance decisions, then delegate failing acceptance tests to `test_writer`.
+
+## Test Writer Handoff
+
+- Noether the 2nd (`test_writer`) started at 2026-05-25 14:37 CST.
+- Scope: add failing TASK-031 acceptance tests only, likely in `src/test/ai-plugin-provider-abstraction.test.tsx`.
+- Required coverage:
+  - built-in `ai` registration with canonical commands, views, metadata/event descriptors, inert settings panel descriptor, and provider boundary expectations;
+  - stale underscore id absence;
+  - command execution through the real Command Registry/runtime path;
+  - fake provider and injected settings request shaping for OpenAI Responses-style `model`, `instructions`, `input`, `store: false`, and `text.format`;
+  - exact bounded plain command DTO validation and rejection of secret/provider override fields;
+  - unconfigured provider fail-closed behavior with no mutations;
+  - redacted provider/settings errors and no public secret echo;
+  - malformed/oversized/injection-like provider output rejection;
+  - inert/fail-closed `ai.suggestion-panel` and `ai.review-panel` rendering;
+  - static guards for Core isolation, sibling/private imports, execution/rendering/storage/network/native/package sinks, and no package/native/Tauri/Rust/schema/capability diffs.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Noether the 2nd, validate the expected red signal, and commit the test-only patch.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:36 CST.
+Last updated: 2026-05-25 14:37 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 14:36 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 pre-test guidance completed; parent is recording decisions before test-writer handoff.
+- Current phase: TASK-031 failing acceptance tests delegated; waiting for `test_writer`.
 
 ## Active Agents
 
-- No active agents. Parent is recording pre-test guidance outcomes and decisions.
+- Noether the 2nd (`test_writer`) is writing focused failing TASK-031 acceptance tests in `src/test/ai-plugin-provider-abstraction.test.tsx`.
 
 ## Current TASK-031 State
 
@@ -49,7 +49,10 @@ Last updated: 2026-05-25 14:36 CST.
   - Provider id is `openai`; default model guidance is `gpt-5.5`; OpenAI adapter request shape must be Responses-style with `store: false` and `text.format`.
   - Tests must use fake provider/transport and placeholder non-secret strings only; no live OpenAI calls or `OPENAI_API_KEY` requirement.
   - AI commands must consume exact bounded caller-provided projections and return advisory DTOs only. They must not mutate pages, metadata, events, filters, or sibling plugin private data in this task.
-- Next action: commit pre-test guidance decisions, then delegate failing acceptance tests to `test_writer`.
+- Test writer delegated:
+  - Noether the 2nd (`test_writer`) should add focused red tests for built-in `ai` registration, canonical ids and stale-id absence, fake provider/Responses request shaping, exact bounded DTO validation, unconfigured provider behavior, secret redaction, provider output validation, inert views, static architecture guards, and no package/native/Tauri/Rust/schema/capability diffs.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Noether the 2nd, validate expected red tests and static guards, then commit the test-only patch.
 
 ## Current TASK-030 State
 
