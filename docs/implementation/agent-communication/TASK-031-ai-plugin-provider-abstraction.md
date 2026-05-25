@@ -542,3 +542,25 @@
   - current OpenAI Responses / Structured Outputs alignment and stale underscore alias absence;
   - test-quality coverage for the remaining P1 regressions.
 - Parent next action: wait for final narrow re-review, record findings, and either fix remaining P0/P1 or proceed to formal docs sync.
+
+## Final Narrow Re-Review Outcomes
+
+- Darwin the 2nd (`security_reviewer`) found no remaining P0/P1 security findings.
+  - Confirmed production exports are narrow, test support is gated by `import.meta.env.MODE === "test"`, test hooks are accessed through a test-only global hook, provider wrapper preserves operation/providerId/request without `Object.defineProperty` or output mutation, settings stay private, provider requests omit `apiKey`, `store: false` is set, and descriptor-based validation rejects accessor/prototype-shaped data.
+  - Native/package/capability drift guard was empty.
+  - Residual: no security P2/P3; noted the non-blocking public result `persist*` to `storage` rewrite.
+- Kuhn the 2nd (`reviewer`) found no remaining P0/P1 correctness findings.
+  - Confirmed fixed: provider/settings override seams, test-support operation/output stability, OpenAI `error: null` / `incomplete_details: null` success, supported strict schema keywords, `null` provider output invalidation, command DTO validation, and advisory no-write behavior.
+  - Residual P2: raw Responses objects with no `status` but valid `output_text` are accepted.
+  - Residual P3: public result strings matching `persist*` are rewritten to `storage`.
+- Maxwell the 2nd (`deprecation_auditor`) found no remaining P0/P1 current-API/deprecation findings.
+  - Verified current OpenAI docs for Responses `instructions`, string/input-item `input`, `store`, `text.format`, `json_schema`, strict schema subset, completed Responses examples with `error: null` and `incomplete_details: null`, and latest model guidance `gpt-5.5`.
+  - Confirmed no Chat Completions `response_format`, Assistants/threads/runs, OpenAI SDK imports, `fetch`/XHR/WebSocket, Tauri HTTP usage, unsupported strict-schema keywords, or stale underscore AI command aliases.
+- Bohr the 2nd (`test_quality_reviewer`) found no remaining P0/P1 test-quality gaps.
+  - Confirmed meaningful coverage for production override/settings seams, test-support operation stability, `providerId` forbidden across commands, raw Responses success with null error/details, unsupported strict-schema keyword exclusion, and explicit `null` provider output.
+- Parent focused validation:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ml-plugin-baseline-predictions.test.tsx` passed with 5 files / 105 tests.
+
+## Current Next Action
+
+- Commit this final re-review outcome, then delegate formal docs sync to `doc_writer`.
