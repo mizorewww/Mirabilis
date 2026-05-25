@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 06:38 CST - TASK-038 final review fix committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Implementation fix: Mendel the 2nd updated `src/App.tsx` and `src/plugins/task/components/TaskFilterViews.tsx` in commit `7b4d5c0`.
+- Fixes: Recent pages remain available on valid filter routes; unavailable filter routes hide Recent pages to avoid leaking unrelated titles when ownership cannot be trusted; plugin ownership data missing now fails closed; filter execution only uses active-plugin metadata and requires active owner reservations for queried metadata namespaces; built-in task page-list view consumes route-token DTOs instead of raw Markdown pages.
+- Parent validation: `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` passed with 1 file / 17 tests; focused TASK-038 command passed with 3 files / 36 tests; adjacent suite passed with 5 files / 89 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: run final targeted re-review, then sync docs, run release readiness and branch gate, merge to `master`, and continue to TASK-039.
+
 ### 2026-05-26 06:29 CST - TASK-038 final review regressions committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.

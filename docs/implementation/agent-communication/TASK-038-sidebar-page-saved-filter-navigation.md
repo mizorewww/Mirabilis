@@ -209,3 +209,24 @@ type ActiveRoute =
 - Parent decision:
   - accept `7454c9c` as the final red baseline;
   - delegate production fixes to Mendel the 2nd (`implementer`) with write scope limited to `src/App.tsx` and, if needed for DTO contract cleanup, `src/plugins/task/components/TaskFilterViews.tsx`.
+
+## Final Review-Fix Implementation Outcome
+
+- Mendel the 2nd (`implementer`) fixed the final P1 review regressions in commit `7b4d5c0`.
+- Changed production files:
+  - `src/App.tsx`;
+  - `src/plugins/task/components/TaskFilterViews.tsx`.
+- Delivered fixes:
+  - Recent pages remain available on valid filter routes and still open registered page editor routes;
+  - unavailable filter routes hide Recent pages to avoid leaking unrelated page titles when route ownership cannot be trusted;
+  - filter source/view/plugin ownership checks fail closed when `pluginHost.listPlugins` ownership data is unavailable;
+  - filter execution only considers active-plugin metadata and requires queried metadata namespaces to have active owner reservations;
+  - the built-in task page-list view consumes `{ routeToken, title }` DTOs rather than raw `MarkdownPage[]`.
+- Parent validation after Mendel the 2nd:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` passed with 1 file / 17 tests.
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` passed with 3 files / 36 tests.
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx` passed with 5 files / 89 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Parent decision:
+  - accept `7b4d5c0`;
+  - run final targeted re-review for correctness, security, and test quality before docs sync and branch gate.
