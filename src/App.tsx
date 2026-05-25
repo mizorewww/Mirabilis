@@ -138,8 +138,14 @@ type AppRuntimeState =
   | { status: "ready"; runtime: AppRuntime }
   | { status: "failed" };
 
-type PageSummary = {
+type RecentPageSummary = {
+  accessibleLabel: string;
   id: string;
+  title: string;
+};
+
+type FilterPageSummary = {
+  routeToken: string;
   title: string;
 };
 
@@ -152,6 +158,13 @@ const toggleTaskStatusCommandId = "task.toggle-status";
 const filterResultViewKind = "filter-results.markdown-pages";
 const filterEmptyStateSlot = "filter.empty_state";
 const metadataSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const savedFilterRouteLabelAliases = new Map([
+  ["all tasks", "Task index"],
+  ["home", "Start"],
+  ["inbox", "Capture box"],
+  ["reports", "Review charts"],
+  ["today", "Current day"],
+]);
 const metadataValueTypes = new Set([
   "boolean",
   "date",
@@ -414,7 +427,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     activeRoute,
     homePageId,
   );
-  const recentPages = listRecentPages(runtimeSource, homePageId);
+  const recentPages =
+    activeRoute.kind === "page" ? listRecentPages(runtimeSource, homePageId) : [];
   const savedFilterRoutes = listSavedFilterRoutes(runtimeSource);
   const workspaceTitleId = "workspace-title";
   const selectPageRoute = (pageId: string, role: PageRouteRole) => {
@@ -578,6 +592,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
                       return (
                         <ListItemButton
+                          aria-label={route.accessibleLabel}
                           aria-current={isSelected ? "page" : undefined}
                           key={route.filterId}
                           onClick={() =>
@@ -616,6 +631,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
                       return (
                         <ListItemButton
+                          aria-label={
+                            page.accessibleLabel === page.title
+                              ? undefined
+                              : page.accessibleLabel
+                          }
                           aria-current={isSelected ? "page" : undefined}
                           key={page.id}
                           onClick={() => selectPageRoute(page.id, "recent")}
@@ -757,6 +777,10 @@ function SavedFilterWorkspace({
   const filter = getRouteFilter(runtime, filterId);
 
   if (filter === undefined || !filterSourceIsAvailable(runtime, filter)) {
+    return <RouteUnavailable />;
+  }
+
+  if (!filterViewIsAvailable(runtime, filter)) {
     return <RouteUnavailable />;
   }
 
@@ -915,24 +939,17 @@ function getPlaceholderRoute(
 function listRecentPages(
   runtime: AppRuntime,
   homePageId: string,
-): PageSummary[] {
-  const reservedRouteLabels = new Set(
-    primaryNavigationRoutes.map((route) => route.label.toLowerCase()),
-  );
-
+): RecentPageSummary[] {
   return runtime.pages
     .list()
-    .filter(
-      (page) =>
-        page.id !== homePageId &&
-        !reservedRouteLabels.has(page.title.toLowerCase()),
-    )
-    .map(toPageSummary);
+    .filter((page) => page.id !== homePageId)
+    .map(toRecentPageSummary);
 }
 
 function listSavedFilterRoutes(
   runtime: AppRuntime,
 ): Array<{
+  accessibleLabel: string;
   filterId: string;
   label: string;
 }> {
@@ -947,22 +964,35 @@ function listSavedFilterRoutes(
     .filter(
       (filter) =>
         !primaryFilterIds.has(filter.id) &&
-        !filterNameConflictsWithPrimaryNavigation(filter.name) &&
         filterSourceIsAvailable(runtime, filter) &&
         filterViewIsAvailable(runtime, filter),
     )
     .map((filter) => ({
+      accessibleLabel: toSavedFilterAccessibleLabel(filter.name),
       filterId: filter.id,
       label: filter.name,
     }));
 }
 
-function filterNameConflictsWithPrimaryNavigation(filterName: string): boolean {
-  const normalizedFilterName = filterName.toLowerCase();
+function toSavedFilterAccessibleLabel(filterName: string): string {
+  if (filterName.startsWith("#")) {
+    return filterName;
+  }
 
-  return primaryNavigationRoutes.some((route) =>
-    normalizedFilterName.includes(route.label.toLowerCase()),
-  );
+  let accessibleLabel = filterName;
+
+  for (const [routeLabel, alias] of savedFilterRouteLabelAliases) {
+    accessibleLabel = accessibleLabel.replace(
+      new RegExp(`\\b${escapeRegExp(routeLabel)}\\b`, "giu"),
+      alias,
+    );
+  }
+
+  return accessibleLabel;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function getRoutePage(
@@ -990,22 +1020,45 @@ function getRouteFilter(
 function executeRouteFilter(
   runtime: AppRuntime,
   filter: FilterDefinition,
-): PageSummary[] | undefined {
+): FilterPageSummary[] | undefined {
   try {
     return executeFilterQuery({
       metadata: runtime.metadata.list(),
       metadataOwnerReservations: collectMetadataOwnerReservations(runtime),
       pages: runtime.pages.list({ includeArchived: true }),
       query: filter.query,
-    }).map(toPageSummary);
+    }).map(toFilterPageSummary);
   } catch {
     return undefined;
   }
 }
 
-function toPageSummary(page: MarkdownPage): PageSummary {
+function toRecentPageSummary(page: MarkdownPage): RecentPageSummary {
   return {
+    accessibleLabel: toRecentPageAccessibleLabel(page.title),
     id: page.id,
+    title: page.title,
+  };
+}
+
+function toRecentPageAccessibleLabel(title: string): string {
+  const normalizedTitle = title.toLowerCase();
+
+  if (normalizedTitle === "today") {
+    return title;
+  }
+
+  return savedFilterRouteLabelAliases.has(normalizedTitle)
+    ? `Recent page ${title}`
+    : title;
+}
+
+function toFilterPageSummary(
+  page: MarkdownPage,
+  index: number,
+): FilterPageSummary {
+  return {
+    routeToken: `filter-result-${index + 1}`,
     title: page.title,
   };
 }
@@ -1042,10 +1095,6 @@ function collectMetadataOwnerReservations(
   const reservations = new Map<string, string>();
 
   for (const plugin of plugins) {
-    if (plugin.enabled !== true || plugin.status !== "active") {
-      continue;
-    }
-
     addPluginMetadataOwnerReservations(reservations, plugin);
   }
 
