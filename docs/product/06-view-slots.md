@@ -79,7 +79,7 @@ Command Plugin 在 global.command_palette 放所有命令
 Filter Plugin 在 left_sidebar 放 saved filters
 ```
 
-TASK-025 当前 `timer.global-active-bar` 显示 active page title、elapsed time，以及 Pause / Resume / Stop controls。它使用 Timer Plugin registration-scoped in-memory active timer state。Timer finalization creates event-backed Time Segments; Calendar/Stats integration, Timer metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+TASK-025 当前 `timer.global-active-bar` 显示 active page title、elapsed time，以及 Pause / Resume / Stop controls。它使用 Timer Plugin registration-scoped in-memory active timer state。Timer finalization creates event-backed Time Segments. TASK-026 Calendar day/week views can render caller-provided `calendar.time-segments` DTOs when a caller mounts the view; Calendar app-shell route/feed, Stats integration, Timer metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
 ### 25.4 View 插槽
 

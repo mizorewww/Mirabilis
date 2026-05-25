@@ -1,18 +1,41 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:35 CST.
+Last updated: 2026-05-25 09:38 CST.
 
 ## Current Task
 
-- Task: TASK-025 - Implement Time Segment and Time Segment Note.
-- Branch: `master`.
+- Task: TASK-026 - Implement Calendar Plugin baseline.
+- Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 merged; merge-result check passed; TASK-026 start pending.
+- Current phase: TASK-026 completed on branch; ready to merge to `master`.
 
 ## Active Agents
 
-- None currently running. Next action is selecting and starting TASK-026.
+- None currently active. Parent should merge TASK-026 to `master` and run merge-result gate.
+
+## Current TASK-026 State
+
+- TASK-026 current scope is the first Calendar Plugin baseline:
+  - Built-in plugin id `calendar`.
+  - Views `calendar.day` and `calendar.week` consume explicit normalized `{ kind: "calendar.time-segments" }` data.
+  - Command `calendar.open-time-segment` opens read-only in-view detail state.
+  - Manual segment creation/editing, `calendar.month`, snake_case aliases, app-shell routing, broad cross-plugin event queries, native/Tauri/package/Rust/schema changes, and external calendar sync remain deferred.
+- Pre-test guidance agents Pauli (`planner`), Turing (`docs_researcher`), Cicero (`deprecation_auditor`), and Gauss (`security_reviewer`) completed. Key parent decision: Calendar must not read Timer-owned events through its plugin event facade; tests and implementation use normalized DTO input instead.
+- Kant (`test_writer`) added `src/test/calendar-plugin-baseline.test.tsx`. Parent red validation matched the expected signal: `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` ran 8 tests and all failed because Calendar Plugin built-in registration, views, command, and `src/plugins/calendar/*` production sources do not exist yet. `bun run typecheck`, focused eslint, no `.skip` / `.only` search, `git diff --check`, and native/package/Tauri guard passed. Commit: `acd2648`.
+- Huygens (`implementer`) added the initial TASK-026 production implementation in `src/bootstrap/built-in-plugins.ts`, `src/plugins/calendar/index.ts`, and `src/plugins/calendar/plugin.ts`. It registers built-in `calendar`, day/week views over explicit normalized segment DTOs, and read-only `calendar.open-time-segment` detail behavior without native/package/Rust/Tauri changes. Parent validation passed: focused Calendar tests 8/8, adjacent plugin/API/architecture tests 86/86, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `fd65d37`.
+- Focused review partial outcomes:
+  - Boole (`pr_explorer`) mapped changed files and confirmed no native/package/Tauri/Rust/schema changes; flagged module-level `knownSegmentCounts`, loose date parsing, duration mismatch, cross-midnight scope, and stale formal docs for reviewer attention.
+  - Linnaeus (`reviewer`) found P1: `calendar.open-time-segment` uses module-global known segment state, allowing command validity to leak across runtimes/views. It also found P2 stale detail after data/date/week changes and P2 non-UTC date parsing.
+  - Curie (`security_reviewer`) found P1: non-enumerable allowed DTO/command fields are accepted instead of failing closed. It also found P2 strict UTC/duration validation gaps and P3 module-scoped visibility state.
+  - Peirce (`deprecation_auditor`) found no deprecated React/API blockers, but noted the module-global command state as a P2 API contract risk and asked docs to clarify that exported `note`/`detail` are normalized projection fields.
+  - Faraday (`docs_researcher`) found no current-doc blockers; it confirmed RTL/user-event/region/button/no-grid direction and listed formal docs sync obligations.
+- Popper (`test_quality_reviewer`) found P1: current tests missed segments that overlap a selected day/week but start outside that range. It also found P2 DTO hardening parity gaps, P2 static boundary guard brittleness, P3 command-failure UI coverage, and P3 docs/process coverage for manual segment deferral.
+- Banach (`test_writer`) added review-fix regression tests in `src/test/calendar-plugin-baseline.test.tsx` for cross-runtime command leakage and unmount clearing, non-enumerable required/optional/provenance/command fields, and overlapping day/week segments. Parent red validation matched the expected signal: focused Calendar tests had 6 failures / 7 passes. `bun run typecheck`, focused eslint, no `.skip` / `.only`, and `git diff --check` passed. Commit: `dd41b35`.
+- Bacon (`implementer`) fixed the review regressions in `src/plugins/calendar/plugin.ts`. It made known segment validation runtime-scoped through `register(ctx)`, rejected non-enumerable allowed DTO/command fields, and switched day/week filtering to UTC interval overlap. Parent validation passed: focused Calendar tests 13/13, adjacent plugin/API/architecture tests 91/91, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `3e5b9fb`.
+- Narrow post-fix review completed with Russell (`reviewer`), Poincare (`security_reviewer`), and Bohr (`test_quality_reviewer`). P0/P1 findings: none. Accepted residuals: P2 strict UTC/duration matching and stale detail clearing; P3 internal Map passed as view prop, broader DTO field hardening matrix, week-overlap placement assertions, and UI command rejection coverage.
+- Doc writer completed formal docs sync across product, architecture, development, implementation, testing, and agent-communication docs. Checks passed: `git diff --check`, targeted Calendar stale scans, and `bun run typecheck`.
+- Final branch gates passed: `bun run check:quick` passed with typecheck, lint, 31 frontend test files / 481 tests, Rust fmt, Rust clippy, and Rust tests; `bun run build` passed. Erdos (`release_checker`) found no P0/P1 blockers and said TASK-026 is ready to merge. `docs/implementation/progress.md` now marks TASK-026 complete pending merge-result validation.
 
 ## Completed Recent Task
 
@@ -153,8 +176,8 @@ Last updated: 2026-05-25 08:35 CST.
 
 ## Next Actions
 
-1. Start TASK-026 - Implement Calendar Plugin baseline from `master`.
-2. Validate agent config and delegate pre-test planning/current-doc/security/deprecation guidance.
+1. Run final local gates for TASK-026.
+2. Update progress/completion ledger only after parent final gates pass.
 
 ## Current TASK-021 State
 

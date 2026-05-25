@@ -654,7 +654,7 @@ Acceptance criteria:
 - `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and note text inertly, with accessible Add Note / Edit Note UI that saves through `timer.add-note`.
 - MetadataBar command execution requires owner-aware `MetadataBarCommandRegistry` descriptor lookup and fails closed without lookup; slot UI still receives only a narrow `execute()` facade.
 - PluginHost's internal scoped command executor authorizes by registered command descriptor owner, not command ID prefix.
-- Metadata totals, Calendar/Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
+- Metadata totals, Calendar app-shell feed/routing, Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
 - Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace it.
 
 Test plan:
@@ -672,18 +672,26 @@ Source docs:
 
 - `docs/product/05-built-in-plugins.md#19-calendar-plugin`
 - `docs/development/02-implementation-roadmap-and-constraints.md#phase-6calendar-plugin`
+- `docs/architecture/07-runtime-flows.md#189-caller-opens-calendar-dayweek`
+- `docs/testing/strategy.md#task-026-calendar-plugin-baseline-guidance`
 
 Acceptance criteria:
 
-- Calendar Plugin registers day and week views.
-- Time segments render as calendar blocks.
-- Clicking a block opens segment detail.
-- Manual time segment creation is supported or explicitly deferred with a follow-up task.
+- Built-in Calendar Plugin registers plugin id `calendar`, views `calendar.day` and `calendar.week`, and command `calendar.open-time-segment`.
+- Calendar views accept explicit normalized `{ kind: "calendar.time-segments" }` DTO input supplied by a caller/view host; Calendar does not read Timer-owned events directly through the plugin-facing event facade in this slice.
+- DTOs carry Timer segment provenance: `source: "timer"` plus provenance `{ eventPageId, namespace: "timer", sourcePluginId: "timer", type: "time_segment_created" }`.
+- Day/week views render normalized Timer segments as accessible calendar blocks with UTC time ranges and interval-overlap visibility for carryover segments.
+- Clicking a block executes `calendar.open-time-segment({ segmentId, pageId })` and renders read-only inert detail text.
+- DTO and command validation fails closed for malformed, wrong-owner, extra-field, accessor, symbol, prototype-carried, non-enumerable, blank, non-string, invalid-date, end-before-start, and non-positive/non-finite-duration inputs where applicable.
+- `calendar.open-time-segment` validation is runtime/view lifecycle scoped and does not leak across runtimes or survive unmount.
+- Manual segment creation/editing, `calendar.month`, snake_case aliases, app-shell route mounting/navigation, drag/drop, broad cross-plugin event query/read facade, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC/duration hardening, and stale detail clearing are explicitly deferred.
 
 Test plan:
 
-- Calendar view tests for segment rendering and click behavior.
-- Timer/calendar integration test.
+- Calendar view tests for registration, normalized DTO rendering, inert text, UTC day/week ranges, deterministic current-date behavior, interval-overlap carryover segments, and click-to-detail behavior.
+- Command/DTO hardening tests for fail-closed validation and runtime-scoped known segment validation.
+- Static boundary tests for no Timer internals, raw runtime/store/registry/pluginHost, NativeBridge/Tauri, HTML injection, package/native/Tauri/Rust/schema diff, snake_case aliases, or manual segment commands.
+- Timer/calendar integration-style test that normalizes public Timer `time_segment_created` events in the test harness before rendering Calendar.
 
 Dependencies:
 

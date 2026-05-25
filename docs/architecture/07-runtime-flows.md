@@ -56,7 +56,7 @@ TASK-016/TASK-021 当前实现顺序是：`createTauriNativeBridge()` -> storage
 
 `storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-024 后包含内置 `MarkdownEditorPlugin`、`TaskPlugin`、`TagPlugin`、`MetadataUiPlugin` 和 `TimerPlugin`。Quick capture、search、calendar 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-026 后包含内置 `MarkdownEditorPlugin`、`TaskPlugin`、`TagPlugin`、`MetadataUiPlugin`、`TimerPlugin` 和 `CalendarPlugin`。Quick capture、search、habit、heatmap、stats、chart、ML、AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
@@ -166,7 +166,9 @@ MetadataBar and PluginHost scoped command execution authorize by registered comm
 全局 saved-filter navigation / app-shell filter route
 Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
-Timer metadata totals, Calendar/Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native/schema surfaces
+CalendarPlugin registers calendar.day / calendar.week / calendar.open-time-segment
+Calendar views consume caller-provided kind calendar.time-segments DTOs
+Timer metadata totals, Calendar app-shell route/feed, Stats/ML integration, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native/schema surfaces
 ```
 
 ### 18.2 用户点击任务文字
@@ -318,6 +320,46 @@ timer.page-timeline.segments rendered on page.timeline
 → Timeline refreshes and renders note text inertly
 ```
 
-`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar/Stats/ML integration, metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Stats/ML integration, metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+
+### 18.9 Caller opens Calendar day/week
+
+TASK-026 current flow:
+
+```text
+Caller/view host prepares CalendarTimeSegmentsData
+→ data.kind is "calendar.time-segments"
+→ each segment is a normalized Timer projection with source "timer"
+→ provenance requires namespace "timer", sourcePluginId "timer", type "time_segment_created"
+→ Caller resolves ViewRegistry id "calendar.day" or "calendar.week"
+→ Calendar view validates DTOs fail-closed
+→ Calendar view filters by UTC interval overlap against date/weekStart
+→ Calendar view renders native buttons inside Calendar day/week regions
+→ User clicks a segment block
+→ Calendar view executes calendar.open-time-segment({ segmentId, pageId })
+→ Command validates exact payload against the current runtime-scoped known segment set
+→ Calendar view renders read-only Segment detail text
+```
+
+Calendar does not call `ctx.events.list(...)` to read Timer-owned events in this slice. Plugin-facing event reads remain scoped to the calling plugin, so a reviewed cross-plugin query/read facade is required before Calendar can directly query Timer events. The current Timer integration test normalizes a public `time_segment_created` event in the test harness, which models caller/view-host behavior rather than Calendar-owned event reads.
+
+Calendar date inputs are UTC date-only strings. If `date` or `weekStart` is absent, the implementation derives the selected range from the current UTC date; deterministic tests pass explicit date/weekStart values or set the system clock. TASK-026 still accepts any `Date.parse`-parseable instant for segment `startAt`/`endAt`; strict `Z`-only UTC and duration-match validation remain future hardening.
+
+Deferred after TASK-026:
+
+```text
+calendar.month
+manual segment creation/editing
+snake_case command aliases
+app-shell Calendar route/navigation
+drag/drop editing
+broad cross-plugin event read/query facade
+Timer metadata totals
+Stats/ML/Habit/Task scheduled feeds
+external calendar sync
+native/Tauri/package/Rust/schema changes
+strict UTC Z-only and duration-match hardening
+stale detail clearing after data/date/week changes
+```
 
 ---
