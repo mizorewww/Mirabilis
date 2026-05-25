@@ -564,3 +564,16 @@
 ## Current Next Action
 
 - Commit this final re-review outcome, then delegate formal docs sync to `doc_writer`.
+
+## Docs Sync Handoff
+
+- Chandrasekhar the 2nd (`doc_writer`) started at 2026-05-25 16:06 CST.
+- Scope: docs only.
+- Required sync:
+  - product, architecture, development, implementation task-index, and testing docs should describe the delivered built-in `ai` plugin provider abstraction;
+  - use canonical kebab-case AI command ids only and clarify stale underscore ids are not runtime aliases;
+  - document provider id `openai`, default model guidance `gpt-5.5`, plugin-owned provider boundary, Responses-style `instructions` / string `input` / `store:false` / `text.format` strict schema subset, raw Responses normalization, fail-closed redaction, mocked provider/transport tests, and no live OpenAI/package/native/Tauri changes;
+  - document the current provider settings state as plugin-owned injectable settings plus inert `ai.provider-settings`, with persistent settings UI, secret storage/keychain, native HTTP, and live provider execution deferred;
+  - document advisory-only command behavior, exact bounded caller-provided projections, Core/sibling boundary, inert accessible views, descriptors, test strategy, and residual/deferred items.
+- Constraints: do not edit source, tests, `docs/implementation/progress.md`, agent-communication files, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Chandrasekhar the 2nd, validate docs-only scope, and commit docs sync separately.

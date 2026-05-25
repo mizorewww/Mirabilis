@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:05 CST.
+Last updated: 2026-05-25 16:06 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 16:05 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 final narrow re-review passed; preparing formal docs sync.
+- Current phase: TASK-031 formal docs sync delegated.
 
 ## Active Agents
 
-- None.
+- Chandrasekhar the 2nd (`doc_writer`) is syncing formal docs for TASK-031.
 
 ## Current TASK-031 State
 
@@ -150,7 +150,10 @@ Last updated: 2026-05-25 16:05 CST.
   - Maxwell the 2nd (`deprecation_auditor`) found no remaining P0/P1 current-API/deprecation findings. It verified current Responses / Structured Outputs shape against official OpenAI docs, including `error: null`, `incomplete_details: null`, `text.format`, strict schema subset, and no stale underscore AI aliases.
   - Bohr the 2nd (`test_quality_reviewer`) found no remaining P0/P1 test-quality gaps and confirmed coverage for the final P1 regressions.
   - Parent also reran adjacent focused suite after the final re-review handoff: 5 files / 105 tests passed.
-- Next action: commit final re-review outcome, then delegate formal docs sync.
+- Docs sync delegated:
+  - Chandrasekhar the 2nd (`doc_writer`) should sync product, architecture, development, implementation task-index, and testing docs to the delivered AI Plugin provider abstraction.
+  - Scope: docs only; no source, tests, progress ledger, agent-communication, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Chandrasekhar the 2nd, validate docs-only scope, and commit docs sync separately.
 
 ## Current TASK-030 State
 
