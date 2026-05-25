@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:23 CST.
+Last updated: 2026-05-25 16:28 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 16:23 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 pre-test guidance delegated.
+- Current phase: TASK-032 pre-test guidance completed; preparing test handoff.
 
 ## Active Agents
 
-- Linnaeus the 2nd (`planner`) is defining the smallest safe TASK-032 slice.
-- Hilbert the 2nd (`docs_researcher`) is checking current docs for Tauri/native/network/security implications.
-- Carson the 2nd (`deprecation_auditor`) is auditing Sync/runtime/settings API assumptions.
-- Laplace the 2nd (`security_reviewer`) is defining Sync skeleton security constraints.
+- None.
 
 ## Current TASK-032 State
 
@@ -47,7 +44,21 @@ Last updated: 2026-05-25 16:23 CST.
   - Hilbert the 2nd (`docs_researcher`) should verify current Tauri v2 / security / permission implications if native or network sync appears relevant, and test guidance for a pure TypeScript skeleton.
   - Carson the 2nd (`deprecation_auditor`) should audit stale sync assumptions, absent settings/query/background/native APIs, and likely production surfaces.
   - Laplace the 2nd (`security_reviewer`) should define no-network/no-secret/no-native/capability constraints, data minimization, conflict/privacy risks, and static guard requirements.
-- Next action: wait for guidance, record parent decisions, then delegate failing tests to `test_writer`.
+- Pre-test guidance completed:
+  - Linnaeus the 2nd (`planner`) recommended a TypeScript-only built-in `sync` plugin skeleton with pure serializers, syncable unit DTOs, a rebuildable plugin index policy, and a structured conflict policy. It recommended no commands/views and no transport/background sync.
+  - Hilbert the 2nd (`docs_researcher`) confirmed TASK-032 can remain TypeScript-only and verified current Tauri v2 capability/permission/scope/HTTP/WebSocket/CSP guidance for why native/network sync must remain deferred.
+  - Carson the 2nd (`deprecation_auditor`) found no P0 for a pure skeleton, but P1 hazards if tests assume executable workspace sync, plugin settings runtime API, network/native sync, or executable indexer runtime. It recommended canonical unit ids under `sync.unit.*` and a rebuildable marker `sync.rebuildable.plugin-indexes`.
+  - Laplace the 2nd (`security_reviewer`) found no current P0/P1 blocker, but required no live network, credentials, remote endpoint settings, Tauri/native/package/capability broadening, whole-workspace export command, inbound apply/import command, sibling/Core private imports, or durable plugin index sync payloads.
+- Parent decisions after guidance:
+  - Use plugin id `sync` and export `SyncPlugin`.
+  - Register a TypeScript-only built-in plugin with no runtime commands, no views, no settings panel, no transport, no background jobs, and no live sync execution.
+  - Use canonical syncable unit kinds `sync.unit.markdown-page`, `sync.unit.metadata`, `sync.unit.event`, `sync.unit.filter`, and `sync.unit.plugin-settings`; stale ids and aliases such as `sync_plugin`, `sync.markdown_page`, `sync.plugin_settings`, `sync.page`, `sync.pages`, `sync.indexer`, and `sync.indexes` are not supported.
+  - Expose pure caller-provided serializers only; they do not read runtime stores or enumerate workspace data.
+  - Plugin Settings are a safe DTO/snapshot contract only, distinguishing unset from JSON null; no runtime settings facade, SQLite plugin settings access, settings UI, secrets, or remote endpoint settings in this task.
+  - Local plugin indexes are represented only by `sync.rebuildable.plugin-indexes` policy and excluded from durable sync units.
+  - Conflict strategy is a structured exported policy: mutable units require manual resolution on divergent edits; events are append-only with distinct-id union, duplicate identical-id dedupe, and same-id different-content conflict; tombstones/deletes remain deferred.
+  - Tests should be pure Vitest/static tests in `src/test/sync-plugin-skeleton.test.ts` and should guard no package/native/Tauri/Rust/schema/capability drift plus no network/storage/native/secret/import sinks.
+- Next action: commit guidance decisions, then delegate failing tests to `test_writer`.
 
 ## Current TASK-031 State
 

@@ -52,3 +52,39 @@
 - Laplace the 2nd (`security_reviewer`) started at 2026-05-25 16:23 CST.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Linnaeus the 2nd (`planner`) recommended the smallest safe TASK-032 slice:
+  - built-in TypeScript-only `sync` plugin registered through `BUILT_IN_PLUGINS`;
+  - no runtime commands, no views, no transport, no background jobs, and no live sync execution;
+  - expected files: `src/plugins/sync/index.ts`, `src/plugins/sync/plugin.ts`, `src/plugins/sync/syncable-units.ts`, `src/plugins/sync/conflict-policy.ts`, `src/bootstrap/built-in-plugins.ts`, and `src/test/sync-plugin-skeleton.test.ts`;
+  - pure caller-provided serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings snapshots;
+  - rebuildable plugin index policy, not a syncable index payload;
+  - structured conflict policy with manual resolution for divergent mutable records and append-only event union/dedupe rules.
+- Hilbert the 2nd (`docs_researcher`) confirmed TASK-032 can safely remain TypeScript-only. It verified current Tauri v2 guidance for capabilities, permissions, command scopes, HTTP plugin URL scoping, WebSocket permissions, and CSP. It recommended no package/native/Tauri/Rust/capability changes and pure Vitest/static tests.
+- Carson the 2nd (`deprecation_auditor`) found no P0 for a pure skeleton and identified P1 hazards if tests assume executable workspace sync, runtime plugin settings APIs, network/native sync, executable indexer runtime, or cross-plugin enumeration through `PluginContext`. It recommended canonical unit ids under `sync.unit.*`, rebuildable marker `sync.rebuildable.plugin-indexes`, and rejection of stale aliases.
+- Laplace the 2nd (`security_reviewer`) found no current P0/P1 blocker and required tests to forbid live network, credentials/secrets/auth tokens, remote endpoint settings, Tauri/native/package/capability broadening, whole-workspace export commands, inbound apply/import commands, sibling/Core private imports, and durable plugin index sync payloads.
+
+## Parent Decisions After Guidance
+
+- Use plugin id `sync` and export `SyncPlugin`.
+- Add only a TypeScript built-in plugin skeleton. No runtime commands, no views, no settings panel, no network/native transport, no workers/background jobs, no remote endpoints, and no live sync execution.
+- Canonical syncable unit kinds:
+  - `sync.unit.markdown-page`
+  - `sync.unit.metadata`
+  - `sync.unit.event`
+  - `sync.unit.filter`
+  - `sync.unit.plugin-settings`
+- Rebuildable index marker:
+  - `sync.rebuildable.plugin-indexes`
+- Stale ids and aliases such as `sync-plugin`, `sync_plugin`, `core.sync`, `sync.page`, `sync.pages`, `sync.markdown_page`, `sync.plugin_settings`, `sync.indexer`, `sync.indexes`, and any snake_case/plural/network/transport command aliases are not supported.
+- Syncable unit serializers are pure functions over caller-provided records. They must not read runtime stores, enumerate workspace data, import sibling plugin internals, or use raw Core stores/registries/runtime/native bridge.
+- Plugin Settings are a syncable DTO/snapshot contract only. The serializer distinguishes `{ state: "unset" }` from `{ state: "json", value: null }`; no runtime settings facade, SQLite plugin settings access, settings UI, secrets, keychain, auth, or remote endpoint settings are added.
+- Local plugin indexes are derived/rebuildable local state and are excluded from durable sync payloads.
+- Conflict policy is a structured exported policy: Markdown Page, Metadata, Filter, and Plugin Settings divergent edits require manual resolution; Event units are append-only with distinct-id union, duplicate identical-id dedupe, and same-id different-content conflict. Tombstones/deletes and conflict UI are deferred.
+- Tests should be added first in `src/test/sync-plugin-skeleton.test.ts` and cover registration, DTO serialization, caller mutation snapshots, unsafe value rejection, plugin settings unset-vs-null, rebuildable index exclusion, structured conflict policy, stale-id absence, and static guards for no package/native/Tauri/Rust/schema/capability/network/storage/native/secret drift.
+
+## Current Next Action
+
+- Commit guidance decisions, then delegate failing acceptance tests to `test_writer`.
