@@ -1,0 +1,1 @@
+export { SearchPlugin } from "./plugin";
