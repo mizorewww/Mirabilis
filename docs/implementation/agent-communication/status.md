@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 02:33 CST.
+Last updated: 2026-05-26 02:58 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-26 02:33 CST.
 - Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 implementation committed; branch validation and review pending.
+- Current phase: TASK-036 review fixes committed; branch validation and re-review pending.
 
 ## Active Agents
 
-- None. Implementation and validation-fix agents completed.
+- None. Review regression and validation-fix agents completed.
 
 ## Current TASK-036 State
 
@@ -49,22 +49,23 @@ Last updated: 2026-05-26 02:33 CST.
   - Nietzsche (`test_writer`) fixed the test-file-only type/lint issues without changing production code.
   - Parent validation after both fixes: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 12 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
   - Commits: `405658b Pascal(implementation)(Add Generic ViewHost And SlotHost): implement shell host boundaries` and `c908620 Nietzsche(test-fix)(Add Generic ViewHost And SlotHost): satisfy host test validation`.
-- Parent decision: record implementation validation, run build and `check:quick`, then delegate review agents.
+- Initial review outcome:
+  - McClintock, Ampere, Averroes, Wegener, and Volta reported P1/P2 host-boundary findings around `accepts.kinds`, controlled ViewHost props, unsafe alias/function redaction, proxy/trap safety, same-id boundary recovery, descriptor-backed callbacks, `viewId`/`viewType` conflicts, and ViewHost runtime facade coverage.
+  - Parent decision: require failing regression tests before production fixes.
+- Review-fix outcome:
+  - Maxwell (`test_writer`) added review regression tests first. Red validation failed as expected with 12 failed / 13 passed.
+  - Planck (`implementer`) fixed `ViewHost` and `SlotHost` boundary behavior in commit `3c3c5dc`.
+  - Leibniz (`test_writer`) fixed test-only TypeScript annotations in commit `b87455f`.
+  - Parent validation passed: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` with 1 file / 25 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Parent decision: record review fixes, run branch-level build and `check:quick`, then delegate re-review and release-readiness agents.
 
 ## Received Review Notes
 
-- Nash P1: `docs/implementation/progress.md` only recorded the TASK-035 start state; it needs an implementation validation / review-pending run-log entry with delivered scope, checks, build chunk warning, and review status while keeping TASK-035 `[~]`.
-- Nash P1: `docs/implementation/agent-communication/status.md` was stale; it needs the current phase, received review notes, corrected M9 snapshot, and accurate active/pending fix work.
-- Nash P2: `docs/product/07-user-interface-design.md` still read entirely pre-scaffold; it needs a current-status note for the TASK-035 baseline MUI substrate and TASK-036+ deferred shell work.
-- Nash P2: `docs/implementation/task-index.md` needs a concise TASK-035 delivered/deferred note covering the MUI quartet, theme/baseline, shell frame, placeholder routes/tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
-- Nash P2: `docs/testing/strategy.md` needs TASK-035 testing guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
-- Parent decision: accepted and fixed Nash's docs findings through Peirce's docs-only commit `291adb0`.
-- Test-quality/security review fixes:
-  - Carver closed the P1 `bun.lock` guard precision finding and shell interaction coverage gap in commit `695ec5c`.
-  - Plato closed the final Command inactive-to-active coverage P2 in commit `2889f84`.
-  - Socrates confirmed the package/lock/native boundary is closed with no remaining P0/P1/P2 findings.
-  - Gauss confirmed test-quality P0/P1 findings are closed; the final Command P2 was fixed afterward.
-- Release readiness: Dirac found no P0/P1 blocker, confirmed `check:full` is not required for TASK-035, and accepted the Vite/Rollup chunk-size warning as a deferred P2.
+- TASK-036 re-review is pending after commits `3c3c5dc` and `b87455f`.
+- Known deferred questions for re-review:
+  - whether same controlled props cloning should additionally cover slot-condition mutation/capture edge cases beyond current mutation-isolation tests;
+  - whether lazy component/Suspense support should be included in TASK-036 or deferred to route mounting;
+  - whether static test coupling around the host file split/export should be softened before closeout.
 
 ## Current TASK-035 State
 
@@ -163,9 +164,10 @@ Last updated: 2026-05-26 02:33 CST.
 ## Current M9 Roadmap State
 
 - TASK-034 is complete and merged on `master`.
-- TASK-035 is merged locally on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
-- TASK-036 through TASK-045 remain `[ ]` and cover generic ViewHost/SlotHost, Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: push `master`, then start TASK-036.
+- TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
+- TASK-036 is in progress on `feat/task-036-viewhost-slothost`: generic ViewHost/SlotHost tests, implementation, and first review fixes are committed; branch validation and re-review are pending.
+- TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: run TASK-036 branch validation and re-review.
 
 ## Historical TASK-033 State
 

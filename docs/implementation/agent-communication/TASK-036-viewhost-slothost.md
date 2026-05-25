@@ -43,7 +43,7 @@
 
 ## Current Next Action
 
-- Run branch validation and delegate review agents.
+- Run branch-level build and `check:quick`, then delegate re-review and release-readiness agents.
 
 ## Pre-Test Guidance Outcomes
 
@@ -106,3 +106,37 @@
   - `405658b Pascal(implementation)(Add Generic ViewHost And SlotHost): implement shell host boundaries`;
   - `c908620 Nietzsche(test-fix)(Add Generic ViewHost And SlotHost): satisfy host test validation`.
 - Parent decision: run branch validation and delegate review agents.
+
+## Review Regression And Fix Outcome
+
+- Initial review findings:
+  - McClintock (`pr_explorer`) found P1 coverage/behavior gaps for `accepts.kinds` and unsafe key aliases, plus P2 boundary-reset and callback descriptor risks.
+  - Ampere (`reviewer`) found P1 gaps for controlled ViewHost props, `accepts.kinds`, proxy/trap safety, and `viewId`/`viewType` conflict behavior, plus P2 boundary reset behavior.
+  - Averroes (`security_reviewer`) found P1 risks for arbitrary function handles and exact-name-only secret/native filtering, plus P2 malformed DTO and symbol/non-enumerable handling questions.
+  - Wegener (`deprecation_auditor`) found P1 risks for `accepts.kinds` and same-id boundary recovery, plus a P2 lazy/Suspense concern for future route mounting.
+  - Volta (`test_quality_reviewer`) found P1 missing ViewHost `useRuntime()` facade coverage and P2 gaps around slot-condition mutation/capture isolation and static test coupling.
+- Parent decision: require tests first for P1 and high-confidence boundary regressions before any production fix. Keep P2 lazy/Suspense and static-test-coupling questions for re-review unless they become blockers.
+- Maxwell (`test_writer`) added review regression tests in `src/test/view-slot-hosts.test.tsx`.
+- Red validation after Maxwell: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 12 failed / 13 passed.
+- Test commit: `a1d6799 Maxwell(test-fix)(Add Generic ViewHost And SlotHost): cover review boundary regressions`.
+- Planck (`implementer`) fixed production host behavior in:
+  - `src/shell/hosts/ViewHost.tsx`;
+  - `src/shell/hosts/SlotHost.tsx`.
+- Planck implemented:
+  - controlled `ViewHost.props` pass-through with unsafe prop redaction;
+  - `accepts.kind` and `accepts.kinds` support;
+  - fail-closed `viewId` / `viewType` conflict handling;
+  - descriptor-safe cloning and proxy/trap fail-closed paths;
+  - normalized secret/native/command alias blocking;
+  - top-level callback allowlisting instead of arbitrary function pass-through;
+  - boundary reset keys that include controlled props.
+- Leibniz (`test_writer`) fixed test-only TypeScript annotations for the new regression tests without touching production code.
+- Parent validation after Planck and Leibniz:
+  - `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 25 tests;
+  - `bun run typecheck` passed;
+  - `bun run lint` passed;
+  - `git diff --check` passed.
+- Commits:
+  - `3c3c5dc Planck(review-fix)(Add Generic ViewHost And SlotHost): close host boundary findings`;
+  - `b87455f Leibniz(test-fix)(Add Generic ViewHost And SlotHost): satisfy review regression typing`.
+- Parent decision: record review fixes, run branch-level build and `check:quick`, then re-run review/release agents before closeout.

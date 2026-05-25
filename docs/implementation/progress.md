@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 02:58 CST - TASK-036 review fixes committed
+
+- Branch: `feat/task-036-viewhost-slothost`.
+- Task: Add Generic ViewHost And SlotHost.
+- Review regression tests: Maxwell added focused coverage for controlled `ViewHost.props`, `accepts.kinds`, hostile proxy/trap DTOs and props, unsafe function handles, secret/native aliases, ViewHost `useRuntime()` facade isolation, same-id boundary recovery, `viewId`/`viewType` conflicts, and accessor-backed callback bags. Red validation failed as expected before review fixes.
+- Review fixes: Planck updated `ViewHost` and `SlotHost` to support controlled props, `accepts.kind` / `accepts.kinds`, conflict fail-closed resolution, descriptor-safe cloning, alias/key normalization for secret/native/command handles, callback allowlisting, proxy/trap fail-closed paths, and reset keys that include controlled props. Commit: `3c3c5dc`.
+- Test validation fix: Leibniz fixed test-only TypeScript annotations for the review regression tests without changing production code. Commit: `b87455f`.
+- Parent validation after fixes: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 25 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: run branch-level `bun run build` and `bun run check:quick`, then delegate re-review/release-readiness agents before marking TASK-036 complete.
+
 ### 2026-05-26 02:05 CST - TASK-036 started
 
 - Branch: `feat/task-036-viewhost-slothost`.
@@ -107,7 +117,8 @@ Add newest entries at the top.
 - Pre-test guidance: current-doc, deprecation/API, security, and planning agents agree TASK-036 should add app-shell host modules under `src/shell/hosts/`; render registered components via JSX / `createElement`; use real Error Boundaries; fail closed on missing/ambiguous/wrong-kind/malformed/thrown/unavailable views and slots; pass only narrow controlled props; evaluate slot `when` with the same controlled props; trust SlotRegistry ordering; and avoid all native/package/Tauri/Rust/security surface changes.
 - Failing tests: Cicero added `src/test/view-slot-hosts.test.tsx`. Red validation `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 11 failures for missing `../shell/hosts` and expected host production files, while the native/package surface guard passed.
 - Implementation: Pascal added `src/shell/hosts/PluginRenderBoundary.tsx`, `ViewHost.tsx`, `SlotHost.tsx`, and `index.ts`. Nietzsche fixed test-file-only type/lint issues discovered after implementation. Parent validation passed for `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` (1 file / 12 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
-- Next action: run branch validation and delegate review agents.
+- Initial review: correctness, security, deprecation/API, and test-quality agents reported host-boundary regressions around `accepts.kinds`, controlled prop surfaces, unsafe alias redaction, proxy/trap safety, boundary reset behavior, callback descriptors, and ViewHost runtime facade coverage. Maxwell added regression tests first; Planck and Leibniz closed the validation failures.
+- Next action: run branch validation and delegate re-review agents.
 
 ### 2026-05-26 02:04 CST - TASK-035 merged
 
