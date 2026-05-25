@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Delegate final plain-object review-fix tests.
+- Commit final runtime-shaped DTO fix record, then run final confirmation review.
 
 ## Implementation Handoff
 
@@ -419,3 +419,41 @@
   - preserve plain serialized event unit merge behavior.
 - Production fix should remain focused in `src/plugins/sync/conflict-policy.ts` and should either require plain/null prototypes for event unit and `syncKey`, or return only a validated safe clone without accepting runtime-shaped originals.
 - Parent next action: delegate final plain-object review-fix tests to `test_writer`.
+
+## Final Plain-Object Review-Fix Tests
+
+- Popper the 2nd (`test_writer`) added tests in `src/test/sync-plugin-skeleton.test.ts`.
+- Coverage added:
+  - reject class-instance / custom-prototype event conflict DTO wrappers that have exact own DTO keys;
+  - reject class-instance / custom-prototype `syncKey` objects that have exactly an own `id`;
+  - include inherited runtime behavior such as `toJSON()` / prototype methods;
+  - preserve canonical serialized event merge behavior.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 16 passed.
+  - Failure symptoms: class-instance/custom-prototype event units and sync keys were accepted for both `local` and `remote`.
+- Parent static validation passed:
+  - `bun run typecheck`;
+  - focused ESLint;
+  - `git diff --check`;
+  - `.skip/.only` scan;
+  - package/native/Tauri/Rust/schema/capability guard.
+- Test-fix commit: `31eba41 Popper(test-fix)(Implement Sync Plugin skeleton): cover runtime-shaped event DTOs`; post-commit auto-push succeeded.
+
+## Final Plain-Object Production Fix Outcome
+
+- Volta the 2nd (`implementer`) fixed runtime-shaped event DTO rejection in `src/plugins/sync/conflict-policy.ts`.
+- Fixes delivered:
+  - event conflict DTO wrappers and `syncKey` objects must be plain `Object.prototype` records;
+  - class instances and custom-prototype objects are rejected before merge;
+  - descriptor-safe validation remains intact and getters are not invoked;
+  - event union, dedupe, and same-id conflict behavior is preserved.
+- Parent validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` passed with 1 file / 17 tests.
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ai-plugin-provider-abstraction.test.tsx` passed with 5 files / 110 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
+- Review-fix commit: `74bc1d8 Volta(review-fix)(Implement Sync Plugin skeleton): reject runtime-shaped event DTOs`; post-commit auto-push succeeded.
+- Parent next action: commit this validation record, then run final confirmation review.

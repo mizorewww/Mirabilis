@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:51 CST.
+Last updated: 2026-05-25 18:00 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:51 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 final plain-object review-fix tests pending.
+- Current phase: TASK-032 runtime-shaped DTO fix committed; final confirmation pending.
 
 ## Active Agents
 
@@ -154,7 +154,17 @@ Last updated: 2026-05-25 17:51 CST.
 - Parent decisions after final confirmation:
   - Add tests first for class-instance/non-plain top-level event unit objects and non-plain `syncKey` objects, including inherited `toJSON` or other runtime-shaped prototypes, and ensure they are rejected.
   - Then delegate production fix to enforce plain/null prototypes for event unit and `syncKey`, or otherwise return a validated safe clone without accepting runtime-shaped objects.
-- Next action: delegate final plain-object review-fix tests to `test_writer`.
+- Final plain-object review-fix tests delegated:
+  - Popper the 2nd (`test_writer`) added tests for class-instance/custom-prototype event units and non-plain `syncKey` objects with exact own keys and inherited runtime behavior.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 16 passed; production accepted those runtime-shaped objects.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `31eba41 Popper(test-fix)(Implement Sync Plugin skeleton): cover runtime-shaped event DTOs`; post-commit auto-push succeeded.
+- Final plain-object production fix completed:
+  - Volta the 2nd (`implementer`) updated `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: event conflict DTO wrappers and `syncKey` objects must be plain `Object.prototype` records; class instances and custom-prototype objects are rejected before merge while descriptor-safe validation and event union/dedupe/conflict behavior remain intact.
+  - Parent validated: focused TASK-032 tests passed (1 file / 17 tests), adjacent plugin/API/Core/AI suite passed (5 files / 110 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `74bc1d8 Volta(review-fix)(Implement Sync Plugin skeleton): reject runtime-shaped event DTOs`; post-commit auto-push succeeded.
+- Next action: commit this final fix record, then run final confirmation review.
 
 ## Current TASK-031 State
 
