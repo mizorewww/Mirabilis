@@ -853,6 +853,81 @@ describe("Sync Plugin skeleton", () => {
     }
   });
 
+  it("rejects event conflict units when identity or DTO keys are not exact", async () => {
+    const sync = await loadSyncModule();
+    const validEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-valid-exact-dto" }),
+    );
+    const eventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-invalid-exact-dto" }),
+    );
+
+    for (const malformed of [
+      {
+        label: "snapshot id differs from sync key id",
+        unit: {
+          ...eventUnit,
+          snapshot: {
+            ...eventUnit.snapshot,
+            id: "event-snapshot-different-from-sync-key",
+          },
+        },
+      },
+      {
+        label: "extra top-level event unit key",
+        unit: {
+          ...eventUnit,
+          mergedFrom: "remote",
+        },
+      },
+      {
+        label: "extra event sync key field",
+        unit: {
+          ...eventUnit,
+          syncKey: {
+            ...eventUnit.syncKey,
+            sourcePluginId: "task",
+          },
+        },
+      },
+    ] as const) {
+      expectEventConflictUnitRejected(sync, {
+        label: malformed.label,
+        unit: malformed.unit,
+        validEventUnit,
+      });
+    }
+  });
+
+  it("continues to merge serialized event units with distinct canonical ids", async () => {
+    const sync = await loadSyncModule();
+    const localEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({
+        id: "event-canonical-local",
+        payload: { status: "done" },
+      }),
+    );
+    const remoteEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({
+        id: "event-canonical-remote",
+        payload: { status: "reopened" },
+      }),
+    );
+
+    expect(
+      sync.resolveSyncUnitConflict({
+        local: [localEventUnit],
+        remote: [remoteEventUnit],
+        unitKind: syncUnitEvent,
+      }),
+    ).toStrictEqual({
+      conflicts: [],
+      outcome: "merged",
+      unitKind: syncUnitEvent,
+      units: [localEventUnit, remoteEventUnit],
+    });
+  });
+
   it("rejects accessor-backed event conflict unit fields without invoking getters", async () => {
     const sync = await loadSyncModule();
 
