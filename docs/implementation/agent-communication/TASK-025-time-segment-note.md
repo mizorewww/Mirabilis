@@ -430,4 +430,25 @@
 
 ## Current Next Action
 
-- Wait for Lorentz (`test_writer`) to finish, validate the red signal, commit tests, then delegate implementation.
+## MetadataBar Execute-Only Fail-Closed Tests
+
+- Status: completed by Lorentz (`test_writer`) on 2026-05-25 08:02 CST.
+- Commit: `81e2bf0`.
+- File changed:
+  - `src/test/metadata-ui-plugin.test.tsx`.
+- Coverage added:
+  - MetadataBar renders with a command facade that exposes only `execute()` and no descriptor lookup.
+  - An `alpha` metadata slot attempts matching-prefix foreign command `alpha.foreign` through the execute-only facade.
+  - The execute-only facade must fail closed without dispatching `alpha.foreign`.
+  - Same-owner `alpha.own-command` also fails closed when descriptor ownership cannot be verified.
+- Parent validation:
+  - `bun run test:frontend -- src/test/metadata-ui-plugin.test.tsx` failed as expected with 1 failed / 17 passed.
+  - Expected red reason: `alpha.foreign` dispatched, `betaHandler` ran, and same-owner `alpha.own-command` also dispatched through the execute-only fallback.
+  - `bun run typecheck` passed.
+  - `./node_modules/.bin/eslint src/test/metadata-ui-plugin.test.tsx --max-warnings=0` passed.
+  - No `.skip` / `.only` matches in the touched test file.
+  - `git diff --check` passed.
+
+## Current Next Action
+
+- Delegate `implementer` to make MetadataBar fail closed when command descriptor lookup is unavailable.
