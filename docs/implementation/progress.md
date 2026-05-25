@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 09:39 CST - TASK-026 merged
+
+- Branch: `feat/task-026-calendar-plugin-baseline`.
+- Merge commit: `8738006` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 31 frontend test files / 481 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-026 is complete on `master`; next autonomous task is TASK-027.
+
 ### 2026-05-25 09:37 CST - TASK-026 completed
 
 - Branch: `feat/task-026-calendar-plugin-baseline`.
