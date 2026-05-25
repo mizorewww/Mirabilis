@@ -1,19 +1,19 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 03:43 CST.
+Last updated: 2026-05-26 03:45 CST.
 
 ## Current Task
 
-- Task: TASK-036 - Add Generic ViewHost And SlotHost.
-- Branch: `feat/task-036-viewhost-slothost`.
+- Task: TASK-037 - Mount Home Workspace Editor.
+- Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 merged to `master`; TASK-037 selection pending.
+- Current phase: TASK-037 started; pre-test guidance pending.
 
 ## Active Agents
 
-- None. TASK-036 agents completed.
-- Pending: start TASK-037 on a focused branch.
+- None. TASK-037 guidance agents not yet started.
+- Pending: delegate current-doc, deprecation/API, security, and planning guidance.
 
 ## Current TASK-036 State
 
@@ -204,8 +204,9 @@ Last updated: 2026-05-26 03:43 CST.
 - TASK-034 is complete and merged on `master`.
 - TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
-- TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: start TASK-037 - Mount Home Workspace Editor.
+- TASK-037 is in progress on `feat/task-037-home-workspace-editor`: initial docs/code context has been read, and pre-test guidance is pending.
+- TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: delegate TASK-037 guidance agents.
 
 ## Historical TASK-033 State
 

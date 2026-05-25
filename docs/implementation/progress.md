@@ -80,7 +80,7 @@ Status markers:
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [x] TASK-036: Add Generic ViewHost And SlotHost
-- [ ] TASK-037: Mount Home Workspace Editor
+- [~] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
@@ -93,6 +93,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 03:45 CST - TASK-037 started
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Start point: `master` after TASK-036 merge-validation commit `bf87242`.
+- Source docs read: `docs/implementation/task-index.md#task-037-mount-home-workspace-editor`, `docs/product/07-user-interface-design.md`, `docs/product/04-editor-and-workflows.md`, `docs/architecture/04-slots-editor-task.md#8-markdown-editor-plugin`, and `docs/testing/strategy.md` TASK-016/TASK-019/TASK-020 guidance.
+- Initial scope: make the ready app create/select a session Home Markdown Page when no route is active; render the registered `page.editor` view through `ViewHost`; preserve typing, toolbar snippets, save, task-title open, and checkbox toggle behavior for the selected session page; keep placeholder routes outside Home.
+- Initial constraints: parent remains orchestration-only; write failing user-event tests first; do not directly import `MarkdownPageEditor` into App Shell; do not add metadata/timeline/sidebar/search/capture/calendar/report/ML/AI/settings/sync route scope; do not change package/lock/Tauri/Rust/IPC/capability/permission/release surfaces.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with the known non-blocking unrestricted sandbox/network notes and the known `TERM=dumb` terminal failure.
+- Next action: delegate current-doc/deprecation/security/planning guidance before test writing.
 
 ### 2026-05-26 03:43 CST - TASK-036 merged
 
