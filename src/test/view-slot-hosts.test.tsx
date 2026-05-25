@@ -70,6 +70,11 @@ type CounterSlotProps = {
   onIncrement: () => void;
 };
 
+type SameIdRecoverySlotProps = {
+  mode: "broken" | "ready";
+  label: string;
+};
+
 type ModelSlotProps = {
   model: {
     label: string;
@@ -1002,11 +1007,11 @@ describe("SlotHost", () => {
     const registry = createInMemorySlotRegistry();
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-    registry.register<Record<string, unknown>>({
+    registry.register<SameIdRecoverySlotProps>({
       id: "slot.same-id-recovery",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: ({ mode, label }) => {
+      component: ({ mode, label }: SameIdRecoverySlotProps) => {
         if (mode === "broken") {
           throw new Error(`same contribution failed ${unsafeSentinelText}`);
         }
@@ -1118,7 +1123,7 @@ describe("SlotHost", () => {
       id: "slot.callback-surface",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: (props) => {
+      component: (props: CapturedProps) => {
         capturedProps.push(props);
         const apply = props.onApply as (() => void) | undefined;
 
@@ -1177,7 +1182,7 @@ describe("SlotHost", () => {
       id: "slot.alias-props",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: (props) => {
+      component: (props: CapturedProps) => {
         capturedProps.push(props);
 
         return (
