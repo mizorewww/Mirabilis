@@ -1,18 +1,184 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:18 CST.
+Last updated: 2026-05-25 20:58 CST.
 
 ## Current Task
 
-- Task: TASK-031 - Implement AI Plugin provider abstraction.
-- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
+- Task: TASK-032 - Implement Sync Plugin skeleton.
+- Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 merged to `master`; merge-result gate passed.
+- Current phase: TASK-032 ready to merge after final branch gate.
 
 ## Active Agents
 
 - None.
+
+## Current TASK-032 State
+
+- TASK-032 follows TASK-013 and is the first Sync Plugin skeleton slice:
+  - define syncable units for Markdown Page, Metadata, Event, Filter, and Plugin Settings;
+  - treat local plugin indexes as rebuildable;
+  - document conflict strategy before full implementation;
+  - do not enable network sync without explicit settings and security review.
+- Start point: `master` after TASK-031 merge validation commit `ad583f4`.
+- Initial parent interpretation:
+  - Keep Sync behavior in a built-in plugin, not Core.
+  - Prefer a TypeScript-only skeleton unless agents prove an acceptance-critical need for native/Tauri/Rust/schema/capability changes.
+  - Do not add live network sync, raw `fetch`, sockets, workers, package dependencies, filesystem/native transport, Tauri permissions, or secret storage in this slice.
+  - Model syncable unit definitions and serialization boundaries as plugin-owned descriptors/DTOs over existing core domain concepts.
+  - Treat plugin settings carefully because the current runtime has manifest `settingsPanels` descriptors and SQLite plugin settings rows, but no plugin-facing runtime settings facade yet.
+- Source docs read:
+  - `docs/implementation/task-index.md#task-032-implement-sync-plugin-skeleton`.
+  - `docs/development/01-data-roadmap-and-mvp.md#phase-11sync-plugin`.
+  - `docs/architecture/01-overview-and-monorepo.md#11-分层结构`.
+  - Related Sync / plugin settings / native transport references in `docs/development/02-implementation-roadmap-and-constraints.md`, product, architecture, and testing docs.
+- Agent/config validation passed for orchestration start:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known `TERM=dumb` terminal failure and unrestricted sandbox/network notes.
+- Parent decisions before guidance:
+  - Continue TASK-032 as an autonomous task on branch `feat/task-032-sync-plugin-skeleton`.
+  - Delegate planning, docs/current API review, deprecation/API audit, and security review before writing tests because Sync touches possible Tauri/native/network/security boundaries and plugin settings semantics.
+- Pre-test guidance delegated:
+  - Linnaeus the 2nd (`planner`) should define the smallest safe slice, canonical ids, DTOs, syncable unit definitions, rebuildable-index assumptions, conflict strategy, settings approach, acceptance criteria, and deferred scope.
+  - Hilbert the 2nd (`docs_researcher`) should verify current Tauri v2 / security / permission implications if native or network sync appears relevant, and test guidance for a pure TypeScript skeleton.
+  - Carson the 2nd (`deprecation_auditor`) should audit stale sync assumptions, absent settings/query/background/native APIs, and likely production surfaces.
+  - Laplace the 2nd (`security_reviewer`) should define no-network/no-secret/no-native/capability constraints, data minimization, conflict/privacy risks, and static guard requirements.
+- Pre-test guidance completed:
+  - Linnaeus the 2nd (`planner`) recommended a TypeScript-only built-in `sync` plugin skeleton with pure serializers, syncable unit DTOs, a rebuildable plugin index policy, and a structured conflict policy. It recommended no commands/views and no transport/background sync.
+  - Hilbert the 2nd (`docs_researcher`) confirmed TASK-032 can remain TypeScript-only and verified current Tauri v2 capability/permission/scope/HTTP/WebSocket/CSP guidance for why native/network sync must remain deferred.
+  - Carson the 2nd (`deprecation_auditor`) found no P0 for a pure skeleton, but P1 hazards if tests assume executable workspace sync, plugin settings runtime API, network/native sync, or executable indexer runtime. It recommended canonical unit ids under `sync.unit.*` and a rebuildable marker `sync.rebuildable.plugin-indexes`.
+  - Laplace the 2nd (`security_reviewer`) found no current P0/P1 blocker, but required no live network, credentials, remote endpoint settings, Tauri/native/package/capability broadening, whole-workspace export command, inbound apply/import command, sibling/Core private imports, or durable plugin index sync payloads.
+- Parent decisions after guidance:
+  - Use plugin id `sync` and export `SyncPlugin`.
+  - Register a TypeScript-only built-in plugin with no runtime commands, no views, no settings panel, no transport, no background jobs, and no live sync execution.
+  - Use canonical syncable unit kinds `sync.unit.markdown-page`, `sync.unit.metadata`, `sync.unit.event`, `sync.unit.filter`, and `sync.unit.plugin-settings`; stale ids and aliases such as `sync_plugin`, `sync.markdown_page`, `sync.plugin_settings`, `sync.page`, `sync.pages`, `sync.indexer`, and `sync.indexes` are not supported.
+  - Expose pure caller-provided serializers only; they do not read runtime stores or enumerate workspace data.
+  - Plugin Settings are a safe DTO/snapshot contract only, distinguishing unset from JSON null; no runtime settings facade, SQLite plugin settings access, settings UI, secrets, or remote endpoint settings in this task.
+  - Local plugin indexes are represented only by `sync.rebuildable.plugin-indexes` policy and excluded from durable sync units.
+  - Conflict strategy is a structured exported policy: mutable units require manual resolution on divergent edits; events are append-only with distinct-id union, duplicate identical-id dedupe, and same-id different-content conflict; tombstones/deletes remain deferred.
+  - Tests should be pure Vitest/static tests in `src/test/sync-plugin-skeleton.test.ts` and should guard no package/native/Tauri/Rust/schema/capability drift plus no network/storage/native/secret/import sinks.
+- Test writer delegated:
+  - Sartre the 2nd (`test_writer`) should add focused failing tests in `src/test/sync-plugin-skeleton.test.ts`.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability, or agent-communication edits; no commit, merge, or push.
+  - Required red signal: missing built-in `sync` plugin, missing `src/plugins/sync/**` exports, missing syncable unit serializers/policies, and missing conflict policy.
+- Test writer completed:
+  - Sartre the 2nd (`test_writer`) added `src/test/sync-plugin-skeleton.test.ts`.
+  - Coverage added: built-in `sync` registration, stale-id absence, syncable unit descriptors, deterministic serializers for Markdown Page / Metadata / Event / Filter / Plugin Settings, snapshot safety, unsafe JSON rejection, Plugin Settings unset vs JSON null, secret/remote settings key rejection, rebuildable plugin-index policy, conflict policy, and static no-native/no-network/no-secret/no-Core/sibling drift guards.
+  - Parent red validation: focused TASK-032 tests failed as expected with 6 failed / 1 passed. Failure symptoms: `sync` is missing from `BUILT_IN_PLUGINS`, and `src/plugins/sync` cannot be imported.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, tests-only changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test commit: `a0c7ea6 Sartre(test)(Implement Sync Plugin skeleton): add sync skeleton acceptance tests`; post-commit auto-push succeeded.
+- Implementation delegated:
+  - Einstein the 2nd (`implementer`) should add the built-in `sync` plugin registration, syncable unit descriptors/serializers, rebuildable index policy, and conflict resolver/policy.
+  - Scope: production code only in `src/bootstrap/built-in-plugins.ts` and `src/plugins/sync/**`; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Implementation completed:
+  - Einstein the 2nd (`implementer`) added the TASK-032 production skeleton.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/sync/index.ts`, `src/plugins/sync/plugin.ts`, `src/plugins/sync/syncable-units.ts`, and `src/plugins/sync/conflict-policy.ts`.
+  - Parent also received an additional implementation completion notification from Galileo the 2nd with the same file set and no known risks; the working tree was treated as the single source of truth before commit.
+  - Parent validated: focused TASK-032 tests passed (1 file / 7 tests), adjacent plugin/API/Core/AI suite passed (5 files / 100 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Implementation commit: `23f1b48 Einstein(implementation)(Implement Sync Plugin skeleton): implement sync plugin skeleton`; post-commit auto-push succeeded.
+- Review wave delegated:
+  - Heisenberg the 2nd (`pr_explorer`) maps changed paths, review hotspots, and scope drift.
+  - Euler the 2nd (`reviewer`) checks correctness, DTO/conflict semantics, and runtime side effects.
+  - Dewey the 2nd (`deprecation_auditor`) checks stale ids/API assumptions and native/settings/indexer drift.
+  - Fermat the 2nd (`security_reviewer`) checks no-network/no-secret/no-native/no-import-boundary drift and JSON snapshot safety.
+  - Meitner the 2nd (`docs_researcher`) checks current-guidance needs and Mirabilis docs drift.
+  - Hooke the 2nd (`test_quality_reviewer`) checks acceptance and regression coverage quality.
+  - `doc_writer` could not start yet because the agent thread limit was reached; parent will start docs sync after a slot opens.
+- Review wave completed:
+  - Heisenberg the 2nd (`pr_explorer`) found no P0/P1 and mapped changed surfaces. It highlighted two review hotspots: broad conflict resolver input validation and char-code encoding for reserved plugin-setting keys.
+  - Euler the 2nd (`reviewer`) found one P1: `clonePlainJsonObject` builds clones with `{}` and assignment, so a valid JSON `__proto__` key mutates the clone prototype and drops the key from serialized output. It also noted P2 resolver validation and docs drift.
+  - Dewey the 2nd (`deprecation_auditor`) found one P1: exported `resolveSyncUnitConflict` implicitly accepts unsupported/stale non-event sync kinds such as `sync.page` or `sync.plugin_settings`, conflicting with the canonical-id decision. It confirmed no native/package/Tauri/API drift and checked current Tauri/Vitest/Vite guidance.
+  - Fermat the 2nd (`security_reviewer`) found one P1: generic Plugin Settings sync can still carry secrets/auth/credentials or remote endpoint settings through nested JSON or unlisted key variants. It found no live network/native/storage/sibling/Core boundary drift.
+  - Meitner the 2nd (`docs_researcher`) found one P1: long-lived docs must be synced before merge because production now registers `SyncPlugin` and the task requires conflict strategy documentation. It determined no external docs were needed for this TypeScript-only skeleton.
+  - Hooke the 2nd (`test_quality_reviewer`) found two P1 test gaps: unsafe JSON rejection does not cover Markdown Page snapshots, and Plugin Settings secret/remote coverage only checks top-level keys.
+  - Huygens the 2nd (`doc_writer`) produced a docs-only patch in product, architecture, development, implementation task-index, and testing docs; it has not been committed yet.
+- Parent decisions after review:
+  - Add review-fix tests first for the P1s: Markdown Page unsafe JSON coverage, `__proto__` own-key snapshot safety, nested Plugin Settings secret/auth/credential/remote setting rejection, and stale/unsupported sync kind rejection in `resolveSyncUnitConflict`.
+  - Then delegate production fixes to `implementer`.
+  - Keep docs sync as a separate docs commit after production fixes are green; update docs again only if review fixes change documented behavior.
+- Review-fix tests delegated:
+  - Plato the 2nd (`test_writer`) added focused tests for Markdown Page unsafe JSON coverage, safe own `__proto__` key preservation, nested Plugin Settings secret/auth/credential/remote endpoint rejection, stale/unsupported conflict kind rejection, and no-extra Sync manifest contributions.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 8 passed. Failure symptoms: own `__proto__` key dropped, nested Plugin Settings reserved keys accepted, and stale/unsupported resolver kinds accepted.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test-fix commit: `86674a5 Plato(test-fix)(Implement Sync Plugin skeleton): cover sync review regressions`; auto-push failed due to GitHub SSH/remote errors and remains to be retried.
+- Review-fix implementation delegated:
+  - Archimedes the 2nd (`implementer`) should fix production P1s in `src/plugins/sync/syncable-units.ts` and `src/plugins/sync/conflict-policy.ts`, preserving Huygens' docs-only patch and making the focused tests green.
+- Review-fix implementation completed:
+  - Archimedes the 2nd (`implementer`) fixed production P1s in `src/plugins/sync/syncable-units.ts` and `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: safe own `__proto__` key preservation via descriptor-based clone writes, recursive Plugin Settings reserved-key rejection after JSON-safe cloning, canonical conflict resolver kind allowlist, and stable-sort object construction that avoids prototype mutation.
+  - Parent validated: focused TASK-032 tests passed (1 file / 11 tests), adjacent plugin/API/Core/AI suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `45bd231 Archimedes(review-fix)(Implement Sync Plugin skeleton): harden sync DTO boundaries`; post-commit auto-push succeeded and also pushed prior local commits.
+- Narrow re-review completed:
+  - Gibbs the 2nd (`deprecation_auditor`) found no P0/P1 and confirmed the top-level conflict resolver stale-id P1 is fixed.
+  - Boole the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed the prior test-quality P1 gaps are covered.
+  - Herschel the 2nd (`reviewer`) found one P1: event conflict arrays still accept stale or mismatched unit DTO kinds because `local`/`remote` units are cast without validating each unit's `kind`.
+  - Zeno the 2nd (`security_reviewer`) found two related P1s: event conflict arrays accept stale/unsupported unit DTO kinds, and `readSyncUnitId()` can invoke an accessor-backed `syncKey` getter before descriptor-safe validation.
+- Parent decisions after narrow re-review:
+  - Add tests first for event conflict `local`/`remote` unit validation: stale DTO kinds, mismatched non-event kinds, unsupported kinds, invalid schema versions/shapes, and accessor-backed `syncKey`/`kind`/`snapshot` fields that must not be invoked.
+  - Then delegate production hardening to `implementer`.
+  - Keep Huygens' docs patch separate and update it after the second P1 fix if needed.
+- Second review-fix tests delegated:
+  - Turing the 2nd (`test_writer`) added tests for event conflict arrays rejecting stale DTO kinds, mismatched canonical non-event kinds, unsupported kinds, malformed shapes, wrong schema versions, and accessor-backed `syncKey`/`syncKey.id`/`kind`/`snapshot` without invoking getters.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 11 passed. Failure symptoms: invalid event-array kinds did not throw, malformed event units did not throw or threw raw property errors, and accessor-backed conflict unit fields were read.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `7a04d6a Turing(test-fix)(Implement Sync Plugin skeleton): cover event conflict unit validation`; post-commit auto-push succeeded.
+- Second review-fix implementation delegated:
+  - Averroes the 2nd (`implementer`) should harden event conflict unit validation in `src/plugins/sync/conflict-policy.ts` without touching tests/docs/progress/package/native surfaces.
+- Second review-fix implementation completed:
+  - Averroes the 2nd (`implementer`) hardened `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: every event conflict `local`/`remote` unit is descriptor-validated before merge; stale, mismatched, unsupported, malformed, wrong-schema, missing-field, array-snapshot, bad-syncKey, non-object, and accessor-backed event unit DTOs are rejected; canonical event union/dedupe/manual-conflict behavior is preserved.
+  - Parent validated: focused TASK-032 tests passed (1 file / 14 tests), adjacent plugin/API/Core/AI suite passed (5 files / 107 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `2b70ec9 Averroes(review-fix)(Implement Sync Plugin skeleton): validate event conflict units`; post-commit auto-push succeeded.
+- Final narrow re-review completed:
+  - Boyle the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed the second review-fix tests cover event conflict validation paths.
+  - Carver the 2nd (`security_reviewer`) found no P0/P1 and confirmed event conflict validation P1s are closed from the security perspective.
+  - Ampere the 2nd (`reviewer`) found one remaining P1: event conflict validation still accepts malformed distinct-id event DTOs where `snapshot.id` does not match `syncKey.id`, where extra top-level fields are present, or where extra `syncKey` fields are present; those can be returned in merged output.
+- Parent decisions after final narrow re-review:
+  - Add tests first for exact event unit DTO validation: `snapshot.id` must match `syncKey.id`; top-level unit keys must be exactly `kind`, `schemaVersion`, `snapshot`, and `syncKey`; `syncKey` keys must be exactly `id`; canonical distinct event merge still works.
+  - Then delegate production fix to `implementer`.
+- Third review-fix tests delegated:
+  - Epicurus the 2nd (`test_writer`) added exact event DTO tests in `src/test/sync-plugin-skeleton.test.ts`.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 15 passed. Failure symptoms: event units with `snapshot.id !== syncKey.id`, extra top-level DTO keys, and extra `syncKey` keys were accepted.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `f97c98a Epicurus(test-fix)(Implement Sync Plugin skeleton): cover exact event DTO validation`; post-commit auto-push succeeded.
+- Third review-fix implementation completed:
+  - Hume the 2nd (`implementer`) fixed exact event DTO validation in `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: event units require exact top-level keys `kind`, `schemaVersion`, `snapshot`, `syncKey`; `syncKey` requires exactly `id`; `snapshot.id` must equal `syncKey.id`; validation remains descriptor-safe and getter-free.
+  - Parent validated: focused TASK-032 tests passed (1 file / 16 tests), adjacent plugin/API/Core/AI suite passed (5 files / 109 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `1c8cfc8 Hume(review-fix)(Implement Sync Plugin skeleton): require exact event DTOs`; post-commit auto-push succeeded.
+- Final confirmation review completed:
+  - Kierkegaard the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed coverage for all previously found P1 areas.
+  - Arendt the 2nd (`security_reviewer`) found no remaining P0/P1 security findings.
+  - Mencius the 2nd (`reviewer`) found one remaining P1: event conflict validation accepts non-plain top-level event unit objects and non-plain `syncKey` objects with exact own DTO keys, then returns the original object in merged output.
+- Parent decisions after final confirmation:
+  - Add tests first for class-instance/non-plain top-level event unit objects and non-plain `syncKey` objects, including inherited `toJSON` or other runtime-shaped prototypes, and ensure they are rejected.
+  - Then delegate production fix to enforce plain/null prototypes for event unit and `syncKey`, or otherwise return a validated safe clone without accepting runtime-shaped objects.
+- Final plain-object review-fix tests delegated:
+  - Popper the 2nd (`test_writer`) added tests for class-instance/custom-prototype event units and non-plain `syncKey` objects with exact own keys and inherited runtime behavior.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 1 failed / 16 passed; production accepted those runtime-shaped objects.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `31eba41 Popper(test-fix)(Implement Sync Plugin skeleton): cover runtime-shaped event DTOs`; post-commit auto-push succeeded.
+- Final plain-object production fix completed:
+  - Volta the 2nd (`implementer`) updated `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: event conflict DTO wrappers and `syncKey` objects must be plain `Object.prototype` records; class instances and custom-prototype objects are rejected before merge while descriptor-safe validation and event union/dedupe/conflict behavior remain intact.
+  - Parent validated: focused TASK-032 tests passed (1 file / 17 tests), adjacent plugin/API/Core/AI suite passed (5 files / 110 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `74bc1d8 Volta(review-fix)(Implement Sync Plugin skeleton): reject runtime-shaped event DTOs`; post-commit auto-push succeeded.
+- Final confirmation review completed:
+  - Wegener (`reviewer`) found no remaining P0/P1 correctness issues and confirmed strict event DTO validation, descriptor-safe reads, prior P1 closures, and no runtime sync surface.
+  - Planck (`security_reviewer`) found no remaining P0/P1 security issues, confirmed no native/package/Tauri/storage/worker/network drift, and ran focused IPC/SQLite Rust boundary tests.
+  - Ptolemy (`test_quality_reviewer`) found no remaining P0/P1 test-quality gaps and confirmed coverage for all previously found P1 areas.
+- Parent decisions after final confirmation:
+  - P0/P1 review gate is clear for TASK-032 code and tests.
+  - Ask `doc_writer` to review/update the existing Huygens docs patch against final behavior, especially strict event DTO validation and reserved Plugin Settings caveats, then commit docs separately.
+- Final docs sync completed:
+  - Curie (`doc_writer`) reviewed and updated the existing Sync docs patch against final behavior.
+  - Docs now describe the TypeScript-only `sync` plugin skeleton, syncable DTO descriptors, rebuildable plugin-index policy, Plugin Settings reserved-key rejection, strict event conflict DTO validation, and deferred native/network/settings UI/keychain/conflict UI scope.
+  - Docs commit: `1201a34 Curie(docs)(Implement Sync Plugin skeleton): sync sync plugin docs`; post-commit auto-push succeeded.
+- Final branch gate completed:
+  - `bun run check:quick` passed with typecheck, lint, 37 frontend test files / 578 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `docs/implementation/progress.md` now marks TASK-032 complete and records branch, commits, checks, docs sync, review status, and accepted future risks.
+- Next action: commit this completion/progress update, merge `feat/task-032-sync-plugin-skeleton` into `master`, push, run merge-result `bun run check:quick`, record merge validation, then continue to TASK-033.
 
 ## Current TASK-031 State
 

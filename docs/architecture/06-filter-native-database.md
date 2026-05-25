@@ -488,7 +488,7 @@ Important index:
 idx_core_plugin_indexes_plugin_index(plugin_id, index_name) UNIQUE
 ```
 
-This table is not a task/timer/habit/stats/ml schema and does not allow plugins to submit dynamic DDL. Future plugin-owned indexes are rebuildable support data. Facts still live in:
+This table is not a task/timer/habit/stats/ml schema and does not allow plugins to submit dynamic DDL. Plugin-owned indexes are rebuildable support data. TASK-032 Sync explicitly excludes local plugin indexes from durable sync payloads; there is no durable `sync.plugin-index` unit. Facts still live in:
 
 ```text
 core_pages

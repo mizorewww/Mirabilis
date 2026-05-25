@@ -865,6 +865,16 @@ Dependencies:
 
 - TASK-013.
 
+Delivered/deferred scope after TASK-032:
+
+- Built-in Sync Plugin id is `sync`; it registers no runtime commands, views, slots, settings panels, indexers, algorithms, mobile toolbar items, or transport.
+- `src/plugins/sync/**` exports schema version `1` syncable unit descriptors and serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings DTO snapshots.
+- Plugin Settings are DTO snapshots only. Top-level and nested secret/auth/credential/remote-endpoint-like keys are rejected; future settings sync should use explicit allowlists and keychain separation. No persistent plugin settings, settings UI, Core settings facade, secret storage/keychain, remote endpoint settings, or sync settings panel is added.
+- Local plugin indexes are rebuildable derived data and are excluded from durable sync payloads; no durable `sync.plugin-index` unit exists.
+- Conflict policy: mutable units require manual resolution; event units are append-only union with identical duplicate dedupe and same-id/different-content manual conflict.
+- The conflict helper strictly validates event DTOs: event units and `syncKey` must be plain records with exact descriptor-safe keys, getters are not invoked, `snapshot.id` must equal `syncKey.id`, and stale, mismatched, non-plain, malformed, wrong-schema, extra-key, or malformed-array event units are rejected.
+- Tombstones, deletes, conflict UI, schema-backed sync state, background jobs, network/native sync transport, package/Cargo/Rust changes, Tauri permissions/capabilities, and live sync execution remain deferred.
+
 ### TASK-033: Add release packaging and local full gate
 
 Source docs:

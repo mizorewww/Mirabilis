@@ -420,16 +420,19 @@ Persistent plugin settings, settings UI, secret storage/keychain, native HTTP/li
 
 ### Phase 11：Sync Plugin
 
-实现：
+TASK-032 当前实现的是 Sync Plugin skeleton：
 
 ```text
-同步 Markdown Page
-同步 Metadata
-同步 Event
-同步 Filter
-同步 Plugin Settings
-本地重建索引
+built-in plugin id sync
+no runtime commands / views / settings panels / transport
+syncable unit descriptors and serializers for Markdown Page / Metadata / Event / Filter / Plugin Settings DTO snapshots
+local plugin indexes marked rebuildable and excluded from durable sync payloads
+mutable units require manual conflict resolution
+event units use append-only union, duplicate dedupe, and same-id-content conflict
+tombstones / deletes / conflict UI deferred
 ```
+
+Plugin Settings are DTO snapshots only in this slice. Top-level or nested secret/auth/credential/remote-endpoint-like keys are rejected; future settings sync should use explicit allowlists and keep secrets or remote credentials out of durable setting snapshots. TASK-032 does not add settings UI, persistent plugin settings, secret storage/keychain, remote endpoint storage, native/network sync transport, schema changes, Tauri permissions/capabilities, package/Cargo changes, or Rust commands. No network sync may be enabled without explicit settings and security review.
 
 ---
 
@@ -594,6 +597,6 @@ AI：AI Plugin
 搜索：Search Plugin
 ```
 
-TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。TASK-031 当前 AI baseline 也已接入 built-in plugin runtime：`ai` 注册 canonical kebab-case commands、AI metadata/event descriptors、`ai.provider-settings` descriptor 和 fail-closed views，通过 plugin-owned `openai` provider boundary 返回 advisory DTO。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理、persistent Search indexing / background indexer / SQLite FTS、AI settings UI/secret storage/live provider execution 都是后续范围。
+TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。TASK-031 当前 AI baseline 也已接入 built-in plugin runtime：`ai` 注册 canonical kebab-case commands、AI metadata/event descriptors、`ai.provider-settings` descriptor 和 fail-closed views，通过 plugin-owned `openai` provider boundary 返回 advisory DTO。TASK-032 当前 Sync baseline 以内置 `sync` plugin id 接入，但只定义 syncable unit DTO descriptors/serializers、rebuildable local plugin-index policy 和 conflict policy；没有 runtime commands/views/settings panels、transport、settings UI、secret storage、network/native sync 或 schema/capability changes。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理、persistent Search indexing / background indexer / SQLite FTS、AI settings UI/secret storage/live provider execution 和 Sync network/native transport 都是后续范围。
 
 产品开发的中心任务是把 **Plugin Host、Registry、Command、View、Metadata、Event、Filter** 做扎实。只要这套底层抽象稳定，任务、习惯、时间记录、热力图、统计、机器学习和 AI 都可以作为插件不断接入，而不会污染 Core。

@@ -114,6 +114,8 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
 
 - 搜索是 Search Plugin 注册的命令和结果视图。TASK-029 当前内置 `search` 注册 `search.query` 和 `search.results`，按需扫描未 archived page title/body；persistent Search indexing、background indexer、SQLite/FTS 和 native surface 仍是后续范围。
 
+- Sync Plugin 当前以内置 plugin id `sync` 接入。TASK-032 注册的是 skeleton：没有 runtime commands、views、settings panels、transport、network behavior 或 native surface；`src/plugins/sync/**` 只定义 Markdown Page、Metadata、Event、Filter 和 Plugin Settings DTO snapshots 的 syncable unit descriptors/serializers，本地 plugin indexes 被标记为 rebuildable derived data，conflict policy 规定 mutable units 需要 manual resolution、event units append-only union/dedupe/same-id conflict。Plugin Settings 只是 DTO snapshot，不表示 settings UI、settings persistence 或 secret storage 已存在；top-level/nested secret、auth、credential、remote-endpoint-like keys are rejected, and future settings sync needs explicit allowlists plus keychain separation.
+
 以下能力仍属于后续 Plugin Platform 工作，不属于 TASK-010 当前 API contract：
 
 ```text

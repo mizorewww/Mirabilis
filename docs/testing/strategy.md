@@ -460,6 +460,31 @@ git diff --check
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, OpenAI SDK/package dependencies, keychain/secret storage, or schema-backed AI persistence. TASK-031 itself is TypeScript plugin/runtime/view/provider-boundary behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, live network, or secret-storage surface.
 
+## TASK-032 Sync Plugin Skeleton Guidance
+
+TASK-032 tests cover the built-in `sync` plugin skeleton and sync contract helpers without adding runtime sync commands, views, settings panels, transport, package/native/Tauri/Rust/schema/capability changes, network calls, persistent plugin settings, settings UI, or secret storage:
+
+- Registration coverage should assert built-in plugin id `sync`, plugin name `Sync Plugin`, and no runtime commands, views, slots, settings panels, indexers, algorithms, or mobile toolbar items.
+- Stale-id coverage should prove `sync-plugin`, `sync_plugin`, `core.sync`, `sync.page`, `sync.pages`, `sync.markdown_page`, `sync.plugin_settings`, `sync.indexer`, `sync.indexes`, `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, and `sync.configure-remote` are not aliases.
+- Syncable-unit coverage should assert schema version `1` descriptors for `sync.unit.markdown-page`, `sync.unit.metadata`, `sync.unit.event`, `sync.unit.filter`, and `sync.unit.plugin-settings`, with sync keys `id`, `pageId/namespace/key`, `id`, `id`, and `pluginId/key` respectively.
+- Serialization coverage should verify deterministic DTO snapshots for Markdown Page, Metadata, Event, Filter, and Plugin Settings. Plugin Settings coverage must keep `{ state: "unset" }` distinct from JSON `null` and must treat settings as caller-provided DTO snapshots only.
+- Boundary coverage should reject non-JSON or executable/runtime-shaped data, including functions, symbols, bigint, non-finite numbers, cycles, non-plain objects, sparse/custom arrays, accessors, non-enumerable fields, oversized data, and over-deep data. Top-level and nested secret/auth/credential/remote-endpoint-like plugin setting keys must not become durable sync units; future settings sync should use explicit allowlists and keychain separation.
+- Rebuildable-index coverage should assert `SYNC_REBUILDABLE_INDEX_POLICY` marks local plugin indexes as `durable: false`, `syncable: false`, and excludes a durable `sync.plugin-index` unit.
+- Conflict-policy coverage should assert mutable units require manual resolution; event units merge distinct ids, dedupe identical duplicates, and require manual resolution for same-id/different-content conflicts; tombstones, deletes, and conflict UI remain deferred.
+- Event conflict-helper coverage should reject stale, mismatched, non-plain, malformed, and wrong-schema event units; require event units and `syncKey` to be plain records with exact descriptor-safe data keys; reject accessors without invoking getters; reject malformed arrays; and require `snapshot.id` to equal `syncKey.id`.
+- Security/static coverage should keep Sync production code free of sibling plugin internals, raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, storage/network/filesystem/worker APIs, secret/remote endpoint setting names, package/native/Tauri/Rust/schema/capability diffs, and Core Sync business terms.
+
+TASK-032 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live sync execution, keychain/secret storage, or schema-backed sync state. TASK-032 itself is TypeScript plugin/runtime contract behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, live network, transport, settings UI, or secret-storage surface.
+
 ## Merge Gate
 
 Before merging to `master`:

@@ -72,12 +72,38 @@ Status markers:
 - [x] TASK-029: Implement Quick Capture and Search plugins
 - [x] TASK-030: Implement ML Plugin baseline predictions
 - [x] TASK-031: Implement AI Plugin provider abstraction
-- [ ] TASK-032: Implement Sync Plugin skeleton
+- [x] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 20:58 CST - TASK-032 completed
+
+- Branch: `feat/task-032-sync-plugin-skeleton`.
+- Task: Implement Sync Plugin skeleton.
+- Delivered: built-in `SyncPlugin` is registered through `BUILT_IN_PLUGINS` with plugin id `sync`, no commands, no views, no settings panel, no slots, no indexers, no algorithms, no mobile toolbar items, no transport, no background jobs, and no live sync execution.
+- Delivered: `src/plugins/sync/**` exports canonical syncable unit descriptors and pure caller-provided serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings DTO snapshots. Core remains free of sync business behavior, and the skeleton adds no package/native/Tauri/Rust/schema/capability/network/storage/worker surfaces.
+- Delivered: local plugin indexes are represented by the rebuildable marker `sync.rebuildable.plugin-indexes` and excluded from durable sync payloads. Plugin Settings distinguish unset from JSON null, reject unsafe JSON/runtime values, preserve safe own `__proto__` JSON keys without prototype mutation, and reject top-level plus nested reserved secret/auth/credential/remote endpoint key names.
+- Delivered: conflict policy requires manual resolution for mutable units and supports append-only Event union/dedupe/same-id conflict detection. Event conflict inputs now require canonical unit kind, exact DTO keys, exact plain `syncKey`, plain top-level wrappers, descriptor-safe field reads, and `snapshot.id === syncKey.id`.
+- Review and fixes: review agents found and fixed P1s around `__proto__` JSON cloning, nested Plugin Settings reserved-key rejection, stale/unsupported conflict kinds, event-array DTO kind/accessor validation, exact event DTO key/id validation, and runtime-shaped event wrapper / `syncKey` rejection. Final correctness, security, and test-quality confirmation found no remaining P0/P1 blockers.
+- Documentation sync: product, architecture, development, implementation task-index, and testing docs now describe the Sync skeleton, syncable units/DTO boundaries, rebuildable plugin indexes, strict event conflict DTO validation, Plugin Settings reserved-key caveats, and deferred network/native/settings UI/keychain/conflict UI/tombstone/delete scope.
+- Key commits: `a0c7ea6` tests, `23f1b48` implementation, `86674a5` / `7a04d6a` / `f97c98a` / `31eba41` review-fix tests, `45bd231` / `2b70ec9` / `1c8cfc8` / `74bc1d8` review-fix implementation, `1201a34` docs sync.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 37 frontend test files / 578 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: live/native/network sync transport, explicit sync settings, persistent plugin settings facade, settings UI, OS keychain/secret storage, remote endpoint configuration, tombstones/deletes, conflict UI, durable plugin-index transport, whole-workspace export/import, and secret-looking values under neutral settings keys remain future work requiring a fresh security/current-doc review.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
+
+### 2026-05-25 16:21 CST - TASK-032 started
+
+- Branch: `feat/task-032-sync-plugin-skeleton`.
+- Task: Implement Sync Plugin skeleton.
+- Start point: `master` after TASK-031 merge validation commit `ad583f4`.
+- Source docs read: `docs/implementation/task-index.md#task-032-implement-sync-plugin-skeleton`, `docs/development/01-data-roadmap-and-mvp.md#phase-11sync-plugin`, `docs/architecture/01-overview-and-monorepo.md#11-分层结构`, related Sync references in `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+- Initial scope to narrow through agents: built-in Sync Plugin skeleton, syncable unit definitions for Markdown Page, Metadata, Event, Filter, and Plugin Settings, local index rebuildability assumptions, conflict strategy documentation, and strict no-network/no-native execution without explicit settings and security review.
+- Initial risks and questions: current runtime has manifest settings descriptors and SQLite plugin settings rows but no plugin-facing settings facade; full sync transport belongs to Tauri/native and must not be enabled by default; local plugin indexes should be treated as derived/rebuildable rather than durable sync payloads; conflict model may be documentation-first if no executable transport is in scope.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-032-sync-plugin-skeleton.md`.
 
 ### 2026-05-25 16:18 CST - TASK-031 merged
 
