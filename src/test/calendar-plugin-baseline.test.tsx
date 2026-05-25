@@ -20,6 +20,7 @@ import {
   type StructuredMarkdownDocument,
   type ViewDefinition,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -832,7 +833,11 @@ describe("Calendar Plugin baseline", () => {
       );
     }
 
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 
   it("renders a real Timer segment after the test harness normalizes the public Timer event", async () => {

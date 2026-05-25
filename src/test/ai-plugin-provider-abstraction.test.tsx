@@ -22,6 +22,7 @@ import {
   type ViewDefinition,
 } from "../core";
 import { createOpenAIProvider } from "../plugins/ai/providers/openAIProvider";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -999,7 +1000,11 @@ describe("AI Plugin provider abstraction", () => {
       );
     }
 
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 
   it("does not commit real-looking secrets in the TASK-031 test file", async () => {

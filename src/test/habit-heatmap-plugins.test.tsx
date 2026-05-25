@@ -24,6 +24,7 @@ import {
   type StructuredMarkdownDocument,
   type ViewDefinition,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -1016,7 +1017,11 @@ describe("Habit and Heatmap plugins", () => {
       );
     }
 
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 });
 

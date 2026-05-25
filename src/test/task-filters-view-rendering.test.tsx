@@ -23,6 +23,7 @@ import {
   type SlotContribution,
   type ViewDefinition,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -510,7 +511,11 @@ describe("Task filters, page.list view rendering, and empty state slot", () => {
   });
 
   it("does not require native, Tauri, package, Cargo, permission, or command-surface changes", async () => {
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 });
 

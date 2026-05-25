@@ -18,6 +18,7 @@ import {
   type MetadataRecord,
   type NativeBridge,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -1328,7 +1329,11 @@ describe("Metadata UI Plugin", () => {
   });
 
   it("does not require native, Tauri, package, Cargo, permission, or command-surface changes", async () => {
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 });
 

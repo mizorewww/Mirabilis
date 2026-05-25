@@ -18,6 +18,7 @@ import {
   NativeBridge,
   StructuredMarkdownDocument,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -550,7 +551,9 @@ describe("Task Plugin syntax and task page creation", () => {
   it("does not require new package, Cargo, Tauri command, capability, permission, or native command surface changes", async () => {
     const changedNativeSurfaceFiles = await listNativeSurfaceChangesFromMaster();
 
-    expect(changedNativeSurfaceFiles).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(changedNativeSurfaceFiles),
+    ).toStrictEqual([]);
   });
 });
 

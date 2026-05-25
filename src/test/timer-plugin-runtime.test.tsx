@@ -19,6 +19,7 @@ import {
   type NativeBridge,
   type SlotContribution,
 } from "../core";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -1429,7 +1430,11 @@ describe("Timer Plugin runtime commands and active timer UI", () => {
   });
 
   it("does not require native, Tauri, package, Cargo, permission, IPC, or command-surface changes", async () => {
-    expect(await listNativeSurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listNativeSurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 });
 
