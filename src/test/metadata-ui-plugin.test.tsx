@@ -529,6 +529,177 @@ describe("Metadata UI Plugin", () => {
     expect.soft(betaHandler).not.toHaveBeenCalled();
   });
 
+  it("fails closed for execute-only metadata slot command facades without prefix fallback", async () => {
+    const alphaHandler = vi.fn((input: unknown) => ({
+      input,
+      owner: "alpha",
+    }));
+    const betaHandler = vi.fn(() => ({
+      owner: "beta",
+    }));
+    const ExecuteOnlyProbe = (props: CapturedFieldProps) => {
+      const [ownOutcome, setOwnOutcome] = useState("Own execute-only idle");
+      const [foreignOutcome, setForeignOutcome] = useState(
+        "Foreign execute-only idle",
+      );
+
+      return (
+        <section aria-label="Execute-only command probe">
+          <button
+            type="button"
+            onClick={() => {
+              const commands = readCommandExecutor(props.commands);
+
+              if (commands === null) {
+                setForeignOutcome("Foreign execute-only blocked");
+                return;
+              }
+
+              void commands
+                .execute("alpha.foreign", { pageId: props.pageId })
+                .then(
+                  () => setForeignOutcome("Foreign execute-only escaped"),
+                  () => setForeignOutcome("Foreign execute-only blocked"),
+                );
+            }}
+          >
+            Run execute-only foreign command
+          </button>
+          <span>{foreignOutcome}</span>
+          <button
+            type="button"
+            onClick={() => {
+              const commands = readCommandExecutor(props.commands);
+
+              if (commands === null) {
+                setOwnOutcome("Own execute-only blocked");
+                return;
+              }
+
+              void commands
+                .execute("alpha.own-command", { pageId: props.pageId })
+                .then(
+                  () => setOwnOutcome("Own execute-only escaped"),
+                  () => setOwnOutcome("Own execute-only blocked"),
+                );
+            }}
+          >
+            Run execute-only own command
+          </button>
+          <span>{ownOutcome}</span>
+        </section>
+      );
+    };
+    const alphaPlugin: AppPlugin = {
+      manifest: {
+        id: "alpha",
+        name: "alpha execute-only metadata field",
+        version: "1.0.0",
+        minAppVersion: "0.1.0",
+        contributes: {
+          metadataFields: [
+            {
+              id: "alpha.status",
+              namespace: "alpha",
+              key: "status",
+              valueType: "string",
+            },
+          ],
+        },
+      },
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.own-command",
+          title: "Alpha own command",
+          handler: alphaHandler,
+        });
+        ctx.slots.register({
+          id: "alpha.page-header-metadata.execute-only-command",
+          slot: pageHeaderMetadataSlot,
+          component: ExecuteOnlyProbe,
+        });
+      },
+    };
+    const betaPlugin: AppPlugin = {
+      manifest: {
+        id: "beta",
+        name: "beta execute-only command owner",
+        version: "1.0.0",
+        minAppVersion: "0.1.0",
+      },
+      register(ctx) {
+        ctx.commands.register({
+          id: "alpha.foreign",
+          title: "Beta-owned alpha-prefixed command",
+          handler: betaHandler,
+        });
+      },
+    };
+    const runtime = await createRuntime({
+      pageIds: ["metadata-execute-only-command-page"],
+      builtInPlugins: [...BUILT_IN_PLUGINS, alphaPlugin, betaPlugin],
+    });
+    const user = userEvent.setup();
+    const page = createPage(runtime, "Metadata execute-only command page");
+    const execute = vi.fn(
+      (commandId: string, input?: unknown): Promise<unknown> =>
+        runtime.commands.execute(commandId, input),
+    );
+
+    render(
+      await createMetadataBar(runtime, page.id, {
+        commands: { execute },
+      }),
+    );
+
+    expect(runtime.registries.commands.get("alpha.own-command")).toMatchObject({
+      id: "alpha.own-command",
+      pluginId: "alpha",
+    });
+    expect(runtime.registries.commands.get("alpha.foreign")).toMatchObject({
+      id: "alpha.foreign",
+      pluginId: "beta",
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /run execute-only foreign command/i,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Foreign execute-only (blocked|escaped)/),
+      ).toBeVisible(),
+    );
+
+    expect
+      .soft(screen.getByText(/Foreign execute-only (blocked|escaped)/))
+      .toHaveTextContent("Foreign execute-only blocked");
+    expect.soft(betaHandler).not.toHaveBeenCalled();
+    expect.soft(execute).not.toHaveBeenCalledWith("alpha.foreign", {
+      pageId: page.id,
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /run execute-only own command/i,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Own execute-only (blocked|escaped)/),
+      ).toBeVisible(),
+    );
+
+    expect
+      .soft(screen.getByText(/Own execute-only (blocked|escaped)/))
+      .toHaveTextContent("Own execute-only blocked");
+    expect.soft(alphaHandler).not.toHaveBeenCalled();
+    expect.soft(execute).not.toHaveBeenCalledWith("alpha.own-command", {
+      pageId: page.id,
+    });
+  });
+
   it("keeps repeated Tag editors label-associated when multiple metadata bars render", async () => {
     const runtime = await createRuntime({
       pageIds: ["first-tag-page", "second-tag-page"],
