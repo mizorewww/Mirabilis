@@ -402,3 +402,16 @@
 ## Current Next Action
 
 - Run a narrow test-quality confirmation.
+
+## Final Narrow Test-Quality Confirmation
+
+- Kepler the 2nd (`test_quality_reviewer`) confirmed no remaining P0/P1 test-quality findings.
+- It verified tracked-only fallback coverage now includes:
+  - one-hour floor: `trackedSeconds = 1,200`, `baselineTotalSeconds = 3,600`;
+  - longer input: `trackedSeconds = 5,400`, `baselineTotalSeconds = 10,800`.
+- It found no `.skip` / `.only` markers.
+- It ran `bun run test:frontend src/test/ml-plugin-baseline-predictions.test.tsx`, which passed with 12 tests.
+
+## Current Next Action
+
+- Delegate formal docs sync to `doc_writer`.
