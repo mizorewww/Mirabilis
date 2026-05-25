@@ -356,4 +356,5 @@
   - AppImage remains outside the default local Arch gate and needs controlled Linux-builder validation before support can be claimed.
   - `app.security.csp: null` remains a pre-existing residual risk; public release, updater, or remote/web-content work needs future CSP hardening/security review.
   - Updater, signing, publishing, GitHub CI, native behavior, capability/permission, IPC contract, and dependency changes remain deferred.
-- Parent next action: update `docs/implementation/progress.md` to mark TASK-033 complete, then merge the branch to `master` and rerun the full release gate on the merge result.
+- Parent progress closeout: TASK-033 is marked `[x]` in `docs/implementation/progress.md` with final delivered scope, checks, commits, residual risks, and merge status.
+- Parent next action: commit the progress closeout, then merge the branch to `master` and rerun the full release gate on the merge result.

@@ -73,11 +73,27 @@ Status markers:
 - [x] TASK-030: Implement ML Plugin baseline predictions
 - [x] TASK-031: Implement AI Plugin provider abstraction
 - [x] TASK-032: Implement Sync Plugin skeleton
-- [~] TASK-033: Add release packaging and local full gate
+- [x] TASK-033: Add release packaging and local full gate
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 00:05 CST - TASK-033 completed
+
+- Branch: `feat/task-033-release-packaging-local-full-gate`.
+- Task: Add release packaging and local full gate.
+- Delivered: `bun run check:full` now runs `bun run check:quick` first and then `bun run tauri build --ci --bundles deb,rpm`; `check:quick` remains unchanged.
+- Delivered: local release readiness validates Linux `deb` and `rpm` artifacts, with AppImage explicitly deferred to a controlled Linux builder before support can be claimed.
+- Delivered: release version expectations stay synchronized at `0.1.0` across `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`; root `CHANGELOG.md` is the release notes/changelog surface.
+- Delivered: Cargo release metadata now has a non-placeholder description and no deprecated `authors` field.
+- Delivered: `.codex/agents/release-checker.toml`, testing docs, development docs, task index, and changelog now document local gate semantics, artifact/version/changelog checks, AppImage deferral, no GitHub CI dependency, and pre-existing CSP-null scope.
+- Review and fixes: P1 findings for deprecated Cargo `authors`, missing fail-fast script coverage, and underdocumented CSP-null release scope were fixed and re-reviewed. Final release, security, deprecation, test-quality, and docs agents found no remaining P0/P1 blockers.
+- Final branch gate: `bun run check:full` passed with typecheck, lint, 38 frontend test files / 589 tests, Rust fmt, Rust clippy, Rust tests, frontend production build, Tauri release build, and deb/rpm bundles.
+- Bundle outputs verified during branch gate: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- Key commits: `b94eefb` tests, `b5629a5` implementation, `7149e5a` docs, `1a83600` guard test-fix, `eefc687` review-fix tests, `2fdcd23` deprecated-authors fix, `f8847cf` CSP docs, `caf4c09` delivered/deferred docs, and `fa2324b` final readiness record.
+- Remaining accepted risks: AppImage controlled-builder validation, public-release CSP hardening, updater/signing/publishing, GitHub CI infrastructure, native behavior, capability/permission, IPC contract, and dependency changes remain future work.
+- Merge status: ready to merge to `master`; merge-result `bun run check:full` will run after merge.
 
 ### 2026-05-25 21:03 CST - TASK-033 started
 
