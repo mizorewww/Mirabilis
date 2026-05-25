@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 03:43 CST - TASK-036 merged
+
+- Branch: `feat/task-036-viewhost-slothost`.
+- Merge commit on `master`: `8fb646c Merge TASK-036 generic view and slot hosts`.
+- Merge-result validation: `bun run check:quick` passed on `master` with 40 frontend test files / 635 tests, Rust fmt, Rust clippy, and Rust tests.
+- Push status: `master` pushed to `origin/master`.
+- Next task: TASK-037 - Mount Home Workspace Editor.
+
 ### 2026-05-26 03:39 CST - TASK-036 completed and ready to merge
 
 - Branch: `feat/task-036-viewhost-slothost`.

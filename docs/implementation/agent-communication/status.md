@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 03:39 CST.
+Last updated: 2026-05-26 03:43 CST.
 
 ## Current Task
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-26 03:39 CST.
 - Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 complete and ready to merge.
+- Current phase: TASK-036 merged to `master`; TASK-037 selection pending.
 
 ## Active Agents
 
 - None. TASK-036 agents completed.
-- Pending: commit final closeout, merge to `master`, validate merge result, push `master`, then continue TASK-037.
+- Pending: start TASK-037 on a focused branch.
 
 ## Current TASK-036 State
 
@@ -203,9 +203,9 @@ Last updated: 2026-05-26 03:39 CST.
 
 - TASK-034 is complete and merged on `master`.
 - TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
-- TASK-036 is ready to merge on `feat/task-036-viewhost-slothost`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, and release readiness are complete.
+- TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
 - TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: merge TASK-036, then start TASK-037.
+- Next action: start TASK-037 - Mount Home Workspace Editor.
 
 ## Historical TASK-033 State
 
