@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 04:20 CST - TASK-037 implementation committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Implementation: Popper reviewed the late Noether edits, completed the Home workspace production implementation, and produced commit `11fd2a3`.
+- Changed files: `src/App.tsx`, `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`, `src/providers/RuntimeProvider.tsx`, `src/providers/runtime-source-context.ts`, `src/shell/hosts/MarkdownWorkspaceBridge.tsx`, `src/shell/hosts/MarkdownWorkspaceBridgeContext.ts`, and `src/shell/hosts/index.ts`.
+- Delivered: session Home Markdown Page selection/creation; registered `markdown.page-editor` rendered through `ViewHost`; a shell-internal current-page bounded bridge for page load/save, exact command allowlist wrappers, editor extension collection, and page-open navigation; realistic Home editing/save/task-open/checkbox-toggle flows; stale insert protection; non-Home placeholders preserved.
+- Parent validation: focused aggregate frontend tests passed with 8 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: delegate review agents.
+
 ### 2026-05-26 04:10 CST - TASK-037 implementer replacement
 
 - Branch: `feat/task-037-home-workspace-editor`.

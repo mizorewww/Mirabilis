@@ -111,3 +111,31 @@
 - Parent waited for a blocking result, sent one concise status request, waited another window, and initially observed no worktree changes before closing Noether.
 - Outcome: Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
 - Parent decision: treat the late edits as partial agent output, do not commit them directly, and delegate a replacement implementer to review, continue, or correct them rather than taking over production work in the parent thread.
+
+## Implementation Outcome
+
+- Popper (`implementer`) reviewed the late Noether edits, completed the production implementation, and produced commit `11fd2a3`.
+- Changed production files:
+  - `src/App.tsx`;
+  - `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`;
+  - `src/providers/RuntimeProvider.tsx`;
+  - `src/providers/runtime-source-context.ts`;
+  - `src/shell/hosts/MarkdownWorkspaceBridge.tsx`;
+  - `src/shell/hosts/MarkdownWorkspaceBridgeContext.ts`;
+  - `src/shell/hosts/index.ts`.
+- Delivered behavior:
+  - Home now selects or creates a session `Home` Markdown Page on the ready first screen;
+  - Home renders `markdown.page-editor` / `page.editor` through `ViewHost`;
+  - the Markdown editor supports hosted ViewHost props through a shell-internal workspace bridge while preserving direct and loaded `pageFacade` usage;
+  - the bridge exposes only current-page bounded load/save, exact command allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, editor extension collection, and page open navigation;
+  - user typing, snippet insert, save status, task-title open, checkbox toggle, and stale insert navigation behavior pass the red acceptance tests;
+  - non-Home routes remain placeholders.
+- Parent validation after Popper:
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx` passed with 8 files / 112 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Package, native, Tauri, IPC, capability, permission, and release files had no diff.
+- Parent decision:
+  - accept `11fd2a3` as the implementation commit;
+  - proceed to review agents before branch-level gate and closeout.
