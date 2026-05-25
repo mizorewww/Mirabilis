@@ -140,6 +140,25 @@ const forbiddenPluginSettingsKeys = [
   "server",
   "webhook",
 ] as const;
+const forbiddenNestedPluginSettingsKeys = [
+  "api_key",
+  "apiKey",
+  "accessKey",
+  "credential",
+  "credentials",
+  "auth",
+  "authorization",
+  "oauth",
+  "bearer",
+  "endpoint",
+  "baseUrl",
+  "remoteUrl",
+  "url",
+  "host",
+  "server",
+  "webhook",
+  "webhookUrl",
+] as const;
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -206,6 +225,10 @@ describe("Sync Plugin skeleton", () => {
     expect.soft(manifestViewIds).toStrictEqual([]);
     expect.soft(runtimeViewIds).toStrictEqual([]);
     expect.soft(settingsPanelIds).toStrictEqual([]);
+    expect.soft(contributionIds(contributes.markdownSyntax)).toStrictEqual([]);
+    expect.soft(contributionIds(contributes.metadataFields)).toStrictEqual([]);
+    expect.soft(contributionIds(contributes.eventTypes)).toStrictEqual([]);
+    expect.soft(contributionIds(contributes.filters)).toStrictEqual([]);
     expect.soft(contributionIds(contributes.slots)).toStrictEqual([]);
     expect.soft(contributionIds(contributes.indexers)).toStrictEqual([]);
     expect.soft(contributionIds(contributes.algorithms)).toStrictEqual([]);
@@ -505,6 +528,66 @@ describe("Sync Plugin skeleton", () => {
     expect(accessorPayload.readCount()).toBe(0);
   });
 
+  it("rejects unsafe Markdown Page body attrs without invoking getters", async () => {
+    const sync = await loadSyncModule();
+
+    for (const unsafe of createUnsafeNestedValues()) {
+      expect(() =>
+        sync.serializeMarkdownPageSyncUnit(
+          createMarkdownPage({
+            body: createMarkdownBodyWithAttrs({ nested: unsafe.value }),
+          }),
+        ),
+        unsafe.label,
+      ).toThrow(/sync|json|plain|unsafe|cycle|depth/i);
+    }
+
+    const accessorPayload = createAccessorPayload();
+
+    expect(() =>
+      sync.serializeMarkdownPageSyncUnit(
+        createMarkdownPage({
+          body: createMarkdownBodyWithAttrs(accessorPayload.value),
+        }),
+      ),
+    ).toThrow(/sync|json|plain|unsafe|accessor/i);
+    expect(accessorPayload.readCount()).toBe(0);
+  });
+
+  it("preserves valid own __proto__ JSON keys without mutating cloned prototypes", async () => {
+    const sync = await loadSyncModule();
+    const attrsWithOwnProto = JSON.parse(
+      '{"__proto__":{"carried":"sync-data"},"visible":"value"}',
+    ) as Record<string, unknown>;
+
+    expect(
+      Object.prototype.hasOwnProperty.call(attrsWithOwnProto, "__proto__"),
+    ).toBe(true);
+
+    const pageUnit = sync.serializeMarkdownPageSyncUnit(
+      createMarkdownPage({
+        body: createMarkdownBodyWithAttrs(attrsWithOwnProto),
+      }),
+    );
+    const clonedAttrs = readFirstBlockAttrs(pageUnit);
+    const ownProtoDescriptor = Object.getOwnPropertyDescriptor(
+      clonedAttrs,
+      "__proto__",
+    );
+
+    expect(clonedAttrs.visible).toBe("value");
+    expect(ownProtoDescriptor).toBeDefined();
+    expect(ownProtoDescriptor?.enumerable).toBe(true);
+    expect(ownProtoDescriptor?.value).toStrictEqual({ carried: "sync-data" });
+    expect(Object.getPrototypeOf(clonedAttrs)).not.toBe(
+      ownProtoDescriptor?.value,
+    );
+    expect(
+      (Object.getPrototypeOf(clonedAttrs) as Record<string, unknown> | null)
+        ?.carried,
+    ).toBeUndefined();
+  });
+
   it("distinguishes unset plugin settings from JSON null and rejects secret or remote endpoint setting keys", async () => {
     const sync = await loadSyncModule();
 
@@ -549,6 +632,30 @@ describe("Sync Plugin skeleton", () => {
         ),
         key,
       ).toThrow(/settings|secret|remote|endpoint|sync/i);
+    }
+  });
+
+  it("rejects nested plugin settings secrets, credentials, auth, and remote endpoints under neutral keys", async () => {
+    const sync = await loadSyncModule();
+
+    for (const key of forbiddenNestedPluginSettingsKeys) {
+      expect.soft(
+        () =>
+          sync.serializePluginSettingsSyncUnit(
+            createPluginSettingsSnapshot({
+              key: "config",
+              state: {
+                state: "json",
+                value: {
+                  preferences: {
+                    [key]: "must-not-sync",
+                  },
+                },
+              },
+            }),
+          ),
+        key,
+      ).toThrow(/settings|secret|credential|auth|remote|endpoint|durable|sync/i);
     }
   });
 
@@ -641,6 +748,58 @@ describe("Sync Plugin skeleton", () => {
     });
   });
 
+  it("rejects stale and unsupported sync conflict resolver unit kinds", async () => {
+    const sync = await loadSyncModule();
+    const basePageUnit = sync.serializeMarkdownPageSyncUnit(createMarkdownPage());
+    const localPageUnit = sync.serializeMarkdownPageSyncUnit(
+      createMarkdownPage({ title: "Local title" }),
+    );
+    const remotePageUnit = sync.serializeMarkdownPageSyncUnit(
+      createMarkdownPage({ title: "Remote title" }),
+    );
+    const eventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-supported" }),
+    );
+
+    expect(
+      sync.resolveSyncUnitConflict({
+        base: basePageUnit,
+        local: localPageUnit,
+        remote: remotePageUnit,
+        unitKind: syncUnitMetadata,
+      }),
+    ).toStrictEqual({
+      outcome: "manual-resolution-required",
+      reason: "mutable-unit-divergence",
+      unitKind: syncUnitMetadata,
+    });
+    expect(
+      sync.resolveSyncUnitConflict({
+        local: [eventUnit],
+        remote: [eventUnit],
+        unitKind: syncUnitEvent,
+      }),
+    ).toStrictEqual({
+      conflicts: [],
+      outcome: "merged",
+      unitKind: syncUnitEvent,
+      units: [eventUnit],
+    });
+
+    for (const unitKind of [...staleSyncIds, "sync.unit.unsupported"] as const) {
+      expect.soft(
+        () =>
+          sync.resolveSyncUnitConflict({
+            base: basePageUnit,
+            local: localPageUnit,
+            remote: remotePageUnit,
+            unitKind,
+          }),
+        unitKind,
+      ).toThrow(/sync|unit|kind|unsupported|invalid|stale/i);
+    }
+  });
+
   it("keeps Sync production isolated from native/package drift, transport, storage, runtime stores, sibling plugins, and Core business terms", async () => {
     const nativeSurfaceChanges = await listNativeSurfaceChangesFromMaster();
     const productionSources = await readProductionSources(
@@ -729,6 +888,33 @@ function createMarkdownPage(overrides: Partial<MarkdownPage> = {}): MarkdownPage
   };
 }
 
+function createMarkdownBodyWithAttrs(
+  attrs: Record<string, unknown>,
+): StructuredMarkdownDocument {
+  return {
+    content: [
+      {
+        attrs,
+        blockId: "block-sync-attrs",
+        text: "Sync attrs",
+        type: "markdown.line",
+      },
+    ],
+    type: "doc",
+  };
+}
+
+function readFirstBlockAttrs(unit: SyncUnitDto): Record<string, unknown> {
+  const body = unit.snapshot.body as StructuredMarkdownDocument;
+  const attrs = body.content[0]?.attrs;
+
+  if (attrs === undefined) {
+    throw new Error("Expected first Markdown Page block attrs");
+  }
+
+  return attrs;
+}
+
 function createMetadataRecord(
   overrides: Partial<MetadataRecord> = {},
 ): MetadataRecord {
@@ -804,6 +990,11 @@ function createUnsafeNestedValues(): Array<{ label: string; value: unknown }> {
     unknown
   >;
   inherited.own = "own";
+  const nonEnumerable: Record<string, unknown> = { visible: "visible" };
+  Object.defineProperty(nonEnumerable, "hidden", {
+    enumerable: false,
+    value: "hidden",
+  });
 
   return [
     { label: "function", value: () => "unsafe" },
@@ -814,6 +1005,7 @@ function createUnsafeNestedValues(): Array<{ label: string; value: unknown }> {
     { label: "cycle", value: cycle },
     { label: "Map", value: new Map([["key", "value"]]) },
     { label: "prototype-carried field", value: inherited },
+    { label: "non-enumerable field", value: nonEnumerable },
     { label: "deep JSON", value: createDeepJsonValue(40) },
   ];
 }
