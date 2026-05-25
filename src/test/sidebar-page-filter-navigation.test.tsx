@@ -1005,7 +1005,6 @@ function isForbiddenFilterPropKey(key: string): boolean {
 }
 
 function expectNoSensitiveRouteLeak(): void {
-  // eslint-disable-next-line testing-library/no-node-access -- route redaction checks inspect full rendered text.
   const text = document.body.textContent ?? "";
 
   expect(text).not.toMatch(
@@ -1021,7 +1020,6 @@ function expectNoDangerousDom(): void {
   // eslint-disable-next-line testing-library/no-node-access -- security assertion requires DOM sink inspection.
   expect(document.querySelector("iframe")).toBeNull();
 
-  // eslint-disable-next-line testing-library/no-node-access -- security assertion requires DOM attribute inspection.
   for (const element of [...document.querySelectorAll("*")]) {
     for (const attribute of [...element.attributes]) {
       expect(attribute.name).not.toMatch(/^on/iu);
