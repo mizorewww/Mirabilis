@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 16:18 CST - TASK-031 merged
+
+- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
+- Merge commit: `6a3baf4` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 36 frontend test files / 561 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-031 is complete on `master`; next autonomous task is TASK-032.
+
 ### 2026-05-25 16:17 CST - TASK-031 completed
 
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.

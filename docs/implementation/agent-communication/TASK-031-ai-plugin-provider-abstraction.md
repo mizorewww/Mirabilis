@@ -607,3 +607,14 @@
 ## Current Next Action
 
 - Commit this docs outcome record, run the final branch gate, and mark TASK-031 complete if checks pass.
+
+## Final Branch Gate And Merge
+
+- Final branch gate:
+  - `bun run check:quick` passed on `feat/task-031-ai-plugin-provider-abstraction` with typecheck, lint, 36 frontend test files / 561 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `docs/implementation/progress.md` marked TASK-031 complete and recorded branch, delivered behavior, checks, official docs verified, and accepted residual risks.
+  - Progress commit: `cb9fc7a Codex(progress)(Implement AI Plugin provider abstraction): mark task complete`; post-commit auto-push succeeded.
+- Merge:
+  - TASK-031 merged into `master` with merge commit `6a3baf4 Merge TASK-031 ai plugin provider abstraction`.
+  - Merge-result `bun run check:quick` passed with typecheck, lint, 36 frontend test files / 561 tests, Rust fmt, Rust clippy, and Rust tests.
+- Parent next action: commit merge validation on `master`, verify push, and continue to TASK-032.
