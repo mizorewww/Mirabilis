@@ -8,6 +8,7 @@ export type ChartCategorySeries = {
 };
 
 export type ChartCategoryItem = {
+  id?: string;
   label: string;
   value: number;
 };
@@ -92,6 +93,12 @@ type TimerNote = {
   segmentId: string;
 };
 
+type PageTotal = {
+  label: string;
+  pageId: string;
+  value: number;
+};
+
 type TimeByTagInput = {
   kind: "stats.time-by-tag-input";
   segments: readonly unknown[];
@@ -140,6 +147,9 @@ const taskPluginId = "task";
 const taskNamespace = "task";
 const habitPluginId = "habit";
 const habitNamespace = "habit";
+const maxStatsInputItems = 1_000;
+const maxTrustedNumericMagnitude = 1_000_000_000;
+const maxTrustedLabelLength = 200;
 const aggregationInputKinds = {
   "stats.estimate-vs-actual": "stats.estimate-vs-actual-input",
   "stats.habit-completion-rate": "stats.habit-completion-input",
@@ -203,11 +213,12 @@ const habitEventPayloadKeys = new Set(["date", "habitPageId"]);
 const habitSummaryKeys = new Set(["habitPageId", "title"]);
 const noteEventKeys = new Set([
   "namespace",
+  "pageId",
   "payload",
   "sourcePluginId",
   "type",
 ]);
-const noteEventPayloadKeys = new Set(["notePageId", "pageId", "segmentId"]);
+const noteEventPayloadKeys = new Set(["notePageId", "notedAt", "segmentId"]);
 
 export const StatsPlugin: AppPlugin = {
   manifest: {
@@ -431,18 +442,18 @@ function aggregateTimeByTag(input: TimeByTagInput): ChartCategorySeries {
 }
 
 function aggregateTimeByPage(input: TimeByPageInput): ChartCategorySeries {
-  const totals = new Map<string, number>();
+  const totals = new Map<string, PageTotal>();
 
   for (const segmentInput of input.segments) {
     const segment = readTimerSegment(segmentInput);
 
     if (segment !== null) {
-      addToTotal(totals, segment.pageTitle, segment.durationSeconds);
+      addToPageTotal(totals, segment);
     }
   }
 
   return {
-    categories: mapTotalsToCategories(totals),
+    categories: mapPageTotalsToCategories(totals),
     kind: "chart.category-series",
     title: "Time by page",
     unit: "seconds",
@@ -485,11 +496,19 @@ function aggregateEstimateVsActual(
     }
 
     const deltaSeconds = actualSeconds - expectedSeconds;
+    const errorPercent = (deltaSeconds / expectedSeconds) * 100;
+
+    if (
+      !isTrustedNumericMagnitude(deltaSeconds) ||
+      !isTrustedNumericMagnitude(errorPercent)
+    ) {
+      continue;
+    }
 
     comparisons.push({
       actualSeconds,
       deltaSeconds,
-      errorPercent: (deltaSeconds / expectedSeconds) * 100,
+      errorPercent,
       expectedSeconds,
       label: taskPageId,
     });
@@ -603,7 +622,7 @@ function aggregateUnnotedSessions(
       return note === null ? [] : [`${note.pageId}\u0000${note.segmentId}`];
     }),
   );
-  const totals = new Map<string, number>();
+  const totals = new Map<string, PageTotal>();
 
   for (const segmentInput of input.segments) {
     const segment = readTimerSegment(segmentInput);
@@ -612,12 +631,12 @@ function aggregateUnnotedSessions(
       segment !== null &&
       !notedSegmentKeys.has(`${segment.pageId}\u0000${segment.segmentId}`)
     ) {
-      addToTotal(totals, segment.pageTitle, 1);
+      addToPageTotal(totals, segment, 1);
     }
   }
 
   return {
-    categories: mapTotalsToCategories(totals),
+    categories: mapPageTotalsToCategories(totals),
     kind: "chart.category-series",
     title: "Unnoted sessions",
     unit: "count",
@@ -647,17 +666,14 @@ function readTimerSegment(input: unknown): TimerSegment | null {
   if (
     provenance === null ||
     typeof durationSeconds !== "number" ||
-    !Number.isFinite(durationSeconds) ||
+    !isTrustedNumericMagnitude(durationSeconds) ||
     durationSeconds <= 0 ||
-    typeof endAt !== "string" ||
-    typeof pageId !== "string" ||
-    pageId.trim().length === 0 ||
-    typeof pageTitle !== "string" ||
-    pageTitle.trim().length === 0 ||
-    typeof segmentId !== "string" ||
-    segmentId.trim().length === 0 ||
+    !isTrustedString(endAt) ||
+    !isTrustedString(pageId) ||
+    !isTrustedString(pageTitle) ||
+    !isTrustedString(segmentId) ||
     source !== timerPluginId ||
-    typeof startAt !== "string" ||
+    !isTrustedString(startAt) ||
     provenance.eventPageId !== pageId ||
     provenance.namespace !== timerNamespace ||
     provenance.sourcePluginId !== timerPluginId ||
@@ -707,10 +723,8 @@ function readTagMetadata(input: unknown): TagMetadata | null {
     payload.namespace !== tagNamespace ||
     payload.sourcePluginId !== tagPluginId ||
     payload.type !== "tag" ||
-    typeof payload.id !== "string" ||
-    payload.id.trim().length === 0 ||
-    typeof payload.label !== "string" ||
-    payload.label.trim().length === 0
+    !isTrustedString(payload.id) ||
+    !isTrustedString(payload.label)
   ) {
     return null;
   }
@@ -729,10 +743,9 @@ function readTaskEstimate(input: unknown): TaskEstimate | null {
     payload.namespace !== taskNamespace ||
     payload.sourcePluginId !== taskPluginId ||
     payload.type !== "estimate" ||
-    typeof payload.pageId !== "string" ||
-    payload.pageId.trim().length === 0 ||
+    !isTrustedString(payload.pageId) ||
     typeof payload.estimateSeconds !== "number" ||
-    !Number.isFinite(payload.estimateSeconds) ||
+    !isTrustedNumericMagnitude(payload.estimateSeconds) ||
     payload.estimateSeconds <= 0
   ) {
     return null;
@@ -757,10 +770,9 @@ function readHabitEvent(input: unknown): HabitEvent | null {
     payload.namespace !== habitNamespace ||
     payload.sourcePluginId !== habitPluginId ||
     (payload.type !== "checked" && payload.type !== "unchecked") ||
-    typeof payload.createdAt !== "string" ||
+    !isTrustedString(payload.createdAt) ||
     typeof eventPayload.date !== "string" ||
-    typeof eventPayload.habitPageId !== "string" ||
-    eventPayload.habitPageId.trim().length === 0
+    !isTrustedString(eventPayload.habitPageId)
   ) {
     return null;
   }
@@ -785,10 +797,8 @@ function readHabitSummary(input: unknown): HabitSummary | null {
 
   if (
     payload === null ||
-    typeof payload.habitPageId !== "string" ||
-    payload.habitPageId.trim().length === 0 ||
-    typeof payload.title !== "string" ||
-    payload.title.trim().length === 0
+    !isTrustedString(payload.habitPageId) ||
+    !isTrustedString(payload.title)
   ) {
     return null;
   }
@@ -812,18 +822,17 @@ function readTimerNote(input: unknown): TimerNote | null {
     payload.namespace !== timerNamespace ||
     payload.sourcePluginId !== timerPluginId ||
     payload.type !== timerNoteAddedType ||
-    typeof notePayload.notePageId !== "string" ||
-    notePayload.notePageId.trim().length === 0 ||
-    typeof notePayload.pageId !== "string" ||
-    notePayload.pageId.trim().length === 0 ||
-    typeof notePayload.segmentId !== "string" ||
-    notePayload.segmentId.trim().length === 0
+    !isTrustedString(payload.pageId) ||
+    !isTrustedString(notePayload.notePageId) ||
+    !isTrustedString(notePayload.notedAt) ||
+    !isTrustedString(notePayload.segmentId) ||
+    parseInstant(notePayload.notedAt) === null
   ) {
     return null;
   }
 
   return {
-    pageId: notePayload.pageId,
+    pageId: payload.pageId,
     segmentId: notePayload.segmentId,
   };
 }
@@ -904,6 +913,10 @@ function readArray(input: unknown, label: string): readonly unknown[] {
     throw new Error(`${label} must be an array`);
   }
 
+  if (input.length > maxStatsInputItems) {
+    throw new Error(`${label} exceeds maximum item count`);
+  }
+
   return input;
 }
 
@@ -912,14 +925,14 @@ function readOptionalStringArray(input: unknown): readonly string[] | null {
     return [];
   }
 
-  if (!Array.isArray(input)) {
+  if (!Array.isArray(input) || input.length > maxStatsInputItems) {
     return null;
   }
 
   const values: string[] = [];
 
   for (const value of input) {
-    if (typeof value !== "string" || value.trim().length === 0) {
+    if (!isTrustedString(value)) {
       return null;
     }
 
@@ -936,7 +949,7 @@ function readOptionalNonBlankString(
     return undefined;
   }
 
-  return typeof input === "string" && input.trim().length > 0 ? input : null;
+  return isTrustedString(input) ? input : null;
 }
 
 function isAggregationId(input: unknown): input is StatsAggregationId {
@@ -981,16 +994,86 @@ function readDateOnlyString(input: unknown): string | null {
 }
 
 function addToTotal(totals: Map<string, number>, label: string, value: number): void {
-  totals.set(label, (totals.get(label) ?? 0) + value);
+  const nextValue = (totals.get(label) ?? 0) + value;
+
+  if (isTrustedNumericMagnitude(nextValue)) {
+    totals.set(label, nextValue);
+  }
 }
 
 function mapTotalsToCategories(totals: ReadonlyMap<string, number>): ChartCategoryItem[] {
-  return [...totals].map(([label, value]) => ({ label, value }));
+  return [...totals].flatMap(([label, value]) =>
+    isTrustedString(label) && isTrustedNumericMagnitude(value)
+      ? [{ label, value }]
+      : [],
+  );
+}
+
+function addToPageTotal(
+  totals: Map<string, PageTotal>,
+  segment: TimerSegment,
+  value = segment.durationSeconds,
+): void {
+  const current = totals.get(segment.pageId);
+  const nextValue = (current?.value ?? 0) + value;
+
+  if (!isTrustedNumericMagnitude(nextValue)) {
+    return;
+  }
+
+  totals.set(segment.pageId, {
+    label: current?.label ?? segment.pageTitle,
+    pageId: segment.pageId,
+    value: nextValue,
+  });
+}
+
+function mapPageTotalsToCategories(
+  totals: ReadonlyMap<string, PageTotal>,
+): ChartCategoryItem[] {
+  const labelCounts = new Map<string, number>();
+
+  for (const total of totals.values()) {
+    labelCounts.set(total.label, (labelCounts.get(total.label) ?? 0) + 1);
+  }
+
+  return [...totals.values()].flatMap((total) => {
+    if (
+      !isTrustedString(total.label) ||
+      !isTrustedString(total.pageId) ||
+      !isTrustedNumericMagnitude(total.value)
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        ...(labelCounts.get(total.label) === 1 ? {} : { id: total.pageId }),
+        label: total.label,
+        value: total.value,
+      },
+    ];
+  });
 }
 
 function compareSegmentsByStart(left: TimerSegment, right: TimerSegment): number {
   return (
     left.startMs - right.startMs ||
     left.segmentId.localeCompare(right.segmentId)
+  );
+}
+
+function isTrustedString(input: unknown): input is string {
+  return (
+    typeof input === "string" &&
+    input.trim().length > 0 &&
+    input.length <= maxTrustedLabelLength
+  );
+}
+
+function isTrustedNumericMagnitude(input: number): boolean {
+  return (
+    Number.isFinite(input) &&
+    Math.abs(input) <= maxTrustedNumericMagnitude
   );
 }

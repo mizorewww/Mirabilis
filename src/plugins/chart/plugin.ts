@@ -10,6 +10,7 @@ export type ChartCategorySeries = {
 };
 
 export type ChartCategoryItem = {
+  id?: string;
   label: string;
   value: number;
 };
@@ -53,6 +54,19 @@ export type ChartViewProps = {
 };
 
 type ChartUnit = "seconds" | "count" | "percent";
+type SeriesRow = {
+  key: string;
+  label: string;
+  values: readonly SeriesRowValue[];
+};
+type SeriesRowValue = {
+  key: string;
+  text: string;
+};
+type SeriesTableColumn = {
+  key: string;
+  label: string;
+};
 
 const pluginId = "chart";
 const categorySeriesKind = "chart.category-series";
@@ -60,6 +74,7 @@ const comparisonSeriesKind = "chart.comparison-series";
 const timeSeriesKind = "chart.time-series";
 const categorySeriesKeys = new Set(["categories", "kind", "title", "unit"]);
 const categoryItemKeys = new Set(["label", "value"]);
+const categoryItemOptionalKeys = new Set(["id"]);
 const timeSeriesKeys = new Set(["kind", "points", "title", "unit"]);
 const timePointRequiredKeys = new Set(["date", "value"]);
 const timePointOptionalKeys = new Set(["label"]);
@@ -76,6 +91,9 @@ const comparisonItemKeys = new Set([
   "expectedSeconds",
   "label",
 ]);
+const maxChartItems = 200;
+const maxTrustedNumericMagnitude = 1_000_000_000;
+const maxTrustedLabelLength = 200;
 
 export const ChartPlugin: AppPlugin = {
   manifest: {
@@ -200,6 +218,7 @@ function renderChartBody(
       "p",
       {
         "aria-busy": "true",
+        "aria-atomic": "true",
         "aria-label": "Chart loading",
         role: "status",
       },
@@ -211,6 +230,7 @@ function renderChartBody(
     return createElement(
       "p",
       {
+        "aria-atomic": "true",
         "aria-label": "Chart empty",
         role: "status",
       },
@@ -228,39 +248,69 @@ function renderChartBody(
 function renderSeriesTable(
   series: ChartCategorySeries | ChartComparisonSeries | ChartTimeSeries,
 ): ReactElement {
+  const columns = seriesColumns(series);
+  const rows = seriesRows(series);
+
   return createElement(
     "table",
     {
       "aria-label": series.title,
     },
-    createElement(
-      "tbody",
-      null,
-      ...seriesRows(series).map((row) =>
+    [
+      createElement(
+        "thead",
+        {
+          key: "head",
+        },
         createElement(
           "tr",
-          {
-            key: row.key,
-          },
-          createElement(
-            "th",
-            {
-              scope: "row",
-            },
-            row.label,
-          ),
-          ...row.values.map((value) =>
+          null,
+          columns.map((column) =>
             createElement(
-              "td",
+              "th",
               {
-                key: value,
+                key: column.key,
+                scope: "col",
               },
-              value,
+              column.label,
             ),
           ),
         ),
       ),
-    ),
+      createElement(
+        "tbody",
+        {
+          key: "body",
+        },
+        rows.map((row) =>
+          createElement(
+            "tr",
+            {
+              key: row.key,
+            },
+            [
+              createElement(
+                "th",
+                {
+                  key: "label",
+                  scope: "row",
+                },
+                row.label,
+              ),
+              ...row.values.map((value) =>
+                createElement(
+                  "td",
+                  {
+                    key: value.key,
+                  },
+                  value.text,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
   );
 }
 
@@ -272,13 +322,13 @@ function renderSeriesList(
     {
       "aria-label": series.title,
     },
-    ...seriesRows(series).map((row) =>
+    seriesRows(series).map((row) =>
       createElement(
         "li",
         {
           key: row.key,
         },
-        [row.label, ...row.values].join(" "),
+        [row.label, ...row.values.map((value) => value.text)].join(" "),
       ),
     ),
   );
@@ -286,34 +336,87 @@ function renderSeriesList(
 
 function seriesRows(
   series: ChartCategorySeries | ChartComparisonSeries | ChartTimeSeries,
-): Array<{ key: string; label: string; values: string[] }> {
+): SeriesRow[] {
   switch (series.kind) {
     case categorySeriesKind:
-      return series.categories.map((item) => ({
-        key: item.label,
+      return series.categories.map((item, index) => ({
+        key: item.id ?? `${item.label}\u0000${index}`,
         label: item.label,
-        values: [formatValue(item.value, series.unit)],
+        values: [
+          {
+            key: "value",
+            text: formatValue(item.value, series.unit),
+          },
+        ],
       }));
     case timeSeriesKind:
-      return series.points.map((point) => ({
-        key: `${point.date}\u0000${point.label ?? ""}`,
+      return series.points.map((point, index) => ({
+        key: `${point.date}\u0000${point.label ?? ""}\u0000${index}`,
         label: point.date,
         values: [
-          ...(point.label === undefined ? [] : [point.label]),
-          formatValue(point.value, series.unit),
+          ...(point.label === undefined
+            ? []
+            : [
+                {
+                  key: "label",
+                  text: point.label,
+                },
+              ]),
+          {
+            key: "value",
+            text: formatValue(point.value, series.unit),
+          },
         ],
       }));
     case comparisonSeriesKind:
-      return series.comparisons.map((item) => ({
-        key: item.label,
+      return series.comparisons.map((item, index) => ({
+        key: `${item.label}\u0000${index}`,
         label: item.label,
         values: [
-          formatValue(item.expectedSeconds, series.unit),
-          formatValue(item.actualSeconds, series.unit),
-          formatValue(item.deltaSeconds, series.unit),
-          `${formatNumber(item.errorPercent)} percent`,
+          {
+            key: "expected",
+            text: formatValue(item.expectedSeconds, series.unit),
+          },
+          {
+            key: "actual",
+            text: formatValue(item.actualSeconds, series.unit),
+          },
+          {
+            key: "delta",
+            text: formatValue(item.deltaSeconds, series.unit),
+          },
+          {
+            key: "error",
+            text: `${formatNumber(item.errorPercent)} percent`,
+          },
         ],
       }));
+  }
+}
+
+function seriesColumns(
+  series: ChartCategorySeries | ChartComparisonSeries | ChartTimeSeries,
+): SeriesTableColumn[] {
+  switch (series.kind) {
+    case categorySeriesKind:
+      return [
+        { key: "label", label: "Label" },
+        { key: "value", label: "Value" },
+      ];
+    case timeSeriesKind:
+      return [
+        { key: "date", label: "Date" },
+        { key: "label", label: "Label" },
+        { key: "value", label: "Value" },
+      ];
+    case comparisonSeriesKind:
+      return [
+        { key: "label", label: "Label" },
+        { key: "expected", label: "Expected" },
+        { key: "actual", label: "Actual" },
+        { key: "delta", label: "Delta" },
+        { key: "error", label: "Error" },
+      ];
   }
 }
 
@@ -323,16 +426,21 @@ function readCategorySeries(input: unknown): ChartCategorySeries | null {
   if (
     payload === null ||
     payload.kind !== categorySeriesKind ||
-    typeof payload.title !== "string" ||
-    payload.title.trim().length === 0 ||
+    !isTrustedLabel(payload.title) ||
     !isUnit(payload.unit) ||
-    !Array.isArray(payload.categories)
+    readBoundedArray(payload.categories) === null
   ) {
     return null;
   }
 
+  const categories = readBoundedArray(payload.categories);
+
+  if (categories === null) {
+    return null;
+  }
+
   return {
-    categories: payload.categories.flatMap((itemInput) => {
+    categories: categories.flatMap((itemInput) => {
       const item = readCategoryItem(itemInput);
 
       return item === null ? [] : [item];
@@ -344,19 +452,28 @@ function readCategorySeries(input: unknown): ChartCategorySeries | null {
 }
 
 function readCategoryItem(input: unknown): ChartCategoryItem | null {
-  const payload = readExactRecordOrNull(input, categoryItemKeys);
+  const payload = readExactRecordOrNull(
+    input,
+    categoryItemKeys,
+    categoryItemOptionalKeys,
+  );
 
   if (
     payload === null ||
-    typeof payload.label !== "string" ||
-    payload.label.trim().length === 0 ||
-    typeof payload.value !== "number" ||
-    !Number.isFinite(payload.value)
+    !isTrustedLabel(payload.label) ||
+    !isTrustedNumber(payload.value)
   ) {
     return null;
   }
 
+  const id = readOptionalLabel(payload.id);
+
+  if (id === null) {
+    return null;
+  }
+
   return {
+    ...(id === undefined ? {} : { id }),
     label: payload.label,
     value: payload.value,
   };
@@ -368,17 +485,22 @@ function readTimeSeries(input: unknown): ChartTimeSeries | null {
   if (
     payload === null ||
     payload.kind !== timeSeriesKind ||
-    typeof payload.title !== "string" ||
-    payload.title.trim().length === 0 ||
+    !isTrustedLabel(payload.title) ||
     !isUnit(payload.unit) ||
-    !Array.isArray(payload.points)
+    readBoundedArray(payload.points) === null
   ) {
+    return null;
+  }
+
+  const points = readBoundedArray(payload.points);
+
+  if (points === null) {
     return null;
   }
 
   return {
     kind: timeSeriesKind,
-    points: payload.points.flatMap((pointInput) => {
+    points: points.flatMap((pointInput) => {
       const point = readTimePoint(pointInput);
 
       return point === null ? [] : [point];
@@ -399,8 +521,7 @@ function readTimePoint(input: unknown): ChartTimePoint | null {
     payload === null ||
     typeof payload.date !== "string" ||
     parseDateOnly(payload.date) === null ||
-    typeof payload.value !== "number" ||
-    !Number.isFinite(payload.value)
+    !isTrustedNumber(payload.value)
   ) {
     return null;
   }
@@ -424,16 +545,21 @@ function readComparisonSeries(input: unknown): ChartComparisonSeries | null {
   if (
     payload === null ||
     payload.kind !== comparisonSeriesKind ||
-    typeof payload.title !== "string" ||
-    payload.title.trim().length === 0 ||
+    !isTrustedLabel(payload.title) ||
     payload.unit !== "seconds" ||
-    !Array.isArray(payload.comparisons)
+    readBoundedArray(payload.comparisons) === null
   ) {
     return null;
   }
 
+  const comparisons = readBoundedArray(payload.comparisons);
+
+  if (comparisons === null) {
+    return null;
+  }
+
   return {
-    comparisons: payload.comparisons.flatMap((itemInput) => {
+    comparisons: comparisons.flatMap((itemInput) => {
       const item = readComparisonItem(itemInput);
 
       return item === null ? [] : [item];
@@ -449,16 +575,11 @@ function readComparisonItem(input: unknown): ChartComparisonItem | null {
 
   if (
     payload === null ||
-    typeof payload.label !== "string" ||
-    payload.label.trim().length === 0 ||
-    typeof payload.actualSeconds !== "number" ||
-    !Number.isFinite(payload.actualSeconds) ||
-    typeof payload.deltaSeconds !== "number" ||
-    !Number.isFinite(payload.deltaSeconds) ||
-    typeof payload.errorPercent !== "number" ||
-    !Number.isFinite(payload.errorPercent) ||
-    typeof payload.expectedSeconds !== "number" ||
-    !Number.isFinite(payload.expectedSeconds)
+    !isTrustedLabel(payload.label) ||
+    !isTrustedNumber(payload.actualSeconds) ||
+    !isTrustedNumber(payload.deltaSeconds) ||
+    !isTrustedNumber(payload.errorPercent) ||
+    !isTrustedNumber(payload.expectedSeconds)
   ) {
     return null;
   }
@@ -538,7 +659,27 @@ function readOptionalLabel(input: unknown): string | null | undefined {
     return undefined;
   }
 
-  return typeof input === "string" && input.trim().length > 0 ? input : null;
+  return isTrustedLabel(input) ? input : null;
+}
+
+function readBoundedArray(input: unknown): readonly unknown[] | null {
+  return Array.isArray(input) && input.length <= maxChartItems ? input : null;
+}
+
+function isTrustedLabel(input: unknown): input is string {
+  return (
+    typeof input === "string" &&
+    input.trim().length > 0 &&
+    input.length <= maxTrustedLabelLength
+  );
+}
+
+function isTrustedNumber(input: unknown): input is number {
+  return (
+    typeof input === "number" &&
+    Number.isFinite(input) &&
+    Math.abs(input) <= maxTrustedNumericMagnitude
+  );
 }
 
 function isSeriesEmpty(
