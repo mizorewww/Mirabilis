@@ -320,3 +320,10 @@
 
 - Delegate formal docs sync to `doc_writer`.
 - Expected docs scope: product, architecture, runtime-flow, and development docs that still mention stale `stats.open_review`, snake_case Stats aggregation ids, stale chart ids, future-only Stats/Chart wording, or outdated Chart DTO examples.
+
+## Docs Sync Handoff
+
+- Maxwell (`doc_writer`) started at 2026-05-25 11:49 CST.
+- Scope: formal docs only for TASK-028 Stats/Chart implementation drift.
+- Expected files include product, architecture, runtime-flow, and development docs; source, tests, progress, package/native/Tauri/Rust/schema files are out of scope.
+- Parent next action: wait for Maxwell, validate the docs-only patch, and commit it separately.

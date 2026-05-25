@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:48 CST.
+Last updated: 2026-05-25 11:49 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:48 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 P1 fixes closed; formal docs sync pending.
+- Current phase: TASK-028 formal docs sync delegated.
 
 ## Active Agents
 
-- No active agents. Next delegation is `doc_writer` for formal Stats/Chart docs sync.
+- Maxwell (`doc_writer`) is syncing formal Stats/Chart docs to the TASK-028 implementation.
 
 ## Current TASK-028 State
 
@@ -197,5 +197,5 @@ Last updated: 2026-05-25 11:48 CST.
 
 ## Next Actions
 
-1. Delegate formal Stats/Chart docs sync to `doc_writer`.
+1. Wait for Maxwell (`doc_writer`) to finish formal docs sync.
 2. Validate docs-only patch and commit separately.
