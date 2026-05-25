@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Ask `test_writer` to add failing user-event and boundary tests for the Home workspace editor slice.
+- Ask `implementer` to make the focused Home workspace editor tests pass without expanding the TASK-037 scope or weakening TASK-036 host boundaries.
 
 ## Pre-Test Guidance Outcomes
 
@@ -78,3 +78,29 @@
   - accept the adapter-first direction;
   - do not ask test writer to relax TASK-036 host boundaries;
   - require failing tests for Home workspace rendering, no direct editor import, no raw runtime/facade leaks, real user-event editing flows, stale async guards, and no package/native drift before implementation.
+
+## Test Writer Outcome
+
+- Epicurus (`test_writer`) added failing TASK-037 acceptance and boundary coverage in commit `35bda50`.
+- Changed files:
+  - `src/test/home-workspace-editor.test.tsx`;
+  - `src/test/mui-shell-frame.test.tsx`;
+  - `src/test/app-shell-boundary.test.ts`.
+- Coverage added:
+  - the ready first screen must show an editable Home Markdown textbox instead of Home placeholders, startup copy, landing copy, or hero copy;
+  - StrictMode-style rerenders must still create/select exactly one session Home page;
+  - Home must render the registered `page.editor` / `markdown.page-editor` view through `ViewHost`, allowing a swapped registered editor while preventing raw runtime, command, store, native, registry, filesystem, path, or page facade leaks in plugin props;
+  - realistic user flows type Markdown, click toolbar snippet buttons, save, click a task title, navigate back to Home, and toggle a checkbox through accessible UI;
+  - stale toolbar insert completion after navigating away from Home must not overwrite another route or the Home page;
+  - non-Home routes remain placeholders and do not mount the Markdown editor;
+  - TASK-037 must not change package, native, Tauri, IPC, capability, permission, or release surfaces;
+  - App Shell static boundary tests now reject direct Markdown editor component references and plugin-private imports;
+  - the MUI deprecated API guard now covers `InputProps`, `PaperProps`, and `TransitionComponent`.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx` failed as expected with 2 failed files / 6 passed and 8 failed / 104 passed because Home still rendered placeholders and no Markdown textbox / registered editor.
+  - `bun run typecheck` passed.
+  - `git diff --check` passed.
+- Parent decision:
+  - accept the tests as the TASK-037 red baseline;
+  - commit them separately before implementation;
+  - delegate production changes to `implementer`.

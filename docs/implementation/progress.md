@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 04:02 CST - TASK-037 failing tests committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Test writer: Epicurus added `src/test/home-workspace-editor.test.tsx` and updated `src/test/mui-shell-frame.test.tsx` plus `src/test/app-shell-boundary.test.ts` in commit `35bda50`.
+- Coverage: editable Home Markdown textbox on the ready first screen; one session Home page across StrictMode-style rerenders; registered `page.editor` / `markdown.page-editor` rendering through `ViewHost`; no raw runtime/native/store/registry/command/page facade leaks; realistic user-event typing, toolbar insert, save, task-title open, navigation, and checkbox toggle flows; stale async toolbar insert protection; non-Home route placeholder preservation; package/native/Tauri/IPC/capability/permission/release drift guard; static App Shell boundary guard against direct Markdown editor or plugin-private imports.
+- Parent red validation: the focused aggregate frontend test command failed as expected with 2 failed files / 6 passed and 8 failed / 104 passed because Home still rendered placeholders and no Markdown textbox / registered editor. `bun run typecheck` and `git diff --check` passed.
+- Next action: delegate production implementation to `implementer` with narrow Home-only scope and existing TASK-036 host-boundary constraints.
+
 ### 2026-05-26 03:45 CST - TASK-037 started
 
 - Branch: `feat/task-037-home-workspace-editor`.

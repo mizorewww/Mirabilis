@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 03:53 CST.
+Last updated: 2026-05-26 04:02 CST.
 
 ## Current Task
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-26 03:53 CST.
 - Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 pre-test guidance complete; failing tests pending.
+- Current phase: TASK-037 failing tests committed; implementation pending.
 
 ## Active Agents
 
-- None. TASK-037 guidance agents completed.
-- Pending: delegate failing Home workspace editor tests to `test_writer`.
+- None. TASK-037 guidance agents and test writer completed.
+- Pending: delegate Home workspace editor production work to `implementer`.
 
 ## Current TASK-037 State
 
@@ -33,6 +33,12 @@ Last updated: 2026-05-26 03:53 CST.
   - stale async insert/save/open/toggle completions must be ignored;
   - no package/native/Tauri/Rust/IPC/capability/permission/release surface changes.
 - Parent decision: ask `test_writer` for failing RTL/user-event tests and static guards before implementation.
+- Test writer outcome:
+  - Epicurus (`test_writer`) added failing Home workspace editor acceptance tests and boundary guards in commit `35bda50`.
+  - Test coverage now drives the Home first screen as a real editable Markdown workspace, StrictMode-safe single session Home page creation/selection, registered `page.editor` rendering through `ViewHost`, no raw runtime/native/store/registry/command/page facade leaks, realistic user typing/clicking/save/task-open/checkbox-toggle flows, stale async toolbar insert protection, non-Home placeholder preservation, and no package/native/Tauri/IPC/capability/permission/release drift.
+  - Parent red validation failed as expected because the app still renders Home placeholders and no Markdown textbox or registered editor: 2 failed files / 6 passed, 8 failed / 104 passed for the focused aggregate command.
+  - `bun run typecheck` and `git diff --check` passed.
+- Parent decision: delegate implementation next, with the same narrow Home-only scope and TASK-036 host-boundary constraints.
 
 ## Current TASK-036 State
 
@@ -225,7 +231,7 @@ Last updated: 2026-05-26 03:53 CST.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
 - TASK-037 is in progress on `feat/task-037-home-workspace-editor`: initial docs/code context has been read, and pre-test guidance is pending.
 - TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: delegate TASK-037 guidance agents.
+- Next action: delegate TASK-037 implementation.
 
 ## Historical TASK-033 State
 
