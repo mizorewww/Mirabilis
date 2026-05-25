@@ -1,18 +1,164 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:25 CST.
+Last updated: 2026-05-25 16:16 CST.
 
 ## Current Task
 
-- Task: TASK-030 - Implement ML Plugin baseline predictions.
-- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Task: TASK-031 - Implement AI Plugin provider abstraction.
+- Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 merged to `master`; merge validation passed and is being recorded before continuing to TASK-031.
+- Current phase: TASK-031 docs sync completed; preparing final branch gate.
 
 ## Active Agents
 
-- No active agents. Parent is recording TASK-030 merge validation before continuing to TASK-031.
+- None.
+
+## Current TASK-031 State
+
+- TASK-031 follows TASK-030 and owns the first AI plugin provider-abstraction slice:
+  - AI Plugin supports an OpenAI provider abstraction without leaking provider details into Core.
+  - Commands exist for quick capture cleanup, generate subtasks, suggest metadata, generate filters, summarize time notes, weekly review, and explain prediction.
+  - Provider settings are stored as plugin settings.
+  - Secrets are never committed or logged.
+- Initial parent interpretation:
+  - Keep AI behavior in a built-in plugin, not Core.
+  - Use a provider interface so command tests can mock provider calls and production can have an OpenAI provider implementation behind the AI plugin boundary.
+  - Prefer no real API calls, no real credentials, no committed secrets, and no live-network tests.
+  - Treat current `PluginContext` settings support as a risk: `settingsPanels` are manifest descriptors and no runtime plugin settings facade is present yet.
+  - Avoid package/native/Tauri/Rust/schema/capability changes unless agents identify an acceptance-critical need.
+- Official OpenAI docs verified:
+  - Latest model guidance identifies `gpt-5.5` as current latest model guidance.
+  - OpenAI recommends the Responses API for new projects.
+  - Responses uses top-level `instructions`/`input`, can set `store: false`, and uses `text.format` for Structured Outputs.
+  - Structured Outputs are recommended over plain JSON mode when schema adherence matters.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK for config/auth/MCP/reachability with the known `TERM=dumb`, unrestricted sandbox/network notes, and a non-blocking Responses WebSocket timeout while HTTPS reachability remained OK.
+- Pre-test guidance delegated:
+  - Dalton the 2nd (`planner`) should define the smallest safe slice, canonical ids, DTOs, settings approach, acceptance criteria, and deferred scope.
+  - Banach the 2nd (`docs_researcher`) should verify current OpenAI official docs plus React/Vitest/Testing Library implications.
+  - Singer the 2nd (`deprecation_auditor`) should audit stale ids, absent settings/provider APIs, and SDK/package assumptions.
+  - Faraday the 2nd (`security_reviewer`) should define secret handling, provider/network, prompt-injection, data-exfiltration, and logging constraints.
+- Pre-test guidance completed:
+  - Dalton the 2nd (`planner`) recommended a TypeScript-only built-in `ai` plugin with canonical kebab-case commands, plugin-local provider abstraction, OpenAI Responses adapter with injected transport, plugin-owned injectable settings store, inert settings panel descriptor, fail-closed views, no durable writes, and no SDK/native/package changes.
+  - Banach the 2nd (`docs_researcher`) verified official OpenAI docs: latest-model guidance currently names `gpt-5.5`; Responses API is recommended for new projects; use `instructions` / `input`, `store: false`, `text.format` for Structured Outputs, and programmatic refusal/error handling.
+  - Singer the 2nd (`deprecation_auditor`) found no P0 blocker for the recommended slice, but confirmed the literal durable plugin-settings acceptance is not implementable with current runtime APIs. It recommended inert `settingsPanels`, an injectable in-memory AI settings store, and explicit deferral of persistent settings/SDK/Tauri HTTP/native work.
+  - Faraday the 2nd (`security_reviewer`) required no real or realistic secrets, no live API calls, no Core provider leakage, no existing data-store key persistence, exact bounded DTOs, no implicit full-workspace exfiltration, redacted errors, and static guards for sinks/native/storage/package changes.
+- Parent decisions after guidance:
+  - Continue TASK-031 without blocking by treating provider settings as an AI-plugin-owned injectable settings abstraction plus inert settings panel descriptor; persistent plugin settings/secret storage are deferred and will be documented.
+  - Canonical runtime IDs use kebab-case only. Product-doc underscore IDs are stale and must not be registered as aliases.
+  - Provider id is `openai`; default model guidance is `gpt-5.5`; OpenAI adapter request shape must be Responses-style with `store: false` and `text.format`.
+  - Tests must use fake provider/transport and placeholder non-secret strings only; no live OpenAI calls or `OPENAI_API_KEY` requirement.
+  - AI commands must consume exact bounded caller-provided projections and return advisory DTOs only. They must not mutate pages, metadata, events, filters, or sibling plugin private data in this task.
+- Test writer delegated:
+  - Noether the 2nd (`test_writer`) should add focused red tests for built-in `ai` registration, canonical ids and stale-id absence, fake provider/Responses request shaping, exact bounded DTO validation, unconfigured provider behavior, secret redaction, provider output validation, inert views, static architecture guards, and no package/native/Tauri/Rust/schema/capability diffs.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Test writer completed:
+  - Noether the 2nd (`test_writer`) added `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-031 tests failed with 8 failed / 1 passed because the `ai` built-in, `src/plugins/ai/test-support`, `ai.suggestion-panel`, and `src/plugins/ai/index.ts` production surfaces do not exist yet.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint for the new test file, `git diff --check`, `.skip/.only` scan, changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test commit: `fd2c9c8 Noether(test)(Implement AI Plugin provider abstraction): add ai provider acceptance tests`; post-commit auto-push succeeded.
+- Implementation delegated:
+  - Wegener the 2nd (`implementer`) should add the built-in `ai` plugin, plugin-local provider/settings abstraction, OpenAI Responses adapter boundary with injected transport/settings, command handlers, test support seam, and inert views.
+  - Scope: production code only, expected under `src/plugins/ai/**` plus `src/bootstrap/built-in-plugins.ts`; no tests/docs/progress/package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Implementation completed:
+  - Wegener the 2nd (`implementer`) added the TASK-031 production baseline.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/ai/index.ts`, `src/plugins/ai/plugin.ts`, `src/plugins/ai/settings.ts`, `src/plugins/ai/test-support.ts`, `src/plugins/ai/providers/modelProvider.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/views/AiSuggestionPanel.tsx`, and `src/plugins/ai/views/AiReviewPanel.tsx`.
+  - Parent validated: focused TASK-031 tests passed (9 tests), adjacent plugin/API/Core/ML suite passed (5 files / 99 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/import scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
+  - Implementation commit: `5461921 Wegener(implementation)(Implement AI Plugin provider abstraction): implement ai provider boundary`; post-commit auto-push succeeded.
+- Review wave delegated:
+  - Jason the 2nd (`pr_explorer`) maps changed paths and review surfaces.
+  - Anscombe the 2nd (`reviewer`) checks correctness and behavior gaps.
+  - Nash the 2nd (`deprecation_auditor`) checks stale ids, absent APIs, and current OpenAI shape assumptions.
+  - Parfit the 2nd (`security_reviewer`) checks secrets, provider/network, prompt-injection, output-validation, and test seam risks.
+  - Schrodinger the 2nd (`docs_researcher`) checks current-doc/accessibility alignment and docs drift.
+  - Franklin the 2nd (`test_quality_reviewer`) checks test quality and missing P1 coverage.
+- Review wave completed:
+  - Jason the 2nd (`pr_explorer`) found no scope drift or native/package surface changes. It highlighted provider settings deferral, test-support under production plugin paths, unusual operation-changing getter in test support, public result text mutation, broad output schemas, and stale formal docs as risk surfaces.
+  - Parfit the 2nd (`security_reviewer`) found no P0 and two P1s: unguarded production test hooks/global provider-settings setters can override AI provider/settings, and validated command payloads are passed to async provider calls by reference so callers can mutate them after validation.
+  - Franklin the 2nd (`test_quality_reviewer`) found P1 test gaps for hostile/secret-like strings nested inside provider JSON output, forbidden secret/provider fields across all commands, provider-output accessor non-execution, and direct OpenAI provider adapter tests.
+  - Schrodinger the 2nd (`docs_researcher`) found a P1 current-doc issue: the mocked Responses request shape uses an object envelope as top-level `input`, which is not compatible with recorded OpenAI Responses examples using string or message/item-list input.
+  - Anscombe the 2nd (`reviewer`) confirmed the P1 post-validation mutation bug and listed P2 issues for Core filter operator compatibility, tag grammar, and nested provider/secret-shaped public JSON keys.
+  - Nash the 2nd (`deprecation_auditor`) found no P0 and two P1s: the OpenAI boundary is not live-compatible with Responses input/output/refusal shape, and the strict Structured Outputs schema is underspecified because properties are `{}`.
+- Parent decisions after review:
+  - Add review-fix tests first for all P1s.
+  - Production fixes should remove or hard-gate test-only provider/settings hooks from production import paths, eliminate the operation-changing getter, and prevent production callers from overriding provider/settings.
+  - Command readers or request construction must pass sanitized deep snapshots to provider calls, not caller-owned objects.
+  - Provider boundary should use a Responses-compatible `input` shape and parse/normalize raw Responses-like results/refusals/errors into AI-owned outputs.
+  - Structured Output schemas should use meaningful JSON Schema property types, not empty property schemas.
+  - Output validation should reject nested hostile strings, secret/provider-shaped keys, and provider-output accessors without executing them.
+  - Forbidden secret/provider override fields should be tested across all public AI commands.
+- Review-fix tests delegated:
+  - Tesla the 2nd (`test_writer`) should add focused red tests for production test-hook hardening, post-validation payload snapshotting, Responses-compatible provider input, raw Responses parsing/refusal/error handling, meaningful Structured Output schemas, nested hostile/secret provider JSON rejection, provider-output accessor non-execution, and forbidden secret/provider fields across all nine commands.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Review-fix tests completed:
+  - Tesla the 2nd (`test_writer`) extended `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-031 tests failed with 5 failed / 9 passed. Failure symptoms cover unguarded production test hooks, opaque Responses input object envelope, caller mutation visible after validation, raw OpenAI Responses pass-through, and nested unsafe provider JSON being accepted.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test-fix commit: `9f36d38 Tesla(test-fix)(Implement AI Plugin provider abstraction): cover ai review regressions`; post-commit auto-push succeeded.
+- Review-fix implementation delegated:
+  - Rawls the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: test-hook hardening, sanitized async input snapshots, Responses-compatible provider input, raw Responses parsing/refusal/error handling, meaningful Structured Output schemas, and nested provider output validation/accessor safety.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Review-fix implementation completed:
+  - Rawls the 2nd (`implementer`) fixed TASK-031 P1 production issues in `src/plugins/ai/plugin.ts`, `src/plugins/ai/providers/modelProvider.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/settings.ts`, and `src/plugins/ai/test-support.ts`.
+  - Fix scope: hard-gated AI test support to test mode, renamed production-adjacent test runtime seams away from public test-hook names, snapshotted validated command inputs before async provider calls, switched provider request input to a Responses-compatible string, parsed raw Responses-like success/refusal/error/incomplete/invalid shapes into redacted AI-owned outcomes, added meaningful strict JSON Schema property definitions, and rejected nested hostile/secret/provider-shaped output without executing accessors.
+  - Parent validated: focused TASK-031 tests passed (14 tests), adjacent plugin/API/Core/ML suite passed (5 files / 104 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/import scans found no matches, sibling/Core leakage scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
+  - Review-fix commit: `9aa398f Rawls(review-fix)(Implement AI Plugin provider abstraction): harden ai provider boundary`; post-commit auto-push succeeded.
+- Narrow re-review delegated:
+  - Bacon the 2nd (`security_reviewer`) should confirm no remaining P0/P1 security issues in provider/settings/test-support seams, secrets, native/package/storage drift, async payload snapshotting, provider output validation, and Core/sibling boundaries.
+  - Leibniz the 2nd (`reviewer`) should confirm prior correctness P1s are fixed for post-validation mutation, Responses-compatible input, raw Responses normalization, strict schemas, test-support getter hardening, and accessor-safe output validation.
+  - Feynman the 2nd (`deprecation_auditor`) should confirm current OpenAI Responses / Structured Outputs alignment and no stale underscore AI aliases.
+  - James the 2nd (`test_quality_reviewer`) should confirm review-fix tests cover the P1 regressions meaningfully.
+- Narrow re-review completed:
+  - Bacon the 2nd (`security_reviewer`) found no P0 and one remaining P1: provider/settings override seams are still exported from production modules, and `getAiProviderSettings()` exposes configured settings including `apiKey`; `test-support` guarding does not protect direct production-module imports. It also noted the operation-changing getter remains in `test-support.ts`.
+  - Leibniz the 2nd (`reviewer`) found no P0 and three remaining P1s: `error: null` OpenAI Responses successes are normalized as failures; strict Structured Output schemas use unsupported OpenAI JSON Schema keywords such as `maximum`, `minimum`, `maxItems`, and `maxLength`; and override/test-support hardening remains incomplete. It also carried one P2 for generated-filter/Core operator parity.
+  - Feynman the 2nd (`deprecation_auditor`) found no P0 and one current-API P1: normal Responses success payloads with `error: null` are rejected. It confirmed canonical dashed AI ids only, no Chat Completions / `response_format` / Assistants / SDK assumptions, and no stale underscore alias registration.
+  - James the 2nd (`test_quality_reviewer`) found no P0 and P1 test gaps: tests miss the renamed override seams, miss the `Object.defineProperty` operation getter, and omit `providerId` from the all-command forbidden-field matrix.
+  - Parent independently re-checked official OpenAI Structured Outputs docs: `strict: true` requests with unsupported JSON Schema keywords are rejected, including unsupported string length, numeric min/max, and array min/max item keywords.
+  - Interim full gate before second review-fix: `bun run check:quick` passed with 36 frontend files / 560 tests, typecheck, lint, Rust fmt, Rust clippy, and Rust tests.
+- Parent decisions after narrow re-review:
+  - Add second review-fix tests first.
+  - Required test coverage: direct import or source guard for production provider/settings override seams; no `Object.defineProperty` operation getter or operation-changing test wrapper; `providerId` forbidden across all public AI commands; OpenAI raw success fixture with `error: null` and `incomplete_details: null`; strict Structured Output schemas contain meaningful supported property shapes while excluding unsupported keywords (`maxLength`, `minLength`, `pattern`, `format`, `minimum`, `maximum`, `multipleOf`, `minItems`, `maxItems`, `allOf`, `not`, `if`, `then`, `else`, `dependentRequired`, `dependentSchemas`, `patternProperties`).
+  - After tests fail red, delegate production fix to `implementer`.
+- Second review-fix tests delegated:
+  - Hypatia the 2nd (`test_writer`) should add focused red coverage in `src/test/ai-plugin-provider-abstraction.test.tsx` for production override seam exports/settings exposure, `Object.defineProperty` operation getter behavior in test support, `providerId` forbidden across all commands, Responses success with `error: null` / `incomplete_details: null`, and strict Structured Output schema compatibility with OpenAI-supported keywords.
+  - Scope: tests only; no production, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Second review-fix tests completed:
+  - Hypatia the 2nd (`test_writer`) extended `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Added coverage: production AI module export guards for provider/settings override seams and settings access, static and behavioral guards against `Object.defineProperty` operation getters in test support, `providerId` in the all-command forbidden-field matrix, raw OpenAI Responses success fixture with `error: null` and `incomplete_details: null`, and unsupported-keyword checks for strict Structured Output schemas.
+  - Parent red validation: focused TASK-031 tests failed as expected with 4 failed / 11 passed. Failures cover production override exports, test-support changing `cleanup-inbox` to `generate-subtasks` on a second operation read, unsupported strict schema keywords, and `error: null` Responses success treated as provider unavailable.
+  - Parent static validation passed: focused ESLint, `git diff --check`, `.skip/.only` scan, tests-only changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
+  - Test-fix commit: `8d37679 Hypatia(test-fix)(Implement AI Plugin provider abstraction): cover remaining ai provider regressions`; post-commit auto-push succeeded.
+- Second review-fix implementation delegated:
+  - Dirac the 2nd (`implementer`) should fix production P1s in `src/plugins/ai/**`: remove production-module provider/settings override exports and settings secret exposure while preserving test-mode configuration through `test-support`, remove `Object.defineProperty` / operation-changing wrapper behavior, treat Responses `error: null` and `incomplete_details: null` as acceptable completed-success fields, and remove unsupported OpenAI strict JSON Schema keywords while preserving runtime validation.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Second review-fix implementation completed with a small test-helper correction:
+  - Dirac the 2nd (`implementer`) changed `src/plugins/ai/plugin.ts`, `src/plugins/ai/providers/openAIProvider.ts`, `src/plugins/ai/settings.ts`, and `src/plugins/ai/test-support.ts`.
+  - Dirac removed production exports for provider/settings override seams and moved test configuration behind a test-mode global hook, removed operation-changing `Object.defineProperty` behavior from test support, accepted completed Responses payloads with `error: null` / `incomplete_details: null`, and removed unsupported OpenAI strict JSON Schema keywords while preserving runtime validation.
+  - Parent rejected Dirac's first green attempt because `test-support.ts` used a brittle `provider.generate.toString()` / output-substitution compatibility branch; Dirac removed that branch.
+  - Removing output substitution exposed a test helper bug, so Lagrange the 2nd (`test_writer`) changed only `src/test/ai-plugin-provider-abstraction.test.tsx` so explicit `null` outputs from `outputForOperation` are preserved instead of falling back to default fixtures.
+  - Parent validation after both fixes: focused TASK-031 tests passed (15 tests), adjacent plugin/API/Core/ML suite passed (5 files / 105 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/native/storage/package scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
+  - Test-helper commit: `6988af6 Lagrange(test-fix)(Implement AI Plugin provider abstraction): preserve explicit null provider fixtures`; post-commit auto-push succeeded.
+  - Production review-fix commit: `05d84db Dirac(review-fix)(Implement AI Plugin provider abstraction): close provider seam regressions`; post-commit auto-push succeeded.
+- Final narrow re-review delegated:
+  - Darwin the 2nd (`security_reviewer`) should confirm no remaining P0/P1 security issues around provider/settings override seams, settings secret exposure, test-support mutation, secrets, native/package/storage/network drift, and plugin boundaries.
+  - Kuhn the 2nd (`reviewer`) should confirm prior correctness P1s are fixed for raw Responses normalization, strict schemas, test-support stability, null provider output invalidation, and advisory non-mutating command behavior.
+  - Maxwell the 2nd (`deprecation_auditor`) should confirm current OpenAI Responses / Structured Outputs alignment and no stale underscore alias registration.
+  - Bohr the 2nd (`test_quality_reviewer`) should confirm tests meaningfully cover the remaining P1 regressions.
+- Final narrow re-review completed:
+  - Darwin the 2nd (`security_reviewer`) found no remaining P0/P1 security findings. It confirmed narrow production exports, test-mode gated support hooks, stable provider wrapper behavior, private settings, no API key in provider requests, `store: false`, descriptor-based validation, no native/package drift, no secrets, and no network/storage/native sinks.
+  - Kuhn the 2nd (`reviewer`) found no remaining P0/P1 correctness findings. It confirmed prior P1s are fixed and left two residuals: P2 raw Responses objects without `status` but valid `output_text` are accepted, and P3 public result strings matching `persist*` are rewritten to `storage`.
+  - Maxwell the 2nd (`deprecation_auditor`) found no remaining P0/P1 current-API/deprecation findings. It verified current Responses / Structured Outputs shape against official OpenAI docs, including `error: null`, `incomplete_details: null`, `text.format`, strict schema subset, and no stale underscore AI aliases.
+  - Bohr the 2nd (`test_quality_reviewer`) found no remaining P0/P1 test-quality gaps and confirmed coverage for the final P1 regressions.
+  - Parent also reran adjacent focused suite after the final re-review handoff: 5 files / 105 tests passed.
+- Docs sync delegated:
+  - Chandrasekhar the 2nd (`doc_writer`) should sync product, architecture, development, implementation task-index, and testing docs to the delivered AI Plugin provider abstraction.
+  - Scope: docs only; no source, tests, progress ledger, agent-communication, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Docs sync completed:
+  - Chandrasekhar the 2nd (`doc_writer`) synced product, architecture, development, implementation task-index, and testing docs to TASK-031.
+  - Changed docs: `docs/product/05-built-in-plugins.md`, `docs/product/03-plugin-platform.md`, `docs/product/06-view-slots.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/architecture/01-overview-and-monorepo.md`, `docs/architecture/05-plugin-implementations.md`, `docs/architecture/07-runtime-flows.md`, `docs/implementation/task-index.md`, and `docs/testing/strategy.md`.
+  - Parent validation: `git diff --check` passed, docs-only/disallowed-file guards passed, and stale underscore AI id scan showed only explicit "not aliases" guidance.
+  - Docs commit: `6fa9536 Chandrasekhar(docs)(Implement AI Plugin provider abstraction): sync ai provider docs`; post-commit auto-push succeeded.
+- Next action: commit docs outcome record, run `bun run check:quick`, then mark TASK-031 complete if the gate passes.
 
 ## Current TASK-030 State
 

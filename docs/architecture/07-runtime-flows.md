@@ -56,7 +56,7 @@ async function createAppRuntime() {
 
 `storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
 
-`BUILT_IN_PLUGINS` 在 TASK-030 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin` 和 `MlPlugin`。AI、sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
+`BUILT_IN_PLUGINS` 在 TASK-031 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin`、`MlPlugin` 和 `AiPlugin`。Sync 等其他具体业务内置插件仍属于后续插件任务。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
 `runtime.markdown.collectEditorExtensions()` 从 `pluginHost.listPlugins()` 暴露的 public plugin metadata 收集 active plugin manifest 的 inert `contributes.markdownSyntax` descriptor。`runtime.markdown.pages` 是 narrow NativeBridge page facade，只发出 allowlisted `core.pages.get` / `core.pages.update` DTO，不接受 raw SQL、SQL params、filesystem path 或 file DTO。
 
@@ -75,6 +75,8 @@ TASK-028 的 `stats.run-aggregation`、`chart.bar`、`chart.line` 和 `chart.pie
 TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open` 和 `search.query` 也运行在当前 in-memory Core/plugin runtime 内。Quick Capture 通过 plugin-facing transaction 创建或追加 trusted plugin-marked Inbox Page，并写 `quick-capture.unprocessed` metadata / `quick-capture.filter.inbox` filter；Search 每次命令执行时 transient scan 当前未 archived pages 的 title 和 structured body text。二者不新增 NativeBridge/Tauri IPC、global shortcut、filesystem、notification、package/Cargo、Rust surface、schema 或 Tauri capability。
 
 TASK-030 的 `ml.run-prediction` 同样只运行在 TypeScript plugin/runtime 内。`ml.predict-remaining-time` 是 inert algorithm descriptor；Command Registry 是当前 runtime execution entry。ML 消费 caller-provided exact bounded page/metadata/event projections，返回 deterministic `ml.remaining-time-prediction` DTO，不读取 sibling plugin private stores/facades，不持久化 caller-provided projection evidence 为 ML metadata/events，也不新增 NativeBridge/Tauri IPC、network、filesystem、worker、model storage/training、package/Cargo、Rust surface、schema 或 Tauri capability。
+
+TASK-031 的 `ai.cleanup-inbox`、`ai.turn-text-into-task`、`ai.suggest-tags`、`ai.suggest-due-date`、`ai.generate-subtasks`、`ai.generate-filter`、`ai.summarize-time-notes`、`ai.generate-weekly-review` 和 `ai.explain-prediction` 也只运行在 TypeScript plugin/runtime 内。AI Plugin 消费 exact bounded caller-provided projections，通过 `src/plugins/ai/**` owned `openai` provider boundary 形成 Responses-style request DTOs（`instructions`、string `input`、`store: false`、strict `text.format` / `json_schema`），并返回 advisory DTOs。当前 provider/settings are injectable/mocked and default to unconfigured; no live OpenAI call, OpenAI SDK, raw network API, NativeBridge/Tauri IPC, filesystem, worker, package/Cargo/Rust surface, persistence schema, keychain, or Tauri capability is added.
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
 
@@ -554,9 +556,43 @@ executable AlgorithmRegistry / runtime algorithm handler
 trusted cross-plugin query/feed facade
 persistent ML prediction metadata/events and model refresh
 recommend next task / best work time / estimate bias / clustering / ranking
-AI explanation
+ML-native explanation/model integration beyond TASK-031 ai.explain-prediction advisory command
 app-shell/sidebar mounting polish
 network/filesystem/workers/model storage/training/background jobs
+native/Tauri/package/Rust/schema/capability changes
+```
+
+---
+
+### 18.15 User runs AI advisory command
+
+TASK-031 current flow:
+
+```text
+Caller/view host prepares exact bounded projections for the chosen AI command
+→ CommandRegistry.execute("ai.generate-subtasks", input)
+→ Plugin Host creates command-time PluginContext for AiPlugin
+→ AiPlugin validates exact input kind, projection shape, bounds, and forbidden secret/provider fields
+→ AiPlugin snapshots validated input before async provider execution
+→ AiPlugin builds an openai provider request with instructions, string input, store false, and strict text.format json_schema
+→ Injected/mocked provider or transport returns raw/provider output
+→ OpenAI adapter normalizes output_text or message output_text content
+→ AiPlugin validates provider output and returns an advisory DTO, or returns a redacted fail-closed AI result
+```
+
+The current flow does not write pages, metadata, events, filters, settings, or provider configuration. `ai.suggestion-panel` and `ai.review-panel` can be resolved from ViewRegistry and render accessible unavailable/loading status, but there is no app-shell AI route, acceptance UX, persistent settings UI, secret storage, native HTTP, live provider execution, or durable AI metadata/event write path in TASK-031.
+
+Deferred after TASK-031:
+
+```text
+persistent plugin settings and settings UI
+OS keychain / secret storage
+native HTTP transport / OpenAI SDK / live provider execution
+durable AI metadata/event writes and suggestion acceptance workflow
+app-shell AI route/sidebar mounting polish
+raw Responses missing-status stricter parsing
+exact preservation of public result words matching persist*
+generate-filter parity with broader Core filter operators such as neq / exists
 native/Tauri/package/Rust/schema/capability changes
 ```
 

@@ -802,7 +802,7 @@ executable AlgorithmRegistry / runtime algorithm handler
 trusted cross-plugin query/feed facade
 persistent prediction metadata/events and model refresh
 recommendation / best work time / estimate bias / clustering / ranking
-AI explanation
+ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
 app-shell/sidebar mounting polish
 network/filesystem/workers/model storage/training/background jobs
 native/package/Rust/schema/Tauri capability changes
@@ -812,32 +812,61 @@ native/package/Rust/schema/Tauri capability changes
 
 ## 14. AI Plugin 架构
 
+AI Plugin 负责 AI/provider behavior；Core 不包含 AI business logic、OpenAI model/prompt details、provider settings, network code, or secret handling. TASK-031 当前只交付 TypeScript app-runtime provider abstraction baseline，plugin id 是 `ai`。
+
 ```text
-plugins/ai/
-  src/
-    manifest.ts
-    plugin.ts
-    providers/
-      modelProvider.ts
-      openAIProvider.ts
-    commands/
-      cleanupInbox.ts
-      generateSubtasks.ts
-      suggestMetadata.ts
-      generateFilter.ts
-      summarizeTimeNotes.ts
-      explainPrediction.ts
-    tools/
-      pageTool.ts
-      metadataTool.ts
-      eventTool.ts
-      filterTool.ts
-    views/
-      AiSuggestionPanel.tsx
-      AiReviewPanel.tsx
+src/plugins/ai/
+  index.ts
+  plugin.ts
+  settings.ts
+  test-support.ts
+  providers/
+    modelProvider.ts
+    openAIProvider.ts
+  views/
+    AiSuggestionPanel.tsx
+    AiReviewPanel.tsx
 ```
 
-AI Plugin 注册命令：
+Canonical TASK-031 ids:
+
+```text
+commands:
+  ai.cleanup-inbox
+  ai.turn-text-into-task
+  ai.suggest-tags
+  ai.suggest-due-date
+  ai.generate-subtasks
+  ai.generate-filter
+  ai.summarize-time-notes
+  ai.generate-weekly-review
+  ai.explain-prediction
+
+views/types:
+  ai.suggestion-panel
+  ai.review-panel
+
+metadata descriptors:
+  ai.summary
+  ai.suggestedTags
+  ai.suggestedEstimate
+
+event descriptors:
+  ai.suggestion-generated
+  ai.summary-generated
+
+settings descriptor:
+  ai.provider-settings
+
+provider id:
+  openai
+```
+
+All current AI ids are kebab-case or camelCase where shown above. Stale underscore ids such as `ai.cleanup_inbox`, `ai.turn_text_into_task`, `ai.suggest_tags`, `ai.suggest_due_date`, `ai.generate_subtasks`, `ai.generate_filter`, `ai.summarize_time_notes`, `ai.generate_weekly_review`, `ai.explain_prediction`, `ai.suggestion_panel`, `ai.review_panel`, `ai.suggested_tags`, `ai.suggested_estimate`, `ai.suggestion_generated`, and `ai.summary_generated` are not aliases.
+
+### 14.1 Registration and Commands
+
+`AiPlugin` is included in `BUILT_IN_PLUGINS`. It contributes manifest command descriptors and registers the same runtime commands through Command Registry:
 
 ```ts
 ctx.commands.register({
@@ -847,20 +876,83 @@ ctx.commands.register({
 });
 ```
 
-用户在任务页点击 AI 拆解：
+Each command requires an exact bounded input kind and caller-provided projection payload. Current input sources include capture text, page projections, metadata projections, event projections, existing tag lists, child page projections, allowed filter field/operator descriptors, and caller-provided prediction DTOs. The command boundary rejects malformed records, extra fields, unsafe/prototype/accessor data, unbounded arrays/text/JSON, forbidden provider/secret fields, unsafe provider output, and unsupported generated filter operators before exposing public DTOs.
+
+Current command results are advisory DTOs only:
 
 ```text
-AI 读取当前 Markdown Page
-AI 输出 Markdown：
+ai.cleanup-inbox -> ai.cleanup-inbox-suggestion
+ai.turn-text-into-task -> ai.task-suggestion
+ai.suggest-tags -> ai.suggested-tags
+ai.suggest-due-date -> ai.suggested-due-date
+ai.generate-subtasks -> ai.subtask-suggestions
+ai.generate-filter -> ai.filter-suggestion
+ai.summarize-time-notes -> ai.time-notes-summary
+ai.generate-weekly-review -> ai.weekly-review
+ai.explain-prediction -> ai.prediction-explanation
+```
+
+The AI Plugin does not call `ctx.pages`, `ctx.metadata`, `ctx.events`, or `ctx.filters` mutation methods in TASK-031. It does not write `ai.summary`, `ai.suggestedTags`, `ai.suggestedEstimate`, `ai.suggestion-generated`, or `ai.summary-generated`; these descriptors reserve future AI-owned durable write paths after a trusted acceptance flow exists. It does not import sibling plugin internals or read sibling plugin private stores/facades.
+
+### 14.2 OpenAI Provider Boundary
+
+`src/plugins/ai/providers/modelProvider.ts` defines the plugin-local provider interface. `src/plugins/ai/providers/openAIProvider.ts` normalizes raw Responses-like transport output behind the same interface. The current provider id is `openai`, and `defaultOpenAiModel` is `gpt-5.5`.
+
+The provider request is shaped as:
+
+```text
+operation: cleanup-inbox | turn-text-into-task | suggest-tags | suggest-due-date | generate-subtasks | generate-filter | summarize-time-notes | generate-weekly-review | explain-prediction
+providerId: openai
+request.instructions: string
+request.input: string
+request.model: settings model or gpt-5.5
+request.store: false
+request.text.format.type: json_schema
+request.text.format.strict: true
+request.text.format.name: command-specific schema name
+request.text.format.schema: object schema with additionalProperties false
+```
+
+The strict JSON schemas intentionally stay within the supported subset covered by TASK-031 tests. Runtime validation enforces bounds, exact dates, confidence range, safe text, safe JSON keys, and generated-filter field/operator allowlists separately instead of relying on unsupported strict-schema keywords such as `maxLength`, `pattern`, `format`, `minimum`, `maximum`, `maxItems`, `allOf`, or `patternProperties`.
+
+Raw Responses normalization accepts successful completed payloads with `error: null` and `incomplete_details: null`. It parses JSON from top-level `output_text` or from `output` message content entries with `type: "output_text"`. Refusal content, incomplete responses, error responses, invalid response shapes, invalid JSON, null output, accessor-backed data, transport failures, and unavailable transport fail closed with redacted AI-owned errors.
+
+TASK-031 does not add the OpenAI SDK, `fetch`, `XMLHttpRequest`, WebSocket, workers, localStorage/sessionStorage/IndexedDB, Node HTTP/filesystem modules, NativeBridge/Tauri imports, Tauri HTTP permissions/capabilities, Rust commands, package changes, Cargo changes, schema changes, keychain access, or live network calls. Tests inject mocked providers and mocked OpenAI transports.
+
+### 14.3 Settings, Views, and Deferred Scope
+
+`ai.provider-settings` is an inert manifest `settingsPanels` descriptor. The actual settings used by TASK-031 are AI-plugin-owned injectable runtime/test state with `{ providerId: "openai", model, apiKey }`, defaulting to unconfigured. Production public AI exports do not expose settings secrets or provider override hooks; test support is gated by test mode and wraps injected providers without changing request operation/provider identity.
+
+`ai.suggestion-panel` and `ai.review-panel` are minimal accessible views. They render loading/unavailable `role="status"` text inside named regions and ignore unsafe data/error props, so malformed provider output or caller data remains inert.
+
+用户在任务页点击 AI 拆解时，当前 slice can only return advisory Markdown-like text:
+
+```text
+Caller supplies bounded page projection
+AI command returns advisory Markdown:
 - [ ] 子任务 A
 - [ ] 子任务 B
 - [ ] 子任务 C
-插入当前页面
-Task Plugin 自动识别子任务
 ```
 
 AI 不直接创建任务。
-AI 生成 Markdown-ish 内容。
-Task Plugin 负责解释 `- [ ]`。
+AI 不直接插入当前页面。
+Task Plugin 后续通过 explicit user/caller acceptance workflow 负责解释 `- [ ]`。
+
+Deferred after TASK-031:
+
+```text
+persistent plugin settings and settings UI
+OS keychain / secret storage
+native HTTP transport / OpenAI SDK / live provider execution
+durable AI metadata and event writes
+acceptance UX that applies suggestions to pages, metadata, events, or filters
+AI tools / hosted tools / streaming / Agents SDK orchestration
+app-shell route/sidebar mounting polish
+raw Responses missing-status stricter parsing
+exact preservation of public result words matching persist*
+generate-filter parity with broader Core filter operators such as neq / exists
+native/package/Rust/schema/Tauri capability changes
+```
 
 ---

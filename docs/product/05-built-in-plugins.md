@@ -1016,7 +1016,7 @@ detect best work time
 estimate bias
 similar task clustering
 rank today tasks
-AI explanation
+ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
 app-shell mounting / polish
 native/package/Rust/schema/Tauri capability changes
 ```
@@ -1025,37 +1025,102 @@ native/package/Rust/schema/Tauri capability changes
 
 ## 22. AI Plugin
 
-AI Plugin 通过 Command / View / Metadata 接入。
+AI Plugin 是内置插件，manifest id 是 `ai`。TASK-031 当前交付的是 plugin-owned provider abstraction 和 advisory command baseline，不是完整 AI workspace automation、settings UI、secret storage、native HTTP transport 或 live OpenAI execution。
 
 ### 22.1 AI Plugin 注册能力
 
 ```text
+Built-in plugin:
+AiPlugin
+
+Plugin id:
+ai
+
 Commands:
-ai.cleanup_inbox
-ai.turn_text_into_task
-ai.suggest_tags
-ai.suggest_due_date
-ai.generate_subtasks
-ai.generate_filter
-ai.summarize_time_notes
-ai.generate_weekly_review
-ai.explain_prediction
+ai.cleanup-inbox
+ai.turn-text-into-task
+ai.suggest-tags
+ai.suggest-due-date
+ai.generate-subtasks
+ai.generate-filter
+ai.summarize-time-notes
+ai.generate-weekly-review
+ai.explain-prediction
 
 Metadata:
 ai.summary
-ai.suggested_tags
-ai.suggested_estimate
+ai.suggestedTags
+ai.suggestedEstimate
 
 Events:
-ai.suggestion_generated
-ai.summary_generated
+ai.suggestion-generated
+ai.summary-generated
+
+Settings descriptor:
+ai.provider-settings
 
 Views:
-ai.suggestion_panel
-ai.review_panel
+ai.suggestion-panel
+ai.review-panel
+
+Provider id:
+openai
+
+Default model guidance:
+gpt-5.5
 ```
 
-### 22.2 快速收集箱 AI
+Canonical AI ids are kebab-case only. The old underscore ids `ai.cleanup_inbox`, `ai.turn_text_into_task`, `ai.suggest_tags`, `ai.suggest_due_date`, `ai.generate_subtasks`, `ai.generate_filter`, `ai.summarize_time_notes`, `ai.generate_weekly_review`, `ai.explain_prediction`, `ai.suggestion_panel`, `ai.review_panel`, `ai.suggested_tags`, `ai.suggested_estimate`, `ai.suggestion_generated`, and `ai.summary_generated` are stale documentation artifacts and are not runtime aliases.
+
+### 22.2 Provider Boundary
+
+The provider boundary lives under `src/plugins/ai/**`; Core remains AI/provider/model/prompt-free. TASK-031 registers `openai` as the current provider id and shapes requests as OpenAI Responses-style DTOs:
+
+```text
+providerId: openai
+operation: cleanup-inbox | turn-text-into-task | suggest-tags | suggest-due-date | generate-subtasks | generate-filter | summarize-time-notes | generate-weekly-review | explain-prediction
+request.model: gpt-5.5 by default when settings omit a nonblank model
+request.instructions: string
+request.input: string
+request.store: false
+request.text.format.type: json_schema
+request.text.format.strict: true
+request.text.format.schema: supported strict structured-output subset
+```
+
+The structured-output schemas intentionally use a limited subset. Bounds, exact payload shape, unsafe text checks, forbidden secret/provider fields, operator allowlists, and public DTO sanitization are enforced by AI Plugin runtime validators rather than by schema keywords such as `maxLength`, `pattern`, `minimum`, or `maxItems`.
+
+Raw Responses parsing accepts completed payloads with `error: null` and `incomplete_details: null`, and normalizes JSON from either top-level `output_text` or message `content` parts with `type: "output_text"`. Refusals, incomplete responses, error responses, malformed payloads, invalid JSON, invalid command DTOs, and provider failures fail closed to redacted AI-owned failure DTOs or command rejections; raw provider payloads, usage data, settings, API keys, stack traces, and transport errors are not exposed.
+
+TASK-031 uses mocked/injected provider and transport seams in tests. It does not add the OpenAI SDK, `fetch`, native HTTP, package dependencies, Tauri permissions/capabilities, Rust commands, schema changes, keychain access, or live network calls.
+
+### 22.3 Command Behavior
+
+AI commands consume exact bounded caller-provided projections and return advisory DTOs only:
+
+```text
+ai.cleanup-inbox -> ai.cleanup-inbox-suggestion
+ai.turn-text-into-task -> ai.task-suggestion
+ai.suggest-tags -> ai.suggested-tags
+ai.suggest-due-date -> ai.suggested-due-date
+ai.generate-subtasks -> ai.subtask-suggestions
+ai.generate-filter -> ai.filter-suggestion
+ai.summarize-time-notes -> ai.time-notes-summary
+ai.generate-weekly-review -> ai.weekly-review
+ai.explain-prediction -> ai.prediction-explanation
+```
+
+Input projections include bounded page, metadata, event, capture, existing tag, existing child, allowed filter field/operator, or ML prediction DTO data depending on the command. They must be supplied by the caller; AI Plugin does not read sibling plugin private stores/facades and does not import Task, Tag, Timer, Quick Capture, Search, Stats, Chart, ML, Habit, Heatmap, Calendar, NativeBridge, PluginHost, or raw Core internals.
+
+AI commands do not mutate Markdown Pages, metadata, events, filters, sibling plugin data, plugin settings, or provider configuration. They do not persist AI metadata/events in TASK-031. Acceptance remains a future caller/user workflow: for example, a returned subtask Markdown suggestion is only text until another explicit command or user action applies it.
+
+### 22.4 Settings and Views
+
+`ai.provider-settings` is currently an inert manifest settings panel descriptor. The runtime settings state used by TASK-031 is AI-plugin-owned and injectable for tests/runtime configuration; it defaults to unconfigured. Persistent plugin settings, settings UI, OS keychain/secret storage, Core settings facade, native HTTP transport, and live provider execution are deferred.
+
+`ai.suggestion-panel` and `ai.review-panel` are accessible fail-closed views. They render loading or unavailable status text through React text sinks and intentionally ignore unsafe caller data, provider output, or errors.
+
+### 22.5 快速收集箱 AI
 
 用户输入：
 
@@ -1076,7 +1141,23 @@ task.scheduled = 明天下午
 task.estimate = 1h
 ```
 
-用户接受后，由 Task Plugin、Tag Plugin、Metadata 系统落地。
+当前 TASK-031 只返回 advisory suggestion DTO。用户接受后的实际落地仍由后续 UI/workflow 通过 Task Plugin、Tag Plugin、Metadata 系统或其他 explicit commands 完成。
+
+### 22.6 Deferred / Residual AI Scope
+
+```text
+persistent plugin settings and settings UI
+OS keychain / secret storage
+native HTTP / OpenAI SDK / live provider execution
+provider execution outside injected/mocked tests
+durable ai.summary / ai.suggestedTags / ai.suggestedEstimate writes
+ai.suggestion-generated / ai.summary-generated writes from trusted acceptance flows
+automatic page/filter/task/tag mutation from AI suggestions
+app-shell mounting and acceptance UX
+raw Responses missing-status stricter parsing
+exact preservation of public result words matching persist*
+generate-filter parity with the broader Core filter executor, including neq / exists semantics
+```
 
 ---
 

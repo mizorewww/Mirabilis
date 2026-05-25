@@ -801,19 +801,30 @@ Source docs:
 
 - `docs/product/05-built-in-plugins.md#22-ai-plugin`
 - `docs/development/02-implementation-roadmap-and-constraints.md#phase-10ai-plugin`
+- `docs/architecture/05-plugin-implementations.md#14-ai-plugin-架构`
 
 Acceptance criteria:
 
-- AI Plugin supports an OpenAI provider abstraction without leaking provider details into Core.
-- Commands exist for quick capture cleanup, generate subtasks, suggest metadata, generate filters, summarize time notes, weekly review, and explain prediction.
-- Provider settings are stored as plugin settings.
-- Secrets are never committed or logged.
+- Built-in TypeScript-only `ai` plugin is registered through `BUILT_IN_PLUGINS` with canonical kebab-case commands `ai.cleanup-inbox`, `ai.turn-text-into-task`, `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, `ai.generate-filter`, `ai.summarize-time-notes`, `ai.generate-weekly-review`, and `ai.explain-prediction`; stale underscore ids are not aliases.
+- AI contributes `ai.suggestion-panel` and `ai.review-panel` views, metadata descriptors `ai.summary`, `ai.suggestedTags`, `ai.suggestedEstimate`, event descriptors `ai.suggestion-generated`, `ai.summary-generated`, and inert settings descriptor `ai.provider-settings`.
+- Provider abstraction is owned under `src/plugins/ai/**`, uses provider id `openai`, defaults model guidance to `gpt-5.5`, and keeps OpenAI/provider/model/prompt behavior out of Core.
+- Provider requests use Responses-style shape with `instructions`, string `input`, `store: false`, and `text.format` strict `json_schema` using the supported schema subset; runtime validators enforce bounds, safe text/JSON, exact DTOs, and generated-filter field/operator allowlists separately.
+- Raw Responses normalization accepts completed payloads with `error: null` and `incomplete_details: null`, parses top-level `output_text` and message output text content, and fails closed/redacted for refusals, incomplete/error/invalid responses, invalid JSON, provider failures, and unavailable transport.
+- Provider/settings execution is mocked or injected in tests. No live OpenAI calls, OpenAI SDK/package changes, raw network APIs, native/Tauri/Rust/schema/capability changes, keychain, or secret storage are introduced.
+- Provider settings are represented only as AI-plugin-owned injectable runtime/test settings plus the inert `ai.provider-settings` descriptor. Persistent plugin settings, settings UI, secret storage/keychain, native HTTP transport, and live provider execution are deferred.
+- Commands consume exact bounded caller-provided projections and return advisory DTOs only. They do not mutate pages, metadata, events, filters, settings, sibling plugin data, or durable AI metadata/events.
+- `ai.suggestion-panel` and `ai.review-panel` render inert accessible loading/unavailable states and fail closed for unsafe data/error props.
+- Secrets and provider settings are not committed, logged, included in provider request input, or exposed through production AI public exports.
 
 Test plan:
 
-- Provider boundary tests with mocked API.
-- Command tests for prompt/input shaping.
-- Security review for secrets handling.
+- Built-in registration tests for canonical command/view/metadata/event/settings descriptors and stale-id absence.
+- Real Command Registry tests for all nine AI commands, Responses-style provider request shaping, default `gpt-5.5`, `store: false`, strict schema subset, advisory result DTOs, and no runtime store mutations.
+- Exact bounded input validation tests for malformed, extra-field, hostile, accessor/prototype-shaped, oversized, forbidden secret/provider override, and post-validation mutation cases.
+- Mocked provider/transport tests for unconfigured provider, provider failures, raw Responses success paths, refusals, incomplete/error/invalid responses, invalid JSON, null outputs, redaction, and no live calls.
+- Provider output validation tests for wrong-kind, oversized, unsafe HTML/URL/SQL/prompt-injection text, nested secret/provider-shaped keys, unsupported generated-filter operators, and accessor non-execution.
+- UI tests for inert/fail-closed `ai.suggestion-panel` and `ai.review-panel`.
+- Static guards for Core isolation, sibling/private imports, raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, HTML/Markdown/code execution sinks, storage/network/native/package sinks, real-looking secrets, and package/native/Tauri/Rust/schema/capability diffs.
 
 Dependencies:
 
@@ -822,6 +833,14 @@ Dependencies:
 Docs to verify before implementation:
 
 - Current OpenAI API docs and model guidance.
+
+Known residual/deferred after TASK-031:
+
+- Persistent settings/secret storage/settings UI/native HTTP/live provider execution.
+- Durable AI metadata/event writes and suggestion acceptance workflows.
+- Raw Responses missing-status stricter parsing.
+- Exact preservation of public result wording around `persist*`.
+- `ai.generate-filter` parity with the broader Core filter executor, including `neq` / `exists` semantics.
 
 ### TASK-032: Implement Sync Plugin skeleton
 
