@@ -104,9 +104,10 @@ type HabitCompletionEventFixture = {
 
 type TimerNoteEventFixture = {
   namespace: string;
+  pageId: string;
   payload: {
     notePageId: string;
-    pageId: string;
+    notedAt: string;
     segmentId: string;
   };
   sourcePluginId: string;
@@ -226,6 +227,10 @@ const staleStatsOrChartIds = [
   "line_chart",
   "pie_chart",
 ] as const;
+const maxStatsInputItems = 1_000;
+const maxChartItems = 200;
+const maxTrustedNumericMagnitude = 1_000_000_000;
+const maxTrustedLabelLength = 200;
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -409,6 +414,93 @@ describe("Stats and Chart plugins", () => {
     }
   });
 
+  it("rejects oversized Stats aggregation arrays before running aggregation work", async () => {
+    const runtime = await createRuntime();
+    const oversizedSegments = Array.from(
+      { length: maxStatsInputItems + 1 },
+      (_, index) =>
+        createTimerSegment({
+          durationSeconds: 60,
+          pageId: `page-oversized-${index}`,
+          pageTitle: `Oversized page ${index}`,
+          segmentId: `segment-oversized-${index}`,
+          startAt: addSeconds("2026-05-20T09:00:00.000Z", index * 120),
+        }),
+    );
+    let resolved = false;
+
+    try {
+      await runStatsAggregation(
+        runtime,
+        createRunAggregationPayload(
+          "stats.sum-time-by-page",
+          createTimeByPageInput(oversizedSegments),
+        ),
+      );
+      resolved = true;
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+    }
+
+    expect(resolved).toBe(false);
+  });
+
+  it("ignores out-of-bound Stats numeric magnitudes and labels", async () => {
+    const runtime = await createRuntime();
+    const overlongLabel = "L".repeat(maxTrustedLabelLength + 1);
+    const pageResult = await runStatsAggregation(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-page",
+        createTimeByPageInput([
+          createTimerSegment({
+            durationSeconds: 60,
+            pageId: "page-bounded",
+            pageTitle: "Bounded",
+            segmentId: "segment-bounded",
+          }),
+          createTimerSegment({
+            durationSeconds: maxTrustedNumericMagnitude + 1,
+            pageId: "page-overflow",
+            pageTitle: "Overflow",
+            segmentId: "segment-overflow",
+          }),
+        ]),
+      ),
+    );
+    const tagResult = await runStatsAggregation(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-tag",
+        createTimeByTagInput(
+          [
+            createTimerSegment({
+              durationSeconds: 30,
+              pageId: "page-overlong-label",
+              pageTitle: "Long tag",
+              segmentId: "segment-overlong-label",
+              tagIds: ["tag-overlong"],
+            }),
+          ],
+          [createTagMetadata("tag-overlong", overlongLabel)],
+        ),
+      ),
+    );
+
+    expect.soft(pageResult).toStrictEqual({
+      categories: [{ label: "Bounded", value: 60 }],
+      kind: "chart.category-series",
+      title: "Time by page",
+      unit: "seconds",
+    } satisfies ChartCategorySeries);
+    expect.soft(tagResult).toStrictEqual({
+      categories: [{ label: "No tag", value: 30 }],
+      kind: "chart.category-series",
+      title: "Time by tag",
+      unit: "seconds",
+    } satisfies ChartCategorySeries);
+  });
+
   it("aggregates Timer duration by trusted Tag metadata and uses No tag for untagged valid segments", async () => {
     const runtime = await createRuntime();
     const validTagged = createTimerSegment({
@@ -542,6 +634,47 @@ describe("Stats and Chart plugins", () => {
       title: "Time by page",
       unit: "seconds",
     } satisfies ChartCategorySeries);
+  });
+
+  it("retains separate Time by page rows for distinct pages that share a title", async () => {
+    const runtime = await createRuntime();
+    const result = (await runStatsAggregation(
+      runtime,
+      createRunAggregationPayload(
+        "stats.sum-time-by-page",
+        createTimeByPageInput([
+          createTimerSegment({
+            durationSeconds: 600,
+            pageId: "page-shared-title-a",
+            pageTitle: "Shared title",
+            segmentId: "segment-shared-title-a",
+          }),
+          createTimerSegment({
+            durationSeconds: 900,
+            pageId: "page-shared-title-b",
+            pageTitle: "Shared title",
+            segmentId: "segment-shared-title-b",
+          }),
+        ]),
+      ),
+    )) as ChartCategorySeries;
+
+    expect(result).toMatchObject({
+      kind: "chart.category-series",
+      title: "Time by page",
+      unit: "seconds",
+    });
+    expect(result.categories).toHaveLength(2);
+    expectCategoryRowWithIdentity(
+      result.categories,
+      "page-shared-title-a",
+      600,
+    );
+    expectCategoryRowWithIdentity(
+      result.categories,
+      "page-shared-title-b",
+      900,
+    );
   });
 
   it("compares trusted task estimates with actual Timer seconds and returns deterministic delta/error fields", async () => {
@@ -832,6 +965,159 @@ describe("Stats and Chart plugins", () => {
     } satisfies ChartCategorySeries);
   });
 
+  it("retains page identity for unnoted session counts when page titles collide", async () => {
+    const runtime = await createRuntime();
+    const noted = createTimerSegment({
+      durationSeconds: 600,
+      pageId: "page-shared-unnoted-noted",
+      pageTitle: "Shared title",
+      segmentId: "segment-shared-unnoted-noted",
+    });
+    const unnotedFirst = createTimerSegment({
+      durationSeconds: 300,
+      pageId: "page-shared-unnoted-a",
+      pageTitle: "Shared title",
+      segmentId: "segment-shared-unnoted-a",
+    });
+    const unnotedSecond = createTimerSegment({
+      durationSeconds: 900,
+      pageId: "page-shared-unnoted-b",
+      pageTitle: "Shared title",
+      segmentId: "segment-shared-unnoted-b",
+    });
+    const result = (await runStatsAggregation(
+      runtime,
+      createRunAggregationPayload(
+        "stats.unnoted-sessions-count",
+        createUnnotedSessionsInput(
+          [noted, unnotedFirst, unnotedSecond],
+          [
+            createTimerNoteEvent({
+              notePageId: "note-page-shared-unnoted",
+              pageId: noted.pageId,
+              segmentId: noted.segmentId,
+            }),
+          ],
+        ),
+      ),
+    )) as ChartCategorySeries;
+
+    expect(result).toMatchObject({
+      kind: "chart.category-series",
+      title: "Unnoted sessions",
+      unit: "count",
+    });
+    expect(result.categories).toHaveLength(2);
+    expectCategoryRowWithIdentity(
+      result.categories,
+      unnotedFirst.pageId,
+      1,
+    );
+    expectCategoryRowWithIdentity(
+      result.categories,
+      unnotedSecond.pageId,
+      1,
+    );
+    expect(JSON.stringify(result.categories)).not.toContain(noted.pageId);
+  });
+
+  it("fails closed to empty chart states for oversized Chart DTO arrays", async () => {
+    const runtime = await createRuntime();
+    const scenarios: Array<{
+      data: ChartData;
+      regionName: "Bar chart" | "Line chart";
+      sentinelLabel: string;
+      viewId: ChartViewId;
+    }> = [
+      {
+        data: createCategorySeries({
+          categories: Array.from({ length: maxChartItems + 1 }, (_, index) => ({
+            label: `Category ${index}`,
+            value: index + 1,
+          })),
+          title: "Oversized categories",
+          unit: "count",
+        }),
+        regionName: "Bar chart",
+        sentinelLabel: "Category 0",
+        viewId: "chart.bar",
+      },
+      {
+        data: createTimeSeries({
+          points: Array.from({ length: maxChartItems + 1 }, (_, index) => ({
+            date: `2026-05-${String((index % 28) + 1).padStart(2, "0")}`,
+            label: `Point ${index}`,
+            value: index + 1,
+          })),
+          title: "Oversized points",
+          unit: "count",
+        }),
+        regionName: "Line chart",
+        sentinelLabel: "Point 0",
+        viewId: "chart.line",
+      },
+      {
+        data: createComparisonSeries({
+          comparisons: Array.from({ length: maxChartItems + 1 }, (_, index) => ({
+            actualSeconds: index + 2,
+            deltaSeconds: 1,
+            errorPercent: 1,
+            expectedSeconds: index + 1,
+            label: `Comparison ${index}`,
+          })),
+          title: "Oversized comparisons",
+        }),
+        regionName: "Bar chart",
+        sentinelLabel: "Comparison 0",
+        viewId: "chart.bar",
+      },
+    ];
+
+    for (const scenario of scenarios) {
+      const { unmount } = renderChartView(runtime, scenario.viewId, {
+        data: scenario.data,
+      });
+      const chart = screen.getByRole("region", { name: scenario.regionName });
+      const status = within(chart).queryByRole("status", {
+        name: /chart empty/i,
+      });
+
+      expect(status, `${scenario.viewId} oversized empty status`)
+        .toBeInTheDocument();
+      if (status !== null) {
+        expect(status).toHaveTextContent("No chart data");
+      }
+      expect(within(chart).queryByText(scenario.sentinelLabel))
+        .not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("ignores Chart rows with out-of-bound labels or numeric magnitudes", async () => {
+    const runtime = await createRuntime();
+    const overlongLabel = "L".repeat(maxTrustedLabelLength + 1);
+
+    renderChartView(runtime, "chart.bar", {
+      data: createCategorySeries({
+        categories: [
+          { label: "Accepted", value: 1 },
+          { label: overlongLabel, value: 2 },
+          { label: "Huge finite", value: maxTrustedNumericMagnitude + 1 },
+        ],
+        title: "Bounded rows",
+        unit: "count",
+      }),
+    });
+
+    const chart = screen.getByRole("region", { name: "Bar chart" });
+    const table = within(chart).getByRole("table", { name: "Bounded rows" });
+
+    expect(within(table).getByText("Accepted")).toBeVisible();
+    expect(within(table).getByText("1 count")).toBeVisible();
+    expect(within(table).queryByText(overlongLabel)).not.toBeInTheDocument();
+    expect(within(table).queryByText("Huge finite")).not.toBeInTheDocument();
+  });
+
   it("renders Bar, Line, and Pie chart data as accessible inert React markup with loading and empty states", async () => {
     const runtime = await createRuntime();
     const unsafeLabel = "Deep <img src=x onerror=alert(1)>";
@@ -896,6 +1182,47 @@ describe("Stats and Chart plugins", () => {
     expect(loadingStatus).toHaveAttribute("aria-busy", "true");
     expect(emptyStatus).toHaveTextContent("No chart data");
     expectNoDangerousDom();
+  });
+
+  it("renders comparison charts with accessible headers for every comparison field", async () => {
+    const runtime = await createRuntime();
+
+    renderChartView(runtime, "chart.bar", {
+      data: createComparisonSeries({
+        comparisons: [
+          {
+            actualSeconds: 1_800,
+            deltaSeconds: 300,
+            errorPercent: 20,
+            expectedSeconds: 1_500,
+            label: "Planning",
+          },
+        ],
+        title: "Estimate vs actual",
+      }),
+    });
+
+    const chart = screen.getByRole("region", { name: "Bar chart" });
+    const table = within(chart).getByRole("table", {
+      name: "Estimate vs actual",
+    });
+
+    for (const header of ["Label", "Expected", "Actual", "Delta", "Error"]) {
+      const columnHeader = within(table).queryByRole("columnheader", {
+        name: header,
+      });
+
+      expect(columnHeader, `comparison column header ${header}`)
+        .toBeInTheDocument();
+      if (columnHeader !== null) {
+        expect(columnHeader).toBeVisible();
+      }
+    }
+    expect(within(table).getByText("Planning")).toBeVisible();
+    expect(within(table).getByText("1500 seconds")).toBeVisible();
+    expect(within(table).getByText("1800 seconds")).toBeVisible();
+    expect(within(table).getByText("300 seconds")).toBeVisible();
+    expect(within(table).getByText("20 percent")).toBeVisible();
   });
 
   it("passes Stats output DTOs directly into Chart views without exposing Stats internals or runtime stores to Chart", async () => {
@@ -1299,6 +1626,7 @@ function createHabitEvent(input: {
 
 function createTimerNoteEvent(input: {
   notePageId: string;
+  notedAt?: string;
   pageId: string;
   segmentId: string;
   sourcePluginId?: string;
@@ -1306,9 +1634,10 @@ function createTimerNoteEvent(input: {
 }): TimerNoteEventFixture {
   return {
     namespace: "timer",
+    pageId: input.pageId,
     payload: {
       notePageId: input.notePageId,
-      pageId: input.pageId,
+      notedAt: input.notedAt ?? "2026-05-20T10:00:00.000Z",
       segmentId: input.segmentId,
     },
     sourcePluginId: input.sourcePluginId ?? "timer",
@@ -1509,6 +1838,20 @@ function snapshotRuntimeState(runtime: AppRuntime): RuntimeSnapshot {
     metadata: runtime.metadata.list(),
     pages: runtime.pages.list({ includeArchived: true }),
   };
+}
+
+function expectCategoryRowWithIdentity(
+  categories: readonly ChartCategoryItem[],
+  identity: string,
+  value: number,
+): void {
+  const row = categories.find((category) =>
+    JSON.stringify(category).includes(identity),
+  );
+
+  expect(row, `category row for ${identity}`).toEqual(
+    expect.objectContaining({ value }),
+  );
 }
 
 function createSequenceFactory(values: readonly string[]): () => string {
