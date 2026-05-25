@@ -349,3 +349,31 @@
 - Ramanujan the 2nd (`test_quality_reviewer`) started at 2026-05-25 14:02 CST.
 - All agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for narrow re-review, then proceed to formal docs sync only if no P0/P1 findings remain.
+
+## Narrow Re-Review Outcomes
+
+- Sagan the 2nd (`security_reviewer`) found no remaining P0/P1 security issues. It confirmed:
+  - `ml.run-prediction` returns a DTO and no longer writes ML metadata/events;
+  - caller-provided projections are non-durable;
+  - exact UTC instant validation rejects numeric-like and rollover dates;
+  - JSON metadata has pre-copy node-budget validation;
+  - `PredictionPanel` validates unknown DTOs and falls back to inert unavailable rendering;
+  - no package/native/Tauri/Rust/schema/capability/import/sink regression appeared.
+- Poincare the 2nd (`reviewer`) found no remaining P0/P1 correctness issues. It confirmed:
+  - durable write behavior changed as intended;
+  - missing/archived current pages reject;
+  - exact date validation is shared by feature and panel readers;
+  - fallback model behavior distinguishes task estimate, similar-history, and tracked-only evidence;
+  - malformed DTOs fail closed;
+  - view and slot use the same component path.
+- Ramanujan the 2nd (`test_quality_reviewer`) found one remaining P1 test gap:
+  - tracked-only fallback coverage proves the one-hour floor case, but not the `trackedSeconds * 2` arm for longer tracked-only inputs.
+
+## Parent Decision After Narrow Re-Review
+
+- Add a narrow test-only regression for the tracked-only `trackedSeconds * 2` fallback arm.
+- Do not start production fixes unless the new test fails.
+
+## Current Next Action
+
+- Delegate the narrow tracked-only fallback test to `test_writer`.
