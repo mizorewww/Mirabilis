@@ -899,6 +899,54 @@ describe("Sync Plugin skeleton", () => {
     }
   });
 
+  it("rejects non-plain event conflict units and sync keys even when own DTO keys are exact", async () => {
+    const sync = await loadSyncModule();
+    const validEventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-valid-runtime-shaped-dto" }),
+    );
+    const eventUnit = sync.serializeEventSyncUnit(
+      createAppEvent({ id: "event-runtime-shaped-dto" }),
+    );
+
+    for (const runtimeUnit of createRuntimeShapedEventConflictUnits(eventUnit)) {
+      expect(Object.keys(runtimeUnit.unit), runtimeUnit.label).toStrictEqual([
+        "kind",
+        "schemaVersion",
+        "snapshot",
+        "syncKey",
+      ]);
+      expect(Object.getPrototypeOf(runtimeUnit.unit), runtimeUnit.label).not.toBe(
+        Object.prototype,
+      );
+      expectEventConflictUnitRejected(sync, {
+        label: runtimeUnit.label,
+        unit: runtimeUnit.unit,
+        validEventUnit,
+      });
+    }
+
+    for (const runtimeSyncKey of createRuntimeShapedEventSyncKeys(eventUnit)) {
+      const unit = {
+        ...eventUnit,
+        syncKey: runtimeSyncKey.syncKey,
+      };
+
+      expect(
+        Object.keys(runtimeSyncKey.syncKey),
+        runtimeSyncKey.label,
+      ).toStrictEqual(["id"]);
+      expect(
+        Object.getPrototypeOf(runtimeSyncKey.syncKey),
+        runtimeSyncKey.label,
+      ).not.toBe(Object.prototype);
+      expectEventConflictUnitRejected(sync, {
+        label: runtimeSyncKey.label,
+        unit,
+        validEventUnit,
+      });
+    }
+  });
+
   it("continues to merge serialized event units with distinct canonical ids", async () => {
     const sync = await loadSyncModule();
     const localEventUnit = sync.serializeEventSyncUnit(
@@ -1304,6 +1352,97 @@ function createEventConflictInput(
         remote: [unit],
         unitKind: syncUnitEvent,
       };
+}
+
+function createRuntimeShapedEventConflictUnits(
+  baseUnit: SyncUnitDto,
+): Array<{ label: string; unit: Record<string, unknown> }> {
+  class RuntimeEventUnit {
+    kind: SyncUnitDto["kind"];
+    schemaVersion: SyncUnitDto["schemaVersion"];
+    snapshot: SyncUnitDto["snapshot"];
+    syncKey: SyncUnitDto["syncKey"];
+
+    constructor(unit: SyncUnitDto) {
+      this.kind = unit.kind;
+      this.schemaVersion = unit.schemaVersion;
+      this.snapshot = unit.snapshot;
+      this.syncKey = unit.syncKey;
+    }
+
+    toJSON(): Record<string, unknown> {
+      return { runtime: true };
+    }
+  }
+
+  const customPrototype = {
+    inheritedRuntimeMethod(): string {
+      return "runtime";
+    },
+    toJSON(): Record<string, unknown> {
+      return { runtime: true };
+    },
+  };
+  const customPrototypeUnit = Object.assign(
+    Object.create(customPrototype) as Record<string, unknown>,
+    {
+      kind: baseUnit.kind,
+      schemaVersion: baseUnit.schemaVersion,
+      snapshot: baseUnit.snapshot,
+      syncKey: baseUnit.syncKey,
+    },
+  );
+
+  return [
+    {
+      label: "class-instance event unit with inherited toJSON",
+      unit: new RuntimeEventUnit(baseUnit) as unknown as Record<string, unknown>,
+    },
+    {
+      label: "custom-prototype event unit with inherited runtime methods",
+      unit: customPrototypeUnit,
+    },
+  ];
+}
+
+function createRuntimeShapedEventSyncKeys(
+  baseUnit: SyncUnitDto,
+): Array<{ label: string; syncKey: Record<string, unknown> }> {
+  class RuntimeSyncKey {
+    id: string;
+
+    constructor(id: string) {
+      this.id = id;
+    }
+
+    toJSON(): Record<string, unknown> {
+      return { id: this.id, runtime: true };
+    }
+  }
+
+  const customPrototype = {
+    inheritedRuntimeMethod(): string {
+      return "runtime";
+    },
+  };
+  const customPrototypeSyncKey = Object.assign(
+    Object.create(customPrototype) as Record<string, unknown>,
+    { id: baseUnit.syncKey.id },
+  );
+
+  return [
+    {
+      label: "class-instance sync key with inherited toJSON",
+      syncKey: new RuntimeSyncKey(baseUnit.syncKey.id) as unknown as Record<
+        string,
+        unknown
+      >,
+    },
+    {
+      label: "custom-prototype sync key with exact own id",
+      syncKey: customPrototypeSyncKey,
+    },
+  ];
 }
 
 function createAccessorEventConflictUnit(
