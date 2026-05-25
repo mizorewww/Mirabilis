@@ -1,33 +1,109 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 02:04 CST.
+Last updated: 2026-05-26 03:39 CST.
 
 ## Current Task
 
-- Task: TASK-035 - Add MUI Substrate And First Shell Frame.
-- Branch: `feat/task-035-mui-shell-frame`.
+- Task: TASK-036 - Add Generic ViewHost And SlotHost.
+- Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-035 merged locally; merge-result validation passed; master push pending.
+- Current phase: TASK-036 complete and ready to merge.
 
 ## Active Agents
 
-- None. All TASK-035 review and fix agents have completed.
+- None. TASK-036 agents completed.
+- Pending: commit final closeout, merge to `master`, validate merge result, push `master`, then continue TASK-037.
+
+## Current TASK-036 State
+
+- TASK-036 follows the merged TASK-035 MUI shell frame and owns generic trusted view/slot rendering helpers.
+- Start point: `master` after TASK-035 merge validation commit `739b0db`.
+- Initial scope:
+  - add trusted app-shell `ViewHost` for rendering View Registry entries by id/type with explicit accepted data;
+  - add trusted app-shell `SlotHost` for rendering Slot Registry contributions by slot name in registry order;
+  - render safe loading, empty, missing, wrong-data, error, thrown-render, invalid-contribution, and plugin-unavailable states;
+  - keep plugin-rendered UI behind narrow controlled props only.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and use React Testing Library/user-event for observable behavior;
+  - hosts must never pass full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, filesystem, path, provider settings, or secrets to plugin-rendered UI;
+  - no business-plugin private imports, native/Tauri/Rust/package/capability/permission/IPC/schema/release changes.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Parent decision: collect current React/Testing Library/deprecation/security guidance before delegating failing tests.
+- Pre-test guidance:
+  - Pasteur (`docs_researcher`) confirmed current React guidance: render registered components via JSX / `createElement`, not direct function calls; use real class Error Boundaries for render failures; use RTL role/name queries and `userEvent.setup()`; use MUI v9 path imports for Alert/Progress/Skeleton/Box/Stack state UI.
+  - Copernicus (`deprecation_auditor`) found no P0. P1 risks: plugin render failures must use real Error Boundaries, direct-render test helper patterns must not become generic host behavior, and `SlotHost` must trust registry ordering while isolating each contribution.
+  - Singer (`security_reviewer`) defined P0/P1 boundaries: no full runtime/native/DB/filesystem/secrets/registries/PluginHost/command mutation handles in plugin props; view type ambiguity, wrong-kind data, thrown renders, broader slot condition props, raw errors, and business-plugin private imports must fail closed.
+  - Bernoulli (`planner`) recommended the smallest safe slice: app-shell host modules under `src/shell/hosts/`, with `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and barrel export. Do not put React rendering in Core and do not mount Home/editor/routes yet.
+- Parent decision: accept guidance and delegate failing tests to `test_writer`.
+- Test writer outcome:
+  - Cicero (`test_writer`) added `src/test/view-slot-hosts.test.tsx`.
+  - Parent red validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 11 failures for missing `../shell/hosts` and missing expected host production files; the native/package surface guard passed.
+  - Test commit: `80ad0f2 Cicero(test)(Add Generic ViewHost And SlotHost): add host boundary acceptance tests`.
+- Parent decision: delegate implementation to `implementer` with ownership of `src/shell/hosts/*` only, plus no package/native/docs/progress/test edits unless needed for focused fixes after validation.
+- Implementation outcome:
+  - Pascal (`implementer`) added `src/shell/hosts/PluginRenderBoundary.tsx`, `src/shell/hosts/ViewHost.tsx`, `src/shell/hosts/SlotHost.tsx`, and `src/shell/hosts/index.ts`.
+  - Pascal validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 12 tests and `git diff --check` passed. `bun run typecheck` / `bun run lint` exposed test-file-only validation issues outside Pascal's allowed write scope.
+  - Nietzsche (`test_writer`) fixed the test-file-only type/lint issues without changing production code.
+  - Parent validation after both fixes: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 12 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+  - Commits: `405658b Pascal(implementation)(Add Generic ViewHost And SlotHost): implement shell host boundaries` and `c908620 Nietzsche(test-fix)(Add Generic ViewHost And SlotHost): satisfy host test validation`.
+- Initial review outcome:
+  - McClintock, Ampere, Averroes, Wegener, and Volta reported P1/P2 host-boundary findings around `accepts.kinds`, controlled ViewHost props, unsafe alias/function redaction, proxy/trap safety, same-id boundary recovery, descriptor-backed callbacks, `viewId`/`viewType` conflicts, and ViewHost runtime facade coverage.
+  - Parent decision: require failing regression tests before production fixes.
+- Review-fix outcome:
+  - Maxwell (`test_writer`) added review regression tests first. Red validation failed as expected with 12 failed / 13 passed.
+  - Planck (`implementer`) fixed `ViewHost` and `SlotHost` boundary behavior in commit `3c3c5dc`.
+  - Leibniz (`test_writer`) fixed test-only TypeScript annotations in commit `b87455f`.
+  - Parent validation passed: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` with 1 file / 25 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Branch validation after review fixes:
+  - `bun run build` passed with the known TASK-035 MUI chunk-size warning.
+  - `bun run check:quick` passed with 40 frontend test files / 624 tests, Rust fmt, Rust clippy, and Rust tests.
+- First re-review outcome:
+  - Aquinas (`pr_explorer`) found no P0/P1 and noted P2 risks for lazy/Suspense support, SlotHost `app` API symmetry, and static test file-split coupling.
+  - Ptolemy (`reviewer`) found one P1: callback/function boundaries still trust key names such as `onSelect`/`onApply`/`onIncrement`, so unsafe command/native functions can be renamed into allowed callbacks while required safe facades remain blocked. It also noted P2 risks for missing documented denylist keys (`shell`, `notification`, `shortcut`, `file`) and deep DTO recursion.
+  - Curie (`security_reviewer`) found one P1: `__proto__`, `constructor`, and `prototype` are not blocked and cloning uses ordinary objects, so controlled DTOs/props can prototype-pollute or expose inherited unsafe values. It also confirmed Tauri/native/package surfaces are unchanged and noted the same deep recursion P2.
+- Parent decision: do not close TASK-036. Delegate failing regression tests for both P1 blockers and the high-confidence native-key/deep-recursion P2s before any production fix.
+- Micro-design outcome:
+  - Bohr (`planner`) recommended fail-closed behavior for prototype keys in `acceptedData`, ViewHost props, and SlotHost props; null-prototype clone output; rejection of all bare functions even with allowed names; descriptor-backed host-owned action wrappers for user interaction; no generic `commands`/`pageFacade` support until TASK-037+ adapters; and same-round fixes for documented native aliases plus recursion budgets.
+- Hardened regression tests:
+  - Kuhn (`test_writer`) updated `src/test/view-slot-hosts.test.tsx` in commit `5f73778`.
+  - Parent red validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 10 failed / 23 passed; `bun run typecheck` and `git diff --check` passed.
+  - Failure reasons matched production work still needed: prototype keys not fail-closed, documented native aliases not redacted, descriptor actions not wrapped, bare callbacks still passed, over-deep data still rendered, and SlotHost prototype props still reached `when`.
+- Hardened implementation:
+  - Laplace (`implementer`) updated `src/shell/hosts/ViewHost.tsx` and `src/shell/hosts/SlotHost.tsx` in commit `5c87e52`.
+  - Implemented prototype-key fail-closed handling, null-prototype clone outputs, documented native alias redaction, descriptor-backed host action wrappers, bare function stripping, and recursion budget behavior.
+  - Parent validation after Laplace: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` passed with 1 file / 33 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Final branch validation:
+  - `bun run build` passed with the known TASK-035 MUI chunk-size warning.
+  - `bun run check:quick` passed with 40 frontend test files / 632 tests, Rust fmt, Rust clippy, and Rust tests.
+- Final review outcome:
+  - Bacon (`reviewer`) found no P0/P1 and one P2: nested `ViewHost.props` prototype-key clone failures are stripped rather than fail closed.
+  - Avicenna (`security_reviewer`) found no P0/P1/P2 and confirmed no package/native/Tauri/Rust/security surface drift. Residual risk: future `actions` callers must remain owner-scoped wrappers, not raw command/native handles.
+  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remains a TASK-037+ route/plugin mounting decision.
+  - Linnaeus (`test_quality_reviewer`) found no P0/P1 and P2 gaps for SlotHost plugin-unavailable coverage, slot `when` mutation/capture isolation, and brittle static file-split coupling.
+  - Erdos (`doc_writer`) found P1 docs-sync gaps in `docs/testing/strategy.md` and the TASK-036 communication doc, plus P2 closeout/status/product/task-index updates.
+- Docs-sync outcome:
+  - `docs/testing/strategy.md` now records that `src/test/view-slot-hosts.test.tsx` covers ViewHost/SlotHost observable states, descriptor-backed `host.action` wrappers exercised through user-event, prototype-key fail-closed behavior, native/secret alias redaction, recursion budgets, proxy/trap fail-closed paths, and the no package/native/Tauri/Rust drift static guard.
+  - `docs/testing/strategy.md` also records that lazy/Suspense behavior plus real command and `pageFacade` adapters are deferred to TASK-037+.
+  - The TASK-036 task communication doc records Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and the remaining P2 decisions.
+  - The progress ledger records final branch validation, final reviews, docs-sync completion, and the still-pending P2 test-hardening/disposition.
+  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036 while route/editor mounting, real adapters, lazy/Suspense, and actual slot placement remain TASK-037+.
+- Final P2 hardening and release readiness:
+  - Lagrange (`test_writer`) added coverage for nested `ViewHost.props` prototype-key fail-closed behavior, SlotHost plugin-unavailable skipping with visible siblings, and slot `when` mutation/capture isolation in commit `f2e8ed7`.
+  - Goodall (`implementer`) updated `ViewHost` to fail closed for nested controlled-prop prototype-key clone failures in commit `114008d`.
+  - Parent validation after Goodall passed: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` with 1 file / 36 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+  - Final branch validation passed: `bun run build` with the known TASK-035 MUI chunk-size warning, and `bun run check:quick` with 40 frontend test files / 635 tests, Rust fmt, Rust clippy, and Rust tests.
+  - Boole (`release_checker`) found no P0/P1 code/security/release blockers, confirmed no package/native/Tauri/Rust surface drift, and confirmed `check:full` is not required for TASK-036.
+- Parent decision: mark TASK-036 `[x]`, commit closeout, merge to `master`, validate merge result, push `master`, then continue to TASK-037.
 
 ## Received Review Notes
 
-- Nash P1: `docs/implementation/progress.md` only recorded the TASK-035 start state; it needs an implementation validation / review-pending run-log entry with delivered scope, checks, build chunk warning, and review status while keeping TASK-035 `[~]`.
-- Nash P1: `docs/implementation/agent-communication/status.md` was stale; it needs the current phase, received review notes, corrected M9 snapshot, and accurate active/pending fix work.
-- Nash P2: `docs/product/07-user-interface-design.md` still read entirely pre-scaffold; it needs a current-status note for the TASK-035 baseline MUI substrate and TASK-036+ deferred shell work.
-- Nash P2: `docs/implementation/task-index.md` needs a concise TASK-035 delivered/deferred note covering the MUI quartet, theme/baseline, shell frame, placeholder routes/tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
-- Nash P2: `docs/testing/strategy.md` needs TASK-035 testing guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
-- Parent decision: accepted and fixed Nash's docs findings through Peirce's docs-only commit `291adb0`.
-- Test-quality/security review fixes:
-  - Carver closed the P1 `bun.lock` guard precision finding and shell interaction coverage gap in commit `695ec5c`.
-  - Plato closed the final Command inactive-to-active coverage P2 in commit `2889f84`.
-  - Socrates confirmed the package/lock/native boundary is closed with no remaining P0/P1/P2 findings.
-  - Gauss confirmed test-quality P0/P1 findings are closed; the final Command P2 was fixed afterward.
-- Release readiness: Dirac found no P0/P1 blocker, confirmed `check:full` is not required for TASK-035, and accepted the Vite/Rollup chunk-size warning as a deferred P2.
+- No remaining P0/P1 code, security, docs-sync, or release findings after commits `3187b10` and `114008d`.
+- Final P2 test-hardening items were closed by `f2e8ed7` and `114008d`.
+- Deferred P2 items: lazy/Suspense support belongs with TASK-037+ route/plugin mounting, and the static host file-split guard can be revisited during later refactors.
 
 ## Current TASK-035 State
 
@@ -126,9 +202,10 @@ Last updated: 2026-05-26 02:04 CST.
 ## Current M9 Roadmap State
 
 - TASK-034 is complete and merged on `master`.
-- TASK-035 is merged locally on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
-- TASK-036 through TASK-045 remain `[ ]` and cover generic ViewHost/SlotHost, Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: push `master`, then start TASK-036.
+- TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
+- TASK-036 is ready to merge on `feat/task-036-viewhost-slothost`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, and release readiness are complete.
+- TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: merge TASK-036, then start TASK-037.
 
 ## Historical TASK-033 State
 

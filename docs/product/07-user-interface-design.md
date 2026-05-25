@@ -1,21 +1,21 @@
 # User Interface Design
 
-This document defines the first complete Mirabilis UI design target. It is a product and architecture design document; status notes below distinguish implemented scaffold from TASK-036+ design targets.
+This document defines the first complete Mirabilis UI design target. It is a product and architecture design document; status notes below distinguish implemented scaffold and generic host infrastructure from TASK-037+ design targets.
 
-Current TASK-035 status: Mirabilis now has the baseline MUI substrate and first shell frame: the reviewed MUI dependency quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools. Generic `ViewHost`/`SlotHost`, Home editor mounting, command/search/capture dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-036+ work.
+Current M9 status: TASK-035 delivered the baseline MUI substrate and first shell frame: the reviewed MUI dependency quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools. TASK-036 delivered generic trusted `ViewHost` / `SlotHost` shell hosts for registry-owned views and slots. Route/editor mounting, real command and `pageFacade` adapters, lazy/Suspense behavior, actual slot placement, command/search/capture dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-037+ work.
 
 ## Diagnosis And Current Gap
 
-TASK-001 through TASK-033 delivered the runtime substrate, built-in plugin behavior, persistence boundary, and local release gate. TASK-035 adds the first MUI shell scaffold, but the user-visible app still needs the full Markdown-first workspace described by the product docs.
+TASK-001 through TASK-033 delivered the runtime substrate, built-in plugin behavior, persistence boundary, and local release gate. TASK-035 adds the first MUI shell scaffold, and TASK-036 adds generic registry-backed host infrastructure. The user-visible app still needs the full Markdown-first workspace described by the product docs.
 
 The gap is not a missing business feature in Core. The gap is composition:
 
-- App Shell now mounts a baseline product frame around the existing runtime, but it does not yet host real registry-backed views, slots, dialogs, or route data.
-- Existing plugin views and slots are mostly reusable pieces that still need trusted shell hosts.
+- App Shell now mounts a baseline product frame around the existing runtime and has generic trusted hosts for registry-backed views and slots, but it does not yet mount concrete routes, dialogs, or route data.
+- Existing plugin views and slots are mostly reusable pieces that still need route-specific DTO projections, command/page facade adapters, and concrete placement in the workspace.
 - Deferred route surfaces, overlays, contextual panels, and responsive behavior need one MUI design system before production scaffolding.
 - UI tests must prove real typing, clicking, keyboard navigation, focus return, and visible outcomes from the user's perspective.
 
-The first implementation task after this design document was TASK-035: add the MUI substrate and first app shell frame. TASK-036+ continue from that baseline.
+The first implementation task after this design document was TASK-035: add the MUI substrate and first app shell frame. TASK-036 added the generic `ViewHost` / `SlotHost` boundary. TASK-037+ continue by mounting concrete workspace routes and slots.
 
 ## Unfinished UI And Workflow Inventory
 

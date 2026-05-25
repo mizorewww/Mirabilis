@@ -99,6 +99,27 @@ bun run check:quick
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-035 changes the frontend package/lock surface only for reviewed MUI dependencies and adds no native runtime surface.
 
+## TASK-036 ViewHost And SlotHost Guidance
+
+TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves the generic `ViewHost` / `SlotHost` shell boundary behavior without mounting real routes, the Home editor, real command adapters, or real `pageFacade` adapters:
+
+- `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
+- `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
+- Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
+- TASK-036 deliberately defers lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement to TASK-037+.
+
+Focused TASK-036 validation:
+
+```bash
+bun run test:frontend -- src/test/view-slot-hosts.test.tsx
+bun run typecheck
+bun run lint
+bun run build
+bun run check:quick
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-036 is a TypeScript/React shell-host boundary task and adds no package, native, IPC, Rust, permission, capability, schema, or release surface.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:
