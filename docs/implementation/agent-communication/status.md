@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:37 CST.
+Last updated: 2026-05-25 13:44 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-25 13:37 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review wave delegated.
+- Current phase: TASK-030 review findings recorded; review-fix tests pending.
 
 ## Active Agents
 
-- Leibniz (`pr_explorer`) is mapping changed paths and review surfaces.
-- Goodall the 2nd (`reviewer`) is reviewing correctness and edge cases.
-- Bernoulli the 2nd (`deprecation_auditor`) is auditing APIs, deprecations, and stale patterns.
-- McClintock the 2nd (`security_reviewer`) is reviewing ML trust boundaries and native/package impact.
-- Pascal the 2nd (`docs_researcher`) is reviewing current docs and accessibility.
-- Pasteur the 2nd (`test_quality_reviewer`) is reviewing test quality.
+- No active agents. Parent is preparing review-fix test handoff.
 
 ## Current TASK-030 State
 
@@ -76,6 +71,19 @@ Last updated: 2026-05-25 13:37 CST.
   - McClintock the 2nd (`security_reviewer`) checks payload/projection/native/package trust boundaries.
   - Pascal the 2nd (`docs_researcher`) checks current-doc/accessibility behavior and docs drift.
   - Pasteur the 2nd (`test_quality_reviewer`) checks test quality and acceptance coverage.
+- Review wave completed:
+  - Leibniz (`pr_explorer`) found no scope drift. Risk surfaces: projection trust, validation complexity, non-transactional ML writes, heuristic semantics, UI wiring, and docs drift.
+  - Pasteur the 2nd (`test_quality_reviewer`) found P1 test gaps: missing coverage for similar-history and tracked-only model fallback branches, missing nested hostile projection and missing/archived current-page coverage, and slot component rendering not tested with the same accessibility/inert assertions as the view.
+  - Bernoulli the 2nd (`deprecation_auditor`) found no P0/P1 blockers. P2/P3 docs drift remains for stale underscore ML ids, Algorithm Registry wording, generic `run-ml-prediction`, and async metadata examples.
+  - McClintock the 2nd (`security_reviewer`) found P1 issues: caller-forged provenance can be treated as trusted evidence and persisted as ML metadata/events, and date validation accepts non-exact instants such as numeric strings or rollover dates.
+  - Pascal the 2nd (`docs_researcher`) found no P0/P1 accessibility/current-doc blockers. P2 notes: redundant explicit `region`, `aria-busy` semantics, and formal docs/testing-strategy drift.
+  - Goodall the 2nd (`reviewer`) found P1 issues: `PredictionPanel` renders unvalidated view data and can crash or display forged data, and metadata JSON projection validation lacks a global node budget before copying untrusted nested values.
+- Parent decisions after review:
+  - Add review-fix tests first for all P1s.
+  - Because current command execution has no caller identity and there is no trusted query/feed facade, TASK-030 must not persist ML metadata/events from caller-provided cross-plugin projection evidence. The command may return deterministic heuristic results with limitations, but durable writes are deferred until a trusted projection source exists.
+  - Tighten date validation to exact UTC ISO instants and reject rollover/numeric-date strings.
+  - Add runtime validation for `ml.prediction-panel` data and fail closed to unavailable UI for malformed/wrong-kind DTOs.
+  - Add a total JSON node budget or pre-filtering guard for metadata projection values before copying nested JSON.
 
 ## Current TASK-029 State
 

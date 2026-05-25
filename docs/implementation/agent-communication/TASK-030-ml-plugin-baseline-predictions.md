@@ -218,3 +218,42 @@
 - Pasteur the 2nd (`test_quality_reviewer`) started at 2026-05-25 13:37 CST.
 - All review agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.
+
+## Review Wave Outcomes
+
+- Leibniz (`pr_explorer`) mapped changed files and found no scope drift. Changed production scope is `src/plugins/ml/**` plus `src/bootstrap/built-in-plugins.ts`; package/native/Tauri/Rust/schema/Core source surfaces are unchanged. Review surfaces are projection trust, validation complexity, non-transactional ML writes, heuristic semantics, UI wiring, and docs drift.
+- Pasteur the 2nd (`test_quality_reviewer`) found three P1 test gaps:
+  - baseline model fallback branches for similar-history-only and tracked-only evidence are not separately covered;
+  - hostile projection coverage misses missing/archived current pages and nested metadata/event payload descriptor cases;
+  - slot component rendering is not tested with the same accessibility/inert assertions as the registered view component.
+- Bernoulli the 2nd (`deprecation_auditor`) found no P0/P1 blockers. It confirmed the code avoids executable AlgorithmRegistry assumptions and uses current React/Vitest/Testing Library patterns. P2/P3 docs drift remains for stale underscore ML ids, Algorithm Registry wording, generic `run-ml-prediction`, and async metadata examples.
+- McClintock the 2nd (`security_reviewer`) found two P1 issues:
+  - caller-forged `sourcePluginId`/`namespace`/payload provenance can be treated as trusted evidence and persisted as ML metadata/events;
+  - date validation accepts finite `Date.parse` strings instead of exact instants, allowing numeric or rollover date strings.
+- Pascal the 2nd (`docs_researcher`) found no P0/P1 accessibility/current-doc blockers. It listed P2 accessibility notes and formal docs/testing-strategy drift for doc sync.
+- Goodall the 2nd (`reviewer`) found two P1 issues:
+  - `PredictionPanel` does not validate view data before rendering, so malformed or wrong-kind data can crash render or display forged prediction data;
+  - metadata JSON projection validation has per-array/depth limits but no total node budget before copying untrusted nested values.
+
+## Parent Decisions After Review
+
+- Required P1 fix path:
+  - write review-fix tests first;
+  - then delegate production fixes to `implementer`;
+  - run focused and adjacent validation again before committing production fixes.
+- Projection trust decision:
+  - current command execution has no caller identity and no trusted cross-plugin query/feed facade;
+  - therefore TASK-030 may return deterministic heuristic prediction results from caller-provided projections, but must not persist ML metadata/events from caller-provided cross-plugin projection evidence;
+  - durable prediction metadata/events are deferred until a trusted projection source or reviewed query/feed facade exists.
+- Test fixes should also lock:
+  - similar-history-only and tracked-only fallback outputs/confidence;
+  - missing/archived current page rejection;
+  - nested metadata/event payload descriptor hostility;
+  - exact UTC ISO instant validation;
+  - `ml.prediction-panel` wrong-kind/malformed DTO fail-closed rendering;
+  - slot component rendering parity with the view;
+  - JSON projection total node budget or equivalent pre-copy guard.
+
+## Current Next Action
+
+- Delegate review-fix tests to `test_writer`.
