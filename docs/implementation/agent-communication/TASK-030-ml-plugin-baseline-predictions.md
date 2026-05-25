@@ -309,3 +309,35 @@
 - Required fixes: no durable ML writes from caller-provided cross-plugin projections, forged-provenance durable-write prevention, fallback branch policy alignment, exact UTC ISO date validation, PredictionPanel DTO validation/fail-closed rendering, total JSON node budget or equivalent pre-copy guard, and slot/view rendering parity.
 - Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Confucius the 2nd, validate focused green checks, and commit review-fix implementation separately.
+
+## Review-Fix Implementation Outcome
+
+- Confucius the 2nd (`implementer`) completed TASK-030 production review fixes.
+- Changed files:
+  - `src/plugins/ml/features/buildRemainingTimeFeatures.ts`
+  - `src/plugins/ml/plugin.ts`
+  - `src/plugins/ml/views/PredictionPanel.tsx`
+- Delivered:
+  - stopped durable ML metadata/event writes from caller-provided cross-plugin projections;
+  - prevented forged-provenance projection payloads from creating durable ML records;
+  - aligned similar-history-only and tracked-only fallback confidence/range behavior with review-fix policy;
+  - tightened date validation to exact UTC ISO instants with rollover rejection;
+  - added total JSON node-budget validation before metadata JSON copying;
+  - added runtime DTO validation and fail-closed unavailable rendering for `PredictionPanel`;
+  - kept slot and view rendering on the same validated component path.
+- Parent validation after review fix:
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx` passed with 12 tests.
+  - `bun run test:frontend -- src/test/ml-plugin-baseline-predictions.test.tsx src/test/stats-chart-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/task-plugin-syntax-page-creation.test.ts src/test/tag-plugin-baseline.test.tsx` passed with 8 files / 157 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - Focused ESLint for `src/plugins/ml` and `src/test/ml-plugin-baseline-predictions.test.tsx` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Import/sink static scan found no ML production matches.
+  - Package/native/Tauri/Rust/schema diff guard was empty.
+- Review-fix commit: `b384812 Confucius(review-fix)(Implement ML Plugin baseline predictions): harden ml prediction boundaries`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate narrow re-review for TASK-030 P1 fixes.
+- If no P0/P1 findings remain, proceed to formal docs sync.

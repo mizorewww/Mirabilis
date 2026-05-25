@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:55 CST.
+Last updated: 2026-05-25 14:01 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:55 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review-fix implementation delegated.
+- Current phase: TASK-030 review-fix implementation committed; narrow re-review pending.
 
 ## Active Agents
 
-- Confucius the 2nd (`implementer`) is fixing TASK-030 P1 production issues.
+- No active agents. Parent is recording review-fix implementation results before narrow re-review.
 
 ## Current TASK-030 State
 
@@ -97,6 +97,11 @@ Last updated: 2026-05-25 13:55 CST.
   - Confucius the 2nd (`implementer`) should fix ML production P1s in `src/plugins/ml/**`.
   - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits.
   - Required result: focused TASK-030 tests pass while typecheck/lint stay green and package/native/Tauri/Rust/schema surfaces remain unchanged.
+- Review-fix implementation completed:
+  - Confucius the 2nd (`implementer`) fixed ML production P1s in `src/plugins/ml/features/buildRemainingTimeFeatures.ts`, `src/plugins/ml/plugin.ts`, and `src/plugins/ml/views/PredictionPanel.tsx`.
+  - Fix scope: no durable ML metadata/events from caller-provided projections, forged-provenance durable-write prevention, fallback policy alignment, exact UTC instant validation, `PredictionPanel` DTO validation/fail-closed rendering, total JSON node-budget validation, and shared slot/view validation.
+  - Parent validated: focused TASK-030 tests passed (12 tests), adjacent plugin/API/Stats/Search/Task/Tag suite passed (8 files / 157 tests), `bun run typecheck` passed, `bun run lint` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, import/sink guard found no ML matches, and package/native/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `b384812 Confucius(review-fix)(Implement ML Plugin baseline predictions): harden ml prediction boundaries`; post-commit auto-push succeeded.
 
 ## Current TASK-029 State
 
