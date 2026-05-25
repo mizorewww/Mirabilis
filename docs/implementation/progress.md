@@ -65,7 +65,7 @@ Status markers:
 
 - [x] TASK-026: Implement Calendar Plugin baseline
 - [x] TASK-027: Implement Habit and Heatmap plugins
-- [~] TASK-028: Implement Stats and Chart plugins
+- [x] TASK-028: Implement Stats and Chart plugins
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
@@ -78,6 +78,20 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 11:58 CST - TASK-028 completed
+
+- Branch: `feat/task-028-stats-chart-plugins`.
+- Task: Implement Stats and Chart plugins.
+- Delivered: built-in `StatsPlugin` and `ChartPlugin` are registered through `BUILT_IN_PLUGINS` with plugin ids `stats` and `chart`.
+- Delivered: Stats registers canonical command `stats.run-aggregation({ aggregationId, input })` and inert algorithm descriptors `stats.sum-time-by-tag`, `stats.sum-time-by-page`, `stats.estimate-vs-actual`, `stats.habit-completion-rate`, `stats.task-switch-count`, and `stats.unnoted-sessions-count`.
+- Delivered: Stats computes normalized DTO aggregations for time by tag, time by page, estimate vs actual, habit completion, task switching, and unnoted sessions from caller-provided trusted public projections, while Core remains free of Stats/Chart business behavior.
+- Delivered: Chart registers accessible generic views `chart.bar`, `chart.line`, and `chart.pie` for `chart.category-series`, `chart.time-series`, and `chart.comparison-series` DTOs, including loading and empty states and comparison table headers.
+- Review and fixes: review agents found P1s for unbounded DTOs, page-title grouping, Timer note event compatibility, comparison chart labels, and non-inert arrays. Planck/Sartre added red regression tests; Boyle/Mill fixed production behavior. Narrow re-review found no remaining P0/P1 blockers.
+- Documentation sync: product, architecture, development, runtime-flow, and task-index docs now describe canonical Stats/Chart ids, DTO kinds, deferred dashboard/filter/index/route/chart-library/ML-AI scope, and trust-boundary validation.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 33 frontend test files / 519 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: aggregate overflow currently drops out-of-bound additions rather than surfacing an explicit aggregate-invalid state; hostile Proxy-backed arrays/objects are not specifically covered; array-method tests are representative rather than exhaustive; Stats dashboard/insight views, saved filters, persistent indexes, production charting libraries, app-shell routes, broad cross-plugin query facade, ML/AI insight generation, and native/Tauri/package/Rust/schema changes remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
 
 ### 2026-05-25 10:36 CST - TASK-028 started
 
