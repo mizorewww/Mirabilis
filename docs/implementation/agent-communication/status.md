@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:11 CST.
+Last updated: 2026-05-25 08:17 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 08:11 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar execute-only fail-closed narrow post-fix re-review in progress.
+- Current phase: TASK-025 MetadataBar execute-only fail-closed review cleared; formal docs sync pending.
 
 ## Active Agents
 
-- Wegener (`reviewer`) is reviewing Carver's MetadataBar execute-only fail-closed correctness.
-- James (`security_reviewer`) is reviewing Carver's MetadataBar command-execution security boundary.
-- Plato (`test_quality_reviewer`) is reviewing MetadataBar command-ownership regression coverage.
-- Pascal (`deprecation_auditor`) is auditing Carver's MetadataBar type/API contract and docs handoff.
+- None currently running. Next delegation is TASK-025 formal docs sync to `doc_writer`.
 
 ## Completed Recent Task
 
@@ -155,8 +152,8 @@ Last updated: 2026-05-25 08:11 CST.
 
 ## Next Actions
 
-1. Wait for MetadataBar execute-only narrow post-fix review agents.
-2. If no P0/P1 remains, delegate TASK-025 formal docs sync to `doc_writer`.
+1. Delegate TASK-025 formal docs sync to `doc_writer`.
+2. Validate docs scans, typecheck, and diff check before final branch gates.
 
 ## Current TASK-021 State
 

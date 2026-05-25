@@ -499,4 +499,25 @@
 
 ## Current Next Action
 
-- Wait for MetadataBar execute-only narrow post-fix review agents. If no P0/P1 remains, delegate TASK-025 formal docs sync.
+## MetadataBar Execute-Only Narrow Re-Review Outcomes
+
+- Plato (`test_quality_reviewer`) found no P0/P1/P2 test-quality findings. It confirmed coverage for descriptor-backed same-owner MetadataBar execution, descriptor-backed matching-prefix foreign-owner rejection with no handler call, execute-only facade fail-closed for both own and foreign commands, and internal PluginHost scoped executor ownership.
+- Wegener (`reviewer`) found no P0/P1/P2 correctness findings. It confirmed the previous P1 is fixed: MetadataBar now requires descriptor-backed commands, verifies descriptor id equals the requested id, checks `descriptor.pluginId === contribution.pluginId`, and throws before dispatch when lookup is missing, throws, malformed, or foreign-owned.
+- James (`security_reviewer`) found no P0/P1/P2 security findings. It confirmed MetadataBar, PluginHost internal scoped executor, and Timer note UI have no raw command/security escape, and native/Tauri/package diff guards are empty.
+- Pascal (`deprecation_auditor`) found no P0/P1 code/API findings. It accepted the secure `MetadataBarProps.commands` contract change requiring an owner-aware registry at the component boundary while slot contributors still receive only a narrow `execute()` facade. P2 known residual remains unchanged: the hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` surface is globally discoverable/duplicated between PluginHost and Timer.
+- Checks reported by agents:
+  - Plato: MetadataBar + PluginHost focused tests, expanded MetadataBar/PluginHost/API/Timer tests, typecheck, diff check, and skip/only scan passed.
+  - Wegener: MetadataBar focused tests, typecheck, focused eslint, scoped diff check, and skip/only scan passed.
+  - James: MetadataBar/PluginHost/Timer focused tests, typecheck, lint, diff checks, native/Tauri/package guard, and skip/only scan passed.
+  - Pascal: MetadataBar/PluginHost/API focused tests, typecheck, diff check, and native/package/Tauri/Rust scoped diff passed.
+- Formal docs sync handoff from Pascal and previous auditors:
+  - Replace stale `timer.add_note` with `timer.add-note`.
+  - Document `timer.page-timeline.segments`.
+  - Describe Timer events as records with `namespace: "timer", type: "time_segment_created"` and `namespace: "timer", type: "time_segment_note_added"`.
+  - Update prior TASK-024 stop/switch wording that says no segment is created.
+  - Document descriptor-owner command execution for MetadataBar and Timer scoped executor where relevant.
+  - Keep metadata totals, Calendar/Stats/ML, native/schema bridges, Recently Worked, Unnoted Sessions, and manual segments deferred.
+
+## Current Next Action
+
+- Delegate `doc_writer` to synchronize TASK-025 formal docs.
