@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:38 CST.
+Last updated: 2026-05-25 10:44 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 10:38 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 pre-test guidance active.
+- Current phase: TASK-028 pre-test guidance complete; failing test handoff pending.
 
 ## Active Agents
 
-- Hume (`planner`) is active for scope, acceptance criteria, identifiers, and TDD handoff.
-- Lovelace (`docs_researcher`) is active for current React/Vitest/Testing Library/chart accessibility guidance.
-- Mencius (`deprecation_auditor`) is active for canonical Stats/Chart API identifiers and stale-doc risks.
-- Socrates (`security_reviewer`) is active for aggregation/chart trust boundaries and plugin isolation.
+- None currently active. Next agent should be `test_writer` for TASK-028 failing acceptance tests.
 
 ## Current TASK-028 State
 
@@ -28,6 +25,22 @@ Last updated: 2026-05-25 10:38 CST.
   - Prefer explicit normalized DTOs and command/view registry primitives already used by Calendar and Heatmap.
   - Keep native/Tauri/package/Rust/schema changes, persistent indexes, app-shell dashboard routing, ML/AI insight generation, sync, release packaging, and broad cross-plugin query facade out of scope unless agents identify an acceptance-critical dependency.
 - Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance completed:
+  - Hume (`planner`) recommended the smallest safe slice as built-in `stats` and `chart` plugins only: Stats owns aggregation, Chart owns rendering, Core/native/package/Rust/schema remain unchanged, Stats views/filters and production charting libraries are deferred.
+  - Lovelace (`docs_researcher`) recommended one focused `src/test/stats-chart-plugins.test.tsx` suite using semantic RTL queries, no snapshots/color/SVG geometry assertions, accessible chart regions/tables/lists/status states, deterministic aggregation fixtures, and no charting library in the baseline.
+  - Mencius (`deprecation_auditor`) confirmed no current API/deprecation blocker. It warned not to test against a runtime AlgorithmRegistry, because manifest `contributes.algorithms` is inert today, and recommended namespaced DTO kinds plus stale-doc cleanup later.
+  - Socrates (`security_reviewer`) required PluginContext/DTO boundaries only, no raw runtime/store/registry/native imports, exact DTO validation, forged provenance rejection, bounded chart inputs, no HTML/Markdown sinks, and no package/native/Tauri/Rust/schema changes.
+- Parent decisions after guidance:
+  - Use plugin ids `stats` and `chart`.
+  - Stats runtime command is `stats.run-aggregation({ aggregationId, input })`; do not add per-aggregation commands or `stats.open_review`.
+  - Stats manifest includes inert algorithm descriptors: `stats.sum-time-by-tag`, `stats.sum-time-by-page`, `stats.estimate-vs-actual`, `stats.habit-completion-rate`, `stats.task-switch-count`, and `stats.unnoted-sessions-count`.
+  - Stats exports pure aggregation helpers for implementation/test reuse, but tests must preserve green typecheck while production files are absent.
+  - Stats does not register views or filters in this slice.
+  - Chart views are `chart.bar`, `chart.line`, and `chart.pie`; Chart DTO kinds are `chart.category-series`, `chart.time-series`, and `chart.comparison-series`.
+  - `chart.bar` may render category and comparison series; `chart.line` renders time series; `chart.pie` renders category series.
+  - No snake_case aliases such as `sum_time_by_tag`, `bar_chart`, `line_chart`, or `pie_chart`.
+  - Aggregations consume caller-provided normalized DTO fixtures and must not directly read Timer/Habit/Task/Tag internals or private data through plugin facades.
+  - Output maps to Chart DTOs: time-by-tag/page, habit completion, task switching, and unnoted sessions return category series; estimate-vs-actual returns comparison series.
 
 ## Current TASK-027 State
 
@@ -135,5 +148,5 @@ Last updated: 2026-05-25 10:38 CST.
 
 ## Next Actions
 
-1. Wait for pre-test guidance agents.
-2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
+1. Spawn `test_writer` for TASK-028 failing acceptance tests.
+2. Validate the expected red signal and commit tests before delegating implementation.
