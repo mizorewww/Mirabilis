@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:54 CST.
+Last updated: 2026-05-25 13:55 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:54 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review-fix tests committed; production fix handoff pending.
+- Current phase: TASK-030 review-fix implementation delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording review-fix test results before delegating production fixes.
+- Confucius the 2nd (`implementer`) is fixing TASK-030 P1 production issues.
 
 ## Current TASK-030 State
 
@@ -93,6 +93,10 @@ Last updated: 2026-05-25 13:54 CST.
   - Parent validated the expected red signal: focused TASK-030 tests failed with 5 failed / 7 passed. Failure symptoms: current command still writes ML metadata/events for caller-provided projections, forged provenance still creates ML metadata, similar-history-only fallback confidence/range differs from expected policy, numeric date string `"1"` is accepted, and `PredictionPanel` renders wrong-kind forged DTO data instead of unavailable status.
   - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, production/docs/native/package diff guards.
   - Test-fix commit: `927029c Peirce(test-fix)(Implement ML Plugin baseline predictions): cover ml review regressions`; post-commit auto-push succeeded.
+- Review-fix implementation delegated:
+  - Confucius the 2nd (`implementer`) should fix ML production P1s in `src/plugins/ml/**`.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits.
+  - Required result: focused TASK-030 tests pass while typecheck/lint stay green and package/native/Tauri/Rust/schema surfaces remain unchanged.
 
 ## Current TASK-029 State
 

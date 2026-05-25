@@ -300,3 +300,12 @@
 ## Current Next Action
 
 - Delegate production review fixes to `implementer`.
+
+## Review-Fix Implementation Handoff
+
+- Confucius the 2nd (`implementer`) started at 2026-05-25 13:55 CST.
+- Scope: production changes only for TASK-030 P1 review fixes.
+- Expected changed files: `src/plugins/ml/**`.
+- Required fixes: no durable ML writes from caller-provided cross-plugin projections, forged-provenance durable-write prevention, fallback branch policy alignment, exact UTC ISO date validation, PredictionPanel DTO validation/fail-closed rendering, total JSON node budget or equivalent pre-copy guard, and slot/view rendering parity.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Confucius the 2nd, validate focused green checks, and commit review-fix implementation separately.
