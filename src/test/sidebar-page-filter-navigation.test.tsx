@@ -13,7 +13,15 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useState, type ComponentType } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from "vitest";
 
 import App from "../App";
 import { createAppRuntime, type AppRuntime } from "../bootstrap";
@@ -27,6 +35,10 @@ import {
   type NativeBridge,
   type StructuredMarkdownDocument,
 } from "../core";
+import {
+  TaskPageListView,
+  type TaskPageListViewProps,
+} from "../plugins/task/components/TaskFilterViews";
 import { useMarkdownWorkspaceBridge } from "../shell/hosts";
 import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
@@ -275,7 +287,7 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     replaceTaskPageListView(runtime, capturedPageListProps);
     renderReadyApp(runtime);
 
-    await user.click(await findNavigationButton(/all tasks/i));
+    await user.click(await findWorkspaceRouteButton(/all tasks/i));
 
     const taskPages = await screen.findByRole("list", { name: /task pages/i });
 
@@ -348,7 +360,7 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     replaceTaskPageListView(runtime, capturedPageListProps);
     renderReadyApp(runtime);
 
-    await user.click(await findNavigationButton(/^today\b/i));
+    await user.click(await findWorkspaceRouteButton(/^today\b/i));
 
     const taskPages = await screen.findByRole("list", { name: /task pages/i });
 
@@ -367,6 +379,120 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
       "aria-current",
       "page",
     );
+  });
+
+  it("renders All Tasks and Today through the real built-in task.page-list without leaking raw ids or bodies", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(8),
+      pageIds: [
+        "home-page",
+        "all-route-task-page",
+        "today-route-task-page",
+        "done-route-task-page",
+      ],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const allTask = createRuntimePage(runtime, "All route visible title", [
+      {
+        blockId: "all-route-private-body",
+        text: "ALL_ROUTE_PRIVATE_BODY_TOKEN",
+      },
+    ]);
+    const todayTask = createRuntimePage(runtime, "Today route visible title", [
+      {
+        blockId: "today-route-private-body",
+        text: "TODAY_ROUTE_PRIVATE_BODY_TOKEN",
+      },
+    ]);
+    const doneTodayTask = createRuntimePage(runtime, "Done route visible title", [
+      {
+        blockId: "done-route-private-body",
+        text: "DONE_ROUTE_PRIVATE_BODY_TOKEN",
+      },
+    ]);
+
+    setTaskMetadata(runtime, allTask, { status: "todo" });
+    setTaskMetadata(runtime, todayTask, {
+      scheduled: fixedToday,
+      status: "todo",
+    });
+    setTaskMetadata(runtime, doneTodayTask, {
+      due: fixedToday,
+      status: "done",
+    });
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/all tasks/i));
+
+    const allTasksList = await screen.findByRole("list", {
+      name: /task pages/i,
+    });
+
+    expect(within(allTasksList).getByText(allTask.title)).toBeVisible();
+    expect(within(allTasksList).getByText(todayTask.title)).toBeVisible();
+    expect(within(allTasksList).getByText(doneTodayTask.title)).toBeVisible();
+    expect(document.body.textContent ?? "").not.toContain(allTask.id);
+    expect(document.body.textContent ?? "").not.toContain(todayTask.id);
+    expect(document.body.textContent ?? "").not.toContain(doneTodayTask.id);
+    expect(document.body.textContent ?? "").not.toContain(
+      "ALL_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+    expect(document.body.textContent ?? "").not.toContain(
+      "TODAY_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+    expect(document.body.textContent ?? "").not.toContain(
+      "DONE_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+
+    await user.click(await findWorkspaceRouteButton(/^today\b/i));
+
+    const todayList = await screen.findByRole("list", {
+      name: /task pages/i,
+    });
+
+    expect(within(todayList).getByText(todayTask.title)).toBeVisible();
+    await waitFor(() => {
+      expect(within(todayList).queryByText(allTask.title)).not.toBeInTheDocument();
+      expect(
+        within(todayList).queryByText(doneTodayTask.title),
+      ).not.toBeInTheDocument();
+    });
+    expect(document.body.textContent ?? "").not.toContain(allTask.id);
+    expect(document.body.textContent ?? "").not.toContain(todayTask.id);
+    expect(document.body.textContent ?? "").not.toContain(doneTodayTask.id);
+    expect(document.body.textContent ?? "").not.toContain(
+      "ALL_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+    expect(document.body.textContent ?? "").not.toContain(
+      "TODAY_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+    expect(document.body.textContent ?? "").not.toContain(
+      "DONE_ROUTE_PRIVATE_BODY_TOKEN",
+    );
+  });
+
+  it("documents task.page-list result DTOs as exact route tokens and inert titles", () => {
+    expectTypeOf<TaskPageListViewProps["pages"][number]>().toEqualTypeOf<PageSummary>();
+
+    render(
+      <TaskPageListView
+        pages={[
+          {
+            routeToken: "filter-result-1",
+            title: "Visible task result",
+          },
+        ]}
+      />,
+    );
+
+    const taskPages = screen.getByRole("list", { name: /task pages/i });
+
+    expect(within(taskPages).getByText("Visible task result")).toBeVisible();
+    expect(screen.queryByText("filter-result-1")).not.toBeInTheDocument();
   });
 
   it("routes Inbox through public Quick Capture save semantics and ignores a title-only Inbox page", async () => {
@@ -458,6 +584,58 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [tagged], {
       filterIds: ["tag-filter-today"],
     });
+  });
+
+  it("lets visible saved filter labels be used as their accessible names", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(1),
+      pageIds: ["home-page", "today-review-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const reviewPage = createRuntimePage(runtime, "Today Review task", []);
+
+    await runtime.commands.execute(tagAddCommandId, {
+      pageId: reviewPage.id,
+      tag: "review",
+    });
+    runtime.filters.save({
+      id: "tag.filter.today-review",
+      name: "Today Review",
+      query: {
+        where: [
+          {
+            field: "metadata.tag.tags",
+            op: "includes",
+            value: "review",
+          },
+        ],
+      },
+      sourcePluginId: tagPluginId,
+      viewType: pageListViewType,
+    });
+    renderReadyApp(runtime);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+    const todayReviewFilter = await within(savedFilters).findByRole("button", {
+      name: /^Today Review$/i,
+    });
+
+    expect(todayReviewFilter).toHaveAccessibleName("Today Review");
+
+    await user.click(todayReviewFilter);
+
+    expect(todayReviewFilter).toHaveAttribute("aria-current", "page");
+    expect(
+      within(await screen.findByRole("list", { name: /task pages/i })).getByText(
+        reviewPage.title,
+      ),
+    ).toBeVisible();
   });
 
   it("renders empty filter results through filter.empty_state SlotHost with only minimal props", async () => {
@@ -707,6 +885,71 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     expect(document.body.textContent ?? "").not.toContain(legacyTaskPage.id);
     expect(document.body.textContent ?? "").not.toContain(legacyTaskPage.title);
     expect(document.body.textContent ?? "").not.toContain("LEGACY_TASK_BODY_TOKEN");
+  });
+
+  it("fails closed when an active saved filter queries a metadata namespace with no declared owner", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(1),
+      pageIds: ["home-page", "unowned-metadata-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const unownedPage = createRuntimePage(runtime, "Unowned Metadata Leak", [
+      {
+        blockId: "unowned-metadata-body",
+        text: "UNOWNED_METADATA_BODY_TOKEN PRIVATE_PAGE_BODY_TOKEN",
+      },
+    ]);
+
+    runtime.metadata.set({
+      pageId: unownedPage.id,
+      namespace: "orphan",
+      key: "secret",
+      value: true,
+      valueType: "boolean",
+      sourcePluginId: tagPluginId,
+    });
+    runtime.filters.save({
+      id: "tag.filter.orphan-secret",
+      name: "Orphan Secret",
+      query: {
+        where: [
+          {
+            field: "metadata.orphan.secret",
+            op: "eq",
+            value: true,
+          },
+        ],
+      },
+      sourcePluginId: tagPluginId,
+      viewType: pageListViewType,
+    });
+    renderReadyApp(runtime);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+
+    await user.click(
+      await within(savedFilters).findByRole("button", {
+        name: /Orphan Secret/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(document.body.textContent ?? "").toMatch(
+        /unavailable|not available|missing|could not load|Orphan Secret has no pages/i,
+      );
+    });
+    expect(screen.queryByRole("list", { name: /task pages/i })).not.toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toContain(unownedPage.id);
+    expect(document.body.textContent ?? "").not.toContain(unownedPage.title);
+    expect(document.body.textContent ?? "").not.toContain(
+      "UNOWNED_METADATA_BODY_TOKEN",
+    );
   });
 
   it("fails closed when plugin ownership data is unavailable for filter source and view checks", async () => {
@@ -1153,6 +1396,17 @@ async function findNavigationButton(name: RegExp): Promise<HTMLElement> {
   return within(navigation).findByRole("button", { name });
 }
 
+async function findWorkspaceRouteButton(name: RegExp): Promise<HTMLElement> {
+  const navigation = await screen.findByRole("navigation", {
+    name: /^Workspace$/i,
+  });
+  const workspaceRoutes = within(navigation).getByRole("list", {
+    name: /^Workspace routes$/i,
+  });
+
+  return within(workspaceRoutes).findByRole("button", { name });
+}
+
 async function tabToElement(
   user: ReturnType<typeof userEvent.setup>,
   target: HTMLElement,
@@ -1382,12 +1636,10 @@ function readPageSummaryTitle(value: unknown): string | undefined {
 }
 
 function readPageRouteToken(page: Record<string, unknown>): string | undefined {
-  for (const key of ["routeToken", "routeKey", "key", "id"]) {
-    const value = page[key];
+  const value = page.routeToken;
 
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
   }
 
   return undefined;
@@ -1398,7 +1650,7 @@ function isAllowedPageSummaryKey(key: string): boolean {
 }
 
 function isAllowedRouteTokenKey(key: string): boolean {
-  return key === "id" || key === "key" || key === "routeKey" || key === "routeToken";
+  return key === "routeToken";
 }
 
 function collectForbiddenFilterPropPaths(
