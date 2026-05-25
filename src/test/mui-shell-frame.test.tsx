@@ -190,6 +190,19 @@ describe("TASK-035 MUI shell frame", () => {
         ).toHaveAttribute("aria-pressed", "false");
       }
     }
+
+    const commandButton = topBar.getByRole("button", { name: /^Command$/i });
+    const previouslyActiveButton = topBar.getByRole("button", {
+      name: /^Settings$/i,
+    });
+
+    expect(previouslyActiveButton).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(commandButton);
+
+    expect(commandButton).toHaveAttribute("aria-pressed", "true");
+    expect(status).toHaveTextContent(/^Command surface placeholder$/i);
+    expect(previouslyActiveButton).toHaveAttribute("aria-pressed", "false");
   });
 
   it("changes the visible shell route through real user navigation", async () => {
