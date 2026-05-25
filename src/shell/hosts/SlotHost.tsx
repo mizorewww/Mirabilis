@@ -12,16 +12,25 @@ type SlotHostProps<SlotProps extends Record<string, unknown> = Record<string, un
   registry: SlotRegistry;
   slot: string;
   props?: SlotProps;
+  actions?: HostActions;
   app?: AppRuntimeInfo;
   isPluginAvailable?: (pluginId: string) => boolean;
 };
 
 type ContributionProps = Record<string, unknown>;
+type HostActions = Record<string, (...args: unknown[]) => unknown>;
+type CloneBudget = {
+  nodes: number;
+};
+
+const MAX_CLONE_DEPTH = 64;
+const MAX_CLONE_NODES = 2_000;
 
 export function SlotHost({
   registry,
   slot,
   props = {} as Record<string, unknown>,
+  actions,
   app,
   isPluginAvailable,
 }: SlotHostProps) {
@@ -33,6 +42,7 @@ export function SlotHost({
     <Stack spacing={1}>
       {contributions.map((contribution) => (
         <SlotContributionHost
+          actions={actions}
           contribution={contribution}
           isPluginAvailable={isPluginAvailable}
           key={contribution.id}
@@ -44,10 +54,12 @@ export function SlotHost({
 }
 
 function SlotContributionHost({
+  actions,
   contribution,
   props,
   isPluginAvailable,
 }: {
+  actions?: HostActions;
   contribution: SlotContribution;
   props: Record<string, unknown>;
   isPluginAvailable?: (pluginId: string) => boolean;
@@ -56,7 +68,7 @@ function SlotContributionHost({
     return null;
   }
 
-  const controlledProps = createContributionProps(props);
+  const controlledProps = createContributionProps(props, actions);
 
   if (controlledProps === undefined) {
     return null;
@@ -121,8 +133,9 @@ function isAvailable(
 
 function createContributionProps(
   props: Record<string, unknown>,
+  actions: HostActions | undefined,
 ): ContributionProps | undefined {
-  const clonedProps = cloneControlledProps(props);
+  const clonedProps = cloneControlledProps(props, actions);
 
   if (clonedProps === undefined) {
     return undefined;
@@ -133,6 +146,7 @@ function createContributionProps(
 
 function cloneControlledProps(
   props: Record<string, unknown>,
+  actions: HostActions | undefined,
 ): ContributionProps | undefined {
   if (!isPlainRecord(props)) {
     return undefined;
@@ -147,6 +161,10 @@ function cloneControlledProps(
   const output: ContributionProps = {};
 
   for (const key of keys) {
+    if (isHardBlockedKey(key)) {
+      return undefined;
+    }
+
     if (isBlockedKey(key)) {
       continue;
     }
@@ -158,17 +176,26 @@ function cloneControlledProps(
     }
 
     if (typeof descriptor.value === "function") {
-      if (isAllowedCallbackKey(key)) {
-        output[key] = descriptor.value;
-      }
+      continue;
+    }
 
+    const actionWrapper = createHostActionWrapper(descriptor.value, actions);
+
+    if (actionWrapper !== undefined) {
+      setSafeRecordValue(output, key, actionWrapper);
+      continue;
+    }
+
+    if (readHostActionId(descriptor.value) !== undefined) {
       continue;
     }
 
     const clonedValue = cloneControlledValue(descriptor.value);
 
     if (clonedValue !== undefined) {
-      output[key] = clonedValue;
+      setSafeRecordValue(output, key, clonedValue);
+    } else if (isObjectLikeValue(descriptor.value)) {
+      return undefined;
     }
   }
 
@@ -177,13 +204,16 @@ function cloneControlledProps(
 
 function cloneControlledValue(value: unknown): unknown | undefined {
   const seen = new WeakSet<object>();
+  const budget = createCloneBudget();
 
-  return cloneControlledValueInner(value, seen);
+  return cloneControlledValueInner(value, seen, budget, 0);
 }
 
 function cloneControlledValueInner(
   value: unknown,
   seen: WeakSet<object>,
+  budget: CloneBudget,
+  depth: number,
 ): unknown | undefined {
   if (typeof value === "function") {
     return undefined;
@@ -195,6 +225,10 @@ function cloneControlledValueInner(
 
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (!consumeCloneNode(budget) || depth > MAX_CLONE_DEPTH) {
+    return undefined;
   }
 
   if (typeof value !== "object" || seen.has(value)) {
@@ -232,7 +266,12 @@ function cloneControlledValueInner(
         return undefined;
       }
 
-      const clonedValue = cloneControlledValueInner(descriptor.value, seen);
+      const clonedValue = cloneControlledValueInner(
+        descriptor.value,
+        seen,
+        budget,
+        depth + 1,
+      );
 
       if (clonedValue === undefined) {
         seen.delete(value);
@@ -265,6 +304,12 @@ function cloneControlledValueInner(
   const output: ContributionProps = {};
 
   for (const key of keys) {
+    if (isHardBlockedKey(key)) {
+      seen.delete(value);
+
+      return undefined;
+    }
+
     if (isBlockedKey(key)) {
       continue;
     }
@@ -277,10 +322,23 @@ function cloneControlledValueInner(
       return undefined;
     }
 
-    const clonedValue = cloneControlledValueInner(descriptor.value, seen);
+    if (readHostActionId(descriptor.value) !== undefined) {
+      continue;
+    }
+
+    const clonedValue = cloneControlledValueInner(
+      descriptor.value,
+      seen,
+      budget,
+      depth + 1,
+    );
 
     if (clonedValue !== undefined) {
-      output[key] = clonedValue;
+      setSafeRecordValue(output, key, clonedValue);
+    } else if (isObjectLikeValue(descriptor.value)) {
+      seen.delete(value);
+
+      return undefined;
     }
   }
 
@@ -313,6 +371,7 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
 function createResetKey(ownerId: string, value: unknown): string {
   let hash = 2_166_136_261;
   const seen = new WeakSet<object>();
+  let remainingNodes = MAX_CLONE_NODES;
 
   function write(text: string): void {
     for (let index = 0; index < text.length; index += 1) {
@@ -321,7 +380,7 @@ function createResetKey(ownerId: string, value: unknown): string {
     }
   }
 
-  function visit(input: unknown): void {
+  function visit(input: unknown, depth = 0): void {
     if (input === null) {
       write("null");
       return;
@@ -352,13 +411,20 @@ function createResetKey(ownerId: string, value: unknown): string {
       return;
     }
 
+    remainingNodes -= 1;
+
+    if (remainingNodes < 0 || depth > MAX_CLONE_DEPTH) {
+      write("budget");
+      return;
+    }
+
     seen.add(input);
 
     if (Array.isArray(input)) {
       write("array[");
 
       for (const item of input) {
-        visit(item);
+        visit(item, depth + 1);
         write(",");
       }
 
@@ -386,7 +452,7 @@ function createResetKey(ownerId: string, value: unknown): string {
       }
 
       write(`${key}:`);
-      visit(descriptor.value);
+      visit(descriptor.value, depth + 1);
       write(",");
     }
 
@@ -445,13 +511,81 @@ function isArrayIndexKey(key: string, length: number): boolean {
   );
 }
 
-function isAllowedCallbackKey(key: string): boolean {
-  return new Set(["onSelect", "onApply", "onIncrement"]).has(key);
+function createCloneBudget(): CloneBudget {
+  return {
+    nodes: MAX_CLONE_NODES,
+  };
+}
+
+function consumeCloneNode(budget: CloneBudget): boolean {
+  budget.nodes -= 1;
+
+  return budget.nodes >= 0;
+}
+
+function setSafeRecordValue(
+  target: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void {
+  Object.defineProperty(target, key, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  });
+}
+
+function createHostActionWrapper(
+  value: unknown,
+  actions: HostActions | undefined,
+): ((...args: unknown[]) => unknown) | undefined {
+  const actionId = readHostActionId(value);
+
+  if (actionId === undefined || actions === undefined || !isPlainRecord(actions)) {
+    return undefined;
+  }
+
+  const descriptor = safeDescriptor(actions, actionId);
+
+  if (!isReadableDataDescriptor(descriptor) || typeof descriptor.value !== "function") {
+    return undefined;
+  }
+
+  const action = descriptor.value;
+
+  return (...args: unknown[]) => action(...args);
+}
+
+function readHostActionId(value: unknown): string | undefined {
+  if (!isPlainRecord(value)) {
+    return undefined;
+  }
+
+  const kind = readDataProperty(value, "kind");
+  const actionId = readDataProperty(value, "actionId");
+
+  return kind === "host.action" && typeof actionId === "string" && actionId.length > 0
+    ? actionId
+    : undefined;
+}
+
+function readDataProperty(value: object, key: string): unknown {
+  const descriptor = safeDescriptor(value, key);
+
+  return isReadableDataDescriptor(descriptor) ? descriptor.value : undefined;
+}
+
+function isObjectLikeValue(value: unknown): value is object {
+  return value !== null && typeof value === "object";
 }
 
 function isBlockedKey(key: string): boolean {
   const normalized = key.toLowerCase().replace(/[-_]/gu, "");
   const blockedKeys = new Set([
+    "__proto__",
+    "constructor",
+    "prototype",
     "runtime",
     "stores",
     "registries",
@@ -465,8 +599,15 @@ function isBlockedKey(key: string): boolean {
     "sqli" + "te",
     "storage",
     "filesystem",
+    "file",
+    "files",
     "fs",
     "path",
+    "shell",
+    "notification",
+    "notifications",
+    "shortcut",
+    "shortcuts",
     "provider" + "settings",
     "openai" + "api" + "key",
     "auth" + "to" + "ken",
@@ -484,5 +625,16 @@ function isBlockedKey(key: string): boolean {
     "unregister",
   ]);
 
-  return blockedKeys.has(normalized);
+  return isHardBlockedKey(key) || blockedKeys.has(normalized);
+}
+
+function isHardBlockedKey(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  const normalized = lowerKey.replace(/[-_]/gu, "");
+
+  return (
+    lowerKey === "__proto__" ||
+    normalized === "constructor" ||
+    normalized === "prototype"
+  );
 }

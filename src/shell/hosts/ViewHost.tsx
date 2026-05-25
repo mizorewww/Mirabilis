@@ -10,6 +10,14 @@ import type {
 import { PluginRenderBoundary } from "./PluginRenderBoundary";
 
 type ControlledCallbacks = Record<string, (...args: unknown[]) => unknown>;
+type HostActions = Record<string, (...args: unknown[]) => unknown>;
+type CloneBudget = {
+  depth: number;
+  nodes: number;
+};
+
+const MAX_CLONE_DEPTH = 64;
+const MAX_CLONE_NODES = 2_000;
 
 type ViewHostProps = {
   registry: ViewRegistry;
@@ -19,7 +27,8 @@ type ViewHostProps = {
   props?: Record<string, unknown>;
   state?: "ready" | "loading" | "empty" | "error";
   error?: unknown;
-  callbacks?: ControlledCallbacks;
+  callbacks?: Record<string, unknown>;
+  actions?: HostActions;
   app?: AppRuntimeInfo;
   isPluginAvailable?: (pluginId: string) => boolean;
 };
@@ -39,6 +48,7 @@ export function ViewHost({
   state = "ready",
   error,
   callbacks,
+  actions,
   app,
   isPluginAvailable,
 }: ViewHostProps) {
@@ -84,7 +94,7 @@ export function ViewHost({
   const clonedProps =
     props === undefined ? {} : cloneControlledProps(props, { allowCallbacks: false });
   const clonedCallbacks =
-    callbacks === undefined ? undefined : freezeCallbacks(callbacks);
+    callbacks === undefined ? undefined : freezeCallbacks(callbacks, actions);
 
   if (
     clonedProps === undefined ||
@@ -197,7 +207,8 @@ function hasAcceptedKind(value: unknown, expectedKinds: readonly string[]): bool
 }
 
 function freezeCallbacks(
-  callbacks: ControlledCallbacks,
+  callbacks: Record<string, unknown>,
+  actions: HostActions | undefined,
 ): ControlledCallbacks | undefined {
   if (!isPlainRecord(callbacks)) {
     return undefined;
@@ -211,14 +222,24 @@ function freezeCallbacks(
   }
 
   for (const key of keys) {
+    if (isHardBlockedKey(key)) {
+      return undefined;
+    }
+
+    if (isBlockedKey(key)) {
+      continue;
+    }
+
     const descriptor = safeDescriptor(callbacks, key);
 
     if (!isReadableDataDescriptor(descriptor)) {
       return undefined;
     }
 
-    if (typeof descriptor.value === "function" && isAllowedCallbackKey(key)) {
-      clone[key] = descriptor.value;
+    const actionWrapper = createHostActionWrapper(descriptor.value, actions);
+
+    if (actionWrapper !== undefined && isAllowedCallbackKey(key)) {
+      clone[key] = actionWrapper;
     }
   }
 
@@ -237,13 +258,16 @@ function cloneAppInfo(app: AppRuntimeInfo): AppRuntimeInfo {
 
 function clonePlainValue(value: unknown): unknown | undefined {
   const seen = new WeakSet<object>();
+  const budget = createCloneBudget();
 
-  return clonePlainValueInner(value, seen);
+  return clonePlainValueInner(value, seen, budget, 0);
 }
 
 function clonePlainValueInner(
   value: unknown,
   seen: WeakSet<object>,
+  budget: CloneBudget,
+  depth: number,
 ): unknown | undefined {
   if (value === null || typeof value === "string" || typeof value === "boolean") {
     return value;
@@ -251,6 +275,10 @@ function clonePlainValueInner(
 
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (!consumeCloneNode(budget) || depth > MAX_CLONE_DEPTH) {
+    return undefined;
   }
 
   if (typeof value !== "object" || seen.has(value)) {
@@ -288,7 +316,12 @@ function clonePlainValueInner(
         return undefined;
       }
 
-      const clonedValue = clonePlainValueInner(descriptor.value, seen);
+      const clonedValue = clonePlainValueInner(
+        descriptor.value,
+        seen,
+        budget,
+        depth + 1,
+      );
 
       if (clonedValue === undefined) {
         seen.delete(value);
@@ -335,7 +368,12 @@ function clonePlainValueInner(
       return undefined;
     }
 
-    const clonedValue = clonePlainValueInner(descriptor.value, seen);
+    const clonedValue = clonePlainValueInner(
+      descriptor.value,
+      seen,
+      budget,
+      depth + 1,
+    );
 
     if (clonedValue === undefined) {
       seen.delete(value);
@@ -343,7 +381,7 @@ function clonePlainValueInner(
       return undefined;
     }
 
-    output[key] = clonedValue;
+    setSafeRecordValue(output, key, clonedValue);
   }
 
   seen.delete(value);
@@ -408,8 +446,9 @@ function cloneControlledValue(
   },
 ): unknown | undefined {
   const seen = new WeakSet<object>();
+  const budget = createCloneBudget();
 
-  return cloneControlledValueInner(value, seen, options);
+  return cloneControlledValueInner(value, seen, options, budget, 0);
 }
 
 function cloneControlledValueInner(
@@ -419,6 +458,8 @@ function cloneControlledValueInner(
     allowCallbacks: boolean;
     failOnBlockedKey: boolean;
   },
+  budget: CloneBudget,
+  depth: number,
 ): unknown | undefined {
   if (typeof value === "function") {
     return undefined;
@@ -432,6 +473,10 @@ function cloneControlledValueInner(
     return Number.isFinite(value) ? value : undefined;
   }
 
+  if (!consumeCloneNode(budget) || depth > MAX_CLONE_DEPTH) {
+    return undefined;
+  }
+
   if (typeof value !== "object" || seen.has(value)) {
     return undefined;
   }
@@ -439,7 +484,7 @@ function cloneControlledValueInner(
   seen.add(value);
 
   if (Array.isArray(value)) {
-    const output = cloneArrayValue(value, seen, options);
+    const output = cloneArrayValue(value, seen, options, budget, depth);
 
     seen.delete(value);
 
@@ -463,6 +508,12 @@ function cloneControlledValueInner(
   const output: Record<string, unknown> = {};
 
   for (const key of keys) {
+    if (isHardBlockedKey(key)) {
+      seen.delete(value);
+
+      return undefined;
+    }
+
     if (isBlockedKey(key)) {
       if (options.failOnBlockedKey) {
         seen.delete(value);
@@ -482,10 +533,6 @@ function cloneControlledValueInner(
     }
 
     if (typeof descriptor.value === "function") {
-      if (options.allowCallbacks && isAllowedCallbackKey(key)) {
-        output[key] = descriptor.value;
-      }
-
       continue;
     }
 
@@ -493,10 +540,12 @@ function cloneControlledValueInner(
       descriptor.value,
       seen,
       options,
+      budget,
+      depth + 1,
     );
 
     if (clonedValue !== undefined) {
-      output[key] = clonedValue;
+      setSafeRecordValue(output, key, clonedValue);
     }
   }
 
@@ -512,6 +561,8 @@ function cloneArrayValue(
     allowCallbacks: boolean;
     failOnBlockedKey: boolean;
   },
+  budget: CloneBudget,
+  depth: number,
 ): readonly unknown[] | undefined {
   const length = safeArrayLength(value);
   const keys = safeKeys(value);
@@ -539,6 +590,8 @@ function cloneArrayValue(
       descriptor.value,
       seen,
       options,
+      budget,
+      depth + 1,
     );
 
     if (clonedValue === undefined) {
@@ -554,6 +607,7 @@ function cloneArrayValue(
 function createResetKey(ownerId: string, value: unknown): string {
   let hash = 2_166_136_261;
   const seen = new WeakSet<object>();
+  let remainingNodes = MAX_CLONE_NODES;
 
   function write(text: string): void {
     for (let index = 0; index < text.length; index += 1) {
@@ -562,7 +616,7 @@ function createResetKey(ownerId: string, value: unknown): string {
     }
   }
 
-  function visit(input: unknown): void {
+  function visit(input: unknown, depth = 0): void {
     if (input === null) {
       write("null");
       return;
@@ -593,13 +647,20 @@ function createResetKey(ownerId: string, value: unknown): string {
       return;
     }
 
+    remainingNodes -= 1;
+
+    if (remainingNodes < 0 || depth > MAX_CLONE_DEPTH) {
+      write("budget");
+      return;
+    }
+
     seen.add(input);
 
     if (Array.isArray(input)) {
       write("array[");
 
       for (const item of input) {
-        visit(item);
+        visit(item, depth + 1);
         write(",");
       }
 
@@ -627,7 +688,7 @@ function createResetKey(ownerId: string, value: unknown): string {
       }
 
       write(`${key}:`);
-      visit(descriptor.value);
+      visit(descriptor.value, depth + 1);
       write(",");
     }
 
@@ -690,9 +751,72 @@ function isAllowedCallbackKey(key: string): boolean {
   return new Set(["onSelect", "onApply", "onIncrement"]).has(key);
 }
 
+function createCloneBudget(): CloneBudget {
+  return {
+    depth: MAX_CLONE_DEPTH,
+    nodes: MAX_CLONE_NODES,
+  };
+}
+
+function consumeCloneNode(budget: CloneBudget): boolean {
+  budget.nodes -= 1;
+
+  return budget.nodes >= 0 && budget.depth >= 0;
+}
+
+function setSafeRecordValue(
+  target: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void {
+  Object.defineProperty(target, key, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  });
+}
+
+function createHostActionWrapper(
+  value: unknown,
+  actions: HostActions | undefined,
+): ((...args: unknown[]) => unknown) | undefined {
+  const actionId = readHostActionId(value);
+
+  if (actionId === undefined || actions === undefined || !isPlainRecord(actions)) {
+    return undefined;
+  }
+
+  const descriptor = safeDescriptor(actions, actionId);
+
+  if (!isReadableDataDescriptor(descriptor) || typeof descriptor.value !== "function") {
+    return undefined;
+  }
+
+  const action = descriptor.value;
+
+  return (...args: unknown[]) => action(...args);
+}
+
+function readHostActionId(value: unknown): string | undefined {
+  if (!isPlainRecord(value)) {
+    return undefined;
+  }
+
+  const kind = readDataProperty(value, "kind");
+  const actionId = readDataProperty(value, "actionId");
+
+  return kind === "host.action" && typeof actionId === "string" && actionId.length > 0
+    ? actionId
+    : undefined;
+}
+
 function isBlockedKey(key: string): boolean {
   const normalized = key.toLowerCase().replace(/[-_]/gu, "");
   const blockedKeys = new Set([
+    "__proto__",
+    "constructor",
+    "prototype",
     "runtime",
     "stores",
     "registries",
@@ -706,8 +830,15 @@ function isBlockedKey(key: string): boolean {
     "sqli" + "te",
     "storage",
     "filesystem",
+    "file",
+    "files",
     "fs",
     "path",
+    "shell",
+    "notification",
+    "notifications",
+    "shortcut",
+    "shortcuts",
     "provider" + "settings",
     "openai" + "api" + "key",
     "auth" + "to" + "ken",
@@ -725,5 +856,16 @@ function isBlockedKey(key: string): boolean {
     "unregister",
   ]);
 
-  return blockedKeys.has(normalized);
+  return isHardBlockedKey(key) || blockedKeys.has(normalized);
+}
+
+function isHardBlockedKey(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  const normalized = lowerKey.replace(/[-_]/gu, "");
+
+  return (
+    lowerKey === "__proto__" ||
+    normalized === "constructor" ||
+    normalized === "prototype"
+  );
 }
