@@ -1,29 +1,66 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 00:54 CST.
+Last updated: 2026-05-26 01:15 CST.
 
 ## Current Task
 
-- Task: M9 roadmap documentation - User-visible app shell and workspace.
-- Branch: `docs/m9-user-visible-ui-roadmap`.
+- Task: TASK-034 - Design MUI Workspace And Audit Unfinished UI.
+- Branch: `docs/task-034-mui-ui-design`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
-- Parent role: orchestration only; this docs writer is editing roadmap/progress/agent-communication docs directly per handoff.
-- Current phase: M9 UI roadmap planning added after the completed TASK-033 scan exposed missing user-visible app-shell work.
+- Parent role: orchestration only.
+- Current phase: TASK-034 docs/design/audit complete; ready to merge.
 
 ## Active Agents
 
-- None active in this docs-only handoff.
+- None. TASK-034 doc writer completed.
+
+## Current TASK-034 State
+
+- TASK-034 is corrected to be a docs-only UI design and unfinished-work audit task.
+- User directive: first create complete documentation design and UI design, use MUI, scaffold later, write tests that simulate real user typing/clicking, split tasks, find all incomplete content, and get all UI work done.
+- TASK-034 deliverables:
+  - add `docs/product/07-user-interface-design.md`;
+  - link it from `docs/product/README.md`;
+  - revise `docs/implementation/task-index.md` so TASK-035 through TASK-045 cover the MUI implementation split;
+  - update `docs/implementation/progress.md`;
+  - update current TASK-034 agent communication;
+  - run `git diff --check`.
+- MUI design direction accepted for docs:
+  - `ThemeProvider` and `CssBaseline`;
+  - top `AppBar`;
+  - left `Drawer`;
+  - central `main` with `ViewHost`;
+  - optional right context panel;
+  - `Portal` for floating slots;
+  - `Dialog` for command/search/capture;
+  - dense, work-focused desktop app with no landing/hero.
+- Testing direction accepted for later implementation:
+  - React Testing Library plus `@testing-library/user-event`;
+  - `userEvent.setup()`, awaited `user.click`, `user.type`, and `user.keyboard`;
+  - accessible role/name queries;
+  - visible outcome assertions rather than internals.
+- Hard constraints:
+  - Core remains business-free;
+  - plugin/business actions go through Command Registry or documented owner-scoped command facades;
+  - plugin UI receives narrow controlled props;
+  - no direct Tauri/native/package/Rust/capability changes unless explicitly scoped;
+  - `useRuntime()` remains the public safe facade;
+  - a trusted shell-internal runtime channel must be designed before implementation if the shell needs private runtime handles.
+- Next action after TASK-034 docs: start TASK-035 - Add MUI Substrate And First Shell Frame.
+- TASK-034 outcome:
+  - Confucius (`doc_writer`) added `docs/product/07-user-interface-design.md`.
+  - Product README, task index, progress ledger, status, and TASK-034 communication docs were updated.
+  - TASK-034 is now marked `[x]`.
+  - Validation: `git diff --check` passed.
+  - No production code, tests, packages, lockfiles, Cargo/Tauri files, or native surfaces were changed.
+- Next action: merge TASK-034 docs to `master`, then start TASK-035.
 
 ## Current M9 Roadmap State
 
 - Diagnosis accepted from planner/user context: TASK-001 through TASK-033 delivered runtime substrate and plugin-owned capabilities, but `src/App.tsx` still renders only the centered Mirabilis startup/status panel after startup.
-- Missing user-visible work now tracked by M9 includes production app-shell mounting, page routes, saved-filter navigation, view/slot host composition, command palette, Quick Capture modal mounting, Search route, Calendar/Reports feeds, ML/AI contextual panels, and responsive/accessibility polish.
-- Durable docs updated by this handoff:
-  - `docs/implementation/task-index.md` gets the new M9 milestone row and TASK-034 through TASK-042.
-  - `docs/implementation/progress.md` gets the new unstarted TASK-034 through TASK-042 entries and a Run Log correction to the previous roadmap completion scan.
-  - `docs/implementation/agent-communication/status.md` records this current orchestration state.
-- No new M9 task should be marked `[~]` during this docs-only update.
-- Next action after this docs update: start TASK-034 - Replace Startup Card With A Usable Workspace.
+- Missing user-visible work now tracked by M9 includes MUI substrate, ViewHost/SlotHost, Home workspace editor, sidebar navigation, metadata/timer/timeline mounting, command palette, Quick Capture, search, Calendar/Reports, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- `docs/implementation/progress.md` marks TASK-034 `[~]` and TASK-035 through TASK-045 `[ ]`.
+- Next implementation task after docs validation is TASK-035, not TASK-034.
 
 ## Historical TASK-033 State
 
