@@ -266,7 +266,10 @@ function checkToday(
       nextDue,
     });
 
-    if (!hasCheckedEventForDate(tx, page.id, today)) {
+    if (
+      readLatestHabitCompletionEventTypeForDate(tx, page.id, today) !==
+      "checked"
+    ) {
       tx.events.append({
         pageId: page.id,
         namespace: habitNamespace,
@@ -528,14 +531,26 @@ function deleteLastCheckedAtForDate(
   }
 }
 
-function hasCheckedEventForDate(
+function readLatestHabitCompletionEventTypeForDate(
   tx: PluginTransaction,
   pageId: string,
   date: string,
-): boolean {
-  return tx.events
-    .list({ pageId, namespace: habitNamespace })
-    .some((event) => isHabitCompletionEvent(event, pageId, date, "checked"));
+): "checked" | "unchecked" | undefined {
+  const events = tx.events.list({ pageId, namespace: habitNamespace });
+
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+
+    if (isHabitCompletionEvent(event, pageId, date, "checked")) {
+      return "checked";
+    }
+
+    if (isHabitCompletionEvent(event, pageId, date, "unchecked")) {
+      return "unchecked";
+    }
+  }
+
+  return undefined;
 }
 
 function isHabitCompletionEvent(
