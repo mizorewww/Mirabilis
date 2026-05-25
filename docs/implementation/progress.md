@@ -105,7 +105,8 @@ Add newest entries at the top.
 - Initial constraints: parent remains orchestration-only; write failing tests before implementation; no full runtime, Core stores, registries, Plugin Host, NativeBridge, raw invoke, filesystem, path, provider settings, or secrets may be passed to plugin-rendered UI; no business-plugin private imports; no Tauri/native/Rust/package/capability/permission/IPC/schema/release behavior changes.
 - Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/WebSocket/reachability OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
 - Pre-test guidance: current-doc, deprecation/API, security, and planning agents agree TASK-036 should add app-shell host modules under `src/shell/hosts/`; render registered components via JSX / `createElement`; use real Error Boundaries; fail closed on missing/ambiguous/wrong-kind/malformed/thrown/unavailable views and slots; pass only narrow controlled props; evaluate slot `when` with the same controlled props; trust SlotRegistry ordering; and avoid all native/package/Tauri/Rust/security surface changes.
-- Next action: delegate failing tests to `test_writer`.
+- Failing tests: Cicero added `src/test/view-slot-hosts.test.tsx`. Red validation `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 11 failures for missing `../shell/hosts` and expected host production files, while the native/package surface guard passed.
+- Next action: delegate implementation to `implementer`.
 
 ### 2026-05-26 02:04 CST - TASK-035 merged
 

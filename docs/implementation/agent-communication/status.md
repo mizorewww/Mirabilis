@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 02:08 CST.
+Last updated: 2026-05-26 02:22 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-26 02:08 CST.
 - Branch: `feat/task-036-viewhost-slothost`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 pre-test guidance received; failing tests pending.
+- Current phase: TASK-036 failing tests committed; implementation pending.
 
 ## Active Agents
 
-- None yet. Pre-test guidance agents completed.
+- None. Test writer completed; implementation agent pending.
 
 ## Current TASK-036 State
 
@@ -38,6 +38,11 @@ Last updated: 2026-05-26 02:08 CST.
   - Singer (`security_reviewer`) defined P0/P1 boundaries: no full runtime/native/DB/filesystem/secrets/registries/PluginHost/command mutation handles in plugin props; view type ambiguity, wrong-kind data, thrown renders, broader slot condition props, raw errors, and business-plugin private imports must fail closed.
   - Bernoulli (`planner`) recommended the smallest safe slice: app-shell host modules under `src/shell/hosts/`, with `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and barrel export. Do not put React rendering in Core and do not mount Home/editor/routes yet.
 - Parent decision: accept guidance and delegate failing tests to `test_writer`.
+- Test writer outcome:
+  - Cicero (`test_writer`) added `src/test/view-slot-hosts.test.tsx`.
+  - Parent red validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 11 failures for missing `../shell/hosts` and missing expected host production files; the native/package surface guard passed.
+  - Test commit: `80ad0f2 Cicero(test)(Add Generic ViewHost And SlotHost): add host boundary acceptance tests`.
+- Parent decision: delegate implementation to `implementer` with ownership of `src/shell/hosts/*` only, plus no package/native/docs/progress/test edits unless needed for focused fixes after validation.
 
 ## Received Review Notes
 

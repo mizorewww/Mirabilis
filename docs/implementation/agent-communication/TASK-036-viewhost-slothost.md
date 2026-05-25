@@ -43,7 +43,7 @@
 
 ## Current Next Action
 
-- Delegate failing tests to `test_writer`.
+- Delegate implementation to `implementer`.
 
 ## Pre-Test Guidance Outcomes
 
@@ -71,3 +71,15 @@
   - do not mount Home, Markdown editor, metadata/timeline, dialogs, Calendar/Reports, ML/AI, or route data in this task;
   - use optional `isPluginAvailable(pluginId)` predicates for availability until later shell integration can derive active plugin records.
 - Parent decision: accept guidance. The test writer should add failing RTL tests and static guards before implementation.
+
+## Test Writer Outcome
+
+- Cicero (`test_writer`) added `src/test/view-slot-hosts.test.tsx`.
+- Coverage added:
+  - `ViewHost` exact-id render, unambiguous view-type render, ambiguous type fail-closed, missing/wrong/missing-kind/getter-backed/function-bearing DTO fail-closed, loading/empty/error states, thrown render boundary recovery, unavailable plugin, unsafe-prop redaction, and public `useRuntime()` facade boundary.
+  - `SlotHost` ordering/default-tie behavior, condition true/false/thrown/non-boolean behavior, per-contribution render isolation, user-event callback flow, mutation isolation, and redacted fallbacks.
+  - Static guards for no package/lock/native/Tauri/Rust/capability/release drift and no forbidden host imports/patterns.
+- Parent red validation: `bun run test:frontend -- src/test/view-slot-hosts.test.tsx` failed as expected with 11 failures for missing `../shell/hosts` and missing expected host production files; 1 static native-surface guard test passed.
+- `git diff --check` passed.
+- Test commit: `80ad0f2 Cicero(test)(Add Generic ViewHost And SlotHost): add host boundary acceptance tests`.
+- Parent decision: delegate implementation to `implementer`.
