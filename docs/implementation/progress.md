@@ -63,7 +63,7 @@ Status markers:
 
 ## Milestone M6: Calendar and reporting
 
-- [~] TASK-026: Implement Calendar Plugin baseline
+- [x] TASK-026: Implement Calendar Plugin baseline
 - [ ] TASK-027: Implement Habit and Heatmap plugins
 - [ ] TASK-028: Implement Stats and Chart plugins
 
@@ -78,6 +78,22 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 09:37 CST - TASK-026 completed
+
+- Branch: `feat/task-026-calendar-plugin-baseline`.
+- Task: Implement Calendar Plugin baseline.
+- Delivered: built-in `CalendarPlugin` registers plugin id `calendar`, views `calendar.day` and `calendar.week`, and command `calendar.open-time-segment`.
+- Delivered: Calendar views consume explicit normalized `{ kind: "calendar.time-segments" }` DTO input with Timer segment provenance, render UTC day/week calendar blocks as inert React text, show interval-overlap carryover segments, and open read-only in-view `Segment detail` through `calendar.open-time-segment({ segmentId, pageId })`.
+- Delivered: Calendar does not read Timer-owned events directly through the plugin-facing event facade and does not import Timer internals, raw runtime/store/registry/PluginHost, NativeBridge/Tauri APIs, markdown renderers, or HTML sinks.
+- Delivered: DTO and command validation fail closed for malformed, wrong-owner, wrong-namespace, wrong-type, missing, extra-field, accessor, symbol, prototype-carried, non-enumerable, blank/non-string id, invalid-date, end-before-start, and non-positive/non-finite-duration inputs where applicable. Command validity is runtime/view lifecycle scoped and cleared on unmount.
+- Review and fixes: focused review found P1 module-global command validity leakage, P1 non-enumerable field acceptance, and P1 overlap test gap. Banach added red regression tests; Bacon fixed the regressions. Narrow post-fix review by Russell, Poincare, and Bohr found no P0/P1 blockers.
+- Documentation sync: product, architecture, development, implementation, and testing docs now describe the delivered Calendar baseline, normalized DTO boundary, direct Timer-event-read deferral, validation behavior, final checks, and future work.
+- Final branch gates: `bun run check:quick` passed with typecheck, lint, 31 frontend test files / 481 tests, Rust fmt, Rust clippy, and Rust tests. `bun run build` passed.
+- Release readiness: Erdos (`release_checker`) found no P0/P1 blockers, confirmed changed files match TASK-026 scope, confirmed no package/native/Tauri/Rust/schema/capability/permission/lockfile changes, and said TASK-026 is ready to merge.
+- Remaining accepted risks: strict UTC `Z`-only parsing and duration-match validation, stale detail clearing after data/date/week changes, broader DTO hardening matrices, week-overlap placement assertions, UI command rejection messaging, and hiding the internal runtime-scoped `knownSegments` Map from wrapped view props remain future hardening.
+- Deferred scope: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell Calendar route/navigation, drag/drop editing, broad cross-plugin read/query facade, Timer metadata totals, Stats/ML/Habit/Task feeds, external calendar sync, and native/Tauri/package/Rust/schema changes.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
 
 ### 2026-05-25 08:39 CST - TASK-026 started
 
