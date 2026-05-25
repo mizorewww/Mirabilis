@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:31 CST.
+Last updated: 2026-05-25 11:32 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:31 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 second P1 regression tests pending.
+- Current phase: TASK-028 second P1 regression tests delegated.
 
 ## Active Agents
 
-- No active agents. Next delegation is a `test_writer` handoff for the remaining Stats/Chart array inertness P1.
+- Sartre (`test_writer`) is adding failing regression tests for the remaining Stats/Chart array inertness P1.
 
 ## Current TASK-028 State
 
@@ -183,5 +183,5 @@ Last updated: 2026-05-25 11:31 CST.
 
 ## Next Actions
 
-1. Delegate failing regression tests for Stats/Chart array inertness to `test_writer`.
-2. After red validation, delegate production fixes to `implementer`.
+1. Wait for Sartre (`test_writer`) to finish array inertness regression tests.
+2. Validate the expected red signal, commit tests, then delegate production fixes to `implementer`.

@@ -237,3 +237,14 @@
   - Required test coverage should prove Stats and Chart reject or sanitize non-inert arrays before invoking accessor elements, custom iterators, or overridden array methods.
   - The test patch must touch tests only.
   - After red validation, delegate production fixes to `implementer`.
+
+## Second Review-Fix Test Handoff
+
+- Sartre (`test_writer`) started at 2026-05-25 11:32 CST.
+- Scope: add failing tests only in `src/test/stats-chart-plugins.test.tsx` for the remaining Stats/Chart array inertness P1.
+- Required coverage:
+  - Stats must reject or fail closed before invoking accessor-backed array elements.
+  - Stats must not call caller-overridden array methods such as `flatMap` or `sort`.
+  - Nested arrays such as Timer segment `tagIds` must not execute custom iterators.
+  - Chart must reject or sanitize non-inert series rows before invoking accessor-backed rows or caller-overridden array methods.
+- Parent next action: wait for Sartre, validate the expected red signal, commit the test-only patch, then delegate production fixes to `implementer`.
