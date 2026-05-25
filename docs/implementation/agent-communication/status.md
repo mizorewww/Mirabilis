@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:44 CST.
+Last updated: 2026-05-25 11:45 CST.
 
 ## Current Task
 
@@ -8,11 +8,12 @@ Last updated: 2026-05-25 11:44 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 second P1 production fix completed; focused security/test re-review next.
+- Current phase: TASK-028 narrow array inertness re-review running.
 
 ## Active Agents
 
-- No active agents. Next delegation is focused re-review for the Stats/Chart array inertness fix.
+- Hubble (`security_reviewer`) is re-checking the Stats/Chart array inertness fix.
+- Kuhn (`test_quality_reviewer`) is re-checking Sartre's array inertness test coverage.
 
 ## Current TASK-028 State
 
@@ -193,5 +194,5 @@ Last updated: 2026-05-25 11:44 CST.
 
 ## Next Actions
 
-1. Delegate narrow security/test-quality re-review for the array inertness fix.
+1. Wait for Hubble and Kuhn.
 2. If no P0/P1 findings remain, delegate formal docs sync to `doc_writer`.

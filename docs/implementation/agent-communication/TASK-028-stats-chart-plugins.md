@@ -302,3 +302,10 @@
 
 - Delegate a narrow re-review to confirm Hypatia's array inertness P1 is closed.
 - If no P0/P1 findings remain, delegate formal docs sync for the stale Stats/Chart docs.
+
+## Narrow Array Inertness Re-Review Handoff
+
+- Hubble (`security_reviewer`) started at 2026-05-25 11:45 CST to re-check the Stats/Chart array inertness security boundary.
+- Kuhn (`test_quality_reviewer`) started at 2026-05-25 11:45 CST to re-check Sartre's regression tests and Mill's fix coverage.
+- Both agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for Hubble and Kuhn, then proceed to docs sync only if no P0/P1 findings remain.
