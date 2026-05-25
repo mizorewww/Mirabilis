@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 02:04 CST - TASK-035 merged
+
+- Branches: `feat/task-035-mui-shell-frame` and merge-result guard fix branch `test/task-035-merged-mui-guard`.
+- Merge commits on `master`: `2665043 Merge TASK-035 MUI shell frame` and `d2b4cb8 Merge TASK-035 merged guard fix`.
+- Merge-result validation: initial `bun run check:quick` on local `master` caught a stale pre-merge dependency-diff assertion in `src/test/mui-shell-frame.test.tsx`. Hilbert added a tests-only guard fix so the TASK-035 MUI dependency guard accepts both the exact pre-merge reviewed MUI quartet diff and the no-diff post-merge state while still rejecting unreviewed MUI/Emotion, script, dev-dependency, package/native, and lockfile drift.
+- Final merge-result validation: `bun run check:quick` passed with 39 frontend test files / 599 tests, Rust fmt, Rust clippy, and Rust tests.
+- Push status: pending after this merge-validation entry.
+- Next task: TASK-036 - Add Generic ViewHost And SlotHost.
+
 ### 2026-05-26 01:57 CST - TASK-035 completed and ready to merge
 
 - Branch: `feat/task-035-mui-shell-frame`.
