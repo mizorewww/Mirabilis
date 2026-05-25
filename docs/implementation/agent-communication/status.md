@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:44 CST.
+Last updated: 2026-05-25 09:54 CST.
 
 ## Current Task
 
@@ -8,14 +8,11 @@ Last updated: 2026-05-25 09:44 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 pre-test guidance in progress.
+- Current phase: TASK-027 pre-test guidance complete; failing test handoff pending.
 
 ## Active Agents
 
-- Einstein (`planner`) is defining the smallest safe TASK-027 scope, canonical ids, acceptance criteria, and TDD handoff.
-- Laplace (`docs_researcher`) is checking current docs/test guidance for React/Vitest/Testing Library and heatmap/date-series UI.
-- Kierkegaard (`deprecation_auditor`) is auditing canonical Habit/Heatmap ids and stale API/doc risks.
-- Singer (`security_reviewer`) is reviewing Habit command/event/metadata boundaries, Heatmap input validation, inert rendering, and native/package/Tauri/Rust/schema guardrails.
+- None currently active. Next agent should be `test_writer` for TASK-027 failing acceptance tests.
 
 ## Current TASK-027 State
 
@@ -31,6 +28,20 @@ Last updated: 2026-05-25 09:44 CST.
   - Preserve Task Plugin ownership of checkbox behavior unless agents define a narrow command/event path for Habit completion.
   - Keep native/Tauri/package/Rust/schema changes, persistence rewiring, broad app-shell navigation, Stats/ML aggregation, Calendar scheduled feeds, external sync, and release packaging out of scope unless agents identify an acceptance-critical dependency.
 - Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance completed:
+  - Einstein (`planner`) recommended a narrow slice: built-in `habit` plugin for habit metadata/events/filters and built-in `heatmap` plugin for generic date-series rendering. It recommended deferring existing Task checkbox auto-bridge, `habit.heatmap` alias, Habit Review, skipped/weekly/monthly recurrence, full streak logic, save-time indexing, Stats/ML/Calendar feeds, app-shell routes, and native/Tauri/Rust/schema/package changes.
+  - Laplace (`docs_researcher`) recommended focused RTL/Vitest tests in one TASK-027 file, semantic list/button/region queries, explicit deterministic dates or fake timers, no color/snapshot heatmap assertions, and static native/plugin-boundary guards. It flagged stale snake_case docs and ambiguous Task checkbox wording for later docs sync.
+  - Kierkegaard (`deprecation_auditor`) recommended kebab-case commands, camelCase metadata keys, split event `namespace: "habit"` / `type: "checked" | "unchecked"`, `heatmap.calendar` over `habit.heatmap`, and namespaced `heatmap.date-series` over bare `date-series`.
+  - Singer (`security_reviewer`) required PluginContext-only access, exact payload/DTO validation, forged owner rejection, generic Heatmap DTO rendering, no raw runtime/store/PluginHost/native/Tauri imports, no HTML/Markdown sinks, and no package/native/Rust/schema changes.
+- Parent decisions after guidance:
+  - Use plugin ids `habit` and `heatmap`.
+  - Use canonical commands `habit.refresh-habit`, `habit.check-today`, `habit.uncheck-today`, and `habit.set-frequency`; do not register snake_case aliases.
+  - Use Habit metadata `habit.enabled` (`boolean`), `habit.frequency` (`string`, baseline `daily`), `habit.lastCheckedAt` (`date`), and `habit.nextDue` (`date`). `habit.target`, `habit.streak`, and skipped/weekly/monthly recurrence remain deferred.
+  - Use event records with `namespace: "habit"` and `type: "checked" | "unchecked"`; payloads use `{ habitPageId, date }`. Stored event `type` must not be `habit.checked`.
+  - `habit.check-today({ pageId })` is the TASK-027 completion path. It verifies the page exists and is a trusted Habit page, appends at most one `checked` event per habit/date, sets `lastCheckedAt` to today, and advances `nextDue` to tomorrow for daily habits. Existing Task checkbox auto-bridge is deferred.
+  - `habit.uncheck-today({ pageId })` appends `unchecked`, removes today's completion state, and sets `nextDue` back to today.
+  - Habits filter id is `habit.filter.habits`; Today Habits filter id is `habit.filter.today-habits`. Today Habits uses `metadata.habit.nextDue eq today OR metadata.habit.nextDue lt today` because the current filter engine has no `lte` operator.
+  - Heatmap registers generic view `heatmap.calendar` with `type: "heatmap"` and accepts `{ kind: "heatmap.date-series" }`. Heatmap does not import Habit internals or read Habit events directly; tests may normalize public Habit events into DTOs in the harness.
 
 ## Completed Recent Task
 
@@ -63,5 +74,5 @@ Last updated: 2026-05-25 09:44 CST.
 
 ## Next Actions
 
-1. Wait for Einstein, Laplace, Kierkegaard, and Singer to finish pre-test guidance.
-2. Summarize parent decisions and hand off failing tests to `test_writer`.
+1. Spawn `test_writer` for TASK-027 failing acceptance tests.
+2. Validate the expected red signal and commit tests before delegating implementation.

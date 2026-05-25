@@ -50,3 +50,55 @@
 ## Current Next Action
 
 - Wait for pre-test guidance agents, then record parent decisions and delegate failing acceptance tests to `test_writer`.
+
+## Pre-Test Guidance Outcomes
+
+- Einstein (`planner`) completed read-only planning. Recommendation: implement the smallest safe slice as a built-in `habit` plugin plus a separate generic `heatmap` plugin. Habit owns metadata, commands, filters, and events; Heatmap owns a generic date-series view. Existing Task checkbox auto-bridge, Habit Review, `habit.card` polish, `habit.heatmap` alias, skipped/weekly/monthly recurrence, full streak algorithm, save-time automatic indexing, source task propagation, Calendar/Stats/ML feeds, app-shell routes, native/Tauri/Rust/schema/package changes, and release packaging remain deferred.
+- Laplace (`docs_researcher`) completed read-only current-doc/test guidance. Recommendation: use RTL `screen`/`within`, semantic `list` / `listitem` / `button` / `checkbox` / `region` queries, `userEvent.setup()`, deterministic date props or fake timers with `advanceTimers`, and avoid heatmap color/CSS/snapshot assertions. It recommended focused TASK-027 tests, static native/plugin-boundary guards, and later docs sync for stale snake_case and ambiguous checkbox wording.
+- Kierkegaard (`deprecation_auditor`) completed read-only API audit. Recommendation: use kebab-case commands, camelCase metadata keys, split event storage as `namespace: "habit"` with `type: "checked" | "unchecked"`, `heatmap.calendar` as the generic Heatmap view, and namespaced `heatmap.date-series` data kind. It flagged `habit.check_today`, `habit.uncheck_today`, `habit.set_frequency`, `habit.last_checked_at`, `type: "habit.checked"`, `habit.heatmap`, and bare `date-series` as stale or avoidable.
+- Singer (`security_reviewer`) completed read-only security guidance. P0/P1 constraints: no native/package/Rust/Tauri/schema changes; no Core habit/heatmap business behavior; plugins must use PluginContext facades only; command/DTO validators should reject extra/accessor/symbol/prototype/non-enumerable shapes; Habit completion must verify target pages and trusted Habit-owned metadata or `#habit` recognition; forged metadata/events must not make pages filterable or heatmap-visible; Heatmap must render inert generic data and must not import Habit internals or read Habit events directly.
+
+## Parent Decisions After Guidance
+
+- TASK-027 current scope is a Habit Plugin baseline plus a generic Heatmap Plugin baseline, not Task checkbox integration or a cross-plugin event query API.
+- Plugin ids are `habit` and `heatmap`.
+- Canonical commands:
+  - `habit.refresh-habit({ pageId })`
+  - `habit.check-today({ pageId })`
+  - `habit.uncheck-today({ pageId })`
+  - `habit.set-frequency({ pageId, frequency: "daily" })`
+- Do not register snake_case command aliases such as `habit.check_today`, `habit.uncheck_today`, or `habit.set_frequency`.
+- Habit metadata fields:
+  - `habit.enabled`, `valueType: "boolean"`
+  - `habit.frequency`, `valueType: "string"`, baseline value `daily`
+  - `habit.lastCheckedAt`, `valueType: "date"`
+  - `habit.nextDue`, `valueType: "date"`
+- `habit.target`, `habit.streak`, `habit.last_checked_at`, skipped behavior, weekly/monthly recurrence, and full streak logic are deferred.
+- Habit event records use `namespace: "habit"` and `type: "checked" | "unchecked"` with payload `{ habitPageId, date }`. Do not store dotted event types such as `type: "habit.checked"`.
+- `habit.check-today` is the TASK-027 completion path. It verifies page existence and trusted Habit status, appends at most one `checked` event per habit/date, sets `lastCheckedAt` to today's local `YYYY-MM-DD`, and advances `nextDue` to tomorrow for daily habits.
+- `habit.uncheck-today` appends `unchecked`, removes today's completion state, and sets `nextDue` back to today.
+- Existing Task checkbox auto-bridge is deferred because current PluginContext has no command middleware, event subscription, or cross-plugin event read facade. Habit logic must not be added to Core, Task Plugin, Markdown Editor, or App Shell for this slice.
+- Habit filters:
+  - `habit.filter.habits`, name `Habits`, `viewType: "page.list"`, query `metadata.habit.enabled eq true`.
+  - `habit.filter.today-habits`, name `Today Habits`, `viewType: "page.list"`, query enabled + daily + (`metadata.habit.nextDue eq today` OR `metadata.habit.nextDue lt today`). The current filter engine has `eq`, `neq`, `gt`, `lt`, `includes`, `exists`, and `within`, but no `lte`.
+- Heatmap registers generic view `heatmap.calendar` with `type: "heatmap"` and `accepts: { kind: "heatmap.date-series" }`.
+- Heatmap consumes normalized DTOs, not Habit-owned events directly. A test harness or future view host may normalize public Habit `checked` events into `heatmap.date-series`; Heatmap itself must not import Habit internals or call a plugin-facing event facade to read another plugin's events.
+
+## Test Writer Handoff
+
+- Next agent: `test_writer`.
+- Required red tests:
+  - Built-ins include `habit` and `heatmap`.
+  - Habit manifest declares `#habit` syntax and metadata fields `habit.enabled`, `habit.frequency`, `habit.lastCheckedAt`, and `habit.nextDue`.
+  - Habit runtime registers canonical commands and default filters; snake_case commands and `habit.heatmap` alias are absent.
+  - `habit.refresh-habit` recognizes valid `#habit` syntax in page title/body, writes Habit-owned metadata, and ignores fenced/escaped/HTML-like false positives.
+  - `habit.check-today` / `habit.uncheck-today` use exact payloads, verify trusted Habit pages, write Habit-owned metadata/events, are deterministic under fake timers, and do not mutate Task/Tag metadata or source Markdown.
+  - Duplicate same-day `habit.check-today` is idempotent and does not double-write `checked` events.
+  - Habits and Today Habits filters execute through the current filter engine with owner-reservation trust boundaries, excluding forged metadata and archived pages.
+  - Heatmap view `heatmap.calendar` renders valid `heatmap.date-series` data, rejects malformed/wrong-owner/non-enumerable/prototype/accessor/symbol DTO rows, sorts deterministic date cells, renders inert text only, and has an empty state.
+  - Integration-style test normalizes public Habit `checked` events in the test harness before rendering Heatmap; Heatmap must not read Habit events itself.
+  - Static boundary/native guard: no Core habit/heatmap business terms, no raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, no Habit internals imported by generic Heatmap view, no HTML/Markdown sinks, and no package/native/Tauri/Rust/schema diffs.
+
+## Current Next Action
+
+- Spawn `test_writer` for failing TASK-027 acceptance tests, validate the expected red signal, and commit tests.
