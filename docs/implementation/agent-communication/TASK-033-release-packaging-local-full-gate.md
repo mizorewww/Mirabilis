@@ -320,3 +320,19 @@
   - `2fdcd23 Godel(review-fix)(Add release packaging and local full gate): remove deprecated Cargo authors`
   - `f8847cf Ohm(docs)(Add release packaging and local full gate): document CSP release scope`
 - Parent next action: commit this review-fix outcome record, then run `release_checker` and any narrow re-review needed before marking TASK-033 complete.
+
+## Release Readiness And Narrow Re-Review Handoff
+
+- Sagan (`release_checker`) started at 2026-05-25 21:49 CST.
+- Carver (`security_reviewer`) started at 2026-05-25 21:49 CST.
+- Fermat (`deprecation_auditor`) started at 2026-05-25 21:49 CST.
+- McClintock (`test_quality_reviewer`) started at 2026-05-25 21:49 CST.
+- Euler (`docs_researcher`) started at 2026-05-25 21:49 CST.
+- All agents are read-only and must not edit tracked files, commit, merge, or push.
+- Review focus:
+  - release readiness without GitHub CI;
+  - CSP docs P1 closure and release-safety constraints;
+  - deprecated Cargo authors P1 closure and current Tauri CLI usage;
+  - fail-fast/native-surface guard test-quality P1 closure;
+  - TASK-033 docs/changelog/current-guidance readiness.
+- Parent next action: wait for outcomes, fix any remaining P0/P1, then mark TASK-033 complete if clear.
