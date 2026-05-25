@@ -60,6 +60,7 @@ type TimerSegment = {
 
 const maxMlProjectionItems = 1_000;
 const maxMlTextLength = 1_000;
+const maxMlJsonNodes = 1_000;
 const maxTrustedNumericMagnitude = 1_000_000_000;
 const taskPluginId = "task";
 const taskNamespace = "task";
@@ -239,7 +240,7 @@ export function buildRemainingTimeFeatures(
 
   return {
     features: {
-      baselineTotalSeconds: taskEstimateSeconds ?? similarAverageSeconds,
+      baselineTotalSeconds: taskEstimateSeconds,
       childTasksCompleted,
       childTasksTotal: childPages.length,
       similarAverageSeconds,
@@ -613,6 +614,7 @@ function readMetadataValue(input: unknown, valueType: MetadataValueType): unknow
       }
       break;
     case "json":
+      assertJsonNodeBudget(input, 0, { remaining: maxMlJsonNodes });
       return copyJsonValue(input, 0);
     case "null":
       if (input === null) {
@@ -670,6 +672,147 @@ function copyJsonValue(input: unknown, depth: number): unknown {
   return output;
 }
 
+function assertJsonNodeBudget(
+  input: unknown,
+  depth: number,
+  budget: { remaining: number },
+): void {
+  if (depth > 6) {
+    throw new Error("JSON metadata exceeds maximum depth");
+  }
+
+  if (budget.remaining <= 0) {
+    throw new Error("JSON metadata exceeds maximum node count");
+  }
+
+  budget.remaining -= 1;
+
+  if (input === null || typeof input === "boolean") {
+    return;
+  }
+
+  if (typeof input === "string") {
+    readBoundedText(input, "JSON text");
+
+    return;
+  }
+
+  if (typeof input === "number") {
+    if (!isTrustedNumericMagnitude(input)) {
+      throw new Error("JSON number must be bounded");
+    }
+
+    return;
+  }
+
+  if (Array.isArray(input)) {
+    const length = readInertPlainArrayLength(input, "JSON array");
+
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, String(index));
+
+      if (
+        descriptor === undefined ||
+        !descriptor.enumerable ||
+        !Object.prototype.hasOwnProperty.call(descriptor, "value")
+      ) {
+        throw new Error("JSON array must be an inert plain array");
+      }
+
+      assertJsonNodeBudget(descriptor.value, depth + 1, budget);
+    }
+
+    return;
+  }
+
+  const record = readExactPlainRecord(input, "JSON object");
+
+  for (const key of Reflect.ownKeys(record)) {
+    if (typeof key !== "string" || key.length > maxMlTextLength) {
+      throw new Error("JSON object key must be bounded");
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(record, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throw new Error("JSON object must be exact plain data");
+    }
+
+    assertJsonNodeBudget(descriptor.value, depth + 1, budget);
+  }
+}
+
+function readInertPlainArrayLength(input: unknown[], label: string): number {
+  if (Object.getPrototypeOf(input) !== Array.prototype) {
+    throw new Error(`${label} must be an inert plain array`);
+  }
+
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length");
+
+  if (
+    lengthDescriptor === undefined ||
+    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
+    !Number.isSafeInteger(lengthDescriptor.value) ||
+    lengthDescriptor.value < 0 ||
+    lengthDescriptor.value > maxMlProjectionItems
+  ) {
+    throw new Error(`${label} must be a bounded inert plain array`);
+  }
+
+  const length = lengthDescriptor.value;
+
+  for (const key of Reflect.ownKeys(input)) {
+    if (key === "length") {
+      continue;
+    }
+
+    if (typeof key !== "string" || readArrayIndex(key, length) === null) {
+      throw new Error(`${label} must be an inert plain array`);
+    }
+  }
+
+  return length;
+}
+
+function readExactPlainRecord(input: unknown, label: string): Record<string, unknown> {
+  if (
+    typeof input !== "object" ||
+    input === null ||
+    Array.isArray(input) ||
+    Object.getPrototypeOf(input) !== Object.prototype
+  ) {
+    throw new Error(`${label} must be exact plain data`);
+  }
+
+  const ownKeys = Reflect.ownKeys(input);
+
+  if (ownKeys.length > 20) {
+    throw new Error(`${label} exceeds maximum field count`);
+  }
+
+  for (const key of ownKeys) {
+    if (typeof key !== "string") {
+      throw new Error(`${label} contains untrusted fields`);
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throw new Error(`${label} must be exact plain data`);
+    }
+  }
+
+  return input as Record<string, unknown>;
+}
+
 function readMetadataValueType(input: unknown): MetadataValueType {
   if (metadataValueTypes.has(input as MetadataValueType)) {
     return input as MetadataValueType;
@@ -698,8 +841,13 @@ function readBoundedText(input: unknown, label: string): string {
 
 function readInstantString(input: unknown, label: string): string {
   const value = readNonBlankString(input, label);
+  const timestamp = Date.parse(value);
 
-  if (!Number.isFinite(Date.parse(value))) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value) ||
+    !Number.isFinite(timestamp) ||
+    new Date(timestamp).toISOString() !== value
+  ) {
     throw new Error(`${label} must be a valid instant`);
   }
 

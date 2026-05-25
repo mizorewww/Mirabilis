@@ -1,7 +1,6 @@
-import type { AppPlugin, MetadataJsonValue, PluginContext } from "../../core";
+import type { AppPlugin } from "../../core";
 
 import {
-  mlBaselineModelId,
   mlPredictionAlgorithmId,
   mlPredictionResultKind,
   predictRemainingTime,
@@ -110,14 +109,9 @@ export const MlPlugin: AppPlugin = {
   },
 };
 
-function runPrediction(
-  input: unknown,
-  ctx: PluginContext,
-): MlRemainingTimePredictionResult {
+function runPrediction(input: unknown): MlRemainingTimePredictionResult {
   const payload = readRunPredictionPayload(input);
   const result = predictRemainingTime(buildRemainingTimeFeatures(payload.input));
-
-  writePredictionResult(ctx, result);
 
   return result;
 }
@@ -137,52 +131,6 @@ function readRunPredictionPayload(input: unknown): MlRunPredictionPayload {
     algorithmId: mlPredictionAlgorithmId,
     input: readRemainingTimePredictionInput(payload.input),
   };
-}
-
-function writePredictionResult(
-  ctx: PluginContext,
-  result: MlRemainingTimePredictionResult,
-): void {
-  const metadataValue = {
-    algorithmId: result.algorithmId,
-    confidence: result.confidence,
-    generatedAt: result.generatedAt,
-    kind: result.kind,
-    maxSeconds: result.maxSeconds,
-    minSeconds: result.minSeconds,
-    modelId: mlBaselineModelId,
-    pageId: result.pageId,
-  } satisfies MetadataJsonValue;
-  const eventPayload = {
-    algorithmId: result.algorithmId,
-    confidence: result.confidence,
-    generatedAt: result.generatedAt,
-    maxSeconds: result.maxSeconds,
-    minSeconds: result.minSeconds,
-    modelId: mlBaselineModelId,
-    pageId: result.pageId,
-  } satisfies MetadataJsonValue;
-
-  ctx.metadata.set({
-    key: predictedRemainingTimeMetadataKey,
-    namespace: pluginId,
-    pageId: result.pageId,
-    value: metadataValue,
-    valueType: "json",
-  });
-  ctx.metadata.set({
-    key: predictionConfidenceMetadataKey,
-    namespace: pluginId,
-    pageId: result.pageId,
-    value: result.confidence,
-    valueType: "number",
-  });
-  ctx.events.append({
-    namespace: pluginId,
-    pageId: result.pageId,
-    payload: eventPayload,
-    type: predictionGeneratedEventType,
-  });
 }
 
 function readExactRecord(
