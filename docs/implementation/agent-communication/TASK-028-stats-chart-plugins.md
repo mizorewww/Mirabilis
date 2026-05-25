@@ -190,3 +190,28 @@
   - Native/package/Tauri/Rust/schema diff guard.
 - Test-fix commit: `9106bb4 Planck(test-fix)(Implement Stats and Chart plugins): cover stats chart review regressions`; post-commit auto-push succeeded.
 - Boyle (`implementer`) started at 2026-05-25 11:15 CST for the P1 production fixes. Scope: production code only; expected fixes are bounded Stats/Chart DTOs, page identity grouping, canonical Timer note support, and accessible comparison chart headers.
+
+## Review-Fix Implementation Outcome
+
+- Boyle (`implementer`) completed the P1 production fixes in `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+- Fix scope:
+  - Stats and Chart DTO arrays are bounded.
+  - Labels, identifiers, and numeric magnitudes are constrained at plugin trust boundaries.
+  - Stats aggregation totals are guarded against overflow or out-of-bound values.
+  - Time-by-page and unnoted-session aggregations group by page identity while preserving useful page labels.
+  - Unnoted sessions recognize canonical Timer `timer.note-added` events with top-level `pageId` and payload `segmentId`, `notePageId`, and `notedAt`.
+  - Chart comparison output has explicit table column headers for Label, Expected, Actual, Delta, and Error.
+  - Chart status output includes `aria-atomic`, and dynamic rows use stable keyed children.
+- Parent validation after Boyle's fix:
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx` passed with 18 tests.
+  - `bun run test:frontend -- src/test/stats-chart-plugins.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts src/test/core-architecture-boundary.test.ts src/test/habit-heatmap-plugins.test.tsx src/test/calendar-plugin-baseline.test.tsx` passed with 6 files / 124 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Native/package/Tauri/Rust/schema diff guard was empty.
+- Review-fix commit: `dc8739d Boyle(review-fix)(Implement Stats and Chart plugins): harden stats chart DTO boundaries`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate focused re-review of the fixed P1 surfaces to reviewer, security, test-quality, and current-doc agents.
+- If no P0/P1 findings remain, delegate formal docs sync for stale Stats/Chart docs.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:15 CST.
+Last updated: 2026-05-25 11:25 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:15 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 P1 production fixes delegated.
+- Current phase: TASK-028 P1 production fixes completed; focused re-review next.
 
 ## Active Agents
 
-- Boyle (`implementer`) is active for review-found P1 production fixes.
+- No active agents. Next delegation is focused re-review of the TASK-028 P1 fixes.
 
 ## Current TASK-028 State
 
@@ -63,6 +63,12 @@ Last updated: 2026-05-25 11:15 CST.
   - Parent validated the expected red signal: focused TASK-028 tests failed with 8 failed / 10 passed.
   - Static validation passed: `bun run typecheck`, focused ESLint for `src/test/stats-chart-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
   - Test-fix commit: `9106bb4 Planck(test-fix)(Implement Stats and Chart plugins): cover stats chart review regressions`; post-commit auto-push succeeded.
+- P1 production fixes completed:
+  - Boyle (`implementer`) hardened Stats and Chart trust boundaries in production code only.
+  - Changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+  - Fix scope: bounded Stats/Chart DTO arrays, trusted label and numeric magnitude checks, aggregate overflow guards, page-identity grouping for same-title pages, canonical Timer note-added event support, accessible Chart table headers, `aria-atomic` status, and stable dynamic child keys.
+  - Parent validated: focused TASK-028 tests passed (18 tests), adjacent plugin/core suite passed (6 files / 124 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `dc8739d Boyle(review-fix)(Implement Stats and Chart plugins): harden stats chart DTO boundaries`; post-commit auto-push succeeded.
 
 ## Current TASK-027 State
 
@@ -170,5 +176,5 @@ Last updated: 2026-05-25 11:15 CST.
 
 ## Next Actions
 
-1. Wait for Boyle (`implementer`) to finish the P1 production fixes.
-2. Validate focused green checks and commit the production fix separately.
+1. Delegate focused re-review of the TASK-028 P1 fixes to reviewer/security/test-quality/current-doc agents.
+2. If no P0/P1 findings remain, delegate docs sync for stale formal Stats/Chart docs.
