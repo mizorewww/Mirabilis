@@ -8,6 +8,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createElement,
+  useCallback,
   useState,
   type ComponentType,
   type ReactNode,
@@ -24,7 +25,13 @@ import {
 import { RuntimeProvider, useRuntime } from "../providers";
 import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
-type ControlledCallbacks = Record<string, (...args: unknown[]) => unknown>;
+type HostActionDescriptor = {
+  kind: "host.action";
+  actionId: string;
+};
+
+type ControlledCallbacks = Record<string, unknown>;
+type HostActions = Record<string, (...args: unknown[]) => unknown>;
 
 type ViewHostProps = {
   registry: ViewRegistry;
@@ -35,6 +42,7 @@ type ViewHostProps = {
   state?: "ready" | "loading" | "empty" | "error";
   error?: unknown;
   callbacks?: ControlledCallbacks;
+  actions?: HostActions;
   app?: AppRuntimeInfo;
   isPluginAvailable?: (pluginId: string) => boolean;
 };
@@ -43,6 +51,7 @@ type SlotHostProps<SlotProps extends Record<string, unknown> = Record<string, un
   registry: SlotRegistry;
   slot: string;
   props?: SlotProps;
+  actions?: HostActions;
   app?: AppRuntimeInfo;
   isPluginAvailable?: (pluginId: string) => boolean;
 };
@@ -98,6 +107,7 @@ const safeViewKind = "safe.item";
 const safeViewType = "safe.workspace";
 const safeSlotName = "safe.workspace.panel";
 const unsafeSentinelText = "RAW_RUNTIME_SECRET_TOKEN";
+const unsafePrototypeKeys = ["__proto__", "constructor", "prototype"] as const;
 const unsafeAliasKeys = [
   "openaiApiKey",
   "authToken",
@@ -107,6 +117,15 @@ const unsafeAliasKeys = [
   "native_bridge",
   "provider-settings",
   "commands",
+] as const;
+const nativeResourceAliasKeys = [
+  "shell",
+  "notification",
+  "notifications",
+  "shortcut",
+  "shortcuts",
+  "file",
+  "files",
 ] as const;
 const expectedHostSourceFiles = [
   "src/shell/hosts/PluginRenderBoundary.tsx",
@@ -135,21 +154,16 @@ describe("ViewHost", () => {
     const { ViewHost, PluginRenderBoundary } = await loadHosts();
     const registry = createInMemoryViewRegistry();
     const capturedProps: CapturedProps[] = [];
-    const onSelect = vi.fn();
     const acceptedData = createSafeViewData("item-1", "Trusted item");
     const unsafeRuntime = createUnsafeFullRuntime();
 
     function SafeView(props: CapturedProps) {
       capturedProps.push(props);
       const data = props.data as SafeViewData;
-      const callbacks = props.callbacks as ControlledCallbacks | undefined;
 
       return (
         <section role="region" aria-label="Trusted view">
           <h2>{data.title}</h2>
-          <button type="button" onClick={() => callbacks?.onSelect(data.id)}>
-            Select trusted item
-          </button>
         </section>
       );
     }
@@ -178,7 +192,6 @@ describe("ViewHost", () => {
         registry,
         viewId: "safe.view.primary",
         acceptedData,
-        callbacks: { onSelect },
         app: createAppInfo(),
         runtime: unsafeRuntime,
         NativeBridge: unsafeRuntime.nativeBridge,
@@ -279,26 +292,121 @@ describe("ViewHost", () => {
     expect(screen.queryByText(unsafeSentinelText)).not.toBeInTheDocument();
   });
 
-  it("passes only deliberate view callbacks and blocks raw command or registry handles", async () => {
+  it("fails closed when controlled ViewHost props contain prototype-pollution keys", async () => {
+    const { ViewHost } = await loadHosts();
+
+    for (const unsafeKey of unsafePrototypeKeys) {
+      const registry = createInMemoryViewRegistry();
+      const component = vi.fn(() => (
+        <section role="region" aria-label="Prototype-polluted prop view">
+          Prototype props should not render
+        </section>
+      ));
+
+      registry.register({
+        id: `safe.view.prototype-props.${unsafeKey}`,
+        pluginId: "safe-plugin",
+        type: safeViewType,
+        title: "Prototype-polluted prop view",
+        accepts: { kind: safeViewKind },
+        component,
+      });
+
+      const { unmount } = render(
+        <ViewHost
+          registry={registry}
+          viewId={`safe.view.prototype-props.${unsafeKey}`}
+          acceptedData={createSafeViewData("item-1", "Trusted item")}
+          props={createPropsWithUnsafePrototypeKey(unsafeKey)}
+          app={createAppInfo()}
+        />,
+      );
+
+      expectViewUnavailable();
+      expect(component).not.toHaveBeenCalled();
+      expect(document.body).not.toHaveTextContent("Prototype props should not render");
+      expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      unmount();
+    }
+  });
+
+  it("redacts documented native aliases from controlled ViewHost props", async () => {
+    const { ViewHost } = await loadHosts();
+    const registry = createInMemoryViewRegistry();
+    const capturedProps: CapturedProps[] = [];
+
+    registry.register({
+      id: "safe.view.native-alias-props",
+      pluginId: "safe-plugin",
+      type: safeViewType,
+      title: "Native alias prop view",
+      accepts: { kind: safeViewKind },
+      component: (props: CapturedProps) => {
+        capturedProps.push(props);
+
+        return (
+          <section role="region" aria-label="Native alias prop view">
+            {String(props.label)}
+          </section>
+        );
+      },
+    });
+
+    render(
+      <ViewHost
+        registry={registry}
+        viewId="safe.view.native-alias-props"
+        acceptedData={createSafeViewData("item-1", "Trusted item")}
+        props={{
+          label: "Safe native alias label",
+          ...createNativeResourceAliasProps(),
+        }}
+        app={createAppInfo()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Native alias prop view" }),
+    ).toHaveTextContent("Safe native alias label");
+    expect(capturedProps).toHaveLength(1);
+    expect(capturedProps[0]).toHaveProperty("label", "Safe native alias label");
+
+    for (const nativeAliasKey of nativeResourceAliasKeys) {
+      expect(capturedProps[0]).not.toHaveProperty(nativeAliasKey);
+    }
+
+    expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+    expect(findUnsafeSurfacePaths(capturedProps[0])).toStrictEqual([]);
+  });
+
+  it("turns descriptor-backed view callbacks into host-owned action wrappers", async () => {
     const { ViewHost } = await loadHosts();
     const user = userEvent.setup();
     const registry = createInMemoryViewRegistry();
-    const onSelect = vi.fn();
+    const rawSelect = vi.fn();
     const rawExecute = vi.fn();
     const rawRegister = vi.fn();
     const rawUnregister = vi.fn();
-    let capturedCallbacks: ControlledCallbacks | undefined;
+    let capturedOnSelect: unknown;
+    let rawSelectAction: ((...args: unknown[]) => unknown) | undefined;
 
     function CallbackProbeView(props: CapturedProps) {
-      capturedCallbacks = props.callbacks as ControlledCallbacks | undefined;
+      const callbacks = props.callbacks as ControlledCallbacks | undefined;
+      const onSelect = callbacks?.onSelect;
+      capturedOnSelect = onSelect;
 
       return (
         <section role="region" aria-label="Callback probe view">
           <button
             type="button"
-            onClick={() => capturedCallbacks?.onSelect("item-1")}
+            onClick={() => {
+              if (typeof onSelect === "function") {
+                onSelect("item-1");
+              }
+            }}
           >
-            Select via allowed callback
+            Select via host action
           </button>
         </section>
       );
@@ -313,38 +421,151 @@ describe("ViewHost", () => {
       component: CallbackProbeView,
     });
 
+    function ViewActionHostProbe() {
+      const [selectedId, setSelectedId] = useState("none");
+      const selectAction = useCallback((nextSelectedId: unknown) => {
+        rawSelect(nextSelectedId);
+        setSelectedId(String(nextSelectedId));
+      }, []);
+      rawSelectAction = selectAction;
+
+      return (
+        <>
+          <p role="status" aria-label="Selected item">
+            Selected {selectedId}
+          </p>
+          <ViewHost
+            registry={registry}
+            viewId="safe.view.callbacks"
+            acceptedData={createSafeViewData("item-1", "Callback item")}
+            callbacks={{
+              onSelect: hostAction("select"),
+              execute: rawExecute,
+              register: rawRegister,
+              unregister: rawUnregister,
+            }}
+            actions={{ select: selectAction }}
+            app={createAppInfo()}
+          />
+        </>
+      );
+    }
+
+    render(<ViewActionHostProbe />);
+
+    expect(screen.getByRole("region", { name: "Callback probe view" })).toBeVisible();
+    expect(typeof capturedOnSelect).toBe("function");
+    expect(capturedOnSelect).not.toBe(rawSelectAction);
+    expect(capturedOnSelect).not.toBe(rawSelect);
+
+    await user.click(
+      screen.getByRole("button", { name: "Select via host action" }),
+    );
+
+    expect(screen.getByRole("status", { name: "Selected item" })).toHaveTextContent(
+      "Selected item-1",
+    );
+    expect(rawSelect).toHaveBeenCalledWith("item-1");
+    expect(rawExecute).not.toHaveBeenCalled();
+    expect(rawRegister).not.toHaveBeenCalled();
+    expect(rawUnregister).not.toHaveBeenCalled();
+  });
+
+  it("rejects bare view callback functions even when they use allowed names", async () => {
+    const { ViewHost } = await loadHosts();
+    const user = userEvent.setup();
+    const registry = createInMemoryViewRegistry();
+    const rawSelect = vi.fn();
+    const rawApply = vi.fn();
+    const rawIncrement = vi.fn();
+    let capturedCallbacks: ControlledCallbacks | undefined;
+
+    function RawCallbackProbeView(props: CapturedProps) {
+      capturedCallbacks = props.callbacks as ControlledCallbacks | undefined;
+
+      return (
+        <section role="region" aria-label="Raw callback probe view">
+          <button
+            type="button"
+            onClick={() => {
+              const callback = capturedCallbacks?.onSelect;
+
+              if (typeof callback === "function") {
+                callback("item-1");
+              }
+            }}
+          >
+            Select raw callback
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const callback = capturedCallbacks?.onApply;
+
+              if (typeof callback === "function") {
+                callback();
+              }
+            }}
+          >
+            Apply raw callback
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const callback = capturedCallbacks?.onIncrement;
+
+              if (typeof callback === "function") {
+                callback();
+              }
+            }}
+          >
+            Increment raw callback
+          </button>
+        </section>
+      );
+    }
+
+    registry.register({
+      id: "safe.view.raw-callbacks",
+      pluginId: "safe-plugin",
+      type: safeViewType,
+      title: "Raw callback probe view",
+      accepts: { kind: safeViewKind },
+      component: RawCallbackProbeView,
+    });
+
     render(
       <ViewHost
         registry={registry}
-        viewId="safe.view.callbacks"
-        acceptedData={createSafeViewData("item-1", "Callback item")}
-        callbacks={
-          {
-            onSelect,
-            execute: rawExecute,
-            register: rawRegister,
-            unregister: rawUnregister,
-          } as ControlledCallbacks
-        }
+        viewId="safe.view.raw-callbacks"
+        acceptedData={createSafeViewData("item-1", "Raw callback item")}
+        callbacks={{
+          onSelect: rawSelect,
+          onApply: rawApply,
+          onIncrement: rawIncrement,
+        }}
         app={createAppInfo()}
       />,
     );
 
-    expect(screen.getByRole("region", { name: "Callback probe view" })).toBeVisible();
-    expect(capturedCallbacks).toBeDefined();
-    expect(capturedCallbacks).toHaveProperty("onSelect", onSelect);
-    expect(capturedCallbacks).not.toHaveProperty("execute");
-    expect(capturedCallbacks).not.toHaveProperty("register");
-    expect(capturedCallbacks).not.toHaveProperty("unregister");
+    expect(screen.getByRole("region", { name: "Raw callback probe view" })).toBeVisible();
+    expect(capturedCallbacks?.onSelect).toBeUndefined();
+    expect(capturedCallbacks?.onApply).toBeUndefined();
+    expect(capturedCallbacks?.onIncrement).toBeUndefined();
 
     await user.click(
-      screen.getByRole("button", { name: "Select via allowed callback" }),
+      screen.getByRole("button", { name: "Select raw callback" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Apply raw callback" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Increment raw callback" }),
     );
 
-    expect(onSelect).toHaveBeenCalledWith("item-1");
-    expect(rawExecute).not.toHaveBeenCalled();
-    expect(rawRegister).not.toHaveBeenCalled();
-    expect(rawUnregister).not.toHaveBeenCalled();
+    expect(rawSelect).not.toHaveBeenCalled();
+    expect(rawApply).not.toHaveBeenCalled();
+    expect(rawIncrement).not.toHaveBeenCalled();
   });
 
   it("renders by viewType only when exactly one view matches and fails closed for ambiguity", async () => {
@@ -532,6 +753,126 @@ describe("ViewHost", () => {
       expect(component).not.toHaveBeenCalled();
       unmount();
     }
+  });
+
+  it("fails closed for own and nested prototype-pollution keys in acceptedData", async () => {
+    const { ViewHost } = await loadHosts();
+
+    for (const unsafeKey of unsafePrototypeKeys) {
+      for (const placement of ["own", "nested"] as const) {
+        const registry = createInMemoryViewRegistry();
+        const component = vi.fn(() => (
+          <section role="region" aria-label="Prototype-polluted view">
+            Prototype data should not render
+          </section>
+        ));
+
+        registry.register({
+          id: `safe.view.prototype-data.${unsafeKey}.${placement}`,
+          pluginId: "safe-plugin",
+          type: safeViewType,
+          title: "Prototype-polluted safe view",
+          accepts: { kind: safeViewKind },
+          component,
+        });
+
+        const { unmount } = render(
+          <ViewHost
+            registry={registry}
+            viewId={`safe.view.prototype-data.${unsafeKey}.${placement}`}
+            acceptedData={createSafeViewDataWithUnsafePrototypeKey(
+              unsafeKey,
+              placement,
+            )}
+            app={createAppInfo()}
+          />,
+        );
+
+        expectViewUnavailable();
+        expect(component).not.toHaveBeenCalled();
+        expect(document.body).not.toHaveTextContent("Prototype data should not render");
+        expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        unmount();
+      }
+    }
+  });
+
+  it("allows safe null-prototype acceptedData DTOs without unsafe keys", async () => {
+    const { ViewHost } = await loadHosts();
+    const registry = createInMemoryViewRegistry();
+    const capturedProps: CapturedProps[] = [];
+
+    registry.register({
+      id: "safe.view.null-prototype-data",
+      pluginId: "safe-plugin",
+      type: safeViewType,
+      title: "Null-prototype safe view",
+      accepts: { kind: safeViewKind },
+      component: (props: CapturedProps) => {
+        capturedProps.push(props);
+        const data = props.data as SafeViewData;
+
+        return (
+          <section role="region" aria-label="Null-prototype view">
+            {data.title}
+          </section>
+        );
+      },
+    });
+
+    render(
+      <ViewHost
+        registry={registry}
+        viewId="safe.view.null-prototype-data"
+        acceptedData={createNullPrototypeViewData("item-null", "Null prototype item")}
+        app={createAppInfo()}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Null-prototype view" })).toHaveTextContent(
+      "Null prototype item",
+    );
+    expect(capturedProps).toHaveLength(1);
+    expect(capturedProps[0]?.data).toStrictEqual({
+      kind: safeViewKind,
+      id: "item-null",
+      title: "Null prototype item",
+    });
+  });
+
+  it("fails closed without throwing for over-deep acceptedData", async () => {
+    const { ViewHost } = await loadHosts();
+    const registry = createInMemoryViewRegistry();
+    const component = vi.fn(() => (
+      <section role="region" aria-label="Over-deep view">
+        Deep accepted data should not render
+      </section>
+    ));
+
+    registry.register({
+      id: "safe.view.deep-data",
+      pluginId: "safe-plugin",
+      type: safeViewType,
+      title: "Over-deep safe view",
+      accepts: { kind: safeViewKind },
+      component,
+    });
+
+    expect(() => {
+      render(
+        <ViewHost
+          registry={registry}
+          viewId="safe.view.deep-data"
+          acceptedData={createOverDeepViewData()}
+          app={createAppInfo()}
+        />,
+      );
+    }).not.toThrow();
+
+    expectViewUnavailable();
+    expect(component).not.toHaveBeenCalled();
+    expect(document.body).not.toHaveTextContent("Deep accepted data should not render");
   });
 
   it("fails closed instead of throwing for trap-backed acceptedData objects", async () => {
@@ -962,6 +1303,81 @@ describe("SlotHost", () => {
     }
   });
 
+  it("skips contributions without evaluating when for prototype-polluted slot props", async () => {
+    const { SlotHost } = await loadHosts();
+
+    for (const unsafeKey of unsafePrototypeKeys) {
+      const registry = createInMemorySlotRegistry();
+      const when = vi.fn(() => true);
+      const component = vi.fn(() => (
+        <section role="region" aria-label="Prototype-polluted slot">
+          Prototype slot props should not render
+        </section>
+      ));
+
+      registry.register<Record<string, unknown>>({
+        id: `slot.prototype-props.${unsafeKey}`,
+        pluginId: "safe-plugin",
+        slot: safeSlotName,
+        component,
+        when,
+      });
+
+      const { unmount } = render(
+        <SlotHost
+          registry={registry}
+          slot={safeSlotName}
+          props={createPropsWithUnsafePrototypeKey(unsafeKey)}
+          app={createAppInfo()}
+        />,
+      );
+
+      expect(when).not.toHaveBeenCalled();
+      expect(component).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole("region", { name: "Prototype-polluted slot" }),
+      ).not.toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent("Prototype slot props should not render");
+      expect(document.body).not.toHaveTextContent(unsafeSentinelText);
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      unmount();
+    }
+  });
+
+  it("fails closed without throwing for over-deep slot props", async () => {
+    const { SlotHost } = await loadHosts();
+    const registry = createInMemorySlotRegistry();
+    const component = vi.fn(() => (
+      <section role="region" aria-label="Over-deep slot">
+        Deep slot props should not render
+      </section>
+    ));
+
+    registry.register<Record<string, unknown>>({
+      id: "slot.deep-props",
+      pluginId: "safe-plugin",
+      slot: safeSlotName,
+      component,
+    });
+
+    expect(() => {
+      render(
+        <SlotHost
+          registry={registry}
+          slot={safeSlotName}
+          props={createOverDeepProps()}
+          app={createAppInfo()}
+        />,
+      );
+    }).not.toThrow();
+
+    expect(component).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("region", { name: "Over-deep slot" }),
+    ).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Deep slot props should not render");
+  });
+
   it("isolates thrown contribution renders behind a redacted fallback while siblings stay visible", async () => {
     const { SlotHost } = await loadHosts();
     const registry = createInMemorySlotRegistry();
@@ -1059,29 +1475,41 @@ describe("SlotHost", () => {
     }
   });
 
-  it("lets user clicks flow only through narrow controlled callbacks to update visible host state", async () => {
+  it("lets user clicks flow only through descriptor-backed host action wrappers", async () => {
     const { SlotHost } = await loadHosts();
     const user = userEvent.setup();
     const registry = createInMemorySlotRegistry();
+    const rawIncrement = vi.fn();
+    let capturedOnIncrement: unknown;
+    let rawIncrementAction: ((...args: unknown[]) => unknown) | undefined;
 
     registry.register<CounterSlotProps>({
       id: "counter",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: ({ count, onIncrement }: CounterSlotProps) => (
-        <section role="region" aria-label="Counter contribution">
-          <p role="status" aria-label="Counter value">
-            Count {count}
-          </p>
-          <button type="button" onClick={onIncrement}>
-            Increment
-          </button>
-        </section>
-      ),
+      component: ({ count, onIncrement }: CounterSlotProps) => {
+        capturedOnIncrement = onIncrement;
+
+        return (
+          <section role="region" aria-label="Counter contribution">
+            <p role="status" aria-label="Counter value">
+              Count {count}
+            </p>
+            <button type="button" onClick={onIncrement}>
+              Increment
+            </button>
+          </section>
+        );
+      },
     });
 
     function CounterHostProbe() {
       const [count, setCount] = useState(0);
+      const incrementAction = useCallback(() => {
+        rawIncrement();
+        setCount((currentCount) => currentCount + 1);
+      }, []);
+      rawIncrementAction = incrementAction;
 
       return (
         <SlotHost
@@ -1089,8 +1517,9 @@ describe("SlotHost", () => {
           slot={safeSlotName}
           props={{
             count,
-            onIncrement: () => setCount((currentCount) => currentCount + 1),
+            onIncrement: hostAction("increment"),
           }}
+          actions={{ increment: incrementAction }}
           app={createAppInfo()}
         />
       );
@@ -1101,19 +1530,25 @@ describe("SlotHost", () => {
     expect(screen.getByRole("status", { name: "Counter value" })).toHaveTextContent(
       "Count 0",
     );
+    expect(typeof capturedOnIncrement).toBe("function");
+    expect(capturedOnIncrement).not.toBe(rawIncrementAction);
+    expect(capturedOnIncrement).not.toBe(rawIncrement);
 
     await user.click(screen.getByRole("button", { name: "Increment" }));
 
     expect(screen.getByRole("status", { name: "Counter value" })).toHaveTextContent(
       "Count 1",
     );
+    expect(rawIncrement).toHaveBeenCalledTimes(1);
   });
 
-  it("redacts raw command and registry function handles while preserving allowed slot callbacks", async () => {
+  it("rejects bare slot callback functions even when they use allowed names", async () => {
     const { SlotHost } = await loadHosts();
     const user = userEvent.setup();
     const registry = createInMemorySlotRegistry();
+    const onSelect = vi.fn();
     const onApply = vi.fn();
+    const onIncrement = vi.fn();
     const rawExecute = vi.fn();
     const rawRegister = vi.fn();
     const rawUnregister = vi.fn();
@@ -1125,13 +1560,21 @@ describe("SlotHost", () => {
       slot: safeSlotName,
       component: (props: CapturedProps) => {
         capturedProps.push(props);
+        const select = props.onSelect as (() => void) | undefined;
         const apply = props.onApply as (() => void) | undefined;
+        const increment = props.onIncrement as (() => void) | undefined;
 
         return (
           <section role="region" aria-label="Slot callback probe">
             <p>{String(props.label)}</p>
+            <button type="button" onClick={() => select?.()}>
+              Select raw slot callback
+            </button>
             <button type="button" onClick={() => apply?.()}>
-              Apply allowed callback
+              Apply raw slot callback
+            </button>
+            <button type="button" onClick={() => increment?.()}>
+              Increment raw slot callback
             </button>
           </section>
         );
@@ -1144,7 +1587,9 @@ describe("SlotHost", () => {
         slot={safeSlotName}
         props={{
           label: "Safe slot callback",
+          onSelect,
           onApply,
+          onIncrement,
           execute: rawExecute,
           commands: { execute: rawExecute },
           register: rawRegister,
@@ -1157,17 +1602,27 @@ describe("SlotHost", () => {
     expect(screen.getByRole("region", { name: "Slot callback probe" })).toBeVisible();
     expect(capturedProps).toHaveLength(1);
     expect(capturedProps[0]).toHaveProperty("label", "Safe slot callback");
-    expect(capturedProps[0]).toHaveProperty("onApply", onApply);
+    expect(capturedProps[0]).not.toHaveProperty("onSelect");
+    expect(capturedProps[0]).not.toHaveProperty("onApply");
+    expect(capturedProps[0]).not.toHaveProperty("onIncrement");
     expect(capturedProps[0]).not.toHaveProperty("execute");
     expect(capturedProps[0]).not.toHaveProperty("commands");
     expect(capturedProps[0]).not.toHaveProperty("register");
     expect(capturedProps[0]).not.toHaveProperty("unregister");
 
     await user.click(
-      screen.getByRole("button", { name: "Apply allowed callback" }),
+      screen.getByRole("button", { name: "Select raw slot callback" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Apply raw slot callback" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Increment raw slot callback" }),
     );
 
-    expect(onApply).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onApply).not.toHaveBeenCalled();
+    expect(onIncrement).not.toHaveBeenCalled();
     expect(rawExecute).not.toHaveBeenCalled();
     expect(rawRegister).not.toHaveBeenCalled();
     expect(rawUnregister).not.toHaveBeenCalled();
@@ -1367,6 +1822,106 @@ function createSafeViewData(id: string, title: string): SafeViewData {
   };
 }
 
+function hostAction(actionId: string): HostActionDescriptor {
+  return Object.freeze({
+    kind: "host.action",
+    actionId,
+  });
+}
+
+function createNullPrototypeViewData(id: string, title: string): SafeViewData {
+  const data = Object.create(null) as Record<string, unknown>;
+
+  data.kind = safeViewKind;
+  data.id = id;
+  data.title = title;
+
+  return data as SafeViewData;
+}
+
+function createSafeViewDataWithUnsafePrototypeKey(
+  unsafeKey: (typeof unsafePrototypeKeys)[number],
+  placement: "own" | "nested",
+): SafeViewData {
+  const data = createSafeViewData(
+    `prototype-${unsafeKey}-${placement}`,
+    "Prototype unsafe item",
+  ) as SafeViewData & Record<string, unknown>;
+
+  if (placement === "own") {
+    defineEnumerableDataProperty(data, unsafeKey, {
+      polluted: unsafeSentinelText,
+    });
+
+    return data;
+  }
+
+  const nested = Object.create(null) as Record<string, unknown>;
+  defineEnumerableDataProperty(nested, unsafeKey, {
+    polluted: unsafeSentinelText,
+  });
+  data.nested = nested;
+
+  return data;
+}
+
+function createPropsWithUnsafePrototypeKey(
+  unsafeKey: (typeof unsafePrototypeKeys)[number],
+): Record<string, unknown> {
+  const props: Record<string, unknown> = {
+    label: "Prototype unsafe props",
+  };
+
+  defineEnumerableDataProperty(props, unsafeKey, {
+    polluted: unsafeSentinelText,
+  });
+
+  return props;
+}
+
+function defineEnumerableDataProperty(
+  target: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void {
+  Object.defineProperty(target, key, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  });
+}
+
+function createOverDeepViewData(): SafeViewData & Record<string, unknown> {
+  const data = createSafeViewData("deep-item", "Over-deep item") as SafeViewData &
+    Record<string, unknown>;
+
+  data.child = createDeepObject(160);
+
+  return data;
+}
+
+function createOverDeepProps(): Record<string, unknown> {
+  return {
+    label: "Over-deep slot props",
+    model: createDeepObject(160),
+  };
+}
+
+function createDeepObject(depth: number): Record<string, unknown> {
+  const root: Record<string, unknown> = { level: 0 };
+  let cursor = root;
+
+  for (let level = 1; level <= depth; level += 1) {
+    const next: Record<string, unknown> = { level };
+
+    cursor.next = next;
+    cursor = next;
+  }
+
+  return root;
+}
+
 function createAppInfo(): AppRuntimeInfo {
   return {
     version: "9.9.9-test",
@@ -1508,6 +2063,12 @@ function createUnsafeAliasProps(): Record<string, string> {
   );
 }
 
+function createNativeResourceAliasProps(): Record<string, string> {
+  return Object.fromEntries(
+    nativeResourceAliasKeys.map((aliasKey) => [aliasKey, unsafeSentinelText]),
+  );
+}
+
 function createThrowingProxy(label: string): unknown {
   return new Proxy(Object.create(null) as Record<string, unknown>, {
     get() {
@@ -1618,7 +2179,7 @@ function isUnsafeSurfaceKey(propertyName: string, propertyPath: string): boolean
 
   const normalized = propertyName.toLowerCase().replace(/[-_]/gu, "");
 
-  return /^(?:runtime|stores|registries|services|pluginhost|nativebridge|bridge|invoke|tauri|db|sqlite|storage|filesystem|fs|path|providersettings|openaiapikey|authtoken|accesstoken|apikey|secrets?|secrettoken|token|password|commands|commandregistry|execute|register|unregister)$/u.test(
+  return /^(?:runtime|stores|registries|services|pluginhost|nativebridge|bridge|invoke|tauri|db|sqlite|storage|filesystem|fs|path|shell|notifications?|shortcuts?|files?|providersettings|openaiapikey|authtoken|accesstoken|apikey|secrets?|secrettoken|token|password|commands|commandregistry|execute|register|unregister)$/u.test(
     normalized,
   );
 }
