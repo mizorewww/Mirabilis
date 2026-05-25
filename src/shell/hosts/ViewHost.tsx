@@ -546,6 +546,10 @@ function cloneControlledValueInner(
 
     if (clonedValue !== undefined) {
       setSafeRecordValue(output, key, clonedValue);
+    } else if (isObjectLikeValue(descriptor.value)) {
+      seen.delete(value);
+
+      return undefined;
     }
   }
 
@@ -809,6 +813,10 @@ function readHostActionId(value: unknown): string | undefined {
   return kind === "host.action" && typeof actionId === "string" && actionId.length > 0
     ? actionId
     : undefined;
+}
+
+function isObjectLikeValue(value: unknown): value is object {
+  return value !== null && typeof value === "object";
 }
 
 function isBlockedKey(key: string): boolean {
