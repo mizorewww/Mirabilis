@@ -322,3 +322,11 @@
   - Clarify Quick Capture preserves Markdown and requires explicit Task/Tag command handoff; it does not auto-create Task pages.
   - Clarify current views are `quick-capture.modal` / `quick-capture.mobile-input` labelled region/textarea baselines, not rich mobile toolbar mounting.
   - Clarify Search is on-demand scan, not persistent indexing, in current TASK-029 baseline.
+
+## Docs Sync Handoff
+
+- McClintock (`doc_writer`) started at 2026-05-25 12:55 CST.
+- Scope: formal docs only for TASK-029 Quick Capture/Search implementation drift.
+- Expected docs: product, architecture, development, and task-index docs that mention stale Quick Capture ids, Inbox metadata, native shortcut behavior, mobile toolbar behavior, automatic Task creation, or Search indexing.
+- Constraints: do not edit source, tests, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for McClintock, validate docs-only patch, and commit separately.

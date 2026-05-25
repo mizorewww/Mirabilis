@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:53 CST.
+Last updated: 2026-05-25 12:55 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 12:53 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 docs sync pending.
+- Current phase: TASK-029 docs sync delegated.
 
 ## Active Agents
 
-- No active agents. Next delegation is `doc_writer` for TASK-029 formal docs sync.
+- McClintock (`doc_writer`) is syncing formal TASK-029 Quick Capture/Search docs.
 
 ## Current TASK-029 State
 
@@ -270,5 +270,5 @@ Last updated: 2026-05-25 12:53 CST.
 
 ## Next Actions
 
-1. Delegate formal TASK-029 docs sync to `doc_writer`.
+1. Wait for McClintock (`doc_writer`) to finish docs sync.
 2. Validate docs-only patch and commit separately.
