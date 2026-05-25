@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Commit final runtime-shaped DTO fix record, then run final confirmation review.
+- Delegate final docs sync validation/update to `doc_writer`.
 
 ## Implementation Handoff
 
@@ -457,3 +457,20 @@
   - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
 - Review-fix commit: `74bc1d8 Volta(review-fix)(Implement Sync Plugin skeleton): reject runtime-shaped event DTOs`; post-commit auto-push succeeded.
 - Parent next action: commit this validation record, then run final confirmation review.
+
+## Final Confirmation Review Outcomes
+
+- Wegener (`reviewer`) found no remaining P0/P1 correctness issues.
+  - Confirmed event DTO wrappers must be plain records, `syncKey` is exact and plain, `snapshot.id` equals `syncKey.id`, descriptor-based validation does not invoke getters, canonical event behavior remains intact, prior P1s remain closed, and no runtime sync surface was introduced.
+- Planck (`security_reviewer`) found no remaining P0/P1 security issues.
+  - Confirmed event DTO/accessor/prototype hardening, prototype-safe JSON cloning, nested Plugin Settings reserved-key rejection, no package/native/Tauri/capability/storage/worker/network drift, and no forbidden production Sync literals beyond expected safe terms.
+  - Ran focused native boundary checks for IPC and SQLite tests.
+- Ptolemy (`test_quality_reviewer`) found no remaining P0/P1 test-quality gaps.
+  - Confirmed tests cover `__proto__`, Markdown unsafe JSON, nested Plugin Settings reserved data, stale resolver kinds, event-array validation/accessors, exact event DTO keys/id, and non-plain event DTO wrappers / `syncKey`.
+
+## Parent Decisions After Final Confirmation
+
+- TASK-032 code and tests are through the P0/P1 review gate.
+- Huygens' docs patch remains uncommitted and must be reviewed/updated against final behavior before docs commit.
+- Final docs sync should mention strict event DTO validation and keep future sync transport/settings/security caveats explicit.
+- Parent next action: delegate final docs sync validation/update to `doc_writer`.
