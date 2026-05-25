@@ -236,3 +236,33 @@
 - Required coverage: Quick Capture modal baseline region semantics, hostile `search.query` payload rejection/no-mutation, Search title/scanned page/body caps, and optional focused P2 Search status / save-and-open parity / static import guard hardening.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Lagrange, validate expected red/focused signal, and commit tests separately.
+
+## Review-Fix Test Outcome
+
+- Lagrange (`test_writer`) added focused review-fix coverage in `src/test/quick-capture-search-plugins.test.tsx`.
+- Added/hardened coverage:
+  - Quick Capture modal baseline should render as a labelled `region`, not a bare `dialog`.
+  - `quick-capture.save-and-open` hostile payload parity.
+  - Hostile `search.query` payload rejection/no-mutation.
+  - Search title cap and scanned page/body caps.
+  - Search result status summary for non-empty and empty results.
+  - Static import guard for forbidden root `../../core` factory imports.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/quick-capture-search-plugins.test.tsx` failed as expected with 2 failed / 13 passed.
+  - Failure symptoms: `quick-capture.modal` still renders `role="dialog"` and `search.results` lacks `role="status"`.
+  - Search hostile payload, Search caps, save-and-open hostile payload parity, and static guard tests already pass against the current implementation.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/quick-capture-search-plugins.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test-fix commit: `8a36751 Lagrange(test-fix)(Implement Quick Capture and Search plugins): cover capture search review gaps`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate production review fixes to `implementer`.
+- Expected production scope:
+  - Change `quick-capture.modal` baseline to a labelled `region` with accessible textbox semantics.
+  - Add `role="status"` summary output to `search.results` for non-empty and empty results.
+  - Keep package/native/Tauri/Rust/schema/capability surfaces unchanged.
