@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:07 CST.
+Last updated: 2026-05-25 13:09 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 13:07 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 started; pre-test guidance pending.
+- Current phase: TASK-030 pre-test guidance delegated.
 
 ## Active Agents
 
-- No active agents. Parent is about to delegate TASK-030 pre-test guidance.
+- Pasteur (`planner`) is defining the smallest safe TASK-030 slice.
+- Averroes (`docs_researcher`) is checking current React/Vitest/Testing Library and Tauri guidance.
+- Chandrasekhar (`deprecation_auditor`) is auditing stale ML API/runtime assumptions.
+- Hegel (`security_reviewer`) is reviewing ML feature/prediction trust boundaries.
 
 ## Current TASK-030 State
 
@@ -27,6 +30,11 @@ Last updated: 2026-05-25 13:07 CST.
   - Treat manifest algorithm descriptors as inert unless agents identify an existing executable runtime hook.
   - Prefer a deterministic TypeScript-only baseline and defer real model training, background jobs, persistent model/index storage, AI/provider calls, app-shell route polish, broad cross-plugin private reads, and native/Tauri/package/Rust/schema/capability changes.
 - Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance delegated:
+  - Pasteur (`planner`) should define canonical ids, DTO/result shapes, minimal acceptance criteria, expected production files, and deferred scope.
+  - Averroes (`docs_researcher`) should verify current official docs for deterministic Vitest tests, React/Testing Library accessible prediction panel rendering, and Tauri no-native implications.
+  - Chandrasekhar (`deprecation_auditor`) should check whether ML algorithm descriptors are inert and identify stale ids/API assumptions.
+  - Hegel (`security_reviewer`) should define payload, feature, prediction, rendering, and static-guard constraints.
 
 ## Current TASK-029 State
 

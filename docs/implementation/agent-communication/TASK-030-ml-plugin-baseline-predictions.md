@@ -48,3 +48,12 @@
   - `docs_researcher` to check current React/Vitest/Testing Library guidance for deterministic feature/model tests and accessible prediction panel tests.
   - `deprecation_auditor` to audit stale ML algorithm naming/API/runtime assumptions.
   - `security_reviewer` to review feature input trust boundaries, metadata/event/page data handling, prediction confidence/limitations, and native/Tauri/package impact.
+
+## Pre-Test Guidance Handoff
+
+- Pasteur (`planner`) started at 2026-05-25 13:09 CST.
+- Averroes (`docs_researcher`) started at 2026-05-25 13:09 CST.
+- Chandrasekhar (`deprecation_auditor`) started at 2026-05-25 13:09 CST.
+- Hegel (`security_reviewer`) started at 2026-05-25 13:09 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for guidance, record parent decisions, then delegate failing acceptance tests to `test_writer`.
