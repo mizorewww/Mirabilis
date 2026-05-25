@@ -38,4 +38,12 @@
 
 ## Current Next Action
 
-- Spawn pre-test guidance agents, then record parent decisions and delegate failing acceptance tests to `test_writer`.
+- Pre-test guidance started 2026-05-25 10:38 CST.
+- Hume (`planner`) is defining the smallest safe TASK-028 slice, canonical ids, acceptance criteria, risks, and TDD handoff.
+- Lovelace (`docs_researcher`) is checking current React/Vitest/Testing Library/chart accessibility guidance for aggregation and chart view tests.
+- Mencius (`deprecation_auditor`) is auditing canonical Stats/Chart identifiers, stale docs/API risks, and deprecated framework patterns.
+- Socrates (`security_reviewer`) is reviewing aggregation input trust, chart DTO validation, plugin isolation, and native/package/Tauri/Rust/schema guardrails.
+
+## Current Next Action
+
+- Wait for pre-test guidance agents, then record parent decisions and delegate failing acceptance tests to `test_writer`.

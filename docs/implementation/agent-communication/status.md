@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:36 CST.
+Last updated: 2026-05-25 10:38 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 10:36 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 started; pre-test guidance pending.
+- Current phase: TASK-028 pre-test guidance active.
 
 ## Active Agents
 
-- None currently active. Next agents should provide pre-test planning/current-doc/API/security guidance for TASK-028.
+- Hume (`planner`) is active for scope, acceptance criteria, identifiers, and TDD handoff.
+- Lovelace (`docs_researcher`) is active for current React/Vitest/Testing Library/chart accessibility guidance.
+- Mencius (`deprecation_auditor`) is active for canonical Stats/Chart API identifiers and stale-doc risks.
+- Socrates (`security_reviewer`) is active for aggregation/chart trust boundaries and plugin isolation.
 
 ## Current TASK-028 State
 
@@ -132,5 +135,5 @@ Last updated: 2026-05-25 10:36 CST.
 
 ## Next Actions
 
-1. Spawn pre-test guidance agents for TASK-028.
+1. Wait for pre-test guidance agents.
 2. Record parent decisions, then delegate failing acceptance tests to `test_writer`.
