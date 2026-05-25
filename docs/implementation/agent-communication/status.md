@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 04:02 CST.
+Last updated: 2026-05-26 04:10 CST.
 
 ## Current Task
 
@@ -12,8 +12,8 @@ Last updated: 2026-05-26 04:02 CST.
 
 ## Active Agents
 
-- None. TASK-037 guidance agents and test writer completed.
-- Pending: delegate Home workspace editor production work to `implementer`.
+- None. TASK-037 guidance agents and test writer completed; first implementer replacement required.
+- Pending: delegate Home workspace editor production work to a replacement `implementer`.
 
 ## Current TASK-037 State
 
@@ -39,6 +39,11 @@ Last updated: 2026-05-26 04:02 CST.
   - Parent red validation failed as expected because the app still renders Home placeholders and no Markdown textbox or registered editor: 2 failed files / 6 passed, 8 failed / 104 passed for the focused aggregate command.
   - `bun run typecheck` and `git diff --check` passed.
 - Parent decision: delegate implementation next, with the same narrow Home-only scope and TASK-036 host-boundary constraints.
+- Implementation delegation note:
+  - Noether (`implementer`) was assigned after the red baseline and progress commits.
+  - Parent waited, sent one concise status request, waited another window, and initially observed no worktree changes before closing Noether.
+  - Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
+  - Parent will treat those late edits as partial agent output and ask a replacement implementer to review, continue, or correct them instead of taking over production code.
 
 ## Current TASK-036 State
 

@@ -104,3 +104,10 @@
   - accept the tests as the TASK-037 red baseline;
   - commit them separately before implementation;
   - delegate production changes to `implementer`.
+
+## Implementation Delegation Notes
+
+- Noether (`implementer`) was assigned TASK-037 production implementation after the failing-test commit.
+- Parent waited for a blocking result, sent one concise status request, waited another window, and initially observed no worktree changes before closing Noether.
+- Outcome: Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
+- Parent decision: treat the late edits as partial agent output, do not commit them directly, and delegate a replacement implementer to review, continue, or correct them rather than taking over production work in the parent thread.

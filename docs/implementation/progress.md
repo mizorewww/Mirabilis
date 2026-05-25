@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 04:10 CST - TASK-037 implementer replacement
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Noether (`implementer`) was assigned after the failing-test baseline. Parent waited, sent one concise status request, waited a second window, and initially observed no worktree changes before shutdown.
+- Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
+- Parent decision: treat the late edits as partial agent output and delegate the same narrow Home workspace production scope to a replacement `implementer`; parent will not take over production implementation.
+
 ### 2026-05-26 04:02 CST - TASK-037 failing tests committed
 
 - Branch: `feat/task-037-home-workspace-editor`.
