@@ -41,4 +41,12 @@
 
 ## Current Next Action
 
-- Spawn `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer` for TASK-027 pre-test guidance.
+- Pre-test guidance started 2026-05-25 09:44 CST.
+- Einstein (`planner`) is defining the smallest safe TASK-027 scope, canonical ids, acceptance criteria, risks, and TDD handoff.
+- Laplace (`docs_researcher`) is checking current React/Vitest/Testing Library guidance for Habit filters and Heatmap/date-series view tests.
+- Kierkegaard (`deprecation_auditor`) is auditing canonical Habit/Heatmap identifiers, stale docs/API risks, and deprecated framework patterns.
+- Singer (`security_reviewer`) is reviewing Habit command/event/metadata trust boundaries, Heatmap input validation, inert rendering, and native/package/Tauri/Rust/schema guardrails.
+
+## Current Next Action
+
+- Wait for pre-test guidance agents, then record parent decisions and delegate failing acceptance tests to `test_writer`.

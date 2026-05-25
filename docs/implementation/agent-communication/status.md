@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:41 CST.
+Last updated: 2026-05-25 09:44 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 09:41 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 started; pre-test planning/current-doc/API/security guidance pending.
+- Current phase: TASK-027 pre-test guidance in progress.
 
 ## Active Agents
 
-- None currently active. Next step is to spawn pre-test guidance agents.
+- Einstein (`planner`) is defining the smallest safe TASK-027 scope, canonical ids, acceptance criteria, and TDD handoff.
+- Laplace (`docs_researcher`) is checking current docs/test guidance for React/Vitest/Testing Library and heatmap/date-series UI.
+- Kierkegaard (`deprecation_auditor`) is auditing canonical Habit/Heatmap ids and stale API/doc risks.
+- Singer (`security_reviewer`) is reviewing Habit command/event/metadata boundaries, Heatmap input validation, inert rendering, and native/package/Tauri/Rust/schema guardrails.
 
 ## Current TASK-027 State
 
@@ -60,5 +63,5 @@ Last updated: 2026-05-25 09:41 CST.
 
 ## Next Actions
 
-1. Spawn `planner`, `docs_researcher`, `deprecation_auditor`, and `security_reviewer` for TASK-027 pre-test guidance.
-2. Use their guidance to hand off failing tests to `test_writer`.
+1. Wait for Einstein, Laplace, Kierkegaard, and Singer to finish pre-test guidance.
+2. Summarize parent decisions and hand off failing tests to `test_writer`.
