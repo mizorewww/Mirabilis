@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:19 CST.
+Last updated: 2026-05-25 10:23 CST.
 
 ## Current Task
 
@@ -8,17 +8,11 @@ Last updated: 2026-05-25 10:19 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 review wave active.
+- Current phase: TASK-027 P1 review fix required; regression-test and docs-sync handoff pending.
 
 ## Active Agents
 
-- Bernoulli (`pr_explorer`) is active for changed-path mapping.
-- Hooke (`reviewer`) is active for correctness review.
-- Heisenberg (`deprecation_auditor`) is active for API/deprecation audit.
-- Feynman (`security_reviewer`) is active for trust-boundary review.
-- Beauvoir (`docs_researcher`) is active for current-doc guidance.
-- Fermat (`test_quality_reviewer`) is active for test-quality review.
-- `doc_writer` spawn is pending because the agent thread limit was reached; parent will retry after one active review agent closes.
+- None currently active. Next agents should be `test_writer` for the P1 same-day re-check regression and `doc_writer` for stale Habit/Heatmap documentation.
 
 ## Current TASK-027 State
 
@@ -58,6 +52,13 @@ Last updated: 2026-05-25 10:19 CST.
   - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/habit/index.ts`, `src/plugins/habit/plugin.ts`, `src/plugins/heatmap/index.ts`, and `src/plugins/heatmap/plugin.ts`.
   - Parent validated: focused TASK-027 tests passed (14 tests), adjacent plugin/core suite passed (6 files / 116 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Implementation commit: `b44bf7a Halley(implementation)(Implement Habit and Heatmap plugins): implement habit and heatmap plugin baselines`; post-commit auto-push succeeded.
+- Review wave outcomes:
+  - Bernoulli (`pr_explorer`) mapped changed files and highlighted same-day `check -> uncheck -> check` event chronology, owner-reserved filter execution, local-date boundaries, custom `#habit` parsing, and Heatmap row validation as risk surfaces.
+  - Hooke (`reviewer`) found one P1: `habit.check-today` suppresses a new `checked` event after same-day `uncheck-today`, leaving metadata checked while append-only event consumers see the terminal event as `unchecked`.
+  - Fermat (`test_quality_reviewer`) confirmed the same P1 as a test gap and recommended regression coverage for same-day re-check after uncheck.
+  - Heisenberg (`deprecation_auditor`) confirmed the same P1 and found no deprecated API blockers; it also flagged stale formal docs for Habit identifiers and Heatmap `date-series` naming.
+  - Feynman (`security_reviewer`) found no P0/P1 security or isolation issues; residual low-risk notes were no Heatmap row-count cap and owner-scoped metadata preserving Habit trust after syntax removal.
+  - Beauvoir (`docs_researcher`) found no current official-doc P0/P1 changes needed. It verified React 19.2 `createElement`, Testing Library query guidance, Vitest fake-date APIs, W3C ARIA region guidance, and Tauri v2 capabilities guidance, and listed stale local docs for `doc_writer`.
 
 ## Completed Recent Task
 
@@ -102,6 +103,6 @@ Last updated: 2026-05-25 10:19 CST.
 
 ## Next Actions
 
-1. Wait for active review agents and record findings.
-2. Retry `doc_writer` after a thread slot opens.
-3. Fix or delegate fixes for P0/P1 issues before the final local gate.
+1. Spawn `test_writer` to add failing regression coverage for same-day `check -> uncheck -> check`.
+2. Spawn `doc_writer` to sync stale formal Habit/Heatmap docs.
+3. After the regression test is committed red, spawn `implementer` for the P1 fix.

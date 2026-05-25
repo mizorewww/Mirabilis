@@ -144,3 +144,19 @@
   - Fermat (`test_quality_reviewer`) for test-quality review.
 - `doc_writer` spawn is pending because the agent thread limit was reached; parent will retry after one active review agent closes.
 - Parent next action: wait for review findings, retry doc sync, and address P0/P1 findings before the final local gate.
+
+## Review Wave Outcomes
+
+- Bernoulli (`pr_explorer`) completed changed-path mapping. It confirmed the branch was clean at `974ad6a` and highlighted same-day Habit event chronology, owner-reserved filter execution, local-date boundaries, custom `#habit` parsing, Heatmap row validation, and intentionally deferred scope as reviewer risk surfaces.
+- Hooke (`reviewer`) found one P1 correctness issue: `habit.check-today` suppresses a new `checked` event if any historical same-day checked event exists. After `check-today -> uncheck-today -> check-today`, metadata is checked again but the append-only event stream ends at `unchecked`, so Heatmap/date-series normalizers can miss the active completion.
+- Fermat (`test_quality_reviewer`) confirmed the same issue as a P1 test gap and recommended adding same-day re-check coverage. Non-blocking test follow-ups: malformed payload coverage for `habit.refresh-habit` and awareness that static diff guards depend on local `master`.
+- Heisenberg (`deprecation_auditor`) confirmed the same P1 and found no deprecated API blockers. It also flagged stale formal docs: stale `habit.last_checked_at`, snake_case commands, dotted `habit.checked`, `habit.heatmap`, and bare `date-series`.
+- Feynman (`security_reviewer`) found no P0/P1 security or isolation issues. Residual low-risk notes: Heatmap has no row-count cap and Habit-owned metadata can preserve trust after `#habit` removal.
+- Beauvoir (`docs_researcher`) found no current official-doc P0/P1 changes needed. It verified current React `createElement`, Testing Library queries, Vitest fake-date APIs, W3C ARIA region guidance, and Tauri v2 capabilities guidance. It listed stale local docs for `doc_writer`.
+
+## Parent Decisions After Review
+
+- Treat the same-day `check -> uncheck -> check` chronology as P1 and fix before the final local gate.
+- Add a focused failing regression test first through `test_writer`.
+- Then delegate the production fix to `implementer`; the expected behavior is that same-day re-check after uncheck appends a trailing `checked` event so append-only event consumers and Heatmap normalizers see the active completion.
+- Retry `doc_writer` now that review agents have closed; docs sync should cover canonical command ids, metadata keys, event namespace/type split, Heatmap ownership of `heatmap.calendar`, `heatmap.date-series`, and deferred scope.
