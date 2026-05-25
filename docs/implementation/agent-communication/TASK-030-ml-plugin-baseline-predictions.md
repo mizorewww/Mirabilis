@@ -423,3 +423,40 @@
 - Expected docs: product, architecture, development, task-index, runtime-flow, view-slot, and testing-strategy docs that mention stale ML ids, executable AlgorithmRegistry, direct sibling reads, persistent ML writes, or native/model training/background scope.
 - Constraints: do not edit source, tests, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Erdos the 2nd, validate docs-only patch, and commit separately.
+
+## Docs Sync Outcome
+
+- Erdos the 2nd (`doc_writer`) completed the formal TASK-030 docs sync.
+- Changed docs:
+  - `docs/product/02-core-data-model.md`
+  - `docs/product/03-plugin-platform.md`
+  - `docs/product/04-editor-and-workflows.md`
+  - `docs/product/05-built-in-plugins.md`
+  - `docs/product/06-view-slots.md`
+  - `docs/architecture/01-overview-and-monorepo.md`
+  - `docs/architecture/04-slots-editor-task.md`
+  - `docs/architecture/05-plugin-implementations.md`
+  - `docs/architecture/07-runtime-flows.md`
+  - `docs/development/01-data-roadmap-and-mvp.md`
+  - `docs/development/02-implementation-roadmap-and-constraints.md`
+  - `docs/implementation/task-index.md`
+  - `docs/testing/strategy.md`
+- Delivered:
+  - canonical ML ids and stale-alias negative notes;
+  - `ml.run-prediction` as the Command Registry runtime entry;
+  - inert algorithm descriptor behavior and deferred executable AlgorithmRegistry;
+  - exact bounded caller-provided projections and no sibling private reads/imports;
+  - deterministic DTO-only output with no durable writes from caller-provided projections;
+  - validated fail-closed `PredictionPanel` view/slot behavior;
+  - no package/native/Tauri/Rust/schema/capability changes;
+  - deferred trusted query/feed facade, persistence, model training/refresh, ranking/recommendation, AI explanation, and app-shell polish.
+- Parent validation:
+  - `git diff --check` passed.
+  - Source/package/native/Tauri/Rust/schema diff guard was empty.
+  - Docs-only scope was confirmed.
+  - Stale ML id/AlgorithmRegistry scan only found explicit negative-list/deferred-current-state references and long-term planning references.
+- Docs commit: `00db247 Erdos(docs)(Implement ML Plugin baseline predictions): sync ml prediction docs`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Run final TASK-030 branch gate with `bun run check:quick`.
