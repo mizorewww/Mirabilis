@@ -144,3 +144,24 @@
   - Changed-file guard showed only `src/test/release-packaging-full-gate.test.ts`.
 - Test commit: `b94eefb Hegel(test)(Add release packaging and local full gate): add release gate acceptance tests`; post-commit auto-push succeeded.
 - Parent next action: commit this outcome record, then delegate implementation to `implementer`.
+
+## Implementation Handoff
+
+- Averroes (`implementer`) started at 2026-05-25 21:18 CST.
+- Scope: minimum config, release metadata, release-checker, and docs changes needed to make `src/test/release-packaging-full-gate.test.ts` pass.
+- Expected write surface:
+  - `package.json` for explicit local `check:full` semantics;
+  - `src-tauri/Cargo.toml` for non-placeholder release metadata;
+  - `.codex/agents/release-checker.toml` for concrete local readiness checklist;
+  - a changelog or release-notes surface;
+  - relevant docs such as `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md` if needed.
+- Required implementation:
+  - keep `check:quick` unchanged;
+  - make `check:full` run `check:quick` first, then `tauri build --ci --bundles deb,rpm`;
+  - do not use `--no-bundle`, `--ignore-version-mismatches`, `|| true`, hidden env workarounds, upload/publish/curl/fetch/network commands;
+  - document AppImage as not validated by the default local Arch gate and deferred to a controlled Linux builder unless a future task adds that path;
+  - keep versions synchronized at `0.1.0` unless a documented reason to bump appears;
+  - make version/changelog expectations clear;
+  - avoid any native/capability/IPC/updater/signing/dependency/Core/plugin behavior expansion.
+- Constraints: do not edit tests, progress, agent-communication, commits, merges, or pushes.
+- Parent next action: wait for Averroes, validate focused green tests and release-surface guards, then commit if green.

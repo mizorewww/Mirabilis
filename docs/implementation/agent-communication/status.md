@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 21:17 CST.
+Last updated: 2026-05-25 21:18 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 21:17 CST.
 - Branch: `feat/task-033-release-packaging-local-full-gate`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-033 red tests committed; implementation handoff pending.
+- Current phase: TASK-033 implementation in progress.
 
 ## Active Agents
 
-- None.
+- Averroes (`implementer`) - TASK-033 release gate config/docs implementation.
 
 ## Current TASK-033 State
 
@@ -66,7 +66,11 @@ Last updated: 2026-05-25 21:17 CST.
   - Parent red validation: `bun run test:frontend -- src/test/release-packaging-full-gate.test.ts` failed as expected with 5 failed / 4 passed.
   - Failure symptoms: `check:full` lacks `--ci`, lacks explicit `deb,rpm`, relies on implicit AppImage/all-target behavior, Cargo metadata is placeholder, no release notes/changelog surface exists, and release_checker checklist is too generic.
   - Test commit: `b94eefb Hegel(test)(Add release packaging and local full gate): add release gate acceptance tests`; post-commit auto-push succeeded.
-- Next action: record this red-test outcome, then delegate implementation to `implementer`.
+- Implementation delegated:
+  - Averroes (`implementer`) should make the focused release-gate tests pass with minimum config/docs/release-metadata changes.
+  - Expected write scope: `package.json`, `src-tauri/Cargo.toml`, `.codex/agents/release-checker.toml`, release notes/changelog surface, and relevant release docs such as `docs/testing/strategy.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/implementation/task-index.md` if needed.
+  - Constraints: no tests, progress, agent communication, Core/plugin behavior, IPC, capabilities, Rust commands, dependencies, updater/signing config, CSP, filesystem/network permissions, or broad bundle resources; no commit, merge, or push.
+- Next action: wait for Averroes, validate focused tests and release-surface guards, then commit if green.
 
 ## Current TASK-032 State
 
