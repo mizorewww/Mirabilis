@@ -352,7 +352,7 @@ function QuickCaptureModalView(): ReactElement {
     "section",
     {
       "aria-label": "Quick Capture",
-      role: "dialog",
+      role: "region",
     },
     createElement("textarea", {
       "aria-label": "Quick Capture Markdown",

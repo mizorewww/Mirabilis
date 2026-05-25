@@ -333,28 +333,54 @@ function SearchResultsView({ data }: SearchResultsViewProps): ReactElement {
   const resultsData = readSearchResultsData(data);
 
   return createElement(
-    "ul",
+    "section",
     {
-      "aria-label": "Search results",
+      "aria-label": "Search results summary",
     },
-    resultsData.results.map((item) =>
+    [
       createElement(
-        "li",
+        "p",
         {
-          key: item.pageId,
+          "aria-atomic": true,
+          key: "status",
+          role: "status",
         },
-        [
-          createElement("p", { key: "title" }, item.title),
-          createElement("p", { key: "snippet" }, item.snippet),
-          createElement(
-            "p",
-            { key: "fields" },
-            `Matched ${item.matchedFields.join(", ")}`,
-          ),
-        ],
+        formatSearchResultsStatus(resultsData.results.length),
       ),
-    ),
+      createElement(
+        "ul",
+        {
+          "aria-label": "Search results",
+          key: "results",
+        },
+        resultsData.results.map((item) =>
+          createElement(
+            "li",
+            {
+              key: item.pageId,
+            },
+            [
+              createElement("p", { key: "title" }, item.title),
+              createElement("p", { key: "snippet" }, item.snippet),
+              createElement(
+                "p",
+                { key: "fields" },
+                `Matched ${item.matchedFields.join(", ")}`,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
   );
+}
+
+function formatSearchResultsStatus(resultCount: number): string {
+  if (resultCount === 0) {
+    return "No results";
+  }
+
+  return resultCount === 1 ? "1 result" : `${resultCount} results`;
 }
 
 function readSearchResultsData(input: unknown): SearchResultsData {
