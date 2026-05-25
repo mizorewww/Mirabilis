@@ -81,4 +81,23 @@
 
 ## Current Next Action
 
-- Delegate `test_writer` to add failing TASK-026 Calendar Plugin baseline tests.
+## Test Writer Handoff
+
+- Kant (`test_writer`) started 2026-05-25 08:54 CST.
+- Scope: failing tests only, no production code or docs.
+- Required coverage:
+  - Built-in Calendar Plugin registration plus `calendar.day`, `calendar.week`, and `calendar.open-time-segment`.
+  - Absence of `calendar.month`, snake_case Calendar commands, manual segment create/edit commands, and manual segment UI in this baseline.
+  - Day/week view rendering from explicit normalized Timer segment DTO input, not direct Calendar reads of Timer-owned events through `ctx.events.list`.
+  - Accessible `Calendar day` / `Calendar week` regions and native calendar block buttons with deterministic UTC time display.
+  - Inert text rendering for unsafe page/title/note/detail content.
+  - Filtering for malformed/untrusted segment DTOs or event-provenance inputs.
+  - Clicking a block opens an accessible detail region through `calendar.open-time-segment({ segmentId, pageId })`.
+  - Direct command payload hardening and no store mutation on invalid input.
+  - Static boundary/native guards for no Timer internals, raw runtime/store/registry/pluginHost/NativeBridge/Tauri/html-injection imports/usage and no package/native/Tauri/Rust/schema diff.
+  - Optional Timer/calendar integration-style test may transform public Timer event records to normalized DTOs in the test harness, without expecting CalendarPlugin to read Timer events itself.
+- Expected red signal: Calendar Plugin surfaces do not exist yet.
+
+## Current Next Action
+
+- Wait for Kant (`test_writer`) to finish, validate the expected red signal, and commit tests.

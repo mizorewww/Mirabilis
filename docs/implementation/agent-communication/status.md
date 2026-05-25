@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:52 CST.
+Last updated: 2026-05-25 08:54 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:52 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 pre-test guidance completed; test-writing handoff pending.
+- Current phase: TASK-026 failing acceptance tests delegated to Kant (`test_writer`).
 
 ## Active Agents
 
-- None currently running. Next delegation is `test_writer` for failing Calendar Plugin baseline tests.
+- Kant (`test_writer`) is adding failing TASK-026 Calendar Plugin baseline tests. Scope is tests only; no production code, docs, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -153,8 +153,8 @@ Last updated: 2026-05-25 08:52 CST.
 
 ## Next Actions
 
-1. Commit TASK-026 pre-test guidance summary.
-2. Delegate `test_writer` for failing Calendar Plugin baseline tests.
+1. Wait for Kant (`test_writer`) to finish failing Calendar Plugin baseline tests.
+2. Validate the expected red signal and commit tests.
 
 ## Current TASK-021 State
 
