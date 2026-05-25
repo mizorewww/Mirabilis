@@ -331,18 +331,16 @@ describe("TASK-037 Home workspace editor", () => {
       ]),
     });
 
-    await user.click(
-      within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
-        "button",
-        { name: /today/i },
-      ),
-    );
+    const todayRouteButton = within(
+      screen.getByRole("navigation", { name: /workspace/i }),
+    ).getByRole("button", { name: /today/i });
+
+    await user.click(todayRouteButton);
 
     const todayMain = await screen.findByRole("main", { name: /today/i });
 
-    expect(
-      within(todayMain).getByText(/^Today filter placeholder$/i),
-    ).toBeVisible();
+    expect(todayRouteButton).toHaveAttribute("aria-current", "page");
+    expect(within(todayMain).getByText(/^Today has no pages\.$/i)).toBeVisible();
     expect(
       within(todayMain).queryByRole("textbox", { name: /markdown/i }),
     ).not.toBeInTheDocument();
@@ -357,7 +355,13 @@ describe("TASK-037 Home workspace editor", () => {
 
     expect(stillTodayMain).toBeVisible();
     expect(
-      within(stillTodayMain).getByText(/^Today filter placeholder$/i),
+      within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
+        "button",
+        { name: /today/i },
+      ),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(stillTodayMain).getByText(/^Today has no pages\.$/i),
     ).toBeVisible();
     expect(
       screen.queryByRole("main", { name: /home/i }),
@@ -640,7 +644,7 @@ describe("TASK-037 Home workspace editor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps non-Home routes as placeholders without mounting the Markdown editor", async () => {
+  it("keeps saved-filter and placeholder routes from mounting the Markdown editor", async () => {
     const runtime = await createRuntime({
       pageIds: ["home-session-page"],
     });
@@ -655,19 +659,19 @@ describe("TASK-037 Home workspace editor", () => {
     for (const route of [
       {
         name: /inbox/i,
-        placeholder: /^Inbox filter placeholder$/i,
+        expectedText: /^Inbox has no pages\.$/i,
       },
       {
         name: /today/i,
-        placeholder: /^Today filter placeholder$/i,
+        expectedText: /^Today has no pages\.$/i,
       },
       {
         name: /all tasks/i,
-        placeholder: /^Saved filter placeholder$/i,
+        expectedText: /^All Tasks has no pages\.$/i,
       },
       {
         name: /reports/i,
-        placeholder: /^Stats projection placeholder$/i,
+        expectedText: /^Stats projection placeholder$/i,
       },
     ]) {
       await user.click(
@@ -679,7 +683,7 @@ describe("TASK-037 Home workspace editor", () => {
 
       const main = await screen.findByRole("main", { name: route.name });
 
-      expect(within(main).getByText(route.placeholder)).toBeVisible();
+      expect(within(main).getByText(route.expectedText)).toBeVisible();
       expect(
         within(main).queryByRole("textbox", { name: /markdown/i }),
       ).not.toBeInTheDocument();

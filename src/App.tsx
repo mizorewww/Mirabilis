@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ArticleIcon from "@mui/icons-material/Article";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import HomeIcon from "@mui/icons-material/Home";
 import InboxIcon from "@mui/icons-material/Inbox";
@@ -9,6 +10,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import Alert from "@mui/material/Alert";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -30,9 +32,14 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { createAppRuntime } from "./bootstrap";
 import type { AppRuntime } from "./bootstrap";
 import {
+  executeFilterQuery,
   exportStructuredDocumentToMarkdown,
   importMarkdownToStructuredDocument,
+  type FilterDefinition,
   type MarkdownPage,
+  type MetadataRecord,
+  type MetadataOwnerReservation,
+  type PluginHostRecord,
   type StructuredMarkdownDocument,
 } from "./core";
 import {
@@ -42,35 +49,72 @@ import {
   type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
 } from "./providers";
-import { ViewHost } from "./shell/hosts";
+import { SlotHost, ViewHost } from "./shell/hosts";
 import "./App.css";
 
 type AppProps = {
   initializeRuntime?: RuntimeInitializer<AppRuntime>;
 };
 
-type WorkspaceRouteId =
-  | "home"
-  | "inbox"
-  | "today"
-  | "all"
-  | "reports";
+type PageRouteRole = "home" | "recent" | "command-open";
+
+type FilterRouteRole = "inbox" | "all-tasks" | "today" | "saved";
+
+type PlaceholderRouteId = "reports";
+
+type ActiveRoute =
+  | {
+      kind: "page";
+      pageId: string;
+      role: PageRouteRole;
+    }
+  | {
+      kind: "filter";
+      filterId: string;
+      role: FilterRouteRole;
+    }
+  | {
+      kind: "placeholder";
+      routeId: PlaceholderRouteId;
+    };
 
 type ShellToolId = "command" | "search" | "capture" | "settings";
 
-type WorkspaceRoute = {
-  id: WorkspaceRouteId;
+type NavigationIcon = typeof HomeIcon;
+
+type PageNavigationRoute = {
+  kind: "page";
+  role: "home";
+  label: string;
+  eyebrow: string;
+  summary: string;
+  icon: NavigationIcon;
+};
+
+type FilterNavigationRoute = {
+  kind: "filter";
+  role: Exclude<FilterRouteRole, "saved">;
+  filterId: string;
+  label: string;
+  eyebrow: string;
+  summary: string;
+  icon: NavigationIcon;
+};
+
+type PlaceholderNavigationRoute = {
+  kind: "placeholder";
+  routeId: PlaceholderRouteId;
   label: string;
   eyebrow: string;
   summary: string;
   placeholders: readonly string[];
-  icon: typeof HomeIcon;
+  icon: NavigationIcon;
 };
 
 type ShellTool = {
   id: ShellToolId;
   label: string;
-  icon: typeof KeyboardCommandKeyIcon;
+  icon: NavigationIcon;
 };
 
 type MarkdownWorkspaceDocument = {
@@ -95,12 +139,40 @@ type AppRuntimeState =
   | { status: "ready"; runtime: AppRuntime }
   | { status: "failed" };
 
+type RecentPageSummary = {
+  accessibleLabel: string;
+  id: string;
+  title: string;
+};
+
+type FilterPageSummary = {
+  routeToken: string;
+  title: string;
+};
+
 const sessionHomeTitle = "Home";
 const markdownPageViewId = "markdown.page-editor";
 const pageEditorViewType = "page.editor";
 const markdownInsertCommandId = "markdown.insert-text";
 const openTaskPageCommandId = "task.open-task-page";
 const toggleTaskStatusCommandId = "task.toggle-status";
+const filterResultViewKind = "filter-results.markdown-pages";
+const filterEmptyStateSlot = "filter.empty_state";
+const metadataSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const primaryRouteLabels = new Set([
+  "all tasks",
+  "home",
+  "inbox",
+  "reports",
+]);
+const metadataValueTypes = new Set([
+  "boolean",
+  "date",
+  "json",
+  "null",
+  "number",
+  "string",
+]);
 const appInitializationPromises = new WeakMap<
   RuntimeInitializer<AppRuntime>,
   Promise<AppRuntime>
@@ -164,53 +236,51 @@ const mirabilisTheme = createTheme({
   },
 });
 
-const workspaceRoutes: readonly WorkspaceRoute[] = [
+const primaryNavigationRoutes: readonly [
+  PageNavigationRoute,
+  FilterNavigationRoute,
+  FilterNavigationRoute,
+  FilterNavigationRoute,
+  PlaceholderNavigationRoute,
+] = [
   {
-    id: "home",
+    kind: "page",
+    role: "home",
     label: "Home",
     eyebrow: "Workspace",
     summary: "Session Home page",
-    placeholders: [],
     icon: HomeIcon,
   },
   {
-    id: "inbox",
+    kind: "filter",
+    role: "inbox",
+    filterId: "quick-capture.filter.inbox",
     label: "Inbox",
     eyebrow: "Capture",
-    summary: "Unprocessed notes and captures will appear here.",
-    placeholders: [
-      "Inbox filter placeholder",
-      "Capture review placeholder",
-      "Empty state slot placeholder",
-    ],
+    summary: "Unprocessed Quick Capture pages",
     icon: InboxIcon,
   },
   {
-    id: "today",
+    kind: "filter",
+    role: "today",
+    filterId: "task.filter.today",
     label: "Today",
     eyebrow: "Focus",
-    summary: "Today route placeholder for the focused work queue.",
-    placeholders: [
-      "Today filter placeholder",
-      "Due and active work placeholder",
-      "Route status placeholder",
-    ],
+    summary: "Due or scheduled work for today",
     icon: TodayIcon,
   },
   {
-    id: "all",
+    kind: "filter",
+    role: "all-tasks",
+    filterId: "task.filter.all-tasks",
     label: "All Tasks",
     eyebrow: "Saved filter",
-    summary: "Saved filter placeholder for the full work index.",
-    placeholders: [
-      "Saved filter placeholder",
-      "List view placeholder",
-      "Filter empty state placeholder",
-    ],
+    summary: "Complete task page index",
     icon: ViewListIcon,
   },
   {
-    id: "reports",
+    kind: "placeholder",
+    routeId: "reports",
     label: "Reports",
     eyebrow: "Review",
     summary: "Reporting and chart workspace placeholder.",
@@ -341,19 +411,50 @@ function getAppInitializationPromise(
 function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const runtime = useRuntime();
   const homePageId = useSessionHomePageId(runtimeSource);
-  const [selectedRouteId, setSelectedRouteId] =
-    useState<WorkspaceRouteId>("home");
-  const [selectedPageId, setSelectedPageId] = useState(homePageId);
   const [currentPageState] = useState<CurrentPageState>(() => ({
     pageId: homePageId,
     generation: 0,
   }));
+  const [activeRoute, setActiveRoute] = useState<ActiveRoute>(() => ({
+    kind: "page",
+    pageId: homePageId,
+    role: "home",
+  }));
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeTool, setActiveTool] = useState<ShellToolId>("command");
-  const selectedRoute =
-    workspaceRoutes.find((route) => route.id === selectedRouteId) ??
-    workspaceRoutes[0];
-  const workspaceTitleId = `workspace-title-${selectedRoute.id}`;
+  const routeDetails = getActiveRouteDetails(
+    runtimeSource,
+    activeRoute,
+    homePageId,
+  );
+  const recentPages = activeRouteCanShowRecentPages(runtimeSource, activeRoute)
+    ? listRecentPages(runtimeSource, homePageId)
+    : [];
+  const savedFilterRoutes = listSavedFilterRoutes(runtimeSource);
+  const workspaceTitleId = "workspace-title";
+  const selectPageRoute = (pageId: string, role: PageRouteRole) => {
+    setCurrentPage(currentPageState, pageId);
+    setActiveRoute({
+      kind: "page",
+      pageId,
+      role,
+    });
+  };
+  const selectFilterRoute = (filterId: string, role: FilterRouteRole) => {
+    unsetCurrentPage(currentPageState);
+    setActiveRoute({
+      filterId,
+      kind: "filter",
+      role,
+    });
+  };
+  const selectPlaceholderRoute = (routeId: PlaceholderRouteId) => {
+    unsetCurrentPage(currentPageState);
+    setActiveRoute({
+      kind: "placeholder",
+      routeId,
+    });
+  };
   const bridge = useMemo(
     () =>
       createMarkdownWorkspaceBridge({
@@ -361,8 +462,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         runtime: runtimeSource,
         openPage(pageId) {
           setCurrentPage(currentPageState, pageId);
-          setSelectedRouteId("home");
-          setSelectedPageId(pageId);
+          setActiveRoute({
+            kind: "page",
+            pageId,
+            role: "command-open",
+          });
         },
       }),
     [currentPageState, runtimeSource],
@@ -425,55 +529,136 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
       <Box className="app-shell__frame">
         <Box
-          aria-label="Workspace"
           className="app-shell__navigation"
-          component="nav"
           hidden={!navigationOpen}
           id="workspace-navigation"
         >
           <Drawer open variant="permanent">
             <Toolbar />
             <Box className="app-shell__nav-content">
-              <Typography className="app-shell__nav-heading" variant="overline">
-                Workspace
-              </Typography>
-              <List aria-label="Workspace routes" dense>
-                {workspaceRoutes.map((route) => {
-                  const RouteIcon = route.icon;
-                  const isSelected = route.id === selectedRoute.id;
+              <Box aria-label="Workspace" component="nav">
+                <Typography className="app-shell__nav-heading" variant="overline">
+                  Workspace
+                </Typography>
+                <List aria-label="Workspace routes" dense>
+                  {primaryNavigationRoutes.map((route) => {
+                    const RouteIcon = route.icon;
+                    const isSelected = primaryRouteIsActive(
+                      route,
+                      activeRoute,
+                      homePageId,
+                    );
 
-                  return (
-                    <ListItemButton
-                      aria-current={isSelected ? "page" : undefined}
-                      key={route.id}
-                      onClick={() => {
-                        setSelectedRouteId(route.id);
-
-                        if (route.id === "home") {
-                          setCurrentPage(currentPageState, homePageId);
-                          setSelectedPageId(homePageId);
-                        } else {
-                          unsetCurrentPage(currentPageState);
-                        }
-                      }}
-                      selected={isSelected}
+                    return (
+                      <ListItemButton
+                        aria-current={isSelected ? "page" : undefined}
+                        key={`${route.kind}:${route.label}`}
+                        onClick={() => {
+                          if (route.kind === "page") {
+                            selectPageRoute(homePageId, route.role);
+                          } else if (route.kind === "filter") {
+                            selectFilterRoute(route.filterId, route.role);
+                          } else {
+                            selectPlaceholderRoute(route.routeId);
+                          }
+                        }}
+                        selected={isSelected}
+                      >
+                        <ListItemIcon>
+                          <RouteIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={route.label}
+                          secondary={route.eyebrow}
+                        />
+                      </ListItemButton>
+                    );
+                  })}
+                </List>
+                {recentPages.length > 0 ? (
+                  <>
+                    <Divider />
+                    <Typography
+                      className="app-shell__nav-heading app-shell__nav-heading--section"
+                      variant="overline"
                     >
-                      <ListItemIcon>
-                        <RouteIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={route.label}
-                        secondary={route.eyebrow}
-                      />
-                    </ListItemButton>
-                  );
-                })}
-              </List>
+                      Recent pages
+                    </Typography>
+                    <List aria-label="Recent pages" dense>
+                      {recentPages.map((page) => {
+                        const isSelected =
+                          activeRoute.kind === "page" &&
+                          activeRoute.pageId === page.id &&
+                          activeRoute.role !== "home";
+
+                        return (
+                          <ListItemButton
+                            aria-label={
+                              page.accessibleLabel === page.title
+                                ? undefined
+                                : page.accessibleLabel
+                            }
+                            aria-current={isSelected ? "page" : undefined}
+                            key={page.id}
+                            onClick={() => selectPageRoute(page.id, "recent")}
+                            selected={isSelected}
+                          >
+                            <ListItemIcon>
+                              <ArticleIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={page.title}
+                              secondary="Recent page"
+                            />
+                          </ListItemButton>
+                        );
+                      })}
+                    </List>
+                  </>
+                ) : null}
+              </Box>
+              {savedFilterRoutes.length > 0 ? (
+                <Box component="section">
+                  <Divider />
+                  <Typography
+                    className="app-shell__nav-heading app-shell__nav-heading--section"
+                    variant="overline"
+                  >
+                    Saved filters
+                  </Typography>
+                  <List aria-label="Saved filters" dense>
+                    {savedFilterRoutes.map((route) => {
+                      const isSelected =
+                        activeRoute.kind === "filter" &&
+                        activeRoute.filterId === route.filterId;
+
+                      return (
+                        <ListItemButton
+                          aria-label={route.label}
+                          aria-current={isSelected ? "page" : undefined}
+                          key={route.filterId}
+                          onClick={() =>
+                            selectFilterRoute(route.filterId, "saved")
+                          }
+                          selected={isSelected}
+                        >
+                          <ListItemIcon>
+                            <ViewListIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={route.label}
+                            secondary="Saved filter"
+                          />
+                        </ListItemButton>
+                      );
+                    })}
+                  </List>
+                </Box>
+              ) : null}
               <Divider />
               <Box className="app-shell__nav-footer">
                 <Typography variant="caption">
-                  Shell placeholders only. Plugin surfaces stay behind registered
-                  views and commands.
+                  Plugin surfaces stay behind registered views and commands.
                 </Typography>
               </Box>
             </Box>
@@ -486,35 +671,20 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           component="main"
         >
           <Stack className="app-shell__workspace-header" spacing={1}>
-            <Chip label={selectedRoute.eyebrow} size="small" variant="outlined" />
+            <Chip label={routeDetails.eyebrow} size="small" variant="outlined" />
             <Typography component="h2" id={workspaceTitleId} variant="h5">
-              {selectedRoute.label} Workspace
+              {routeDetails.label} Workspace
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              {selectedRoute.summary}
+              {routeDetails.summary}
             </Typography>
           </Stack>
 
-          {selectedRoute.id === "home" ? (
-            <HomeWorkspaceEditor
-              bridge={bridge}
-              pageId={selectedPageId}
-              runtime={runtimeSource}
-            />
-          ) : (
-            <Stack
-              aria-label={`${selectedRoute.label} route placeholders`}
-              className="app-shell__workspace-placeholders"
-              component="section"
-              spacing={1}
-            >
-              {selectedRoute.placeholders.map((placeholder) => (
-                <Box className="app-shell__placeholder-row" key={placeholder}>
-                  <Typography variant="body2">{placeholder}</Typography>
-                </Box>
-              ))}
-            </Stack>
-          )}
+          <WorkspaceRouteContent
+            activeRoute={activeRoute}
+            bridge={bridge}
+            runtime={runtimeSource}
+          />
 
           <Box className="app-shell__tool-status" role="status">
             <Typography variant="body2">
@@ -528,7 +698,50 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   );
 }
 
-function HomeWorkspaceEditor({
+function WorkspaceRouteContent({
+  activeRoute,
+  bridge,
+  runtime,
+}: {
+  activeRoute: ActiveRoute;
+  bridge: MarkdownWorkspaceBridgeValue;
+  runtime: AppRuntime;
+}) {
+  if (activeRoute.kind === "page") {
+    return (
+      <PageWorkspaceEditor
+        bridge={bridge}
+        pageId={activeRoute.pageId}
+        runtime={runtime}
+      />
+    );
+  }
+
+  if (activeRoute.kind === "filter") {
+    return (
+      <SavedFilterWorkspace filterId={activeRoute.filterId} runtime={runtime} />
+    );
+  }
+
+  const route = getPlaceholderRoute(activeRoute.routeId);
+
+  return (
+    <Stack
+      aria-label={`${route.label} route placeholders`}
+      className="app-shell__workspace-placeholders"
+      component="section"
+      spacing={1}
+    >
+      {route.placeholders.map((placeholder) => (
+        <Box className="app-shell__placeholder-row" key={placeholder}>
+          <Typography variant="body2">{placeholder}</Typography>
+        </Box>
+      ))}
+    </Stack>
+  );
+}
+
+function PageWorkspaceEditor({
   bridge,
   pageId,
   runtime,
@@ -555,6 +768,69 @@ function HomeWorkspaceEditor({
   );
 }
 
+function SavedFilterWorkspace({
+  filterId,
+  runtime,
+}: {
+  filterId: string;
+  runtime: AppRuntime;
+}) {
+  const filter = getRouteFilter(runtime, filterId);
+
+  if (filter === undefined || !filterSourceIsAvailable(runtime, filter)) {
+    return <RouteUnavailable />;
+  }
+
+  if (!filterViewIsAvailable(runtime, filter)) {
+    return <RouteUnavailable />;
+  }
+
+  const pageSummaries = executeRouteFilter(runtime, filter);
+
+  if (pageSummaries === undefined) {
+    return <RouteUnavailable />;
+  }
+
+  if (pageSummaries.length === 0) {
+    return (
+      <Box className="app-shell__filter-empty">
+        <SlotHost
+          isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+          props={{
+            filterName: filter.name,
+          }}
+          registry={runtime.registries.slots}
+          slot={filterEmptyStateSlot}
+        />
+      </Box>
+    );
+  }
+
+  return (
+    <Box className="app-shell__filter-results">
+      <ViewHost
+        acceptedData={{
+          kind: filterResultViewKind,
+        }}
+        isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+        props={{
+          pages: pageSummaries,
+        }}
+        registry={runtime.registries.views}
+        viewType={filter.viewType}
+      />
+    </Box>
+  );
+}
+
+function RouteUnavailable() {
+  return (
+    <Alert aria-label="Route unavailable" severity="error">
+      Route unavailable. This workspace could not load.
+    </Alert>
+  );
+}
+
 function useSessionHomePageId(runtime: AppRuntime): string {
   const [homePageId] = useState(() => selectOrCreateSessionHomePage(runtime).id);
 
@@ -574,6 +850,455 @@ function selectOrCreateSessionHomePage(runtime: AppRuntime): MarkdownPage {
     title: sessionHomeTitle,
     body: createEmptyMarkdownDocument(),
   });
+}
+
+function primaryRouteIsActive(
+  route: (typeof primaryNavigationRoutes)[number],
+  activeRoute: ActiveRoute,
+  homePageId: string,
+): boolean {
+  if (route.kind === "page") {
+    return (
+      activeRoute.kind === "page" &&
+      activeRoute.role === route.role &&
+      activeRoute.pageId === homePageId
+    );
+  }
+
+  if (route.kind === "filter") {
+    return (
+      activeRoute.kind === "filter" &&
+      activeRoute.filterId === route.filterId
+    );
+  }
+
+  return (
+    activeRoute.kind === "placeholder" &&
+    activeRoute.routeId === route.routeId
+  );
+}
+
+function getActiveRouteDetails(
+  runtime: AppRuntime,
+  activeRoute: ActiveRoute,
+  homePageId: string,
+): {
+  label: string;
+  eyebrow: string;
+  summary: string;
+} {
+  if (activeRoute.kind === "page") {
+    const homeRoute = primaryNavigationRoutes[0];
+
+    if (activeRoute.role === "home" && activeRoute.pageId === homePageId) {
+      return homeRoute;
+    }
+
+    const page = getRoutePage(runtime, activeRoute.pageId);
+
+    return {
+      eyebrow:
+        activeRoute.role === "command-open" ? "Workspace" : "Recent page",
+      label: page?.title ?? "Page",
+      summary: "Markdown Page",
+    };
+  }
+
+  if (activeRoute.kind === "filter") {
+    const primaryRoute = primaryNavigationRoutes.find(
+      (route) =>
+        route.kind === "filter" && route.filterId === activeRoute.filterId,
+    );
+
+    if (primaryRoute !== undefined) {
+      return primaryRoute;
+    }
+
+    const filter = getRouteFilter(runtime, activeRoute.filterId);
+
+    return {
+      eyebrow: "Saved filter",
+      label: filter?.name ?? "Saved Filter",
+      summary: "Saved filter results",
+    };
+  }
+
+  return getPlaceholderRoute(activeRoute.routeId);
+}
+
+function getPlaceholderRoute(
+  routeId: PlaceholderRouteId,
+): PlaceholderNavigationRoute {
+  const route = primaryNavigationRoutes.find(
+    (candidate): candidate is PlaceholderNavigationRoute =>
+      candidate.kind === "placeholder" && candidate.routeId === routeId,
+  );
+
+  return route ?? primaryNavigationRoutes[4];
+}
+
+function listRecentPages(
+  runtime: AppRuntime,
+  homePageId: string,
+): RecentPageSummary[] {
+  return runtime.pages
+    .list()
+    .filter((page) => page.id !== homePageId)
+    .map(toRecentPageSummary);
+}
+
+function activeRouteCanShowRecentPages(
+  runtime: AppRuntime,
+  activeRoute: ActiveRoute,
+): boolean {
+  if (activeRoute.kind !== "filter") {
+    return true;
+  }
+
+  const filter = getRouteFilter(runtime, activeRoute.filterId);
+
+  if (filter === undefined || !filterSourceIsAvailable(runtime, filter)) {
+    return false;
+  }
+
+  if (!filterViewIsAvailable(runtime, filter)) {
+    return false;
+  }
+
+  const plugins = listPluginRecords(runtime);
+
+  return (
+    plugins !== undefined && filterQueryOwnersAreAvailable(filter, plugins)
+  );
+}
+
+function listSavedFilterRoutes(
+  runtime: AppRuntime,
+): Array<{
+  filterId: string;
+  label: string;
+}> {
+  const primaryFilterIds = new Set(
+    primaryNavigationRoutes
+      .filter((route): route is FilterNavigationRoute => route.kind === "filter")
+      .map((route) => route.filterId),
+  );
+
+  return runtime.filters
+    .list()
+    .filter(
+      (filter) =>
+        !primaryFilterIds.has(filter.id) &&
+        filterSourceIsAvailable(runtime, filter) &&
+        filterViewIsAvailable(runtime, filter),
+    )
+    .map((filter) => ({
+      filterId: filter.id,
+      label: filter.name,
+    }));
+}
+
+function getRoutePage(
+  runtime: AppRuntime,
+  pageId: string,
+): MarkdownPage | undefined {
+  try {
+    return runtime.pages.get(pageId);
+  } catch {
+    return undefined;
+  }
+}
+
+function getRouteFilter(
+  runtime: AppRuntime,
+  filterId: string,
+): FilterDefinition | undefined {
+  try {
+    return runtime.filters.get(filterId);
+  } catch {
+    return undefined;
+  }
+}
+
+function executeRouteFilter(
+  runtime: AppRuntime,
+  filter: FilterDefinition,
+): FilterPageSummary[] | undefined {
+  try {
+    const plugins = listPluginRecords(runtime);
+
+    if (
+      plugins === undefined ||
+      !filterQueryOwnersAreAvailable(filter, plugins)
+    ) {
+      return undefined;
+    }
+
+    return executeFilterQuery({
+      metadata: listActivePluginMetadata(runtime, plugins),
+      metadataOwnerReservations: collectMetadataOwnerReservations(plugins),
+      pages: runtime.pages.list({ includeArchived: true }),
+      query: filter.query,
+    }).map(toFilterPageSummary);
+  } catch {
+    return undefined;
+  }
+}
+
+function toRecentPageSummary(page: MarkdownPage): RecentPageSummary {
+  return {
+    accessibleLabel: toRecentPageAccessibleLabel(page.title),
+    id: page.id,
+    title: page.title,
+  };
+}
+
+function toRecentPageAccessibleLabel(title: string): string {
+  const normalizedTitle = title.toLowerCase();
+
+  if (normalizedTitle === "today") {
+    return title;
+  }
+
+  return primaryRouteLabels.has(normalizedTitle)
+    ? `Recent page ${title}`
+    : title;
+}
+
+function toFilterPageSummary(
+  page: MarkdownPage,
+  index: number,
+): FilterPageSummary {
+  return {
+    routeToken: `filter-result-${index + 1}`,
+    title: page.title,
+  };
+}
+
+function filterSourceIsAvailable(
+  runtime: AppRuntime,
+  filter: FilterDefinition,
+): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
+  return (
+    filter.sourcePluginId === undefined ||
+    pluginRecordIsActive(plugins, filter.sourcePluginId)
+  );
+}
+
+function filterViewIsAvailable(
+  runtime: AppRuntime,
+  filter: FilterDefinition,
+): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
+  try {
+    const views = runtime.registries.views
+      .list({ type: filter.viewType })
+      .filter((view) => pluginRecordIsActive(plugins, view.pluginId));
+
+    return views.length === 1;
+  } catch {
+    return false;
+  }
+}
+
+function collectMetadataOwnerReservations(
+  plugins: readonly PluginHostRecord[],
+): MetadataOwnerReservation[] {
+  const reservations = new Map<string, string>();
+
+  for (const plugin of plugins) {
+    addPluginMetadataOwnerReservations(reservations, plugin);
+  }
+
+  return [...reservations].map(([namespace, sourcePluginId]) => ({
+    namespace,
+    sourcePluginId,
+  }));
+}
+
+function listActivePluginMetadata(
+  runtime: AppRuntime,
+  plugins: readonly PluginHostRecord[],
+): MetadataRecord[] {
+  const activePluginIds = new Set(
+    plugins.filter(pluginIsActive).map((plugin) => plugin.id),
+  );
+
+  return runtime.metadata
+    .list()
+    .filter((record) => activePluginIds.has(record.sourcePluginId));
+}
+
+function filterQueryOwnersAreAvailable(
+  filter: FilterDefinition,
+  plugins: readonly PluginHostRecord[],
+): boolean {
+  const namespaces = collectFilterQueryMetadataNamespaces(filter.query);
+
+  if (namespaces === undefined) {
+    return false;
+  }
+
+  const reservations = new Map<string, string>();
+
+  for (const plugin of plugins) {
+    addPluginMetadataOwnerReservations(reservations, plugin);
+  }
+
+  for (const namespace of namespaces) {
+    const sourcePluginId = reservations.get(namespace);
+
+    if (
+      sourcePluginId === undefined ||
+      !pluginRecordIsActive(plugins, sourcePluginId)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function collectFilterQueryMetadataNamespaces(
+  query: unknown,
+): Set<string> | undefined {
+  const namespaces = new Set<string>();
+  const activeQueries = new WeakSet<object>();
+
+  return collectFilterQueryMetadataNamespacesInto(query, namespaces, {
+    activeQueries,
+    depth: 0,
+  })
+    ? namespaces
+    : undefined;
+}
+
+function collectFilterQueryMetadataNamespacesInto(
+  query: unknown,
+  namespaces: Set<string>,
+  state: {
+    activeQueries: WeakSet<object>;
+    depth: number;
+  },
+): boolean {
+  if (!isRecord(query) || state.depth > 1_000) {
+    return false;
+  }
+
+  if (state.activeQueries.has(query)) {
+    return false;
+  }
+
+  state.activeQueries.add(query);
+
+  try {
+    const where = query.where;
+
+    if (!Array.isArray(where)) {
+      return false;
+    }
+
+    for (const condition of where) {
+      if (!collectFilterConditionMetadataNamespace(condition, namespaces)) {
+        return false;
+      }
+    }
+
+    return (
+      collectNestedFilterQueryMetadataNamespaces(query.and, namespaces, state) &&
+      collectNestedFilterQueryMetadataNamespaces(query.or, namespaces, state)
+    );
+  } finally {
+    state.activeQueries.delete(query);
+  }
+}
+
+function collectNestedFilterQueryMetadataNamespaces(
+  branches: unknown,
+  namespaces: Set<string>,
+  state: {
+    activeQueries: WeakSet<object>;
+    depth: number;
+  },
+): boolean {
+  if (branches === undefined) {
+    return true;
+  }
+
+  if (!Array.isArray(branches)) {
+    return false;
+  }
+
+  return branches.every((branch) =>
+    collectFilterQueryMetadataNamespacesInto(branch, namespaces, {
+      activeQueries: state.activeQueries,
+      depth: state.depth + 1,
+    }),
+  );
+}
+
+function collectFilterConditionMetadataNamespace(
+  condition: unknown,
+  namespaces: Set<string>,
+): boolean {
+  if (!isRecord(condition) || typeof condition.field !== "string") {
+    return false;
+  }
+
+  const segments = condition.field.split(".");
+
+  if (segments.length !== 3 || segments[0] !== "metadata") {
+    return false;
+  }
+
+  const namespace = segments[1];
+  const key = segments[2];
+
+  if (!isSafeMetadataSegment(namespace) || !isSafeMetadataSegment(key)) {
+    return false;
+  }
+
+  namespaces.add(namespace);
+
+  return true;
+}
+
+function addPluginMetadataOwnerReservations(
+  reservations: Map<string, string>,
+  plugin: PluginHostRecord,
+): void {
+  const fields = plugin.manifest.contributes?.metadataFields;
+
+  if (!Array.isArray(fields)) {
+    return;
+  }
+
+  for (const field of fields) {
+    if (
+      field.namespace === plugin.id &&
+      isSafeMetadataSegment(field.namespace) &&
+      isSafeMetadataSegment(field.key) &&
+      typeof field.valueType === "string" &&
+      metadataValueTypes.has(field.valueType)
+    ) {
+      reservations.set(field.namespace, plugin.id);
+    }
+  }
+}
+
+function isSafeMetadataSegment(value: unknown): value is string {
+  return typeof value === "string" && metadataSegmentPattern.test(value);
 }
 
 function createMarkdownWorkspaceBridge({
@@ -843,19 +1568,43 @@ function createEmptyMarkdownDocument(): StructuredMarkdownDocument {
   };
 }
 
-function isPluginActive(runtime: AppRuntime, pluginId: string): boolean {
-  const plugins = runtime.pluginHost.listPlugins?.();
+function listPluginRecords(
+  runtime: AppRuntime,
+): readonly PluginHostRecord[] | undefined {
+  const { listPlugins } = runtime.pluginHost;
 
-  if (plugins === undefined) {
-    return true;
+  if (typeof listPlugins !== "function") {
+    return undefined;
   }
 
+  try {
+    return listPlugins.call(runtime.pluginHost);
+  } catch {
+    return undefined;
+  }
+}
+
+function isPluginActive(runtime: AppRuntime, pluginId: string): boolean {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return false;
+  }
+
+  return pluginRecordIsActive(plugins, pluginId);
+}
+
+function pluginRecordIsActive(
+  plugins: readonly PluginHostRecord[],
+  pluginId: string,
+): boolean {
   return plugins.some(
-    (plugin) =>
-      plugin.id === pluginId &&
-      plugin.enabled === true &&
-      plugin.status === "active",
+    (plugin) => plugin.id === pluginId && pluginIsActive(plugin),
   );
+}
+
+function pluginIsActive(plugin: PluginHostRecord): boolean {
+  return plugin.enabled === true && plugin.status === "active";
 }
 
 export default App;

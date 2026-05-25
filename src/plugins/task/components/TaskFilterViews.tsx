@@ -1,7 +1,10 @@
-import type { MarkdownPage } from "../../../core";
+export type TaskPageListItem = {
+  routeToken: string;
+  title: string;
+};
 
 export type TaskPageListViewProps = {
-  pages: readonly MarkdownPage[];
+  pages: readonly TaskPageListItem[];
 };
 
 export type TaskFilterEmptyStateProps = {
@@ -12,7 +15,7 @@ export function TaskPageListView({ pages }: TaskPageListViewProps) {
   return (
     <ul aria-label="Task pages">
       {pages.map((page) => (
-        <li key={page.id}>{page.title}</li>
+        <li key={page.routeToken}>{page.title}</li>
       ))}
     </ul>
   );

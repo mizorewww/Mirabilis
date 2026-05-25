@@ -1,22 +1,91 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 05:23 CST.
+Last updated: 2026-05-26 07:04 CST.
 
 ## Current Task
 
-- Task: TASK-037 merged; next task is TASK-038 - Add Sidebar Page And Saved-Filter Navigation.
-- Branch: `master`.
+- Task: TASK-038 - Add Sidebar Page And Saved-Filter Navigation.
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 merge-result validation passed and `master` is pushed; TASK-038 starts from `master`.
+- Current phase: TASK-038 is branch-gated and marked complete on the feature branch. Parent owns merge to `master`, merge-result validation, and TASK-039 kickoff.
 
-## Active Agents
+## Agent Outcomes
 
-- None. TASK-037 code, tests, docs, branch validation, release readiness, merge, and merge-result validation are complete.
-- No code, test, security, correctness, or docs agents are currently active.
-- Completed final re-review: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 findings after Huygens's `08dd1d5` fix.
-- Release readiness: Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required for this UI-only branch.
-- Pending: continue to TASK-038.
+- Kierkegaard (`planner`), Anscombe (`docs_researcher`), Ramanujan (`security_reviewer`), and Mill (`deprecation_auditor`) completed TASK-038 pre-test guidance and were closed.
+- Heisenberg (`test_writer`) added failing TASK-038 acceptance and boundary tests in commit `87d483a`.
+- Hypatia (`implementer`) completed production implementation in commit `84eac3d` and test lint cleanup in commit `1c31a8c`.
+- Locke (`test_writer`) synced stale TASK-037 route assertions in commit `f43b109`.
+- Kant (`doc_writer`), Feynman (`test_quality_reviewer`), Euclid (`deprecation_auditor`), Einstein (`pr_explorer`), Archimedes (`security_reviewer`), and Dalton (`reviewer`) completed TASK-038 review and found docs-sync, test-quality, security, and correctness follow-ups.
+- Helmholtz (`test_writer`) added failing review regression tests in commit `a3e7b94`.
+- Herschel (`implementer`) fixed the review regressions in commit `d58c236`; parent validation passed.
+- Descartes (`planner`) completed a read-only M9 UI roadmap split: TASK-039 through TASK-045 remain the next unfinished UI work after TASK-038 closes.
+- Re-review outcomes:
+  - Helmholtz the 2nd (`test_quality_reviewer`) found P1 missing coverage/behavior for Recent pages while on filter routes.
+  - Franklin (`security_reviewer`) found P1 metadata owner fail-closed gaps for inactive/missing owners and missing plugin ownership data.
+  - Harvey (`reviewer`) found no P0/P1 and noted P2 accessible-name and task page-list DTO contract cleanup.
+  - Ptolemy the 2nd (`deprecation_auditor`) found no P0/P1.
+  - Hume the 2nd (`doc_writer`) found P1 docs-sync gaps.
+  - Carson (`pr_explorer`) mapped changed-path hotspots and confirmed no package/native/Tauri/Rust/security surface drift.
+- Carson the 2nd (`test_writer`) added failing final review regressions in commit `7454c9c`.
+- Mendel the 2nd (`implementer`) fixed the final review regressions in commit `7b4d5c0`; parent validation passed.
+- Final targeted re-review:
+  - Nietzsche the 2nd (`security_reviewer`) found no P0/P1/P2.
+  - Bernoulli the 2nd (`reviewer`) found no P0/P1 and one P2 for saved-filter accessible names diverging from visible labels.
+  - Carver the 2nd (`test_quality_reviewer`) found P1 test coverage gaps for exact route-token DTOs and unowned metadata namespace fail-closed behavior.
+- Confucius the 2nd (`test_writer`) added final test-hardening coverage in commit `1304174`.
+- Poincare the 2nd (`implementer`) completed final TASK-038 polish in commit `9dbbaeb`, keeping saved-filter label-in-name accessibility and making the task page-list DTO require `routeToken`.
+- Current docs sync agent updated product, architecture, testing, task-index, progress, status, and TASK-038 communication docs only. Docs-only `git diff --check` passed. No code, tests, package/native/Tauri/Rust files, final closeout, or merge state were changed.
+- Release readiness: Kant the 2nd found no P0/P1/P2 release blockers and confirmed `check:full` is not required.
+- Parent branch gate passed: `bun run build` and `bun run check:quick`.
+- TASK-038 is marked `[x]` on the feature branch.
+- Pending parent action: merge to `master`, validate merge result, push `master`, and continue to TASK-039.
+
+## Current TASK-038 State
+
+- TASK-038 starts from `master` commit `49b4fc4`, after TASK-037 was merged, merge-result validated, and pushed.
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Initial scope:
+  - use MUI Drawer/List navigation for Home, Inbox, All Tasks, Today, recent pages, and public plugin route groups when backing data exists;
+  - selecting a page route changes the active workspace page and renders the editor through `ViewHost`;
+  - selecting All Tasks / Today / Inbox saved filters uses existing filter/query/public Quick Capture semantics and renders registered `viewType` through `ViewHost`;
+  - recent pages come from the current page store state and remain scoped to the current session;
+  - missing, empty, loading, and unavailable route states are visible, accessible, and non-leaky.
+- Initial constraints:
+  - parent remains orchestration-only;
+  - tests must be written first and use RTL plus `userEvent.setup()` for real drawer, route, saved-filter, and keyboard interaction;
+  - no direct Task, Tag, Quick Capture, or other business-plugin private imports in App Shell;
+  - no package, lockfile, Tauri/native, Rust, IPC, capability, permission, persistence schema, or release changes.
+- Agent/config validation:
+  - 11 `.codex/agents/*.toml` files parsed.
+  - `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Parent decision: collect guidance from planner/current-doc/security/deprecation agents before delegating red tests.
+- Pre-test guidance outcome:
+  - Kierkegaard (`planner`) recommended one focused TASK-038 slice: real Drawer navigation for Home, Inbox, All Tasks, Today, session recent pages, and filter-backed plugin groups only; page routes render the editor through `ViewHost`; saved-filter routes execute `executeFilterQuery`, render registered `viewType` through `ViewHost`, and use `SlotHost` for `filter.empty_state`.
+  - Anscombe (`docs_researcher`) verified official MUI v9, React 19, Testing Library/user-event, Vitest, jsdom, and W3C `aria-current` guidance. Recommendations: MUI path imports only, `selected` for styling plus `aria-current="page"` for active route semantics, `userEvent.setup()` with awaited clicks/keyboard, no layout/media-query assertions in jsdom, and no `check:full` unless native/package/release surfaces change.
+  - Ramanujan (`security_reviewer`) required saved-filter views to receive DTO projections only, not full pages, page bodies, metadata, events, filter query JSON, runtime handles, or native surfaces. Inbox must use public Quick Capture filter/metadata semantics and ignore title-only Inbox pages.
+  - Mill (`deprecation_auditor`) found no P0/P1 blockers and warned against MUI v9 removed props/barrel imports, React 19 removed test APIs, stale `ListItem button`, and selected-state-only assertions.
+- Parent decisions:
+  - Interpret "plugin route groups" as filter-backed plugin groups only for TASK-038; arbitrary view routes remain deferred to TASK-042/TASK-043+ when explicit DTO projections exist.
+  - Adopt the stricter security line for filter result props: route code should pass safe page-summary DTOs such as `{ routeToken, title }`, not full `MarkdownPage` objects or raw page IDs.
+  - Require failing tests first in a focused sidebar/page/filter navigation test file, with updates to existing shell/static guards only where needed.
+- Test writer outcome:
+  - Heisenberg (`test_writer`) added `src/test/sidebar-page-filter-navigation.test.tsx` in commit `87d483a`.
+  - Coverage drives Home/recent page routes through registered page editor `ViewHost`, saved-filter routes for All Tasks/Today/Inbox through registered `page.list`, Quick Capture Inbox trust semantics, DTO-only filter props, minimal empty-state slot props, redacted unavailable states, keyboard activation, static no-private-import/no-native/no-deprecated API guards, and no package/native/release drift.
+  - Parent red validation failed as expected: `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` reported 1 failed file / 2 passed files and 7 failed / 22 passed tests. Failures match missing production navigation/filter implementation.
+  - `bun run typecheck` passed; `git diff --check` passed; `.only/.skip` scan found no matches.
+- Parent decision: accept `87d483a` as the TASK-038 red baseline and delegate production implementation next.
+- Implementation outcome:
+  - Hypatia (`implementer`) updated `src/App.tsx` in commit `84eac3d`.
+  - Delivered Home/recent page route rendering through registered page editor `ViewHost`, saved-filter route execution for Inbox/Today/All Tasks through `executeFilterQuery`, DTO-only page-summary props for filter views, `SlotHost` empty states, generic redacted unavailable route states, active Drawer `aria-current`, and manifest-derived metadata owner reservations.
+  - Hypatia removed stale TASK-038 test lint suppressions in commit `1c31a8c`.
+  - Locke (`test_writer`) updated stale TASK-037 expectations in commit `f43b109` so Inbox/Today/All Tasks now assert saved-filter empty states while Reports remains placeholder and the delayed open regression still proves no Home remount or returned task body leak.
+- Parent validation after implementation:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` passed with 3 files / 29 tests.
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx` passed with 5 files / 82 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+  - No package, lockfile, Tauri, Rust, IPC, capability, permission, schema, native, or release diff is present.
+- Parent decision: accept implementation/test-sync commits and delegate review agents.
 
 ## Current TASK-037 State
 
@@ -156,15 +225,15 @@ Last updated: 2026-05-26 05:23 CST.
 - Final review outcome:
   - Bacon (`reviewer`) found no P0/P1 and one P2: nested `ViewHost.props` prototype-key clone failures are stripped rather than fail closed.
   - Avicenna (`security_reviewer`) found no P0/P1/P2 and confirmed no package/native/Tauri/Rust/security surface drift. Residual risk: future `actions` callers must remain owner-scoped wrappers, not raw command/native handles.
-  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remained a later route/plugin mounting decision. After TASK-037's Home editor mounting, this is still deferred to TASK-038+.
+  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remained a later route/plugin mounting decision. TASK-037 later mounted Home, TASK-038 later mounted page/saved-filter routes, and lazy/Suspense remains deferred to TASK-039+.
   - Linnaeus (`test_quality_reviewer`) found no P0/P1 and P2 gaps for SlotHost plugin-unavailable coverage, slot `when` mutation/capture isolation, and brittle static file-split coupling.
   - Erdos (`doc_writer`) found P1 docs-sync gaps in `docs/testing/strategy.md` and the TASK-036 communication doc, plus P2 closeout/status/product/task-index updates.
 - Docs-sync outcome:
   - `docs/testing/strategy.md` now records that `src/test/view-slot-hosts.test.tsx` covers ViewHost/SlotHost observable states, descriptor-backed `host.action` wrappers exercised through user-event, prototype-key fail-closed behavior, native/secret alias redaction, recursion budgets, proxy/trap fail-closed paths, and the no package/native/Tauri/Rust drift static guard.
-  - `docs/testing/strategy.md` also records that TASK-037 delivered the Home-scoped Markdown workspace bridge, while lazy/Suspense behavior, non-Home route data, actual slot placement, and broader command/page adapters remain TASK-038+.
+  - `docs/testing/strategy.md` also records that TASK-037 delivered the Home-scoped Markdown workspace bridge and TASK-038 delivered sidebar page/saved-filter routes, while lazy/Suspense behavior, actual slot placement, and broader command/page adapters remain TASK-039+.
   - The TASK-036 task communication doc records Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and the remaining P2 decisions.
   - The progress ledger records final branch validation, final reviews, docs-sync completion, and the still-pending P2 test-hardening/disposition.
-  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036, Home editor mounting and Home-scoped adapters are delivered by TASK-037, and lazy/Suspense plus remaining route/slot/dialog surfaces are TASK-038+ deferrals.
+  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036, Home editor mounting and Home-scoped adapters are delivered by TASK-037, sidebar page/saved-filter routes are delivered by TASK-038, and lazy/Suspense plus remaining slot/dialog/route-projection surfaces are TASK-039+ deferrals.
 - Final P2 hardening and release readiness:
   - Lagrange (`test_writer`) added coverage for nested `ViewHost.props` prototype-key fail-closed behavior, SlotHost plugin-unavailable skipping with visible siblings, and slot `when` mutation/capture isolation in commit `f2e8ed7`.
   - Goodall (`implementer`) updated `ViewHost` to fail closed for nested controlled-prop prototype-key clone failures in commit `114008d`.

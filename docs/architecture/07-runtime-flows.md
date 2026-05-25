@@ -207,7 +207,7 @@ PredictionPanel validates DTOs and fails closed/inertly for malformed or wrong-k
 
 后续：
 编辑器保存后自动扫描 task blocks
-全局 saved-filter navigation / app-shell filter route
+TASK-038 已交付 current app-shell Drawer saved-filter routes for public filters; broader global/persistent saved-filter navigation remains future scope
 Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
@@ -282,23 +282,25 @@ CommandRegistry.execute("tag.create-filter", { tag })
 
 TASK-022 makes this saved filter shape executable/renderable through the generic `page.list` path when a caller supplies pages, metadata, query, and required metadata owner reservations.
 
-### 18.5 用户打开 All Tasks / Today filter result
+### 18.5 用户打开 Drawer saved-filter route
 
 ```text
-TaskPlugin registered default filter exists
-→ App/filter caller reads saved FilterDefinition
-→ Caller supplies current pages and metadata records
-→ Caller supplies Plugin Host-derived metadataOwnerReservations when enforcing built-in metadata trust
+User clicks Inbox, Today, All Tasks, or a public saved filter in the MUI Drawer
+→ App Shell resolves a public FilterDefinition from the current runtime
+→ App Shell verifies filter source plugin ownership, target view ownership, and plugin ownership data
+→ Missing/inactive/unowned filter source, missing/unowned view, or unavailable plugin ownership data fails closed
+→ App Shell collects active metadata owner reservations for namespaces queried by the filter
+→ Missing/inactive/unowned metadata owner namespace fails closed
 → executeFilterQuery({ pages, metadata, query, currentDate?, metadataOwnerReservations })
-→ Core excludes archived pages and evaluates metadata-only query subset
-→ Caller resolves ViewRegistry by filter.viewType
-→ viewType "page.list" resolves to task.page-list
-→ TaskPageListView renders page titles as inert React text
-→ If result is empty, caller resolves filter.empty_state slot
+→ Core excludes archived pages and evaluates the metadata-only query subset
+→ App Shell projects matched pages to ViewHost props as pages: { routeToken, title }[]
+→ ViewHost renders the registered filter viewType, such as page.list / task.page-list
+→ TaskPageListView renders page titles as inert React text keyed by routeToken
+→ If the trusted result is empty, App Shell resolves filter.empty_state through SlotHost
 → task.filter-empty-state renders generic empty-state copy from filterName
 ```
 
-There is no production app-shell filter route yet. Automatic save-time scanning/indexing, Event/plugin-index `within` execution, JS filters, date picker, `@date` parser, and global saved-filter navigation remain deferred.
+The route-unavailable state is shown before empty/result rendering whenever the filter, plugin ownership data, metadata owner reservations, or registered view cannot be trusted. Filter routes do not pass raw page IDs, page bodies, metadata records, event records, filter query JSON, runtime handles, NativeBridge, Tauri/native handles, filesystem/path handles, or plugin-private objects to plugin-rendered views. Automatic save-time scanning/indexing, Event/plugin-index `within` execution, JS filters, date picker, `@date` parser, persistent/global saved-filter navigation, and arbitrary plugin view routes without explicit DTO designs remain deferred.
 
 ### 18.6 用户点击 Start
 

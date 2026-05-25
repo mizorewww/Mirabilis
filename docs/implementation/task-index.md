@@ -1024,7 +1024,8 @@ Delivered/deferred note for the TASK-036 branch:
 
 - Delivered: generic app-shell `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and host exports for registry-owned views and slots; exact-id and unambiguous-type view resolution; explicit accepted-data checks; safe loading, empty, missing, wrong-data, unavailable, thrown, and error states; slot registry ordering and per-contribution isolation; controlled props/data cloning; descriptor-backed `host.action` wrappers for user interactions; prototype-key fail-closed behavior; native/secret alias redaction; recursion budgets; proxy/trap fail-closed behavior; and static guards for no package/native/Tauri/Rust/capability/release drift.
 - Delivered later by TASK-037: Home editor route mounting plus Home-scoped command and page bridge adapters.
-- Deferred: route data projections outside Home, lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, responsive polish, and broader command/page facade adapters remain TASK-038+ or later.
+- Delivered later by TASK-038: sidebar page route and saved-filter route mounting for Home, recent pages, Inbox, Today, All Tasks, and public saved filters, using explicit route DTOs through `ViewHost` / `SlotHost`.
+- Deferred: lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, Calendar/Reports/ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain TASK-039+ or later.
 - Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
 
 Test plan:
@@ -1071,7 +1072,8 @@ Delivered/deferred note for the TASK-037 branch:
 
 - Delivered by branch: the ready Home route creates/selects one session Home Markdown Page and renders registered `markdown.page-editor` / `page.editor` through `ViewHost`; hosted editor props stay narrow and do not expose raw runtime/native/store/registry/command/page facade handles; the provider-scoped Markdown workspace bridge exposes only current-page bounded load/save, inert editor extension collection, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, and guarded page-open navigation; typing, toolbar snippets, save, task-title open, checkbox toggle, stale insert/open guards, foreign load/save/openPage rejection, and non-Home placeholder preservation are covered.
 - Security/correctness hardening delivered by branch: no raw runtime render-prop/public provider exposure, no plugin-to-shell production import, hosted `pages.load/save` remain current-page scoped, hosted `openPage` cannot self-authorize foreign pages, and command-returned page opens are one-shot authorizations bound to the source page generation.
-- Deferred: sidebar page/filter navigation, metadata/timer/timeline slot placement, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, `Portal` floating slots, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-038+ or later.
+- Delivered later by TASK-038: sidebar page/filter navigation for Home, recent pages, Inbox, Today, All Tasks, and public saved filters; page routes stay on the registered editor path, and saved-filter routes use the public filter executor plus `ViewHost` / `SlotHost` with route-token DTOs.
+- Deferred: metadata/timer/timeline slot placement, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, `Portal` floating slots, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-039+ or later.
 
 Test plan:
 
@@ -1114,6 +1116,14 @@ Acceptance criteria:
 - Recent pages come from current page store state and remain scoped to the current session.
 - Missing, empty, loading, and unavailable route states are visible, accessible, and non-leaky.
 - No direct Task/Tag/Quick Capture private imports, native/Tauri/Rust/package/capability changes, or persistent navigation storage are added.
+
+Delivered/deferred note for the TASK-038 branch:
+
+- Delivered by branch: left MUI Drawer navigation for Home, recent page routes, Inbox, Today, All Tasks, and public saved filters. Home/recent page routes change the active workspace page and keep rendering the registered `markdown.page-editor` / `page.editor` through `ViewHost`.
+- Delivered by branch: Inbox, Today, All Tasks, and public saved filters resolve public `FilterDefinition`s, verify filter source/view/plugin ownership fail-closed, collect active metadata owner reservations, execute `executeFilterQuery`, render registered `viewType`s through `ViewHost`, and render trusted empty states through `SlotHost`.
+- Delivered by branch: filter result views receive only opaque `{ routeToken, title }` DTOs; saved-filter rows keep visible labels such as `#today` and `Today Review` as accessible names; active navigation rows expose `aria-current="page"`; recent pages remain session-scoped and visible on trusted filter routes.
+- Security/native scope: App Shell still does not import Task, Tag, Quick Capture, Search, Markdown editor private modules, raw Tauri/native modules, or plugin-private view components; TASK-038 adds no package, lockfile, Tauri config, generated permissions, capabilities, Rust, IPC, filesystem, schema, persistent navigation storage, or release changes.
+- Deferred: Reports/top-bar dialogs, metadata/timer/timeline/global slot placement, Calendar/Reports route projections, search overlay/result routes, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, and durable route storage remain TASK-039+ or later.
 
 Test plan:
 
