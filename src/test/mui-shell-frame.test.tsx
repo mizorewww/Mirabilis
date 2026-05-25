@@ -232,6 +232,7 @@ describe("TASK-035 MUI static and package guards", () => {
     expect(packageJson.devDependencies).toStrictEqual(
       basePackageJson.devDependencies,
     );
+    // eslint-disable-next-line testing-library/no-node-access -- JSON package fields are not DOM nodes.
     expect(packageJson.scripts).toStrictEqual(basePackageJson.scripts);
     expect(findForbiddenPackageDrift(packageJson)).toStrictEqual([]);
   });
