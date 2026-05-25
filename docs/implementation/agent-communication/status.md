@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:10 CST.
+Last updated: 2026-05-25 12:12 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 12:10 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 pre-test guidance completed; test handoff next.
+- Current phase: TASK-029 failing acceptance tests delegated.
 
 ## Active Agents
 
-- No active agents. Next delegation is `test_writer` for failing TASK-029 acceptance tests.
+- Aquinas (`test_writer`) is adding failing TASK-029 acceptance tests.
 
 ## Current TASK-029 State
 
@@ -236,5 +236,5 @@ Last updated: 2026-05-25 12:10 CST.
 
 ## Next Actions
 
-1. Delegate failing TASK-029 acceptance tests to `test_writer`.
+1. Wait for Aquinas (`test_writer`) to finish TASK-029 acceptance tests.
 2. Validate expected red signal, then commit tests separately.

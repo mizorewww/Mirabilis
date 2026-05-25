@@ -115,3 +115,10 @@
   - `search.query` finds title and body matches, excludes archived pages, treats regex-looking input literally, caps limits/results/snippets, updates on later page edits, and returns no results for blank queries.
   - Search result view renders unsafe titles/snippets as inert text with accessible list/listitem semantics.
   - Static guard: no forbidden imports/sinks in new Quick Capture/Search plugin files; no package/native/Tauri/Rust/schema/capability/generated-permission diffs.
+
+## Test Writer Active
+
+- Aquinas (`test_writer`) started at 2026-05-25 12:12 CST.
+- Scope: add failing TASK-029 acceptance tests only, expected file `src/test/quick-capture-search-plugins.test.tsx`.
+- Constraints: do not edit production files, docs, progress files, package/native/Tauri/Rust/schema files; do not commit, merge, or push.
+- Parent next action: wait for Aquinas, validate the expected red signal, and commit the test-only patch.
