@@ -314,3 +314,31 @@
 - Optional if cheap: filter `neq` / `exists` parity, Tag Plugin slug grammar, loading-state view coverage, and production-source secret scan.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Tesla the 2nd, validate the expected red signal, and commit review-fix tests separately.
+
+## Review-Fix Test Outcome
+
+- Tesla the 2nd (`test_writer`) extended `src/test/ai-plugin-provider-abstraction.test.tsx`.
+- Added coverage:
+  - static guards for unguarded provider/settings test hooks and operation-changing getters in AI test support;
+  - async payload snapshot regression proving provider input must not observe caller mutations after command execution starts;
+  - Responses-compatible provider input shape instead of opaque object envelopes;
+  - direct `createOpenAIProvider` mocked-transport coverage for raw success, refusal, incomplete/error/invalid responses, unavailable transport, and thrown transport errors;
+  - Structured Output schemas with meaningful property definitions and strict `json_schema` / `additionalProperties: false`;
+  - nested hostile/secret provider JSON output rejection;
+  - provider output accessor non-execution for top-level, nested, and array fields;
+  - forbidden secret/provider override fields across all nine AI commands.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx` failed as expected with 5 failed / 9 passed.
+  - Failure symptoms: unguarded production test hooks, opaque Responses input object envelope, caller mutation visible after validation, raw OpenAI Responses pass-through, and nested unsafe provider JSON accepted.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/ai-plugin-provider-abstraction.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan found no matches.
+  - Changed-file guard showed only `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Package/native/Tauri/Rust/schema/capability diff guard was empty.
+- Test-fix commit: `9f36d38 Tesla(test-fix)(Implement AI Plugin provider abstraction): cover ai review regressions`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit review-fix test record, then delegate production fixes to `implementer`.
