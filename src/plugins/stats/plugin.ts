@@ -909,15 +909,17 @@ function readExactRecordOrNull(
 }
 
 function readArray(input: unknown, label: string): readonly unknown[] {
-  if (!Array.isArray(input)) {
-    throw new Error(`${label} must be an array`);
+  const values = copyInertPlainArray(input);
+
+  if (values === null) {
+    throw new Error(`${label} must be an inert plain array`);
   }
 
-  if (input.length > maxStatsInputItems) {
+  if (values.length > maxStatsInputItems) {
     throw new Error(`${label} exceeds maximum item count`);
   }
 
-  return input;
+  return values;
 }
 
 function readOptionalStringArray(input: unknown): readonly string[] | null {
@@ -925,13 +927,17 @@ function readOptionalStringArray(input: unknown): readonly string[] | null {
     return [];
   }
 
-  if (!Array.isArray(input) || input.length > maxStatsInputItems) {
+  const inputValues = copyInertPlainArray(input);
+
+  if (inputValues === null || inputValues.length > maxStatsInputItems) {
     return null;
   }
 
   const values: string[] = [];
 
-  for (const value of input) {
+  for (let index = 0; index < inputValues.length; index += 1) {
+    const value = inputValues[index];
+
     if (!isTrustedString(value)) {
       return null;
     }
@@ -940,6 +946,68 @@ function readOptionalStringArray(input: unknown): readonly string[] | null {
   }
 
   return values;
+}
+
+function copyInertPlainArray(input: unknown): unknown[] | null {
+  if (
+    !Array.isArray(input) ||
+    Object.getPrototypeOf(input) !== Array.prototype
+  ) {
+    return null;
+  }
+
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length");
+
+  if (
+    lengthDescriptor === undefined ||
+    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
+    !Number.isSafeInteger(lengthDescriptor.value) ||
+    lengthDescriptor.value < 0
+  ) {
+    return null;
+  }
+
+  const length = lengthDescriptor.value;
+
+  for (const key of Reflect.ownKeys(input)) {
+    if (key === "length") {
+      continue;
+    }
+
+    if (typeof key !== "string" || readArrayIndex(key, length) === null) {
+      return null;
+    }
+  }
+
+  const values: unknown[] = [];
+
+  for (let index = 0; index < length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, String(index));
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return null;
+    }
+
+    values.push(descriptor.value);
+  }
+
+  return values;
+}
+
+function readArrayIndex(key: string, length: number): number | null {
+  if (!/^(?:0|[1-9]\d*)$/u.test(key)) {
+    return null;
+  }
+
+  const index = Number(key);
+
+  return Number.isSafeInteger(index) && index >= 0 && index < length
+    ? index
+    : null;
 }
 
 function readOptionalNonBlankString(
