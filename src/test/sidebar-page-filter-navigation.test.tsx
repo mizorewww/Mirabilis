@@ -50,7 +50,7 @@ type CreateRuntimeOptions = {
 };
 
 type PageSummary = {
-  id: string;
+  routeToken: string;
   title: string;
 };
 
@@ -78,6 +78,11 @@ const filterResultsKind = "filter-results.markdown-pages";
 const taskEmptyStateSlotId = "task.filter-empty-state";
 const filterEmptyStateSlot = "filter.empty_state";
 const allTasksFilterId = "task.filter.all-tasks";
+const todayFilterId = "task.filter.today";
+const inboxFilterId = "quick-capture.filter.inbox";
+const tagPluginId = "tag";
+const tagAddCommandId = "tag.add-tag";
+const tagCreateFilterCommandId = "tag.create-filter";
 const quickCaptureSaveCommandId = "quick-capture.save";
 const appShellEntrypoints = [
   "src/App.tsx",
@@ -228,21 +233,23 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
 
     await user.click(await findNavigationButton(/all tasks/i));
 
-    expect(await screen.findByRole("list", { name: /task pages/i })).toBeVisible();
-    expect(screen.getByText(`${todo.id}: ${todo.title}`)).toBeVisible();
-    expect(screen.getByText(`${done.id}: ${done.title}`)).toBeVisible();
-    expect(screen.getByText(`${unsafeHtml.id}: ${unsafeHtml.title}`)).toBeVisible();
-    expect(screen.getByText(`${unsafeLink.id}: ${unsafeLink.title}`)).toBeVisible();
-    expect(screen.queryByText(`${plainNote.id}: ${plainNote.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${archived.id}: ${archived.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${forged.id}: ${forged.title}`)).not.toBeInTheDocument();
+    const taskPages = await screen.findByRole("list", { name: /task pages/i });
+
+    expect(taskPages).toBeVisible();
+    expect(within(taskPages).getByText(todo.title)).toBeVisible();
+    expect(within(taskPages).getByText(done.title)).toBeVisible();
+    expect(within(taskPages).getByText(unsafeHtml.title)).toBeVisible();
+    expect(within(taskPages).getByText(unsafeLink.title)).toBeVisible();
+    expect(within(taskPages).queryByText(plainNote.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(archived.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(forged.title)).not.toBeInTheDocument();
     expectNoDangerousDom();
     expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [
       todo,
       done,
       unsafeHtml,
       unsafeLink,
-    ]);
+    ], { filterIds: [allTasksFilterId] });
     expect(await findNavigationButton(/all tasks/i)).toHaveAttribute(
       "aria-current",
       "page",
@@ -299,19 +306,23 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
 
     await user.click(await findNavigationButton(/^today\b/i));
 
-    expect(await screen.findByText(`${dueToday.id}: ${dueToday.title}`)).toBeVisible();
-    expect(
-      screen.getByText(`${scheduledToday.id}: ${scheduledToday.title}`),
-    ).toBeVisible();
-    expect(screen.queryByText(`${doneToday.id}: ${doneToday.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${future.id}: ${future.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${invalidDate.id}: ${invalidDate.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${stringDate.id}: ${stringDate.title}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`${noDate.id}: ${noDate.title}`)).not.toBeInTheDocument();
+    const taskPages = await screen.findByRole("list", { name: /task pages/i });
+
+    expect(within(taskPages).getByText(dueToday.title)).toBeVisible();
+    expect(within(taskPages).getByText(scheduledToday.title)).toBeVisible();
+    expect(within(taskPages).queryByText(doneToday.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(future.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(invalidDate.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(stringDate.title)).not.toBeInTheDocument();
+    expect(within(taskPages).queryByText(noDate.title)).not.toBeInTheDocument();
     expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [
       dueToday,
       scheduledToday,
-    ]);
+    ], { filterIds: [todayFilterId] });
+    expect(await findNavigationButton(/^today\b/i)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("routes Inbox through public Quick Capture save semantics and ignores a title-only Inbox page", async () => {
@@ -323,7 +334,7 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     const user = userEvent.setup({
       advanceTimers: (delay) => vi.advanceTimersByTime(delay),
     });
-    const userInbox = createRuntimePage(runtime, "Inbox", [
+    createRuntimePage(runtime, "Inbox", [
       { blockId: "user-inbox-body", text: "User-owned Inbox body" },
     ]);
 
@@ -344,13 +355,65 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
 
     await user.click(await findNavigationButton(/^inbox\b/i));
 
-    expect(await screen.findByText(`${trustedInbox.id}: ${trustedInbox.title}`)).toBeVisible();
-    expect(
-      screen.queryByText(`${userInbox.id}: ${userInbox.title}`),
-    ).not.toBeInTheDocument();
+    const taskPages = await screen.findByRole("list", { name: /task pages/i });
+
+    expect(within(taskPages).getByText(trustedInbox.title)).toBeVisible();
+    expect(screen.queryByText("User-owned Inbox body")).not.toBeInTheDocument();
     expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [
       trustedInbox,
+    ], { filterIds: [inboxFilterId] });
+    expect(await findNavigationButton(/^inbox\b/i)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("shows public tag saved filters in the Drawer even when their names contain a primary route label", async () => {
+    const runtime = await createRuntime({
+      filterIds: ["tag-filter-today"],
+      metadataIds: createMetadataIds(2),
+      pageIds: ["home-page", "tagged-today-page", "untagged-page"],
+    });
+    const capturedPageListProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const tagged = createRuntimePage(runtime, "Tagged Today Note", [
+      { blockId: "tagged-body", text: "Visible tagged page body" },
     ]);
+    const untagged = createRuntimePage(runtime, "Untagged Today Note", [
+      { blockId: "untagged-body", text: "This page should not match #today" },
+    ]);
+
+    await runtime.commands.execute(tagAddCommandId, {
+      pageId: tagged.id,
+      tag: "today",
+    });
+    await expect(
+      runtime.commands.execute(tagCreateFilterCommandId, { tag: "today" }),
+    ).resolves.toStrictEqual({ filterId: "tag-filter-today" });
+    replaceTaskPageListView(runtime, capturedPageListProps);
+    renderReadyApp(runtime);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+    const todayTagFilter = await within(savedFilters).findByRole("button", {
+      name: /#today/i,
+    });
+
+    await user.click(todayTagFilter);
+
+    const taskPages = await screen.findByRole("list", { name: /task pages/i });
+
+    expect(todayTagFilter).toHaveAttribute("aria-current", "page");
+    expect(within(taskPages).getByText(tagged.title)).toBeVisible();
+    expect(within(taskPages).queryByText(untagged.title)).not.toBeInTheDocument();
+    expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [tagged], {
+      filterIds: ["tag-filter-today"],
+    });
   });
 
   it("renders empty filter results through filter.empty_state SlotHost with only minimal props", async () => {
@@ -408,12 +471,12 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
     await user.keyboard("{Enter}");
 
     expect(allTasksRoute).toHaveAttribute("aria-current", "page");
-    expect(
-      await screen.findByText(`${keyboardTask.id}: ${keyboardTask.title}`),
-    ).toBeVisible();
+    const taskPages = await screen.findByRole("list", { name: /task pages/i });
+
+    expect(within(taskPages).getByText(keyboardTask.title)).toBeVisible();
     expectFilterViewReceivedOnlyPageSummaryDtos(capturedPageListProps, [
       keyboardTask,
-    ]);
+    ], { filterIds: [allTasksFilterId] });
   });
 
   it("shows visible redacted states for missing filters, missing views, and unavailable plugin routes", async () => {
@@ -438,6 +501,144 @@ describe("TASK-038 sidebar page and saved-filter navigation", () => {
       },
       routeName: /all tasks/i,
     });
+  });
+
+  it("shows generic unavailable when a saved filter view is missing even if the filter has no matches", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page"],
+    });
+    const capturedEmptyStateProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    replaceFilterEmptyStateSlot(runtime, capturedEmptyStateProps);
+    runtime.registries.views.unregister(taskPageListViewId);
+    renderReadyApp(runtime);
+
+    await user.click(await findNavigationButton(/^today\b/i));
+
+    const state = await findGenericUnavailableState();
+
+    expect(state).toBeVisible();
+    expect(capturedEmptyStateProps).toStrictEqual([]);
+  });
+
+  it("keeps inactive plugin metadata reservations closed for generic filters over reserved fields", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(1),
+      pageIds: ["home-page", "forged-inactive-task-page"],
+    });
+    const capturedPageListProps: CapturedProps[] = [];
+    const capturedEmptyStateProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const forgedPage = createRuntimePage(runtime, "Forged inactive task page", [
+      {
+        blockId: "forged-task-body",
+        text: "FORGED_INACTIVE_TASK_BODY PRIVATE_PAGE_BODY_TOKEN",
+      },
+    ]);
+
+    await deactivatePlugin(runtime, taskPluginId);
+    registerPageListView(runtime, {
+      capturedProps: capturedPageListProps,
+      pluginId: tagPluginId,
+      viewId: "tag.inactive-task-filter-page-list",
+    });
+    registerFilterEmptyStateSlot(runtime, {
+      capturedProps: capturedEmptyStateProps,
+      pluginId: tagPluginId,
+      slotId: "tag.inactive-task-filter-empty-state",
+    });
+    runtime.metadata.set({
+      pageId: forgedPage.id,
+      namespace: "task",
+      key: "enabled",
+      value: true,
+      valueType: "boolean",
+      sourcePluginId: tagPluginId,
+    });
+    runtime.filters.save({
+      id: "tag.filter.inactive-task-enabled",
+      name: "Inactive Task Ownership",
+      query: {
+        where: [{ field: "metadata.task.enabled", op: "eq", value: true }],
+      },
+      sourcePluginId: tagPluginId,
+      viewType: pageListViewType,
+    });
+    renderReadyApp(runtime);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+
+    await user.click(
+      await within(savedFilters).findByRole("button", {
+        name: /Inactive Task Ownership/i,
+      }),
+    );
+
+    const state = await findUnavailableOrFilterEmptyState();
+
+    expect(state).toBeVisible();
+    expect(screen.queryByRole("list", { name: /task pages/i })).not.toBeInTheDocument();
+    expect(capturedPageListProps).toStrictEqual([]);
+    expect(document.body.textContent ?? "").not.toContain(forgedPage.id);
+    expect(document.body.textContent ?? "").not.toContain(forgedPage.title);
+    expect(document.body.textContent ?? "").not.toContain(
+      "FORGED_INACTIVE_TASK_BODY",
+    );
+  });
+
+  it("keeps user pages titled like primary routes visible in Recent pages and opens them through the editor", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page", "user-today-page"],
+    });
+    const capturedEditorProps: CapturedProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const userTodayPage = createRuntimePage(runtime, "Today", [
+      { blockId: "user-today-body", text: "User page named Today body" },
+    ]);
+
+    replaceRegisteredPageEditor(
+      runtime,
+      createBridgeLoadingPageEditor(capturedEditorProps),
+    );
+    renderReadyApp(runtime);
+
+    const navigation = await screen.findByRole("navigation", {
+      name: /^Workspace$/i,
+    });
+    const workspaceRoutes = within(navigation).getByRole("list", {
+      name: /^Workspace routes$/i,
+    });
+    const recentPages = await within(navigation).findByRole("list", {
+      name: /^Recent pages$/i,
+    });
+    const primaryTodayRoute = within(workspaceRoutes).getByRole("button", {
+      name: /^Today\b/i,
+    });
+    const recentTodayRoute = await within(recentPages).findByRole("button", {
+      name: /^Today\b/i,
+    });
+
+    expect(primaryTodayRoute).not.toHaveAttribute("aria-current", "page");
+
+    await user.click(recentTodayRoute);
+
+    expect(recentTodayRoute).toHaveAttribute("aria-current", "page");
+    expect(await screen.findByText("User page named Today body")).toBeVisible();
+    expect(latestCapturedPageId(capturedEditorProps)).toBe(userTodayPage.id);
   });
 });
 
@@ -705,11 +906,30 @@ function replaceTaskPageListView(
   capturedProps: CapturedProps[],
 ): void {
   runtime.registries.views.unregister(taskPageListViewId);
-  runtime.registries.views.register({
-    id: taskPageListViewId,
+  registerPageListView(runtime, {
+    capturedProps,
     pluginId: taskPluginId,
+    viewId: taskPageListViewId,
+  });
+}
+
+function registerPageListView(
+  runtime: AppRuntime,
+  {
+    capturedProps,
+    pluginId,
+    viewId,
+  }: {
+    capturedProps: CapturedProps[];
+    pluginId: string;
+    viewId: string;
+  },
+): void {
+  runtime.registries.views.register({
+    id: viewId,
+    pluginId,
     type: pageListViewType,
-    title: "Replacement task page list",
+    title: "Replacement page list",
     component: createCapturingPageListView(capturedProps),
     accepts: {
       kind: filterResultsKind,
@@ -727,7 +947,7 @@ function createCapturingPageListView(
     return (
       <ul aria-label="Task pages">
         {pages.map((page) => (
-          <li key={page.id}>{`${page.id}: ${page.title}`}</li>
+          <li key={page.routeToken}>{page.title}</li>
         ))}
       </ul>
     );
@@ -739,9 +959,28 @@ function replaceFilterEmptyStateSlot(
   capturedProps: CapturedProps[],
 ): void {
   runtime.registries.slots.unregister(taskEmptyStateSlotId);
-  runtime.registries.slots.register({
-    id: taskEmptyStateSlotId,
+  registerFilterEmptyStateSlot(runtime, {
+    capturedProps,
     pluginId: taskPluginId,
+    slotId: taskEmptyStateSlotId,
+  });
+}
+
+function registerFilterEmptyStateSlot(
+  runtime: AppRuntime,
+  {
+    capturedProps,
+    pluginId,
+    slotId,
+  }: {
+    capturedProps: CapturedProps[];
+    pluginId: string;
+    slotId: string;
+  },
+): void {
+  runtime.registries.slots.register({
+    id: slotId,
+    pluginId,
     slot: filterEmptyStateSlot,
     order: 100,
     component: (props: CapturedProps) => {
@@ -837,6 +1076,25 @@ async function findGenericUnavailableState(): Promise<HTMLElement> {
   return state;
 }
 
+async function findUnavailableOrFilterEmptyState(): Promise<HTMLElement> {
+  let state: HTMLElement | null = null;
+
+  await waitFor(() => {
+    state =
+      screen.queryByRole("alert", { name: /route unavailable/i }) ??
+      screen.queryByRole("status", { name: /filter empty state/i }) ??
+      screen.queryByRole("status", { name: /route|filter|view/i });
+
+    expect(state).toBeDefined();
+  });
+
+  if (state === null) {
+    throw new Error("Expected an unavailable or empty filter state");
+  }
+
+  return state;
+}
+
 async function deactivatePlugin(
   runtime: AppRuntime,
   pluginId: string,
@@ -883,13 +1141,13 @@ function readPageSummariesFromProps(props: CapturedProps): PageSummary[] {
   return pages.map((page) => {
     if (!isRecord(page)) {
       return {
-        id: "invalid-page",
+        routeToken: "invalid-page",
         title: "invalid page",
       };
     }
 
     return {
-      id: typeof page.id === "string" ? page.id : "missing-id",
+      routeToken: readPageRouteToken(page) ?? "missing-route-token",
       title: typeof page.title === "string" ? page.title : "missing title",
     };
   });
@@ -898,6 +1156,9 @@ function readPageSummariesFromProps(props: CapturedProps): PageSummary[] {
 function expectFilterViewReceivedOnlyPageSummaryDtos(
   capturedProps: readonly CapturedProps[],
   expectedPages: readonly MarkdownPage[],
+  options: {
+    filterIds?: readonly string[];
+  } = {},
 ): void {
   expect(capturedProps.length).toBeGreaterThan(0);
 
@@ -909,18 +1170,74 @@ function expectFilterViewReceivedOnlyPageSummaryDtos(
     return;
   }
 
-  const expectedSummaries = expectedPages.map((page) => ({
-    id: page.id,
-    title: page.title,
-  }));
+  const pages = latestProps.pages;
 
-  expect(latestProps.pages).toStrictEqual(expectedSummaries);
+  expect(Array.isArray(pages)).toBe(true);
+
+  if (!Array.isArray(pages)) {
+    return;
+  }
+
+  expect(pages.map(readPageSummaryTitle)).toStrictEqual(
+    expectedPages.map((page) => page.title),
+  );
   expect(collectForbiddenFilterPropPaths(latestProps)).toStrictEqual([]);
   expect(collectFunctionValuePaths(latestProps)).toStrictEqual([]);
+  expect(
+    collectForbiddenFilterPropValuePaths(latestProps, {
+      filterIds: options.filterIds ?? [],
+      pages: expectedPages,
+    }),
+  ).toStrictEqual([]);
 
-  for (const page of latestProps.pages as readonly Record<string, unknown>[]) {
-    expect(Object.keys(page).sort()).toStrictEqual(["id", "title"]);
+  for (const page of pages) {
+    expect(isRecord(page)).toBe(true);
+
+    if (!isRecord(page)) {
+      continue;
+    }
+
+    const keys = Object.keys(page).sort();
+    const routeTokenKeys = keys.filter(isAllowedRouteTokenKey);
+
+    expect(keys.every((key) => isAllowedPageSummaryKey(key))).toBe(true);
+    expect(routeTokenKeys).toHaveLength(1);
+    expect(typeof page.title).toBe("string");
+
+    const routeTokenKey = routeTokenKeys[0];
+
+    expect(routeTokenKey).toBeDefined();
+
+    if (routeTokenKey !== undefined) {
+      expect(typeof page[routeTokenKey]).toBe("string");
+    }
   }
+}
+
+function readPageSummaryTitle(value: unknown): string | undefined {
+  return isRecord(value) && typeof value.title === "string"
+    ? value.title
+    : undefined;
+}
+
+function readPageRouteToken(page: Record<string, unknown>): string | undefined {
+  for (const key of ["routeToken", "routeKey", "key", "id"]) {
+    const value = page[key];
+
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function isAllowedPageSummaryKey(key: string): boolean {
+  return key === "title" || isAllowedRouteTokenKey(key);
+}
+
+function isAllowedRouteTokenKey(key: string): boolean {
+  return key === "id" || key === "key" || key === "routeKey" || key === "routeToken";
 }
 
 function collectForbiddenFilterPropPaths(
@@ -973,6 +1290,66 @@ function collectFunctionValuePaths(
   });
 }
 
+function collectForbiddenFilterPropValuePaths(
+  value: unknown,
+  {
+    filterIds,
+    pages,
+  }: {
+    filterIds: readonly string[];
+    pages: readonly MarkdownPage[];
+  },
+  pathPrefix = "props",
+): string[] {
+  const forbiddenValues = new Set([
+    ...filterIds,
+    ...pages.map((page) => page.id),
+    ...pages.flatMap(collectMarkdownPageBodyText),
+  ]);
+
+  return collectForbiddenStringValuePaths(value, forbiddenValues, pathPrefix);
+}
+
+function collectForbiddenStringValuePaths(
+  value: unknown,
+  forbiddenValues: ReadonlySet<string>,
+  pathPrefix: string,
+): string[] {
+  if (typeof value === "string") {
+    return forbiddenValues.has(value) ? [pathPrefix] : [];
+  }
+
+  if (!isRecord(value) && !Array.isArray(value)) {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([key, nestedValue]) =>
+    collectForbiddenStringValuePaths(
+      nestedValue,
+      forbiddenValues,
+      `${pathPrefix}.${key}`,
+    ),
+  );
+}
+
+function collectMarkdownPageBodyText(page: MarkdownPage): string[] {
+  return collectStructuredDocumentText(page.body).filter(
+    (text) => text.trim().length > 0,
+  );
+}
+
+function collectStructuredDocumentText(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+
+  if (!isRecord(value) && !Array.isArray(value)) {
+    return [];
+  }
+
+  return Object.values(value).flatMap(collectStructuredDocumentText);
+}
+
 function isForbiddenFilterPropKey(key: string): boolean {
   return new Set([
     "body",
@@ -989,6 +1366,7 @@ function isForbiddenFilterPropKey(key: string): boolean {
     "fs",
     "handles",
     "metadata",
+    "pageid",
     "native",
     "nativebridge",
     "pagebody",
@@ -998,6 +1376,7 @@ function isForbiddenFilterPropKey(key: string): boolean {
     "queryjson",
     "registries",
     "runtime",
+    "sourcepluginid",
     "sql",
     "stores",
     "tauri",
@@ -1169,6 +1548,8 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   const importExportPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
   const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const commonJsRequirePattern = /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
 
   for (const match of source.matchAll(importExportPattern)) {
     const moduleSpecifier = match[1];
@@ -1179,6 +1560,22 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   }
 
   for (const match of source.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(dynamicImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(commonJsRequirePattern)) {
     const moduleSpecifier = match[1];
 
     if (moduleSpecifier !== undefined) {
