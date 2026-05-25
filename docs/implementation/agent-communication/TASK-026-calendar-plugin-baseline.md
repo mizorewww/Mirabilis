@@ -48,4 +48,37 @@
 
 ## Current Next Action
 
-- Wait for pre-test guidance agents, then summarize guidance, decide smallest safe TASK-026 scope, and delegate `test_writer`.
+## Pre-Test Guidance Outcomes
+
+- Pauli (`planner`) completed read-only planning. Recommendation: implement the smallest Calendar consumption slice: built-in `CalendarPlugin`, day/week views, Timer-owned Time Segment blocks, a Calendar-owned open-detail command, and explicit manual segment creation deferral. Canonical ids: plugin `calendar`, views `calendar.day` and `calendar.week`, command `calendar.open-time-segment`; do not implement snake_case command ids or `calendar.month` in this slice. Slot ids are not required.
+- Turing (`docs_researcher`) completed read-only current-doc/test guidance. Recommendation: add focused `src/test/calendar-plugin-baseline.test.tsx`, render registered view components from `runtime.registries.views`, use semantic regions and native buttons, avoid ARIA grid unless implementing full grid behavior, use deterministic UTC ISO instants with `Z`, inject explicit date/week/timeZone props, use Testing Library/user-event, and avoid deprecated React test APIs.
+- Cicero (`deprecation_auditor`) completed read-only API audit. P1 guidance: Calendar cannot read Timer-owned events through `CalendarPlugin`'s `ctx.events.list(...)` because Plugin Host filters plugin-facing event reads to `sourcePluginId === pluginId`. TASK-026 must either pass normalized segment DTOs into Calendar views or explicitly defer a missing cross-plugin query/read facade. It should use hyphenated command ids, treat product-doc snake_case Calendar commands as stale/future wording, and defer manual segment creation to a future Timer-owned command such as `timer.create-manual-segment`.
+- Gauss (`security_reviewer`) completed read-only security guidance. P0/P1 constraints: Calendar must not import Timer internals, raw runtime stores, Plugin Host, NativeBridge/Tauri, or mutate/forge Timer-owned events; Calendar UI must render inert React text only; detail/manual command payloads must be exact and fail closed; Timer segment/note inputs must be parsed as untrusted data; wrong-owner/malformed/cross-page/cross-date events and note links must be ignored; native/Tauri/package/Rust/schema/capability changes remain out of scope.
+
+## Parent Decisions After Guidance
+
+- TASK-026 current scope is a Calendar Plugin view baseline over normalized segment DTOs, not a new cross-plugin event query API.
+- Calendar views use `calendar.day` and `calendar.week` and accept a data shape such as `{ kind: "calendar.time-segments" }`; tests and implementation may refine prop names, but data must be explicit normalized DTOs rather than Calendar directly reading Timer private state.
+- `calendar.open-time-segment({ segmentId, pageId })` is the canonical current command. It is read-only and returns/opens detail state; snake_case aliases are absent.
+- Clicking a block should execute the Calendar-owned command through the command registry and render an accessible in-view detail region with inert text.
+- Manual segment creation is explicitly deferred for TASK-026. Do not register `calendar.create-manual-segment`, `calendar.edit-time-block`, or snake_case aliases. Future work should define a Timer-owned manual segment command or a controlled cross-plugin read/write contract.
+- Calendar must not import Timer plugin internals or append `namespace: "timer"` events. A later task may add a reviewed cross-plugin query/read facade or Timer-owned manual command.
+- Keep native/Tauri/package/Rust/schema changes, `calendar.month`, drag/drop, app-shell route mounting, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, and release packaging deferred.
+
+## Test Writer Handoff
+
+- Next agent: `test_writer`.
+- Required red tests:
+  - Built-ins include `calendar`; it registers `calendar.day` and `calendar.week`, and does not register `calendar.month`.
+  - It registers `calendar.open-time-segment`; snake_case `calendar.open_time_segment`, `calendar.create_manual_segment`, `calendar.edit_time_block`, plus hyphenated create/edit commands are absent.
+  - Day view renders normalized Timer segment DTOs as accessible native buttons inside a `Calendar day` region, using inert text for page titles/note/detail fields and deterministic UTC time display.
+  - Week view renders normalized segments across the selected week, groups/orders by day/start time, and ignores out-of-week segments.
+  - Views ignore malformed/wrong-owner/wrong-namespace/wrong-source/missing-page/page-mismatch/invalid-date/end-before-start/extra-field segment DTOs if the test shape carries event provenance, or equivalent invalid normalized inputs if test_writer chooses a stricter DTO shape.
+  - Clicking a block executes `calendar.open-time-segment({ segmentId, pageId })` through command registry behavior and shows an accessible detail region.
+  - Detail note text renders inertly and ignores wrong-owner/malformed/cross-page/cross-segment/missing note links when note DTO/link data is included.
+  - `calendar.open-time-segment` rejects unknown, malformed, extra-field, accessor/symbol/non-enumerable, blank/non-string id, wrong-owner, or malformed payloads without opening detail or mutating stores.
+  - Static boundary/native guard: no Timer internals, raw runtime/store/registry/pluginHost/NativeBridge/Tauri/html-injection imports/usage, and no package/native/Tauri/Rust/schema diff.
+
+## Current Next Action
+
+- Delegate `test_writer` to add failing TASK-026 Calendar Plugin baseline tests.
