@@ -145,4 +145,17 @@
 
 ## Current Next Action
 
-- Wait for active review output, then fill the pending `test_quality_reviewer` and `doc_writer` roles.
+- Focused review partial outcomes:
+  - Boole (`pr_explorer`) mapped changed files and coverage. It confirmed no native/package/Tauri/Rust/schema changes and flagged module-level `knownSegmentCounts`, loose date parsing, duration mismatch, cross-midnight behavior, and stale formal docs for attention.
+  - Linnaeus (`reviewer`) found P1: `calendar.open-time-segment` uses module-global known segment state, allowing command validity to leak across runtimes/views. It also found P2 stale detail after data/date/week changes and P2 non-UTC date parsing.
+  - Curie (`security_reviewer`) found P1: non-enumerable allowed DTO/command fields are accepted instead of failing closed. It also found P2 strict UTC/duration validation gaps and P3 module-scoped visibility state.
+  - Peirce (`deprecation_auditor`) found no deprecated React/API blockers. It noted module-global command state as a P2 API contract risk, exported `note`/`detail` DTO docs needs, and a P3 fake-timer cleanup suggestion.
+  - Faraday (`docs_researcher`) found no current-doc blockers; it confirmed React/RTL/user-event/named-region/native-button/no-grid direction and listed formal docs sync obligations.
+- Parent decision: treat the two P1 findings as blockers and enter review-fix TDD:
+  - Add a two-runtime/unmount regression for `calendar.open-time-segment` command validity not leaking across runtime/view instances.
+  - Add non-enumerable required/optional segment, provenance, and command-field regressions so Calendar fails closed on non-enumerable own fields, not only non-enumerable extra fields.
+  - Leave strict UTC/duration and stale detail as P2 follow-ups unless the review-fix agent can cover them without broadening the fix.
+
+## Current Next Action
+
+- Spawn `test_writer` for P1 review-fix regression tests, validate expected red signal, and commit tests before delegating implementation.

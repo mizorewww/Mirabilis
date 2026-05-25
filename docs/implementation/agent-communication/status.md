@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:06 CST.
+Last updated: 2026-05-25 09:09 CST.
 
 ## Current Task
 
@@ -8,16 +8,12 @@ Last updated: 2026-05-25 09:06 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 focused review in progress.
+- Current phase: TASK-026 review-fix TDD pending for P1 findings.
 
 ## Active Agents
 
-- Boole (`pr_explorer`) is mapping changed files, behavior, coverage, and review risks.
-- Linnaeus (`reviewer`) is reviewing correctness and behavior regressions.
-- Curie (`security_reviewer`) is reviewing plugin boundaries, payload hardening, inert rendering, and native/package/Tauri/Rust/schema surfaces.
-- Peirce (`deprecation_auditor`) is auditing canonical ids, stale APIs, and React/plugin API usage.
-- Faraday (`docs_researcher`) is checking current docs guidance and docs-sync obligations.
-- Pending due to active-agent limit: `test_quality_reviewer` and `doc_writer`.
+- Popper (`test_quality_reviewer`) is reviewing TASK-026 test quality.
+- Pending after P1 regression tests are committed: `doc_writer`.
 
 ## Current TASK-026 State
 
@@ -29,6 +25,12 @@ Last updated: 2026-05-25 09:06 CST.
 - Pre-test guidance agents Pauli (`planner`), Turing (`docs_researcher`), Cicero (`deprecation_auditor`), and Gauss (`security_reviewer`) completed. Key parent decision: Calendar must not read Timer-owned events through its plugin event facade; tests and implementation use normalized DTO input instead.
 - Kant (`test_writer`) added `src/test/calendar-plugin-baseline.test.tsx`. Parent red validation matched the expected signal: `bun run test:frontend -- src/test/calendar-plugin-baseline.test.tsx` ran 8 tests and all failed because Calendar Plugin built-in registration, views, command, and `src/plugins/calendar/*` production sources do not exist yet. `bun run typecheck`, focused eslint, no `.skip` / `.only` search, `git diff --check`, and native/package/Tauri guard passed. Commit: `acd2648`.
 - Huygens (`implementer`) added the initial TASK-026 production implementation in `src/bootstrap/built-in-plugins.ts`, `src/plugins/calendar/index.ts`, and `src/plugins/calendar/plugin.ts`. It registers built-in `calendar`, day/week views over explicit normalized segment DTOs, and read-only `calendar.open-time-segment` detail behavior without native/package/Rust/Tauri changes. Parent validation passed: focused Calendar tests 8/8, adjacent plugin/API/architecture tests 86/86, `bun run typecheck`, `bun run lint`, `git diff --check`, and native/package/Tauri guard. Commit: `fd65d37`.
+- Focused review partial outcomes:
+  - Boole (`pr_explorer`) mapped changed files and confirmed no native/package/Tauri/Rust/schema changes; flagged module-level `knownSegmentCounts`, loose date parsing, duration mismatch, cross-midnight scope, and stale formal docs for reviewer attention.
+  - Linnaeus (`reviewer`) found P1: `calendar.open-time-segment` uses module-global known segment state, allowing command validity to leak across runtimes/views. It also found P2 stale detail after data/date/week changes and P2 non-UTC date parsing.
+  - Curie (`security_reviewer`) found P1: non-enumerable allowed DTO/command fields are accepted instead of failing closed. It also found P2 strict UTC/duration validation gaps and P3 module-scoped visibility state.
+  - Peirce (`deprecation_auditor`) found no deprecated React/API blockers, but noted the module-global command state as a P2 API contract risk and asked docs to clarify that exported `note`/`detail` are normalized projection fields.
+  - Faraday (`docs_researcher`) found no current-doc blockers; it confirmed RTL/user-event/region/button/no-grid direction and listed formal docs sync obligations.
 
 ## Completed Recent Task
 
@@ -169,8 +171,8 @@ Last updated: 2026-05-25 09:06 CST.
 
 ## Next Actions
 
-1. Wait for one active review agent to finish, then spawn `test_quality_reviewer` and `doc_writer`.
-2. Fix any P0/P1 findings through delegated test/implementation agents before final docs/gate.
+1. Spawn `test_writer` for review-fix regression tests covering the P1 findings.
+2. Validate the expected red signal and commit tests, then delegate implementation fix.
 
 ## Current TASK-021 State
 
