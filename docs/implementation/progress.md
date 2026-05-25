@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 04:53 CST - TASK-037 second security review fixes committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Re-review findings: Hume found P1 issues after `2a232d8` where `RuntimeProvider` render-prop children still exposed raw runtime and hosted editors could call `openPage(foreignPageId)` to self-authorize a later foreign page load. Arendt found no P0/P1 but noted the broad `RuntimeSource` initializer/cast P2. Darwin found no P0/P1 and one React 19 provider-form P2.
+- Regression tests: Lorentz added failing tests for raw runtime render-prop exposure, broad App runtime initializer/cast, and `openPage` self-authorization in commit `76f5634`. Parent red validation failed as expected with 3 failures / 17 passed; `bun run typecheck` and `git diff --check` passed.
+- Review fixes: Hubble removed `RuntimeProvider` render-prop support, narrowed App initialization to `RuntimeInitializer<AppRuntime>`, added a shell-private runtime boundary, removed the `as AppRuntime` cast, gated hosted `openPage` to trusted command-returned page IDs, and handled hosted page load failures generically in commit `fc3d11a`.
+- Parent validation after Hubble: `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts` passed with 2 files / 20 tests; the 3-file review suite passed with 56 tests; the focused aggregate suite passed with 8 files / 119 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: run security/correctness re-review again.
+
 ### 2026-05-26 04:38 CST - TASK-037 review fixes committed
 
 - Branch: `feat/task-037-home-workspace-editor`.

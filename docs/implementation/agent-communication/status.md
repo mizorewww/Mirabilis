@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 04:38 CST.
+Last updated: 2026-05-26 04:53 CST.
 
 ## Current Task
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-26 04:38 CST.
 - Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-037 initial review fixes committed; re-review pending.
+- Current phase: TASK-037 second security review fixes committed; re-review pending.
 
 ## Active Agents
 
-- None. TASK-037 guidance, tests, implementation, initial review, and review-fix agents completed.
-- Pending: delegate TASK-037 re-review and remaining docs/deprecation/test-quality agents.
+- None. TASK-037 guidance, tests, implementation, initial review, and two review-fix rounds completed.
+- Pending: delegate TASK-037 security/correctness re-review, then remaining docs/test-quality/release agents.
 
 ## Current TASK-037 State
 
@@ -59,6 +59,13 @@ Last updated: 2026-05-26 04:38 CST.
   - Tesla fixed the regressions in commit `2a232d8` by removing raw runtime source context, using a trusted `RuntimeProvider` render-prop path for shell-owned runtime access, moving the workspace bridge into providers, removing shell-host bridge modules/imports, scoping hosted page loads, and invalidating current-page generation on non-Home navigation.
   - Parent validation after Tesla passed: review regression tests with 3 files / 53 tests, focused aggregate tests with 8 files / 116 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
 - Parent decision: run re-review and remaining review/doc/deprecation/test-quality agents before branch-level gate.
+- Second security review-fix outcome:
+  - Hume found remaining P1 issues after `2a232d8`: exported `RuntimeProvider` render-prop children exposed raw runtime, and hosted editors could self-authorize a foreign page by calling `bridge.openPage(foreignPageId)` before `pages.load(foreignPageId)`.
+  - Arendt found no P0/P1 and noted a P2 broad `RuntimeSource` initializer/cast issue in `App`.
+  - Lorentz added failing regression tests in commit `76f5634`.
+  - Hubble fixed the regressions in commit `fc3d11a` by removing `RuntimeProvider` render-prop support, narrowing `App` runtime initialization to `AppRuntime`, adding a shell-private `AppRuntimeBoundary`, removing the cast, gating hosted `openPage` to trusted command-returned page IDs, and handling hosted page load failures generically.
+  - Parent validation after Hubble passed: 2-file regression tests / 20 tests, 3-file review tests / 56 tests, focused aggregate / 119 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
+- Parent decision: accept `fc3d11a` and run security/correctness re-review again.
 
 ## Current TASK-036 State
 
@@ -251,7 +258,7 @@ Last updated: 2026-05-26 04:38 CST.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
 - TASK-037 is in progress on `feat/task-037-home-workspace-editor`: initial docs/code context has been read, and pre-test guidance is pending.
 - TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: delegate TASK-037 re-review and remaining review agents.
+- Next action: delegate TASK-037 security/correctness re-review.
 
 ## Historical TASK-033 State
 

@@ -164,3 +164,30 @@
 - Parent decision:
   - accept `2a232d8`;
   - run re-review and remaining review/doc/deprecation/test-quality agents before closeout.
+
+## Second Security Review-Fix Outcome
+
+- Re-review findings after `2a232d8`:
+  - Hume (`security_reviewer`) found two remaining P1 issues:
+    - `RuntimeProvider` render-prop children still exposed raw initialized runtime through the exported provider API;
+    - hosted editor code could call `bridge.openPage(foreignPageId)` to self-authorize a foreign page and then call `pages.load(foreignPageId)`.
+  - Hume also noted a P2 that hosted page load failures should be handled generically to avoid unhandled promise rejection or raw page ID exposure.
+  - Arendt (`reviewer`) found no P0/P1 but noted a P2 that `App` accepted broad `RuntimeInitializer<RuntimeSource>` and cast back to `AppRuntime`.
+  - Darwin (`deprecation_auditor`) found no P0/P1 and one P2 React 19 migration note for provider syntax in new context code.
+- Regression tests:
+  - Lorentz (`test_writer`) added failing tests in commit `76f5634`.
+  - Coverage added: `RuntimeProvider` must not expose raw runtime through render-prop children, `App` initialization must use the trusted `AppRuntime` contract without `RuntimeSource` casts, and hosted editors cannot use `openPage` to self-authorize a foreign page load.
+  - Parent red validation failed as expected with 3 failures / 17 passed for `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts`; `bun run typecheck` and `git diff --check` passed.
+- Review fixes:
+  - Hubble (`implementer`) fixed the regressions in commit `fc3d11a`.
+  - Fixes: removed `RuntimeProvider` render-prop support, narrowed `App` runtime initialization to `AppRuntime`, added a shell-private `AppRuntimeBoundary`, removed the `as AppRuntime` cast, gated hosted `openPage` to page IDs returned by trusted `task.open-task-page` command execution, and handled hosted page load rejection without leaking raw IDs.
+  - Hubble made test-only type/lint adjustments in `src/test/mui-shell-frame.test.tsx`, `src/test/runtime-provider.test.tsx`, and `src/test/home-workspace-editor.test.tsx`.
+- Parent validation after Hubble:
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts` passed with 2 files / 20 tests.
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx` passed with 3 files / 56 tests.
+  - `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/markdown-editor-plugin-shell.test.tsx src/test/markdown-page-persistence.test.tsx src/test/task-navigation-infinite-nesting.test.tsx src/test/task-checkbox-toggle-events.test.tsx` passed with 8 files / 119 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+  - Package, native, Tauri, IPC, capability, permission, and release files had no diff.
+- Parent decision:
+  - accept `fc3d11a`;
+  - run security/correctness re-review again before branch-level gate.
