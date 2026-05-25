@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Commit exact event DTO validation record, then run final confirmation review.
+- Delegate final plain-object review-fix tests.
 
 ## Implementation Handoff
 
@@ -402,3 +402,20 @@
   - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
 - Review-fix commit: `1c8cfc8 Hume(review-fix)(Implement Sync Plugin skeleton): require exact event DTOs`; post-commit auto-push succeeded.
 - Parent next action: commit this validation record, then run final confirmation review.
+
+## Final Confirmation Review Outcomes
+
+- Kierkegaard the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed coverage for all previously found P1 areas.
+- Arendt the 2nd (`security_reviewer`) found no remaining P0/P1 security findings.
+- Mencius the 2nd (`reviewer`) found one remaining P1:
+  - event conflict validation accepts non-plain top-level event unit objects and non-plain `syncKey` objects that have exact own DTO keys, then returns the original object in merged output. This allows class instances with inherited runtime behavior such as `toJSON()` through the event conflict path.
+
+## Parent Decisions After Final Confirmation
+
+- Add tests first for runtime-shaped event conflict DTOs:
+  - reject class-instance / non-plain top-level event unit objects even when they have exact own DTO keys;
+  - reject non-plain `syncKey` objects even when they have exactly an own `id` key;
+  - include inherited runtime-shaped behavior such as `toJSON()` in the fixture if useful;
+  - preserve plain serialized event unit merge behavior.
+- Production fix should remain focused in `src/plugins/sync/conflict-policy.ts` and should either require plain/null prototypes for event unit and `syncKey`, or return only a validated safe clone without accepting runtime-shaped originals.
+- Parent next action: delegate final plain-object review-fix tests to `test_writer`.
