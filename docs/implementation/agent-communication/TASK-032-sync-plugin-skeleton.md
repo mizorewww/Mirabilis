@@ -103,3 +103,29 @@
   - static guards for no package/native/Tauri/Rust/schema/capability, network/storage/native/secret/Core/sibling drift.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files, or agent-communication files; do not commit, merge, or push.
 - Parent next action: wait for Sartre the 2nd, validate the expected red signal, and commit the test-only patch.
+
+## Test Writer Outcome
+
+- Sartre the 2nd (`test_writer`) added `src/test/sync-plugin-skeleton.test.ts`.
+- Coverage added:
+  - built-in `sync` registration with no commands/views/settings panels and stale-id guards;
+  - syncable unit descriptors, schema version, sync key fields, rebuildable plugin-index policy, and no durable `sync.plugin-index`;
+  - exact DTO serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings;
+  - snapshot immutability and unsafe JSON/runtime-data rejection;
+  - Plugin Settings `unset` vs JSON `null`, plus secret/remote settings key rejection;
+  - mutable-unit and event append-only conflict policy behavior;
+  - static guards for package/native/schema/capability drift and Sync/Core architecture boundaries.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 6 failed / 1 passed.
+  - Failure symptoms: missing `sync` built-in registration and missing `src/plugins/sync` module/exports.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/sync-plugin-skeleton.test.ts --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan found no matches.
+  - Changed-file/native guards showed only `src/test/sync-plugin-skeleton.test.ts`; package, lock, `src-tauri`, schemas, and capabilities unchanged.
+- Test commit: `a0c7ea6 Sartre(test)(Implement Sync Plugin skeleton): add sync skeleton acceptance tests`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit this test outcome record, then delegate minimum production implementation to `implementer`.
