@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:58 CST.
+Last updated: 2026-05-25 15:59 CST.
 
 ## Current Task
 
@@ -8,11 +8,14 @@ Last updated: 2026-05-25 15:58 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 second review fixes implemented and committed; preparing final narrow re-review.
+- Current phase: TASK-031 final narrow re-review delegated.
 
 ## Active Agents
 
-- None.
+- Darwin the 2nd (`security_reviewer`) is final-checking TASK-031 security P1 closure.
+- Kuhn the 2nd (`reviewer`) is final-checking TASK-031 correctness P1 closure.
+- Maxwell the 2nd (`deprecation_auditor`) is final-checking TASK-031 OpenAI current-API alignment.
+- Bohr the 2nd (`test_quality_reviewer`) is final-checking TASK-031 test-quality P1 closure.
 
 ## Current TASK-031 State
 
@@ -139,7 +142,12 @@ Last updated: 2026-05-25 15:58 CST.
   - Parent validation after both fixes: focused TASK-031 tests passed (15 tests), adjacent plugin/API/Core/ML suite passed (5 files / 105 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, source secret/sink/native/storage/package scans found no matches, and package/native/Tauri/Rust/schema/capability diff guard was empty.
   - Test-helper commit: `6988af6 Lagrange(test-fix)(Implement AI Plugin provider abstraction): preserve explicit null provider fixtures`; post-commit auto-push succeeded.
   - Production review-fix commit: `05d84db Dirac(review-fix)(Implement AI Plugin provider abstraction): close provider seam regressions`; post-commit auto-push succeeded.
-- Next action: commit this implementation outcome record, then delegate final narrow re-review for remaining P0/P1 confirmation.
+- Final narrow re-review delegated:
+  - Darwin the 2nd (`security_reviewer`) should confirm no remaining P0/P1 security issues around provider/settings override seams, settings secret exposure, test-support mutation, secrets, native/package/storage/network drift, and plugin boundaries.
+  - Kuhn the 2nd (`reviewer`) should confirm prior correctness P1s are fixed for raw Responses normalization, strict schemas, test-support stability, null provider output invalidation, and advisory non-mutating command behavior.
+  - Maxwell the 2nd (`deprecation_auditor`) should confirm current OpenAI Responses / Structured Outputs alignment and no stale underscore alias registration.
+  - Bohr the 2nd (`test_quality_reviewer`) should confirm tests meaningfully cover the remaining P1 regressions.
+- Next action: wait for final narrow re-review, record findings, and either fix remaining P0/P1 or proceed to docs sync.
 
 ## Current TASK-030 State
 

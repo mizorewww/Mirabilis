@@ -528,3 +528,17 @@
 ## Current Next Action
 
 - Commit this second review-fix implementation record, then delegate final narrow re-review for remaining P0/P1 confirmation.
+
+## Final Narrow Re-Review Handoff
+
+- Darwin the 2nd (`security_reviewer`) started at 2026-05-25 15:59 CST.
+- Kuhn the 2nd (`reviewer`) started at 2026-05-25 15:59 CST.
+- Maxwell the 2nd (`deprecation_auditor`) started at 2026-05-25 15:59 CST.
+- Bohr the 2nd (`test_quality_reviewer`) started at 2026-05-25 15:59 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Review focus:
+  - security P1 closure for provider/settings override seams, settings secret exposure, test-support mutation, secrets, native/package/storage/network drift, and plugin boundaries;
+  - correctness P1 closure for raw Responses normalization, strict schemas, test-support stability, null provider output invalidation, and advisory non-mutating command behavior;
+  - current OpenAI Responses / Structured Outputs alignment and stale underscore alias absence;
+  - test-quality coverage for the remaining P1 regressions.
+- Parent next action: wait for final narrow re-review, record findings, and either fix remaining P0/P1 or proceed to formal docs sync.
