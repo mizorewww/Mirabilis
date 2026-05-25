@@ -122,3 +122,28 @@
 - Scope: add failing TASK-029 acceptance tests only, expected file `src/test/quick-capture-search-plugins.test.tsx`.
 - Constraints: do not edit production files, docs, progress files, package/native/Tauri/Rust/schema files; do not commit, merge, or push.
 - Parent next action: wait for Aquinas, validate the expected red signal, and commit the test-only patch.
+
+## Test Writer Outcome
+
+- Aquinas (`test_writer`) added `src/test/quick-capture-search-plugins.test.tsx`.
+- Coverage added:
+  - Built-in registration for `quick-capture` and `search`, canonical ids, stale alias absence.
+  - Quick Capture Inbox create/append/trust behavior, unsafe Markdown preservation, explicit Task/Tag handoff, `save-and-open`, and hostile payload rejection.
+  - Search command/query behavior: case-insensitive literal title/body matching, archived exclusion, blank query behavior, limits/caps, snippets, later page edits, and no full bodies.
+  - Search results view inert rendering with accessible list/listitem semantics.
+  - Static plugin isolation and no package/native/Tauri/Rust/schema/capability diffs.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/quick-capture-search-plugins.test.tsx` failed as expected with 9 failed / 1 passed.
+  - Failure symptoms: missing built-in plugin `quick-capture`, missing `quick-capture.save`, missing `quick-capture.save-and-open`, missing `search.query`, missing `search.results`, and missing expected production plugin files.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/quick-capture-search-plugins.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan.
+  - Native/package/Tauri/Rust/schema diff guard.
+- Test commit: `8248f65 Aquinas(test)(Implement Quick Capture and Search plugins): add capture search acceptance tests`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Delegate minimum production implementation to `implementer`.
+- Expected production scope: add built-in Quick Capture and Search plugins, register them through `BUILT_IN_PLUGINS`, satisfy focused tests, and keep package/native/Tauri/Rust/schema/capability surfaces unchanged.

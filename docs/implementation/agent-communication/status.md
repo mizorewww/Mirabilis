@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 12:12 CST.
+Last updated: 2026-05-25 12:21 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 12:12 CST.
 - Branch: `feat/task-029-quick-capture-search-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 failing acceptance tests delegated.
+- Current phase: TASK-029 implementation pending.
 
 ## Active Agents
 
-- Aquinas (`test_writer`) is adding failing TASK-029 acceptance tests.
+- No active agents. Next delegation is `implementer` for TASK-029 production code.
 
 ## Current TASK-029 State
 
@@ -41,6 +41,11 @@ Last updated: 2026-05-25 12:12 CST.
   - Quick Capture must create/append only a trusted plugin-marked `Inbox` page. If a title-only Inbox already exists without Quick Capture metadata, leave it alone and create a trusted Inbox.
   - Quick Capture preserves Markdown as structured text and does not auto-create Task/Tag pages or metadata. Tests may explicitly run existing `tag.refresh-tags` and `task.resolve-task-block` / `task.open-task-page` afterward to prove handoff.
   - Search is transient/on-demand over unarchived pages only; no persistent index, worker, SQLite/FTS, package, native, Tauri, Rust, schema, or capability changes.
+- Test writer completed:
+  - Aquinas (`test_writer`) added `src/test/quick-capture-search-plugins.test.tsx` with 10 TASK-029 acceptance tests.
+  - Parent validated the expected red signal: focused TASK-029 tests failed with 9 failed / 1 passed because the `quick-capture` and `search` built-ins, commands, views, and plugin files do not exist yet.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint for `src/test/quick-capture-search-plugins.test.tsx`, `git diff --check`, `.skip/.only` scan, and native/package/Tauri/Rust/schema diff guard.
+  - Test commit: `8248f65 Aquinas(test)(Implement Quick Capture and Search plugins): add capture search acceptance tests`; post-commit auto-push succeeded.
 
 ## Current TASK-028 State
 
@@ -236,5 +241,5 @@ Last updated: 2026-05-25 12:12 CST.
 
 ## Next Actions
 
-1. Wait for Aquinas (`test_writer`) to finish TASK-029 acceptance tests.
-2. Validate expected red signal, then commit tests separately.
+1. Delegate TASK-029 production implementation to `implementer`.
+2. Validate focused green checks and commit implementation separately.
