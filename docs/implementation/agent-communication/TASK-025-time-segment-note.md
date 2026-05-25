@@ -605,4 +605,12 @@
 
 ## Current Next Action
 
-- Commit final progress update, merge TASK-025 to `master`, run merge-result gate, and continue TASK-026.
+## Merge Result
+
+- TASK-025 was merged to `master` in commit `5970fa2`.
+- Merge-result `bun run check:quick` passed on 2026-05-25 with typecheck, lint, 30 frontend test files / 468 tests, Rust fmt, Rust clippy, and Rust tests.
+
+## Final State
+
+- TASK-025 is complete on `master`.
+- Next autonomous task: TASK-026 - Implement Calendar Plugin baseline.

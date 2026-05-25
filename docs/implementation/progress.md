@@ -79,6 +79,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-25 08:35 CST - TASK-025 merged
+
+- Branch: `feat/task-025-time-segment-note`.
+- Merge commit: `5970fa2` on `master`.
+- Merge-result checks: `bun run check:quick` passed with typecheck, lint, 30 frontend test files / 468 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-025 is complete on `master`; next autonomous task is TASK-026.
+
 ### 2026-05-25 08:33 CST - TASK-025 completed
 
 - Branch: `feat/task-025-time-segment-note`.
