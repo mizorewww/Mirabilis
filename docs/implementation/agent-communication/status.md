@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:03 CST.
+Last updated: 2026-05-25 11:07 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-25 11:03 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 review wave active.
+- Current phase: TASK-028 P1 review fixes required; regression-test handoff pending.
 
 ## Active Agents
 
-- Anscombe (`pr_explorer`) is active for changed-path mapping.
-- Ptolemy (`reviewer`) is active for correctness review.
-- Parfit (`deprecation_auditor`) is active for API/deprecation audit.
-- Tesla (`security_reviewer`) is active for trust-boundary review.
-- Arendt (`docs_researcher`) is active for current-doc guidance.
-- Epicurus (`test_quality_reviewer`) is active for test-quality review.
+- None currently active. Next agent should be `test_writer` for review-found P1 regression tests.
 
 ## Current TASK-028 State
 
@@ -56,6 +51,13 @@ Last updated: 2026-05-25 11:03 CST.
   - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/stats/index.ts`, `src/plugins/stats/plugin.ts`, `src/plugins/chart/index.ts`, and `src/plugins/chart/plugin.ts`.
   - Parent validated: focused TASK-028 tests passed (11 tests), adjacent plugin/core suite passed (6 files / 117 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Implementation commit: `d17f954 Galileo(implementation)(Implement Stats and Chart plugins): implement stats chart baselines`; post-commit auto-push succeeded.
+- Review wave outcomes:
+  - Anscombe (`pr_explorer`) mapped changed files and highlighted input budgets, aggregation semantics, chart accessibility, boundary guard coupling, and type drift as review risk surfaces.
+  - Tesla (`security_reviewer`) found one P1: Stats/Chart DTOs lack bounded array, label, and numeric magnitude handling, allowing large allocation/render/sort work or aggregate overflow at command/view trust boundaries.
+  - Epicurus (`test_quality_reviewer`) confirmed the bounded-input issue as a P1 test gap.
+  - Ptolemy (`reviewer`) found two P1 correctness issues: `sum-time-by-page` and `unnoted-sessions` group by page title rather than page identity, collapsing distinct pages with the same title; and `readTimerNote` rejects canonical Timer note events from the Timer Plugin shape.
+  - Parfit (`deprecation_auditor`) found no P0/P1 API/deprecation issues. P2 follow-ups: stale docs, Stats helper export note drift, and React dynamic children/duplicate key cleanup.
+  - Arendt (`docs_researcher`) found one P1 accessibility issue: comparison chart output uses unlabeled positional table cells without programmatically clear column labels. It also recommended explicit `aria-atomic` on status and React dynamic-child cleanup as non-blocking improvements.
 
 ## Current TASK-027 State
 
@@ -163,5 +165,5 @@ Last updated: 2026-05-25 11:03 CST.
 
 ## Next Actions
 
-1. Wait for active review agents and record findings.
-2. Fix or delegate fixes for P0/P1 issues before docs sync and final gate.
+1. Spawn `test_writer` for review-found P1 regression tests.
+2. Commit red regression tests, then spawn `implementer` for bounded-input, page identity, canonical Timer note, and comparison accessibility fixes.

@@ -153,3 +153,29 @@
   - Arendt (`docs_researcher`) for current-doc guidance.
   - Epicurus (`test_quality_reviewer`) for test-quality review.
 - Parent next action: wait for review findings and address P0/P1 findings before docs sync and the final local gate.
+
+## Review Wave Outcomes
+
+- Anscombe (`pr_explorer`) completed changed-path mapping. It confirmed the branch was clean at `cf05f2e` and highlighted input budgets, aggregation semantics, chart accessibility/rendering, boundary guard coupling, and Stats/Chart type drift as review risk surfaces.
+- Tesla (`security_reviewer`) found one P1 security/trust-boundary issue: Stats and Chart DTOs are unbounded. Stats accepts unbounded arrays, non-magnitude-bounded finite numbers, and arbitrarily long labels/ids/titles; Chart renders unbounded rows/points/comparisons and long text. This can cause expensive sort/render work, large allocations, layout pressure, or numeric overflow.
+- Epicurus (`test_quality_reviewer`) confirmed the bounded-input issue as a P1 test gap. It recommended tests defining accepted max row/input count and asserting fail-closed or bounded rendering for oversized Stats aggregation inputs and Chart DTOs.
+- Ptolemy (`reviewer`) found two P1 correctness issues:
+  - `stats.sum-time-by-page` and `stats.unnoted-sessions-count` group by page title rather than page identity, collapsing distinct pages with the same title.
+  - `readTimerNote` rejects canonical Timer note events from the Timer Plugin shape. Timer note-added events use top-level `pageId` and payload keys `segmentId`, `notePageId`, `notedAt`; the current Stats reader expects payload `pageId`.
+- Parfit (`deprecation_auditor`) found no P0/P1 API/deprecation blockers. P2 follow-ups: stale formal docs, canonical note drift around pure helper exports, and React dynamic children/duplicate key cleanup.
+- Arendt (`docs_researcher`) found one P1 accessibility issue: comparison chart output is not sufficiently self-describing because expected/actual/delta/error values are positional table cells without programmatically clear column labels. It recommended column headers or equivalent labeled list text, plus tests with `columnheader` or user-visible labels. Non-blocking: add `aria-atomic="true"` to status and clean up dynamic child arrays while touching Chart markup.
+
+## Parent Decisions After Review
+
+- Treat all review-found P1s as required before the final local gate:
+  - Bounded Stats/Chart DTO arrays, strings, numeric magnitudes, and aggregate totals.
+  - Page identity grouping for time-by-page and unnoted sessions while preserving useful labels.
+  - Canonical Timer note event support for unnoted sessions.
+  - Accessible comparison chart labels/column headers.
+- Add red regression tests first through `test_writer`.
+- Then delegate the production fixes to `implementer`.
+- Defer P2 stale docs until `doc_writer` after P1 fixes are green.
+
+## Current Next Action
+
+- Spawn `test_writer` for failing review-fix regression tests, validate the expected red signal, and commit tests.
