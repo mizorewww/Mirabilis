@@ -85,6 +85,11 @@ type CurrentPageState = {
   generation: number;
 };
 
+type CommandOpenedPageAuthorization = {
+  sourcePageId: string;
+  generation: number;
+};
+
 type AppRuntimeState =
   | { status: "loading" }
   | { status: "ready"; runtime: AppRuntime }
@@ -580,7 +585,10 @@ function createMarkdownWorkspaceBridge({
   openPage(pageId: string): void;
   runtime: AppRuntime;
 }): MarkdownWorkspaceBridgeValue {
-  const commandOpenedPageIds = new Set<string>();
+  const commandOpenedPageIds = new Map<
+    string,
+    CommandOpenedPageAuthorization
+  >();
 
   return {
     pages: {
@@ -625,7 +633,10 @@ function createMarkdownWorkspaceBridge({
           const output = await runtime.commands.execute(commandId, openInput);
 
           ensureCurrentPage(currentPageState, openInput.sourcePageId, generation);
-          allowCommandOpenedPageId(commandOpenedPageIds, output);
+          allowCommandOpenedPageId(commandOpenedPageIds, output, {
+            sourcePageId: openInput.sourcePageId,
+            generation,
+          });
 
           return output;
         }
@@ -656,7 +667,13 @@ function createMarkdownWorkspaceBridge({
       },
     },
     openPage(pageId) {
-      if (commandOpenedPageIds.delete(pageId)) {
+      const authorization = commandOpenedPageIds.get(pageId);
+
+      if (
+        authorization !== undefined &&
+        isCurrentPageGeneration(currentPageState, authorization)
+      ) {
+        commandOpenedPageIds.delete(pageId);
         openPage(pageId);
       }
     },
@@ -664,8 +681,9 @@ function createMarkdownWorkspaceBridge({
 }
 
 function allowCommandOpenedPageId(
-  commandOpenedPageIds: Set<string>,
+  commandOpenedPageIds: Map<string, CommandOpenedPageAuthorization>,
   output: unknown,
+  authorization: CommandOpenedPageAuthorization,
 ): void {
   if (!isRecord(output) || typeof output.pageId !== "string") {
     return;
@@ -674,8 +692,18 @@ function allowCommandOpenedPageId(
   const pageId = output.pageId.trim();
 
   if (pageId.length > 0) {
-    commandOpenedPageIds.add(pageId);
+    commandOpenedPageIds.set(pageId, authorization);
   }
+}
+
+function isCurrentPageGeneration(
+  currentPageState: CurrentPageState,
+  authorization: CommandOpenedPageAuthorization,
+): boolean {
+  return (
+    currentPageState.pageId === authorization.sourcePageId &&
+    currentPageState.generation === authorization.generation
+  );
 }
 
 function loadWorkspacePage(
