@@ -395,24 +395,28 @@ persistent predictions / model refresh
 估时偏差模型
 相似任务聚类
 task ranking
-AI explanation
+ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
 app-shell mounting / polish
 native/package/Rust/schema/Tauri capability changes
 ```
 
 ### Phase 10：AI Plugin
 
-实现：
+TASK-031 当前实现的是 AI Plugin provider abstraction baseline：
 
 ```text
-快速输入整理
-任务拆解
-metadata 建议
-Filter 生成
-Time Segment Note 总结
-周报
-预测解释
+built-in plugin id ai
+provider id openai
+canonical commands ai.cleanup-inbox / ai.turn-text-into-task / ai.suggest-tags / ai.suggest-due-date
+canonical commands ai.generate-subtasks / ai.generate-filter / ai.summarize-time-notes / ai.generate-weekly-review / ai.explain-prediction
+advisory DTOs only, no page/metadata/event/filter mutation
+OpenAI Responses-style request boundary with instructions, string input, store false, and strict json_schema format
+mocked/injected provider and transport tests, no live OpenAI calls
+inert ai.provider-settings descriptor
+fail-closed ai.suggestion-panel and ai.review-panel views
 ```
+
+Persistent plugin settings, settings UI, secret storage/keychain, native HTTP/live provider execution, AI acceptance workflows, durable AI metadata/events, and package/native/Tauri/Rust/schema/capability changes remain deferred.
 
 ### Phase 11：Sync Plugin
 
@@ -590,6 +594,6 @@ AI：AI Plugin
 搜索：Search Plugin
 ```
 
-TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理，以及 persistent Search indexing / background indexer / SQLite FTS 都是后续范围。
+TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。TASK-031 当前 AI baseline 也已接入 built-in plugin runtime：`ai` 注册 canonical kebab-case commands、AI metadata/event descriptors、`ai.provider-settings` descriptor 和 fail-closed views，通过 plugin-owned `openai` provider boundary 返回 advisory DTO。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理、persistent Search indexing / background indexer / SQLite FTS、AI settings UI/secret storage/live provider execution 都是后续范围。
 
 产品开发的中心任务是把 **Plugin Host、Registry、Command、View、Metadata、Event、Filter** 做扎实。只要这套底层抽象稳定，任务、习惯、时间记录、热力图、统计、机器学习和 AI 都可以作为插件不断接入，而不会污染 Core。

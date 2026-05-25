@@ -106,7 +106,7 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
 
 - Machine Learning Plugin 当前以内置 plugin id `ml` 接入。TASK-030 中 `ml.predict-remaining-time` 是 manifest algorithm descriptor，当前可执行入口是 Command Registry 里的 `ml.run-prediction`；不存在 executable AlgorithmRegistry facade。
 
-- AI 任务拆解当前是 AI Plugin 注册的 Command；AI Tool 是后续扩展；
+- AI Plugin 当前以内置 plugin id `ai` 接入。TASK-031 注册 provider-owned advisory commands、`ai.suggestion-panel` / `ai.review-panel` views、AI-owned metadata/event descriptors 和 inert `ai.provider-settings` descriptor；provider boundary 由 `src/plugins/ai/**` 拥有，Core 不包含 OpenAI、model、prompt 或 provider behavior。AI Tool、live provider execution、persistent settings/secret storage 和 acceptance workflows 是后续扩展；
 
 - 日历是 Calendar Plugin 注册的 View。TASK-026 当前内置 `calendar` 注册 `calendar.day` / `calendar.week`，接受 `{ kind: "calendar.time-segments" }` normalized DTO，并通过 `calendar.open-time-segment` 打开 inert detail；`calendar.month`、snake_case aliases、manual create/edit 和直接跨插件读取 Timer events 不在这个 slice 内；
 
@@ -242,7 +242,7 @@ habit.uncheck-today
 habit.set-frequency
 stats.run-aggregation
 ml.run-prediction
-ai.generate_subtasks
+ai.generate-subtasks
 ```
 
 ### 9.3 View Registry
@@ -301,6 +301,9 @@ habit.lastCheckedAt
 habit.nextDue
 timer.total_tracked_time (deferred after TASK-026)
 ml.predictedRemainingTime
+ai.summary
+ai.suggestedTags
+ai.suggestedEstimate
 ```
 
 TASK-030 当前声明 `ml.predictedRemainingTime` 和 `ml.predictionConfidence` metadata descriptors，但 `ml.run-prediction` 只返回 deterministic prediction DTO，不会基于 caller-provided projections 写入 durable ML metadata。实际持久化预测结果 deferred until a trusted query/feed/projection source exists.
@@ -356,7 +359,8 @@ namespace=timer, type=time_segment_note_added
 namespace=habit, type=checked
 namespace=habit, type=unchecked
 namespace=ml, type=prediction-generated
-ai.summary_generated
+namespace=ai, type=suggestion-generated
+namespace=ai, type=summary-generated
 ```
 
 ### 9.6 Algorithm Registry

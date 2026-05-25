@@ -433,6 +433,33 @@ git diff --check
 
 Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, model storage/training, or schema-backed ML persistence. TASK-030 itself is TypeScript plugin/runtime/view/slot behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, network, worker, or persistent model surface.
 
+## TASK-031 AI Plugin Provider Abstraction Guidance
+
+TASK-031 tests cover the built-in `ai` plugin provider abstraction without adding package/native/Tauri/Rust/schema/capability changes, live OpenAI calls, SDK dependencies, raw network APIs, persistent settings, settings UI, secret storage, or durable AI writes:
+
+- Registration coverage should assert built-in plugin id `ai`, canonical commands `ai.cleanup-inbox`, `ai.turn-text-into-task`, `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, `ai.generate-filter`, `ai.summarize-time-notes`, `ai.generate-weekly-review`, and `ai.explain-prediction`, views `ai.suggestion-panel` / `ai.review-panel`, metadata descriptors `ai.summary` / `ai.suggestedTags` / `ai.suggestedEstimate`, event descriptors `ai.suggestion-generated` / `ai.summary-generated`, and inert settings descriptor `ai.provider-settings`.
+- Stale-id coverage should prove underscore ids such as `ai.cleanup_inbox`, `ai.turn_text_into_task`, `ai.suggest_tags`, `ai.suggest_due_date`, `ai.generate_subtasks`, `ai.generate_filter`, `ai.summarize_time_notes`, `ai.generate_weekly_review`, and `ai.explain_prediction` are not aliases.
+- Provider request coverage should execute every command through the real Command Registry with exact bounded caller-provided projections, using mocked/injected provider settings and provider/transport. Assert provider id `openai`, default model guidance `gpt-5.5`, Responses-style `instructions`, string `input`, `store: false`, and `text.format` strict `json_schema` using only the supported schema subset.
+- Boundary coverage should reject malformed, extra-field, hostile, accessor-backed, symbol-keyed, non-enumerable, prototype-carried, sparse/custom-array, oversized, over-depth, forbidden secret/provider override, and post-validation mutation cases before provider execution and without store mutations.
+- Raw Responses coverage should exercise mocked transport success through top-level `output_text` and message content, including completed payloads with `error: null` and `incomplete_details: null`; refusals, incomplete/error/invalid responses, invalid JSON, null output, unavailable transport, and provider failures must fail closed with redacted results/errors.
+- Output coverage should reject wrong-kind, malformed, oversized, unsafe HTML/URL/SQL/prompt-injection text, nested secret/provider-shaped keys, unsupported generated-filter operators, and accessor-backed provider output. Successful public DTOs remain advisory and must not include provider settings, raw response fields, `sourcePluginId`, mutation instructions, or provider ids.
+- Mutation coverage should assert AI commands do not write pages, metadata, events, filters, settings, sibling plugin data, or durable AI metadata/events from caller-provided projections.
+- UI coverage should render `ai.suggestion-panel` and `ai.review-panel` as accessible fail-closed regions with inert loading/unavailable status text.
+- Security/static coverage should keep Core production code free of AI/OpenAI/provider business behavior, keep `src/plugins/ai/**` free of sibling plugin internals, raw runtime/store/registry/PluginHost/NativeBridge/Tauri imports, storage/network/filesystem/worker APIs, HTML/Markdown/code execution sinks, console logging, real-looking secrets, and package/native/Tauri/Rust/schema/capability diffs.
+- Known residuals to keep visible in review notes: persistent settings/secret storage/live provider execution remain deferred; raw Responses objects with valid output but no `status` are accepted; public result strings matching `persist*` are rewritten to `storage`; generated-filter parity with broader Core `neq` / `exists` semantics remains future hardening.
+
+TASK-031 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx
+bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ml-plugin-baseline-predictions.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, OpenAI SDK/package dependencies, keychain/secret storage, or schema-backed AI persistence. TASK-031 itself is TypeScript plugin/runtime/view/provider-boundary behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, live network, or secret-storage surface.
+
 ## Merge Gate
 
 Before merging to `master`:
