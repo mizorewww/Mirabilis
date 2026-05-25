@@ -245,3 +245,55 @@
 - Franklin the 2nd (`test_quality_reviewer`) started at 2026-05-25 15:06 CST.
 - All review agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for review findings, then fix P0/P1 findings before docs sync and final branch gate.
+
+## Review Wave Outcomes
+
+- Jason the 2nd (`pr_explorer`) mapped TASK-031 changes and found no scope drift or package/native/Tauri/Rust/schema/capability broadening. Review surfaces:
+  - persistent settings acceptance remains deferred;
+  - test-only hooks live under `src/plugins/ai/**`;
+  - `src/plugins/ai/test-support.ts` has an unusual operation-changing getter;
+  - `sanitizePublicJson` mutates successful result text by rewriting `persist*` strings;
+  - Structured Output schemas are broad;
+  - formal docs still contain stale underscore AI ids.
+- Parfit the 2nd (`security_reviewer`) found no P0 and two P1s:
+  - unguarded production test hooks/global provider-settings setters can override the AI provider/settings from production import paths;
+  - validated command payloads are passed to provider calls by reference, so callers can mutate nested fields after validation and before async provider serialization.
+- Franklin the 2nd (`test_quality_reviewer`) found P1 test gaps:
+  - hostile or secret-like strings nested inside JSON advisory fields such as `suggestedMetadata` / `metadata` are not tested;
+  - forbidden `apiKey` / `token` / `provider` / `model` command fields are only tested on `ai.cleanup-inbox`, not all commands;
+  - provider output accessor non-execution is not tested;
+  - the OpenAI provider adapter itself is not directly exercised with mocked transport.
+- Schrodinger the 2nd (`docs_researcher`) found a P1 current-doc issue:
+  - the mocked OpenAI Responses request shape sends an object envelope as top-level `input`, while recorded OpenAI Responses docs use string or message/item-list inputs. It recommended either making the boundary Responses-compatible now or clearly documenting the current shape as an internal envelope before a later adapter step.
+- Anscombe the 2nd (`reviewer`) found no P0 and confirmed the P1 post-validation mutation bug. It also found P2s:
+  - generated filter validation does not match Core filter contract for `neq` and `exists`;
+  - AI tag suggestions do not mirror Tag Plugin lowercase ASCII slug grammar;
+  - nested provider JSON can carry public `apiKey` / `token` / `secret` / `providerId` / `model` keys.
+- Nash the 2nd (`deprecation_auditor`) found no P0 and two P1s:
+  - the OpenAI boundary is not live-compatible with current Responses API shape because it types `input` as `unknown`, sends an object envelope, and does not parse raw Responses output/refusal/error shapes;
+  - Structured Outputs schemas are too underspecified because each property schema is `{}` while `strict: true` is set.
+
+## Parent Decisions After Review
+
+- Add review-fix tests first for all P1 findings.
+- Required review-fix test coverage:
+  - production callers cannot import or use unguarded provider/settings/test-support hooks to override AI provider or settings;
+  - no operation-changing getter behavior in test support or provider request handling;
+  - command input is snapshotted before async provider use, proven by mutating the original payload after `execute()` starts;
+  - provider output accessors at top-level, nested object fields, and array elements are not executed;
+  - nested provider JSON rejects hostile strings, unsafe URLs, raw SQL, prompt-injection text, and secret/provider-shaped keys;
+  - forbidden secret/provider override fields are rejected across all nine AI commands;
+  - OpenAI provider adapter is directly tested with mocked transport for unavailable/error/raw Responses success/refusal/invalid response behavior;
+  - provider request `input` is Responses-compatible, not an opaque object envelope;
+  - Structured Output schemas contain meaningful property type definitions, not `{}`.
+- Required implementation fix direction:
+  - remove, move, or hard-gate test-only provider/settings hooks from production import paths and remove the operation-changing getter;
+  - build sanitized deep DTO snapshots for validated command inputs and provider outputs before async boundaries;
+  - shape the OpenAI boundary around Responses-compatible `instructions`, string/message-list `input`, `store: false`, and `text.format`;
+  - parse/normalize raw Responses-like output/refusal/error results into AI-owned outputs/errors without leaking raw provider data;
+  - generate stricter JSON Schemas for command outputs.
+- Defer P2 fixes until after P1 review-fix unless cheap while touching the same code: Core filter `neq` / `exists` parity, Tag Plugin grammar, loading-state view coverage, and production-source secret scanning.
+
+## Current Next Action
+
+- Commit review findings record, then delegate review-fix tests to `test_writer`.

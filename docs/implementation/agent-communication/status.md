@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 15:06 CST.
+Last updated: 2026-05-25 15:23 CST.
 
 ## Current Task
 
@@ -8,16 +8,11 @@ Last updated: 2026-05-25 15:06 CST.
 - Branch: `feat/task-031-ai-plugin-provider-abstraction`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-031 review wave delegated; waiting for review findings.
+- Current phase: TASK-031 review wave completed; P1 findings are being recorded before review-fix tests.
 
 ## Active Agents
 
-- Jason the 2nd (`pr_explorer`) is mapping changed paths and review surfaces.
-- Anscombe the 2nd (`reviewer`) is reviewing correctness, regressions, edge cases, and missing tests.
-- Nash the 2nd (`deprecation_auditor`) is reviewing stale ids, absent APIs, OpenAI shape, and docs drift.
-- Parfit the 2nd (`security_reviewer`) is reviewing secrets, provider/network boundary, prompt injection, output validation, and test seam safety.
-- Schrodinger the 2nd (`docs_researcher`) is reviewing current-doc alignment, accessibility, and docs drift.
-- Franklin the 2nd (`test_quality_reviewer`) is reviewing acceptance coverage and test quality.
+- No active agents. Parent is recording review findings before review-fix test handoff.
 
 ## Current TASK-031 State
 
@@ -77,7 +72,22 @@ Last updated: 2026-05-25 15:06 CST.
   - Parfit the 2nd (`security_reviewer`) checks secrets, provider/network, prompt-injection, output-validation, and test seam risks.
   - Schrodinger the 2nd (`docs_researcher`) checks current-doc/accessibility alignment and docs drift.
   - Franklin the 2nd (`test_quality_reviewer`) checks test quality and missing P1 coverage.
-- Next action: wait for review findings; fix P0/P1 before docs sync and final gate.
+- Review wave completed:
+  - Jason the 2nd (`pr_explorer`) found no scope drift or native/package surface changes. It highlighted provider settings deferral, test-support under production plugin paths, unusual operation-changing getter in test support, public result text mutation, broad output schemas, and stale formal docs as risk surfaces.
+  - Parfit the 2nd (`security_reviewer`) found no P0 and two P1s: unguarded production test hooks/global provider-settings setters can override AI provider/settings, and validated command payloads are passed to async provider calls by reference so callers can mutate them after validation.
+  - Franklin the 2nd (`test_quality_reviewer`) found P1 test gaps for hostile/secret-like strings nested inside provider JSON output, forbidden secret/provider fields across all commands, provider-output accessor non-execution, and direct OpenAI provider adapter tests.
+  - Schrodinger the 2nd (`docs_researcher`) found a P1 current-doc issue: the mocked Responses request shape uses an object envelope as top-level `input`, which is not compatible with recorded OpenAI Responses examples using string or message/item-list input.
+  - Anscombe the 2nd (`reviewer`) confirmed the P1 post-validation mutation bug and listed P2 issues for Core filter operator compatibility, tag grammar, and nested provider/secret-shaped public JSON keys.
+  - Nash the 2nd (`deprecation_auditor`) found no P0 and two P1s: the OpenAI boundary is not live-compatible with Responses input/output/refusal shape, and the strict Structured Outputs schema is underspecified because properties are `{}`.
+- Parent decisions after review:
+  - Add review-fix tests first for all P1s.
+  - Production fixes should remove or hard-gate test-only provider/settings hooks from production import paths, eliminate the operation-changing getter, and prevent production callers from overriding provider/settings.
+  - Command readers or request construction must pass sanitized deep snapshots to provider calls, not caller-owned objects.
+  - Provider boundary should use a Responses-compatible `input` shape and parse/normalize raw Responses-like results/refusals/errors into AI-owned outputs.
+  - Structured Output schemas should use meaningful JSON Schema property types, not empty property schemas.
+  - Output validation should reject nested hostile strings, secret/provider-shaped keys, and provider-output accessors without executing them.
+  - Forbidden secret/provider override fields should be tested across all public AI commands.
+- Next action: commit review findings record, then delegate review-fix tests to `test_writer`.
 
 ## Current TASK-030 State
 
