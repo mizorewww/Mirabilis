@@ -753,14 +753,14 @@ Source docs:
 Acceptance criteria:
 
 - Quick Capture creates or appends to an Inbox page.
-- Captured Markdown can include task and tag syntax that existing plugins process.
-- Search can query page titles and body text at baseline.
-- Desktop entry points are documented and reviewed for Tauri permission impact.
+- Captured Markdown can include task and tag syntax that existing plugins process through explicit public-command handoff.
+- Search can query page titles and body text at baseline through transient on-demand scanning.
+- Desktop entry points are documented and reviewed for Tauri permission impact; native/global shortcut implementation remains deferred in this slice.
 
 Test plan:
 
 - Plugin tests for capture-to-inbox.
-- Search indexing/query tests.
+- Search query tests for bounded on-demand title/body scanning, caps, literal matching, archived-page exclusion, and result view rendering.
 - Security review for desktop/native entry points.
 
 Dependencies:

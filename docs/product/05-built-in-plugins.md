@@ -1,6 +1,6 @@
 # 内置插件产品设计
 
-集中描述 Metadata UI、Tag、Task、Habit、Timer、Calendar、Stats、Chart、ML、AI、Filter 和 Quick Capture 等内置插件的产品语义。
+集中描述 Metadata UI、Tag、Task、Habit、Timer、Calendar、Stats、Chart、ML、AI、Filter、Quick Capture 和 Search 等内置插件的产品语义。
 
 ## 14. Metadata UI Plugin
 
@@ -1116,34 +1116,60 @@ JS Filter 用来实现：
 
 ## 24. Quick Capture Plugin
 
-快速收集箱也是 Plugin。
+快速收集箱也是 Plugin。TASK-029 当前交付的是 TypeScript built-in baseline，manifest id 是 `quick-capture`。它把 Markdown 捕获到 Quick Capture 自己标记的 Inbox Page，不是 app-shell 级完整弹窗、不是 native/global shortcut 集成，也不会自动执行 Task / Tag 语义处理。
 
 ### 24.1 注册能力
 
 ```text
+Plugin id:
+quick-capture
+
 Commands:
-quick_capture.open
-quick_capture.save
-quick_capture.save_and_open
+quick-capture.open
+quick-capture.save
+quick-capture.save-and-open
 
 Views:
-quick_capture.modal
-quick_capture.mobile_input
+quick-capture.modal
+quick-capture.mobile-input
 
 Metadata:
-inbox.unprocessed
+quick-capture.unprocessed
+  namespace: quick-capture
+  key: unprocessed
+  valueType: boolean
 
 Filters:
-Inbox
+quick-capture.filter.inbox
+  name: Inbox
+  viewType: page.list
+  query: metadata.quick-capture.unprocessed eq true
 ```
 
-### 24.2 桌面端
+`quick-capture.modal` 和 `quick-capture.mobile-input` 当前都是 labelled `region` + labelled `textarea` baseline。`quick-capture.modal` 不声明真正的 `dialog` 语义；focus containment、close/save controls、app-shell modal mounting 和 route polish 仍是后续工作。
 
-用户按全局快捷键：
+### 24.2 捕获行为
 
-```text
-打开快速输入框
+`quick-capture.open` 只返回打开 Quick Capture baseline view 所需的窄 DTO：
+
+```ts
+{ kind: "quick-capture.open-result", viewId: "quick-capture.modal" }
 ```
+
+`quick-capture.save({ markdown })` 接受 bounded nonblank Markdown string。首次保存创建 title 为 `Inbox` 的 Markdown Page，并写入 `quick-capture.unprocessed = true` metadata；后续保存只会复用这个经过 Quick Capture metadata 标记且未 archived 的 trusted Inbox。若用户已有一个 title-only `Inbox` 页面但没有 Quick Capture metadata，Quick Capture 不会隐式接管它，而是创建自己的 trusted Inbox。
+
+返回值：
+
+```ts
+{
+  kind: "quick-capture.save-result";
+  pageId: string;
+  createdInbox: boolean;
+  appendedBlockIds: string[];
+}
+```
+
+`quick-capture.save-and-open({ markdown })` 使用同一保存语义，并额外返回 `openPageId: pageId`。它不负责导航，不调用 native shortcut、filesystem、notification、DB 或 opener 能力。
 
 输入：
 
@@ -1151,18 +1177,109 @@ Inbox
 - [ ] 整理 plugin registry 设计 #architecture
 ```
 
-保存后进入 Inbox Page，同时 Task Plugin 创建任务页面。
+保存后 Markdown 作为 inert structured text 进入 trusted Inbox。Quick Capture 不自动创建 Task page、不写 Task metadata/event，也不自动刷新 Tag metadata。Task / Tag handoff 必须通过公开命令显式完成，例如：
 
-### 24.3 移动端
+```text
+tag.refresh-tags({ pageId })
+task.resolve-task-block({ sourcePageId, sourceBlockId })
+task.open-task-page({ sourcePageId, sourceBlockId })
+```
 
-打开快速输入，自动弹键盘。
+这保证 Quick Capture 只负责收集 Markdown，Task / Tag 业务仍归各自插件所有。
 
-工具栏：
+### 24.3 桌面端
+
+桌面快速入口和全局快捷键已经在 TASK-029 中完成文档和安全影响 review，但实际 native/global shortcut 接入被推迟。当前没有新增 Tauri permission/capability、package、Rust、schema、filesystem、notification、window/tray 或 generated-permission 变更。
+
+### 24.4 移动端
+
+TASK-029 当前只注册 `quick-capture.mobile-input` view baseline。把它挂到移动端 toolbar、自动弹键盘、以及提供完整移动输入流程仍是后续 app-shell / editor integration。
+
+长期工具栏目标仍是：
 
 ```text
 ☐   #   @date   [[ ]]   /
 ```
 
-这些按钮只插入 Markdown 语法。
+这些按钮只插入 Markdown 语法；TASK-029 没有实现 Quick Capture mobile toolbar buttons。
+
+---
+
+## 25. Search Plugin
+
+Search Plugin 是内置插件，manifest id 是 `search`。TASK-029 当前交付的是 transient on-demand page scan baseline，不是 persistent indexer、worker、SQLite/FTS 或 native search service。
+
+### 25.1 注册能力
+
+```text
+Plugin id:
+search
+
+Command:
+search.query
+
+View / data kind:
+search.results
+```
+
+### 25.2 查询行为
+
+`search.query({ query, limit? })` 对未 archived 的 Markdown Page title 和 structured body text 做 case-insensitive literal substring scan。空白 query 返回空结果；regex-looking input 仍按普通文本处理。
+
+返回值：
+
+```ts
+{
+  kind: "search.results";
+  query: string;
+  results: Array<{
+    pageId: string;
+    title: string;
+    snippet: string;
+    matchedFields: Array<"title" | "body">;
+  }>;
+}
+```
+
+当前边界：
+
+```text
+default limit: 20
+max results: 50
+max query length: 200
+max scanned pages: 1,000
+max scanned body text per page: 50,000 chars
+max returned title length: 200 chars
+max snippet length: 160 chars
+```
+
+Search results 不返回完整页面正文。后续 page edit 会被下一次 `search.query` 看到，因为当前实现每次查询都直接扫描当前 page store，而不是读取持久索引。
+
+### 25.3 结果视图
+
+`search.results` view 渲染：
+
+```text
+role=status summary
+aria-label="Search results" list
+listitem per result
+```
+
+title、snippet 和 matched fields 都通过 React text sinks 显示；unsafe-looking HTML、Markdown 或 `javascript:` 文本不会执行。
+
+### 25.4 Deferred
+
+以下能力不属于 TASK-029：
+
+```text
+persistent Search indexing
+background search indexer / worker
+SQLite FTS
+package/dependency changes
+native/Tauri/Rust/schema/capability changes
+app-shell search route and command-palette polish
+cross-plugin query facade
+ranking beyond current page-list scan order
+```
 
 ---

@@ -110,7 +110,9 @@ TASK-010 当前 API contract 覆盖以下贡献能力：
 
 - 日历是 Calendar Plugin 注册的 View。TASK-026 当前内置 `calendar` 注册 `calendar.day` / `calendar.week`，接受 `{ kind: "calendar.time-segments" }` normalized DTO，并通过 `calendar.open-time-segment` 打开 inert detail；`calendar.month`、snake_case aliases、manual create/edit 和直接跨插件读取 Timer events 不在这个 slice 内；
 
-- 快速收集箱是 Quick Capture Plugin 注册的入口和命令。
+- 快速收集箱是 Quick Capture Plugin 注册的入口和命令。TASK-029 当前内置 `quick-capture` 注册 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open`、`quick-capture.modal`、`quick-capture.mobile-input`、`quick-capture.unprocessed` 和 `quick-capture.filter.inbox`；native/global shortcut 和 mobile toolbar mounting 仍是后续范围；
+
+- 搜索是 Search Plugin 注册的命令和结果视图。TASK-029 当前内置 `search` 注册 `search.query` 和 `search.results`，按需扫描未 archived page title/body；persistent Search indexing、background indexer、SQLite/FTS 和 native surface 仍是后续范围。
 
 以下能力仍属于后续 Plugin Platform 工作，不属于 TASK-010 当前 API contract：
 

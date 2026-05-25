@@ -23,8 +23,10 @@ editor.mobile.toolbar
 Task Plugin 在 editor.block.leading 放 checkbox
 Task Plugin 在 hover_menu 放 open / start
 Tag Plugin 在 inline.autocomplete 放 tag suggestions
-Quick Capture Plugin 在 mobile.toolbar 放 ☐ # @date
+Markdown Editor Plugin 在 editor.mobile.toolbar 放 baseline ☐ # [[ ]] snippet buttons
 ```
+
+TASK-029 当前 Quick Capture 只注册 `quick-capture.mobile-input` view，渲染 labelled region + textarea baseline。把 Quick Capture 输入挂进 `editor.mobile.toolbar`、自动弹键盘，以及提供 ☐ / # / @date / [[ ]] / slash 语法按钮仍是后续移动端集成范围。
 
 ### 25.2 页面插槽
 
