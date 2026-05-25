@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:45 CST.
+Last updated: 2026-05-25 11:48 CST.
 
 ## Current Task
 
@@ -8,12 +8,11 @@ Last updated: 2026-05-25 11:45 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 narrow array inertness re-review running.
+- Current phase: TASK-028 P1 fixes closed; formal docs sync pending.
 
 ## Active Agents
 
-- Hubble (`security_reviewer`) is re-checking the Stats/Chart array inertness fix.
-- Kuhn (`test_quality_reviewer`) is re-checking Sartre's array inertness test coverage.
+- No active agents. Next delegation is `doc_writer` for formal Stats/Chart docs sync.
 
 ## Current TASK-028 State
 
@@ -87,6 +86,10 @@ Last updated: 2026-05-25 11:45 CST.
   - Changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
   - Parent validated: focused TASK-028 tests passed (23 tests), adjacent plugin/core suite passed (6 files / 129 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, and native/package/Tauri/Rust/schema diff guard was empty.
   - Review-fix commit: `e48380a Mill(review-fix)(Implement Stats and Chart plugins): reject hostile stats chart arrays`; post-commit auto-push succeeded.
+- Narrow array inertness re-review completed:
+  - Hubble (`security_reviewer`) found no P0/P1 issues and confirmed Hypatia's array-inertness P1 is closed. Residual note: Proxy-backed arrays/objects are not specifically covered by the narrow test set.
+  - Kuhn (`test_quality_reviewer`) found no P0/P1 test-quality blockers. P2: array-method coverage is representative rather than exhaustive; Stats does not separately cover `sort`, Chart does not separately cover `map`, and top-level accessor coverage uses `segments` as the shared-reader representative.
+  - Parent decision: proceed to formal docs sync before final branch gate.
 
 ## Current TASK-027 State
 
@@ -194,5 +197,5 @@ Last updated: 2026-05-25 11:45 CST.
 
 ## Next Actions
 
-1. Wait for Hubble and Kuhn.
-2. If no P0/P1 findings remain, delegate formal docs sync to `doc_writer`.
+1. Delegate formal Stats/Chart docs sync to `doc_writer`.
+2. Validate docs-only patch and commit separately.

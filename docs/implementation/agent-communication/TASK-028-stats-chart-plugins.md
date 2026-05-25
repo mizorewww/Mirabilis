@@ -309,3 +309,14 @@
 - Kuhn (`test_quality_reviewer`) started at 2026-05-25 11:45 CST to re-check Sartre's regression tests and Mill's fix coverage.
 - Both agents are read-only and must not edit files, commit, merge, or push.
 - Parent next action: wait for Hubble and Kuhn, then proceed to docs sync only if no P0/P1 findings remain.
+
+## Narrow Array Inertness Re-Review Outcomes
+
+- Hubble (`security_reviewer`) found no P0/P1 issues. It confirmed Hypatia's array-inertness P1 is closed: Stats and Chart copy arrays through descriptor inspection before aggregation/rendering, nested `tagIds` use the same inert copying path, and the focused tests pass. Residual risk: Proxy-backed arrays/objects are not specifically covered by the narrow test set.
+- Kuhn (`test_quality_reviewer`) found no P0/P1 test-quality blockers. It confirmed Sartre's tests meaningfully cover the requested P1 shape. P2: coverage is representative rather than exhaustive for `sort`, Chart `map`, and all Stats top-level arrays.
+- Parent decision: no P0/P1 findings remain. Proceed to formal docs sync for stale Stats/Chart documentation before the final branch gate.
+
+## Current Next Action
+
+- Delegate formal docs sync to `doc_writer`.
+- Expected docs scope: product, architecture, runtime-flow, and development docs that still mention stale `stats.open_review`, snake_case Stats aggregation ids, stale chart ids, future-only Stats/Chart wording, or outdated Chart DTO examples.
