@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:07 CST.
+Last updated: 2026-05-25 11:08 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:07 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 P1 review fixes required; regression-test handoff pending.
+- Current phase: TASK-028 P1 regression tests delegated.
 
 ## Active Agents
 
-- None currently active. Next agent should be `test_writer` for review-found P1 regression tests.
+- Planck (`test_writer`) is active for review-found P1 regression tests.
 
 ## Current TASK-028 State
 
@@ -165,5 +165,5 @@ Last updated: 2026-05-25 11:07 CST.
 
 ## Next Actions
 
-1. Spawn `test_writer` for review-found P1 regression tests.
-2. Commit red regression tests, then spawn `implementer` for bounded-input, page identity, canonical Timer note, and comparison accessibility fixes.
+1. Wait for Planck (`test_writer`) and validate the expected red regressions.
+2. Commit regression tests, then spawn `implementer` for bounded-input, page identity, canonical Timer note, and comparison accessibility fixes.
