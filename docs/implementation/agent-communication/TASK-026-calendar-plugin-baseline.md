@@ -134,4 +134,15 @@
 
 ## Current Next Action
 
-- Spawn focused review agents for correctness, security, API/deprecation, test quality, PR exploration, current-doc evidence, and docs sync.
+- Focused review started 2026-05-25 09:06 CST.
+- Active read-only review agents:
+  - Boole (`pr_explorer`) maps changed files, behavior, coverage, and risks.
+  - Linnaeus (`reviewer`) reviews correctness and behavior regressions.
+  - Curie (`security_reviewer`) reviews plugin boundaries, payload hardening, inert rendering, and native/package/Tauri/Rust/schema surfaces.
+  - Peirce (`deprecation_auditor`) audits canonical ids, stale APIs, and React/plugin API usage.
+  - Faraday (`docs_researcher`) checks current docs guidance and docs-sync obligations.
+- Pending due to active-agent limit: `test_quality_reviewer` and `doc_writer`; parent will spawn them after one active review slot frees.
+
+## Current Next Action
+
+- Wait for active review output, then fill the pending `test_quality_reviewer` and `doc_writer` roles.

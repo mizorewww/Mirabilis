@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 09:04 CST.
+Last updated: 2026-05-25 09:06 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-25 09:04 CST.
 - Branch: `feat/task-026-calendar-plugin-baseline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-026 implementation committed; focused review handoff pending.
+- Current phase: TASK-026 focused review in progress.
 
 ## Active Agents
 
-- None currently active. Next step is focused review across correctness, security, API/deprecation, test quality, PR exploration, current docs, and formal docs sync.
+- Boole (`pr_explorer`) is mapping changed files, behavior, coverage, and review risks.
+- Linnaeus (`reviewer`) is reviewing correctness and behavior regressions.
+- Curie (`security_reviewer`) is reviewing plugin boundaries, payload hardening, inert rendering, and native/package/Tauri/Rust/schema surfaces.
+- Peirce (`deprecation_auditor`) is auditing canonical ids, stale APIs, and React/plugin API usage.
+- Faraday (`docs_researcher`) is checking current docs guidance and docs-sync obligations.
+- Pending due to active-agent limit: `test_quality_reviewer` and `doc_writer`.
 
 ## Current TASK-026 State
 
@@ -164,8 +169,8 @@ Last updated: 2026-05-25 09:04 CST.
 
 ## Next Actions
 
-1. Spawn focused review agents for TASK-026.
-2. Fix any P0/P1 findings through delegated test/implementation agents before docs/final gate.
+1. Wait for one active review agent to finish, then spawn `test_quality_reviewer` and `doc_writer`.
+2. Fix any P0/P1 findings through delegated test/implementation agents before final docs/gate.
 
 ## Current TASK-021 State
 
