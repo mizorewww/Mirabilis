@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:19 CST.
+Last updated: 2026-05-25 17:31 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:19 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 second review-fix tests pending after narrow re-review P1s.
+- Current phase: TASK-032 second P1 fix committed; preparing final narrow re-review.
 
 ## Active Agents
 
@@ -118,7 +118,19 @@ Last updated: 2026-05-25 17:19 CST.
   - Add tests first for event conflict `local`/`remote` unit validation: stale DTO kinds, mismatched non-event kinds, unsupported kinds, invalid schema versions/shapes, and accessor-backed `syncKey`/`kind`/`snapshot` fields that must not be invoked.
   - Then delegate production hardening to `implementer`.
   - Keep Huygens' docs patch separate and update it after the second P1 fix if needed.
-- Next action: delegate second review-fix tests to `test_writer`.
+- Second review-fix tests delegated:
+  - Turing the 2nd (`test_writer`) added tests for event conflict arrays rejecting stale DTO kinds, mismatched canonical non-event kinds, unsupported kinds, malformed shapes, wrong schema versions, and accessor-backed `syncKey`/`syncKey.id`/`kind`/`snapshot` without invoking getters.
+  - Parent red validation: `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 11 passed. Failure symptoms: invalid event-array kinds did not throw, malformed event units did not throw or threw raw property errors, and accessor-backed conflict unit fields were read.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, and package/native/Tauri/Rust/schema/capability guard.
+  - Test-fix commit: `7a04d6a Turing(test-fix)(Implement Sync Plugin skeleton): cover event conflict unit validation`; post-commit auto-push succeeded.
+- Second review-fix implementation delegated:
+  - Averroes the 2nd (`implementer`) should harden event conflict unit validation in `src/plugins/sync/conflict-policy.ts` without touching tests/docs/progress/package/native surfaces.
+- Second review-fix implementation completed:
+  - Averroes the 2nd (`implementer`) hardened `src/plugins/sync/conflict-policy.ts`.
+  - Fixes: every event conflict `local`/`remote` unit is descriptor-validated before merge; stale, mismatched, unsupported, malformed, wrong-schema, missing-field, array-snapshot, bad-syncKey, non-object, and accessor-backed event unit DTOs are rejected; canonical event union/dedupe/manual-conflict behavior is preserved.
+  - Parent validated: focused TASK-032 tests passed (1 file / 14 tests), adjacent plugin/API/Core/AI suite passed (5 files / 107 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
+  - Review-fix commit: `2b70ec9 Averroes(review-fix)(Implement Sync Plugin skeleton): validate event conflict units`; post-commit auto-push succeeded.
+- Next action: commit this validation record, then run final narrow re-review focused on event conflict unit validation.
 
 ## Current TASK-031 State
 

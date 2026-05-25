@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Delegate second review-fix tests for event conflict unit validation P1s.
+- Commit second review-fix validation record, then run final narrow re-review.
 
 ## Implementation Handoff
 
@@ -298,3 +298,52 @@
 - Production fix should harden `src/plugins/sync/conflict-policy.ts` only if possible, reusing descriptor-safe JSON validation patterns rather than reading untrusted accessors.
 - Huygens' docs patch remains uncommitted and should be updated only if the second P1 fix changes documented behavior.
 - Parent next action: delegate second review-fix tests to `test_writer`.
+
+## Second Review-Fix Tests
+
+- Turing the 2nd (`test_writer`) added tests in `src/test/sync-plugin-skeleton.test.ts`.
+- Coverage added:
+  - event conflict arrays reject stale DTO kinds, mismatched canonical non-event kinds, and unsupported kinds;
+  - event conflict arrays reject malformed unit shapes and wrong `schemaVersion`;
+  - event conflict arrays reject accessor-backed `syncKey`, nested `syncKey.id`, `kind`, and `snapshot` fields without invoking getters.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` failed as expected with 3 failed / 11 passed.
+  - Failure symptoms: invalid event-array kinds did not throw, wrong schema/malformed shapes did not throw or threw raw property errors, and accessor-backed conflict unit fields were read.
+- Parent static validation passed:
+  - `bun run typecheck`;
+  - focused ESLint;
+  - `git diff --check`;
+  - `.skip/.only` scan;
+  - package/native/Tauri/Rust/schema/capability guard.
+- Test-fix commit: `7a04d6a Turing(test-fix)(Implement Sync Plugin skeleton): cover event conflict unit validation`; post-commit auto-push succeeded.
+
+## Second Review-Fix Implementation Handoff
+
+- Averroes the 2nd (`implementer`) started at 2026-05-25 17:26 CST.
+- Scope: production code only in `src/plugins/sync/conflict-policy.ts`, with `src/plugins/sync/syncable-units.ts` / `src/plugins/sync/index.ts` only if absolutely needed.
+- Required fixes:
+  - validate every event conflict `local` and `remote` unit DTO before merging;
+  - reject stale, mismatched, unsupported, wrong-version, malformed, and accessor-backed event units;
+  - do not invoke getters while validating conflict unit fields;
+  - preserve canonical event union/dedupe/conflict behavior and top-level stale-kind rejection.
+- Constraints: do not edit tests, docs, progress, agent-communication, bootstrap, package/native/Tauri/Rust/schema/capability files, or unrelated source; do not commit, merge, or push.
+- Parent next action: wait for Averroes, validate, then commit if green.
+
+## Second Review-Fix Implementation Outcome
+
+- Averroes the 2nd (`implementer`) fixed the remaining event conflict unit validation P1s in `src/plugins/sync/conflict-policy.ts`.
+- Fixes delivered:
+  - every event conflict `local` and `remote` unit DTO is validated before merge;
+  - stale, mismatched, unsupported, malformed, wrong-schema, missing-field, array-snapshot, bad-`syncKey`, and non-object event units are rejected;
+  - accessor-backed `kind`, `snapshot`, `syncKey`, and nested `syncKey.id` are rejected without invoking getters;
+  - canonical event union, identical duplicate dedupe, same-id/different-content conflict, and top-level stale-kind rejection remain intact.
+- Parent validation:
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts` passed with 1 file / 14 tests.
+  - `bun run test:frontend -- src/test/sync-plugin-skeleton.test.ts src/test/plugin-api-contracts.test.ts src/test/plugin-host-lifecycle.test.ts src/test/core-architecture-boundary.test.ts src/test/ai-plugin-provider-abstraction.test.tsx` passed with 5 files / 107 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - `.skip/.only` scan found no matches.
+  - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
+- Review-fix commit: `2b70ec9 Averroes(review-fix)(Implement Sync Plugin skeleton): validate event conflict units`; post-commit auto-push succeeded.
+- Parent next action: commit this validation record, then run final narrow re-review focused on event conflict unit validation.
