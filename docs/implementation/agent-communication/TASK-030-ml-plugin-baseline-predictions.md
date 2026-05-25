@@ -257,3 +257,18 @@
 ## Current Next Action
 
 - Delegate review-fix tests to `test_writer`.
+
+## Review-Fix Test Handoff
+
+- Peirce the 2nd (`test_writer`) started at 2026-05-25 13:45 CST.
+- Scope: add focused P1 review-fix regression tests only, expected file `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Required coverage:
+  - no durable ML metadata/event persistence from caller-provided cross-plugin projections, including perfectly forged provenance;
+  - similar-history-only and tracked-only fallback branches;
+  - missing/archived current page and nested hostile metadata/event payload descriptor rejection;
+  - exact UTC ISO instant validation;
+  - over-budget nested JSON metadata rejection;
+  - `ml.prediction-panel` malformed/wrong-kind DTO fail-closed rendering;
+  - slot rendering parity with the registered view component.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Peirce the 2nd, validate expected red/focused signal, and commit review-fix tests separately.

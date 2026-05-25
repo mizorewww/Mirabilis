@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:44 CST.
+Last updated: 2026-05-25 13:45 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:44 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review findings recorded; review-fix tests pending.
+- Current phase: TASK-030 review-fix tests delegated.
 
 ## Active Agents
 
-- No active agents. Parent is preparing review-fix test handoff.
+- Peirce the 2nd (`test_writer`) is adding TASK-030 review-fix regression tests.
 
 ## Current TASK-030 State
 
@@ -84,6 +84,10 @@ Last updated: 2026-05-25 13:44 CST.
   - Tighten date validation to exact UTC ISO instants and reject rollover/numeric-date strings.
   - Add runtime validation for `ml.prediction-panel` data and fail closed to unavailable UI for malformed/wrong-kind DTOs.
   - Add a total JSON node budget or pre-filtering guard for metadata projection values before copying nested JSON.
+- Review-fix tests delegated:
+  - Peirce the 2nd (`test_writer`) should add focused P1 regression coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
+  - Expected pre-fix result: focused TASK-030 tests fail against current production for the newly covered review findings.
 
 ## Current TASK-029 State
 
