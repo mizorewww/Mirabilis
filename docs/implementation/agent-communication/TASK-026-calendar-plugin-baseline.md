@@ -188,4 +188,16 @@
 
 ## Current Next Action
 
-- Spawn narrow post-fix review agents for the P1 regression fixes, then proceed to docs sync if no P0/P1 blockers remain.
+- Narrow post-fix review completed:
+  - Russell (`reviewer`) found no P0/P1 blockers. It confirmed runtime-scoped known segment validation, unmount cleanup, interval-overlap day/week rendering, and no new correctness blockers.
+  - Poincare (`security_reviewer`) found no P0/P1 blockers. It confirmed exact record validation now rejects non-enumerable own fields and other untrusted shapes, runtime-scoped known segment registry avoids cross-runtime leakage, and Calendar still has no Timer internals/native/runtime store/html sink exposure.
+  - Bohr (`test_quality_reviewer`) found no P0/P1 blockers. It confirmed Banach/Bacon tests cover runtime leakage, non-enumerable fields, and overlap behavior with observable assertions.
+- Accepted residuals:
+  - P2: strict UTC `Z` and duration matching remain future hardening.
+  - P2: stale detail clearing after data/date/week changes remains future hardening.
+  - P3: internal `knownSegments` Map is passed as a wrapped view prop.
+  - P3: broader DTO field hardening matrix, week-overlap placement assertions, and UI command rejection coverage can be added later.
+
+## Current Next Action
+
+- Spawn `doc_writer` for TASK-026 formal docs sync, then validate docs and run final gates.
