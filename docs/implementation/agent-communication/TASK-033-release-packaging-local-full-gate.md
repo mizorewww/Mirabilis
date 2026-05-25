@@ -336,3 +336,24 @@
   - fail-fast/native-surface guard test-quality P1 closure;
   - TASK-033 docs/changelog/current-guidance readiness.
 - Parent next action: wait for outcomes, fix any remaining P0/P1, then mark TASK-033 complete if clear.
+
+## Final Release Readiness And Docs Follow-Up
+
+- Final narrow re-review found no remaining P0/P1 blockers:
+  - Sagan (`release_checker`) confirmed local TASK-033 release readiness without GitHub CI, reran a fresh `bun run check:full`, verified deb/rpm artifacts, and found no release-readiness blocker.
+  - Carver (`security_reviewer`) confirmed the CSP documentation P1 is closed and found no release/security surface drift.
+  - Fermat (`deprecation_auditor`) confirmed deprecated Cargo `authors` is removed and current Tauri CLI usage remains valid.
+  - McClintock (`test_quality_reviewer`) confirmed fail-fast script coverage and native-surface guard coverage are sufficient.
+  - Euler (`docs_researcher`) found no P0/P1 current-guidance or docs blocker; it requested only P2/P3 docs polish for TASK-033 delivered/deferred scope and changelog wording.
+- Docs polish:
+  - The previous Euclid `doc_writer` handoff could not be resumed after the thread transition, and the workspace had no uncommitted Euclid changes.
+  - Godel (`doc_writer`) re-ran the same narrow docs-only follow-up.
+  - Files changed: `CHANGELOG.md` and `docs/implementation/task-index.md`.
+  - Result: `CHANGELOG.md` now describes the local gate as an unattended Tauri build in `--ci` mode rather than a "Tauri CI build"; `docs/implementation/task-index.md` now records TASK-033 delivered/deferred scope.
+  - Godel validation: `git diff --check` passed.
+  - Commit: `caf4c09 Godel(docs)(Add release packaging and local full gate): document delivered release scope`.
+- Final accepted residual risks:
+  - AppImage remains outside the default local Arch gate and needs controlled Linux-builder validation before support can be claimed.
+  - `app.security.csp: null` remains a pre-existing residual risk; public release, updater, or remote/web-content work needs future CSP hardening/security review.
+  - Updater, signing, publishing, GitHub CI, native behavior, capability/permission, IPC contract, and dependency changes remain deferred.
+- Parent next action: update `docs/implementation/progress.md` to mark TASK-033 complete, then merge the branch to `master` and rerun the full release gate on the merge result.
