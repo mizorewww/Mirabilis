@@ -287,7 +287,7 @@ timer.add-note 为 stopped segment 创建或更新 Markdown Page note
 timer.page-timeline.segments 显示当前页面 Timer-owned segments 和 inert Note text
 ```
 
-Recently Worked / Unnoted Sessions saved filters、metadata totals、Calendar app-shell feed/routing、Timer-to-Stats feed normalization、ML integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+Recently Worked / Unnoted Sessions saved filters、metadata totals、Calendar app-shell feed/routing、Timer-to-Stats feed normalization、trusted/persistent ML feed integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 ### Phase 6：Calendar Plugin
 
@@ -367,14 +367,37 @@ Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 p
 
 ### Phase 9：ML Plugin
 
-实现：
+TASK-030 当前实现：
 
 ```text
-预测剩余时间
+built-in TypeScript-only plugin id ml
+inert algorithm descriptor ml.predict-remaining-time
+runtime command ml.run-prediction
+input kind ml.remaining-time-prediction-input
+output kind ml.remaining-time-prediction
+view ml.prediction-panel
+slot ml.page-sidebar.prediction-panel -> page.sidebar.panel
+metadata descriptors ml.predictedRemainingTime / ml.predictionConfidence
+event descriptor ml.prediction-generated
+deterministic remaining-time baseline DTO
+```
+
+`ml.run-prediction` consumes exact bounded caller-provided pages/metadata/events projections only. It does not read sibling plugin private stores/facades, does not import Task/Timer/Tag/Habit/Stats internals, and does not persist ML metadata/events from those projections. Durable prediction writes require a future trusted query/feed/projection source.
+
+仍是后续范围：
+
+```text
+executable AlgorithmRegistry / runtime algorithm handler
+trusted cross-plugin query/feed facade
+persistent predictions / model refresh
 推荐下一任务
 分析高效时间段
 估时偏差模型
 相似任务聚类
+task ranking
+AI explanation
+app-shell mounting / polish
+native/package/Rust/schema/Tauri capability changes
 ```
 
 ### Phase 10：AI Plugin
@@ -493,7 +516,7 @@ Note: 刚想清楚...
 设计 Plugin 系统 tracked 47m
 ```
 
-Calendar app-shell route/navigation、broad cross-plugin event query/read facade、Stats app-shell/feed integration、ML integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+Calendar app-shell route/navigation、broad cross-plugin event query/read facade、Stats app-shell/feed integration、trusted/persistent ML feed integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 All Tasks 显示：
 

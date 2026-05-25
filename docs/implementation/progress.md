@@ -70,7 +70,7 @@ Status markers:
 ## Milestone M7: Capture, search, ML, AI, sync, release
 
 - [x] TASK-029: Implement Quick Capture and Search plugins
-- [ ] TASK-030: Implement ML Plugin baseline predictions
+- [x] TASK-030: Implement ML Plugin baseline predictions
 - [ ] TASK-031: Implement AI Plugin provider abstraction
 - [ ] TASK-032: Implement Sync Plugin skeleton
 - [ ] TASK-033: Add release packaging and local full gate
@@ -78,6 +78,30 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 14:21 CST - TASK-030 completed
+
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Task: Implement ML Plugin baseline predictions.
+- Delivered: built-in `MlPlugin` is registered through `BUILT_IN_PLUGINS` with plugin id `ml`, inert algorithm descriptor `ml.predict-remaining-time`, command `ml.run-prediction`, view `ml.prediction-panel`, sidebar slot contribution `ml.page-sidebar.prediction-panel`, metadata descriptors `ml.predictedRemainingTime` / `ml.predictionConfidence`, and event descriptor `ml.prediction-generated`.
+- Delivered: `ml.run-prediction` returns a deterministic remaining-time prediction DTO from exact bounded caller-provided page/metadata/event projections, using task estimate, tracked time, child completion, and similar-history evidence while rejecting malformed, oversized, archived, stale-date, or forged projection input.
+- Delivered: `PredictionPanel` renders validated inert prediction DTOs for both registered view and slot paths, and fails closed to an unavailable state for malformed or wrong-kind data.
+- Review and fixes: review agents found P1 issues around caller-forged durable writes, date validation, DTO validation, JSON node budgeting, fallback coverage, and slot/view parity. Peirce added red regression tests; Confucius removed durable writes from caller-provided projections and hardened validation/rendering; Avicenna covered the tracked-only `trackedSeconds * 2` fallback branch. Narrow re-review and final test-quality confirmation found no remaining P0/P1 blockers.
+- Documentation sync: product, architecture, development, task-index, view-slot, runtime-flow, and testing docs now describe canonical ML ids, `ml.run-prediction` as the runtime Command Registry entry, inert Algorithm Registry scope, exact caller-provided projections, deterministic non-durable DTO output, fail-closed panel rendering, and deferred trusted query/feed facade and persistence work.
+- Final branch gate: `bun run check:quick` passed with typecheck, lint, 35 frontend test files / 546 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: trusted cross-plugin query/feed source, durable prediction metadata/events, executable AlgorithmRegistry, model training/storage/refresh, recommendations, best-work-time, bias analysis, clustering/ranking, AI explanation, app-shell mounting/polish, native/package/Rust/schema/capability changes, and production ML model lifecycle remain future work.
+- Merge status: ready to merge to `master`; merge-result gate will run after merge.
+
+### 2026-05-25 13:07 CST - TASK-030 started
+
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
+- Task: Implement ML Plugin baseline predictions.
+- Start point: `master` after TASK-029 merge validation commit `10b833c`.
+- Source docs read: `docs/implementation/task-index.md#task-030-implement-ml-plugin-baseline-predictions`, `docs/product/05-built-in-plugins.md#21-machine-learning-plugin`, `docs/architecture/05-plugin-implementations.md#134-machine-learning-plugin`, `docs/development/01-data-roadmap-and-mvp.md#phase-9ml-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-9ml-plugin`, `docs/product/06-view-slots.md`, `docs/product/03-plugin-platform.md`, `docs/implementation/agent-workflow.md`, and `docs/testing/strategy.md`.
+- Initial scope: built-in ML Plugin baseline for feature building from caller-visible pages/metadata/events, deterministic remaining-time prediction, prediction panel rendering as plugin view or slot contribution, and documented model limitations/confidence.
+- Initial out of scope until agents narrow otherwise: AI/provider calls, real model training, persistent model/index storage, background refresh jobs, AlgorithmRegistry runtime execution, native/Tauri/package/Rust/schema/capability changes, broad cross-plugin private reads, app-shell route polish, and production dashboard wiring.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-030-ml-plugin-baseline-predictions.md`.
 
 ### 2026-05-25 13:05 CST - TASK-029 merged
 

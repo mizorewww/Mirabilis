@@ -252,7 +252,7 @@ tag.add-tag
 tag.remove-tag
 set-due-date
 tag.create-filter
-run-ml-prediction
+ml.run-prediction
 generate-ai-summary
 ```
 

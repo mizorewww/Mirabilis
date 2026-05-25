@@ -5,6 +5,7 @@ import { HabitPlugin } from "../plugins/habit";
 import { HeatmapPlugin } from "../plugins/heatmap";
 import { MarkdownEditorPlugin } from "../plugins/markdown-editor";
 import { MetadataUiPlugin } from "../plugins/metadata-ui";
+import { MlPlugin } from "../plugins/ml";
 import { QuickCapturePlugin } from "../plugins/quick-capture";
 import { SearchPlugin } from "../plugins/search";
 import { StatsPlugin } from "../plugins/stats";
@@ -25,4 +26,5 @@ export const BUILT_IN_PLUGINS = Object.freeze([
   ChartPlugin,
   QuickCapturePlugin,
   SearchPlugin,
+  MlPlugin,
 ]) as readonly AppPlugin[];

@@ -102,7 +102,7 @@ TASK-025 当前 page-level contributions：
 - `timer.page-header-metadata.placeholder`，order `400`，enabled Start control，through descriptor-owned scoped `commands.execute("timer.start", { pageId })`。
 - `timer.page-timeline.segments`，order `100` on `page.timeline`，renders current-page Timer-owned segments and inert Note text with accessible Add Note / Edit Note controls.
 
-TASK-025 也注册 `timer.global-active-bar` 到 `global.floating`，显示 active page title、elapsed time 和 Pause / Resume / Stop controls。该 bar 读取 Timer Plugin registration-scoped in-memory active timer state；Timer finalization 会追加 event-backed Time Segment。TASK-026 的 Calendar day/week view 可以在调用方显式挂载并传入 `calendar.time-segments` DTO 时渲染 Timer segment projection。TASK-028 的 Stats baseline 可以聚合调用方传入的 normalized Timer/Habit/Task/Tag DTO。Calendar app-shell route/feed、Timer-to-Stats feed normalization、ML integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+TASK-025 也注册 `timer.global-active-bar` 到 `global.floating`，显示 active page title、elapsed time 和 Pause / Resume / Stop controls。该 bar 读取 Timer Plugin registration-scoped in-memory active timer state；Timer finalization 会追加 event-backed Time Segment。TASK-026 的 Calendar day/week view 可以在调用方显式挂载并传入 `calendar.time-segments` DTO 时渲染 Timer segment projection。TASK-028 的 Stats baseline 可以聚合调用方传入的 normalized Timer/Habit/Task/Tag DTO。TASK-030 的 ML baseline 可以在调用方显式传入 `ml.remaining-time-prediction` DTO 时通过 `ml.page-sidebar.prediction-panel` 渲染 prediction panel。Calendar app-shell route/feed、Timer-to-Stats feed normalization、trusted/persistent ML feed integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 `MetadataBar` 传给每个 slot component 的 props 是 narrow controlled props：`pageId`、contributing `pluginId`、trusted field descriptors、trusted values 和 scoped `commands.execute` facade。`MetadataBar` 自身要求 `MetadataBarCommandRegistry.get(commandId)` descriptor lookup；只有 descriptor id exactly matches requested command id 且 `descriptor.pluginId` 等于 contributing plugin 时才会 dispatch。缺少 Plugin Host ownership data、inactive/missing owner plugin、malformed descriptor、unsafe namespace/key、wrong `sourcePluginId`、mismatched `valueType` 或 unavailable command descriptor lookup 都会 fail closed。Manifest `metadataFields` 仍是 descriptors/reservation inputs，不是 renderer/editor declarations。
 
@@ -117,7 +117,8 @@ habit daily
 ML Plugin 可以渲染：
 
 ```text
-预计剩余 6–9h
+ml.page-sidebar.prediction-panel on page.sidebar.panel
+ml.prediction-panel view for kind ml.remaining-time-prediction
 ```
 
 ---

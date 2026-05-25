@@ -1,18 +1,142 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:05 CST.
+Last updated: 2026-05-25 14:23 CST.
 
 ## Current Task
 
-- Task: TASK-029 - Implement Quick Capture and Search plugins.
-- Branch: `feat/task-029-quick-capture-search-plugins`.
+- Task: TASK-030 - Implement ML Plugin baseline predictions.
+- Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-029 merged and merge-result gate passed; TASK-030 selection pending.
+- Current phase: TASK-030 final branch gate passed; completion ledger is being committed before merge.
 
 ## Active Agents
 
-- No active agents. Parent is recording TASK-029 merge validation before starting TASK-030.
+- No active agents. Parent is recording TASK-030 completion before merging to `master`.
+
+## Current TASK-030 State
+
+- TASK-030 follows TASK-028 and owns the first ML plugin baseline:
+  - ML Plugin builds features from pages, metadata, and events.
+  - Remaining-time prediction has a deterministic baseline model.
+  - Prediction panel renders as a plugin view or slot contribution.
+  - Model limitations and confidence are documented.
+- Initial parent interpretation:
+  - Keep ML behavior in a built-in plugin, not Core.
+  - Use current plugin runtime primitives and caller-visible page/metadata/event data only.
+  - Treat manifest algorithm descriptors as inert unless agents identify an existing executable runtime hook.
+  - Prefer a deterministic TypeScript-only baseline and defer real model training, background jobs, persistent model/index storage, AI/provider calls, app-shell route polish, broad cross-plugin private reads, and native/Tauri/package/Rust/schema/capability changes.
+- Agent/config validation passed for orchestration start: 11 agent TOML files parsed; `codex doctor` OK except the known `TERM=dumb` terminal failure plus non-blocking sandbox/network notes.
+- Pre-test guidance delegated:
+  - Pasteur (`planner`) should define canonical ids, DTO/result shapes, minimal acceptance criteria, expected production files, and deferred scope.
+  - Averroes (`docs_researcher`) should verify current official docs for deterministic Vitest tests, React/Testing Library accessible prediction panel rendering, and Tauri no-native implications.
+  - Chandrasekhar (`deprecation_auditor`) should check whether ML algorithm descriptors are inert and identify stale ids/API assumptions.
+  - Hegel (`security_reviewer`) should define payload, feature, prediction, rendering, and static-guard constraints.
+- Pre-test guidance completed:
+  - Pasteur (`planner`) recommended the smallest slice as a built-in `ml` plugin with one inert algorithm descriptor, one executable `ml.run-prediction` command, deterministic remaining-time baseline, caller-provided public projections, prediction view, sidebar slot contribution, and ML-owned metadata/event writes only.
+  - Averroes (`docs_researcher`) verified current React 19, Testing Library, Vitest, WAI-ARIA, Vite 7, and Tauri v2 guidance. It recommended pure fixture tests, React Testing Library semantic role queries, and no package/native/Rust/Tauri changes for a TypeScript-only baseline.
+  - Chandrasekhar (`deprecation_auditor`) found no P0 blockers and identified two P1 pre-test hazards to avoid: there is no executable AlgorithmRegistry, and `PluginContext` metadata/events are owner-scoped, so ML cannot directly read Task/Timer/Tag/Habit private records. Use explicit normalized DTO input instead.
+  - Hegel (`security_reviewer`) found no current P0/P1 blocker and required exact bounded plain DTOs, inert rendering, misleading-confidence guardrails, no sibling plugin/private store/native imports, and static guards for no package/native/Tauri/Rust/schema/capability changes.
+- Parent decisions after guidance:
+  - Plugin id: `ml`.
+  - Inert algorithm descriptor: `ml.predict-remaining-time`.
+  - Runtime command: `ml.run-prediction`; no `ml.run_prediction` or AlgorithmRegistry execution tests.
+  - Input kind: `ml.remaining-time-prediction-input`; output/view data kind: `ml.remaining-time-prediction`.
+  - View id/type: `ml.prediction-panel`; slot contribution: `ml.page-sidebar.prediction-panel` targeting `page.sidebar.panel`.
+  - Metadata descriptors: `ml.predictedRemainingTime` (`namespace: "ml"`, `key: "predictedRemainingTime"`, `valueType: "json"`) and `ml.predictionConfidence` (`namespace: "ml"`, `key: "predictionConfidence"`, `valueType: "number"`).
+  - Event descriptor: `ml.prediction-generated` with `namespace: "ml"` and `type: "prediction-generated"`.
+  - Feature input comes from exact caller-provided page/metadata/event projections; ML must not import sibling plugin internals or use raw stores/private query paths.
+- Test writer delegated:
+  - Aristotle (`test_writer`) should add focused red tests, likely `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
+  - Expected pre-implementation validation: focused tests fail for missing ML built-in/command/view/plugin files while typecheck, focused ESLint, diff check, skip/only scan, and native/package guard stay green.
+- Test writer completed:
+  - Aristotle (`test_writer`) added `src/test/ml-plugin-baseline-predictions.test.tsx` with TASK-030 acceptance coverage.
+  - Parent validated the expected red signal: focused TASK-030 tests failed with 6 failed / 1 passed because the `ml` built-in descriptors, `ml.run-prediction` command, `ml.prediction-panel` view, and `src/plugins/ml/index.ts` production file are missing.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint for `src/test/ml-plugin-baseline-predictions.test.tsx`, `git diff --check`, `.skip/.only` scan, production-source diff guard, and package/native/Tauri/Rust/schema diff guard.
+  - Test commit: `17bcba4 Aristotle(test)(Implement ML Plugin baseline predictions): add ml prediction acceptance tests`; post-commit auto-push succeeded.
+- Implementation delegated:
+  - Dewey (`implementer`) should add the ML plugin production baseline, expected under `src/plugins/ml/*` plus `src/bootstrap/built-in-plugins.ts`.
+  - Scope: production code only; no test/docs/progress/package/native/Tauri/Rust/schema/capability edits.
+  - Required result: focused TASK-030 tests pass while typecheck/lint stay green and package/native/Tauri/Rust/schema surfaces remain unchanged.
+- Implementation completed:
+  - Dewey (`implementer`) added the ML production baseline.
+  - Changed files: `src/bootstrap/built-in-plugins.ts`, `src/plugins/ml/index.ts`, `src/plugins/ml/plugin.ts`, `src/plugins/ml/algorithms/predictRemainingTime.ts`, `src/plugins/ml/features/buildRemainingTimeFeatures.ts`, and `src/plugins/ml/views/PredictionPanel.tsx`.
+  - Parent validated: focused TASK-030 tests passed (7 tests), adjacent plugin/API/Stats/Search/Task/Tag suite passed (8 files / 152 tests), `bun run typecheck` passed, `bun run lint` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, and package/native/Tauri/Rust/schema diff guard was empty.
+  - Implementation commit: `6b0a32f Dewey(implementation)(Implement ML Plugin baseline predictions): implement ml prediction baseline`; post-commit auto-push succeeded.
+- Review wave delegated:
+  - Leibniz (`pr_explorer`) maps changed files and review surfaces.
+  - Goodall the 2nd (`reviewer`) checks correctness, regression, edge cases, and missing tests.
+  - Bernoulli the 2nd (`deprecation_auditor`) checks stale IDs, absent APIs, and version-specific API risks.
+  - McClintock the 2nd (`security_reviewer`) checks payload/projection/native/package trust boundaries.
+  - Pascal the 2nd (`docs_researcher`) checks current-doc/accessibility behavior and docs drift.
+  - Pasteur the 2nd (`test_quality_reviewer`) checks test quality and acceptance coverage.
+- Review wave completed:
+  - Leibniz (`pr_explorer`) found no scope drift. Risk surfaces: projection trust, validation complexity, non-transactional ML writes, heuristic semantics, UI wiring, and docs drift.
+  - Pasteur the 2nd (`test_quality_reviewer`) found P1 test gaps: missing coverage for similar-history and tracked-only model fallback branches, missing nested hostile projection and missing/archived current-page coverage, and slot component rendering not tested with the same accessibility/inert assertions as the view.
+  - Bernoulli the 2nd (`deprecation_auditor`) found no P0/P1 blockers. P2/P3 docs drift remains for stale underscore ML ids, Algorithm Registry wording, generic `run-ml-prediction`, and async metadata examples.
+  - McClintock the 2nd (`security_reviewer`) found P1 issues: caller-forged provenance can be treated as trusted evidence and persisted as ML metadata/events, and date validation accepts non-exact instants such as numeric strings or rollover dates.
+  - Pascal the 2nd (`docs_researcher`) found no P0/P1 accessibility/current-doc blockers. P2 notes: redundant explicit `region`, `aria-busy` semantics, and formal docs/testing-strategy drift.
+  - Goodall the 2nd (`reviewer`) found P1 issues: `PredictionPanel` renders unvalidated view data and can crash or display forged data, and metadata JSON projection validation lacks a global node budget before copying untrusted nested values.
+- Parent decisions after review:
+  - Add review-fix tests first for all P1s.
+  - Because current command execution has no caller identity and there is no trusted query/feed facade, TASK-030 must not persist ML metadata/events from caller-provided cross-plugin projection evidence. The command may return deterministic heuristic results with limitations, but durable writes are deferred until a trusted projection source exists.
+  - Tighten date validation to exact UTC ISO instants and reject rollover/numeric-date strings.
+  - Add runtime validation for `ml.prediction-panel` data and fail closed to unavailable UI for malformed/wrong-kind DTOs.
+  - Add a total JSON node budget or pre-filtering guard for metadata projection values before copying nested JSON.
+- Review-fix tests delegated:
+  - Peirce the 2nd (`test_writer`) should add focused P1 regression coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
+  - Expected pre-fix result: focused TASK-030 tests fail against current production for the newly covered review findings.
+- Review-fix tests completed:
+  - Peirce the 2nd (`test_writer`) added P1 regression coverage in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Parent validated the expected red signal: focused TASK-030 tests failed with 5 failed / 7 passed. Failure symptoms: current command still writes ML metadata/events for caller-provided projections, forged provenance still creates ML metadata, similar-history-only fallback confidence/range differs from expected policy, numeric date string `"1"` is accepted, and `PredictionPanel` renders wrong-kind forged DTO data instead of unavailable status.
+  - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, production/docs/native/package diff guards.
+  - Test-fix commit: `927029c Peirce(test-fix)(Implement ML Plugin baseline predictions): cover ml review regressions`; post-commit auto-push succeeded.
+- Review-fix implementation delegated:
+  - Confucius the 2nd (`implementer`) should fix ML production P1s in `src/plugins/ml/**`.
+  - Scope: production code only; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits.
+  - Required result: focused TASK-030 tests pass while typecheck/lint stay green and package/native/Tauri/Rust/schema surfaces remain unchanged.
+- Review-fix implementation completed:
+  - Confucius the 2nd (`implementer`) fixed ML production P1s in `src/plugins/ml/features/buildRemainingTimeFeatures.ts`, `src/plugins/ml/plugin.ts`, and `src/plugins/ml/views/PredictionPanel.tsx`.
+  - Fix scope: no durable ML metadata/events from caller-provided projections, forged-provenance durable-write prevention, fallback policy alignment, exact UTC instant validation, `PredictionPanel` DTO validation/fail-closed rendering, total JSON node-budget validation, and shared slot/view validation.
+  - Parent validated: focused TASK-030 tests passed (12 tests), adjacent plugin/API/Stats/Search/Task/Tag suite passed (8 files / 157 tests), `bun run typecheck` passed, `bun run lint` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, import/sink guard found no ML matches, and package/native/Tauri/Rust/schema diff guard was empty.
+  - Review-fix commit: `b384812 Confucius(review-fix)(Implement ML Plugin baseline predictions): harden ml prediction boundaries`; post-commit auto-push succeeded.
+- Narrow re-review delegated:
+  - Sagan the 2nd (`security_reviewer`) re-checks caller-forged provenance, exact date validation, JSON node budget, DTO fail-closed rendering, and native/package boundaries.
+  - Poincare the 2nd (`reviewer`) re-checks durable write behavior, fallback branches, exact date/missing-page rejection, panel fail-closed behavior, and slot/view parity.
+  - Ramanujan the 2nd (`test_quality_reviewer`) re-checks review-fix coverage for fallback branches, hostile projections, date validation, panel DTO validation, and slot rendering parity.
+- Narrow re-review completed:
+  - Sagan the 2nd (`security_reviewer`) found no remaining P0/P1 security issues. It confirmed durable ML writes were removed, exact UTC instant validation is enforced, JSON metadata has a pre-copy node budget, `PredictionPanel` validates unknown DTO input, and no native/package/import/sink regression appeared.
+  - Poincare the 2nd (`reviewer`) found no remaining P0/P1 correctness issues. It confirmed durable writes are removed, missing/archived page rejection is enforced, exact date validation is shared by command/view paths, fallback behavior distinguishes estimate/similar-history/tracked-only evidence, and view/slot share the same component path.
+  - Ramanujan the 2nd (`test_quality_reviewer`) found one remaining P1 test gap: tracked-only fallback coverage currently proves only the one-hour floor case, not the `trackedSeconds * 2` arm for longer tracked-only inputs.
+- Parent decision:
+  - Add a narrow test-only regression for the tracked-only `trackedSeconds * 2` fallback arm.
+  - No production implementation handoff is needed unless the new test fails.
+- Narrow test fix delegated:
+  - Avicenna the 2nd (`test_writer`) should add one focused test or extend the existing tracked-only fallback test to cover longer tracked-only input where `trackedSeconds * 2` exceeds one hour.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
+- Narrow test fix completed:
+  - Avicenna the 2nd (`test_writer`) extended `src/test/ml-plugin-baseline-predictions.test.tsx` to cover tracked-only fallback with `trackedSeconds = 5,400`, proving the `trackedSeconds * 2 = 10,800` branch exceeds the one-hour floor.
+  - Parent validation passed: focused TASK-030 tests passed (12 tests), `bun run typecheck` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, and non-test/docs/native/package diff guards were empty.
+  - Test-fix commit: `0bfe2e4 Avicenna(test-fix)(Implement ML Plugin baseline predictions): cover tracked-only fallback branch`; post-commit auto-push succeeded.
+- Final narrow test-quality confirmation completed:
+  - Kepler the 2nd (`test_quality_reviewer`) found no remaining P0/P1 test-quality findings.
+  - It confirmed tracked-only fallback now covers both one-hour floor (`trackedSeconds = 1,200`, `baselineTotalSeconds = 3,600`) and longer-input `trackedSeconds * 2` arm (`trackedSeconds = 5,400`, `baselineTotalSeconds = 10,800`).
+  - It ran focused TASK-030 tests, which passed with 12 tests.
+  - Parent decision: proceed to formal docs sync.
+- Docs sync delegated:
+  - Erdos the 2nd (`doc_writer`) should sync product, architecture, development, implementation task-index, and testing docs to the delivered ML baseline.
+  - Scope: docs only; no source, tests, package/native/Tauri/Rust/schema/capability edits.
+- Docs sync completed:
+  - Erdos the 2nd (`doc_writer`) synced product, architecture, development, task-index, view-slot, runtime-flow, and testing docs to the TASK-030 implementation.
+  - Changed docs: product docs `02` through `06`, architecture docs `01`, `04`, `05`, `07`, development docs `01`/`02`, `docs/implementation/task-index.md`, and `docs/testing/strategy.md`.
+  - Parent validation: `git diff --check` passed, source/package/native/Tauri/Rust/schema diff guard was empty, docs-only scope was confirmed, and stale ML id/AlgorithmRegistry scan had only intentional negative-list/deferred-current-state references.
+  - Docs commit: `00db247 Erdos(docs)(Implement ML Plugin baseline predictions): sync ml prediction docs`; post-commit auto-push succeeded.
+- Final branch gate completed:
+  - `bun run check:quick` passed with typecheck, lint, 35 frontend test files / 546 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `docs/implementation/progress.md` marks TASK-030 complete and records the ready-to-merge branch state.
+- Next action: commit the completion ledger, merge `feat/task-030-ml-plugin-baseline-predictions` into `master`, run merge-result `bun run check:quick`, record merge validation, push `master`, and continue to TASK-031.
 
 ## Current TASK-029 State
 
