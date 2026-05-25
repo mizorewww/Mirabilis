@@ -128,7 +128,7 @@
 
 ## Current Next Action
 
-- Commit second review-fix validation record, then run final narrow re-review.
+- Delegate third review-fix tests for exact event DTO validation.
 
 ## Implementation Handoff
 
@@ -347,3 +347,20 @@
   - Production Sync forbidden-literal, network/native, stale-id, and package/native/Tauri/Rust/schema/capability scans found no matches.
 - Review-fix commit: `2b70ec9 Averroes(review-fix)(Implement Sync Plugin skeleton): validate event conflict units`; post-commit auto-push succeeded.
 - Parent next action: commit this validation record, then run final narrow re-review focused on event conflict unit validation.
+
+## Final Narrow Re-Review Outcomes
+
+- Boyle the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed the second review-fix tests meaningfully cover event conflict validation paths.
+- Carver the 2nd (`security_reviewer`) found no P0/P1 and confirmed no stale/unsupported/mismatched event array units pass through from a security perspective, with no new native/network/storage/package drift.
+- Ampere the 2nd (`reviewer`) found one remaining P1:
+  - event conflict validation still accepts malformed distinct-id event DTOs where `snapshot.id` does not match `syncKey.id`, where extra top-level fields are present, or where extra `syncKey` fields are present. Because distinct ids are stored and returned directly, these malformed units can appear in merged output.
+
+## Parent Decisions After Final Narrow Re-Review
+
+- Add third review-fix tests first for exact event DTO validation:
+  - reject event units where `snapshot.id !== syncKey.id`;
+  - reject extra top-level unit keys beyond `kind`, `schemaVersion`, `snapshot`, and `syncKey`;
+  - reject extra `syncKey` keys beyond `id`;
+  - preserve canonical distinct-id event merge behavior.
+- Production fix should remain focused in `src/plugins/sync/conflict-policy.ts`.
+- Parent next action: delegate third review-fix tests to `test_writer`.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 17:31 CST.
+Last updated: 2026-05-25 17:36 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-25 17:31 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 second P1 fix committed; preparing final narrow re-review.
+- Current phase: TASK-032 third review-fix tests pending after final narrow re-review P1.
 
 ## Active Agents
 
@@ -130,7 +130,14 @@ Last updated: 2026-05-25 17:31 CST.
   - Fixes: every event conflict `local`/`remote` unit is descriptor-validated before merge; stale, mismatched, unsupported, malformed, wrong-schema, missing-field, array-snapshot, bad-syncKey, non-object, and accessor-backed event unit DTOs are rejected; canonical event union/dedupe/manual-conflict behavior is preserved.
   - Parent validated: focused TASK-032 tests passed (1 file / 14 tests), adjacent plugin/API/Core/AI suite passed (5 files / 107 tests), `bun run typecheck` passed, `bun run lint` passed, `git diff --check` passed, `.skip/.only` scan found no matches, production Sync forbidden-literal/network/native/stale-id scan found no matches, and package/native/Tauri/Rust/schema/capability guard was empty.
   - Review-fix commit: `2b70ec9 Averroes(review-fix)(Implement Sync Plugin skeleton): validate event conflict units`; post-commit auto-push succeeded.
-- Next action: commit this validation record, then run final narrow re-review focused on event conflict unit validation.
+- Final narrow re-review completed:
+  - Boyle the 2nd (`test_quality_reviewer`) found no P0/P1 and confirmed the second review-fix tests cover event conflict validation paths.
+  - Carver the 2nd (`security_reviewer`) found no P0/P1 and confirmed event conflict validation P1s are closed from the security perspective.
+  - Ampere the 2nd (`reviewer`) found one remaining P1: event conflict validation still accepts malformed distinct-id event DTOs where `snapshot.id` does not match `syncKey.id`, where extra top-level fields are present, or where extra `syncKey` fields are present; those can be returned in merged output.
+- Parent decisions after final narrow re-review:
+  - Add tests first for exact event unit DTO validation: `snapshot.id` must match `syncKey.id`; top-level unit keys must be exactly `kind`, `schemaVersion`, `snapshot`, and `syncKey`; `syncKey` keys must be exactly `id`; canonical distinct event merge still works.
+  - Then delegate production fix to `implementer`.
+- Next action: delegate third review-fix tests to `test_writer`.
 
 ## Current TASK-031 State
 
