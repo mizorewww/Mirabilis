@@ -123,7 +123,11 @@ const tagRefreshCommandId = "tag.refresh-tags";
 const taskResolveCommandId = "task.resolve-task-block";
 const maxCaptureMarkdownLength = 50_000;
 const maxSearchResults = 50;
+const maxSearchQueryLength = 200;
 const maxSearchSnippetLength = 160;
+const maxSearchTitleLength = 200;
+const maxScannedPages = 1_000;
+const maxScannedBodyLength = 50_000;
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -246,6 +250,23 @@ describe("Quick Capture and Search plugins", () => {
       );
     }
     expect(searchPlugin.manifest.id).toBe(searchPluginId);
+  });
+
+  it("renders Quick Capture modal as a labelled region with accessible textbox semantics, not a bare dialog", async () => {
+    const runtime = await createRuntime();
+    const QuickCaptureModalView = getQuickCaptureModalViewComponent(runtime);
+
+    render(createElement(QuickCaptureModalView));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    const region = screen.getByRole("region", { name: "Quick Capture" });
+    const textbox = within(region).getByRole("textbox", {
+      name: "Quick Capture Markdown",
+    });
+
+    expect(region).toHaveAccessibleName("Quick Capture");
+    expect(textbox).toHaveAccessibleName("Quick Capture Markdown");
   });
 
   it("creates one trusted Inbox on first save and later appends without replacing prior captured Markdown", async () => {
@@ -439,79 +460,29 @@ describe("Quick Capture and Search plugins", () => {
       metadataIds: createMetadataIds(4),
       pageIds: ["unexpected-inbox"],
     });
-    const invalidPayloads: Array<{ input: unknown; label: string }> = [
-      { input: undefined, label: "undefined payload" },
-      { input: null, label: "null payload" },
-      { input: {}, label: "empty payload" },
-      { input: [], label: "array payload" },
-      { input: { markdown: "" }, label: "blank markdown" },
-      { input: { markdown: " \n\t " }, label: "whitespace markdown" },
-      {
-        input: { markdown: "x".repeat(maxCaptureMarkdownLength + 1) },
-        label: "oversized markdown",
-      },
-      {
-        input: { markdown: "Valid text", extra: true },
-        label: "extra field",
-      },
-      {
-        input: { markdown: "Valid text", pageId: "target-page" },
-        label: "target page field",
-      },
-      {
-        input: { markdown: "Valid text", targetPageId: "target-page" },
-        label: "targetPageId field",
-      },
-      {
-        input: { markdown: "Valid text", path: "/tmp/inbox.md" },
-        label: "path field",
-      },
-      {
-        input: { markdown: "Valid text", title: "Caller title" },
-        label: "title field",
-      },
-      {
-        input: { markdown: "Valid text", sourcePluginId: "task" },
-        label: "sourcePluginId spoof",
-      },
-      {
-        input: { markdown: "Valid text", pluginId: "task" },
-        label: "pluginId spoof",
-      },
-      {
-        input: createAccessorMarkdownPayload("Accessor markdown"),
-        label: "accessor-backed markdown",
-      },
-      {
-        input: createSymbolExtraPayload({ markdown: "Symbol extra" }),
-        label: "symbol-keyed extra",
-      },
-      {
-        input: createNonEnumerableExtraPayload({
-          markdown: "Non-enumerable extra",
-        }),
-        label: "non-enumerable extra",
-      },
-      {
-        input: createNonEnumerableFieldPayload(
-          { markdown: "Hidden markdown" },
-          "markdown",
-        ),
-        label: "non-enumerable markdown",
-      },
-      {
-        input: createPrototypeCarriedPayload({
-          markdown: "Prototype markdown",
-        }),
-        label: "prototype-carried markdown",
-      },
-    ];
 
-    for (const { input, label } of invalidPayloads) {
+    for (const { input, label } of createInvalidQuickCaptureSavePayloads()) {
       const before = snapshotRuntimeState(runtime);
 
       await expect(
         runtime.commands.execute(quickCaptureSaveCommandId, input),
+        label,
+      ).rejects.toThrow();
+      expect(snapshotRuntimeState(runtime), label).toStrictEqual(before);
+    }
+  });
+
+  it("rejects hostile Quick Capture save-and-open payloads with the same no-mutation contract as save", async () => {
+    const runtime = await createRuntime({
+      metadataIds: createMetadataIds(4),
+      pageIds: ["unexpected-inbox"],
+    });
+
+    for (const { input, label } of createInvalidQuickCaptureSavePayloads()) {
+      const before = snapshotRuntimeState(runtime);
+
+      await expect(
+        runtime.commands.execute(quickCaptureSaveAndOpenCommandId, input),
         label,
       ).rejects.toThrow();
       expect(snapshotRuntimeState(runtime), label).toStrictEqual(before);
@@ -641,6 +612,172 @@ describe("Quick Capture and Search plugins", () => {
     });
   });
 
+  it("rejects hostile Search query payloads without mutating pages, metadata, events, or filters", async () => {
+    const runtime = await createRuntime();
+
+    createSourcePage(runtime, "Needle source", [
+      { blockId: "needle-source", text: "needle remains searchable" },
+    ]);
+
+    const invalidPayloads: Array<{ input: unknown; label: string }> = [
+      { input: undefined, label: "undefined payload" },
+      { input: null, label: "null payload" },
+      { input: "needle", label: "non-object payload" },
+      { input: [], label: "array payload" },
+      { input: {}, label: "empty payload" },
+      { input: { query: 1 }, label: "number query" },
+      { input: { query: false }, label: "boolean query" },
+      { input: { query: { text: "needle" } }, label: "object query" },
+      {
+        input: { query: "x".repeat(maxSearchQueryLength + 1) },
+        label: "oversized query",
+      },
+      {
+        input: { query: "needle", target: "page-1" },
+        label: "target field",
+      },
+      {
+        input: { query: "needle", targetPageId: "page-1" },
+        label: "targetPageId field",
+      },
+      {
+        input: { query: "needle", path: "/tmp/search.md" },
+        label: "path field",
+      },
+      {
+        input: { query: "needle", title: "Caller title" },
+        label: "title field",
+      },
+      {
+        input: { pluginId: "task", query: "needle" },
+        label: "pluginId spoof",
+      },
+      {
+        input: { query: "needle", sourcePluginId: "task" },
+        label: "sourcePluginId spoof",
+      },
+      {
+        input: createAccessorFieldPayload("query", "needle"),
+        label: "accessor-backed query",
+      },
+      {
+        input: createSymbolExtraPayload({ query: "needle" }),
+        label: "symbol-keyed extra",
+      },
+      {
+        input: createPrototypeCarriedPayload({ query: "needle" }),
+        label: "prototype-carried query",
+      },
+      {
+        input: createNonEnumerableFieldPayload({ query: "needle" }, "query"),
+        label: "non-enumerable query",
+      },
+      {
+        input: createNonEnumerableExtraPayload({ query: "needle" }),
+        label: "non-enumerable extra",
+      },
+      {
+        input: { limit: 0, query: "needle" },
+        label: "zero limit",
+      },
+      {
+        input: { limit: -1, query: "needle" },
+        label: "negative limit",
+      },
+      {
+        input: { limit: 1.5, query: "needle" },
+        label: "fractional limit",
+      },
+      {
+        input: { limit: Number.POSITIVE_INFINITY, query: "needle" },
+        label: "infinite limit",
+      },
+      {
+        input: { limit: "1", query: "needle" },
+        label: "string limit",
+      },
+    ];
+
+    for (const { input, label } of invalidPayloads) {
+      const before = snapshotRuntimeState(runtime);
+
+      await expect(
+        runtime.commands.execute(searchCommandId, input),
+        label,
+      ).rejects.toThrow();
+      expect(snapshotRuntimeState(runtime), label).toStrictEqual(before);
+    }
+  });
+
+  it("caps Search result titles and does not leak matches beyond scanned page or body limits", async () => {
+    const titleRuntime = await createRuntime();
+    const longTitlePage = createSourcePage(
+      titleRuntime,
+      "Long title ".repeat(40),
+      [{ blockId: "title-cap-body", text: "needle inside capped title result" }],
+    );
+
+    const titleResult = await executeSearchQuery(titleRuntime, {
+      query: "needle",
+    });
+    const longTitleResult = titleResult.results.find(
+      (item) => item.pageId === longTitlePage.id,
+    );
+
+    expect(longTitleResult).toBeDefined();
+    if (longTitleResult === undefined) {
+      throw new Error("Expected capped title search result");
+    }
+    expect(longTitleResult?.title.length).toBeLessThanOrEqual(
+      maxSearchTitleLength,
+    );
+    expect(longTitleResult.title).toBe(
+      longTitlePage.title.slice(0, maxSearchTitleLength),
+    );
+    expectNoFullBodyInSearchResult(longTitleResult);
+
+    const bodyRuntime = await createRuntime();
+
+    createSourcePage(bodyRuntime, "Body cap page", [
+      {
+        blockId: "body-cap-line",
+        text: `${"a".repeat(maxScannedBodyLength)}hidden-body-needle`,
+      },
+    ]);
+    await expect(
+      executeSearchQuery(bodyRuntime, { query: "hidden-body-needle" }),
+    ).resolves.toStrictEqual({
+      kind: searchResultsKind,
+      query: "hidden-body-needle",
+      results: [],
+    } satisfies SearchResultsData);
+
+    const pageRuntime = await createRuntime();
+
+    for (const index of Array.from(
+      { length: maxScannedPages },
+      (_value, item) => item + 1,
+    )) {
+      createSourcePage(pageRuntime, `Scanned page ${index}`, [
+        { blockId: `scanned-line-${index}`, text: "ordinary searchable text" },
+      ]);
+    }
+    const beyondScanCap = createSourcePage(pageRuntime, "Beyond scan cap", [
+      { blockId: "beyond-scan-cap", text: "hidden-page-needle" },
+    ]);
+
+    await expect(
+      executeSearchQuery(pageRuntime, { query: "hidden-page-needle" }),
+    ).resolves.toStrictEqual({
+      kind: searchResultsKind,
+      query: "hidden-page-needle",
+      results: [],
+    } satisfies SearchResultsData);
+    expect(pageRuntime.pages.get(beyondScanCap.id)).toStrictEqual(
+      beyondScanCap,
+    );
+  });
+
   it("renders unsafe Search result titles and snippets as inert accessible list items", async () => {
     const runtime = await createRuntime();
     const SearchResultsView = getSearchResultsViewComponent(runtime);
@@ -670,6 +807,43 @@ describe("Quick Capture and Search plugins", () => {
     expect(item).toHaveTextContent("<script>alert('x')</script>");
     expect(item).toHaveTextContent("javascript:alert(1)");
     expectNoDangerousDom();
+  });
+
+  it("exposes a status summary for non-empty and empty Search results", async () => {
+    const runtime = await createRuntime();
+    const SearchResultsView = getSearchResultsViewComponent(runtime);
+    const { rerender } = render(
+      createElement(SearchResultsView, {
+        data: {
+          kind: searchResultsKind,
+          query: "needle",
+          results: [
+            {
+              matchedFields: ["body"],
+              pageId: "needle-page",
+              snippet: "needle in a bounded snippet",
+              title: "Needle page",
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(/1 result/i);
+
+    rerender(
+      createElement(SearchResultsView, {
+        data: {
+          kind: searchResultsKind,
+          query: "missing",
+          results: [],
+        },
+      }),
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /no results|0 results/i,
+    );
   });
 
   it("keeps Quick Capture and Search isolated from raw stores, sibling internals, HTML execution sinks, and package/native diffs", async () => {
@@ -703,6 +877,12 @@ describe("Quick Capture and Search plugins", () => {
     )) {
       expect(source, `${filePath}: raw store/runtime/native import`).not.toMatch(
         /@tauri-apps|\bNativeBridge\b|createTauriNativeBridge|\bPluginHost\b|\buseRuntime\b|runtime-context|from\s+["'][^"']*(?:core\/(?:stores|registries|runtime|native)|plugin-host|bootstrap)["']/u,
+      );
+      expect(source, `${filePath}: raw core factory import`).not.toMatch(
+        /import\s+(?:type\s+)?\{[^}]*\b(?:createCoreStores|createCoreRegistries|createCoreServices)\b[^}]*\}\s+from\s+["']\.\.\/\.\.\/core["']/su,
+      );
+      expect(source, `${filePath}: root core namespace import`).not.toMatch(
+        /import\s+\*\s+as\s+\w+\s+from\s+["']\.\.\/\.\.\/core["']/u,
       );
       expect(source, `${filePath}: sibling plugin internals`).not.toMatch(
         /from\s+["'][^"']*(?:plugins\/(?:task|tag)|\.\.\/(?:task|tag)(?:\/|["']))/u,
@@ -936,6 +1116,14 @@ function getSearchResultsViewComponent(
   return view.component;
 }
 
+function getQuickCaptureModalViewComponent(runtime: AppRuntime): ComponentType {
+  const view = runtime.registries.views.get(
+    "quick-capture.modal",
+  ) as ViewDefinition<Record<string, never>>;
+
+  return view.component;
+}
+
 function getBuiltInPlugin(pluginId: string): (typeof BUILT_IN_PLUGINS)[number] {
   const plugin = BUILT_IN_PLUGINS.find(
     (candidate) => candidate.manifest.id === pluginId,
@@ -1001,13 +1189,93 @@ function snapshotRuntimeState(runtime: AppRuntime): RuntimeSnapshot {
   };
 }
 
+function createInvalidQuickCaptureSavePayloads(): Array<{
+  input: unknown;
+  label: string;
+}> {
+  return [
+    { input: undefined, label: "undefined payload" },
+    { input: null, label: "null payload" },
+    { input: {}, label: "empty payload" },
+    { input: [], label: "array payload" },
+    { input: { markdown: "" }, label: "blank markdown" },
+    { input: { markdown: " \n\t " }, label: "whitespace markdown" },
+    {
+      input: { markdown: "x".repeat(maxCaptureMarkdownLength + 1) },
+      label: "oversized markdown",
+    },
+    {
+      input: { markdown: "Valid text", extra: true },
+      label: "extra field",
+    },
+    {
+      input: { markdown: "Valid text", pageId: "target-page" },
+      label: "target page field",
+    },
+    {
+      input: { markdown: "Valid text", targetPageId: "target-page" },
+      label: "targetPageId field",
+    },
+    {
+      input: { markdown: "Valid text", path: "/tmp/inbox.md" },
+      label: "path field",
+    },
+    {
+      input: { markdown: "Valid text", title: "Caller title" },
+      label: "title field",
+    },
+    {
+      input: { markdown: "Valid text", sourcePluginId: "task" },
+      label: "sourcePluginId spoof",
+    },
+    {
+      input: { markdown: "Valid text", pluginId: "task" },
+      label: "pluginId spoof",
+    },
+    {
+      input: createAccessorMarkdownPayload("Accessor markdown"),
+      label: "accessor-backed markdown",
+    },
+    {
+      input: createSymbolExtraPayload({ markdown: "Symbol extra" }),
+      label: "symbol-keyed extra",
+    },
+    {
+      input: createNonEnumerableExtraPayload({
+        markdown: "Non-enumerable extra",
+      }),
+      label: "non-enumerable extra",
+    },
+    {
+      input: createNonEnumerableFieldPayload(
+        { markdown: "Hidden markdown" },
+        "markdown",
+      ),
+      label: "non-enumerable markdown",
+    },
+    {
+      input: createPrototypeCarriedPayload({
+        markdown: "Prototype markdown",
+      }),
+      label: "prototype-carried markdown",
+    },
+  ];
+}
+
 function createAccessorMarkdownPayload(markdown: string): Record<string, unknown> {
+  return createAccessorFieldPayload("markdown", markdown);
+}
+
+function createAccessorFieldPayload(
+  field: string,
+  value: unknown,
+): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
 
-  Object.defineProperty(payload, "markdown", {
+  Object.defineProperty(payload, field, {
     enumerable: true,
     get() {
-      return markdown;
+      return value;
     },
   });
 
