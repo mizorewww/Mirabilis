@@ -64,6 +64,17 @@ type SafeViewData = {
   title: string;
 };
 
+type CounterSlotProps = {
+  count: number;
+  onIncrement: () => void;
+};
+
+type ModelSlotProps = {
+  model: {
+    label: string;
+  };
+};
+
 type CapturedProps = Record<string, unknown>;
 
 type SourceFile = {
@@ -248,7 +259,7 @@ describe("ViewHost", () => {
         });
       }
 
-      const rendered = render(
+      const { unmount } = render(
         <ViewHost
           registry={registry}
           viewId="safe.view"
@@ -277,7 +288,7 @@ describe("ViewHost", () => {
       expect(document.body).not.toHaveTextContent("SQL");
       expect(document.body).not.toHaveTextContent("/Users/alice/private.md");
       expect(component).not.toHaveBeenCalled();
-      rendered.unmount();
+      unmount();
     }
   });
 
@@ -482,11 +493,11 @@ describe("SlotHost", () => {
     const user = userEvent.setup();
     const registry = createInMemorySlotRegistry();
 
-    registry.register<{ count: number; onIncrement: () => void }>({
+    registry.register<CounterSlotProps>({
       id: "counter",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: ({ count, onIncrement }) => (
+      component: ({ count, onIncrement }: CounterSlotProps) => (
         <section role="region" aria-label="Counter contribution">
           <p role="status" aria-label="Counter value">
             Count {count}
@@ -532,12 +543,12 @@ describe("SlotHost", () => {
     const registry = createInMemorySlotRegistry();
     const callerModel = { label: "Original label" };
 
-    registry.register<{ model: { label: string } }>({
+    registry.register<ModelSlotProps>({
       id: "mutator",
       pluginId: "safe-plugin",
       slot: safeSlotName,
       order: 0,
-      component: (props) => {
+      component: (props: ModelSlotProps) => {
         try {
           props.model.label = "Tampered label";
         } catch {
@@ -547,12 +558,12 @@ describe("SlotHost", () => {
         return <p>Mutator rendered</p>;
       },
     });
-    registry.register<{ model: { label: string } }>({
+    registry.register<ModelSlotProps>({
       id: "observer",
       pluginId: "safe-plugin",
       slot: safeSlotName,
       order: 1,
-      component: ({ model }) => (
+      component: ({ model }: ModelSlotProps) => (
         <p role="status" aria-label="Observed slot data">
           {model.label}
         </p>
@@ -581,20 +592,22 @@ describe("SlotHost", () => {
     const fullRuntime = createUnsafeFullRuntime();
     let observedRuntime: unknown;
 
+    function RuntimeProbeContribution() {
+      observedRuntime = useRuntime();
+      const runtime = observedRuntime as { app: AppRuntimeInfo };
+
+      return (
+        <p role="status" aria-label="Public runtime probe">
+          {runtime.app.version}
+        </p>
+      );
+    }
+
     registry.register({
       id: "runtime.probe",
       pluginId: "safe-plugin",
       slot: safeSlotName,
-      component: () => {
-        observedRuntime = useRuntime();
-        const runtime = observedRuntime as { app: AppRuntimeInfo };
-
-        return (
-          <p role="status" aria-label="Public runtime probe">
-            {runtime.app.version}
-          </p>
-        );
-      },
+      component: RuntimeProbeContribution,
     });
 
     render(
