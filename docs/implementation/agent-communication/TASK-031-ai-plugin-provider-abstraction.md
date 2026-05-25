@@ -150,3 +150,32 @@
   - static guards for Core isolation, sibling/private imports, execution/rendering/storage/network/native/package sinks, and no package/native/Tauri/Rust/schema/capability diffs.
 - Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
 - Parent next action: wait for Noether the 2nd, validate the expected red signal, and commit the test-only patch.
+
+## Test Writer Outcome
+
+- Noether the 2nd (`test_writer`) added `src/test/ai-plugin-provider-abstraction.test.tsx`.
+- Coverage added:
+  - AI built-in registration with canonical command, view, metadata, event, settings, and provider descriptors.
+  - Stale underscore id absence.
+  - Real Command Registry execution path for AI commands.
+  - Fake provider/settings request shaping into Responses-style provider requests with `gpt-5.5`, `store: false`, top-level `instructions` / `input`, and `text.format`.
+  - Exact bounded command DTO validation, forbidden secret/provider override fields, and no store mutations.
+  - Unconfigured provider and provider failure redaction.
+  - Malformed/oversized/wrong-kind/injection-like provider output fail-closed behavior.
+  - Inert accessible `ai.suggestion-panel` and `ai.review-panel` rendering.
+  - Static guards for Core isolation, sibling/private imports, HTML/code execution sinks, storage/network/native/package sinks, native surface diffs, and real-looking secrets.
+- Parent red validation:
+  - `bun run test:frontend -- src/test/ai-plugin-provider-abstraction.test.tsx` failed as expected with 8 failed / 1 passed.
+  - Failure symptoms: missing `ai` built-in registration, missing `src/plugins/ai/test-support`, missing `ai.suggestion-panel`, and missing `src/plugins/ai/index.ts`.
+- Parent static validation passed:
+  - `bun run typecheck`.
+  - `./node_modules/.bin/eslint src/test/ai-plugin-provider-abstraction.test.tsx --max-warnings=0`.
+  - `git diff --check`.
+  - `.skip/.only` scan found no matches.
+  - Changed-file guard showed only `src/test/ai-plugin-provider-abstraction.test.tsx`.
+  - Package/native/Tauri/Rust/schema/capability diff guard was empty.
+- Test commit: `fd2c9c8 Noether(test)(Implement AI Plugin provider abstraction): add ai provider acceptance tests`; post-commit auto-push succeeded.
+
+## Current Next Action
+
+- Commit red validation record, then delegate minimum production implementation to `implementer`.
