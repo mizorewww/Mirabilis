@@ -155,3 +155,40 @@ type ActiveRoute =
 - Parent decision:
   - keep the red tests as the new review-fix baseline;
   - delegate production fixes to Herschel (`implementer`) with write scope focused on `src/App.tsx` and no package/native/Tauri/Rust/release changes.
+
+## Review-Fix Implementation Outcome
+
+- Herschel (`implementer`) fixed the TASK-038 review regressions in commit `d58c236`.
+- Changed production files:
+  - `src/App.tsx`.
+- Delivered fixes:
+  - saved-filter views now receive `{ routeToken, title }` DTOs instead of real Markdown page IDs;
+  - the Saved Filters Drawer excludes only primary filter IDs and no longer suppresses public filters such as `#today` by name substring;
+  - saved-filter routes verify that the target view is available before executing filters or showing empty-state slots;
+  - metadata owner reservations are collected from all plugin manifests exposed by the runtime instead of only active plugins;
+  - Recent pages no longer hide user pages whose titles match primary route labels.
+- Parent validation after Herschel:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` passed with 3 files / 33 tests.
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx` passed with 5 files / 86 tests.
+  - `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Parent decision:
+  - accept `d58c236`;
+  - run re-review agents for correctness, security, test quality, deprecation/API, changed-path exploration, and docs sync;
+  - carry Descartes' M9 UI roadmap split into TASK-038 docs sync and TASK-039 kickoff.
+
+## M9 Remaining UI Roadmap Split
+
+- Descartes (`planner`) completed a read-only split of the remaining M9 UI work.
+- TASK-039 remains next after TASK-038 closes: mount current-page metadata, timer, and timeline slots with MUI surfaces and page-scoped slot/command props.
+- TASK-040 should add the command palette and Quick Capture dialog using MUI dialogs and realistic click/type/keyboard tests.
+- TASK-041 should add a search overlay and result route using bounded result DTOs.
+- TASK-042 should add Calendar and Reports routes with explicit data projections.
+- TASK-043 should add ML and AI context panels without provider secrets, live network calls, or raw workspace dumps.
+- TASK-044 should add Settings and Sync placeholders without accepting or persisting credentials.
+- TASK-045 should polish responsive state and accessibility without adding new product behavior.
+- Descartes' P1 docs-design gaps to consider during closeout or kickoff:
+  - update TASK-038 delivered/deferred route model in product/testing/task-index/progress docs;
+  - define TASK-039 metadata-header versus SlotHost boundaries before tests;
+  - define TASK-040 executable command payload policy before tests;
+  - define TASK-042 first Reports aggregation before tests;
+  - define TASK-045 matchMedia/responsive testing strategy before tests.

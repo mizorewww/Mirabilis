@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 06:21 CST - TASK-038 review fixes committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Implementation fix: Herschel updated `src/App.tsx` in commit `d58c236`.
+- Fixes: saved-filter views receive opaque route-token DTOs instead of raw page IDs; public saved filters such as `#today` are no longer hidden by primary-route name collisions; missing saved-filter views render generic unavailable states before empty-state slots; metadata owner reservations remain closed for inactive plugin namespaces; user pages titled like primary routes remain available in Recent pages.
+- Parent validation: focused TASK-038 command passed with 3 files / 33 tests; adjacent suite passed with 5 files / 86 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- M9 UI split: Descartes confirmed TASK-039 through TASK-045 remain unfinished after TASK-038, covering metadata/timer/timeline slots, command palette and Quick Capture dialog, search overlay/results, calendar/reporting projections, ML/AI panels, settings/sync placeholders, and responsive/accessibility polish.
+- Next action: run re-review agents, fix any P0/P1, sync TASK-038 docs, run branch gate, merge to `master`, then continue to TASK-039.
+
 ### 2026-05-26 06:15 CST - TASK-038 review regressions committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
