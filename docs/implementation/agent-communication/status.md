@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:02 CST.
+Last updated: 2026-05-25 11:03 CST.
 
 ## Current Task
 
@@ -8,11 +8,16 @@ Last updated: 2026-05-25 11:02 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 implementation committed; review handoff pending.
+- Current phase: TASK-028 review wave active.
 
 ## Active Agents
 
-- None currently active. Next agents should be parallel review/docs agents for TASK-028.
+- Anscombe (`pr_explorer`) is active for changed-path mapping.
+- Ptolemy (`reviewer`) is active for correctness review.
+- Parfit (`deprecation_auditor`) is active for API/deprecation audit.
+- Tesla (`security_reviewer`) is active for trust-boundary review.
+- Arendt (`docs_researcher`) is active for current-doc guidance.
+- Epicurus (`test_quality_reviewer`) is active for test-quality review.
 
 ## Current TASK-028 State
 
@@ -158,5 +163,5 @@ Last updated: 2026-05-25 11:02 CST.
 
 ## Next Actions
 
-1. Spawn parallel review agents: `pr_explorer`, `reviewer`, `deprecation_auditor`, `security_reviewer`, `docs_researcher`, and `test_quality_reviewer`.
-2. Record findings, then fix or delegate fixes for P0/P1 issues before docs sync and final gate.
+1. Wait for active review agents and record findings.
+2. Fix or delegate fixes for P0/P1 issues before docs sync and final gate.

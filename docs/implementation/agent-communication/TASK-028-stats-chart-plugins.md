@@ -145,4 +145,11 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
   - Native/package/Tauri/Rust/schema diff guard was empty.
-- Parent next action: spawn parallel review/docs agents and address P0/P1 findings before docs sync and the final local gate.
+- Review wave started at 2026-05-25 11:03 CST:
+  - Anscombe (`pr_explorer`) for changed-path mapping.
+  - Ptolemy (`reviewer`) for correctness review.
+  - Parfit (`deprecation_auditor`) for API/deprecation audit.
+  - Tesla (`security_reviewer`) for trust-boundary review.
+  - Arendt (`docs_researcher`) for current-doc guidance.
+  - Epicurus (`test_quality_reviewer`) for test-quality review.
+- Parent next action: wait for review findings and address P0/P1 findings before docs sync and the final local gate.
