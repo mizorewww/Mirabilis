@@ -128,4 +128,18 @@
 
 ## Current Next Action
 
-- Commit this test outcome record, then delegate minimum production implementation to `implementer`.
+- Wait for Einstein the 2nd (`implementer`) to complete the minimum production implementation, then validate focused Sync tests plus type/lint/static guards.
+
+## Implementation Handoff
+
+- Einstein the 2nd (`implementer`) started at 2026-05-25 16:43 CST.
+- Scope: production code only in `src/bootstrap/built-in-plugins.ts` and `src/plugins/sync/**`.
+- Required implementation:
+  - built-in `sync` plugin registration with no commands, views, settings panels, slots, indexers, algorithms, or mobile toolbar items;
+  - exported syncable unit descriptors for Markdown Page, Metadata, Event, Filter, and Plugin Settings;
+  - pure JSON-safe serializer functions that snapshot caller-provided DTOs and reject unsafe values without reading accessors;
+  - plugin settings unset-vs-JSON-null distinction and reserved-key rejection without enabling settings persistence, secrets, auth, or remote endpoint configuration;
+  - rebuildable local plugin-index policy only, not a durable sync payload;
+  - structured conflict policy and resolver for mutable manual resolution and event append-only union/dedupe/same-id conflict semantics.
+- Constraints: no tests, docs, progress ledger, package/native/Tauri/Rust/schema/capability files, network/native transport, workers/background jobs, remote endpoints, runtime store reads, workspace enumeration, sibling plugin internals, or raw Core store/runtime/native bridge access; no commit, merge, or push.
+- Parent next action: wait for Einstein the 2nd, validate, and commit only if checks are green.

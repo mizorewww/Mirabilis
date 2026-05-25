@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 16:39 CST.
+Last updated: 2026-05-25 16:43 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 16:39 CST.
 - Branch: `feat/task-032-sync-plugin-skeleton`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-032 red tests committed; preparing implementation handoff.
+- Current phase: TASK-032 implementation delegated; waiting for production patch.
 
 ## Active Agents
 
-- None.
+- Einstein the 2nd (`implementer`) is writing the minimum production code for TASK-032 in the allowed Sync Plugin files only.
 
 ## Current TASK-032 State
 
@@ -68,7 +68,10 @@ Last updated: 2026-05-25 16:39 CST.
   - Parent red validation: focused TASK-032 tests failed as expected with 6 failed / 1 passed. Failure symptoms: `sync` is missing from `BUILT_IN_PLUGINS`, and `src/plugins/sync` cannot be imported.
   - Parent static validation passed: `bun run typecheck`, focused ESLint, `git diff --check`, `.skip/.only` scan, tests-only changed-file guard, and package/native/Tauri/Rust/schema/capability diff guard.
   - Test commit: `a0c7ea6 Sartre(test)(Implement Sync Plugin skeleton): add sync skeleton acceptance tests`; post-commit auto-push succeeded.
-- Next action: commit this test outcome record, then delegate production implementation to `implementer`.
+- Implementation delegated:
+  - Einstein the 2nd (`implementer`) should add the built-in `sync` plugin registration, syncable unit descriptors/serializers, rebuildable index policy, and conflict resolver/policy.
+  - Scope: production code only in `src/bootstrap/built-in-plugins.ts` and `src/plugins/sync/**`; no tests, docs, progress, package/native/Tauri/Rust/schema/capability edits; no commit, merge, or push.
+- Next action: wait for Einstein the 2nd, validate focused Sync tests plus type/lint/static guards, then commit the implementation if green.
 
 ## Current TASK-031 State
 
