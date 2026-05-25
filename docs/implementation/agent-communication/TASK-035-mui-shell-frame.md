@@ -50,7 +50,7 @@
 
 ## Current Next Action
 
-- Finish Nash's docs-only review-fix findings, run `git diff --check`, and return to TASK-035 review/final closeout. Do not edit production code, tests, package files, lockfiles, commits, merges, or pushes for this docs-fix pass.
+- Commit TASK-035 closeout, merge `feat/task-035-mui-shell-frame` to `master`, run merge-result validation, and continue to TASK-036.
 
 ## Pre-Test Guidance Outcomes
 
@@ -116,3 +116,24 @@
 - P2: `docs/implementation/task-index.md` needs a concise delivered/deferred note for TASK-035: MUI quartet, `ThemeProvider`/`CssBaseline`, `AppBar`/`Drawer`/`main` shell, placeholder Home/Inbox/Today/All Tasks/Reports routes, top-bar placeholder tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
 - P2: `docs/testing/strategy.md` needs TASK-035 guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event shell interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
 - Parent decision: accept Nash's findings and perform a docs-only fix in the allowed documentation files, then validate with `git diff --check`.
+
+## Review Fixes And Closeout
+
+- Carver (`test_writer`) closed the test-quality/security package-boundary findings by:
+  - adding user-event coverage for drawer hide/restore;
+  - adding user-event coverage for Command/Search/Quick Capture/Settings action state and visible status;
+  - tightening placeholder assertions;
+  - validating the exact reviewed TASK-035 Bun lock package graph through parsed lockfile sections and package-entry fingerprints.
+- Peirce (`doc_writer`) closed Nash's docs-sync findings by updating the progress ledger, live status, TASK-035 communication, product UI design status note, TASK-035 task-index delivered/deferred note, and testing strategy guidance.
+- Plato (`test_writer`) closed the final test-quality P2 by proving Command can be reactivated from an inactive state.
+- Narrow re-reviews:
+  - Dewey (`doc_writer`) found no remaining docs-sync findings.
+  - Socrates (`security_reviewer`) found no remaining package/lock/native/runtime boundary findings.
+  - Dirac (`release_checker`) found no P0/P1 readiness blockers and confirmed `check:full` is not required for TASK-035.
+  - Gauss (`test_quality_reviewer`) found no P0/P1 blockers before Plato's final P2 test hardening.
+- Parent final validation:
+  - `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 22 tests.
+  - `bun run typecheck`, `bun run lint`, `git diff --check`, and `bun run build` passed.
+  - `bun run check:quick` passed with 39 frontend test files / 599 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted P2: `bun run build` emits the Vite/Rollup warning that one generated JavaScript chunk is larger than 500 kB after adding MUI. This is deferred until real route/view mounting and should use current Vite 7 guidance if it becomes actionable.
+- Parent decision: TASK-035 is complete and ready to merge into `master`.

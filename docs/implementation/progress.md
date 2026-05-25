@@ -78,7 +78,7 @@ Status markers:
 ## Milestone M9: MUI user-visible app shell and workspace
 
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
-- [~] TASK-035: Add MUI Substrate And First Shell Frame
+- [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [ ] TASK-036: Add Generic ViewHost And SlotHost
 - [ ] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
@@ -93,6 +93,19 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 01:57 CST - TASK-035 completed and ready to merge
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Delivered: reviewed MUI runtime dependencies through Bun (`@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`); MUI `ThemeProvider` / `CssBaseline`; dense app shell with named `banner`, workspace `navigation`, central `main`, top `AppBar`, left `Drawer`, placeholder Home/Inbox/Today/All Tasks/Reports route regions, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Tests and review fixes: Boyle added failing shell/package/native-guard tests first; Turing implemented the MUI shell; Carver tightened realistic shell interaction and exact reviewed `bun.lock` graph guards; Peirce synchronized docs; Plato added final coverage proving Command can be reactivated from an inactive state.
+- Boundary scope: loading and startup failure states remain visible and redacted; `useRuntime()` remains the public copied/frozen `{ app }` facade; App Shell reads only public app version plus local UI state; no trusted full-runtime channel, business plugin import, IPC, Tauri/native, Rust, capability, permission, schema, packaging, or release behavior changed.
+- Validation: `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` passed with 3 files / 22 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and `bun run build` passed; final `bun run check:quick` passed with 39 frontend test files / 599 tests, Rust fmt, Rust clippy, and Rust tests.
+- Review status: PR scope, correctness, deprecation/API, security, docs/current-guidance, test-quality, docs-sync, and release-readiness reviews found no remaining P0/P1 blockers. P2 bundle-size warning is accepted and deferred.
+- Build note: `bun run build` succeeds but emits the Vite/Rollup warning that the generated JavaScript chunk is larger than 500 kB after adding MUI. Later route/view mounting should track code splitting with current Vite 7 guidance rather than old Rollup-first assumptions.
+- Commits: `1856a4e`, `323365d`, `71999fa`, `b9cb0e7`, `26462a3`, `695ec5c`, `291adb0`, and `2889f84`.
+- Merge status: ready to merge into `master`; merge-result validation will run after merge.
 
 ### 2026-05-26 01:47 CST - TASK-035 implementation validation and review pending
 
