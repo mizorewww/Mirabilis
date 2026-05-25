@@ -225,6 +225,10 @@ function findBusinessBehaviorPatterns(contents: string): string[] {
       /\b(?:Task|Habit|Timer|Calendar|Editor)(?:Store|Service|Repository|Controller|Manager)\b/,
       "business state/service owner",
     ],
+    [
+      /\bMarkdownPageEditor\b/,
+      "direct Markdown editor component reference",
+    ],
   ]);
 
   return [...patterns.entries()]
@@ -266,6 +270,14 @@ function findForbiddenAppShellImport(moduleSpecifier: string): string | undefine
     ],
     [
       /(?:^|\/)plugins\/(?:task|tasks|habit|habits|timer|timers|calendar|calendars|editor)(?:$|[-_/])/,
+      "business plugin implementation",
+    ],
+    [
+      /(?:^|\/)plugins\/markdown-editor(?:$|\/)/,
+      "Markdown editor plugin implementation",
+    ],
+    [
+      /(?:^|\/)plugins\/(?!index(?:$|\.|\/))[^"']+/,
       "business plugin implementation",
     ],
     [
