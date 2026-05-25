@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 10:18 CST.
+Last updated: 2026-05-25 10:19 CST.
 
 ## Current Task
 
@@ -8,11 +8,17 @@ Last updated: 2026-05-25 10:18 CST.
 - Branch: `feat/task-027-habit-heatmap-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-027 implementation committed; review handoff pending.
+- Current phase: TASK-027 review wave active.
 
 ## Active Agents
 
-- None currently active. Next agents should be parallel review/docs/release-readiness agents for TASK-027.
+- Bernoulli (`pr_explorer`) is active for changed-path mapping.
+- Hooke (`reviewer`) is active for correctness review.
+- Heisenberg (`deprecation_auditor`) is active for API/deprecation audit.
+- Feynman (`security_reviewer`) is active for trust-boundary review.
+- Beauvoir (`docs_researcher`) is active for current-doc guidance.
+- Fermat (`test_quality_reviewer`) is active for test-quality review.
+- `doc_writer` spawn is pending because the agent thread limit was reached; parent will retry after one active review agent closes.
 
 ## Current TASK-027 State
 
@@ -96,5 +102,6 @@ Last updated: 2026-05-25 10:18 CST.
 
 ## Next Actions
 
-1. Spawn parallel review agents: `pr_explorer`, `reviewer`, `deprecation_auditor`, `security_reviewer`, `docs_researcher`, `test_quality_reviewer`, and `doc_writer`.
-2. Record findings, then fix or delegate fixes for P0/P1 issues before the final local gate.
+1. Wait for active review agents and record findings.
+2. Retry `doc_writer` after a thread slot opens.
+3. Fix or delegate fixes for P0/P1 issues before the final local gate.

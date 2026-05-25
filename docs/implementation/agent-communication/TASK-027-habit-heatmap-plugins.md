@@ -135,4 +135,12 @@
   - `bun run lint` passed.
   - `git diff --check` passed.
   - Native/package/Tauri/Rust/schema diff guard was empty.
-- Parent next action: spawn parallel review/docs agents and address P0/P1 findings before the final local gate.
+- Review wave started at 2026-05-25 10:19 CST:
+  - Bernoulli (`pr_explorer`) for changed-path mapping.
+  - Hooke (`reviewer`) for correctness review.
+  - Heisenberg (`deprecation_auditor`) for API/deprecation audit.
+  - Feynman (`security_reviewer`) for trust-boundary review.
+  - Beauvoir (`docs_researcher`) for current-doc guidance.
+  - Fermat (`test_quality_reviewer`) for test-quality review.
+- `doc_writer` spawn is pending because the agent thread limit was reached; parent will retry after one active review agent closes.
+- Parent next action: wait for review findings, retry doc sync, and address P0/P1 findings before the final local gate.
