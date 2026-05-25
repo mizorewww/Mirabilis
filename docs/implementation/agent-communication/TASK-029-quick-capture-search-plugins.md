@@ -147,3 +147,11 @@
 
 - Delegate minimum production implementation to `implementer`.
 - Expected production scope: add built-in Quick Capture and Search plugins, register them through `BUILT_IN_PLUGINS`, satisfy focused tests, and keep package/native/Tauri/Rust/schema/capability surfaces unchanged.
+
+## Implementation Handoff
+
+- Schrodinger (`implementer`) started at 2026-05-25 12:22 CST.
+- Scope: production code only for the TASK-029 Quick Capture and Search baseline.
+- Expected changed files: Quick Capture/Search plugin files plus `src/bootstrap/built-in-plugins.ts`.
+- Constraints: do not edit tests, docs, progress, package/native/Tauri/Rust/schema/capability/generated-permission files; do not commit, merge, or push.
+- Parent next action: wait for Schrodinger, validate focused green checks, and commit implementation separately.
