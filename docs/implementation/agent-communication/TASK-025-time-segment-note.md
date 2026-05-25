@@ -417,4 +417,17 @@
 
 ## Current Next Action
 
-- Delegate `test_writer` to add a failing execute-only MetadataBar command executor regression before any production fix.
+## MetadataBar Execute-Only Fail-Closed Test Handoff
+
+- Lorentz (`test_writer`) started 2026-05-25 08:02 CST.
+- Scope: failing tests only, no production code.
+- Required coverage:
+  - MetadataBar is exercised with a command executor/facade that exposes only `execute()` and no descriptor lookup.
+  - An `alpha` metadata slot path attempts to execute a matching-prefix foreign command such as `alpha.foreign`.
+  - The execute-only facade must fail closed before dispatching the foreign command.
+  - Same-owner commands may also fail closed when descriptor ownership cannot be verified; the key security requirement is no prefix fallback.
+- Expected red signal: current MetadataBar fallback dispatches matching-prefix commands when `commands.get` is unavailable.
+
+## Current Next Action
+
+- Wait for Lorentz (`test_writer`) to finish, validate the red signal, commit tests, then delegate implementation.

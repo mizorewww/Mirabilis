@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 08:01 CST.
+Last updated: 2026-05-25 08:02 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 08:01 CST.
 - Branch: `feat/task-025-time-segment-note`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-025 MetadataBar narrow post-fix re-review found P1 execute-only fail-open; review-fix test handoff pending.
+- Current phase: TASK-025 MetadataBar execute-only fail-closed review-fix tests delegated to Lorentz (`test_writer`).
 
 ## Active Agents
 
-- None currently running. Next delegation is a `test_writer` regression for MetadataBar execute-only command executor fail-closed behavior.
+- Lorentz (`test_writer`) is adding a failing MetadataBar execute-only command executor regression for Noether/Dalton's P1. Scope is tests only; no production code, formal docs, commits, pushes, branch changes, or native/Tauri/package/Rust/schema changes.
 
 ## Completed Recent Task
 
@@ -152,7 +152,7 @@ Last updated: 2026-05-25 08:01 CST.
 
 ## Next Actions
 
-1. Delegate a failing regression test for MetadataBar execute-only command executor fail-closed behavior.
+1. Wait for Lorentz (`test_writer`) to finish MetadataBar execute-only fail-closed regression tests.
 2. Validate the red signal, commit tests, then delegate implementation.
 
 ## Current TASK-021 State
