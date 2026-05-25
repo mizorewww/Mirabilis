@@ -20,6 +20,8 @@ const appShellEntrypoints = [
   "src/shell",
   "src/providers",
 ];
+const providerEntrypoints = ["src/providers"];
+const pluginEntrypoints = ["src/plugins"];
 
 const tauriBoundaryFiles = [
   "src-tauri/tauri.conf.json",
@@ -97,6 +99,75 @@ describe("App Shell bootstrap boundary", () => {
         if (forbiddenBoundary !== undefined) {
           violations.push(
             `${path.relative(repoRoot, filePath)} -> ${moduleSpecifier}: ${forbiddenBoundary}`,
+          );
+        }
+      }
+    }
+
+    expect(violations).toStrictEqual([]);
+  });
+
+  it("keeps provider modules from exposing an importable raw runtime source context", async () => {
+    const providerFiles = await listExistingSourceFiles(providerEntrypoints);
+    const violations: string[] = [];
+
+    for (const filePath of providerFiles) {
+      const relativePath = toRepoRelativePath(filePath);
+      const contents = await readFile(filePath, "utf8");
+
+      violations.push(
+        ...findRawRuntimeProviderExposure(relativePath, contents).map(
+          (violation) => `${relativePath}: ${violation}`,
+        ),
+      );
+    }
+
+    expect(violations).toStrictEqual([]);
+  });
+
+  it("keeps RuntimeProvider from exposing raw runtime through render-prop children", async () => {
+    const runtimeProviderPath = path.join(
+      repoRoot,
+      "src",
+      "providers",
+      "RuntimeProvider.tsx",
+    );
+    const contents = await readFile(runtimeProviderPath, "utf8");
+
+    expect(
+      findRuntimeProviderRenderPropExposure(contents).map(
+        (violation) => `src/providers/RuntimeProvider.tsx: ${violation}`,
+      ),
+    ).toStrictEqual([]);
+  });
+
+  it("keeps App runtime initialization typed to the trusted AppRuntime contract", async () => {
+    const appPath = path.join(repoRoot, "src", "App.tsx");
+    const contents = await readFile(appPath, "utf8");
+
+    expect(
+      findBroadAppRuntimeInitializerContract(contents).map(
+        (violation) => `src/App.tsx: ${violation}`,
+      ),
+    ).toStrictEqual([]);
+  });
+
+  it("keeps plugin production modules from importing app-shell host internals", async () => {
+    const pluginFiles = await listExistingSourceFiles(pluginEntrypoints);
+    const violations: string[] = [];
+
+    for (const filePath of pluginFiles) {
+      const contents = await readFile(filePath, "utf8");
+
+      for (const moduleSpecifier of collectStaticModuleSpecifiers(contents)) {
+        const forbiddenImport = findForbiddenPluginShellImport(
+          filePath,
+          moduleSpecifier,
+        );
+
+        if (forbiddenImport !== undefined) {
+          violations.push(
+            `${toRepoRelativePath(filePath)} -> ${moduleSpecifier}: ${forbiddenImport}`,
           );
         }
       }
@@ -225,6 +296,10 @@ function findBusinessBehaviorPatterns(contents: string): string[] {
       /\b(?:Task|Habit|Timer|Calendar|Editor)(?:Store|Service|Repository|Controller|Manager)\b/,
       "business state/service owner",
     ],
+    [
+      /\bMarkdownPageEditor\b/,
+      "direct Markdown editor component reference",
+    ],
   ]);
 
   return [...patterns.entries()]
@@ -269,6 +344,14 @@ function findForbiddenAppShellImport(moduleSpecifier: string): string | undefine
       "business plugin implementation",
     ],
     [
+      /(?:^|\/)plugins\/markdown-editor(?:$|\/)/,
+      "Markdown editor plugin implementation",
+    ],
+    [
+      /(?:^|\/)plugins\/(?!index(?:$|\.|\/))[^"']+/,
+      "business plugin implementation",
+    ],
+    [
       /(?:^|\/)core\/(?:stores|services|commands|events|metadata|filters|views|slots)(?:$|\/)/,
       "Core owner module",
     ],
@@ -281,6 +364,129 @@ function findForbiddenAppShellImport(moduleSpecifier: string): string | undefine
   }
 
   return undefined;
+}
+
+function findRawRuntimeProviderExposure(
+  relativePath: string,
+  contents: string,
+): string[] {
+  const violations: string[] = [];
+
+  if (/^src\/providers\/runtime-source-context\.tsx?$/u.test(relativePath)) {
+    violations.push("raw runtime source context module is importable");
+  }
+
+  const forbiddenExports = new Map<RegExp, string>([
+    [
+      /\bexport\s+const\s+RuntimeSourceContext\b/u,
+      "exports raw RuntimeSourceContext",
+    ],
+    [
+      /\bexport\s+function\s+useRuntimeSource\b/u,
+      "exports raw useRuntimeSource hook",
+    ],
+    [
+      /\bexport\s*\{[^}]*\b(?:RuntimeSourceContext|useRuntimeSource)\b[^}]*\}/su,
+      "re-exports raw runtime source context or hook",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenExports) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findRuntimeProviderRenderPropExposure(contents: string): string[] {
+  const violations: string[] = [];
+  const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /\btype\s+RuntimeProviderChild\b[^=]*=\s*(?:[^;]*\|\s*)?\(\s*\(?\s*runtime\s*:\s*Runtime\b/su,
+      "RuntimeProviderChild accepts a runtime render-prop function",
+    ],
+    [
+      /\bchildren\s*:\s*RuntimeProviderChild\b/u,
+      "RuntimeProvider props expose render-prop children",
+    ],
+    [
+      /\bfunction\s+renderRuntimeChildren\b/u,
+      "renderRuntimeChildren helper can invoke children with raw runtime",
+    ],
+    [
+      /\brenderRuntimeChildren\s*\(\s*children\s*,\s*(?:runtime|state\.runtime)\s*\)/u,
+      "RuntimeProvider passes raw initialized runtime to children",
+    ],
+    [
+      /\btypeof\s+children\s*===\s*["']function["']\s*\?\s*children\s*\(\s*runtime\s*\)/su,
+      "RuntimeProvider invokes function children with raw runtime",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenPatterns) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findBroadAppRuntimeInitializerContract(contents: string): string[] {
+  const violations: string[] = [];
+  const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /\binitializeRuntime\s*\?:\s*RuntimeInitializer\s*<\s*RuntimeSource\s*>/u,
+      "App initializeRuntime prop accepts the broad RuntimeSource contract",
+    ],
+    [
+      /<RuntimeProvider\s*<\s*RuntimeSource\s*>/u,
+      "App narrows RuntimeProvider to RuntimeSource instead of trusted AppRuntime",
+    ],
+    [
+      /\bas\s+AppRuntime\b/u,
+      "App casts a broad runtime source back to AppRuntime",
+    ],
+  ]);
+
+  for (const [pattern, description] of forbiddenPatterns) {
+    if (pattern.test(contents)) {
+      violations.push(description);
+    }
+  }
+
+  return violations;
+}
+
+function findForbiddenPluginShellImport(
+  importerPath: string,
+  moduleSpecifier: string,
+): string | undefined {
+  const resolvedPath = resolveModuleSpecifier(importerPath, moduleSpecifier);
+
+  if (
+    resolvedPath === "src/shell" ||
+    resolvedPath.startsWith("src/shell/")
+  ) {
+    return "app-shell host internals";
+  }
+
+  return undefined;
+}
+
+function resolveModuleSpecifier(
+  importerPath: string,
+  moduleSpecifier: string,
+): string {
+  if (!moduleSpecifier.startsWith(".")) {
+    return moduleSpecifier.replace(/\\/gu, "/");
+  }
+
+  return path
+    .relative(repoRoot, path.resolve(path.dirname(importerPath), moduleSpecifier))
+    .replace(/\\/gu, "/");
 }
 
 function findBootstrapNativeExpansionPatterns(contents: string): string[] {
@@ -354,6 +560,10 @@ async function findForbiddenTask017AllowedNativeChange(
   }
 
   return undefined;
+}
+
+function toRepoRelativePath(filePath: string): string {
+  return path.relative(repoRoot, filePath).replace(/\\/gu, "/");
 }
 
 async function runGitLines(args: readonly string[]): Promise<string[]> {

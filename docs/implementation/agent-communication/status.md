@@ -1,19 +1,90 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 03:43 CST.
+Last updated: 2026-05-26 05:20 CST.
 
 ## Current Task
 
-- Task: TASK-036 - Add Generic ViewHost And SlotHost.
-- Branch: `feat/task-036-viewhost-slothost`.
+- Task: TASK-037 - Mount Home Workspace Editor.
+- Branch: `feat/task-037-home-workspace-editor`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-036 merged to `master`; TASK-037 selection pending.
+- Current phase: TASK-037 marked complete on branch; merge to `master` pending.
 
 ## Active Agents
 
-- None. TASK-036 agents completed.
-- Pending: start TASK-037 on a focused branch.
+- None. TASK-037 code, tests, docs, branch validation, and release readiness are complete on the feature branch.
+- No code, test, security, correctness, or docs agents are currently active.
+- Completed final re-review: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 findings after Huygens's `08dd1d5` fix.
+- Release readiness: Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required for this UI-only branch.
+- Pending: merge `feat/task-037-home-workspace-editor` into `master`, run merge-result validation, push `master`, then continue to TASK-038.
+
+## Current TASK-037 State
+
+- TASK-037 starts from `master` after TASK-036 merge-validation commit `bf87242`.
+- Branch: `feat/task-037-home-workspace-editor`.
+- Initial scope:
+  - replace only the Home placeholder with a real session Markdown workspace;
+  - create/select a single session Home Markdown Page when no page route is active;
+  - render registered `page.editor` through `ViewHost`;
+  - preserve typing, toolbar snippets, save, task-title open, and checkbox toggle flows;
+  - keep non-Home routes and top-bar tools as placeholders.
+- Pre-test guidance:
+  - planner/current-doc/security/deprecation agents agree TASK-037 needs a narrow trusted adapter rather than relaxing TASK-036 host boundaries;
+  - public `useRuntime()` remains the frozen `{ app }` facade;
+  - App Shell must not import `MarkdownPageEditor` or plugin private components;
+  - editor command/page facades must be exact allowlist, owner-scoped, current-page bounded wrappers;
+  - stale async insert/save/open/toggle completions must be ignored;
+  - no package/native/Tauri/Rust/IPC/capability/permission/release surface changes.
+- Parent decision: ask `test_writer` for failing RTL/user-event tests and static guards before implementation.
+- Test writer outcome:
+  - Epicurus (`test_writer`) added failing Home workspace editor acceptance tests and boundary guards in commit `35bda50`.
+  - Test coverage now drives the Home first screen as a real editable Markdown workspace, StrictMode-safe single session Home page creation/selection, registered `page.editor` rendering through `ViewHost`, no raw runtime/native/store/registry/command/page facade leaks, realistic user typing/clicking/save/task-open/checkbox-toggle flows, stale async toolbar insert protection, non-Home placeholder preservation, and no package/native/Tauri/IPC/capability/permission/release drift.
+  - Parent red validation failed as expected because the app still renders Home placeholders and no Markdown textbox or registered editor: 2 failed files / 6 passed, 8 failed / 104 passed for the focused aggregate command.
+  - `bun run typecheck` and `git diff --check` passed.
+- Parent decision: delegate implementation next, with the same narrow Home-only scope and TASK-036 host-boundary constraints.
+- Implementation delegation note:
+  - Noether (`implementer`) was assigned after the red baseline and progress commits.
+  - Parent waited, sent one concise status request, waited another window, and initially observed no worktree changes before closing Noether.
+  - Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
+  - Parent will treat those late edits as partial agent output and ask a replacement implementer to review, continue, or correct them instead of taking over production code.
+- Implementation outcome:
+  - Popper (`implementer`) reviewed the late Noether edits, completed the production implementation, and produced commit `11fd2a3`.
+  - Changed files: `src/App.tsx`, `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`, `src/providers/RuntimeProvider.tsx`, `src/providers/runtime-source-context.ts`, `src/shell/hosts/MarkdownWorkspaceBridge.tsx`, `src/shell/hosts/MarkdownWorkspaceBridgeContext.ts`, and `src/shell/hosts/index.ts`.
+  - Delivered a session Home Markdown Page, `ViewHost` rendering of the registered `markdown.page-editor`, a shell-internal current-page bounded workspace bridge, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, save status, Home navigation from task pages, and non-Home placeholder preservation.
+  - Parent validation passed: focused aggregate frontend tests with 8 files / 112 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
+- Parent decision: commit implementation accepted; run review agents next.
+- Initial review and review-fix outcome:
+  - Russell and Beauvoir found a P1 raw-runtime exposure through `RuntimeSourceContext` wrapping plugin-rendered descendants.
+  - Russell found a P1 hosted `pages.load` current-page scoping gap.
+  - Poincare and Beauvoir found a P1 stale task-open gap after switching away from Home.
+  - Beauvoir found a P2 plugin-to-shell dependency from `MarkdownPageEditor` importing shell host internals.
+  - Zeno added failing review regression tests in commit `1a8cb82` for raw runtime exposure, plugin-to-shell imports, non-current hosted page loads, and stale task-open after switching to Today.
+  - Tesla fixed the regressions in commit `2a232d8` by removing raw runtime source context, using a trusted `RuntimeProvider` render-prop path for shell-owned runtime access, moving the workspace bridge into providers, removing shell-host bridge modules/imports, scoping hosted page loads, and invalidating current-page generation on non-Home navigation.
+  - Parent validation after Tesla passed: review regression tests with 3 files / 53 tests, focused aggregate tests with 8 files / 116 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
+- Parent decision: run re-review and remaining review/doc/deprecation/test-quality agents before branch-level gate.
+- Second security review-fix outcome:
+  - Hume found remaining P1 issues after `2a232d8`: exported `RuntimeProvider` render-prop children exposed raw runtime, and hosted editors could self-authorize a foreign page by calling `bridge.openPage(foreignPageId)` before `pages.load(foreignPageId)`.
+  - Arendt found no P0/P1 and noted a P2 broad `RuntimeSource` initializer/cast issue in `App`.
+  - Lorentz added failing regression tests in commit `76f5634`.
+  - Hubble fixed the regressions in commit `fc3d11a` by removing `RuntimeProvider` render-prop support, narrowing `App` runtime initialization to `AppRuntime`, adding a shell-private `AppRuntimeBoundary`, removing the cast, gating hosted `openPage` to trusted command-returned page IDs, and handling hosted page load failures generically.
+  - Parent validation after Hubble passed: 2-file regression tests / 20 tests, 3-file review tests / 56 tests, focused aggregate / 119 tests, `bun run typecheck`, `bun run lint`, `git diff --check`, and no package/native/Tauri/IPC/capability/permission/release file diff.
+- Parent decision: accept `fc3d11a` and run security/correctness re-review again.
+- Third review regression and fix:
+  - Gibbs (`test_writer`) added delayed command-returned open regression coverage in commit `6a4063f`.
+  - The regression proves a hosted editor cannot use an old command-returned `pageId` to call `bridge.openPage(pageId)` after the user has left Home; Today must stay active and the returned page body must remain hidden.
+  - Huygens (`implementer`) fixed the regression in commit `08dd1d5` by binding command-open authorization to the command source page and current-page generation, and by making `bridge.openPage` consume the authorization only while that source page/generation remains current.
+  - Jason (`security_reviewer`) and Hooke (`reviewer`) final re-reviews found no remaining P0/P1/P2 findings.
+  - Raman (`doc_writer`) found P1 docs-sync gaps. This docs-only closeout updated formal docs, progress, and status before branch gate.
+- Current validation:
+  - Existing code validation recorded through the second review-fix round includes focused regression suites, the focused aggregate frontend suite, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+  - This docs-only pass ran `git diff --check`, which passed. No test suite is required unless later parent branch-gate work requests it.
+- Parent decision: keep TASK-037 `[~]` and unmerged until docs sync and branch gate / parent closeout are complete.
+- Branch validation and release readiness:
+  - Euler (`doc_writer`) completed docs sync in commit `122a0ae`.
+  - Parent branch validation passed: `bun run build` with the known MUI-era Vite chunk-size warning, and `bun run check:quick` with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
+  - Parfit (`release_checker`) found no P0/P1/P2 blockers, confirmed no package/native/Tauri/Rust/IPC/capability/permission/release drift, and confirmed `check:full` is not required.
+  - TASK-037 is now marked `[x]` in `docs/implementation/progress.md` on the branch.
+- Parent decision: merge TASK-037 into `master`, validate the merge result, push `master`, then continue to TASK-038.
 
 ## Current TASK-036 State
 
@@ -82,15 +153,15 @@ Last updated: 2026-05-26 03:43 CST.
 - Final review outcome:
   - Bacon (`reviewer`) found no P0/P1 and one P2: nested `ViewHost.props` prototype-key clone failures are stripped rather than fail closed.
   - Avicenna (`security_reviewer`) found no P0/P1/P2 and confirmed no package/native/Tauri/Rust/security surface drift. Residual risk: future `actions` callers must remain owner-scoped wrappers, not raw command/native handles.
-  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remains a TASK-037+ route/plugin mounting decision.
+  - Banach (`deprecation_auditor`) found no P0/P1 and one P2: lazy/Suspense remained a later route/plugin mounting decision. After TASK-037's Home editor mounting, this is still deferred to TASK-038+.
   - Linnaeus (`test_quality_reviewer`) found no P0/P1 and P2 gaps for SlotHost plugin-unavailable coverage, slot `when` mutation/capture isolation, and brittle static file-split coupling.
   - Erdos (`doc_writer`) found P1 docs-sync gaps in `docs/testing/strategy.md` and the TASK-036 communication doc, plus P2 closeout/status/product/task-index updates.
 - Docs-sync outcome:
   - `docs/testing/strategy.md` now records that `src/test/view-slot-hosts.test.tsx` covers ViewHost/SlotHost observable states, descriptor-backed `host.action` wrappers exercised through user-event, prototype-key fail-closed behavior, native/secret alias redaction, recursion budgets, proxy/trap fail-closed paths, and the no package/native/Tauri/Rust drift static guard.
-  - `docs/testing/strategy.md` also records that lazy/Suspense behavior plus real command and `pageFacade` adapters are deferred to TASK-037+.
+  - `docs/testing/strategy.md` also records that TASK-037 delivered the Home-scoped Markdown workspace bridge, while lazy/Suspense behavior, non-Home route data, actual slot placement, and broader command/page adapters remain TASK-038+.
   - The TASK-036 task communication doc records Kuhn's `5f73778` hardened tests, Laplace's `5c87e52` implementation, final review outcomes, and the remaining P2 decisions.
   - The progress ledger records final branch validation, final reviews, docs-sync completion, and the still-pending P2 test-hardening/disposition.
-  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036 while route/editor mounting, real adapters, lazy/Suspense, and actual slot placement remain TASK-037+.
+  - Product and task-index docs now state that generic `ViewHost` / `SlotHost` infrastructure is delivered by TASK-036, Home editor mounting and Home-scoped adapters are delivered by TASK-037, and lazy/Suspense plus remaining route/slot/dialog surfaces are TASK-038+ deferrals.
 - Final P2 hardening and release readiness:
   - Lagrange (`test_writer`) added coverage for nested `ViewHost.props` prototype-key fail-closed behavior, SlotHost plugin-unavailable skipping with visible siblings, and slot `when` mutation/capture isolation in commit `f2e8ed7`.
   - Goodall (`implementer`) updated `ViewHost` to fail closed for nested controlled-prop prototype-key clone failures in commit `114008d`.
@@ -103,7 +174,7 @@ Last updated: 2026-05-26 03:43 CST.
 
 - No remaining P0/P1 code, security, docs-sync, or release findings after commits `3187b10` and `114008d`.
 - Final P2 test-hardening items were closed by `f2e8ed7` and `114008d`.
-- Deferred P2 items: lazy/Suspense support belongs with TASK-037+ route/plugin mounting, and the static host file-split guard can be revisited during later refactors.
+- Deferred P2 items: lazy/Suspense support belongs with later route/plugin mounting after TASK-037, and the static host file-split guard can be revisited during later refactors.
 
 ## Current TASK-035 State
 
@@ -204,8 +275,9 @@ Last updated: 2026-05-26 03:43 CST.
 - TASK-034 is complete and merged on `master`.
 - TASK-035 is merged on `master`: baseline MUI substrate and first shell frame are implemented, reviewed, validated, and merge-result checked.
 - TASK-036 is merged on `master`: generic ViewHost/SlotHost tests, implementation, hardened boundary fixes, final P2 hardening, docs sync, branch validation, release readiness, merge-result validation, and push are complete.
-- TASK-037 through TASK-045 remain `[ ]` and cover Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- Next action: start TASK-037 - Mount Home Workspace Editor.
+- TASK-037 is complete on `feat/task-037-home-workspace-editor`: Home editor mounting, review-fix loops, delayed command-open regression coverage, Huygens's authorization fix, final Jason/Hooke security/correctness re-review, Euler docs sync, branch validation, and Parfit release readiness are complete. It is not merged yet.
+- TASK-038 through TASK-045 remain `[ ]` and cover sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: merge TASK-037 to `master`, validate, push, then continue TASK-038.
 
 ## Historical TASK-033 State
 

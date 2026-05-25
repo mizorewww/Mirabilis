@@ -1,28 +1,28 @@
 # User Interface Design
 
-This document defines the first complete Mirabilis UI design target. It is a product and architecture design document; status notes below distinguish implemented scaffold and generic host infrastructure from TASK-037+ design targets.
+This document defines the first complete Mirabilis UI design target. It is a product and architecture design document; status notes below distinguish implemented scaffold, generic host infrastructure, delivered Home editor mounting, and TASK-038+ design targets.
 
-Current M9 status: TASK-035 delivered the baseline MUI substrate and first shell frame: the reviewed MUI dependency quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools. TASK-036 delivered generic trusted `ViewHost` / `SlotHost` shell hosts for registry-owned views and slots. Route/editor mounting, real command and `pageFacade` adapters, lazy/Suspense behavior, actual slot placement, command/search/capture dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-037+ work.
+Current M9 status: TASK-035 delivered the baseline MUI substrate and first shell frame: the reviewed MUI dependency quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools. TASK-036 delivered generic trusted `ViewHost` / `SlotHost` shell hosts for registry-owned views and slots. TASK-037 delivered Home editor mounting: a session Home Markdown Page, registered `markdown.page-editor` / `page.editor` rendering through `ViewHost`, a provider-scoped Markdown workspace bridge, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, current-page/generation guards, and one-shot command-returned open authorization bound to the source page generation. Non-Home routes and top-bar tools remain placeholders. Sidebar/filter navigation, metadata/timer/timeline slot placement, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive polish, lazy/Suspense host behavior, `Portal` floating slots, and broader route data remain TASK-038+ work.
 
 ## Diagnosis And Current Gap
 
-TASK-001 through TASK-033 delivered the runtime substrate, built-in plugin behavior, persistence boundary, and local release gate. TASK-035 adds the first MUI shell scaffold, and TASK-036 adds generic registry-backed host infrastructure. The user-visible app still needs the full Markdown-first workspace described by the product docs.
+TASK-001 through TASK-033 delivered the runtime substrate, built-in plugin behavior, persistence boundary, and local release gate. TASK-035 adds the first MUI shell scaffold, TASK-036 adds generic registry-backed host infrastructure, and TASK-037 mounts the first real Home Markdown workspace. The user-visible app still needs the remaining route, slot, dialog, panel, and responsive surfaces described by the product docs.
 
 The gap is not a missing business feature in Core. The gap is composition:
 
-- App Shell now mounts a baseline product frame around the existing runtime and has generic trusted hosts for registry-backed views and slots, but it does not yet mount concrete routes, dialogs, or route data.
-- Existing plugin views and slots are mostly reusable pieces that still need route-specific DTO projections, command/page facade adapters, and concrete placement in the workspace.
+- App Shell now mounts a baseline product frame around the existing runtime, has generic trusted hosts for registry-backed views and slots, and mounts the Home editor through `ViewHost`. It does not yet mount concrete non-Home routes, dialogs, route data projections, or product slot regions.
+- Existing plugin views and slots are mostly reusable pieces. Home now has a provider-scoped Markdown workspace bridge with exact command/page adapters, but non-Home routes still need route-specific DTO projections, command/page facade adapters, and concrete placement in the workspace.
 - Deferred route surfaces, overlays, contextual panels, and responsive behavior need one MUI design system before production scaffolding.
 - UI tests must prove real typing, clicking, keyboard navigation, focus return, and visible outcomes from the user's perspective.
 
-The first implementation task after this design document was TASK-035: add the MUI substrate and first app shell frame. TASK-036 added the generic `ViewHost` / `SlotHost` boundary. TASK-037+ continue by mounting concrete workspace routes and slots.
+The first implementation task after this design document was TASK-035: add the MUI substrate and first app shell frame. TASK-036 added the generic `ViewHost` / `SlotHost` boundary. TASK-037 mounted the Home workspace editor through that boundary. TASK-038+ continue by adding navigation, slots, dialogs, non-Home routes, panels, and responsive polish.
 
 ## Unfinished UI And Workflow Inventory
 
 | Area | MUI UI framework now | Future native/backend/security |
 | --- | --- | --- |
 | App shell and workspace | Use `ThemeProvider`, `CssBaseline`, a dense `AppBar`, left `Drawer`, central `main`, optional right context panel, `ViewHost`, `SlotHost`, and `Portal` for floating slots. Replace startup-card composition with a workbench frame. | No native, Tauri, Rust, package-lock, capability, IPC, updater, or release packaging expansion unless a later task explicitly scopes it. |
-| Editor | Mount the existing Markdown editor through the registered `page.editor` view path inside the MUI workspace. Frame the editor with page title, metadata region, save/status controls, and page timeline slots as tasks land. | Rich editor, Tiptap/ProseMirror, filesystem Markdown import/export, full CommonMark round trip, save-time task/tag scan, and native file dialogs remain separate future work. |
+| Editor | TASK-037 mounts the existing Markdown editor through registered `markdown.page-editor` / `page.editor` inside the Home MUI workspace. The shell bridge is provider-scoped, current-page bounded, and exposes only exact command allowlist wrappers plus page load/save for the active Home/task page. Frame the editor with page title, metadata region, and page timeline slots as later tasks land. | Rich editor, Tiptap/ProseMirror, filesystem Markdown import/export, full CommonMark round trip, save-time task/tag scan, and native file dialogs remain separate future work. |
 | Navigation and filters | Use `Drawer`, `List`, `ListItemButton`, `Tabs` only where useful, and accessible route buttons for Home, Inbox, All Tasks, Today, recent pages, Calendar, Reports, ML/AI, Settings, and Sync placeholders. Saved filters render through existing filter/query and view registry paths. | Persistent navigation state, global route database, broad query facade, plugin index execution, and SQLite FTS remain future backend/security-reviewed tasks. |
 | Metadata, timer, and timeline | Mount `page.header.metadata`, `page.timeline`, and `global.floating` slots through MUI layout regions. Let plugin-owned controls execute through existing command facades. | Timer totals, Recently Worked, Unnoted Sessions saved filters, manual segment editing, Calendar drag/drop, native persistence/schema work, and broader feed/query facade remain future tasks. |
 | Quick Capture and Search | Use MUI `Dialog` for command palette, Quick Capture, and search. Use `TextField`, `List`, `DialogActions`, and visible loading/empty/error states. | Native/global shortcuts, notifications, background capture, persistent search index, worker, SQLite FTS, and filesystem access remain future security-reviewed scope. |
@@ -128,16 +128,18 @@ Component default direction:
 
 1. App starts through the existing runtime bootstrap.
 2. Shell creates or selects a session Home Markdown Page if no route is selected.
-3. Central workspace renders `page.editor` through `ViewHost`.
-4. User typing, toolbar snippets, save, task-title open, and checkbox toggle continue through existing Markdown/Task command paths.
+3. Central workspace renders `markdown.page-editor` / `page.editor` through `ViewHost`.
+4. A provider-scoped Markdown workspace bridge gives the hosted editor only current-page bounded load/save, exact allowlist command wrappers, inert extension collection, and guarded page-open navigation.
+5. User typing, toolbar snippets, save, task-title open, and checkbox toggle continue through existing Markdown/Task command paths.
 
 ### Page And Task Navigation
 
 1. User selects Home, recent page, or task title.
 2. Shell stores the selected page route.
 3. Editor loads the page through the existing Markdown page facade.
-4. Task-title clicks must execute `task.open-task-page` and open only the returned page ID.
-5. Checkbox clicks must execute `task.toggle-status` and update visible state only from the returned status.
+4. Task-title clicks must execute `task.open-task-page` and open only the returned page ID while the original source page/generation is still current.
+5. Delayed command-returned opens after leaving Home are ignored and cannot remount Home or reveal another page.
+6. Checkbox clicks must execute `task.toggle-status` and update visible state only from the returned status.
 
 ### Saved Filters
 

@@ -80,7 +80,7 @@ Status markers:
 - [x] TASK-034: Design MUI Workspace And Audit Unfinished UI
 - [x] TASK-035: Add MUI Substrate And First Shell Frame
 - [x] TASK-036: Add Generic ViewHost And SlotHost
-- [ ] TASK-037: Mount Home Workspace Editor
+- [x] TASK-037: Mount Home Workspace Editor
 - [ ] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
@@ -93,6 +93,89 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-26 05:20 CST - TASK-037 completed and ready to merge
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Delivered: the ready Home route creates/selects a session Home Markdown Page and renders registered `markdown.page-editor` / `page.editor` through `ViewHost`; typing, toolbar snippets, save status, task-title open, checkbox toggle, stale async guards, and non-Home placeholder preservation are covered by user-event tests.
+- Boundary hardening: public `useRuntime()` remains frozen `{ app }`; full `AppRuntime` stays shell-private; `RuntimeProvider` does not expose raw runtime through context or render-prop APIs; hosted editor props remain narrow; the provider-scoped Markdown workspace bridge exposes only current-page bounded load/save, inert extension collection, exact command allowlist wrappers, and guarded `openPage`.
+- Review hardening: raw runtime exposure, plugin-to-shell imports, foreign page load/save attempts, foreign `openPage` self-authorization, delayed command-returned open after leaving Home, and command-open authorization lifetime are covered by regression tests. Huygens bound command-open authorization to source page/generation in commit `08dd1d5`.
+- Final reviews: Jason (`security_reviewer`) and Hooke (`reviewer`) found no P0/P1/P2 after `08dd1d5`; Sartre (`test_quality_reviewer`) found no P0/P1 and P2-only test-hardening suggestions; Darwin (`deprecation_auditor`) found no P0/P1 and one accepted P2 React provider-form migration note; Parfit (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required.
+- Docs sync: Euler updated product, architecture, testing, task-index, progress, status, and TASK-037 communication docs in commit `122a0ae`.
+- Branch validation: `bun run build` passed with the known Vite chunk-size warning; `bun run check:quick` passed with 41 frontend test files / 651 tests, Rust fmt, Rust clippy, and Rust tests.
+- Remaining accepted risks: Vite chunk-size warning remains a known MUI-era P2; TASK-038+ covers sidebar/filter navigation, slot placement, dialogs, non-Home routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, and broader route data.
+- Merge status: ready to merge into `master`; after merge, run merge-result validation and push `master`.
+
+### 2026-05-26 05:12 CST - TASK-037 third review fix and final re-review clear
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Third review regression: Gibbs added delayed command-returned open coverage in commit `6a4063f`. The red regression covered a hosted editor receiving a trusted `task.open-task-page` result, leaving Home for Today before calling `bridge.openPage(returnedPageId)`, and then attempting the delayed open. Expected behavior: Today remains active, the Home editor does not remount, and the returned task page body stays hidden.
+- Review fix: Huygens bound command-open authorization to the source page and current-page generation in commit `08dd1d5`. `bridge.openPage(pageId)` now consumes a command-returned page authorization only while the source page/generation is still current, so delayed opens after leaving Home are ignored.
+- Final re-review: Jason security re-review and Hooke correctness re-review found no remaining P0/P1/P2 findings after `08dd1d5`.
+- Docs-sync status: Raman found P1 documentation gaps. Formal docs/progress/status sync is complete in the working tree and TASK-037 remains `[~]`; do not mark complete until branch gate / parent closeout explicitly records it.
+- Current validation: docs-only `git diff --check` passed. No frontend/Rust/package/native/Tauri/IPC/capability/permission/release suite is required for the docs-only patch.
+- Next action: hand back for branch gate / parent closeout.
+
+### 2026-05-26 04:53 CST - TASK-037 second security review fixes committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Re-review findings: Hume found P1 issues after `2a232d8` where `RuntimeProvider` render-prop children still exposed raw runtime and hosted editors could call `openPage(foreignPageId)` to self-authorize a later foreign page load. Arendt found no P0/P1 but noted the broad `RuntimeSource` initializer/cast P2. Darwin found no P0/P1 and one React 19 provider-form P2.
+- Regression tests: Lorentz added failing tests for raw runtime render-prop exposure, broad App runtime initializer/cast, and `openPage` self-authorization in commit `76f5634`. Parent red validation failed as expected with 3 failures / 17 passed; `bun run typecheck` and `git diff --check` passed.
+- Review fixes: Hubble removed `RuntimeProvider` render-prop support, narrowed App initialization to `RuntimeInitializer<AppRuntime>`, added a shell-private runtime boundary, removed the `as AppRuntime` cast, gated hosted `openPage` to trusted command-returned page IDs, and handled hosted page load failures generically in commit `fc3d11a`.
+- Parent validation after Hubble: `bun run test:frontend -- src/test/home-workspace-editor.test.tsx src/test/app-shell-boundary.test.ts` passed with 2 files / 20 tests; the 3-file review suite passed with 56 tests; the focused aggregate suite passed with 8 files / 119 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: run security/correctness re-review again.
+
+### 2026-05-26 04:38 CST - TASK-037 review fixes committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Initial review: Russell, Poincare, and Beauvoir found P1 issues around raw runtime context exposure to plugin-rendered descendants, hosted `pages.load` not being current-page scoped, and stale task-open completions after switching away from Home. Beauvoir also noted a P2 plugin-to-shell dependency in the Markdown editor component.
+- Regression tests: Zeno added failing tests for raw runtime exposure, plugin-to-shell imports, non-current hosted page loads, and stale task-open after navigating to Today in commit `1a8cb82`. Parent red validation failed as expected with 4 failures / 49 passed; `bun run typecheck` and `git diff --check` passed.
+- Review fixes: Tesla removed the raw runtime source context, changed trusted runtime access to a `RuntimeProvider` render-prop path, moved the Markdown workspace bridge into providers, removed shell-host bridge modules/imports, scoped hosted page loads through current-page validation, and invalidated current-page generation on non-Home route switches in commit `2a232d8`.
+- Parent validation after Tesla: review regression tests passed with 3 files / 53 tests; focused aggregate tests passed with 8 files / 116 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: run re-review and remaining deprecation/test-quality/docs agents.
+
+### 2026-05-26 04:20 CST - TASK-037 implementation committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Implementation: Popper reviewed the late Noether edits, completed the Home workspace production implementation, and produced commit `11fd2a3`.
+- Changed files: `src/App.tsx`, `src/plugins/markdown-editor/components/MarkdownPageEditor.tsx`, `src/providers/RuntimeProvider.tsx`, `src/providers/runtime-source-context.ts`, `src/shell/hosts/MarkdownWorkspaceBridge.tsx`, `src/shell/hosts/MarkdownWorkspaceBridgeContext.ts`, and `src/shell/hosts/index.ts`.
+- Delivered: session Home Markdown Page selection/creation; registered `markdown.page-editor` rendered through `ViewHost`; a shell-internal current-page bounded bridge for page load/save, exact command allowlist wrappers, editor extension collection, and page-open navigation; realistic Home editing/save/task-open/checkbox-toggle flows; stale insert protection; non-Home placeholders preserved.
+- Parent validation: focused aggregate frontend tests passed with 8 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; package/native/Tauri/IPC/capability/permission/release files had no diff.
+- Next action: delegate review agents.
+
+### 2026-05-26 04:10 CST - TASK-037 implementer replacement
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Noether (`implementer`) was assigned after the failing-test baseline. Parent waited, sent one concise status request, waited a second window, and initially observed no worktree changes before shutdown.
+- Noether produced no final output; after shutdown, unverified production edits appeared in the working tree.
+- Parent decision: treat the late edits as partial agent output and delegate the same narrow Home workspace production scope to a replacement `implementer`; parent will not take over production implementation.
+
+### 2026-05-26 04:02 CST - TASK-037 failing tests committed
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Test writer: Epicurus added `src/test/home-workspace-editor.test.tsx` and updated `src/test/mui-shell-frame.test.tsx` plus `src/test/app-shell-boundary.test.ts` in commit `35bda50`.
+- Coverage: editable Home Markdown textbox on the ready first screen; one session Home page across StrictMode-style rerenders; registered `page.editor` / `markdown.page-editor` rendering through `ViewHost`; no raw runtime/native/store/registry/command/page facade leaks; realistic user-event typing, toolbar insert, save, task-title open, navigation, and checkbox toggle flows; stale async toolbar insert protection; non-Home route placeholder preservation; package/native/Tauri/IPC/capability/permission/release drift guard; static App Shell boundary guard against direct Markdown editor or plugin-private imports.
+- Parent red validation: the focused aggregate frontend test command failed as expected with 2 failed files / 6 passed and 8 failed / 104 passed because Home still rendered placeholders and no Markdown textbox / registered editor. `bun run typecheck` and `git diff --check` passed.
+- Next action: delegate production implementation to `implementer` with narrow Home-only scope and existing TASK-036 host-boundary constraints.
+
+### 2026-05-26 03:45 CST - TASK-037 started
+
+- Branch: `feat/task-037-home-workspace-editor`.
+- Task: Mount Home Workspace Editor.
+- Start point: `master` after TASK-036 merge-validation commit `bf87242`.
+- Source docs read: `docs/implementation/task-index.md#task-037-mount-home-workspace-editor`, `docs/product/07-user-interface-design.md`, `docs/product/04-editor-and-workflows.md`, `docs/architecture/04-slots-editor-task.md#8-markdown-editor-plugin`, and `docs/testing/strategy.md` TASK-016/TASK-019/TASK-020 guidance.
+- Initial scope: make the ready app create/select a session Home Markdown Page when no route is active; render the registered `page.editor` view through `ViewHost`; preserve typing, toolbar snippets, save, task-title open, and checkbox toggle behavior for the selected session page; keep placeholder routes outside Home.
+- Initial constraints: parent remains orchestration-only; write failing user-event tests first; do not directly import `MarkdownPageEditor` into App Shell; do not add metadata/timeline/sidebar/search/capture/calendar/report/ML/AI/settings/sync route scope; do not change package/lock/Tauri/Rust/IPC/capability/permission/release surfaces.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with the known non-blocking unrestricted sandbox/network notes and the known `TERM=dumb` terminal failure.
+- Pre-test guidance: planner/current-doc/security/deprecation agents agree TASK-037 needs a narrow Home workspace adapter rather than relaxing `ViewHost`; public `useRuntime()` must remain `{ app }`; App Shell must not directly import Markdown editor/plugin internals; editor commands and page facade must be exact, owner-scoped, current-page bounded wrappers; React async work needs stale completion guards; MUI additions must use v9 path imports and avoid deprecated props.
+- Next action: delegate failing Home workspace editor tests to `test_writer`.
 
 ### 2026-05-26 03:43 CST - TASK-036 merged
 

@@ -9,6 +9,13 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import App from "../App";
+import { createAppRuntime, type AppRuntime } from "../bootstrap";
+import {
+  createCoreStores,
+  type CoreStores,
+  type DbQuery,
+  type NativeBridge,
+} from "../core";
 import { RuntimeProvider, useRuntime } from "../providers";
 import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
@@ -31,6 +38,13 @@ type SourceFile = {
   filePath: string;
   source: string;
 };
+
+type NativeBridgeTransactionResult<Response> =
+  Response extends readonly unknown[]
+    ? number extends Response["length"]
+      ? Array<Response>
+      : Response
+    : Array<Response>;
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -90,19 +104,17 @@ describe("TASK-035 MUI shell frame", () => {
     expect(
       within(main).getByRole("heading", { name: /^Home Workspace$/i }),
     ).toBeVisible();
-    const placeholders = within(main).getByRole("region", {
-      name: /^Home route placeholders$/i,
-    });
-
     expect(
-      within(placeholders).getByText(/^Page metadata slot placeholder$/i),
-    ).toBeVisible();
+      await within(main).findByRole("textbox", { name: /markdown/i }),
+    ).toBeEnabled();
     expect(
-      within(placeholders).getByText(/^Markdown editor view placeholder$/i),
-    ).toBeVisible();
+      within(main).queryByRole("region", {
+        name: /^Home route placeholders$/i,
+      }),
+    ).not.toBeInTheDocument();
     expect(
-      within(placeholders).getByText(/^Page timeline slot placeholder$/i),
-    ).toBeVisible();
+      within(main).queryByText(/^Markdown editor view placeholder$/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/^Runtime 0\.1\.0-shell$/i)).not.toBeInTheDocument();
 
     const topBar = within(banner);
@@ -154,7 +166,7 @@ describe("TASK-035 MUI shell frame", () => {
     expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
 
     const topBar = within(screen.getByRole("banner", { name: /mirabilis/i }));
-    const status = screen.getByRole("status");
+    const status = getShellToolStatus();
     const actionChecks = [
       {
         name: /^Command$/i,
@@ -235,7 +247,9 @@ describe("TASK-035 MUI shell frame", () => {
   });
 
   it("keeps startup loading visible without rendering a fake ready workspace", () => {
-    const initializeRuntime = vi.fn(() => new Promise<RuntimeLike>(() => {}));
+    const initializeRuntime = vi.fn(
+      () => new Promise<AppRuntime>(() => {}),
+    );
 
     render(<App initializeRuntime={initializeRuntime} />);
 
@@ -247,7 +261,7 @@ describe("TASK-035 MUI shell frame", () => {
 
   it("keeps startup failures visible and redacted from raw runtime details", async () => {
     const initializeRuntime = vi
-      .fn<() => Promise<RuntimeLike>>()
+      .fn<() => Promise<AppRuntime>>()
       .mockRejectedValue(createSensitiveTask035StartupError());
 
     render(<App initializeRuntime={initializeRuntime} />);
@@ -384,16 +398,93 @@ describe("TASK-035 MUI static and package guards", () => {
 });
 
 function renderReadyApp(version: string): void {
-  render(<App initializeRuntime={vi.fn(async () => createRuntime(version))} />);
+  render(
+    <App initializeRuntime={vi.fn(() => createShellTestRuntime(version))} />,
+  );
 }
 
-function createRuntime(version: string): RuntimeLike {
-  return {
+async function createShellTestRuntime(version: string): Promise<AppRuntime> {
+  return createAppRuntime({
     app: {
       version,
       pluginApiVersion: "test-api",
     },
+    createNativeBridge: () => createNoopNativeBridge(),
+    createStores: (): CoreStores =>
+      createCoreStores({
+        pages: {
+          createId: createSingleUseIdFactory(`home-${version}`),
+        },
+      }),
+  });
+}
+
+function createNoopNativeBridge(): NativeBridge {
+  return {
+    db: {
+      async execute<Response>(_query: DbQuery): Promise<Response> {
+        void _query;
+
+        return undefined as Response;
+      },
+      async transaction<Response>(
+        _queries: DbQuery[],
+      ): Promise<NativeBridgeTransactionResult<Response>> {
+        void _queries;
+
+        return [] as NativeBridgeTransactionResult<Response>;
+      },
+    },
+    shortcuts: {
+      async register() {
+        return undefined;
+      },
+      async unregister() {
+        return undefined;
+      },
+    },
+    notifications: {
+      async notify() {
+        return undefined;
+      },
+    },
+    files: {
+      async importMarkdown() {
+        return "";
+      },
+      async exportMarkdown() {
+        return undefined;
+      },
+    },
   };
+}
+
+function createSingleUseIdFactory(firstId: string): () => string {
+  let nextId = firstId;
+  let generatedCount = 0;
+
+  return () => {
+    const id = nextId;
+
+    generatedCount += 1;
+    nextId = `${firstId}-extra-${generatedCount}`;
+
+    return id;
+  };
+}
+
+function getShellToolStatus(): HTMLElement {
+  const status = screen
+    .getAllByRole("status")
+    .find((candidate) =>
+      /surface placeholder/i.test(candidate.textContent ?? ""),
+    );
+
+  if (status === undefined) {
+    throw new Error("Expected shell tool status to be visible");
+  }
+
+  return status;
 }
 
 function createUnsafeFullRuntime(version: string): RuntimeLike {
@@ -611,6 +702,12 @@ function findDeprecatedMuiApiPatterns({
     [/\bHidden\b/u, "Hidden"],
     [/\bGridLegacy\b/u, "GridLegacy"],
     [/<ListItem\b[^>]*\bbutton(?:\s|=|>|\{)/u, "ListItem button prop"],
+    [/<[A-Z][\w.:-]*\b[^>]*\bInputProps\s*=/u, "InputProps prop"],
+    [/<[A-Z][\w.:-]*\b[^>]*\bPaperProps\s*=/u, "PaperProps prop"],
+    [
+      /<[A-Z][\w.:-]*\b[^>]*\bTransitionComponent\s*=/u,
+      "TransitionComponent prop",
+    ],
   ]);
   const violations = [...patterns.entries()]
     .filter(([pattern]) => pattern.test(source))
