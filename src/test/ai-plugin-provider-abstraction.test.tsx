@@ -1043,8 +1043,11 @@ async function withConfiguredAiProvider(
           throw options.failWith;
         }
 
-        return options.outputForOperation?.(request.operation) ??
-          createOutputForOperation(request.operation);
+        if (options.outputForOperation !== undefined) {
+          return options.outputForOperation(request.operation);
+        }
+
+        return createOutputForOperation(request.operation);
       },
       id: openAiProviderId,
     },
