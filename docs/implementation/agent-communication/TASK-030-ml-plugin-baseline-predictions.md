@@ -117,3 +117,19 @@
 ## Current Next Action
 
 - Delegate failing acceptance tests to `test_writer`.
+
+## Test Writer Handoff
+
+- Aristotle (`test_writer`) started at 2026-05-25 13:16 CST.
+- Scope: add failing TASK-030 acceptance tests only, likely in `src/test/ml-plugin-baseline-predictions.test.tsx`.
+- Required coverage:
+  - built-in `ml` registration with canonical algorithm, command, view, slot, metadata, and event descriptors;
+  - absence of stale underscore aliases;
+  - no executable AlgorithmRegistry expectation;
+  - `runtime.commands.execute("ml.run-prediction", ...)` behavior for exact bounded projection input and deterministic remaining-time result;
+  - feature/model fixtures for estimate, tracked time, Timer note count, child completion, and similar-history evidence where practical;
+  - hostile payload/projection rejection and no sibling private mutation/read assumptions;
+  - accessible inert prediction panel rendering;
+  - static guards for no Core ML business logic, no sibling plugin/private store/native/Tauri imports, no execution/rendering sinks, and no package/native/Tauri/Rust/schema/capability diffs.
+- Constraints: do not edit production files, docs, progress, package/native/Tauri/Rust/schema/capability files; do not commit, merge, or push.
+- Parent next action: wait for Aristotle, validate the expected red signal, and commit the test-only patch.

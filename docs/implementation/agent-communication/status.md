@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 13:14 CST.
+Last updated: 2026-05-25 13:16 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 13:14 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 pre-test guidance completed; test handoff pending.
+- Current phase: TASK-030 failing tests delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording TASK-030 pre-test guidance before delegating failing tests.
+- Aristotle (`test_writer`) is writing failing TASK-030 acceptance tests.
 
 ## Current TASK-030 State
 
@@ -46,6 +46,10 @@ Last updated: 2026-05-25 13:14 CST.
   - Metadata descriptors: `ml.predictedRemainingTime` (`namespace: "ml"`, `key: "predictedRemainingTime"`, `valueType: "json"`) and `ml.predictionConfidence` (`namespace: "ml"`, `key: "predictionConfidence"`, `valueType: "number"`).
   - Event descriptor: `ml.prediction-generated` with `namespace: "ml"` and `type: "prediction-generated"`.
   - Feature input comes from exact caller-provided page/metadata/event projections; ML must not import sibling plugin internals or use raw stores/private query paths.
+- Test writer delegated:
+  - Aristotle (`test_writer`) should add focused red tests, likely `src/test/ml-plugin-baseline-predictions.test.tsx`.
+  - Scope: tests only; no production, docs, package/native/Tauri/Rust/schema/capability edits.
+  - Expected pre-implementation validation: focused tests fail for missing ML built-in/command/view/plugin files while typecheck, focused ESLint, diff check, skip/only scan, and native/package guard stay green.
 
 ## Current TASK-029 State
 
