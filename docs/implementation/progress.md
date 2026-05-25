@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 05:59 CST - TASK-038 implementation committed
+
+- Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.
+- Implementation: Hypatia implemented sidebar/page/filter routing in commit `84eac3d`; Hypatia removed stale test lint suppressions in `1c31a8c`; Locke synced prior Home workspace route expectations to TASK-038 behavior in `f43b109`.
+- Delivered: Home and recent page routes render the registered page editor through `ViewHost`; Inbox, Today, and All Tasks resolve public saved filters, execute `executeFilterQuery`, pass DTO-only page summaries to `ViewHost`, and render empty results through `SlotHost`; missing filter/view/inactive plugin states render generic redacted route unavailable UI; active Drawer items expose `aria-current="page"` and MUI keyboard activation remains intact.
+- Boundary behavior: Inbox uses public Quick Capture saved-filter/metadata semantics and ignores title-only Inbox pages; metadata owner reservations are derived from active public plugin manifests; no direct business-plugin private imports or native/package/Tauri/Rust/IPC/capability/release changes were introduced.
+- Parent validation: `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` passed with 3 files / 29 tests; adjacent suite `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx` passed with 5 files / 82 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; no package/native/Tauri/Rust/capability/release diff was present.
+- Next action: delegate review agents for correctness, security, deprecation, test quality, docs sync, changed-path exploration, and release readiness.
+
 ### 2026-05-26 05:42 CST - TASK-038 failing tests committed
 
 - Branch: `feat/task-038-sidebar-page-saved-filter-navigation`.

@@ -47,7 +47,7 @@
 
 ## Current Next Action
 
-- Delegate production implementation to `implementer`.
+- Delegate review agents for correctness, security, deprecation/API, test quality, docs sync, changed-path exploration, and release readiness.
 
 ## Pre-Test Guidance Outcomes
 
@@ -110,3 +110,34 @@ type ActiveRoute =
 - Parent decision:
   - accept `87d483a` as the red baseline;
   - delegate production code to `implementer`, preserving the TASK-038 no-package/no-native/no-private-import/DTO-only constraints.
+
+## Implementation Outcome
+
+- Hypatia (`implementer`) updated production app-shell navigation/filter routing in commit `84eac3d`.
+- Changed production files:
+  - `src/App.tsx`.
+- Delivered behavior:
+  - Home and recent page routes render the registered Markdown page editor through `ViewHost`;
+  - Inbox, Today, and All Tasks resolve public saved filters from `runtime.filters`;
+  - saved filters execute through `executeFilterQuery` with metadata owner reservations derived from active public plugin manifests;
+  - filter results render through registered `viewType` via `ViewHost` using DTO-only page summaries `{ id, title }`;
+  - empty filters render `filter.empty_state` through `SlotHost` with minimal `filterName` props;
+  - missing filter, missing view, and inactive plugin routes show generic redacted route-unavailable UI;
+  - Drawer active state uses `aria-current="page"` and MUI `ListItemButton` keyboard activation remains intact.
+- Boundary confirmations:
+  - Inbox uses Quick Capture public saved-filter / metadata semantics and ignores title-only Inbox pages;
+  - App Shell does not import Task, Tag, Quick Capture, Search, Markdown editor private modules, raw Tauri/native modules, or plugin view components;
+  - no package, lockfile, Tauri config/capability/permission, Rust, IPC, schema, filesystem, native, or release files changed.
+- Test follow-up:
+  - Hypatia removed stale lint suppressions in `src/test/sidebar-page-filter-navigation.test.tsx` in commit `1c31a8c`.
+  - Locke (`test_writer`) updated stale TASK-037 non-Home route assertions in `src/test/home-workspace-editor.test.tsx` in commit `f43b109`. The delayed hosted `openPage` regression still proves Today remains active, Home does not remount, and the returned task page body stays hidden; Inbox/Today/All Tasks now assert saved-filter empty states while Reports remains placeholder.
+- Parent validation:
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts` passed with 3 files / 29 tests.
+  - `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/view-slot-hosts.test.tsx src/test/task-filters-view-rendering.test.tsx src/test/quick-capture-search-plugins.test.tsx` passed with 5 files / 82 tests.
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - package/native/Tauri/Rust/capability/release diff check returned no files.
+- Parent decision:
+  - accept implementation and test-sync commits;
+  - run review agents before branch gate and closeout.
