@@ -50,7 +50,7 @@
 
 ## Current Next Action
 
-- Delegate review agents for TASK-035.
+- Finish Nash's docs-only review-fix findings, run `git diff --check`, and return to TASK-035 review/final closeout. Do not edit production code, tests, package files, lockfiles, commits, merges, or pushes for this docs-fix pass.
 
 ## Pre-Test Guidance Outcomes
 
@@ -106,3 +106,13 @@
   - `bun run check:quick` passed with 39 frontend test files / 597 tests, Rust fmt, Rust clippy, and Rust tests.
 - Build note: `bun run build` succeeds but emits the existing Vite/Rollup warning that the generated JS chunk is larger than 500 kB after adding MUI.
 - Implementation commit: `b9cb0e7 Turing(implementation)(Add MUI Substrate And First Shell Frame): implement MUI shell frame`.
+
+## Review Notes Received
+
+- Nash (`doc_writer` / docs sync review) reported no production-code change request, but found documentation-sync gaps to fix before TASK-035 closeout.
+- P1: `docs/implementation/progress.md` only recorded the start state. It needs an implementation validation / review-pending run-log entry with delivered scope, checks, the MUI build chunk warning, and review status, while keeping TASK-035 `[~]` until final merge closeout.
+- P1: `docs/implementation/agent-communication/status.md` was stale. It needs the current phase, received review notes, corrected M9 snapshot, and accurate active/pending docs-fix work.
+- P2: `docs/product/07-user-interface-design.md` needs a current-status note explaining that TASK-035 now provides the baseline MUI substrate and shell frame, while ViewHost/SlotHost, editor mounting, dialogs, Portal slots, responsive polish, and real route data remain TASK-036+.
+- P2: `docs/implementation/task-index.md` needs a concise delivered/deferred note for TASK-035: MUI quartet, `ThemeProvider`/`CssBaseline`, `AppBar`/`Drawer`/`main` shell, placeholder Home/Inbox/Today/All Tasks/Reports routes, top-bar placeholder tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
+- P2: `docs/testing/strategy.md` needs TASK-035 guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event shell interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
+- Parent decision: accept Nash's findings and perform a docs-only fix in the allowed documentation files, then validate with `git diff --check`.

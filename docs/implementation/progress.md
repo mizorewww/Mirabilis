@@ -94,6 +94,17 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-26 01:47 CST - TASK-035 implementation validation and review pending
+
+- Branch: `feat/task-035-mui-shell-frame`.
+- Task: Add MUI Substrate And First Shell Frame.
+- Delivered so far: reviewed MUI runtime dependencies (`@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`); MUI `ThemeProvider` and `CssBaseline`; a dense shell frame with top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports route regions, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Boundary scope: ready/loading/startup-failure states stay visible and redacted; `useRuntime()` remains the public copied/frozen `{ app }` facade; no trusted full-runtime channel was introduced; no Tauri/native/Rust/capability/permission/IPC/schema/release behavior changed.
+- Deferred scope: generic `ViewHost`/`SlotHost`, Home editor mounting, dialog implementations, `Portal` floating slots, responsive polish, and real route data remain TASK-036+ work.
+- Validation: focused TASK-035 validation passed with `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/runtime-provider.test.tsx` (3 files / 20 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `bun run build`, and `bun run check:quick` (39 frontend test files / 597 tests, Rust fmt, Rust clippy, and Rust tests).
+- Build note: `bun run build` succeeds but emits the Vite/Rollup warning that a generated JavaScript chunk is larger than 500 kB after adding MUI.
+- Review status: test commit `71999fa` and implementation commit `b9cb0e7` are on the branch. Nash reported P1/P2 documentation-sync findings after implementation validation; docs-only fix work is active. Keep TASK-035 `[~]` until review fixes are validated and the final merge closeout is recorded.
+
 ### 2026-05-26 01:16 CST - TASK-035 started
 
 - Branch: `feat/task-035-mui-shell-frame`.

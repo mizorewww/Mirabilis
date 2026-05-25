@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-26 01:39 CST.
+Last updated: 2026-05-26 01:47 CST.
 
 ## Current Task
 
@@ -8,11 +8,21 @@ Last updated: 2026-05-26 01:39 CST.
 - Branch: `feat/task-035-mui-shell-frame`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-035 implementation committed; review wave pending.
+- Current phase: TASK-035 implementation validated; Nash docs-sync review findings received; docs-only review-fix work is active before final TASK-035 closeout.
 
 ## Active Agents
 
-- None yet.
+- Nash (`doc_writer` / docs sync review) completed with P1/P2 documentation-sync findings.
+- TASK-035 docs-fix writer is active in this thread, limited to the allowed documentation files. No production code, tests, package files, lockfiles, commits, merges, or pushes are in scope for this fix.
+
+## Received Review Notes
+
+- Nash P1: `docs/implementation/progress.md` only recorded the TASK-035 start state; it needs an implementation validation / review-pending run-log entry with delivered scope, checks, build chunk warning, and review status while keeping TASK-035 `[~]`.
+- Nash P1: `docs/implementation/agent-communication/status.md` was stale; it needs the current phase, received review notes, corrected M9 snapshot, and accurate active/pending fix work.
+- Nash P2: `docs/product/07-user-interface-design.md` still read entirely pre-scaffold; it needs a current-status note for the TASK-035 baseline MUI substrate and TASK-036+ deferred shell work.
+- Nash P2: `docs/implementation/task-index.md` needs a concise TASK-035 delivered/deferred note covering the MUI quartet, theme/baseline, shell frame, placeholder routes/tools, no full runtime channel, and no IPC/Tauri/native/security surface change.
+- Nash P2: `docs/testing/strategy.md` needs TASK-035 testing guidance for `src/test/mui-shell-frame.test.tsx`, RTL/user-event interactions, runtime facade/failure redaction, MUI path/deprecated guards, and the narrow MUI package/lock guard exception.
+- Parent decision: accept Nash's findings and fix documentation only, then validate with `git diff --check`.
 
 ## Current TASK-035 State
 
@@ -48,7 +58,10 @@ Last updated: 2026-05-26 01:39 CST.
   - Parent validation passed: focused TASK-035 frontend tests, `bun run typecheck`, `bun run lint`, `git diff --check`, `bun run build`, and `bun run check:quick`.
   - Build note: `bun run build` succeeds but emits the existing Vite/Rollup warning that the generated JS chunk is larger than 500 kB after adding MUI.
   - Implementation commit: `b9cb0e7 Turing(implementation)(Add MUI Substrate And First Shell Frame): implement MUI shell frame`.
-- Parent decision: commit the implementation and delegate review/release-readiness agents before marking TASK-035 complete.
+- Review state:
+  - Nash reported documentation-sync P1/P2 findings after implementation validation.
+  - Active fix work is docs-only and updates the progress ledger, live status, product UI design note, task index, testing strategy, and TASK-035 communication notes as needed.
+  - Remaining review/final closeout is pending after docs-fix validation; TASK-035 remains `[~]`.
 
 ## Current TASK-034 State
 
@@ -95,10 +108,10 @@ Last updated: 2026-05-26 01:39 CST.
 
 ## Current M9 Roadmap State
 
-- Diagnosis accepted from planner/user context: TASK-001 through TASK-033 delivered runtime substrate and plugin-owned capabilities, but `src/App.tsx` still renders only the centered Mirabilis startup/status panel after startup.
-- Missing user-visible work now tracked by M9 includes MUI substrate, ViewHost/SlotHost, Home workspace editor, sidebar navigation, metadata/timer/timeline mounting, command palette, Quick Capture, search, Calendar/Reports, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
-- `docs/implementation/progress.md` marks TASK-034 `[~]` and TASK-035 through TASK-045 `[ ]`.
-- Next implementation task after docs validation is TASK-035, not TASK-034.
+- TASK-034 is complete and merged on `master`.
+- TASK-035 is `[~]` on `feat/task-035-mui-shell-frame`: baseline MUI substrate and first shell frame are implemented and validated, with docs-sync review fixes active.
+- TASK-036 through TASK-045 remain `[ ]` and cover generic ViewHost/SlotHost, Home editor mounting, sidebar page/filter navigation, metadata/timer/timeline slots, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, and responsive/accessibility polish.
+- Next action: finish the TASK-035 docs-only review fix, run `git diff --check`, then return to TASK-035 review/final closeout before any merge.
 
 ## Historical TASK-033 State
 

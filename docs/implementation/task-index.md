@@ -976,6 +976,12 @@ Acceptance criteria:
 - Use path imports for MUI components and icons.
 - No Tauri/native/Rust/capability/permission/IPC/schema/release behavior changes are added.
 
+Delivered/deferred note for the TASK-035 branch:
+
+- Delivered: the MUI quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Deferred: no full trusted runtime channel was introduced; `ViewHost`/`SlotHost`, editor mounting, dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-036+.
+- Security/native scope: TASK-035 adds no IPC, Tauri/native, Rust, capability, permission, schema, release, or broader security surface change.
+
 Test plan:
 
 - React Testing Library shell tests using `userEvent.setup()` with awaited `user.click` / `user.keyboard` for drawer toggle and top-bar actions.
