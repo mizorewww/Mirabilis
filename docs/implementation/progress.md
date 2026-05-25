@@ -64,7 +64,7 @@ Status markers:
 ## Milestone M6: Calendar and reporting
 
 - [x] TASK-026: Implement Calendar Plugin baseline
-- [ ] TASK-027: Implement Habit and Heatmap plugins
+- [~] TASK-027: Implement Habit and Heatmap plugins
 - [ ] TASK-028: Implement Stats and Chart plugins
 
 ## Milestone M7: Capture, search, ML, AI, sync, release
@@ -78,6 +78,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-25 09:41 CST - TASK-027 started
+
+- Branch: `feat/task-027-habit-heatmap-plugins`.
+- Task: Implement Habit and Heatmap plugins.
+- Start point: `master` after TASK-026 merge validation commit `b898ca3`.
+- Source docs read: `docs/implementation/task-index.md#task-027-implement-habit-and-heatmap-plugins`, `docs/product/05-built-in-plugins.md#17-habit-plugin`, `docs/architecture/05-plugin-implementations.md#12-habit--heatmap-插件架构`, `docs/development/01-data-roadmap-and-mvp.md#phase-7habit-plugin--heatmap-view-plugin`, `docs/development/02-implementation-roadmap-and-constraints.md#phase-7habit--heatmap-plugins`, plus related Habit/Heatmap references in product, architecture, development, and testing docs.
+- Initial scope: built-in Habit Plugin and Heatmap Plugin baseline with `#habit` or habit metadata identifying habit pages, habit completion events, Habits / Today Habits filters, and heatmap view rendering habit completion date series.
+- Initial out of scope until agents narrow otherwise: native/Tauri/package/Rust/schema changes, persistent habit storage beyond current core stores, broad app-shell navigation, Stats/ML aggregation, Calendar scheduled feeds, external sync, release packaging, and any Core business behavior for habits or heatmaps.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/WebSocket/reachability OK with the known `TERM=dumb` terminal failure plus unrestricted sandbox/network notes.
+- Agent orchestration: parent thread remains orchestration-only per user instruction. Planning, docs research, deprecation/API review, security review, TDD tests, implementation, review, and docs sync will be delegated to agents and summarized in `docs/implementation/agent-communication/TASK-027-habit-heatmap-plugins.md`.
 
 ### 2026-05-25 09:39 CST - TASK-026 merged
 
