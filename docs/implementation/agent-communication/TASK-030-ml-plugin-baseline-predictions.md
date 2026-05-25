@@ -341,3 +341,11 @@
 
 - Delegate narrow re-review for TASK-030 P1 fixes.
 - If no P0/P1 findings remain, proceed to formal docs sync.
+
+## Narrow Re-Review Handoff
+
+- Sagan the 2nd (`security_reviewer`) started at 2026-05-25 14:02 CST.
+- Poincare the 2nd (`reviewer`) started at 2026-05-25 14:02 CST.
+- Ramanujan the 2nd (`test_quality_reviewer`) started at 2026-05-25 14:02 CST.
+- All agents are read-only and must not edit files, commit, merge, or push.
+- Parent next action: wait for narrow re-review, then proceed to formal docs sync only if no P0/P1 findings remain.

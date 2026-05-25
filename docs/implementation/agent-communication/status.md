@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 14:01 CST.
+Last updated: 2026-05-25 14:02 CST.
 
 ## Current Task
 
@@ -8,11 +8,13 @@ Last updated: 2026-05-25 14:01 CST.
 - Branch: `feat/task-030-ml-plugin-baseline-predictions`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-030 review-fix implementation committed; narrow re-review pending.
+- Current phase: TASK-030 narrow re-review delegated.
 
 ## Active Agents
 
-- No active agents. Parent is recording review-fix implementation results before narrow re-review.
+- Sagan the 2nd (`security_reviewer`) is re-reviewing the ML security P1 fixes.
+- Poincare the 2nd (`reviewer`) is re-reviewing the ML correctness P1 fixes.
+- Ramanujan the 2nd (`test_quality_reviewer`) is re-reviewing the ML test gap fixes.
 
 ## Current TASK-030 State
 
@@ -102,6 +104,10 @@ Last updated: 2026-05-25 14:01 CST.
   - Fix scope: no durable ML metadata/events from caller-provided projections, forged-provenance durable-write prevention, fallback policy alignment, exact UTC instant validation, `PredictionPanel` DTO validation/fail-closed rendering, total JSON node-budget validation, and shared slot/view validation.
   - Parent validated: focused TASK-030 tests passed (12 tests), adjacent plugin/API/Stats/Search/Task/Tag suite passed (8 files / 157 tests), `bun run typecheck` passed, `bun run lint` passed, focused ESLint passed, `git diff --check` passed, `.skip/.only` scan found no matches, import/sink guard found no ML matches, and package/native/Tauri/Rust/schema diff guard was empty.
   - Review-fix commit: `b384812 Confucius(review-fix)(Implement ML Plugin baseline predictions): harden ml prediction boundaries`; post-commit auto-push succeeded.
+- Narrow re-review delegated:
+  - Sagan the 2nd (`security_reviewer`) re-checks caller-forged provenance, exact date validation, JSON node budget, DTO fail-closed rendering, and native/package boundaries.
+  - Poincare the 2nd (`reviewer`) re-checks durable write behavior, fallback branches, exact date/missing-page rejection, panel fail-closed behavior, and slot/view parity.
+  - Ramanujan the 2nd (`test_quality_reviewer`) re-checks review-fix coverage for fallback branches, hostile projections, date validation, panel DTO validation, and slot rendering parity.
 
 ## Current TASK-029 State
 
