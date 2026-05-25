@@ -621,6 +621,7 @@ Acceptance criteria:
 - `timer.pause`, `timer.resume`, and `timer.stop` use exact empty payloads; exact null-prototype empty payloads are allowed, but caller-owned/non-empty/prototype/accessor/symbol/non-enumerable unsafe payloads are rejected.
 - `timer.switch` stops previous then starts next, supports no-active, paused, and same-page cases, and preserves active state/events when the target page is missing.
 - Command results are narrow DTOs.
+- This TASK-024 acceptance captured the historical pre-segment branch behavior. TASK-025 updates current Timer finalization by adding `createdSegment` results and `time_segment_created` events for finalized active timers.
 
 Out of scope for TASK-024:
 
@@ -646,15 +647,20 @@ Source docs:
 
 Acceptance criteria:
 
-- Stopping a timer writes a `timer.time_segment_created` event.
-- Time segments include start, end, duration, page id, and optional note page id.
-- Users can create or edit a note for a stopped segment.
-- Task page timeline can show its time segments.
+- Timer finalization paths (`timer.stop`, active `timer.start`, and active `timer.switch`) append `namespace: "timer"`, `type: "time_segment_created"` event records.
+- `timer.stopped` remains before segment creation where a timer is finalized.
+- Time Segment payloads are camelCase records with `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, and `source: "timer"`; absent optional fields are omitted and paused duration is excluded.
+- `timer.add-note({ segmentId, markdown })` creates or updates Markdown Page notes for stopped segments, returns `{ notePageId }`, and appends `namespace: "timer"`, `type: "time_segment_note_added"` without mutating the original segment event.
+- `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and note text inertly, with accessible Add Note / Edit Note UI that saves through `timer.add-note`.
+- MetadataBar command execution requires owner-aware `MetadataBarCommandRegistry` descriptor lookup and fails closed without lookup; slot UI still receives only a narrow `execute()` facade.
+- PluginHost's internal scoped command executor authorizes by registered command descriptor owner, not command ID prefix.
+- Metadata totals, Calendar/Stats/ML integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
+- Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace it.
 
 Test plan:
 
 - Timer Plugin tests for segment event payloads.
-- UI tests for stop + note flow.
+- UI tests for stop + note flow, page timeline Add/Edit Note controls, inert note rendering, wrong-owner/malformed note-link filtering, and command ownership boundaries.
 
 Dependencies:
 

@@ -23,7 +23,7 @@ Slot composed by the bar: page.header.metadata
 - 只使用 active plugin manifest 中 valid `metadataFields` descriptor 作为 trusted field descriptors。
 - Metadata record 必须匹配当前 page、owner `sourcePluginId`、descriptor namespace/key 和 descriptor `valueType`。
 - namespace/key 必须是安全 segment，`valueType` 必须有效，trusted values 使用 prototype-safe object。
-- slot props 只包含 `pageId`、contributing `pluginId`、trusted fields、trusted values 和限定到该 contributing plugin namespace 的 command executor。
+- slot props 只包含 `pageId`、contributing `pluginId`、trusted fields、trusted values 和 narrow `commands.execute` facade；`MetadataBar` 通过 registered command descriptor owner 验证 command belongs to the contributing plugin，缺少 descriptor lookup 时 fail closed，不按 command id prefix fallback。
 - 不向 slot component 暴露 full runtime、stores、registries、Plugin Host、NativeBridge、DB、filesystem、path、shell、notification 或 shortcut handles。
 - 渲染值时使用 React text sinks；unsafe metadata strings 仍是 inert text。
 
@@ -438,9 +438,9 @@ Data: habit.checked events
 
 Timer Plugin 是核心体验插件，但仍然不是 Core 功能。
 
-TASK-024 当前交付 Timer Plugin 的 runtime command slice。内置 `TimerPlugin` 注册 canonical commands `timer.start`、`timer.stop`、`timer.pause`、`timer.resume`、`timer.switch`，把 enabled Start control 注册到 `page.header.metadata`，并把 `timer.global-active-bar` 注册到 `global.floating`。一个 global active timer 由 Timer Plugin-owned、registration-scoped、in-memory runtime state 表示；它不是 Core-owned、native、persistent 或 schema-backed state。
+TASK-025 当前交付 Timer Plugin 的 runtime command、Time Segment 和 Note slice。内置 `TimerPlugin` 注册 canonical commands `timer.start`、`timer.stop`、`timer.pause`、`timer.resume`、`timer.switch`、`timer.add-note`，把 enabled Start control 注册到 `page.header.metadata`，把 `timer.global-active-bar` 注册到 `global.floating`，并把 `timer.page-timeline.segments` 注册到 `page.timeline`。一个 global active timer 由 Timer Plugin-owned、registration-scoped、in-memory runtime state 表示；它不是 Core-owned、native、persistent 或 schema-backed state。
 
-TASK-024 不创建 Time Segment、不创建 Note Page、不更新 `timer.total_tracked_time`，也不接入 Calendar/Stats/ML。
+TASK-025 会在 timer finalization 时创建 event-backed Time Segment，并通过 Markdown Page 保存 stopped-segment Note。它仍不更新 `timer.total_tracked_time`，也不接入 Calendar/Stats/ML。
 
 ### 18.1 计时的重要性
 
@@ -463,18 +463,19 @@ TASK-024 不创建 Time Segment、不创建 Note Page、不更新 `timer.total_t
 下一步是什么
 ```
 
-长期目标中，每段计时都会生成 Time Segment，每个 Time Segment 都可以写 Note。TASK-024 只记录 lifecycle events 和 active timer DTO；Time Segment 和 Note 从 TASK-025 开始。
+长期目标中，每段计时都会生成 Time Segment，每个 stopped Time Segment 都可以写 Note。TASK-025 当前已经在 Timer Plugin 内交付 event-backed Time Segment、Markdown Page-backed Note 和 `page.timeline` slot；Calendar/Stats/ML integration、metadata totals、manual segment editing 和 native persistence 仍是后续范围。
 
 ---
 
 ### 18.2 Timer Plugin 注册能力
 
-当前 TASK-024 注册能力：
+当前 TASK-025 注册能力：
 
 ```text
 Slot:
 timer.page-header-metadata.placeholder on page.header.metadata
 timer.global-active-bar on global.floating
+timer.page-timeline.segments on page.timeline
 
 Commands:
 timer.start
@@ -482,15 +483,18 @@ timer.stop
 timer.pause
 timer.resume
 timer.switch
+timer.add-note
 
 Events emitted:
 namespace: timer, type: started
 namespace: timer, type: paused
 namespace: timer, type: resumed
 namespace: timer, type: stopped
+namespace: timer, type: time_segment_created
+namespace: timer, type: time_segment_note_added
 ```
 
-TASK-025+ Timer Plugin 注册能力：
+后续 Timer Plugin 范围：
 
 ```text
 Metadata:
@@ -498,13 +502,7 @@ timer.total_tracked_time
 timer.last_tracked_at
 timer.active_segment_id
 
-Events:
-timer.time_segment_created
-timer.time_segment_note_added
-timer.time_segment_adjusted
-
 Commands:
-timer.add_note
 timer.edit_segment
 timer.create_manual_segment
 
@@ -519,28 +517,32 @@ Views:
 timer.timeline
 timer.segment_detail
 timer.active_bar
+
+Events:
+namespace: timer, type: time_segment_adjusted
 ```
 
 ---
 
 ### 18.3 Time Segment
 
-Time Segment 是 Timer Plugin 管理的事件实体。它从 TASK-025 开始，不属于 TASK-024 当前 runtime command slice。
+Time Segment 是 Timer Plugin 管理的 event-backed 实体。TASK-025 当前通过 append-only event 记录 segment，而不是写独立 Core business store 或 native schema。
 
-结构：
+Timer finalization path 追加 event record：
 
 ```text
-TimeSegment
-- id
-- page_id
-- start_at
-- end_at
-- duration
-- note_page_id
-- source: timer | manual
-- created_at
-- updated_at
+namespace: timer
+type: time_segment_created
+payload:
+  segmentId
+  pageId
+  startAt
+  endAt
+  durationSeconds
+  source: "timer"
 ```
+
+Payload 使用 camelCase 并省略缺失 optional fields。TASK-025 的 finalization event 不写 `notePageId`；Note linkage 通过独立 `time_segment_note_added` event 派生。`durationSeconds` 排除 paused duration。
 
 Note 是一个 Markdown Page：
 
@@ -554,7 +556,7 @@ Note 是一个 Markdown Page：
 
 ### 18.4 开始计时
 
-TASK-024 当前，用户在任务页面点击 Start。
+用户在任务页面点击 Start。
 
 系统：
 
@@ -566,7 +568,7 @@ View: global active timer bar 显示
 
 `timer.started` event payload 使用 `startAt`。Command result 的 active timer DTO 使用 `startedAt`，并保持 narrow DTO shape：`pageId`、`pageTitle`、`segmentId`、`startedAt`、`elapsedSeconds`、`status`，stopped DTO 另有 `stoppedAt`。
 
-`timer.start` 只接受 exact `{ pageId }` payload 并验证 page 存在。若已有 active timer，Timer Plugin 先 append `timer.stopped`，再 append `timer.started`，返回 `{ activeTimer, stoppedTimer }`。它不会创建 Time Segment。
+`timer.start` 只接受 exact `{ pageId }` payload 并验证 page 存在。若已有 active timer，Timer Plugin 先 append `timer.stopped`，再 append `namespace: "timer"`、`type: "time_segment_created"` event，然后 append `timer.started` for the new page，并返回 `{ activeTimer, stoppedTimer, createdSegment }`。Same-page start 也按 stop then restart 处理。
 
 全局计时器：
 
@@ -577,41 +579,55 @@ Pause · Stop
 
 Paused timer 显示 Resume。
 
-### 18.5 计时中写 Note
+### 18.5 为 stopped segment 写 Note
 
-TASK-025+ 目标中，用户点击 Note：
+TASK-025 当前 Note 只针对 stopped segment。用户在 `page.timeline` 的 Timer segment UI 点击 Add Note / Edit Note：
 
 ```text
 刚发现 heatmap 也应该是 View Plugin，不应该写死。
 ```
 
-Timer Plugin 会把这段文字写到当前 Time Segment 的 Note Page。
+Timer Plugin 通过 `timer.add-note({ segmentId, markdown })` 创建或更新 Time Segment Note Markdown Page，返回 `{ notePageId }`，并追加：
+
+```text
+namespace: timer
+type: time_segment_note_added
+payload:
+  segmentId
+  notePageId
+  notedAt
+```
+
+原始 `time_segment_created` event 保持 immutable，不会被回写或补上 `notePageId`。
 
 ### 18.6 停止计时
 
 用户点击 Stop。
 
-TASK-024 当前系统：
+TASK-025 当前系统：
 
 ```text
 Command: timer.stop
 Event: timer.stopped
+Event: namespace timer, type time_segment_created
 Active timer state cleared
-Result: { activeTimer: null, stoppedTimer }
+Result: { activeTimer: null, stoppedTimer, createdSegment }
 ```
 
 `timer.pause`、`timer.resume` 和 `timer.stop` 使用 exact empty payloads。`undefined` 和 exact null-prototype empty payloads are allowed；caller-owned/non-empty/prototype/accessor/symbol/non-enumerable unsafe payloads are rejected。`timer.switch({ pageId })` stops the previous active timer, starts the next, supports no-active, paused, and same-page cases, and preserves active state/events when the target page is missing.
 
-TASK-025+ 系统：
+TASK-025 still defers:
 
 ```text
-Event: timer.stopped
-Event: timer.time_segment_created
-Metadata: timer.total_tracked_time 更新
-Metadata: timer.last_tracked_at 更新
-Calendar Plugin 收到可展示数据
-Stats Plugin 收到可统计数据
-ML Plugin 后续可使用该数据
+Metadata: timer.total_tracked_time
+Metadata: timer.last_tracked_at
+Calendar Plugin display/integration
+Stats Plugin aggregation
+ML Plugin prediction inputs
+Recently Worked / Unnoted Sessions
+Manual segment editing
+Calendar drag/drop
+Native persistence/schema/Tauri/package/Rust changes
 ```
 
 ---
@@ -645,7 +661,7 @@ description
 
 ### 19.2 Calendar 展示 Time Segment
 
-TASK-025+ 之后，Calendar View 可以展示 Timer Plugin 产生的 Time Segment：
+TASK-025 已产生 Timer-owned Time Segment events，但 Calendar Plugin 尚未接入。TASK-026+ 中，Calendar View 可以展示这些 segments：
 
 ```text
 10:00–10:47 设计 Timer Plugin
@@ -659,7 +675,7 @@ TASK-025+ 之后，Calendar View 可以展示 Timer Plugin 产生的 Time Segmen
 
 Task Plugin 可以把 scheduled / due 任务送入 Calendar。
 Habit Plugin 可以把 habit checked event 送入 Calendar。
-TASK-025/026 之后，Timer Plugin 的 Time Segment 可以被 Calendar 渲染。
+TASK-026 之后，Timer Plugin 的 Time Segment 可以被 Calendar 渲染。
 
 Calendar Plugin 只负责渲染时间轴。
 

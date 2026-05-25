@@ -317,7 +317,7 @@ TASK-023 tests cover a reusable, plugin-driven metadata UI slice without adding 
 - Task coverage should assert `task.page-header-metadata.current-fields` renders read-only values for current manifest fields `enabled`, `status`, `sourcePageId`, `sourceBlockId`, `scheduled`, and `due`, without `estimate` or editable widgets.
 - Timer coverage for TASK-023 should treat the Timer metadata contribution as a slot reservation; current Timer runtime behavior is covered by TASK-024 tests.
 - Boundary coverage should prove `MetadataBar` fails closed without Plugin Host ownership data, uses only active owner manifest `metadataFields`, rejects malformed/non-array descriptors, unsafe namespace/key segments, mismatched `sourcePluginId`, and mismatched stored `valueType`, and keeps trusted values prototype-safe.
-- Security coverage should assert slot props remain narrow, command execution is scoped to the contributing plugin namespace, unsafe metadata values render as inert React text, and no raw runtime/store/registry/Plugin Host/NativeBridge/DB/filesystem/path/shell/notification/shortcut handles reach plugin-rendered slot UI.
+- Security coverage should assert slot props remain narrow, command execution is authorized by registered command descriptor owner rather than command id prefix, execute-only command facades fail closed without descriptor lookup, unsafe metadata values render as inert React text, and no raw runtime/store/registry/Plugin Host/NativeBridge/DB/filesystem/path/shell/notification/shortcut handles reach plugin-rendered slot UI.
 - Native-surface guards should continue proving TASK-023 does not change package/Cargo files, Tauri config, capabilities, generated permissions, Rust command registration, filesystem behavior, or native command surfaces.
 - Accepted residual test-hardening notes after TASK-023: future tests may cover stale/inactive host records, the `prototype` unsafe segment explicitly, and sloppy command-prefix edge cases such as `review` vs `reviewer`.
 
@@ -341,7 +341,7 @@ TASK-024 tests cover Timer Plugin lifecycle commands, active timer UI, and bound
 - State-transition coverage should prove pause, resume, stop, active start-while-active, switch no-active, switch paused, switch same-page, and missing-page preservation behavior.
 - Payload-boundary coverage should reject malformed, extra, caller-owned, prototype-shaped, accessor, symbol-keyed, non-enumerable, and unsafe-key payloads; `pause` / `resume` / `stop` should allow exact empty null-prototype payloads.
 - UI coverage should render `timer.global-active-bar`, assert active page title and elapsed time remain visible/inert, and assert Pause / Resume / Stop execute exact Timer command IDs with `{}` payloads.
-- Side-effect coverage should assert TASK-024 does not append `timer.time_segment_created`, create note pages, update Timer metadata totals, write timeline data, or change native/Tauri/package/Cargo/Rust surfaces.
+- Historical TASK-024 side-effect coverage should assert that branch has no TASK-025 segment events, note pages, Timer metadata totals, timeline data, or native/Tauri/package/Cargo/Rust surface changes.
 - Security/static coverage should keep production Timer code free of fake-clock/global timer monkeypatches, `eval` / `Function(...)`, string timer handlers, production jsdom branches, and broad active-bar command execution. The fake timer cleanup compatibility shim is test-only in `src/test/setup.ts`.
 
 TASK-024 focused validation commands:
@@ -353,7 +353,32 @@ bun run lint
 git diff --check
 ```
 
-Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Timer storage. TASK-024 itself is TypeScript plugin/runtime/slot UI behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface.
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Timer storage. TASK-024 itself is TypeScript plugin/runtime/slot UI behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface. After TASK-025, current Timer behavior does create Time Segment events; keep TASK-024 side-effect guidance tied to the TASK-024 historical branch only.
+
+## TASK-025 Time Segment and Note Guidance
+
+TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar/Stats/ML integration, native/Tauri/package/Rust changes, or schema-backed storage:
+
+- Registration coverage should assert built-in `timer` registers canonical commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, `timer.switch`, and `timer.add-note`; legacy underscore aliases should be rejected or absent.
+- Finalization coverage should assert `timer.stop`, active `timer.start`, and active `timer.switch` append `namespace: "timer"`, `type: "time_segment_created"` for the finalized timer, with `timer.stopped` before segment creation where applicable.
+- Segment payload coverage should assert camelCase `segmentId`, `pageId`, `startAt`, `endAt`, `durationSeconds`, `source: "timer"`, omitted absent optional fields, exact/narrow command result DTOs, and pause/resume duration excluded from `durationSeconds`.
+- Note coverage should execute `timer.add-note({ segmentId, markdown })`, assert it creates then updates a Markdown Page note for a stopped segment, returns `{ notePageId }`, appends `namespace: "timer"`, `type: "time_segment_note_added"`, and never mutates the original `time_segment_created` event.
+- Timeline UI coverage should render `timer.page-timeline.segments` on `page.timeline`, assert current-page Timer-owned segment filtering, inert segment/note text rendering, empty state behavior, accessible Add Note / Edit Note controls, Note textbox, Save Note button, and wrong-owner/malformed note-link filtering.
+- MetadataBar command-boundary coverage should assert `MetadataBarCommandRegistry` descriptor lookup is required, same-owner commands execute, foreign-owned matching-prefix commands fail before dispatch, and execute-only facades fail closed without descriptor lookup while plugin-rendered slot UI still receives only a narrow `execute()` facade.
+- PluginHost internal scoped-executor coverage should assert the hidden Timer slot executor authorizes by registered command descriptor owner, not command id prefix, and that a foreign-owned matching-prefix command handler is not called.
+- Security/static coverage should keep Timer/PluginHost/MetadataBar production code free of fake-clock/global timer monkeypatches, `eval` / `Function(...)`, string timer handlers, dangerous HTML, storage/network, Tauri API imports, and native/package/Tauri/Rust surface changes.
+- Known residual P2 to keep visible in review notes: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect command execution, but a future API cleanup should replace the internal channel.
+
+TASK-025 focused validation commands:
+
+```bash
+bun run test:frontend -- src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/plugin-host-lifecycle.test.ts src/test/plugin-api-contracts.test.ts
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, or schema-backed Timer storage. TASK-025 is TypeScript plugin/runtime/slot UI behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, or persistence-schema surface.
 
 ## Merge Gate
 
