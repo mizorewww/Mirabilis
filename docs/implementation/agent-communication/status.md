@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-25 11:37 CST.
+Last updated: 2026-05-25 11:39 CST.
 
 ## Current Task
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-25 11:37 CST.
 - Branch: `feat/task-028-stats-chart-plugins`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-028 second P1 production fix pending.
+- Current phase: TASK-028 second P1 production fix delegated.
 
 ## Active Agents
 
-- No active agents. Next delegation is an `implementer` handoff for the Stats/Chart array inertness P1.
+- Mill (`implementer`) is fixing the Stats/Chart array inertness P1 in production code.
 
 ## Current TASK-028 State
 
@@ -188,5 +188,5 @@ Last updated: 2026-05-25 11:37 CST.
 
 ## Next Actions
 
-1. Delegate production fixes for Stats/Chart array inertness to `implementer`.
+1. Wait for Mill (`implementer`) to finish the array inertness production fix.
 2. Validate focused green checks and commit the production fix separately.

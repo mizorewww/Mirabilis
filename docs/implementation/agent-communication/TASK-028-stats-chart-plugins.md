@@ -273,3 +273,11 @@
 
 - Delegate production fixes to `implementer`.
 - Expected production scope: copy/validate Stats and Chart DTO arrays as inert plain arrays before iteration, avoid caller-overridden array methods and custom iterators, preserve existing valid aggregation/rendering behavior, and keep changes limited to Stats/Chart production files unless the implementer reports a blocker.
+
+## Second Review-Fix Implementation Handoff
+
+- Mill (`implementer`) started at 2026-05-25 11:39 CST.
+- Scope: production fix only for the five failing array inertness tests.
+- Expected changed files: `src/plugins/stats/plugin.ts` and `src/plugins/chart/plugin.ts`.
+- Constraints: do not edit tests/docs/progress/package/native/Tauri/Rust/schema files; do not commit, merge, or push.
+- Parent next action: wait for Mill, validate focused green checks, then commit the production fix separately.
