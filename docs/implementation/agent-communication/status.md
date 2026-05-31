@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 21:21 CST.
+Last updated: 2026-05-31 21:28 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 21:21 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 started; parent is collecting pre-test planner/current-doc/security/deprecation guidance before delegating red tests.
+- Current phase: TASK-042 pre-test guidance complete; parent is recording guidance before delegating red tests.
 
 ## Current Outcome
 
@@ -16,6 +16,8 @@ Last updated: 2026-05-31 21:21 CST.
 - TASK-042 branch was created from `master`.
 - Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - Parent selected TASK-042 as the first unblocked `[ ]` task in `docs/implementation/progress.md`.
+- Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
+- Parent decisions: exclude missing/archived pages from Calendar/Reports projections; cap Calendar route segments at `1000` with deterministic partial-data behavior; default Reports to `stats.sum-time-by-page`; treat task estimate data as optional unless public task-owned estimate metadata exists; require a narrow Calendar command bridge rather than a generic raw `commands.execute` facade.
 
 ## Initial TASK-042 Scope
 
@@ -45,4 +47,4 @@ Last updated: 2026-05-31 21:21 CST.
 
 ## Next Parent Actions
 
-- Spawn pre-test guidance agents, wait for their final statuses, summarize recommendations, then delegate TASK-042 red tests to `test_writer`.
+- Commit pre-test guidance, then delegate TASK-042 red projection and route tests to `test_writer`.

@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 21:28 CST - TASK-042 pre-test guidance complete
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Agent guidance: Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
+- Parent decisions: TASK-042 projections exclude missing/archived pages, Calendar route projections cap at `1000` rows with deterministic partial-data behavior, Reports defaults to `stats.sum-time-by-page`, task estimate inputs remain optional unless public task-owned estimate metadata exists, and Calendar segment clicks must use a narrow command bridge rather than exposing a generic raw command facade.
+- External docs verified by agents: React 19 upgrade/`act` and test-utils guidance, Vite 7 migration and Node support, Vitest 4 timers/migration, Testing Library queries/async/user-event/setup, and MUI v9 install/path imports/migration/Tabs/ToggleButton/Dialog/Paper/Stack guidance.
+- Next action: delegate failing projection-builder, route, and static-boundary tests to `test_writer`.
+
 ### 2026-05-31 21:21 CST - TASK-042 started
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
