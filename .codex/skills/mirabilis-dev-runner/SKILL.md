@@ -52,7 +52,9 @@ For each selected task:
 
 The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed or was explicitly cancelled, and that fallback reason is recorded.
 
-Do not treat agent silence as failure by itself. For a long-running blocking step, wait first, send one concise status request if needed, and wait again. Stop or replace the agent only if it reports a blocker, remains silent after the status request with no useful output or file changes, writes in the wrong branch or path, or must be cancelled to protect the repository checkout.
+The parent thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout only means no final status was returned to the parent in that wait window; it is not an agent status and must not be used to infer that the agent is idle, failed, output-free, or safe to replace.
+
+For a delegated blocking step, wait for the child agent's completion notification or final status before integrating or moving to the dependent step. If the run is unusually long, send one concise queued status request asking the agent to report a blocker or keep working until finished, then continue waiting. Stop, replace, or take over the delegated role only if the agent reports a blocker/final failure, becomes unavailable, writes in the wrong branch or path, or must be cancelled to protect the repository checkout. Record that reason before continuing.
 
 If a worktree was explicitly created, remove/prune it after the task is merged so Git branches and commits remain the only durable version-management surface.
 

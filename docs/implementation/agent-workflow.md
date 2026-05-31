@@ -101,9 +101,10 @@ The main Codex thread is the parent orchestration agent. Its job is to route wor
 - Delegate planning, docs research, TDD tests, implementation, review, security, docs, and release checks to the corresponding project agents.
 - Give each agent a concrete prompt with worktree path, task ID, write scope, read-only/write permission, expected checks, and exact output format.
 - After spawning an agent that owns a blocking step, wait for that agent or use `send_input` to clarify. Do not implement the same step in the parent thread while the delegated agent owns it.
-- Do not assume a quiet agent has stopped. For a long-running blocking step, wait first; if the wait exceeds the expected window, send one short status request such as "report blocked or keep working, and return when finished", then wait again.
+- The parent thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout is only a parent-side wait-window expiry, not evidence that the child agent is idle, failed, or done producing useful work.
+- Do not assume a quiet agent has stopped. For a long-running blocking step, wait for the completion notification/final status; if the wait exceeds the expected window, send one short queued status request such as "report blocked or keep working, and return when finished", then keep waiting.
 - When steps depend on each other, make the dependency explicit: for example, `implementer` starts only after `test_writer` reports the failing test files and expected failure.
-- Stop an agent only when it reports a blocker, remains silent after a status request with no useful file changes/output, writes in the wrong worktree, or must be cancelled to protect the task. Record the stop reason in the run log or commit/progress context when it affects the task.
+- Stop, replace, or take over an agent only when it reports a blocker/final failure, becomes unavailable, writes in the wrong worktree, or must be cancelled to protect the task. Record the stop reason in the run log or commit/progress context when it affects the task.
 - Keep the parent thread responsible for integration: review changed files, run checks, stage focused commits, update progress, merge, and report.
 
 ## Agent Communication State
