@@ -46,4 +46,33 @@
 
 ## Current Next Action
 
-- Collect pre-test guidance from planner, current-doc, security, and deprecation agents before delegating failing TASK-040 acceptance tests.
+- Delegate `test_writer` for failing TASK-040 acceptance and boundary tests.
+
+## Pre-Test Guidance Outcomes
+
+- Singer (`planner`) recommended one UI-only app-shell slice:
+  - turn top-bar Command and Quick Capture placeholders into MUI `Dialog` workflows;
+  - keep the Home Markdown workspace as the first screen and render dialogs as overlays;
+  - list active `runtime.commands.list()` descriptors in the command palette, filter by typed input, support Enter/click execution, and execute through `runtime.commands.execute()` only;
+  - call `quick-capture.open` before opening the Quick Capture dialog, then save through `quick-capture.save` / `quick-capture.save-and-open`;
+  - navigate `save-and-open` to the returned Inbox page through normal app-shell page route state.
+- Descartes (`docs_researcher`) verified current official docs for MUI v9.0.1 Dialog/Modal/TextField/List/Button/Progress path imports, WAI-ARIA modal dialog, React focus/portal/error-boundary references, Testing Library/user-event keyboard/focus guidance, and Vitest timers. Recommendations:
+  - use MUI path imports such as `@mui/material/Dialog`, `DialogTitle`, `DialogContent`, `DialogActions`, `TextField`, `ListItemButton`, `Button`, and progress components;
+  - use normal `dialog`, visible `DialogTitle`, initial focus in the search/capture text field, and MUI default focus trap/restore;
+  - avoid `disableEscapeKeyDown`, deprecated MUI props, fake timers unless needed, and `check:full` unless native/package surfaces change.
+- Heisenberg (`security_reviewer`) required:
+  - command palette renders cloned descriptor DTOs only and never exposes raw registry mutation APIs, handlers, stores, plugin host, runtime, native bridge, filesystem/path/SQL, or function props;
+  - palette execution only executes the selected active descriptor through Command Registry with exact `{}` payloads;
+  - Quick Capture open/save/save-and-open use exact command payloads and fail closed for unavailable/wrong-owner/wrong-result command or view states;
+  - save-and-open navigates only from returned `openPageId` / `pageId` via normal route state and never renders page bodies or raw command errors from dialog state;
+  - errors, pending states, cancel/Escape, and focus return are visible, accessible, and redacted.
+- Dalton (`deprecation_auditor`) found no P0 planned-surface blockers and highlighted P1 API constraints:
+  - no MUI barrels or removed v9 legacy props such as `BackdropProps`, `PaperProps`, `TransitionComponent`, `TransitionProps`, `components`, `componentsProps`, `InputProps`, `inputProps`, `SelectProps`, `InputLabelProps`, or `FormHelperTextProps`;
+  - no nested React roots for dialogs or plugin UI;
+  - no Quick Capture private plugin imports; use public commands and registry/view-host paths only.
+
+## Parent Decisions
+
+- Command palette executes selected commands with exact `{}` only in TASK-040. Commands requiring payload/context forms show redacted failure/disabled behavior and broader command-specific forms remain deferred.
+- Quick Capture uses a shell-owned MUI dialog wrapper for modal semantics while relying on public `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open` commands. The plugin baseline `quick-capture.modal` view remains public registry context, not a private import target.
+- Top-bar Command and Quick Capture controls become dialog launchers with focus return; they no longer behave as placeholder `aria-pressed` toggles.

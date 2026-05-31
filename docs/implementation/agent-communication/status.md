@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 18:59 CST.
+Last updated: 2026-05-31 19:04 CST.
 
 ## Current Task
 
@@ -8,13 +8,15 @@ Last updated: 2026-05-31 18:59 CST.
 - Branch: `feat/task-040-command-palette-quick-capture-dialog`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-040 started; parent is collecting planner/current-doc/security/deprecation guidance before delegating failing tests.
+- Current phase: TASK-040 pre-test guidance complete; parent is delegating failing acceptance and boundary tests.
 
 ## Current Outcome
 
 - TASK-039 is complete on `master` and merge-result validation passed in commit `218d694`.
 - TASK-040 branch was created from `master`.
 - Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Pre-test guidance completed by Singer (`planner`), Descartes (`docs_researcher`), Heisenberg (`security_reviewer`), and Dalton (`deprecation_auditor`).
+- Parent decisions: command palette executes exact `{}` payloads only; Quick Capture uses a shell-owned MUI dialog wrapper over public commands; top-bar Command and Quick Capture controls become dialog launchers with focus return.
 
 ## Initial TASK-040 Scope
 
@@ -41,5 +43,4 @@ Last updated: 2026-05-31 18:59 CST.
 
 ## Next Parent Actions
 
-- Run planner, docs_researcher, security_reviewer, and deprecation_auditor guidance.
 - Delegate `test_writer` for failing TASK-040 acceptance and boundary tests.
