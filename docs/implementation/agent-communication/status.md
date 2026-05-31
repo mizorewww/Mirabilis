@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 19:34 CST.
+Last updated: 2026-05-31 19:55 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 19:34 CST.
 - Branch: `feat/task-040-command-palette-quick-capture-dialog`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-040 implementation is committed; parent is running post-implementation review agents.
+- Current phase: TASK-040 review-fix is committed; parent is running targeted re-review agents.
 
 ## Current Outcome
 
@@ -23,6 +23,10 @@ Last updated: 2026-05-31 19:34 CST.
 - Parfit (`test-fix`) fixed a user-event literal Markdown typing issue in commit `dc7812e`.
 - Arendt (`implementer`) implemented the app-shell Command Palette and Quick Capture dialogs in commit `fe68cab`.
 - Parent validation after implementation passed: focused TASK-040/adjacent suites (6 files / 82 tests and 5 files / 70 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- First review found P1/P2 ownership and coverage gaps around raw command IDs, active-owner revalidation, Quick Capture command ownership, save-and-open failure handling, and explicit Search/Settings placeholders.
+- Mencius (`test-fix`) added review regressions in commit `6ac3ce3`; parent red validation failed as expected with 6 failing regressions.
+- Archimedes (`review-fix`) hardened dialog command ownership in commit `0cbd7f5`.
+- Parent validation after review-fix passed: focused TASK-040/adjacent suites (6 files / 92 tests and 5 files / 79 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden production-surface scans.
 
 ## Initial TASK-040 Scope
 
@@ -49,4 +53,4 @@ Last updated: 2026-05-31 19:34 CST.
 
 ## Next Parent Actions
 
-- Run post-implementation review agents.
+- Run targeted re-review agents for the fixed ownership/security/test-quality/deprecation surface.

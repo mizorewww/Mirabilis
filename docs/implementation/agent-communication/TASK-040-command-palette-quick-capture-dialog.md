@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Run post-implementation review agents for correctness, security, deprecation, docs sync, test quality, and changed-path exploration.
+- Run targeted re-review agents for the fixed ownership/security/test-quality/deprecation surface.
 
 ## Pre-Test Guidance Outcomes
 
@@ -119,3 +119,56 @@
   - `bun run lint`.
   - `git diff --check`.
 - Parent decision: accept implementation/test-fix commits and run review agents.
+
+## First Review Outcome
+
+- Hubble (`deprecation_auditor`) found no MUI or React API P0/P1/P2 issues.
+- Pasteur (`docs_researcher`) found no docs-backed P0/P1/P2 issues and confirmed the implementation stayed within the expected MUI/React/Testing Library surface.
+- Galileo (`security_reviewer`) found a P1 command ownership issue: the palette normalized executable command IDs before dispatch and did not revalidate the active owner at execution time. Galileo also found a P2 Quick Capture ownership issue: `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open` needed active `quick-capture` owner verification before dispatch.
+- Aristotle (`test_quality_reviewer`) found P1/P2 coverage gaps for Search/Settings placeholder behavior, inactive/missing-owner command filtering, save-and-open failure handling, pending cleanup/focus return, and static guard reach.
+- Kepler (`pr_explorer`) highlighted the same command-owner revalidation risk, silent Search/Settings no-ops, and docs drift around future modal mounting language.
+- Boole (`reviewer`) found no P0/P1 correctness blocker, with the raw command ID issue recorded as lower-severity correctness risk.
+- Parent decision: fix the ownership and placeholder behavior before merge; add regression tests first.
+
+## Review Regression Tests
+
+- Mencius (`test-fix`) added review regressions in commit `6ac3ce3`.
+- Changed files:
+  - `src/test/command-palette-quick-capture-dialog.test.tsx`;
+  - `src/test/mui-shell-frame.test.tsx`;
+  - `src/test/app-shell-boundary.test.ts`.
+- Coverage added:
+  - raw command descriptor IDs execute exactly, without display normalization;
+  - command palette revalidates active owner before execution;
+  - inactive and missing-owner command rows are absent, including `ghost.export-secrets`;
+  - foreign-owned Quick Capture commands are not dispatched;
+  - save-and-open rejected/malformed/unknown-page failures preserve Markdown and route state with redacted alerts;
+  - pending save/save-and-open cleanup closes the dialog, clears pending state, navigates or resets, and restores focus;
+  - Search and Settings show explicit placeholder status while Command and Quick Capture remain dialog launchers;
+  - static guards include untracked TASK-040 surface files and dynamic import/require specifiers.
+- Parent red validation failed as expected:
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx`.
+  - Result: 2 failed files / 4 passed files, 6 failed / 86 passed tests.
+- Parent decision: accept `6ac3ce3` as review regression baseline and delegate a production-only review fix.
+
+## Review Fix Outcome
+
+- Archimedes (`review-fix`) hardened the dialog command ownership behavior in commit `0cbd7f5`.
+- Production files changed:
+  - `src/App.tsx`;
+  - `src/shell/dialogs/CommandPaletteDialog.tsx`.
+- Delivered behavior:
+  - Command Palette preserves raw descriptor IDs for execution and bounds display-only fields separately;
+  - rows use stable keys based on plugin owner plus raw command ID;
+  - command execution re-fetches the descriptor, checks the expected plugin owner, verifies the plugin is active, and compares a descriptor fingerprint before dispatching exact `{}`;
+  - Quick Capture open/save/save-and-open verify active `quick-capture` ownership before every dispatch;
+  - save-and-open failure paths keep the current route, preserve Markdown, and show redacted error copy;
+  - Search and Settings top-bar controls show explicit `role="status"` placeholder messages while Command and Quick Capture stay dialog launchers.
+- Parent validation after review-fix passed:
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx` (6 files / 92 tests).
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/metadata-timer-timeline-slots.test.tsx` (5 files / 79 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+  - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, `aria-pressed`, native/Tauri bridge, and filesystem/path surfaces returned no matches.
+- Parent decision: accept `0cbd7f5` and run targeted re-review before release readiness.
