@@ -82,7 +82,7 @@ Status markers:
 - [x] TASK-036: Add Generic ViewHost And SlotHost
 - [x] TASK-037: Mount Home Workspace Editor
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
-- [ ] TASK-039: Mount Metadata, Timer, And Timeline Slots
+- [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
@@ -93,6 +93,43 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 18:55 CST - TASK-039 branch gate passed and task closed
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Final feature-branch commit entering closeout: `ee8c26b` (`Meitner(docs)(Mount Metadata, Timer, And Timeline Slots): sync slot surface docs`).
+- Parent branch gate: `bun run build` passed with the known Vite chunk-size warning; `bun run check:quick` passed with 43 frontend test files / 679 tests, Rust fmt, Rust clippy, and Rust tests.
+- Release readiness: Averroes (`release_checker`) found no P0/P1/P2 blockers, confirmed the worktree was clean, confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release surfaces changed, and confirmed `check:full` is not required for this docs/frontend/test-only diff.
+- Final delivered scope: page metadata, page timeline, and global floating timer slot surfaces are mounted through the MUI app shell with the reviewed public `metadata-ui` path, controlled page DTOs, React-owned Portal rendering, and Timer-owned exact `{}` command facade boundaries.
+- Final status: TASK-039 is marked `[x]`. Next action is merge to `master`, validate the merge result, push `master`, then continue autonomous M9 UI work with TASK-040, Add Command Palette And Quick Capture Dialog.
+
+### 2026-05-31 18:45 CST - TASK-039 docs sync applied after review fixes
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Current commit entering docs sync: `b3b23b9` (`Dirac(review-fix)(Mount Metadata, Timer, And Timeline Slots): keep floating slots in portal tree`).
+- Delivered scope recorded: page routes mount public `metadata-ui` `MetadataBar` below the route title and above the editor; page routes mount `page.timeline` below the editor through `SlotHost` with only `{ page: { id, title } }`; `global.floating` mounts through MUI `Portal` as React-owned portal children and exposes only Timer-owned Pause / Resume / Stop command facade calls with exact `{}` payloads.
+- Review outcome recorded from the TASK-039 review-fix round: nested `createRoot` floating rendering was removed, durable app-shell boundary tests were hardened, security review found no P0/P1/P2, and the correctness P1 was fixed by allowing only the public `metadata-ui` path in app-shell boundary checks.
+- Docs sync: updated product, architecture, development, testing, task-index, progress, live status, and TASK-039 communication docs; preserved deferred scope for `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports, ML/AI, Settings/Sync, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, native persistence, package/Tauri/Rust, and release surfaces.
+- Validation: docs-only `git diff --check` passed; targeted stale-status and stale-slot-mounting grep checks returned no matches.
+- Progress status: TASK-039 remains `[~]`; parent still needs branch gate/release-readiness closeout, final validation, final progress status decision, and merge to `master`.
+
+### 2026-05-26 07:15 CST - TASK-039 pre-test guidance complete
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Agents: Averroes the 2nd (`planner`), Russell the 2nd (`docs_researcher`), Leibniz the 2nd (`security_reviewer`), and Mencius the 2nd (`deprecation_auditor`) completed pre-test guidance.
+- Guidance summary: mount `page.header.metadata` only on page routes through `MetadataBar`; mount `page.timeline` only on page routes through `SlotHost` with `{ page: { id, title } }`; mount `global.floating` through MUI `Portal` using a timer-owner-scoped command facade or host-owned callback path, not raw `runtime.commands`.
+- Security/API constraints: app-shell plugin props must remain controlled and page-scoped; no raw runtime/stores/registries/pluginHost/native/filesystem/path/SQL/tokens/provider details; `MetadataBar` needs a failure boundary when mounted in App Shell; generic `SlotHost` must not be widened for raw command objects; direct Task/Tag/Timer/plugin-private/native imports remain forbidden.
+- Current docs verified: MUI v9.0.1 path imports and Portal, React `createPortal`, Testing Library/user-event fake-timer guidance, Vitest fake timers, and current local TASK-023/TASK-025 slot/timer docs.
+- Next action: delegate `test_writer` to add failing TASK-039 acceptance and boundary tests using RTL plus `userEvent.setup()`.
+
+### 2026-05-26 07:07 CST - TASK-039 started
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Start point: `master` after TASK-038 merge validation commit `1355057`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: mount current-page metadata, timer, and timeline UI into the MUI app shell using existing `MetadataBar`, `SlotHost`, and `Portal`/floating slot paths; keep props page-scoped and controlled; plugin interactions must use Command Registry or documented owner-scoped command facades.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event tests before production code; no direct Timer/Task/Tag business implementation imports into App Shell; no package, lockfile, Tauri, Rust, IPC, capability, permission, persistence schema, release, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feed, or native changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-039 red tests.
 
 ### 2026-05-26 07:06 CST - TASK-038 merged to master
 

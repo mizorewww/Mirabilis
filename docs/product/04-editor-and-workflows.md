@@ -294,7 +294,7 @@ TASK-023 当前交付的是窄的统一 metadata bar slice：
 Built-in plugin: metadata-ui
 Export: MetadataBar
 Composes: page.header.metadata slot contributions in SlotRegistry order
-Mounting: reusable component only; production app-shell/editor mounting remains deferred unless a caller mounts it
+Mounting: TASK-039 mounts public MetadataBar on production app-shell page routes below route title and above editor
 ```
 
 字段 UI 仍由插件通过 slot contribution 提供：
@@ -393,7 +393,7 @@ metadata 更新：
 tags = ["architecture", "plugin"]
 ```
 
-TASK-023 后，这类 Tag 更新仍由 Tag Plugin-owned slot 控件或命令完成，但可以在 `MetadataBar` 统一组合的 `page.header.metadata` 区域中出现。完整 picker 体验、其他插件字段编辑器和 app-shell/editor 默认挂载仍属于后续任务。
+TASK-023 后，这类 Tag 更新仍由 Tag Plugin-owned slot 控件或命令完成，但可以在 `MetadataBar` 统一组合的 `page.header.metadata` 区域中出现。TASK-039 后，该 `MetadataBar` 区域在 production app-shell page routes 上默认出现；完整 picker 体验和其他插件字段编辑器仍属于后续任务。
 
 ### 26.4 计时
 

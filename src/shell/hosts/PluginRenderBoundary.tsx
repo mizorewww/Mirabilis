@@ -28,6 +28,10 @@ export class PluginRenderBoundary extends Component<
     };
   }
 
+  override componentDidCatch(): void {
+    return undefined;
+  }
+
   override componentDidUpdate(previousProps: PluginRenderBoundaryProps): void {
     if (
       this.state.hasFailure &&

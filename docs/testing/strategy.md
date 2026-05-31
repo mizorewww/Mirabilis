@@ -106,7 +106,7 @@ TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves t
 - `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
 - `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
 - Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
-- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting. Lazy/Suspense behavior, actual product slot placement, and broader command/page adapters remain TASK-039+.
+- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting; TASK-039 has since delivered page-route metadata/timeline placement plus global floating timer placement. Lazy/Suspense behavior and broader command/page adapters remain later work.
 
 Focused TASK-036 validation:
 
@@ -170,6 +170,29 @@ git diff --check
 ```
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, or release behavior. TASK-038 is a TypeScript/React/MUI app-shell navigation task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent navigation, or release surface.
+
+## TASK-039 Metadata, Timer, And Timeline Slot Mounting Guidance
+
+TASK-039 coverage lives primarily in `src/test/metadata-timer-timeline-slots.test.tsx`, with supporting static and boundary assertions in `src/test/app-shell-boundary.test.ts`, `src/test/metadata-ui-plugin.test.tsx`, `src/test/timer-plugin-runtime.test.tsx`, `src/test/timer-time-segment-note.test.tsx`, and `src/test/view-slot-hosts.test.tsx`. It proves production app-shell mounting for current-page metadata, current-page timeline, and global floating timer slots without adding package/native/Tauri/Rust/IPC/capability/permission/release drift or persistent storage.
+
+- Page-route coverage should assert `page.header.metadata` is mounted below the route title and above the editor through the public `metadata-ui` `MetadataBar`, not through direct Task/Tag/Timer private component imports and not through generic `SlotHost`.
+- Metadata interactions should use RTL plus `userEvent.setup()` for real tag add/remove typing and clicking, Timer Start clicks, wrong-page command-result rejection, inactive/missing ownership fail-closed behavior, and redacted `MetadataBar` failure states.
+- Timeline coverage should assert page routes mount `page.timeline` below the editor through `SlotHost` with only `{ page: { id, title } }`, render current-page Timer-owned segment/note UI inertly, support Add Note / Edit Note / Save Note interactions through `timer.add-note`, and stay absent from saved-filter and placeholder routes.
+- Global floating coverage should assert `global.floating` renders through MUI `Portal` as React-owned portal children, not nested `createRoot`, and that active timer Pause / Resume / Stop controls receive only a timer-owned command facade that dispatches `timer.pause`, `timer.resume`, and `timer.stop` with exact `{}` payloads.
+- Boundary coverage should fail closed for foreign `global.floating` command attempts, thrown slot contributions, inactive/missing plugins, route switches, raw runtime/store/registry/Plugin Host/native/filesystem/path/SQL/token/provider handles, broad command facades, unsafe alias keys, package/lockfile/Cargo/Tauri/capability/permission/IPC/release drift, and direct private business-plugin imports. The only app-shell business-plugin exception is the reviewed public `metadata-ui` `MetadataBar` import path.
+- Review-fix coverage should keep the floating slot surface inside the normal React tree under `Portal`; tests should not tolerate nested React roots, direct `ReactDOM.createPortal` calls in app code, or unreviewed floating command surfaces.
+
+Focused TASK-039 validation:
+
+```bash
+bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx
+bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, release behavior, or schema-backed persistence. TASK-039 is a TypeScript/React/MUI app-shell slot-mounting task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent timer storage, or release surface.
 
 ## Focused Test Guidance
 

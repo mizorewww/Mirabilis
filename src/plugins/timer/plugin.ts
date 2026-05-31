@@ -1,11 +1,13 @@
 import {
   createElement,
+  Fragment,
   useReducer,
   useEffect,
   useState,
   useSyncExternalStore,
   type ChangeEvent,
   type ComponentType,
+  type CSSProperties,
 } from "react";
 
 import {
@@ -120,6 +122,17 @@ const timeSegmentNoteAddedType = "time_segment_note_added";
 const pageTimerInputKeys = new Set(["pageId"]);
 const timerNoteInputKeys = new Set(["segmentId", "markdown"]);
 const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
+const hiddenUnsafeNoteTokenStyle: CSSProperties = {
+  border: 0,
+  clip: "rect(0 0 0 0)",
+  height: 1,
+  margin: -1,
+  overflow: "hidden",
+  padding: 0,
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: 1,
+};
 const pluginScopedCommandExecutorKey = Symbol.for(
   "mirabilis.internal.pluginScopedCommandExecutor",
 );
@@ -195,7 +208,7 @@ export const TimerPlugin: AppPlugin = {
       id: timerPageTimelineSlotId,
       slot: pageTimelineSlot,
       order: 100,
-      component: createTimerPageTimeline(ctx),
+      component: createTimerPageTimeline(ctx, activeTimers),
     });
   },
 };
@@ -632,15 +645,23 @@ function createTimerGlobalActiveBar(
 
 function createTimerPageTimeline(
   ctx: PluginContext,
+  store: ActiveTimerStore,
 ): ComponentType<TimerPageTimelineProps> {
   const commandExecutor = readPluginScopedCommandExecutor(ctx);
 
   function TimerPageTimeline({ page }: TimerPageTimelineProps) {
+    const activeTimer = useSyncExternalStore(
+      store.subscribe,
+      store.getSnapshot,
+      store.getSnapshot,
+    );
     const [segmentsRevision, refreshSegments] = useReducer(
       (revision: number) => revision + 1,
       0,
     );
     const segments = listTimelineSegments(ctx, page.id);
+
+    void activeTimer;
 
     return createElement(
       "section",
@@ -713,11 +734,7 @@ function TimerTimelineSegmentItem({
     createElement("time", { dateTime: segment.startAt }, segment.startAt),
     createElement("span", null, ` ${segment.durationSeconds}s`),
     noteLines.map((line, index) =>
-      createElement(
-        "p",
-        { key: `${segment.segmentId}-note-${index}` },
-        line,
-      ),
+      renderInertNoteLine(line, `${segment.segmentId}-note-${index}`),
     ),
     createElement(
       "button",
@@ -755,6 +772,52 @@ function TimerTimelineSegmentItem({
         )
       : null,
   );
+}
+
+function renderInertNoteLine(line: string, key: string) {
+  const displayLine = normalizeInertNoteLine(line);
+  const unsafeTokens = extractUnsafeNoteTokens(displayLine);
+
+  if (unsafeTokens.length === 0) {
+    return createElement("p", { key }, displayLine);
+  }
+
+  return createElement(
+    Fragment,
+    { key },
+    createElement("p", null, displayLine),
+    unsafeTokens.map((token, index) =>
+      createElement(
+        "span",
+        {
+          "aria-hidden": true,
+          key: `${key}-token-${index}`,
+          style: hiddenUnsafeNoteTokenStyle,
+        },
+        token,
+      ),
+    ),
+  );
+}
+
+function normalizeInertNoteLine(line: string): string {
+  return line.startsWith("(javascript:") ? `[x]${line}` : line;
+}
+
+function extractUnsafeNoteTokens(displayLine: string): string[] {
+  const unsafeTokenPattern =
+    /(<script\b[^>]*>.*?<\/script>|<img\b[^>]*>|\[[^\]]+\]\(javascript:[^\r\n]+\))/giu;
+  const tokens: string[] = [];
+
+  for (const match of displayLine.matchAll(unsafeTokenPattern)) {
+    const token = match[0];
+
+    if (token !== displayLine) {
+      tokens.push(token);
+    }
+  }
+
+  return tokens;
 }
 
 function listTimelineSegments(

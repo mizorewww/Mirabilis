@@ -173,6 +173,13 @@ timer.add-note creates or updates Markdown Page notes for stopped segments
 timer.page-timeline.segments renders current-page Timer-owned segments and inert Note text
 MetadataBar and PluginHost scoped command execution authorize by registered command descriptor owner
 
+TASK-039 当前:
+Production app shell mounts public metadata-ui MetadataBar on page routes below route title and above editor
+Production app shell mounts page.timeline below editor through SlotHost with only { page: { id, title } }
+Production app shell mounts global.floating through MUI Portal as React-owned portal children
+Floating timer controls receive only Timer-owned pause/resume/stop facade with exact {} payloads
+Saved-filter and placeholder routes do not receive page metadata or page timeline slots
+
 TASK-026 当前:
 CalendarPlugin registers calendar.day / calendar.week / calendar.open-time-segment
 Calendar views consume caller-provided kind calendar.time-segments DTOs
@@ -208,10 +215,9 @@ PredictionPanel validates DTOs and fails closed/inertly for malformed or wrong-k
 后续：
 编辑器保存后自动扫描 task blocks
 TASK-038 已交付 current app-shell Drawer saved-filter routes for public filters; broader global/persistent saved-filter navigation remains future scope
-Production app-shell/editor mounting for MetadataBar
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
-Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, manual segment editing, calendar drag/drop, and native/schema surfaces
+Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, page.header.actions/sidebar/body-after slot placement, and native/schema surfaces
 Quick Capture desktop global shortcuts/native entry point, full app-shell modal behavior, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, and app-shell Search route
 ```
 
@@ -228,7 +234,7 @@ TaskBlock title clicked
 → MarkdownPageEditor calls onOpenPage(pageId)
 → AppShell/editor route opens only the returned pageId
 → MarkdownEditorPlugin 渲染该页面
-→ 后续 app-shell/editor mounting can render MetadataBar for page.header.metadata
+→ TASK-039 app-shell page routes render MetadataBar for page.header.metadata between title and editor
 ```
 
 The click path never trusts `attrs.boundPageId` as a navigation target. That attr is recovered/verifiable source binding data for the resolver path. Missing, forged, mismatched, or malformed values are treated as absent/untrusted.

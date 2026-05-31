@@ -1025,7 +1025,8 @@ Delivered/deferred note for the TASK-036 branch:
 - Delivered: generic app-shell `ViewHost`, `SlotHost`, `PluginRenderBoundary`, and host exports for registry-owned views and slots; exact-id and unambiguous-type view resolution; explicit accepted-data checks; safe loading, empty, missing, wrong-data, unavailable, thrown, and error states; slot registry ordering and per-contribution isolation; controlled props/data cloning; descriptor-backed `host.action` wrappers for user interactions; prototype-key fail-closed behavior; native/secret alias redaction; recursion budgets; proxy/trap fail-closed behavior; and static guards for no package/native/Tauri/Rust/capability/release drift.
 - Delivered later by TASK-037: Home editor route mounting plus Home-scoped command and page bridge adapters.
 - Delivered later by TASK-038: sidebar page route and saved-filter route mounting for Home, recent pages, Inbox, Today, All Tasks, and public saved filters, using explicit route DTOs through `ViewHost` / `SlotHost`.
-- Deferred: lazy/Suspense host behavior, actual metadata/timer/timeline/global slot placement, dialogs, `Portal` floating slots, Calendar/Reports/ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain TASK-039+ or later.
+- Delivered later by TASK-039: actual page-route metadata/timeline placement and `Portal`-backed global floating timer placement.
+- Deferred: lazy/Suspense host behavior, dialogs, Calendar/Reports/ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain TASK-040+ or later.
 - Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
 
 Test plan:
@@ -1073,7 +1074,8 @@ Delivered/deferred note for the TASK-037 branch:
 - Delivered by branch: the ready Home route creates/selects one session Home Markdown Page and renders registered `markdown.page-editor` / `page.editor` through `ViewHost`; hosted editor props stay narrow and do not expose raw runtime/native/store/registry/command/page facade handles; the provider-scoped Markdown workspace bridge exposes only current-page bounded load/save, inert editor extension collection, exact allowlist wrappers for `markdown.insert-text`, `task.open-task-page`, and `task.toggle-status`, and guarded page-open navigation; typing, toolbar snippets, save, task-title open, checkbox toggle, stale insert/open guards, foreign load/save/openPage rejection, and non-Home placeholder preservation are covered.
 - Security/correctness hardening delivered by branch: no raw runtime render-prop/public provider exposure, no plugin-to-shell production import, hosted `pages.load/save` remain current-page scoped, hosted `openPage` cannot self-authorize foreign pages, and command-returned page opens are one-shot authorizations bound to the source page generation.
 - Delivered later by TASK-038: sidebar page/filter navigation for Home, recent pages, Inbox, Today, All Tasks, and public saved filters; page routes stay on the registered editor path, and saved-filter routes use the public filter executor plus `ViewHost` / `SlotHost` with route-token DTOs.
-- Deferred: metadata/timer/timeline slot placement, command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, `Portal` floating slots, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-039+ or later.
+- Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
+- Deferred: command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-040+ or later.
 
 Test plan:
 
@@ -1123,7 +1125,8 @@ Delivered/deferred note for the TASK-038 branch:
 - Delivered by branch: Inbox, Today, All Tasks, and public saved filters resolve public `FilterDefinition`s, verify filter source/view/plugin ownership fail-closed, collect active metadata owner reservations, execute `executeFilterQuery`, render registered `viewType`s through `ViewHost`, and render trusted empty states through `SlotHost`.
 - Delivered by branch: filter result views receive only opaque `{ routeToken, title }` DTOs; saved-filter rows keep visible labels such as `#today` and `Today Review` as accessible names; active navigation rows expose `aria-current="page"`; recent pages remain session-scoped and visible on trusted filter routes.
 - Security/native scope: App Shell still does not import Task, Tag, Quick Capture, Search, Markdown editor private modules, raw Tauri/native modules, or plugin-private view components; TASK-038 adds no package, lockfile, Tauri config, generated permissions, capabilities, Rust, IPC, filesystem, schema, persistent navigation storage, or release changes.
-- Deferred: Reports/top-bar dialogs, metadata/timer/timeline/global slot placement, Calendar/Reports route projections, search overlay/result routes, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, and durable route storage remain TASK-039+ or later.
+- Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
+- Deferred: Reports/top-bar dialogs, Calendar/Reports route projections, search overlay/result routes, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, and durable route storage remain TASK-040+ or later.
 
 Test plan:
 
@@ -1185,6 +1188,15 @@ Docs to verify before implementation:
 - Local TASK-023 through TASK-025 guidance.
 - MUI Portal docs.
 - Current RTL accessible control and async update guidance.
+
+Delivered/deferred note for the TASK-039 branch:
+
+- Delivered by branch: page routes mount public `metadata-ui` `MetadataBar` below the route title and above the editor so Task, Tag, and Timer `page.header.metadata` contributions are visible for the selected page.
+- Delivered by branch: page routes mount `page.timeline` below the editor through `SlotHost`, passing only the narrow page DTO `{ page: { id, title } }`; saved-filter and placeholder routes do not receive page metadata or timeline slots.
+- Delivered by branch: `global.floating` mounts through MUI `Portal` as React-owned portal children. The floating timer bar remains Timer-owned and receives only a Pause / Resume / Stop command facade that dispatches `timer.pause`, `timer.resume`, and `timer.stop` with exact `{}` payloads.
+- Review hardening: nested React roots are not used for floating slots, app-shell boundary tests allow only the public `metadata-ui` import path, and foreign `global.floating` command attempts fail closed.
+- Security/native scope: App Shell still does not import Task, Tag, Timer private modules, raw Tauri/native modules, native persistence, package files, generated capabilities/permissions, Rust, IPC, filesystem, schema, or release surfaces for this task.
+- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
 
 ### TASK-040: Add Command Palette And Quick Capture Dialog
 

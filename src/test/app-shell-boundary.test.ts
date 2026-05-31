@@ -333,8 +333,16 @@ function collectStaticModuleSpecifiers(contents: string): string[] {
 }
 
 function findForbiddenAppShellImport(moduleSpecifier: string): string | undefined {
+  if (isAllowedMetadataUiAppShellMountImport(moduleSpecifier)) {
+    return undefined;
+  }
+
   const normalized = moduleSpecifier.toLowerCase();
   const forbiddenPatterns = new Map<RegExp, string>([
+    [
+      /(?:^|\/)plugins$/,
+      "broad plugin root import",
+    ],
     [
       /(?:^|\/)(?:task|tasks|habit|habits|timer|timers|calendar|calendars|editor)(?:$|[-_/])/,
       "business plugin module",
@@ -364,6 +372,15 @@ function findForbiddenAppShellImport(moduleSpecifier: string): string | undefine
   }
 
   return undefined;
+}
+
+function isAllowedMetadataUiAppShellMountImport(
+  moduleSpecifier: string,
+): boolean {
+  return (
+    moduleSpecifier === "./plugins/metadata-ui" ||
+    moduleSpecifier === "./plugins/metadata-ui/index"
+  );
 }
 
 function findRawRuntimeProviderExposure(

@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ArticleIcon from "@mui/icons-material/Article";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -23,6 +32,7 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import Portal from "@mui/material/Portal";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
@@ -32,6 +42,10 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { createAppRuntime } from "./bootstrap";
 import type { AppRuntime } from "./bootstrap";
 import {
+  MetadataBar,
+  type MetadataBarCommandRegistry,
+} from "./plugins/metadata-ui";
+import {
   executeFilterQuery,
   exportStructuredDocumentToMarkdown,
   importMarkdownToStructuredDocument,
@@ -40,6 +54,7 @@ import {
   type MetadataRecord,
   type MetadataOwnerReservation,
   type PluginHostRecord,
+  type SlotContribution,
   type StructuredMarkdownDocument,
 } from "./core";
 import {
@@ -49,7 +64,7 @@ import {
   type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
 } from "./providers";
-import { SlotHost, ViewHost } from "./shell/hosts";
+import { PluginRenderBoundary, SlotHost, ViewHost } from "./shell/hosts";
 import "./App.css";
 
 type AppProps = {
@@ -156,9 +171,20 @@ const pageEditorViewType = "page.editor";
 const markdownInsertCommandId = "markdown.insert-text";
 const openTaskPageCommandId = "task.open-task-page";
 const toggleTaskStatusCommandId = "task.toggle-status";
+const pageTimelineSlot = "page.timeline";
+const globalFloatingSlot = "global.floating";
+const timerPluginId = "timer";
+const timerPauseCommandId = "timer.pause";
+const timerResumeCommandId = "timer.resume";
+const timerStopCommandId = "timer.stop";
 const filterResultViewKind = "filter-results.markdown-pages";
 const filterEmptyStateSlot = "filter.empty_state";
 const metadataSegmentPattern = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const timerFloatingCommandIds = new Set([
+  timerPauseCommandId,
+  timerResumeCommandId,
+  timerStopCommandId,
+]);
 const primaryRouteLabels = new Set([
   "all tasks",
   "home",
@@ -420,8 +446,12 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     pageId: homePageId,
     role: "home",
   }));
+  const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeTool, setActiveTool] = useState<ShellToolId>("command");
+  const refreshSlotSurfaces = useCallback(() => {
+    setSlotRevision((revision) => revision + 1);
+  }, []);
   const routeDetails = getActiveRouteDetails(
     runtimeSource,
     activeRoute,
@@ -684,6 +714,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
             activeRoute={activeRoute}
             bridge={bridge}
             runtime={runtimeSource}
+            slotRevision={slotRevision}
           />
 
           <Box className="app-shell__tool-status" role="status">
@@ -694,6 +725,13 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           </Box>
         </Box>
       </Box>
+
+      <Portal>
+        <AppFloatingSlots
+          onCommandExecuted={refreshSlotSurfaces}
+          runtime={runtimeSource}
+        />
+      </Portal>
     </Box>
   );
 }
@@ -702,10 +740,12 @@ function WorkspaceRouteContent({
   activeRoute,
   bridge,
   runtime,
+  slotRevision,
 }: {
   activeRoute: ActiveRoute;
   bridge: MarkdownWorkspaceBridgeValue;
   runtime: AppRuntime;
+  slotRevision: number;
 }) {
   if (activeRoute.kind === "page") {
     return (
@@ -713,6 +753,7 @@ function WorkspaceRouteContent({
         bridge={bridge}
         pageId={activeRoute.pageId}
         runtime={runtime}
+        slotRevision={slotRevision}
       />
     );
   }
@@ -745,27 +786,298 @@ function PageWorkspaceEditor({
   bridge,
   pageId,
   runtime,
+  slotRevision,
 }: {
   bridge: MarkdownWorkspaceBridgeValue;
   pageId: string;
   runtime: AppRuntime;
+  slotRevision: number;
 }) {
+  const page = getRoutePage(runtime, pageId);
+
+  if (page === undefined) {
+    return <RouteUnavailable />;
+  }
+
   return (
-    <Box className="app-shell__workspace-editor">
-      <MarkdownWorkspaceBridgeProvider bridge={bridge}>
-        <ViewHost
-          acceptedData={{
-            kind: "markdown-page",
-            pageId,
-          }}
+    <Stack className="app-shell__page-workspace" spacing={2}>
+      <Box className="app-shell__page-metadata">
+        <PluginRenderBoundary
+          fallbackLabel="Page metadata unavailable"
+          fallbackText="Page metadata unavailable"
+          resetKey={page.id}
+        >
+          <MetadataBar
+            commands={runtime.commands as MetadataBarCommandRegistry}
+            metadata={listPageMetadataRecords(runtime)}
+            pageId={page.id}
+            pluginHost={runtime.pluginHost}
+            slots={runtime.registries.slots}
+          />
+        </PluginRenderBoundary>
+      </Box>
+
+      <Box className="app-shell__workspace-editor">
+        <MarkdownWorkspaceBridgeProvider bridge={bridge}>
+          <ViewHost
+            acceptedData={{
+              kind: "markdown-page",
+              pageId: page.id,
+            }}
+            isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+            registry={runtime.registries.views}
+            viewId={markdownPageViewId}
+            viewType={pageEditorViewType}
+          />
+        </MarkdownWorkspaceBridgeProvider>
+      </Box>
+
+      <Box className="app-shell__page-timeline">
+        <SlotHost
           isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
-          registry={runtime.registries.views}
-          viewId={markdownPageViewId}
-          viewType={pageEditorViewType}
+          key={`${page.id}:${slotRevision}`}
+          props={{
+            page: {
+              id: page.id,
+              title: page.title,
+            },
+          }}
+          registry={runtime.registries.slots}
+          slot={pageTimelineSlot}
         />
-      </MarkdownWorkspaceBridgeProvider>
+      </Box>
+    </Stack>
+  );
+}
+
+function AppFloatingSlots({
+  onCommandExecuted,
+  runtime,
+}: {
+  onCommandExecuted(): void;
+  runtime: AppRuntime;
+}) {
+  const contributions = useMemo(
+    () => listSlotContributions(runtime, globalFloatingSlot),
+    [runtime],
+  );
+  const visibleContributionCount = useStagedFloatingContributionCount(
+    createSlotContributionListKey(contributions),
+    contributions.length,
+  );
+
+  if (contributions.length === 0) {
+    return null;
+  }
+
+  return (
+    <Box className="app-shell__floating-slots">
+      {contributions.slice(0, visibleContributionCount).map((contribution) => (
+        <AppFloatingSlotContribution
+          contribution={contribution}
+          key={contribution.id}
+          onCommandExecuted={onCommandExecuted}
+          runtime={runtime}
+        />
+      ))}
     </Box>
   );
+}
+
+const AppFloatingSlotContribution = memo(function AppFloatingSlotContribution({
+  contribution,
+  onCommandExecuted,
+  runtime,
+}: {
+  contribution: SlotContribution;
+  onCommandExecuted(): void;
+  runtime: AppRuntime;
+}) {
+  const props = useMemo(
+    () =>
+      Object.freeze({
+        commands: createFloatingCommandFacade({
+          onCommandExecuted,
+          pluginId: contribution.pluginId,
+          runtime,
+        }),
+      }),
+    [contribution.pluginId, onCommandExecuted, runtime],
+  );
+
+  if (!isPluginActive(runtime, contribution.pluginId)) {
+    return null;
+  }
+
+  const condition = contribution.when;
+
+  if (condition !== undefined) {
+    if (typeof condition !== "function") {
+      return null;
+    }
+
+    try {
+      if (condition(props) !== true) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  const Component = contribution.component as ComponentType<
+    Record<string, unknown>
+  >;
+  const renderedContribution = (
+    <MemoizedDeferredFloatingContributionElement
+      component={Component}
+      props={props}
+      propsKey={`${contribution.pluginId}:${contribution.id}`}
+    />
+  );
+
+  return (
+    <PluginRenderBoundary
+      fallbackLabel="Floating slot unavailable"
+      fallbackText="Floating contribution unavailable"
+      key={`${contribution.pluginId}:${contribution.id}`}
+      resetKey={`${contribution.pluginId}:${contribution.id}`}
+    >
+      {renderedContribution}
+    </PluginRenderBoundary>
+  );
+}, areAppFloatingSlotContributionPropsEqual);
+
+function areAppFloatingSlotContributionPropsEqual(
+  previous: {
+    contribution: SlotContribution;
+    onCommandExecuted(): void;
+    runtime: AppRuntime;
+  },
+  next: {
+    contribution: SlotContribution;
+    onCommandExecuted(): void;
+    runtime: AppRuntime;
+  },
+): boolean {
+  return (
+    previous.contribution === next.contribution &&
+    previous.runtime === next.runtime
+  );
+}
+
+function DeferredFloatingContributionElement({
+  component: Component,
+  props,
+}: {
+  component: ComponentType<Record<string, unknown>>;
+  props: Record<string, unknown>;
+  propsKey: string;
+}) {
+  return useMemo(() => <Component {...props} />, [Component, props]);
+}
+
+const MemoizedDeferredFloatingContributionElement = memo(
+  DeferredFloatingContributionElement,
+  (previous, next) =>
+    previous.component === next.component && previous.propsKey === next.propsKey,
+);
+
+function useStagedFloatingContributionCount(
+  key: string,
+  total: number,
+): number {
+  const [stage, setStage] = useState(() => ({
+    count: 0,
+    key,
+  }));
+  const visibleCount = stage.key === key ? Math.min(stage.count, total) : 0;
+
+  useLayoutEffect(() => {
+    if (stage.key !== key) {
+      // Staged plugin mounting keeps earlier boundaries committed before later plugin failures.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStage({
+        count: total > 0 ? 1 : 0,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count < total) {
+      setStage({
+        count: stage.count + 1,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count > total) {
+      setStage({
+        count: total,
+        key,
+      });
+    }
+  }, [key, stage.count, stage.key, total]);
+
+  return visibleCount;
+}
+
+function createSlotContributionListKey(
+  contributions: readonly SlotContribution[],
+): string {
+  return contributions
+    .map((contribution) => `${contribution.pluginId}:${contribution.id}`)
+    .join("\u0000");
+}
+
+function listSlotContributions(
+  runtime: AppRuntime,
+  slot: string,
+): SlotContribution[] {
+  try {
+    return runtime.registries.slots.list({ slot });
+  } catch {
+    return [];
+  }
+}
+
+function createFloatingCommandFacade({
+  onCommandExecuted,
+  pluginId,
+  runtime,
+}: {
+  onCommandExecuted(): void;
+  pluginId: string;
+  runtime: AppRuntime;
+}): {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+} {
+  return Object.freeze({
+    async execute(commandId, input) {
+      if (
+        pluginId !== timerPluginId ||
+        !timerFloatingCommandIds.has(commandId) ||
+        !isExactEmptyCommandPayload(input)
+      ) {
+        throw new Error("Floating command unavailable");
+      }
+
+      const output = await runtime.commands.execute(commandId, {});
+
+      onCommandExecuted();
+
+      return output;
+    },
+  });
+}
+
+function isExactEmptyCommandPayload(input: unknown): boolean {
+  if (!isRecord(input) || Object.getPrototypeOf(input) !== Object.prototype) {
+    return false;
+  }
+
+  return Reflect.ownKeys(input).length === 0;
 }
 
 function SavedFilterWorkspace({
@@ -1138,6 +1450,14 @@ function listActivePluginMetadata(
   return runtime.metadata
     .list()
     .filter((record) => activePluginIds.has(record.sourcePluginId));
+}
+
+function listPageMetadataRecords(runtime: AppRuntime): MetadataRecord[] {
+  try {
+    return runtime.metadata.list();
+  } catch {
+    return [];
+  }
 }
 
 function filterQueryOwnersAreAvailable(
