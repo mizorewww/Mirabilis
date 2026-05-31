@@ -83,7 +83,7 @@ Status markers:
 - [x] TASK-037: Mount Home Workspace Editor
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
-- [ ] TASK-040: Add Command Palette And Quick Capture Dialog
+- [~] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 18:59 CST - TASK-040 started
+
+- Branch: `feat/task-040-command-palette-quick-capture-dialog`.
+- Start point: `master` after TASK-039 merge-validation commit `218d694`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: add real MUI command palette and Quick Capture dialogs from the top app-shell controls without replacing the Markdown workspace first screen; command execution and Quick Capture save/open flows must go through Command Registry and normal app-shell route state.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event tests before production code; no native/global shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, persistence beyond current runtime, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, or release changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-040 red tests.
 
 ### 2026-05-31 18:56 CST - TASK-039 merged to master
 

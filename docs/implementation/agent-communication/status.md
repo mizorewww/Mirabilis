@@ -1,62 +1,45 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 18:56 CST.
+Last updated: 2026-05-31 18:59 CST.
 
 ## Current Task
 
-- Task: transition from TASK-039 to TASK-040.
-- Branch: `master`.
+- Task: TASK-040 - Add Command Palette And Quick Capture Dialog.
+- Branch: `feat/task-040-command-palette-quick-capture-dialog`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-039 merged to `master`; parent is recording merge-result validation and then continuing to TASK-040.
+- Current phase: TASK-040 started; parent is collecting planner/current-doc/security/deprecation guidance before delegating failing tests.
 
 ## Current Outcome
 
-- Pre-test guidance completed by Averroes the 2nd (`planner`), Russell the 2nd (`docs_researcher`), Leibniz the 2nd (`security_reviewer`), and Mencius the 2nd (`deprecation_auditor`).
-- Linnaeus (`test_writer`) added the TASK-039 red acceptance suite in commit `cab15b1`; Ramanujan (`test_writer`) fixed test-only lint in commit `d265d3c`.
-- Kant (`implementer`) and Epicurus (`implementer`) completed the main implementation in commit `d72d806`.
-- Kierkegaard (`test-fix`) hardened review coverage in commit `3271046`.
-- Dirac (`review-fix`) kept floating slots in the React portal tree and removed the nested-root strategy in commit `b3b23b9`.
-- Meitner (`doc_writer`) synced TASK-039 product, architecture, development, testing, task-index, progress, and communication docs in commit `ee8c26b`.
-- Averroes (`release_checker`) found no P0/P1/P2 release blockers and confirmed `check:full` is not required.
-- TASK-039 merged to `master` in merge commit `5ccb9a5`.
-- Merge-result `bun run check:quick` passed on `master` with 43 frontend test files / 679 tests, Rust fmt, Rust clippy, and Rust tests.
+- TASK-039 is complete on `master` and merge-result validation passed in commit `218d694`.
+- TASK-040 branch was created from `master`.
+- Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
-## Delivered Behavior
+## Initial TASK-040 Scope
 
-- Page routes mount public `metadata-ui` `MetadataBar` below the route title and above the editor so Task, Tag, and Timer `page.header.metadata` contributions are visible for the selected page.
-- Page routes mount `page.timeline` below the editor through `SlotHost`, passing only `{ page: { id, title } }`.
-- Saved-filter and placeholder routes do not receive page metadata or page timeline slots.
-- `global.floating` mounts through MUI `Portal` as React-owned portal children.
-- Floating timer controls receive only a Timer-owned command facade for `timer.pause`, `timer.resume`, and `timer.stop`, each dispatched with exact `{}` payloads.
-- App Shell does not import Task, Tag, Timer private modules, raw Tauri/native modules, package/native/Rust/IPC/capability/permission/schema/release surfaces, or raw runtime/native handles for TASK-039. The only reviewed business-plugin import path in App Shell is public `metadata-ui`.
+- Top app-shell command and capture controls become real MUI Dialog entry points while the Markdown workspace remains the first screen.
+- Command palette lists executable Command Registry descriptors, filters typed input, supports keyboard/click execution, and runs only through Command Registry.
+- Quick Capture entry executes `quick-capture.open`, mounts the registered `quick-capture.modal` view or shell-owned wrapper, saves through `quick-capture.save`, and save-and-open navigates to the returned Inbox page through normal route state.
+- Dialogs need accessible names, initial focus, Escape/cancel handling, focus return, disabled/pending states, and redacted non-leaky errors.
 
-## Review State
+## Constraints
 
-- Security review found no P0/P1/P2 in the current TASK-039 scope.
-- Correctness P1 was fixed by allowing only public `metadata-ui` in app-shell boundary tests while preserving private business-plugin import bans.
-- Review fixes removed nested `createRoot` floating rendering and hardened durable app-shell boundary coverage.
-- No Tauri permissions, generated capabilities, Rust IPC, filesystem, native persistence, package, lockfile, schema, or release surfaces changed for TASK-039.
+- Parent remains orchestration-only.
+- Write failing RTL/user-event tests before production code.
+- No native/global shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, persistence beyond current runtime, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, or release changes.
+- Native/global shortcut and mobile Quick Capture toolbar remain deferred.
 
 ## Validation Recorded
 
-- Parent validation after implementation passed:
-  - `bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx` (4 files / 68 tests).
-  - `bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx` (7 files / 117 tests).
-  - `bun run typecheck`.
-  - `bun run lint`.
-  - `git diff --check`.
-- Docs-sync validation: `git diff --check` passed; targeted stale-status and stale-slot-mounting grep checks returned no matches.
-- Branch gate validation passed:
-  - `bun run build` passed with the known Vite chunk-size warning.
-  - `bun run check:quick` passed with 43 frontend test files / 679 tests, Rust fmt, Rust clippy, and Rust tests.
-- Release readiness confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release surface changes and no P0/P1/P2 blockers.
+- TASK-039 merge-result `bun run check:quick` passed on `master` before TASK-040 branch creation.
+- TASK-040 startup `git status --short --branch` was clean after branch creation.
 
 ## Deferred Scope
 
-- `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search overlay/results, Quick Capture dialog, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+- Native/global Quick Capture shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, Search overlay/results, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
 
 ## Next Parent Actions
 
-- Push `master`.
-- Continue autonomous M9 UI work with TASK-040, Add Command Palette And Quick Capture Dialog.
+- Run planner, docs_researcher, security_reviewer, and deprecation_auditor guidance.
+- Delegate `test_writer` for failing TASK-040 acceptance and boundary tests.
