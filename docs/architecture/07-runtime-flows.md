@@ -205,6 +205,13 @@ QuickCapturePlugin does not auto-create Task/Tag metadata, events, or pages; Tas
 SearchPlugin registers search.query and search.results
 SearchPlugin performs transient bounded literal title/body scans over unarchived pages; no persistent indexer/native/search worker is present
 
+TASK-041 当前:
+App Shell opens top-bar Search as a MUI Dialog over the Markdown workspace
+App Shell executes only active search-owned search.query with exact { query }
+App Shell copies valid search.results data into a shell-owned bounded results route DTO
+Search results route renders inert rows and validates selected pages before normal page-route navigation
+Closing pending Search invalidates stale later resolve/reject results
+
 TASK-030 当前:
 MlPlugin registers ml.run-prediction, ml.prediction-panel, and ml.page-sidebar.prediction-panel
 MlPlugin contributes inert algorithm descriptor ml.predict-remaining-time, metadata descriptors ml.predictedRemainingTime / ml.predictionConfidence, and event descriptor ml.prediction-generated
@@ -218,7 +225,7 @@ TASK-038 已交付 current app-shell Drawer saved-filter routes for public filte
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
 Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, page.header.actions/sidebar/body-after slot placement, and native/schema surfaces
-Quick Capture desktop global shortcuts/native entry point, full app-shell modal behavior, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, and app-shell Search route
+Quick Capture desktop global shortcuts/native entry point, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, native/global Search shortcuts, and Search ranking beyond existing plugin behavior
 ```
 
 ### 18.2 用户点击任务文字
@@ -513,30 +520,39 @@ automatic Task/Tag cleanup or AI inbox processing
 
 ### 18.13 User runs Search
 
-TASK-029 current flow:
+TASK-041 app-shell flow:
 
 ```text
-CommandRegistry.execute("search.query", { query, limit? })
+Top-bar Search button
+→ App Shell opens named MUI Dialog and focuses the labelled search textbox
+→ User submits bounded query text
+→ CommandRegistry.execute("search.query", { query })
 → SearchPlugin validates exact bounded plain payload
 → Blank trimmed query returns { kind: "search.results", query, results: [] }
 → Search lists current pages and scans up to the page cap
 → Archived pages are excluded by the page listing behavior
 → Page title and structured body text are searched as case-insensitive literal substrings
 → Results include pageId, capped title, capped snippet, and matchedFields
-→ Caller resolves ViewRegistry id "search.results"
-→ Search results view validates DTO shape and renders status + list/listitem text
+→ App Shell accepts only active search-owned kind "search.results" data
+→ App Shell copies query/results into a shell-owned bounded route DTO
+→ Results route renders status + list/listitem/button rows as inert React text
+→ Result click validates that pageId still exists
+→ Existing page opens through normal app-shell page route state
 ```
 
-Search results do not include full page bodies. Later page edits are visible on the next `search.query` call because there is no persistent index in this slice.
+Search results do not include full page bodies. Search route state does not receive raw runtime handles, full page bodies, plugin-private objects, NativeBridge, Tauri/native handles, filesystem/path handles, SQL, or raw errors. Later page edits are visible on the next `search.query` call because there is no persistent index in this slice. Closing the Search dialog while a query is pending returns focus and invalidates later resolve/reject results so stale searches cannot navigate or reopen results.
 
-Deferred after TASK-029:
+The registered `search.results` view remains the Search plugin baseline view/data kind. TASK-041 uses a shell-owned route DTO for interactive result navigation so the shell can validate page existence before opening a page route.
+
+Deferred after TASK-041:
 
 ```text
 persistent Search indexing
 background search indexer or worker
 SQLite FTS
 ranking beyond current page-list scan order
-app-shell Search route / command palette polish
+native/global Search shortcuts
+command-palette search polish beyond the current top-bar dialog/results route
 native/Tauri/package/Rust/schema/capability changes
 ```
 

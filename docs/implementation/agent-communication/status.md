@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 20:54 CST.
+Last updated: 2026-05-31 21:00 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 20:54 CST.
 - Branch: `feat/task-041-search-overlay-results-route`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-041 review fixes are committed; parent is syncing docs before release readiness.
+- Current phase: TASK-041 docs sync is applied; parent still needs release readiness, branch gate, final progress closeout, and merge.
 
 ## Current Outcome
 
@@ -26,6 +26,7 @@ Last updated: 2026-05-31 20:54 CST.
 - Noether (`test-fix`) added review regression coverage in commit `8755359`; parent red validation failed as expected with one pending-close regression failure.
 - Boyle (`review-fix`) fixed pending search close and stale-result invalidation in commit `af3cc6c`.
 - Parent validation after review-fix passed: focused TASK-041/adjacent suites (4 files / 79 tests and 4 files / 69 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden production-surface scans.
+- Socrates (`doc_writer`) updated product, architecture, task-index, testing, and communication docs for delivered TASK-041 Search behavior and deferred scope. Docs-only `git diff --check` passed; stale Search deferred/placeholder/app-shell route and stale `#25-search-plugin` greps returned no matches.
 
 ## Initial TASK-041 Scope
 
@@ -53,4 +54,6 @@ Last updated: 2026-05-31 20:54 CST.
 
 ## Next Parent Actions
 
-- Sync TASK-041 product, architecture, task-index, testing, progress, and communication docs for delivered Search behavior and deferred scope.
+- Run release readiness review and branch gate for TASK-041.
+- Update `docs/implementation/progress.md` only during final closeout; TASK-041 remains `[~]` until then.
+- Merge `feat/task-041-search-overlay-results-route` to `master` after the parent accepts release readiness and local checks.

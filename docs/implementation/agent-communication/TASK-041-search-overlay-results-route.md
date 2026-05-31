@@ -158,3 +158,23 @@
   - `git diff --check`.
   - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, Search private imports, native/Tauri bridge, worker/indexer/FTS, unsafe HTML/eval sinks, and filesystem/schema/release surfaces returned no matches.
 - Parent decision: accept review regression and review-fix commits, then sync docs before release readiness.
+
+## Docs Sync Outcome
+
+- Socrates (`doc_writer`) applied docs-only TASK-041 sync on 2026-05-31 21:00 CST; no production code or tests were edited.
+- Changed docs:
+  - `docs/product/07-user-interface-design.md`;
+  - `docs/product/05-built-in-plugins.md`;
+  - `docs/architecture/05-plugin-implementations.md`;
+  - `docs/architecture/07-runtime-flows.md`;
+  - `docs/implementation/task-index.md`;
+  - `docs/testing/strategy.md`;
+  - `docs/implementation/agent-communication/TASK-041-search-overlay-results-route.md`;
+  - `docs/implementation/agent-communication/status.md`.
+- Docs now record TASK-041 Search as delivered in the app shell: top-bar MUI `Dialog`, exact active search-owned `search.query` `{ query }`, shell-owned bounded results route DTO, inert route rows, existing-page validation/navigation, and pending-close stale-result invalidation.
+- Deferred scope remains persistent search index/worker/SQLite FTS, native/global Search shortcuts, ranking beyond existing plugin behavior, package/lockfile, Tauri, Rust, IPC, capability, permission, schema, release surfaces, and broader route/panel polish.
+- Validation:
+  - `git diff --check` passed.
+  - Stale-language grep for Search deferred/placeholder/app-shell route drift returned no matches in product, architecture, testing, development, and task-index docs.
+  - Stale anchor grep for `#25-search-plugin` returned no matches.
+- Progress note: `docs/implementation/progress.md` intentionally remains `[~]` for TASK-041; parent still owns release readiness, branch gate, final progress closeout, and merge.
