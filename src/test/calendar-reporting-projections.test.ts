@@ -463,6 +463,107 @@ describe("TASK-042 calendar and reporting projection builders", () => {
     ]);
   });
 
+  it("bounds Reports time-by-page inputs to Chart-compatible categories with partial status", () => {
+    const pages = Array.from({ length: 201 }, (_value, index) =>
+      createPage(
+        `page-chart-${String(index).padStart(3, "0")}`,
+        `Chart Page ${String(index).padStart(3, "0")}`,
+      ),
+    );
+    const events = pages.map((page, index) =>
+      createTimerSegmentEvent({
+        durationSeconds: 60,
+        endAt: minuteInstant(index + 1),
+        id: `event-chart-${String(index).padStart(3, "0")}`,
+        pageId: page.id,
+        segmentId: `segment-chart-${String(index).padStart(3, "0")}`,
+        startAt: minuteInstant(index),
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.sum-time-by-page",
+      createProjectionSource({ events, pages }),
+    );
+    const segments = projection.input.segments as unknown[];
+
+    expect(segments).toHaveLength(200);
+    expect(segments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pageId: "page-chart-000" }),
+        expect.objectContaining({ pageId: "page-chart-199" }),
+      ]),
+    );
+    expect(segments).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pageId: "page-chart-200" }),
+      ]),
+    );
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 200,
+      omittedRows: 1,
+      reasons: expect.arrayContaining(["chart.category-limit"]),
+    });
+  });
+
+  it("bounds Reports time-by-tag inputs to Chart-compatible categories with partial status", () => {
+    const taggedPage = createPage("page-chart-tags", "Chart Tags");
+    const tagIds = Array.from({ length: 201 }, (_value, index) =>
+      `tag-chart-${String(index).padStart(3, "0")}`,
+    );
+    const segment = createTimerSegmentEvent({
+      durationSeconds: 600,
+      endAt: "2026-05-20T08:10:00.000Z",
+      id: "event-chart-tags",
+      pageId: taggedPage.id,
+      segmentId: "segment-chart-tags",
+      startAt: "2026-05-20T08:00:00.000Z",
+    });
+
+    const projection = buildReports(
+      "stats.sum-time-by-tag",
+      createProjectionSource({
+        events: [segment],
+        metadata: [
+          createMetadata({
+            id: "metadata-chart-tags",
+            key: "tags",
+            namespace: "tag",
+            pageId: taggedPage.id,
+            sourcePluginId: "tag",
+            value: tagIds,
+            valueType: "json",
+          }),
+        ],
+        pages: [taggedPage],
+      }),
+    );
+    const tags = projection.input.tags as unknown[];
+    const segments = projection.input.segments as Array<{ tagIds?: string[] }>;
+
+    expect(tags).toHaveLength(200);
+    expect(tags).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "tag-chart-000" }),
+        expect.objectContaining({ id: "tag-chart-199" }),
+      ]),
+    );
+    expect(tags).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "tag-chart-200" }),
+      ]),
+    );
+    expect(segments[0]?.tagIds).toHaveLength(200);
+    expect(segments[0]?.tagIds).not.toContain("tag-chart-200");
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 200,
+      omittedRows: 1,
+      reasons: expect.arrayContaining(["chart.category-limit"]),
+    });
+  });
+
   it("defaults Reports to stats.sum-time-by-page with trusted timer segments and no raw leakage", () => {
     const focusPage = createPage("page-focus", "Focus Page", [
       "PRIVATE_BODY_TOKEN",
@@ -765,6 +866,117 @@ describe("TASK-042 calendar and reporting projection builders", () => {
       "segment-too-large",
       "segment-missing",
     ]);
+  });
+
+  it("reports partial status when habit completion events exceed the Stats input limit", () => {
+    const habitPage = createPage("page-habit-overflow", "Overflow Habit");
+    const events = Array.from({ length: 1_002 }, (_value, index) =>
+      createHabitEvent({
+        date: `2026-05-${String((index % 28) + 1).padStart(2, "0")}`,
+        habitPageId: habitPage.id,
+        id: `event-habit-overflow-${index}`,
+        type: index % 2 === 0 ? "checked" : "unchecked",
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.habit-completion-rate",
+      createProjectionSource({
+        events,
+        metadata: [
+          createMetadata({
+            id: "metadata-habit-overflow",
+            key: "enabled",
+            namespace: "habit",
+            pageId: habitPage.id,
+            sourcePluginId: "habit",
+            value: true,
+            valueType: "boolean",
+          }),
+        ],
+        pages: [habitPage],
+      }),
+    );
+    const projectedEvents = projection.input.events as unknown[];
+
+    expect(projectedEvents).toHaveLength(1_000);
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 1_000,
+      omittedRows: 2,
+      reasons: expect.arrayContaining(["stats.input-limit"]),
+    });
+  });
+
+  it("reports partial status when habit summaries exceed the Stats input limit", () => {
+    const pages = Array.from({ length: 1_002 }, (_value, index) =>
+      createPage(
+        `page-habit-summary-${String(index).padStart(4, "0")}`,
+        `Habit Summary ${String(index).padStart(4, "0")}`,
+      ),
+    );
+    const metadata = pages.map((page, index) =>
+      createMetadata({
+        id: `metadata-habit-summary-${String(index).padStart(4, "0")}`,
+        key: "enabled",
+        namespace: "habit",
+        pageId: page.id,
+        sourcePluginId: "habit",
+        value: true,
+        valueType: "boolean",
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.habit-completion-rate",
+      createProjectionSource({ metadata, pages }),
+    );
+    const habits = projection.input.habits as unknown[];
+
+    expect(habits).toHaveLength(1_000);
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 1_000,
+      omittedRows: 2,
+      reasons: expect.arrayContaining(["stats.input-limit"]),
+    });
+  });
+
+  it("reports partial status when Timer notes exceed the Stats input limit", () => {
+    const page = createPage("page-note-overflow", "Note Overflow");
+    const segment = createTimerSegmentEvent({
+      durationSeconds: 600,
+      endAt: "2026-05-20T08:10:00.000Z",
+      id: "event-note-overflow-segment",
+      pageId: page.id,
+      segmentId: "segment-note-overflow",
+      startAt: "2026-05-20T08:00:00.000Z",
+    });
+    const notes = Array.from({ length: 1_002 }, (_value, index) =>
+      createTimerNoteEvent({
+        id: `event-note-overflow-${index}`,
+        notePageId: `note-page-overflow-${index}`,
+        pageId: page.id,
+        segmentId: `segment-note-overflow-${index}`,
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.unnoted-sessions-count",
+      createProjectionSource({
+        events: [segment, ...notes],
+        pages: [page],
+      }),
+    );
+    const projectedNotes = projection.input.notes as unknown[];
+
+    expect(projectedNotes).toHaveLength(1_000);
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 1_000,
+      omittedRows: 2,
+      reasons: expect.arrayContaining(["stats.input-limit"]),
+    });
   });
 });
 

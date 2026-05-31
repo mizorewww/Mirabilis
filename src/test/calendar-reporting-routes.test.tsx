@@ -166,6 +166,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.runOnlyPendingTimers();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -281,6 +282,65 @@ describe("TASK-042 Calendar route", () => {
       kind: "calendar.time-segments",
       segments: [
         expect.objectContaining({ segmentId: "segment-week-carryover" }),
+      ],
+    });
+  });
+
+  it("refreshes mounted Calendar projections after runtime data changes when switching views", async () => {
+    const runtime = await createRuntime({
+      eventIds: ["event-mounted-calendar-fresh"],
+      pageIds: ["home-page", "mounted-calendar-page"],
+    });
+    const capturedDayProps: CalendarViewProps[] = [];
+    const capturedWeekProps: CalendarViewProps[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const freshPage = createRuntimePage(runtime, "Fresh Calendar Page", []);
+
+    replaceCalendarView(
+      runtime,
+      calendarDayViewId,
+      "calendar.day",
+      capturedDayProps,
+    );
+    replaceCalendarView(
+      runtime,
+      calendarWeekViewId,
+      "calendar.week",
+      capturedWeekProps,
+    );
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/^Calendar\b/i));
+
+    expect(
+      await screen.findByRole("region", { name: /^Calendar day$/i }),
+    ).toHaveTextContent(/no time segments/i);
+
+    appendTimerSegment(runtime, freshPage, {
+      durationSeconds: 900,
+      endAt: "2026-05-20T17:15:00.000Z",
+      segmentId: "segment-mounted-calendar-fresh",
+      startAt: "2026-05-20T17:00:00.000Z",
+    });
+
+    await user.click(await screen.findByRole("button", { name: /^Week$/i }));
+
+    const week = await screen.findByRole("region", {
+      name: /^Calendar week$/i,
+    });
+
+    expect(within(week).getByText("Fresh Calendar Page")).toBeVisible();
+    expect(capturedWeekProps[capturedWeekProps.length - 1]?.data).toMatchObject({
+      kind: "calendar.time-segments",
+      segments: [
+        expect.objectContaining({
+          pageId: freshPage.id,
+          segmentId: "segment-mounted-calendar-fresh",
+        }),
       ],
     });
   });
@@ -424,6 +484,31 @@ describe("TASK-042 Calendar route", () => {
       },
     });
   });
+
+  it("fails closed when Calendar route registrations are present but owned by another plugin", async () => {
+    await expectCalendarState({
+      createRuntimeOptions: { pageIds: ["home-page"] },
+      expectedText: /unavailable|could not load|missing/i,
+      label: "wrong-owner Calendar day view",
+      mutateRuntime(runtime) {
+        replaceCalendarView(
+          runtime,
+          calendarDayViewId,
+          "calendar.day",
+          [],
+          statsPluginId,
+        );
+      },
+    });
+    await expectCalendarState({
+      createRuntimeOptions: { pageIds: ["home-page"] },
+      expectedText: /unavailable|could not load|missing/i,
+      label: "wrong-owner Calendar open segment command",
+      mutateRuntime(runtime) {
+        replaceCalendarOpenSegmentCommand(runtime, statsPluginId);
+      },
+    });
+  });
 });
 
 describe("TASK-042 Reports route", () => {
@@ -496,6 +581,56 @@ describe("TASK-042 Reports route", () => {
     expectNoRouteLeak(["PRIVATE_BODY_TOKEN", "event-report"]);
   });
 
+  it("keeps Reports chart DTOs compatible with Chart when page categories exceed the Chart limit", async () => {
+    const categoryCount = 201;
+    const runtime = await createRuntime({
+      eventIds: createIds("event-chart-limit", categoryCount),
+      pageIds: ["home-page", ...createIds("page-chart-limit", categoryCount)],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+
+    for (let index = 0; index < categoryCount; index += 1) {
+      const page = createRuntimePage(
+        runtime,
+        `Chart Limit Page ${String(index).padStart(3, "0")}`,
+        [],
+      );
+
+      appendTimerSegment(runtime, page, {
+        durationSeconds: 60,
+        endAt: minuteInstant(index + 1),
+        segmentId: `segment-chart-limit-${String(index).padStart(3, "0")}`,
+        startAt: minuteInstant(index),
+      });
+    }
+
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/^Reports\b/i));
+
+    expect(
+      await screen.findByRole("status", { name: /reports data/i }),
+    ).toHaveTextContent(/partial|omitted/i);
+
+    const chart = await screen.findByRole("region", { name: /^Bar chart$/i });
+
+    expect(
+      within(chart).queryByRole("status", { name: /chart empty/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(chart).getByRole("table", { name: /^Time by page$/i }),
+    ).toBeVisible();
+    expect(within(chart).getByText("Chart Limit Page 000")).toBeVisible();
+    expect(within(chart).getByText("Chart Limit Page 199")).toBeVisible();
+    expect(
+      within(chart).queryByText("Chart Limit Page 200"),
+    ).not.toBeInTheDocument();
+  });
+
   it("switches aggregations through an accessible control and ignores stale async results", async () => {
     const runtime = await createRuntime({
       eventIds: ["event-stale"],
@@ -560,6 +695,104 @@ describe("TASK-042 Reports route", () => {
       kind: "chart.category-series",
       title: "Fresh time by tag result",
     });
+  });
+
+  it("does not let a stale rejected Reports aggregation overwrite a fresh aggregation", async () => {
+    const runtime = await createRuntime({
+      eventIds: ["event-stale-reject"],
+      pageIds: ["home-page", "stale-reject-page"],
+    });
+    const defaultDeferred = createDeferred<ChartData>();
+    const tagDeferred = createDeferred<ChartData>();
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const page = createRuntimePage(runtime, "Stale Reject Page", []);
+
+    appendTimerSegment(runtime, page, {
+      durationSeconds: 1_200,
+      endAt: "2026-05-20T18:20:00.000Z",
+      segmentId: "segment-stale-reject",
+      startAt: "2026-05-20T18:00:00.000Z",
+    });
+    replaceStatsCommand(runtime, (payload) =>
+      readAggregationId(payload) === tagReportsAggregationId
+        ? tagDeferred.promise
+        : defaultDeferred.promise,
+    );
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/^Reports\b/i));
+    await user.click(
+      await screen.findByRole("button", { name: /sum time by tag/i }),
+    );
+
+    defaultDeferred.reject(createSensitiveReportsError());
+    await flushMicrotasks();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /reports loading/i }),
+    ).toBeVisible();
+
+    tagDeferred.resolve(
+      createCategorySeries("Fresh result after stale reject", [
+        { label: "deep-work", value: 1_200 },
+      ]),
+    );
+
+    expect(
+      await screen.findByRole("table", {
+        name: /^Fresh result after stale reject$/i,
+      }),
+    ).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expectNoRouteLeak(["SELECT *", "PRIVATE_BODY_TOKEN", "/home/aac6fef"]);
+  });
+
+  it("refreshes mounted Reports projections after runtime data changes when switching aggregations", async () => {
+    const runtime = await createRuntime({
+      eventIds: ["event-mounted-reports-fresh"],
+      pageIds: ["home-page", "mounted-reports-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, []);
+    const freshPage = createRuntimePage(runtime, "Fresh Reports Page", []);
+
+    replaceStatsCommand(runtime, async (payload) => {
+      const segmentCount = readAggregationSegmentCount(payload);
+
+      return createCategorySeries(`Fresh Reports segments ${segmentCount}`, [
+        { label: "Segments", value: segmentCount },
+      ]);
+    });
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/^Reports\b/i));
+
+    expect(
+      await screen.findByRole("table", { name: /^Fresh Reports segments 0$/i }),
+    ).toBeVisible();
+
+    appendTimerSegment(runtime, freshPage, {
+      durationSeconds: 900,
+      endAt: "2026-05-20T19:15:00.000Z",
+      segmentId: "segment-mounted-reports-fresh",
+      startAt: "2026-05-20T19:00:00.000Z",
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: /task switch count/i }),
+    );
+
+    expect(
+      await screen.findByRole("table", { name: /^Fresh Reports segments 1$/i }),
+    ).toBeVisible();
   });
 
   it("shows loading, redacted errors, and task-estimate partial/unavailable states", async () => {
@@ -677,7 +910,7 @@ describe("TASK-042 Reports route", () => {
     });
   });
 
-  it("shows unavailable Reports states for missing Stats command, missing Chart view, or inactive owners", async () => {
+  it("shows unavailable Reports states for missing, inactive, or wrong-owner registrations", async () => {
     await expectReportsUnavailableState({
       label: "missing Stats command",
       mutateRuntime(runtime) {
@@ -694,6 +927,22 @@ describe("TASK-042 Reports route", () => {
       label: "inactive Stats plugin",
       async mutateRuntime(runtime) {
         await deactivatePlugin(runtime, statsPluginId);
+      },
+    });
+    await expectReportsUnavailableState({
+      label: "wrong-owner Stats command",
+      mutateRuntime(runtime) {
+        replaceStatsCommand(
+          runtime,
+          async () => createCategorySeries("Wrong owner Stats", []),
+          calendarPluginId,
+        );
+      },
+    });
+    await expectReportsUnavailableState({
+      label: "wrong-owner Chart view",
+      mutateRuntime(runtime) {
+        replaceChartBarView(runtime, [], statsPluginId);
       },
     });
   });
@@ -875,6 +1124,7 @@ function replaceCalendarView(
   viewId: typeof calendarDayViewId | typeof calendarWeekViewId,
   viewType: "calendar.day" | "calendar.week",
   capturedProps: CalendarViewProps[],
+  pluginId = calendarPluginId,
 ): void {
   runtime.registries.views.unregister(viewId);
   runtime.registries.views.register({
@@ -902,9 +1152,24 @@ function replaceCalendarView(
       );
     },
     id: viewId,
-    pluginId: calendarPluginId,
+    pluginId,
     title: viewType === "calendar.day" ? "Calendar day" : "Calendar week",
     type: viewType,
+  });
+}
+
+function replaceCalendarOpenSegmentCommand(
+  runtime: AppRuntime,
+  pluginId: string,
+): void {
+  runtime.commands.unregister(calendarOpenSegmentCommandId);
+  runtime.commands.register({
+    async handler() {
+      return undefined;
+    },
+    id: calendarOpenSegmentCommandId,
+    pluginId,
+    title: "Open time segment",
   });
 }
 
@@ -984,6 +1249,7 @@ function replaceStatsCommand(
 function replaceChartBarView(
   runtime: AppRuntime,
   capturedProps: ChartViewProps[],
+  pluginId = chartPluginId,
 ): void {
   runtime.registries.views.unregister(chartBarViewId);
   runtime.registries.views.register({
@@ -999,7 +1265,7 @@ function replaceChartBarView(
       );
     },
     id: chartBarViewId,
-    pluginId: chartPluginId,
+    pluginId,
     title: "Bar chart",
     type: chartBarViewType,
   });
@@ -1177,6 +1443,27 @@ function readAggregationId(payload: unknown): string {
   }
 
   return "";
+}
+
+function readAggregationSegmentCount(payload: unknown): number {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "input" in payload &&
+    typeof payload.input === "object" &&
+    payload.input !== null &&
+    "segments" in payload.input &&
+    Array.isArray(payload.input.segments)
+  ) {
+    return payload.input.segments.length;
+  }
+
+  return 0;
+}
+
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 function createDeferred<Value>(): Deferred<Value> {
