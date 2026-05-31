@@ -470,7 +470,7 @@ function normalizeStoredTags(value: readonly unknown[]): string[] {
 
   for (const item of value) {
     if (typeof item !== "string" || !tagPattern.test(item)) {
-      throw new Error("Stored tag metadata is invalid");
+      continue;
     }
 
     if (seen.has(item)) {

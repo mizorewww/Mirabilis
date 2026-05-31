@@ -1,4 +1,11 @@
-import { createElement, type ComponentType } from "react";
+import {
+  createElement,
+  memo,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+} from "react";
 import Stack from "@mui/material/Stack";
 
 import type {
@@ -36,11 +43,18 @@ export function SlotHost({
 }: SlotHostProps) {
   void app;
 
-  const contributions = listContributions(registry, slot);
+  const contributions = useMemo(
+    () => listContributions(registry, slot),
+    [registry, slot],
+  );
+  const visibleContributionCount = useStagedContributionCount(
+    createContributionListKey(contributions),
+    contributions.length,
+  );
 
   return (
     <Stack spacing={1}>
-      {contributions.map((contribution) => (
+      {contributions.slice(0, visibleContributionCount).map((contribution) => (
         <SlotContributionHost
           actions={actions}
           contribution={contribution}
@@ -53,7 +67,7 @@ export function SlotHost({
   );
 }
 
-function SlotContributionHost({
+const SlotContributionHost = memo(function SlotContributionHost({
   actions,
   contribution,
   props,
@@ -92,6 +106,13 @@ function SlotContributionHost({
 
   const component = contribution.component as ComponentType<ContributionProps>;
   const resetKey = createResetKey(contribution.id, controlledProps);
+  const renderedContribution = (
+    <MemoizedDeferredContributionElement
+      component={component}
+      props={controlledProps}
+      propsKey={resetKey}
+    />
+  );
 
   return (
     <PluginRenderBoundary
@@ -100,9 +121,93 @@ function SlotContributionHost({
       key={resetKey}
       resetKey={resetKey}
     >
-      {createElement(component, controlledProps)}
+      {renderedContribution}
     </PluginRenderBoundary>
   );
+}, areSlotContributionHostPropsEqual);
+
+function areSlotContributionHostPropsEqual(
+  previous: {
+    actions?: HostActions;
+    contribution: SlotContribution;
+    props: Record<string, unknown>;
+    isPluginAvailable?: (pluginId: string) => boolean;
+  },
+  next: {
+    actions?: HostActions;
+    contribution: SlotContribution;
+    props: Record<string, unknown>;
+    isPluginAvailable?: (pluginId: string) => boolean;
+  },
+): boolean {
+  return (
+    previous.actions === next.actions &&
+    previous.contribution === next.contribution &&
+    previous.props === next.props &&
+    previous.isPluginAvailable === next.isPluginAvailable
+  );
+}
+
+function DeferredContributionElement({
+  component,
+  props,
+}: {
+  component: ComponentType<ContributionProps>;
+  props: ContributionProps;
+  propsKey: string;
+}) {
+  return createElement(component, props);
+}
+
+const MemoizedDeferredContributionElement = memo(
+  DeferredContributionElement,
+  (previous, next) =>
+    previous.component === next.component && previous.propsKey === next.propsKey,
+);
+
+function useStagedContributionCount(key: string, total: number): number {
+  const [stage, setStage] = useState(() => ({
+    count: 0,
+    key,
+  }));
+  const visibleCount = stage.key === key ? Math.min(stage.count, total) : 0;
+
+  useLayoutEffect(() => {
+    if (stage.key !== key) {
+      // Staged plugin mounting keeps earlier boundaries committed before later plugin failures.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStage({
+        count: total > 0 ? 1 : 0,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count < total) {
+      setStage({
+        count: stage.count + 1,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count > total) {
+      setStage({
+        count: total,
+        key,
+      });
+    }
+  }, [key, stage.count, stage.key, total]);
+
+  return visibleCount;
+}
+
+function createContributionListKey(
+  contributions: readonly SlotContribution[],
+): string {
+  return contributions
+    .map((contribution) => `${contribution.pluginId}:${contribution.id}`)
+    .join("\u0000");
 }
 
 function listContributions(

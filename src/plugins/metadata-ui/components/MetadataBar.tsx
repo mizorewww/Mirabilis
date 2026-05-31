@@ -1,4 +1,13 @@
-import { createElement, type ReactNode } from "react";
+import {
+  Component,
+  createElement,
+  memo,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 
 import type {
   MetadataFieldContribution,
@@ -73,23 +82,118 @@ export function MetadataBar({
   pluginHost,
 }: MetadataBarProps) {
   const activePlugins = collectActivePluginRecords(pluginHost);
-  const contributions = slots.list({ slot: pageHeaderMetadataSlot });
+  const contributions = useMemo(
+    () => listMetadataContributions(slots),
+    [slots],
+  );
+  const visibleContributionCount = useStagedContributionCount(
+    createContributionListKey(contributions),
+    activePlugins === null ? 0 : contributions.length,
+  );
 
   return (
     <section aria-label="Page metadata">
       {activePlugins === null
         ? null
-        : contributions.map((contribution) =>
-            renderContribution({
-              activePlugins,
-              commands,
-              contribution,
-              metadata,
-              pageId,
-            }),
-          )}
+        : contributions.slice(0, visibleContributionCount).map((contribution) => (
+            <MetadataContributionBoundary
+              key={contribution.id}
+              resetKey={`${contribution.pluginId}:${contribution.id}:${pageId}`}
+            >
+              <MemoizedMetadataContributionRenderer
+                activePlugins={activePlugins}
+                commands={commands}
+                contribution={contribution}
+                metadata={metadata}
+                pageId={pageId}
+              />
+            </MetadataContributionBoundary>
+          ))}
     </section>
   );
+}
+
+function listMetadataContributions(
+  slots: MetadataBarProps["slots"],
+): SlotContribution[] {
+  try {
+    return slots.list({ slot: pageHeaderMetadataSlot });
+  } catch {
+    return [];
+  }
+}
+
+function MetadataContributionRenderer(input: {
+  activePlugins: ReadonlyMap<string, PluginHostRecord>;
+  commands: MetadataBarCommandRegistry;
+  contribution: SlotContribution;
+  metadata: readonly MetadataRecord[];
+  pageId: string;
+}) {
+  return renderContribution(input);
+}
+
+const MemoizedMetadataContributionRenderer = memo(
+  MetadataContributionRenderer,
+  (previous, next) =>
+    previous.activePlugins === next.activePlugins &&
+    previous.commands === next.commands &&
+    previous.contribution === next.contribution &&
+    previous.metadata === next.metadata &&
+    previous.pageId === next.pageId,
+);
+
+type MetadataContributionBoundaryProps = {
+  children: ReactNode;
+  resetKey: string;
+};
+
+type MetadataContributionBoundaryState = {
+  hasFailure: boolean;
+};
+
+class MetadataContributionBoundary extends Component<
+  MetadataContributionBoundaryProps,
+  MetadataContributionBoundaryState
+> {
+  override state: MetadataContributionBoundaryState = {
+    hasFailure: false,
+  };
+
+  static getDerivedStateFromError(): MetadataContributionBoundaryState {
+    return {
+      hasFailure: true,
+    };
+  }
+
+  override componentDidCatch(): void {
+    return undefined;
+  }
+
+  override componentDidUpdate(
+    previousProps: MetadataContributionBoundaryProps,
+  ): void {
+    if (
+      this.state.hasFailure &&
+      previousProps.resetKey !== this.props.resetKey
+    ) {
+      this.setState({
+        hasFailure: false,
+      });
+    }
+  }
+
+  override render(): ReactNode {
+    if (this.state.hasFailure) {
+      return (
+        <div aria-label="Metadata contribution unavailable" role="alert">
+          Metadata contribution unavailable
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 function renderContribution(input: {
@@ -129,13 +233,100 @@ function renderContribution(input: {
     return null;
   }
 
-  return createElement(
-    contribution.component as (props: MetadataFieldSlotProps) => ReactNode,
-    {
-      key: contribution.id,
-      ...props,
-    },
+  return renderMetadataComponent(
+    contribution.component,
+    props,
   );
+}
+
+function renderMetadataComponent(
+  component: SlotContribution["component"],
+  props: MetadataFieldSlotProps,
+): ReactNode {
+  return (
+    <MemoizedDeferredMetadataComponent
+      component={component as ComponentType<MetadataFieldSlotProps>}
+      props={props}
+      propsKey={createMetadataPropsKey(props)}
+    />
+  );
+}
+
+function DeferredMetadataComponent({
+  component,
+  props,
+}: {
+  component: ComponentType<MetadataFieldSlotProps>;
+  props: MetadataFieldSlotProps;
+  propsKey: string;
+}) {
+  return createElement(component, props);
+}
+
+const MemoizedDeferredMetadataComponent = memo(
+  DeferredMetadataComponent,
+  (previous, next) =>
+    previous.component === next.component && previous.propsKey === next.propsKey,
+);
+
+function useStagedContributionCount(key: string, total: number): number {
+  const [stage, setStage] = useState(() => ({
+    count: 0,
+    key,
+  }));
+  const visibleCount = stage.key === key ? Math.min(stage.count, total) : 0;
+
+  useLayoutEffect(() => {
+    if (stage.key !== key) {
+      // Staged plugin mounting keeps earlier boundaries committed before later plugin failures.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStage({
+        count: total > 0 ? 1 : 0,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count < total) {
+      setStage({
+        count: stage.count + 1,
+        key,
+      });
+      return;
+    }
+
+    if (stage.count > total) {
+      setStage({
+        count: total,
+        key,
+      });
+    }
+  }, [key, stage.count, stage.key, total]);
+
+  return visibleCount;
+}
+
+function createContributionListKey(
+  contributions: readonly SlotContribution[],
+): string {
+  return contributions
+    .map((contribution) => `${contribution.pluginId}:${contribution.id}`)
+    .join("\u0000");
+}
+
+function createMetadataPropsKey(props: MetadataFieldSlotProps): string {
+  const fieldsKey = props.fields
+    .map((field) => `${field.namespace}.${field.key}:${field.valueType}`)
+    .join("|");
+  let valuesKey = "";
+
+  try {
+    valuesKey = JSON.stringify(props.values);
+  } catch {
+    valuesKey = "metadata-values-unavailable";
+  }
+
+  return `${props.pageId}:${props.pluginId}:${fieldsKey}:${valuesKey}`;
 }
 
 function collectActivePluginRecords(

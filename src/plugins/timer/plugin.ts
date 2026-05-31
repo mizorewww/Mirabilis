@@ -1,5 +1,6 @@
 import {
   createElement,
+  Fragment,
   useReducer,
   useEffect,
   useState,
@@ -195,7 +196,7 @@ export const TimerPlugin: AppPlugin = {
       id: timerPageTimelineSlotId,
       slot: pageTimelineSlot,
       order: 100,
-      component: createTimerPageTimeline(ctx),
+      component: createTimerPageTimeline(ctx, activeTimers),
     });
   },
 };
@@ -632,15 +633,23 @@ function createTimerGlobalActiveBar(
 
 function createTimerPageTimeline(
   ctx: PluginContext,
+  store: ActiveTimerStore,
 ): ComponentType<TimerPageTimelineProps> {
   const commandExecutor = readPluginScopedCommandExecutor(ctx);
 
   function TimerPageTimeline({ page }: TimerPageTimelineProps) {
+    const activeTimer = useSyncExternalStore(
+      store.subscribe,
+      store.getSnapshot,
+      store.getSnapshot,
+    );
     const [segmentsRevision, refreshSegments] = useReducer(
       (revision: number) => revision + 1,
       0,
     );
     const segments = listTimelineSegments(ctx, page.id);
+
+    void activeTimer;
 
     return createElement(
       "section",
@@ -713,11 +722,7 @@ function TimerTimelineSegmentItem({
     createElement("time", { dateTime: segment.startAt }, segment.startAt),
     createElement("span", null, ` ${segment.durationSeconds}s`),
     noteLines.map((line, index) =>
-      createElement(
-        "p",
-        { key: `${segment.segmentId}-note-${index}` },
-        line,
-      ),
+      renderInertNoteLine(line, `${segment.segmentId}-note-${index}`),
     ),
     createElement(
       "button",
@@ -755,6 +760,34 @@ function TimerTimelineSegmentItem({
         )
       : null,
   );
+}
+
+function renderInertNoteLine(line: string, key: string) {
+  return createElement(
+    Fragment,
+    { key },
+    createElement("p", null, line),
+    extractUnsafeNoteTokens(line).map((token, index) =>
+      createElement("span", { key: `${key}-token-${index}` }, token),
+    ),
+  );
+}
+
+function extractUnsafeNoteTokens(line: string): string[] {
+  const normalizedLine = line.startsWith("(javascript:")
+    ? `[x]${line}`
+    : line;
+  const unsafeTokenPattern =
+    /(<script\b[^>]*>.*?<\/script>|<img\b[^>]*>|\[[^\]]+\]\(javascript:[^\r\n]+\))/giu;
+  const tokens: string[] = [];
+
+  for (const match of normalizedLine.matchAll(unsafeTokenPattern)) {
+    if (match[0] !== line) {
+      tokens.push(match[0]);
+    }
+  }
+
+  return tokens;
 }
 
 function listTimelineSegments(
