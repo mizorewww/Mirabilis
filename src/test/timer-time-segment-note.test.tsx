@@ -506,10 +506,11 @@ describe("Timer Time Segment notes and page timeline", () => {
       "Initial UI note <script>alert(1)</script>",
     );
     await waitFor(() =>
-      expect(
-        within(timeline).getByText("Initial UI note <script>alert(1)</script>"),
-      ).toBeVisible(),
+      expect(timeline).toHaveTextContent(
+        "Initial UI note <script>alert(1)</script>",
+      ),
     );
+    expect(within(timeline).getByText(/Initial UI note/u)).toBeVisible();
     expectNoDangerousDom();
 
     vi.advanceTimersByTime(30_000);
@@ -554,9 +555,9 @@ describe("Timer Time Segment notes and page timeline", () => {
         within(timeline).getByText("Updated UI note stays on one Markdown page."),
       ).toBeVisible(),
     );
-    expect(
-      within(timeline).queryByText("Initial UI note <script>alert(1)</script>"),
-    ).not.toBeInTheDocument();
+    expect(timeline).not.toHaveTextContent(
+      "Initial UI note <script>alert(1)</script>",
+    );
     expectNoDangerousDom();
   });
 

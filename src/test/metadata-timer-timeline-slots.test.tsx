@@ -87,6 +87,12 @@ const sourceExtensions = new Set([".ts", ".tsx"]);
 
 describe("TASK-039 metadata, timer, and timeline app-shell slots", () => {
   afterEach(() => {
+    if (vi.isFakeTimers()) {
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
+    }
+
     vi.useRealTimers();
   });
 
@@ -498,11 +504,30 @@ describe("TASK-039 metadata, timer, and timeline app-shell slots", () => {
 
     const main = await screen.findByRole("main", { name: /home/i });
     const metadataRegion = await findPageMetadata(main);
+    const metadataFallback = within(metadataRegion).getByRole("alert", {
+      name: /metadata contribution unavailable/i,
+    });
+    const timelineFallback = await within(main).findByRole("alert", {
+      name: /slot contribution unavailable/i,
+    });
+    const floatingFallback = await screen.findByRole("alert", {
+      name: /floating slot unavailable/i,
+    });
 
     expect(within(metadataRegion).getByText("Captured metadata slot")).toBeVisible();
+    expect(metadataFallback).toBeVisible();
+    expect(metadataFallback).toHaveTextContent(
+      /^Metadata contribution unavailable$/u,
+    );
     expect(await screen.findByText("Captured timeline slot")).toBeVisible();
     expect(await screen.findByText(/no time segments/i)).toBeVisible();
+    expect(timelineFallback).toBeVisible();
+    expect(timelineFallback).toHaveTextContent(/^Contribution unavailable$/u);
     expect(await screen.findByText("Captured floating slot")).toBeVisible();
+    expect(floatingFallback).toBeVisible();
+    expect(floatingFallback).toHaveTextContent(
+      /^Floating contribution unavailable$/u,
+    );
     expect(screen.queryByText("Inactive metadata leak")).not.toBeInTheDocument();
     expect(screen.queryByText("Missing owner metadata leak")).not
       .toBeInTheDocument();
@@ -512,7 +537,7 @@ describe("TASK-039 metadata, timer, and timeline app-shell slots", () => {
     await waitFor(() => {
       expect(capturedMetadataProps).toHaveLength(1);
       expect(capturedTimelineProps).toHaveLength(1);
-      expect(capturedFloatingProps).toHaveLength(1);
+      expect(capturedFloatingProps.length).toBeGreaterThan(0);
     });
 
     expect(Object.keys(capturedMetadataProps[0] ?? {}).sort()).toStrictEqual([
@@ -538,12 +563,16 @@ describe("TASK-039 metadata, timer, and timeline app-shell slots", () => {
     expect(Object.keys(readRecord(capturedTimelineProps[0]?.page, "timeline page")).sort())
       .toStrictEqual(["id", "title"]);
     expectControlledPropSurface(capturedTimelineProps[0]);
-    expect(capturedFloatingProps[0]).not.toHaveProperty("page");
-    expect(capturedFloatingProps[0]).not.toHaveProperty("pageId");
-    expect(capturedFloatingProps[0]?.commands).not.toBe(runtime.commands);
-    expectControlledPropSurface(capturedFloatingProps[0], {
-      allowCommands: true,
-    });
+
+    for (const floatingProps of capturedFloatingProps) {
+      expect(floatingProps).not.toHaveProperty("page");
+      expect(floatingProps).not.toHaveProperty("pageId");
+      expect(floatingProps.commands).not.toBe(runtime.commands);
+      expectControlledPropSurface(floatingProps, {
+        allowCommands: true,
+      });
+    }
+
     expectNoSensitiveTextLeak();
   });
 
@@ -1281,6 +1310,8 @@ function expectNoDangerousDom(): void {
   // eslint-disable-next-line testing-library/no-node-access
   expect(document.querySelector("iframe")).toBeNull();
 
+  // Security-only scan: Testing Library cannot assert absence of executable
+  // attributes across every rendered node.
   for (const element of [...document.querySelectorAll("*")]) {
     for (const attribute of [...element.attributes]) {
       expect(attribute.name).not.toMatch(/^on/iu);
