@@ -197,3 +197,14 @@
   - `git diff --check`.
   - Forbidden test API scan returned no matches.
 - Sagan (`test_quality_reviewer`) confirmed no P0/P1/P2 test-quality findings remain after `a1a1fb0`.
+
+## Release Readiness And Closeout
+
+- Pascal (`release_checker`) found no release-readiness blockers.
+- Branch gate:
+  - `bun run check:quick` passed with TypeScript, ESLint, 45 frontend test files / 734 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `git diff --check master...HEAD` passed.
+  - Docs/anchor checks returned no stale `#25-search-plugin` or stale Search deferred/placeholder app-shell route claims.
+  - Native/package/Tauri/Rust/IPC/capability/permission/schema/release/native path scan returned no matches.
+- `check:full` was not required because TASK-041 changed only TypeScript/React/MUI app-shell code, tests, and docs, with no package, lockfile, Tauri, Rust, IPC, capability, filesystem, schema, packaging, or release surface changes.
+- Parent decision: mark TASK-041 `[x]`, commit progress closeout, merge to `master`, validate the merge result, then continue to TASK-042.

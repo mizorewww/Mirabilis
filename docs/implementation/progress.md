@@ -84,7 +84,7 @@ Status markers:
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
-- [~] TASK-041: Add Search Overlay And Results Route
+- [x] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
@@ -93,6 +93,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 21:16 CST - TASK-041 branch gate passed and task closed
+
+- Branch: `feat/task-041-search-overlay-results-route`.
+- Final feature-branch commit entering closeout: `cfad110` (`Codex(progress)(Add Search Overlay And Results Route): record final test-quality clearance`).
+- Delivered scope: top-bar Search launches a MUI `Dialog`, executes only active search-owned `search.query` with exact `{ query }` and a 200-character input cap, copies valid results into a shell-owned bounded results route DTO, renders inert result rows, validates selected pages before normal page-route navigation, and invalidates stale pending resolve/reject outcomes after Search closes.
+- Review outcome: security, correctness, deprecation/API, docs/current API, changed-path, and test-quality reviews found no remaining P0/P1/P2 blockers after review fixes. Noether and Banach added review regression coverage for DTO boundaries, listitem semantics, stale pending resolve/reject behavior, and broader worker/indexer/FTS guards; Boyle fixed pending Search close and stale-result invalidation; Socrates synced product, architecture, task-index, testing, and communication docs.
+- Parent branch gate: `bun run check:quick` passed with 45 frontend test files / 734 tests, TypeScript, ESLint, Rust fmt, Rust clippy, and Rust tests. `git diff --check master...HEAD` passed.
+- Release readiness: Pascal (`release_checker`) found no blockers, confirmed the worktree was clean, confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release/native surfaces changed, confirmed version sync remained `0.1.0`, and confirmed `check:full` is not required for this TypeScript/React/MUI/docs/test task.
+- Residual non-blocking risks: persistent Search index/worker/SQLite FTS/native or global Search shortcuts/ranking, Settings/Sync route and panel surfaces, Calendar/Reports projections, ML/AI panels, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+- Final status: TASK-041 is marked `[x]`. Next action is merge to `master`, validate the merge result, push `master`, then continue autonomous M9 UI work with TASK-042, Add Calendar And Reporting Routes With Explicit Data Projections.
 
 ### 2026-05-31 20:09 CST - TASK-041 started
 
