@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 22:00 CST - TASK-042 implementation validated
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Implementation commits: `6eb7365` (`Popper(implementation)(Add Calendar And Reporting Routes With Explicit Data Projections): implement calendar reporting routes`) and `937af88` (`Popper(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route test compatibility`).
+- Delivered so far: App Shell Calendar route, Reports route, explicit Calendar/Reports projection builders, and a narrow ViewHost command bridge for Calendar segment open commands.
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: run post-implementation review agents for correctness, security, deprecation/API, docs, changed paths, and test quality.
+
 ### 2026-05-31 21:40 CST - TASK-042 red tests committed
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
