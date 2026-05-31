@@ -150,7 +150,8 @@ describe("TASK-039 metadata, timer, and timeline app-shell slots", () => {
 
     expect(addedTag).toBeVisible();
     expect(addedTag).not.toHaveAttribute("href");
-    expect(addedTag.closest("a")).toBeNull();
+    expect(within(tags).queryByRole("link", { name: "#review" })).not.toBeInTheDocument();
+    expect(within(tags).queryByRole("button", { name: /^#review$/i })).not.toBeInTheDocument();
 
     await user.click(
       within(tags).getByRole("button", { name: /remove #review/i }),
