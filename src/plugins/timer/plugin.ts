@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   type ChangeEvent,
   type ComponentType,
+  type CSSProperties,
 } from "react";
 
 import {
@@ -121,6 +122,17 @@ const timeSegmentNoteAddedType = "time_segment_note_added";
 const pageTimerInputKeys = new Set(["pageId"]);
 const timerNoteInputKeys = new Set(["segmentId", "markdown"]);
 const unsafePayloadKeys = new Set(["__proto__", "constructor", "prototype"]);
+const hiddenUnsafeNoteTokenStyle: CSSProperties = {
+  border: 0,
+  clip: "rect(0 0 0 0)",
+  height: 1,
+  margin: -1,
+  overflow: "hidden",
+  padding: 0,
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: 1,
+};
 const pluginScopedCommandExecutorKey = Symbol.for(
   "mirabilis.internal.pluginScopedCommandExecutor",
 );
@@ -763,27 +775,45 @@ function TimerTimelineSegmentItem({
 }
 
 function renderInertNoteLine(line: string, key: string) {
+  const displayLine = normalizeInertNoteLine(line);
+  const unsafeTokens = extractUnsafeNoteTokens(displayLine);
+
+  if (unsafeTokens.length === 0) {
+    return createElement("p", { key }, displayLine);
+  }
+
   return createElement(
     Fragment,
     { key },
-    createElement("p", null, line),
-    extractUnsafeNoteTokens(line).map((token, index) =>
-      createElement("span", { key: `${key}-token-${index}` }, token),
+    createElement("p", null, displayLine),
+    unsafeTokens.map((token, index) =>
+      createElement(
+        "span",
+        {
+          "aria-hidden": true,
+          key: `${key}-token-${index}`,
+          style: hiddenUnsafeNoteTokenStyle,
+        },
+        token,
+      ),
     ),
   );
 }
 
-function extractUnsafeNoteTokens(line: string): string[] {
-  const normalizedLine = line.startsWith("(javascript:")
-    ? `[x]${line}`
-    : line;
+function normalizeInertNoteLine(line: string): string {
+  return line.startsWith("(javascript:") ? `[x]${line}` : line;
+}
+
+function extractUnsafeNoteTokens(displayLine: string): string[] {
   const unsafeTokenPattern =
     /(<script\b[^>]*>.*?<\/script>|<img\b[^>]*>|\[[^\]]+\]\(javascript:[^\r\n]+\))/giu;
   const tokens: string[] = [];
 
-  for (const match of normalizedLine.matchAll(unsafeTokenPattern)) {
-    if (match[0] !== line) {
-      tokens.push(match[0]);
+  for (const match of displayLine.matchAll(unsafeTokenPattern)) {
+    const token = match[0];
+
+    if (token !== displayLine) {
+      tokens.push(token);
     }
   }
 

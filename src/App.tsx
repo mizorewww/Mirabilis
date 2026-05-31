@@ -1,16 +1,13 @@
 import {
-  createElement,
   memo,
-  useContext,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ComponentType,
-  type ReactNode,
 } from "react";
-import { createRoot, type Root } from "react-dom/client";
 import AddIcon from "@mui/icons-material/Add";
 import ArticleIcon from "@mui/icons-material/Article";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -67,10 +64,6 @@ import {
   type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
 } from "./providers";
-import {
-  RuntimeContext,
-  type PublicRuntime,
-} from "./providers/runtime-context";
 import { PluginRenderBoundary, SlotHost, ViewHost } from "./shell/hosts";
 import "./App.css";
 
@@ -456,6 +449,9 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeTool, setActiveTool] = useState<ShellToolId>("command");
+  const refreshSlotSurfaces = useCallback(() => {
+    setSlotRevision((revision) => revision + 1);
+  }, []);
   const routeDetails = getActiveRouteDetails(
     runtimeSource,
     activeRoute,
@@ -732,7 +728,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
       <Portal>
         <AppFloatingSlots
-          onCommandExecuted={() => setSlotRevision((revision) => revision + 1)}
+          onCommandExecuted={refreshSlotSurfaces}
           runtime={runtimeSource}
         />
       </Portal>
@@ -897,17 +893,22 @@ const AppFloatingSlotContribution = memo(function AppFloatingSlotContribution({
   onCommandExecuted(): void;
   runtime: AppRuntime;
 }) {
+  const props = useMemo(
+    () =>
+      Object.freeze({
+        commands: createFloatingCommandFacade({
+          onCommandExecuted,
+          pluginId: contribution.pluginId,
+          runtime,
+        }),
+      }),
+    [contribution.pluginId, onCommandExecuted, runtime],
+  );
+
   if (!isPluginActive(runtime, contribution.pluginId)) {
     return null;
   }
 
-  const props = Object.freeze({
-    commands: createFloatingCommandFacade({
-      onCommandExecuted,
-      pluginId: contribution.pluginId,
-      runtime,
-    }),
-  });
   const condition = contribution.when;
 
   if (condition !== undefined) {
@@ -966,61 +967,14 @@ function areAppFloatingSlotContributionPropsEqual(
 }
 
 function DeferredFloatingContributionElement({
-  component,
+  component: Component,
   props,
-  propsKey,
 }: {
   component: ComponentType<Record<string, unknown>>;
   props: Record<string, unknown>;
   propsKey: string;
 }) {
-  const runtimeContext = useContext(RuntimeContext);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const rootRef = useRef<Root | null>(null);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-
-    if (container === null) {
-      return undefined;
-    }
-
-    if (rootRef.current === null) {
-      rootRef.current = createRoot(container);
-    }
-
-    const floatingElement = withRuntimeContext(
-      createElement(component, props),
-      runtimeContext,
-    );
-
-    rootRef.current.render(
-      <PluginRenderBoundary
-        fallbackLabel="Floating slot unavailable"
-        fallbackText="Floating contribution unavailable"
-        key={propsKey}
-        resetKey={propsKey}
-      >
-        {floatingElement}
-      </PluginRenderBoundary>,
-    );
-
-    return undefined;
-  }, [component, props, propsKey, runtimeContext]);
-
-  useLayoutEffect(
-    () => () => {
-      const root = rootRef.current;
-
-      if (root !== null) {
-        rootRef.current = null;
-        globalThis.queueMicrotask(() => root.unmount());
-      }
-    },
-    [],
-  );
-
-  return <div ref={containerRef} />;
+  return useMemo(() => <Component {...props} />, [Component, props]);
 }
 
 const MemoizedDeferredFloatingContributionElement = memo(
@@ -1028,19 +982,6 @@ const MemoizedDeferredFloatingContributionElement = memo(
   (previous, next) =>
     previous.component === next.component && previous.propsKey === next.propsKey,
 );
-
-function withRuntimeContext(
-  children: ReactNode,
-  runtime: PublicRuntime | null,
-): ReactNode {
-  if (runtime === null) {
-    return children;
-  }
-
-  return (
-    <RuntimeContext.Provider value={runtime}>{children}</RuntimeContext.Provider>
-  );
-}
 
 function useStagedFloatingContributionCount(
   key: string,
