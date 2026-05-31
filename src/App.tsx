@@ -138,6 +138,8 @@ type ShellTool = {
   icon: NavigationIcon;
 };
 
+type DeferredShellToolId = Extract<ShellToolId, "search" | "settings">;
+
 type MarkdownWorkspaceDocument = {
   id: string;
   title: string;
@@ -462,6 +464,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [deferredShellTool, setDeferredShellTool] =
+    useState<DeferredShellToolId>();
   const [quickCaptureDialogOpen, setQuickCaptureDialogOpen] = useState(false);
   const [quickCaptureOpenError, setQuickCaptureOpenError] = useState(false);
   const [quickCaptureOpenPending, setQuickCaptureOpenPending] = useState(false);
@@ -503,8 +507,22 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     });
   };
   const executeCommandPaletteCommand = useCallback(
-    async (commandId: string) => {
-      await runtimeSource.commands.execute(commandId, {});
+    async (command: CommandPaletteCommand) => {
+      const descriptor = getActiveOwnedCommandDescriptor(
+        runtimeSource,
+        command.id,
+        command.pluginId,
+      );
+
+      if (
+        descriptor === undefined ||
+        createCommandDescriptorFingerprint(descriptor) !==
+          command.descriptorFingerprint
+      ) {
+        throw new Error("Command unavailable");
+      }
+
+      await runtimeSource.commands.execute(descriptor.id, {});
     },
     [runtimeSource],
   );
@@ -514,11 +532,14 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     }
 
     setQuickCaptureOpenError(false);
+    setDeferredShellTool(undefined);
     setQuickCaptureOpenPending(true);
 
     try {
-      const result = await runtimeSource.commands.execute(
+      const result = await executeActiveOwnedCommand(
+        runtimeSource,
         quickCaptureOpenCommandId,
+        quickCapturePluginId,
         {},
       );
 
@@ -538,8 +559,10 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   }, [quickCaptureDialogOpen, quickCaptureOpenPending, runtimeSource]);
   const saveQuickCapture = useCallback(
     async (markdown: string) => {
-      const result = await runtimeSource.commands.execute(
+      const result = await executeActiveOwnedCommand(
+        runtimeSource,
         quickCaptureSaveCommandId,
+        quickCapturePluginId,
         { markdown },
       );
 
@@ -551,8 +574,10 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   );
   const saveAndOpenQuickCapture = useCallback(
     async (markdown: string) => {
-      const result = await runtimeSource.commands.execute(
+      const result = await executeActiveOwnedCommand(
+        runtimeSource,
         quickCaptureSaveAndOpenCommandId,
+        quickCapturePluginId,
         { markdown },
       );
       const pageId = readQuickCaptureOpenPageId(result);
@@ -631,12 +656,19 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                   key={tool.id}
                   onClick={() => {
                     if (tool.id === "command") {
+                      setDeferredShellTool(undefined);
                       setCommandPaletteOpen(true);
                       return;
                     }
 
                     if (tool.id === "capture") {
                       void openQuickCaptureDialog();
+                      return;
+                    }
+
+                    if (tool.id === "search" || tool.id === "settings") {
+                      setQuickCaptureOpenError(false);
+                      setDeferredShellTool(tool.id);
                     }
                   }}
                   startIcon={<ToolIcon fontSize="small" />}
@@ -803,6 +835,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
             </Typography>
             {quickCaptureOpenError ? (
               <Alert severity="error">Quick Capture could not open.</Alert>
+            ) : null}
+            {deferredShellTool !== undefined ? (
+              <Box role="status">
+                {getDeferredShellToolStatus(deferredShellTool)}
+              </Box>
             ) : null}
           </Stack>
 
@@ -1349,6 +1386,14 @@ function getPlaceholderRoute(
   );
 
   return route ?? primaryNavigationRoutes[4];
+}
+
+function getDeferredShellToolStatus(toolId: DeferredShellToolId): string {
+  if (toolId === "search") {
+    return "Search surface placeholder";
+  }
+
+  return "Settings surface placeholder";
 }
 
 function listRecentPages(
@@ -2029,6 +2074,43 @@ function pluginIsActive(plugin: PluginHostRecord): boolean {
   return plugin.enabled === true && plugin.status === "active";
 }
 
+function getActiveOwnedCommandDescriptor(
+  runtime: AppRuntime,
+  commandId: string,
+  pluginId: string,
+): CommandDescriptor | undefined {
+  if (!isPluginActive(runtime, pluginId)) {
+    return undefined;
+  }
+
+  try {
+    const descriptor = runtime.commands.get(commandId);
+
+    if (descriptor.id !== commandId || descriptor.pluginId !== pluginId) {
+      return undefined;
+    }
+
+    return descriptor;
+  } catch {
+    return undefined;
+  }
+}
+
+async function executeActiveOwnedCommand(
+  runtime: AppRuntime,
+  commandId: string,
+  pluginId: string,
+  input: Record<string, unknown>,
+): Promise<unknown> {
+  const descriptor = getActiveOwnedCommandDescriptor(runtime, commandId, pluginId);
+
+  if (descriptor === undefined) {
+    throw new Error("Command unavailable");
+  }
+
+  return runtime.commands.execute(descriptor.id, input);
+}
+
 function listCommandPaletteCommands(
   runtime: AppRuntime,
 ): CommandPaletteCommand[] {
@@ -2056,10 +2138,19 @@ function listCommandPaletteCommands(
 function toCommandPaletteCommand(
   descriptor: CommandDescriptor,
 ): CommandPaletteCommand | undefined {
-  const id = toBoundedDisplayString(descriptor.id);
+  const id = descriptor.id;
+  const pluginId = descriptor.pluginId;
   const title = toBoundedDisplayString(descriptor.title);
+  const descriptorFingerprint = createCommandDescriptorFingerprint(descriptor);
 
-  if (id === undefined || title === undefined) {
+  if (
+    typeof id !== "string" ||
+    id.trim().length === 0 ||
+    typeof pluginId !== "string" ||
+    pluginId.trim().length === 0 ||
+    title === undefined ||
+    descriptorFingerprint === undefined
+  ) {
     return undefined;
   }
 
@@ -2070,12 +2161,83 @@ function toCommandPaletteCommand(
   );
 
   return {
+    descriptorFingerprint,
     id,
+    pluginId,
+    stableKey: createCommandPaletteStableKey(descriptor),
     title,
     contextLabels,
     ...(description === undefined ? {} : { description }),
     ...(defaultShortcut === undefined ? {} : { defaultShortcut }),
   };
+}
+
+function createCommandPaletteStableKey(descriptor: CommandDescriptor): string {
+  return JSON.stringify([descriptor.pluginId, descriptor.id]);
+}
+
+function createCommandDescriptorFingerprint(
+  descriptor: CommandDescriptor,
+): string | undefined {
+  try {
+    return stableFingerprint([
+      descriptor.id,
+      descriptor.pluginId,
+      descriptor.title,
+      descriptor.description,
+      descriptor.defaultShortcut,
+      descriptor.context,
+    ]);
+  } catch {
+    return undefined;
+  }
+}
+
+function stableFingerprint(value: unknown): string {
+  if (value === undefined) {
+    return "undefined";
+  }
+
+  if (value === null) {
+    return "null";
+  }
+
+  if (typeof value === "string") {
+    return `string:${JSON.stringify(value)}`;
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new Error("Unsafe fingerprint value");
+    }
+
+    return `number:${String(value)}`;
+  }
+
+  if (typeof value === "boolean") {
+    return `boolean:${String(value)}`;
+  }
+
+  if (Array.isArray(value)) {
+    return `array:[${value.map(stableFingerprint).join(",")}]`;
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("Unsafe fingerprint value");
+  }
+
+  const keys = Object.getOwnPropertyNames(value).sort();
+  const fields = keys.map((key) => {
+    const property = Object.getOwnPropertyDescriptor(value, key);
+
+    if (property === undefined || "get" in property || "set" in property) {
+      throw new Error("Unsafe fingerprint property");
+    }
+
+    return `${JSON.stringify(key)}:${stableFingerprint(property.value)}`;
+  });
+
+  return `object:{${fields.join(",")}}`;
 }
 
 function collectCommandContextLabels(context: unknown): string[] {

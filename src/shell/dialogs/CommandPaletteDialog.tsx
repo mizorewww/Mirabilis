@@ -14,7 +14,10 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 export type CommandPaletteCommand = {
+  readonly descriptorFingerprint: string;
   readonly id: string;
+  readonly pluginId: string;
+  readonly stableKey: string;
   readonly title: string;
   readonly contextLabels: readonly string[];
   readonly defaultShortcut?: string;
@@ -24,7 +27,7 @@ export type CommandPaletteCommand = {
 type CommandPaletteDialogProps = {
   commands: readonly CommandPaletteCommand[];
   onClose(): void;
-  onExecute(commandId: string): Promise<void>;
+  onExecute(command: CommandPaletteCommand): Promise<void>;
   open: boolean;
 };
 
@@ -35,18 +38,20 @@ export function CommandPaletteDialog({
   open,
 }: CommandPaletteDialogProps) {
   const [errorVisible, setErrorVisible] = useState(false);
-  const [pendingCommandId, setPendingCommandId] = useState<string | undefined>();
+  const [pendingCommandKey, setPendingCommandKey] = useState<
+    string | undefined
+  >();
   const [query, setQuery] = useState("");
 
   const visibleCommands = useMemo(
     () => filterCommands(commands, query),
     [commands, query],
   );
-  const canRunCommand = pendingCommandId === undefined;
+  const canRunCommand = pendingCommandKey === undefined;
 
   const closeDialog = () => {
     setErrorVisible(false);
-    setPendingCommandId(undefined);
+    setPendingCommandKey(undefined);
     setQuery("");
     onClose();
   };
@@ -57,14 +62,14 @@ export function CommandPaletteDialog({
     }
 
     setErrorVisible(false);
-    setPendingCommandId(command.id);
+    setPendingCommandKey(command.stableKey);
 
     try {
-      await onExecute(command.id);
+      await onExecute(command);
       closeDialog();
     } catch {
       setErrorVisible(true);
-      setPendingCommandId(undefined);
+      setPendingCommandKey(undefined);
     }
   };
 
@@ -105,7 +110,7 @@ export function CommandPaletteDialog({
               visibleCommands.map((command, index) => (
                 <ListItemButton
                   disabled={!canRunCommand}
-                  key={command.id}
+                  key={command.stableKey}
                   onClick={() => void runCommand(command)}
                   selected={index === 0}
                 >
