@@ -178,3 +178,22 @@
   - Stale-language grep for Search deferred/placeholder/app-shell route drift returned no matches in product, architecture, testing, development, and task-index docs.
   - Stale anchor grep for `#25-search-plugin` returned no matches.
 - Progress note: `docs/implementation/progress.md` intentionally remains `[~]` for TASK-041; parent still owns release readiness, branch gate, final progress closeout, and merge.
+
+## Final Test-Quality Hardening
+
+- Gauss (`test_quality_reviewer`) confirmed DTO boundary and listitem coverage were resolved, but left two P2 test-quality gaps:
+  - stale pending close coverage covered later resolve but not later reject;
+  - static worker/FTS guard did not catch `SharedWorker`, `worker_threads`, service-worker patterns, or bare SQLite `MATCH`.
+- Banach (`test-fix`) added test-only coverage in commit `a1a1fb0`.
+- Changed file:
+  - `src/test/search-overlay-results-route.test.tsx`.
+- Coverage added:
+  - pending Search closes through Cancel, then a later rejected `search.query` cannot reopen the dialog, open Search route, show stale alerts, or leak raw error text;
+  - static no-worker/FTS guard now catches `SharedWorker`, `worker_threads`, service-worker APIs, `MATCH AGAINST`, and bare SQLite-style `MATCH`.
+- Parent validation after Banach passed:
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx` (4 files / 80 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+  - Forbidden test API scan returned no matches.
+- Sagan (`test_quality_reviewer`) confirmed no P0/P1/P2 test-quality findings remain after `a1a1fb0`.

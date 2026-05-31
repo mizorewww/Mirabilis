@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 21:00 CST.
+Last updated: 2026-05-31 21:12 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 21:00 CST.
 - Branch: `feat/task-041-search-overlay-results-route`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-041 docs sync is applied; parent still needs release readiness, branch gate, final progress closeout, and merge.
+- Current phase: TASK-041 targeted re-review is clear; parent is running release readiness and branch gate.
 
 ## Current Outcome
 
@@ -27,6 +27,8 @@ Last updated: 2026-05-31 21:00 CST.
 - Boyle (`review-fix`) fixed pending search close and stale-result invalidation in commit `af3cc6c`.
 - Parent validation after review-fix passed: focused TASK-041/adjacent suites (4 files / 79 tests and 4 files / 69 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden production-surface scans.
 - Socrates (`doc_writer`) updated product, architecture, task-index, testing, and communication docs for delivered TASK-041 Search behavior and deferred scope. Docs-only `git diff --check` passed; stale Search deferred/placeholder/app-shell route and stale `#25-search-plugin` greps returned no matches.
+- Gauss (`test_quality_reviewer`) requested two remaining P2 test hardening items. Banach (`test-fix`) added stale reject and broader worker/FTS static guard coverage in commit `a1a1fb0`.
+- Sagan (`test_quality_reviewer`) confirmed no P0/P1/P2 test-quality findings remain after `a1a1fb0`.
 
 ## Initial TASK-041 Scope
 
