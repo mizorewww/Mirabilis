@@ -44,7 +44,7 @@
 
 ## Current Next Action
 
-- Parent runs branch gate/release-readiness closeout, decides final progress status, then merges to `master` when local checks pass.
+- Parent merges TASK-039 to `master`, validates the merge result, pushes `master`, then continues with TASK-040.
 
 ## Pre-Test Guidance Outcomes
 
@@ -112,3 +112,11 @@
   - task index and progress docs now record delivered/deferred scope and keep TASK-039 `[~]` pending parent branch gate and merge closeout;
   - live agent status was reset to the current TASK-039 state and no longer carries stale TASK-038 section labels.
 - Deferred scope preserved: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+
+## Branch Gate And Release Readiness
+
+- Parent branch gate passed:
+  - `bun run build` passed with the known Vite chunk-size warning.
+  - `bun run check:quick` passed with 43 frontend test files / 679 tests, Rust fmt, Rust clippy, and Rust tests.
+- Averroes (`release_checker`) found no P0/P1/P2 blockers, confirmed the worktree was clean, confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release surfaces changed, and confirmed `check:full` is not required for this docs/frontend/test-only diff.
+- Parent decision: mark TASK-039 `[x]` and merge to `master`.

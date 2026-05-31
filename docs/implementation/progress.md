@@ -82,7 +82,7 @@ Status markers:
 - [x] TASK-036: Add Generic ViewHost And SlotHost
 - [x] TASK-037: Mount Home Workspace Editor
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
-- [~] TASK-039: Mount Metadata, Timer, And Timeline Slots
+- [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [ ] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 18:55 CST - TASK-039 branch gate passed and task closed
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Final feature-branch commit entering closeout: `ee8c26b` (`Meitner(docs)(Mount Metadata, Timer, And Timeline Slots): sync slot surface docs`).
+- Parent branch gate: `bun run build` passed with the known Vite chunk-size warning; `bun run check:quick` passed with 43 frontend test files / 679 tests, Rust fmt, Rust clippy, and Rust tests.
+- Release readiness: Averroes (`release_checker`) found no P0/P1/P2 blockers, confirmed the worktree was clean, confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release surfaces changed, and confirmed `check:full` is not required for this docs/frontend/test-only diff.
+- Final delivered scope: page metadata, page timeline, and global floating timer slot surfaces are mounted through the MUI app shell with the reviewed public `metadata-ui` path, controlled page DTOs, React-owned Portal rendering, and Timer-owned exact `{}` command facade boundaries.
+- Final status: TASK-039 is marked `[x]`. Next action is merge to `master`, validate the merge result, push `master`, then continue autonomous M9 UI work with TASK-040, Add Command Palette And Quick Capture Dialog.
 
 ### 2026-05-31 18:45 CST - TASK-039 docs sync applied after review fixes
 
