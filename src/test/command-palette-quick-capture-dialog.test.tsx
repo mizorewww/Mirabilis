@@ -448,7 +448,7 @@ describe("TASK-040 Quick Capture dialog", () => {
     expect(saveButton).toBeDisabled();
     expect(saveAndOpenButton).toBeDisabled();
 
-    await user.type(firstOpen.markdown, "- [ ] Cancelled capture{Enter}Second line");
+    await user.type(firstOpen.markdown, "- [[ ] Cancelled capture{Enter}Second line");
 
     expect(firstOpen.markdown).toHaveAccessibleName(/markdown/i);
     expect(firstOpen.markdown).toHaveValue("- [ ] Cancelled capture\nSecond line");
