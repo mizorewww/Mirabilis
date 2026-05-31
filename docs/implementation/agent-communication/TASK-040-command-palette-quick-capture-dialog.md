@@ -178,3 +178,18 @@
 - Newton found P1 docs drift: `docs/product/07-user-interface-design.md` still grouped top-bar command/search/capture dialogs as deferred `TASK-040+` work.
 - Helmholtz (`doc_writer`) updated the formal product UI status to say TASK-040 delivers app-shell Command Palette and Quick Capture dialogs from the top bar while Search and Settings remain placeholder/deferred surfaces.
 - Deferred scope remains unchanged: native/global Quick Capture shortcut, mobile capture toolbar, background capture, Search dialog/results, persistent search index, Calendar/Reports projections, ML/AI panels, Settings/Sync route and panel surfaces, native/package/Tauri/Rust/IPC/capability changes, and release surfaces stay future work.
+
+## Release Readiness And Closeout
+
+- Targeted re-review after the review fix:
+  - Darwin (`security_reviewer`) found no P0/P1/P2 security issues and noted only a low residual risk around independently verifying Quick Capture metadata ownership for returned page IDs.
+  - Huygens (`test_quality_reviewer`) found no P0/P1/P2 test-quality issues and noted a P3 non-blocking gap for direct wrong-view/missing-view Quick Capture open-result regression coverage.
+  - Faraday (`reviewer`) found no P0/P1/P2 correctness regressions.
+  - Nash (`deprecation_auditor`) found no deprecated or obsolete API usage in the TASK-040 diff.
+  - Newton (`pr_explorer`) found no code/runtime blocker and raised the P1 docs drift fixed by Helmholtz.
+- Leibniz (`release_checker`) found no release blockers.
+- Branch gate:
+  - `bun run check:quick` passed with TypeScript, ESLint, 44 frontend test files / 704 tests, Rust fmt, Rust clippy, and Rust tests.
+  - `git diff --check master...HEAD` passed.
+  - Native/package/Tauri/Rust/capability/permission/schema/release-artifact path scan returned no matches.
+- Parent decision: mark TASK-040 `[x]`, commit progress closeout, merge to `master`, validate the merge result, then continue to TASK-041.
