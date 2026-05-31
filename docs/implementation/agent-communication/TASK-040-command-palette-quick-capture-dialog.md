@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Delegate `test_writer` for failing TASK-040 acceptance and boundary tests.
+- Delegate `implementer` for the minimum production implementation needed to pass the TASK-040 acceptance tests.
 
 ## Pre-Test Guidance Outcomes
 
@@ -76,3 +76,25 @@
 - Command palette executes selected commands with exact `{}` only in TASK-040. Commands requiring payload/context forms show redacted failure/disabled behavior and broader command-specific forms remain deferred.
 - Quick Capture uses a shell-owned MUI dialog wrapper for modal semantics while relying on public `quick-capture.open`, `quick-capture.save`, and `quick-capture.save-and-open` commands. The plugin baseline `quick-capture.modal` view remains public registry context, not a private import target.
 - Top-bar Command and Quick Capture controls become dialog launchers with focus return; they no longer behave as placeholder `aria-pressed` toggles.
+
+## Test Writer Outcome
+
+- Turing (`test_writer`) added TASK-040 red acceptance tests in commit `6ccea0b`.
+- Changed files:
+  - `src/test/command-palette-quick-capture-dialog.test.tsx`;
+  - `src/test/mui-shell-frame.test.tsx`;
+  - `src/test/sidebar-page-filter-navigation.test.tsx`.
+- Coverage added:
+  - Command Palette open/close/focus return, filtering, active/inactive/missing-owner command behavior, exact `{}` execution, redacted failures, no free-form command-id execution, and DTO-only rendering boundaries.
+  - Quick Capture open-before-dialog command contract, labelled Markdown form behavior, disabled/pending states, cancel/Escape, save, save-and-open navigation, trusted Inbox semantics, and redacted open/save failures.
+  - Static guards for package/native/Tauri/Rust/IPC/capability drift, Quick Capture private App Shell imports, MUI v9 removed props/barrels, and forbidden test APIs.
+- Parent red validation failed as expected:
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx`
+  - Result: 2 failed files / 4 passed files, 13 failed / 69 passed tests.
+  - Failure reason: App Shell still renders top-bar Command / Quick Capture as placeholder pressed-state controls and does not yet render accessible `Command Palette` or `Quick Capture` dialogs or execute `quick-capture.open`.
+- Parent validation after red tests:
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Forbidden-pattern scan for `.only`, `.skip`, `fireEvent`, `jest.`, `react-dom/test-utils`, and `delay: null` returned no matches.
+- Parent decision: accept `6ccea0b` as the TASK-040 red baseline and delegate production implementation.
