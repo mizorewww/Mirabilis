@@ -172,3 +172,9 @@
   - `git diff --check`.
   - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, `aria-pressed`, native/Tauri bridge, and filesystem/path surfaces returned no matches.
 - Parent decision: accept `0cbd7f5` and run targeted re-review before release readiness.
+
+## Docs Drift Fix
+
+- Newton found P1 docs drift: `docs/product/07-user-interface-design.md` still grouped top-bar command/search/capture dialogs as deferred `TASK-040+` work.
+- Helmholtz (`doc_writer`) updated the formal product UI status to say TASK-040 delivers app-shell Command Palette and Quick Capture dialogs from the top bar while Search and Settings remain placeholder/deferred surfaces.
+- Deferred scope remains unchanged: native/global Quick Capture shortcut, mobile capture toolbar, background capture, Search dialog/results, persistent search index, Calendar/Reports projections, ML/AI panels, Settings/Sync route and panel surfaces, native/package/Tauri/Rust/IPC/capability changes, and release surfaces stay future work.
