@@ -94,6 +94,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 21:19 CST - TASK-041 merged to master
+
+- Merge commit: `3c88833` (`Merge TASK-041 search overlay results route`).
+- Merge-result validation: `bun run check:quick` passed on `master` with 45 frontend test files / 734 tests, TypeScript, ESLint, Rust fmt, Rust clippy, and Rust tests.
+- Final status: TASK-041 remains `[x]` on `master`. Next action is push `master`, then continue autonomous M9 UI work with TASK-042, Add Calendar And Reporting Routes With Explicit Data Projections.
+
 ### 2026-05-31 21:16 CST - TASK-041 branch gate passed and task closed
 
 - Branch: `feat/task-041-search-overlay-results-route`.
