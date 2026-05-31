@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 21:40 CST - TASK-042 red tests committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `2491bad` (`Franklin(test)(Add Calendar And Reporting Routes With Explicit Data Projections): add calendar reporting route tests`).
+- Red validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` failed as expected with 2 failed files / 4 passed files and 10 failed / 84 passed tests. The projection suite cannot resolve `../shell/projections/calendar-reporting` yet, Calendar route tests fail because the Drawer has no Calendar route yet, and Reports route tests fail because Reports still renders placeholder behavior. Adjacent suites passed.
+- `git diff --check` passed.
+- Next action: delegate implementation to `implementer`.
+
 ### 2026-05-31 21:28 CST - TASK-042 pre-test guidance complete
 
 - Branch: `feat/task-042-calendar-reporting-routes`.

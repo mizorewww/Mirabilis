@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance complete; red-test delegation pending.
+- Status: red tests committed; implementation delegation pending.
 
 ## Scope
 
@@ -28,6 +28,7 @@
 - Locke (`docs_researcher`) completed read-only current-doc guidance with no hard blocker. Official docs verified: React 19 upgrade/`act`, Vite 7 Node support, Vitest timers, Testing Library queries/async/user-event/setup, and MUI v9 Tabs/ToggleButton/Dialog/Paper/Stack/migration. Recommendation: use role/name queries, awaited `userEvent.setup()` actions, `findBy*` for route/aggregation transitions, and MUI v9 patterns.
 - Plato (`security_reviewer`) completed read-only boundary guidance with no hard blocker. Recommendation: add static guards for no native/package/Tauri/Rust/IPC/capability/schema/release drift, no private plugin imports, no raw Core store/registry/plugin-host/native handles in plugin-rendered UI, no HTML/Markdown/code sinks, and no broad cross-plugin feed/query facade.
 - Fermat (`deprecation_auditor`) completed read-only API guidance with no hard blocker. Official docs verified: MUI v9 install/path imports/migration, React 19 upgrade and test-utils warnings, Testing Library user-event/queries, Vite 7 migration, and Vitest 4 migration. Recommendation: keep MUI path imports, avoid stale MUI/React/testing APIs, and test the Calendar command bridge explicitly.
+- Franklin (`test_writer`) added failing TASK-042 projection and route tests in commit `2491bad`. Files changed: `src/test/calendar-reporting-projections.test.ts` and `src/test/calendar-reporting-routes.test.tsx`.
 
 ## Parent Decisions
 
@@ -49,3 +50,8 @@
 - 2026-05-31 21:21 CST: 11 project agent TOML files parsed successfully.
 - 2026-05-31 21:21 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - 2026-05-31 21:28 CST: pre-test planner, docs, security, and deprecation agents completed with no hard blockers.
+- 2026-05-31 21:40 CST: parent red validation ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx`. Expected red result: 2 failed files / 4 passed files, 10 failed / 84 passed tests. `calendar-reporting-projections.test.ts` fails because `../shell/projections/calendar-reporting` does not exist yet; route tests fail because Calendar route is absent and Reports still renders placeholder behavior. Adjacent suites passed. `git diff --check` passed.
+
+## Next Action
+
+- Spawn `implementer` to add the minimum production code needed to pass Franklin's TASK-042 tests.

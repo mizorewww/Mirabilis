@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 21:28 CST.
+Last updated: 2026-05-31 21:40 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 21:28 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 pre-test guidance complete; parent is recording guidance before delegating red tests.
+- Current phase: TASK-042 red tests committed and validated; parent is preparing implementation delegation.
 
 ## Current Outcome
 
@@ -18,6 +18,8 @@ Last updated: 2026-05-31 21:28 CST.
 - Parent selected TASK-042 as the first unblocked `[ ]` task in `docs/implementation/progress.md`.
 - Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
 - Parent decisions: exclude missing/archived pages from Calendar/Reports projections; cap Calendar route segments at `1000` with deterministic partial-data behavior; default Reports to `stats.sum-time-by-page`; treat task estimate data as optional unless public task-owned estimate metadata exists; require a narrow Calendar command bridge rather than a generic raw `commands.execute` facade.
+- Franklin (`test_writer`) added failing projection and route tests in commit `2491bad`.
+- Parent red validation passed as expected: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` failed with the intended missing projection module, absent Calendar route, and placeholder Reports route; adjacent suites passed with 84 tests. `git diff --check` passed.
 
 ## Initial TASK-042 Scope
 
@@ -47,4 +49,4 @@ Last updated: 2026-05-31 21:28 CST.
 
 ## Next Parent Actions
 
-- Commit pre-test guidance, then delegate TASK-042 red projection and route tests to `test_writer`.
+- Commit red validation record, then delegate implementation to `implementer`.
