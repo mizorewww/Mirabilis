@@ -49,6 +49,7 @@ import {
   executeFilterQuery,
   exportStructuredDocumentToMarkdown,
   importMarkdownToStructuredDocument,
+  type CommandDescriptor,
   type FilterDefinition,
   type MarkdownPage,
   type MetadataRecord,
@@ -64,6 +65,11 @@ import {
   type MarkdownWorkspaceBridgeValue,
   type RuntimeInitializer,
 } from "./providers";
+import {
+  CommandPaletteDialog,
+  QuickCaptureDialog,
+  type CommandPaletteCommand,
+} from "./shell/dialogs";
 import { PluginRenderBoundary, SlotHost, ViewHost } from "./shell/hosts";
 import "./App.css";
 
@@ -171,6 +177,11 @@ const pageEditorViewType = "page.editor";
 const markdownInsertCommandId = "markdown.insert-text";
 const openTaskPageCommandId = "task.open-task-page";
 const toggleTaskStatusCommandId = "task.toggle-status";
+const quickCapturePluginId = "quick-capture";
+const quickCaptureOpenCommandId = "quick-capture.open";
+const quickCaptureSaveCommandId = "quick-capture.save";
+const quickCaptureSaveAndOpenCommandId = "quick-capture.save-and-open";
+const quickCaptureModalViewId = "quick-capture.modal";
 const pageTimelineSlot = "page.timeline";
 const globalFloatingSlot = "global.floating";
 const timerPluginId = "timer";
@@ -199,6 +210,8 @@ const metadataValueTypes = new Set([
   "number",
   "string",
 ]);
+const maxCommandFieldLength = 160;
+const maxCommandContextLabels = 6;
 const appInitializationPromises = new WeakMap<
   RuntimeInitializer<AppRuntime>,
   Promise<AppRuntime>
@@ -448,10 +461,14 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   }));
   const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(true);
-  const [activeTool, setActiveTool] = useState<ShellToolId>("command");
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [quickCaptureDialogOpen, setQuickCaptureDialogOpen] = useState(false);
+  const [quickCaptureOpenError, setQuickCaptureOpenError] = useState(false);
+  const [quickCaptureOpenPending, setQuickCaptureOpenPending] = useState(false);
   const refreshSlotSurfaces = useCallback(() => {
     setSlotRevision((revision) => revision + 1);
   }, []);
+  const commandPaletteCommands = listCommandPaletteCommands(runtimeSource);
   const routeDetails = getActiveRouteDetails(
     runtimeSource,
     activeRoute,
@@ -485,6 +502,74 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       routeId,
     });
   };
+  const executeCommandPaletteCommand = useCallback(
+    async (commandId: string) => {
+      await runtimeSource.commands.execute(commandId, {});
+    },
+    [runtimeSource],
+  );
+  const openQuickCaptureDialog = useCallback(async () => {
+    if (quickCaptureDialogOpen || quickCaptureOpenPending) {
+      return;
+    }
+
+    setQuickCaptureOpenError(false);
+    setQuickCaptureOpenPending(true);
+
+    try {
+      const result = await runtimeSource.commands.execute(
+        quickCaptureOpenCommandId,
+        {},
+      );
+
+      if (
+        !isExpectedQuickCaptureOpenResult(result) ||
+        !quickCaptureModalViewIsAvailable(runtimeSource)
+      ) {
+        throw new Error("Quick Capture unavailable");
+      }
+
+      setQuickCaptureDialogOpen(true);
+    } catch {
+      setQuickCaptureOpenError(true);
+    } finally {
+      setQuickCaptureOpenPending(false);
+    }
+  }, [quickCaptureDialogOpen, quickCaptureOpenPending, runtimeSource]);
+  const saveQuickCapture = useCallback(
+    async (markdown: string) => {
+      const result = await runtimeSource.commands.execute(
+        quickCaptureSaveCommandId,
+        { markdown },
+      );
+
+      if (!isQuickCaptureSaveResult(result)) {
+        throw new Error("Quick Capture save unavailable");
+      }
+    },
+    [runtimeSource],
+  );
+  const saveAndOpenQuickCapture = useCallback(
+    async (markdown: string) => {
+      const result = await runtimeSource.commands.execute(
+        quickCaptureSaveAndOpenCommandId,
+        { markdown },
+      );
+      const pageId = readQuickCaptureOpenPageId(result);
+
+      if (pageId === undefined || getRoutePage(runtimeSource, pageId) === undefined) {
+        throw new Error("Quick Capture page unavailable");
+      }
+
+      setCurrentPage(currentPageState, pageId);
+      setActiveRoute({
+        kind: "page",
+        pageId,
+        role: "command-open",
+      });
+    },
+    [currentPageState, runtimeSource],
+  );
   const bridge = useMemo(
     () =>
       createMarkdownWorkspaceBridge({
@@ -542,12 +627,20 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
               return (
                 <Button
-                  aria-pressed={activeTool === tool.id}
                   color="inherit"
                   key={tool.id}
-                  onClick={() => setActiveTool(tool.id)}
+                  onClick={() => {
+                    if (tool.id === "command") {
+                      setCommandPaletteOpen(true);
+                      return;
+                    }
+
+                    if (tool.id === "capture") {
+                      void openQuickCaptureDialog();
+                    }
+                  }}
                   startIcon={<ToolIcon fontSize="small" />}
-                  variant={activeTool === tool.id ? "outlined" : "text"}
+                  variant="text"
                 >
                   {tool.label}
                 </Button>
@@ -708,6 +801,9 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
             <Typography color="text.secondary" variant="body2">
               {routeDetails.summary}
             </Typography>
+            {quickCaptureOpenError ? (
+              <Alert severity="error">Quick Capture could not open.</Alert>
+            ) : null}
           </Stack>
 
           <WorkspaceRouteContent
@@ -716,15 +812,21 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
             runtime={runtimeSource}
             slotRevision={slotRevision}
           />
-
-          <Box className="app-shell__tool-status" role="status">
-            <Typography variant="body2">
-              {shellTools.find((tool) => tool.id === activeTool)?.label} surface
-              placeholder
-            </Typography>
-          </Box>
         </Box>
       </Box>
+
+      <CommandPaletteDialog
+        commands={commandPaletteCommands}
+        onClose={() => setCommandPaletteOpen(false)}
+        onExecute={executeCommandPaletteCommand}
+        open={commandPaletteOpen}
+      />
+      <QuickCaptureDialog
+        onClose={() => setQuickCaptureDialogOpen(false)}
+        onSave={saveQuickCapture}
+        onSaveAndOpen={saveAndOpenQuickCapture}
+        open={quickCaptureDialogOpen}
+      />
 
       <Portal>
         <AppFloatingSlots
@@ -1925,6 +2027,216 @@ function pluginRecordIsActive(
 
 function pluginIsActive(plugin: PluginHostRecord): boolean {
   return plugin.enabled === true && plugin.status === "active";
+}
+
+function listCommandPaletteCommands(
+  runtime: AppRuntime,
+): CommandPaletteCommand[] {
+  const plugins = listPluginRecords(runtime);
+
+  if (plugins === undefined) {
+    return [];
+  }
+
+  try {
+    return runtime.commands
+      .list()
+      .filter((descriptor) =>
+        pluginRecordIsActive(plugins, descriptor.pluginId),
+      )
+      .map(toCommandPaletteCommand)
+      .filter(
+        (command): command is CommandPaletteCommand => command !== undefined,
+      );
+  } catch {
+    return [];
+  }
+}
+
+function toCommandPaletteCommand(
+  descriptor: CommandDescriptor,
+): CommandPaletteCommand | undefined {
+  const id = toBoundedDisplayString(descriptor.id);
+  const title = toBoundedDisplayString(descriptor.title);
+
+  if (id === undefined || title === undefined) {
+    return undefined;
+  }
+
+  const description = toBoundedDisplayString(descriptor.description);
+  const defaultShortcut = toBoundedDisplayString(descriptor.defaultShortcut);
+  const contextLabels = collectCommandContextLabels(descriptor.context).filter(
+    (label) => !title.toLowerCase().includes(label.toLowerCase()),
+  );
+
+  return {
+    id,
+    title,
+    contextLabels,
+    ...(description === undefined ? {} : { description }),
+    ...(defaultShortcut === undefined ? {} : { defaultShortcut }),
+  };
+}
+
+function collectCommandContextLabels(context: unknown): string[] {
+  const labels: string[] = [];
+
+  try {
+    collectCommandContextLabelsInto(context, labels, {
+      depth: 0,
+      seen: new WeakSet<object>(),
+      visited: 0,
+    });
+  } catch {
+    return [];
+  }
+
+  return labels;
+}
+
+function collectCommandContextLabelsInto(
+  value: unknown,
+  labels: string[],
+  state: {
+    depth: number;
+    seen: WeakSet<object>;
+    visited: number;
+  },
+): void {
+  if (
+    labels.length >= maxCommandContextLabels ||
+    state.depth > 4 ||
+    state.visited > 100
+  ) {
+    return;
+  }
+
+  state.visited += 1;
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    const label = toBoundedDisplayString(String(value));
+
+    if (label !== undefined && !labels.includes(label)) {
+      labels.push(label);
+    }
+
+    return;
+  }
+
+  if (value === null || typeof value !== "object") {
+    return;
+  }
+
+  if (state.seen.has(value)) {
+    return;
+  }
+
+  state.seen.add(value);
+
+  try {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        collectCommandContextLabelsInto(item, labels, {
+          depth: state.depth + 1,
+          seen: state.seen,
+          visited: state.visited,
+        });
+      }
+
+      return;
+    }
+
+    for (const propertyName of Object.getOwnPropertyNames(value)) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, propertyName);
+
+      if (
+        descriptor === undefined ||
+        "get" in descriptor ||
+        "set" in descriptor
+      ) {
+        continue;
+      }
+
+      collectCommandContextLabelsInto(descriptor.value, labels, {
+        depth: state.depth + 1,
+        seen: state.seen,
+        visited: state.visited,
+      });
+    }
+  } finally {
+    state.seen.delete(value);
+  }
+}
+
+function toBoundedDisplayString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const text = value.replace(/\s+/gu, " ").trim();
+
+  if (text.length === 0) {
+    return undefined;
+  }
+
+  return text.slice(0, maxCommandFieldLength);
+}
+
+function isExpectedQuickCaptureOpenResult(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value.kind === "quick-capture.open-result" &&
+    value.viewId === quickCaptureModalViewId
+  );
+}
+
+function quickCaptureModalViewIsAvailable(runtime: AppRuntime): boolean {
+  if (!isPluginActive(runtime, quickCapturePluginId)) {
+    return false;
+  }
+
+  try {
+    const view = runtime.registries.views.get(quickCaptureModalViewId);
+
+    return (
+      view.id === quickCaptureModalViewId &&
+      view.pluginId === quickCapturePluginId
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isQuickCaptureSaveResult(value: unknown): value is {
+  kind: "quick-capture.save-result";
+  pageId: string;
+} {
+  return (
+    isRecord(value) &&
+    value.kind === "quick-capture.save-result" &&
+    typeof value.pageId === "string" &&
+    value.pageId.trim().length > 0
+  );
+}
+
+function readQuickCaptureOpenPageId(value: unknown): string | undefined {
+  if (!isQuickCaptureSaveResult(value)) {
+    return undefined;
+  }
+
+  if (
+    "openPageId" in value &&
+    typeof value.openPageId === "string" &&
+    value.openPageId.trim().length > 0
+  ) {
+    return value.openPageId.trim();
+  }
+
+  return value.pageId.trim();
 }
 
 export default App;
