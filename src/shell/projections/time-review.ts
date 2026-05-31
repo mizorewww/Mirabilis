@@ -114,6 +114,17 @@ type TagProjection = {
   type: "tag";
 };
 
+type BoundedRows<Row> = {
+  rows: Row[];
+  totalRows: number;
+};
+
+type ReportsOverflow = {
+  limit: number;
+  omittedRows: number;
+  reason: string;
+};
+
 const timerPluginId = "timer";
 const timerNamespace = "timer";
 const timerSegmentCreatedType = "time_segment_created";
@@ -127,6 +138,7 @@ const habitEnabledKey = "enabled";
 const defaultReportsAggregationId = "stats.sum-time-by-page";
 const calendarSegmentsLimit = 1_000;
 const statsRowsLimit = 1_000;
+const chartCategoryLimit = 200;
 const maxTrustedNumericMagnitude = 1_000_000_000;
 const maxTrustedStringLength = 200;
 const timerSegmentPayloadKeys = new Set([
@@ -199,113 +211,158 @@ export function buildReportsStatsInputProjection(
   const timerSegments = collectTimerSegments(input.events, activePages).sort(
     compareSegments,
   );
-  const segments = timerSegments
-    .slice(0, statsRowsLimit)
-    .map((segment) =>
-      toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
-    );
-  const overflowReasons =
-    timerSegments.length > statsRowsLimit ? ["stats.input-limit"] : [];
+  const statsSegmentLimit = boundRows(timerSegments, statsRowsLimit);
 
   switch (aggregationId) {
     case "stats.sum-time-by-tag": {
       const tags = collectTagRows(tagIdsByPageId);
+      const hasUntaggedSegments = timerSegments.some(
+        (segment) => (tagIdsByPageId.get(segment.pageId) ?? []).length === 0,
+      );
+      const tagLimit = hasUntaggedSegments
+        ? chartCategoryLimit - 1
+        : chartCategoryLimit;
+      const tagBound = boundRows(tags, tagLimit);
+      const emittedTagIds = new Set(tagBound.rows.map((tag) => tag.id));
+      const tagSegments = timerSegments.flatMap((segment) => {
+        const tagIds = tagIdsByPageId.get(segment.pageId) ?? [];
+        const emittedSegmentTagIds = tagIds.filter((tagId) =>
+          emittedTagIds.has(tagId),
+        );
+
+        if (tagIds.length > 0 && emittedSegmentTagIds.length === 0) {
+          return [];
+        }
+
+        return [toStatsSegmentRow(segment, emittedSegmentTagIds)];
+      });
+      const segmentBound = boundRows(tagSegments, statsRowsLimit);
 
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           kind: "stats.time-by-tag-input",
-          segments,
-          tags: tags.slice(0, statsRowsLimit),
+          segments: segmentBound.rows,
+          tags: tagBound.rows,
         },
         status: createReportsStatus(
-          segments.length,
-          overflowReasons,
-          tags.length > statsRowsLimit,
+          segmentBound.rows.length + tagBound.rows.length,
+          [
+            toOverflow(tagBound, chartCategoryLimit, "chart.category-limit"),
+            toOverflow(segmentBound, statsRowsLimit, "stats.input-limit"),
+          ],
         ),
       };
     }
-    case "stats.estimate-vs-actual":
+    case "stats.estimate-vs-actual": {
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           estimates: [],
           kind: "stats.estimate-vs-actual-input",
-          segments,
+          segments: statsSegmentLimit.rows.map((segment) =>
+            toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
+          ),
         },
-        status: {
-          kind: "partial",
-          reasons: ["task-estimates-unavailable"],
-        },
+        status: createEstimateReportsStatus(
+          toOverflow(statsSegmentLimit, statsRowsLimit, "stats.input-limit"),
+        ),
       };
+    }
     case "stats.habit-completion-rate": {
-      const habits = collectHabitSummaries(input.metadata, activePages);
-      const habitIds = new Set(habits.map((habit) => habit.habitPageId));
-      const events = collectHabitEvents(input.events, habitIds).slice(
-        0,
-        statsRowsLimit,
+      const habitRows = collectHabitSummaries(input.metadata, activePages);
+      const habitBound = boundRows(habitRows, statsRowsLimit);
+      const habitIds = new Set(
+        habitBound.rows.map((habit) => habit.habitPageId),
       );
+      const eventRows = collectHabitEvents(input.events, habitIds);
+      const eventBound = boundRows(eventRows, statsRowsLimit);
 
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           endDate: input.endDate,
-          events,
-          habits: habits.slice(0, statsRowsLimit),
+          events: eventBound.rows,
+          habits: habitBound.rows,
           kind: "stats.habit-completion-input",
           startDate: input.startDate,
         },
         status: createReportsStatus(
-          events.length + habits.length,
-          overflowReasons,
-          events.length > statsRowsLimit || habits.length > statsRowsLimit,
+          eventBound.rows.length + habitBound.rows.length,
+          [
+            toOverflow(habitBound, statsRowsLimit, "stats.input-limit"),
+            toOverflow(eventBound, statsRowsLimit, "stats.input-limit"),
+          ],
         ),
       };
     }
-    case "stats.task-switch-count":
+    case "stats.task-switch-count": {
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           kind: "stats.task-switch-count-input",
-          segments,
+          segments: statsSegmentLimit.rows.map((segment) =>
+            toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
+          ),
         },
-        status: createReportsStatus(segments.length, overflowReasons),
+        status: createReportsStatus(
+          statsSegmentLimit.rows.length,
+          [toOverflow(statsSegmentLimit, statsRowsLimit, "stats.input-limit")],
+        ),
       };
+    }
     case "stats.unnoted-sessions-count": {
-      const notes = collectTimerNotes(input.events, activePages).slice(
-        0,
-        statsRowsLimit,
-      );
+      const notes = collectTimerNotes(input.events, activePages);
+      const noteBound = boundRows(notes, statsRowsLimit);
 
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           kind: "stats.unnoted-sessions-input",
-          notes,
-          segments,
+          notes: noteBound.rows,
+          segments: statsSegmentLimit.rows.map((segment) =>
+            toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
+          ),
         },
         status: createReportsStatus(
-          segments.length + notes.length,
-          overflowReasons,
-          notes.length > statsRowsLimit,
+          statsSegmentLimit.rows.length + noteBound.rows.length,
+          [
+            toOverflow(statsSegmentLimit, statsRowsLimit, "stats.input-limit"),
+            toOverflow(noteBound, statsRowsLimit, "stats.input-limit"),
+          ],
         ),
       };
     }
-    case "stats.sum-time-by-page":
+    case "stats.sum-time-by-page": {
+      const pageBound = boundTimerSegmentsByPageCategory(
+        timerSegments,
+        chartCategoryLimit,
+      );
+      const segmentBound = boundRows(pageBound.rows, statsRowsLimit);
+
       return {
         aggregationId,
         chartViewId: "chart.bar",
         input: {
           kind: "stats.time-by-page-input",
-          segments,
+          segments: segmentBound.rows.map((segment) =>
+            toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
+          ),
         },
-        status: createReportsStatus(segments.length, overflowReasons),
+        status: createReportsStatus(
+          segmentBound.rows.length,
+          [
+            toOverflow(pageBound, chartCategoryLimit, "chart.category-limit"),
+            toOverflow(segmentBound, statsRowsLimit, "stats.input-limit"),
+          ],
+        ),
       };
+    }
   }
 }
 
@@ -750,6 +807,61 @@ function readReportsAggregationId(input: string | undefined): ReportsAggregation
     : defaultReportsAggregationId;
 }
 
+function boundRows<Row>(
+  rows: readonly Row[],
+  limit: number,
+): BoundedRows<Row> {
+  return {
+    rows: rows.slice(0, limit),
+    totalRows: rows.length,
+  };
+}
+
+function boundTimerSegmentsByPageCategory(
+  segments: readonly TimerSegmentProjection[],
+  limit: number,
+): BoundedRows<TimerSegmentProjection> {
+  const emittedPageIds = new Set<string>();
+  const rows: TimerSegmentProjection[] = [];
+  let omittedRows = 0;
+
+  for (const segment of segments) {
+    if (emittedPageIds.has(segment.pageId)) {
+      rows.push(segment);
+      continue;
+    }
+
+    if (emittedPageIds.size < limit) {
+      emittedPageIds.add(segment.pageId);
+      rows.push(segment);
+      continue;
+    }
+
+    omittedRows += 1;
+  }
+
+  return {
+    rows,
+    totalRows: rows.length + omittedRows,
+  };
+}
+
+function toOverflow(
+  boundedRows: BoundedRows<unknown>,
+  limit: number,
+  reason: string,
+): ReportsOverflow | undefined {
+  const omittedRows = boundedRows.totalRows - boundedRows.rows.length;
+
+  return omittedRows > 0
+    ? {
+        limit,
+        omittedRows,
+        reason,
+      }
+    : undefined;
+}
+
 function createBoundedStatus(
   length: number,
   limit: number,
@@ -781,24 +893,43 @@ function createBoundedStatus(
 
 function createReportsStatus(
   rowCount: number,
-  reasons: readonly string[],
-  hasAdditionalOverflow = false,
+  overflows: readonly (ReportsOverflow | undefined)[],
 ): ProjectionStatus {
-  const statusReasons = [...reasons];
+  const activeOverflows = overflows.filter(
+    (overflow): overflow is ReportsOverflow => overflow !== undefined,
+  );
 
-  if (hasAdditionalOverflow && !statusReasons.includes("stats.input-limit")) {
-    statusReasons.push("stats.input-limit");
-  }
-
-  if (statusReasons.length > 0) {
+  if (activeOverflows.length > 0) {
     return {
       kind: "partial",
-      limit: statsRowsLimit,
-      reasons: statusReasons,
+      limit: activeOverflows[0]?.limit,
+      omittedRows: activeOverflows.reduce(
+        (total, overflow) => total + overflow.omittedRows,
+        0,
+      ),
+      reasons: [...new Set(activeOverflows.map((overflow) => overflow.reason))],
     };
   }
 
   return rowCount === 0 ? { kind: "empty" } : { kind: "complete" };
+}
+
+function createEstimateReportsStatus(
+  segmentOverflow: ReportsOverflow | undefined,
+): ProjectionStatus {
+  if (segmentOverflow === undefined) {
+    return {
+      kind: "partial",
+      reasons: ["task-estimates-unavailable"],
+    };
+  }
+
+  return {
+    kind: "partial",
+    limit: segmentOverflow.limit,
+    omittedRows: segmentOverflow.omittedRows,
+    reasons: ["task-estimates-unavailable", segmentOverflow.reason],
+  };
 }
 
 function copyArrayLike(input: unknown): unknown[] {

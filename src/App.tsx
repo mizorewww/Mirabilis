@@ -1164,7 +1164,7 @@ const reportsAggregationOptions: ReadonlyArray<{
 function CalendarWorkspace({ runtime }: { runtime: AppRuntime }) {
   const [mode, setMode] = useState<CalendarRouteMode>("day");
   const range = useMemo(() => getCalendarRouteRange(mode), [mode]);
-  const snapshot = useMemo(() => readProjectionSnapshot(runtime), [runtime]);
+  const snapshot = readProjectionSnapshot(runtime);
   const viewId = mode === "day" ? calendarDayViewId : calendarWeekViewId;
 
   if (
@@ -1268,19 +1268,21 @@ function ReportsWorkspace({ runtime }: { runtime: AppRuntime }) {
   const [viewState, setViewState] = useState<ReportsViewState>({
     status: "loading",
   });
-  const snapshot = useMemo(() => readProjectionSnapshot(runtime), [runtime]);
   const dateRange = useMemo(() => getReportsDateRange(), []);
   const projection = useMemo(
-    () =>
-      snapshot === undefined
+    () => {
+      const snapshot = readProjectionSnapshot(runtime);
+
+      return snapshot === undefined
         ? undefined
         : buildReportsStatsInputProjection({
             ...snapshot,
             aggregationId,
             endDate: dateRange.endDate,
             startDate: dateRange.startDate,
-          }),
-    [aggregationId, dateRange.endDate, dateRange.startDate, snapshot],
+          });
+    },
+    [aggregationId, dateRange.endDate, dateRange.startDate, runtime],
   );
   const routeAvailable =
     projection !== undefined &&
