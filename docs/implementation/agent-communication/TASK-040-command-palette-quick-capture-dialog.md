@@ -46,7 +46,7 @@
 
 ## Current Next Action
 
-- Delegate `implementer` for the minimum production implementation needed to pass the TASK-040 acceptance tests.
+- Run post-implementation review agents for correctness, security, deprecation, docs sync, test quality, and changed-path exploration.
 
 ## Pre-Test Guidance Outcomes
 
@@ -98,3 +98,24 @@
   - `git diff --check` passed.
   - Forbidden-pattern scan for `.only`, `.skip`, `fireEvent`, `jest.`, `react-dom/test-utils`, and `delay: null` returned no matches.
 - Parent decision: accept `6ccea0b` as the TASK-040 red baseline and delegate production implementation.
+
+## Implementation Outcome
+
+- Arendt (`implementer`) implemented the TASK-040 app-shell dialogs in commit `fe68cab`.
+- Parfit (`test-fix`) fixed the committed TASK-040 test typing string for literal Markdown bracket syntax in commit `dc7812e`.
+- Production files changed:
+  - `src/App.tsx`;
+  - `src/shell/dialogs/CommandPaletteDialog.tsx`;
+  - `src/shell/dialogs/QuickCaptureDialog.tsx`;
+  - `src/shell/dialogs/index.ts`.
+- Delivered behavior:
+  - top-bar Command and Quick Capture controls now launch dialogs instead of placeholder pressed-state surfaces;
+  - Command Palette lists active command descriptor DTOs, filters typed input, executes selected commands through Command Registry with exact `{}`, restores focus, and shows redacted errors;
+  - Quick Capture opens through `quick-capture.open`, saves through `quick-capture.save`, save-and-open routes through returned page id via app-shell page state, guards pending/blank/cancel states, and shows redacted errors.
+- Parent validation after implementation passed:
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx` (6 files / 82 tests).
+  - `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/metadata-timer-timeline-slots.test.tsx` (5 files / 70 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+- Parent decision: accept implementation/test-fix commits and run review agents.
