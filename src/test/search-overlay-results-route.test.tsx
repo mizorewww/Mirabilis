@@ -484,6 +484,56 @@ describe("TASK-041 Search dialog", () => {
     );
   });
 
+  it("closes with Cancel while search.query is pending, restores focus, and ignores the stale rejected error", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const deferredResults = createDeferred<SearchResultsData>();
+    const staleError = createSensitiveError(searchCommandId);
+    const execute = vi.spyOn(runtime.commands, "execute");
+
+    staleError.message = `${staleError.message} STALE_REJECTED_SEARCH_ERROR_TOKEN`;
+    replaceSearchCommand(runtime, () => deferredResults.promise);
+    renderReadyApp(runtime);
+
+    const { dialog, launcher, query } = await openSearchDialog(user);
+
+    await user.type(query, "deferred rejection");
+    await user.click(within(dialog).getByRole("button", { name: /^Search$/i }));
+
+    await waitFor(() => expect(commandCallCount(execute, searchCommandId)).toBe(1));
+    expect(
+      within(dialog).getByRole("status", { name: /search|loading|pending/i }),
+    ).toHaveTextContent(/searching|loading/i);
+
+    await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: searchDialogName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(launcher).toHaveFocus();
+
+    await act(async () => {
+      deferredResults.reject(staleError);
+      await deferredResults.promise.catch(() => undefined);
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.queryByRole("dialog", { name: searchDialogName }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("main", { name: /home/i })).toBeVisible();
+    expect(
+      screen.queryByRole("main", { name: /search/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Search could not run|STALE_REJECTED_SEARCH_ERROR_TOKEN|SELECT\s+\*|private-indexer|PRIVATE_PAGE_BODY_TOKEN|NativeBridge|PluginHost/u,
+    );
+    expectNoSensitiveDomLeak();
+  });
+
   it("renders empty Search results as an accessible route state without raw runtime details", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -1287,9 +1337,15 @@ function findForbiddenTask041AppShellImport(
 
 function findForbiddenSearchSurfacePatterns(sourceFile: SourceFile): string[] {
   const patterns = new Map<RegExp, string>([
-    [/\bnew\s+Worker\b|\bWorker\s*\(/u, "background worker"],
+    [
+      /\bnew\s+(?:Shared)?Worker\b|\b(?:Shared)?Worker\s*\(|\bworker_threads\b|\bnavigator\s*\.\s*serviceWorker\b|\bserviceWorker\s*\.\s*register\b|\bServiceWorker(?:Container|Registration)?\b|\bservice[-_]?worker\b/iu,
+      "background worker or service worker",
+    ],
     [/\bsearch(?:Index|Indexer)\b|\bindexSearch\b|\bbuildSearchIndex\b/iu, "persistent search indexer"],
-    [/\bFTS(?:3|4|5)?\b|\bfull[-\s]?text\s+search\b|\bMATCH\s+AGAINST\b/iu, "FTS search surface"],
+    [
+      /\bFTS(?:3|4|5)?\b|\bfull[-\s]?text\s+search\b|\bMATCH\s+AGAINST\b|\b(?:WHERE|AND|OR|ON|HAVING)\b[^;\n]*\bMATCH\b(?!\s+AGAINST\b)|\b[A-Za-z_][\w."]*\s+MATCH\s+(?:\?|[:@$][A-Za-z_]\w*|["'`(])/iu,
+      "FTS search surface",
+    ],
   ]);
 
   return [...patterns.entries()]
