@@ -978,7 +978,7 @@ Acceptance criteria:
 
 Delivered/deferred note for the TASK-035 branch:
 
-- Delivered: the MUI quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and top-bar placeholder tools for Command, Search, Quick Capture, and Settings.
+- Delivered: the MUI quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and initial top-bar affordances for Command, Search, Quick Capture, and Settings. Command, Quick Capture, and Search become functional in later M9 tasks; Settings remains placeholder scope.
 - Deferred: no full trusted runtime channel was introduced; `ViewHost`/`SlotHost`, editor mounting, dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-036+.
 - Security/native scope: TASK-035 adds no IPC, Tauri/native, Rust, capability, permission, schema, release, or broader security surface change.
 
@@ -1075,7 +1075,9 @@ Delivered/deferred note for the TASK-037 branch:
 - Security/correctness hardening delivered by branch: no raw runtime render-prop/public provider exposure, no plugin-to-shell production import, hosted `pages.load/save` remain current-page scoped, hosted `openPage` cannot self-authorize foreign pages, and command-returned page opens are one-shot authorizations bound to the source page generation.
 - Delivered later by TASK-038: sidebar page/filter navigation for Home, recent pages, Inbox, Today, All Tasks, and public saved filters; page routes stay on the registered editor path, and saved-filter routes use the public filter executor plus `ViewHost` / `SlotHost` with route-token DTOs.
 - Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
-- Deferred: command/search/capture dialogs, Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, and release surfaces remain TASK-040+ or later.
+- Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
+- Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
+- Deferred: Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
 
 Test plan:
 
@@ -1126,7 +1128,9 @@ Delivered/deferred note for the TASK-038 branch:
 - Delivered by branch: filter result views receive only opaque `{ routeToken, title }` DTOs; saved-filter rows keep visible labels such as `#today` and `Today Review` as accessible names; active navigation rows expose `aria-current="page"`; recent pages remain session-scoped and visible on trusted filter routes.
 - Security/native scope: App Shell still does not import Task, Tag, Quick Capture, Search, Markdown editor private modules, raw Tauri/native modules, or plugin-private view components; TASK-038 adds no package, lockfile, Tauri config, generated permissions, capabilities, Rust, IPC, filesystem, schema, persistent navigation storage, or release changes.
 - Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
-- Deferred: Reports/top-bar dialogs, Calendar/Reports route projections, search overlay/result routes, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, and durable route storage remain TASK-040+ or later.
+- Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
+- Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
+- Deferred: Reports, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, durable route storage, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
 
 Test plan:
 
@@ -1196,7 +1200,9 @@ Delivered/deferred note for the TASK-039 branch:
 - Delivered by branch: `global.floating` mounts through MUI `Portal` as React-owned portal children. The floating timer bar remains Timer-owned and receives only a Pause / Resume / Stop command facade that dispatches `timer.pause`, `timer.resume`, and `timer.stop` with exact `{}` payloads.
 - Review hardening: nested React roots are not used for floating slots, app-shell boundary tests allow only the public `metadata-ui` import path, and foreign `global.floating` command attempts fail closed.
 - Security/native scope: App Shell still does not import Task, Tag, Timer private modules, raw Tauri/native modules, native persistence, package files, generated capabilities/permissions, Rust, IPC, filesystem, schema, or release surfaces for this task.
-- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
+- Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
+- Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
+- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
 
 ### TASK-040: Add Command Palette And Quick Capture Dialog
 
@@ -1241,7 +1247,7 @@ Docs to verify before implementation:
 Source docs:
 
 - `docs/product/07-user-interface-design.md`
-- `docs/product/05-built-in-plugins.md#25-search-plugin`
+- `docs/product/05-built-in-plugins.md#26-search-plugin`
 - `docs/product/06-view-slots.md`
 - `docs/architecture/05-plugin-implementations.md#search-plugin`
 - `docs/architecture/07-runtime-flows.md`
@@ -1275,6 +1281,15 @@ Docs to verify before implementation:
 - MUI Dialog/TextField/List docs.
 - WAI-ARIA dialog or combobox guidance appropriate to the chosen pattern.
 - Current RTL and user-event keyboard guidance.
+
+In-flight implementation note for branch `feat/task-041-search-overlay-results-route` through review-fix commit `af3cc6c`:
+
+- Implemented app-shell Search MUI `Dialog` and bounded Search results route before release closeout; `progress.md` remains `[~]` until the parent runs release readiness and final branch gate.
+- Search dispatch uses only active search-owned `search.query` with exact `{ query }` payload and a 200-character input cap.
+- Search results route state is a shell-owned bounded `{ kind: "search.results", query, results }` DTO copied from valid command output; it does not store full page bodies, raw runtime handles, plugin-private objects, native handles, filesystem paths, SQL, or raw errors.
+- Result rows render inert title/snippet/matched-field text, validate that the selected page still exists, and navigate through normal app-shell page route state only after validation.
+- Closing Search while a query is pending returns focus and invalidates stale later resolve/reject results.
+- Persistent search indexing, search worker, SQLite FTS, native/global search shortcuts, ranking beyond existing plugin behavior, package/lockfile, Tauri, Rust, IPC, capability, permission, schema, and release surfaces remain deferred.
 
 ### TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 

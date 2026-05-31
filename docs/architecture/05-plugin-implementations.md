@@ -703,7 +703,9 @@ view/data kind:
 
 `search.query({ query, limit? })` validates exact plain payload data, trims blank queries to no results, and performs bounded case-insensitive literal substring scans over unarchived page titles and structured body text. It returns `{ kind: "search.results", query, results }` with capped result count, title, snippet, scanned page count, and body text length. Search results do not include full page bodies. The `search.results` view validates DTOs, renders a `role="status"` summary plus list/listitem output, and uses inert React text.
 
-Persistent Search indexing, background search indexer / worker, SQLite FTS, ranking, app-shell Search route/command-palette polish, and native/package/Rust/schema changes remain deferred.
+TASK-041 keeps that plugin baseline intact and adds an app-shell Search consumer: the top-bar MUI `Dialog` executes only active search-owned `search.query` with exact `{ query }`, copies a valid result into a shell-owned bounded results route DTO, renders route rows as inert text/buttons, validates that a selected page still exists, and then navigates through normal page route state. App Shell must not import Search plugin private modules, store full page bodies, or pass raw runtime objects through Search route state.
+
+Persistent Search indexing, background search indexer / worker, SQLite FTS, ranking beyond existing plugin behavior, native/global Search shortcuts, command-palette search polish beyond the current top-bar dialog/results route, and native/package/Rust/schema changes remain deferred.
 
 ### 13.4 Machine Learning Plugin
 

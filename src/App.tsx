@@ -68,6 +68,7 @@ import {
 import {
   CommandPaletteDialog,
   QuickCaptureDialog,
+  SearchDialog,
   type CommandPaletteCommand,
 } from "./shell/dialogs";
 import { PluginRenderBoundary, SlotHost, ViewHost } from "./shell/hosts";
@@ -83,6 +84,21 @@ type FilterRouteRole = "inbox" | "all-tasks" | "today" | "saved";
 
 type PlaceholderRouteId = "reports";
 
+type SearchMatchedField = "body" | "title";
+
+type SearchRouteResult = {
+  readonly matchedFields: readonly SearchMatchedField[];
+  readonly pageId: string;
+  readonly snippet: string;
+  readonly title: string;
+};
+
+type SearchRouteData = {
+  readonly kind: "search.results";
+  readonly query: string;
+  readonly results: readonly SearchRouteResult[];
+};
+
 type ActiveRoute =
   | {
       kind: "page";
@@ -97,6 +113,11 @@ type ActiveRoute =
   | {
       kind: "placeholder";
       routeId: PlaceholderRouteId;
+    }
+  | {
+      data: SearchRouteData;
+      kind: "search";
+      resultUnavailable?: boolean;
     };
 
 type ShellToolId = "command" | "search" | "capture" | "settings";
@@ -138,7 +159,7 @@ type ShellTool = {
   icon: NavigationIcon;
 };
 
-type DeferredShellToolId = Extract<ShellToolId, "search" | "settings">;
+type DeferredShellToolId = Extract<ShellToolId, "settings">;
 
 type MarkdownWorkspaceDocument = {
   id: string;
@@ -184,6 +205,9 @@ const quickCaptureOpenCommandId = "quick-capture.open";
 const quickCaptureSaveCommandId = "quick-capture.save";
 const quickCaptureSaveAndOpenCommandId = "quick-capture.save-and-open";
 const quickCaptureModalViewId = "quick-capture.modal";
+const searchPluginId = "search";
+const searchQueryCommandId = "search.query";
+const searchResultsKind = "search.results";
 const pageTimelineSlot = "page.timeline";
 const globalFloatingSlot = "global.floating";
 const timerPluginId = "timer";
@@ -214,6 +238,22 @@ const metadataValueTypes = new Set([
 ]);
 const maxCommandFieldLength = 160;
 const maxCommandContextLabels = 6;
+const maxSearchQueryLength = 200;
+const maxSearchPageIdLength = 256;
+const maxSearchResults = 50;
+const maxSearchSnippetLength = 160;
+const maxSearchTitleLength = 200;
+const searchResultsDataKeys = new Set(["kind", "query", "results"]);
+const searchResultItemKeys = new Set([
+  "matchedFields",
+  "pageId",
+  "snippet",
+  "title",
+]);
+const allowedSearchMatchedFields = new Set<SearchMatchedField>([
+  "body",
+  "title",
+]);
 const appInitializationPromises = new WeakMap<
   RuntimeInitializer<AppRuntime>,
   Promise<AppRuntime>
@@ -466,6 +506,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [deferredShellTool, setDeferredShellTool] =
     useState<DeferredShellToolId>();
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const searchGenerationRef = useRef(0);
   const [quickCaptureDialogOpen, setQuickCaptureDialogOpen] = useState(false);
   const [quickCaptureOpenError, setQuickCaptureOpenError] = useState(false);
   const [quickCaptureOpenPending, setQuickCaptureOpenPending] = useState(false);
@@ -506,6 +548,29 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       routeId,
     });
   };
+  const openSearchResult = useCallback(
+    (pageId: string) => {
+      if (getRoutePage(runtimeSource, pageId) === undefined) {
+        setActiveRoute((route) =>
+          route.kind === "search"
+            ? {
+                ...route,
+                resultUnavailable: true,
+              }
+            : route,
+        );
+        return;
+      }
+
+      setCurrentPage(currentPageState, pageId);
+      setActiveRoute({
+        kind: "page",
+        pageId,
+        role: "recent",
+      });
+    },
+    [currentPageState, runtimeSource],
+  );
   const executeCommandPaletteCommand = useCallback(
     async (command: CommandPaletteCommand) => {
       const descriptor = getActiveOwnedCommandDescriptor(
@@ -525,6 +590,52 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       await runtimeSource.commands.execute(descriptor.id, {});
     },
     [runtimeSource],
+  );
+  const closeSearchDialog = useCallback(() => {
+    searchGenerationRef.current += 1;
+    setSearchDialogOpen(false);
+  }, []);
+  const runSearch = useCallback(
+    async (query: string) => {
+      const boundedQuery = query.slice(0, maxSearchQueryLength);
+      const searchGeneration = searchGenerationRef.current + 1;
+      const searchIsCurrent = () =>
+        searchGenerationRef.current === searchGeneration;
+
+      searchGenerationRef.current = searchGeneration;
+
+      try {
+        const result = await executeActiveOwnedCommand(
+          runtimeSource,
+          searchQueryCommandId,
+          searchPluginId,
+          { query: boundedQuery },
+        );
+
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        const data = readSearchRouteData(result, boundedQuery);
+
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        unsetCurrentPage(currentPageState);
+        setActiveRoute({
+          data,
+          kind: "search",
+        });
+      } catch (error) {
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        throw error;
+      }
+    },
+    [currentPageState, runtimeSource],
   );
   const openQuickCaptureDialog = useCallback(async () => {
     if (quickCaptureDialogOpen || quickCaptureOpenPending) {
@@ -666,7 +777,14 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                       return;
                     }
 
-                    if (tool.id === "search" || tool.id === "settings") {
+                    if (tool.id === "search") {
+                      setQuickCaptureOpenError(false);
+                      setDeferredShellTool(undefined);
+                      setSearchDialogOpen(true);
+                      return;
+                    }
+
+                    if (tool.id === "settings") {
                       setQuickCaptureOpenError(false);
                       setDeferredShellTool(tool.id);
                     }
@@ -846,6 +964,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           <WorkspaceRouteContent
             activeRoute={activeRoute}
             bridge={bridge}
+            onOpenSearchResult={openSearchResult}
             runtime={runtimeSource}
             slotRevision={slotRevision}
           />
@@ -857,6 +976,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         onClose={() => setCommandPaletteOpen(false)}
         onExecute={executeCommandPaletteCommand}
         open={commandPaletteOpen}
+      />
+      <SearchDialog
+        onClose={closeSearchDialog}
+        onSearch={runSearch}
+        open={searchDialogOpen}
       />
       <QuickCaptureDialog
         onClose={() => setQuickCaptureDialogOpen(false)}
@@ -878,11 +1002,13 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 function WorkspaceRouteContent({
   activeRoute,
   bridge,
+  onOpenSearchResult,
   runtime,
   slotRevision,
 }: {
   activeRoute: ActiveRoute;
   bridge: MarkdownWorkspaceBridgeValue;
+  onOpenSearchResult(pageId: string): void;
   runtime: AppRuntime;
   slotRevision: number;
 }) {
@@ -903,6 +1029,16 @@ function WorkspaceRouteContent({
     );
   }
 
+  if (activeRoute.kind === "search") {
+    return (
+      <SearchResultsWorkspace
+        data={activeRoute.data}
+        onOpenResult={onOpenSearchResult}
+        resultUnavailable={activeRoute.resultUnavailable === true}
+      />
+    );
+  }
+
   const route = getPlaceholderRoute(activeRoute.routeId);
 
   return (
@@ -917,6 +1053,74 @@ function WorkspaceRouteContent({
           <Typography variant="body2">{placeholder}</Typography>
         </Box>
       ))}
+    </Stack>
+  );
+}
+
+function SearchResultsWorkspace({
+  data,
+  onOpenResult,
+  resultUnavailable,
+}: {
+  data: SearchRouteData;
+  onOpenResult(pageId: string): void;
+  resultUnavailable: boolean;
+}) {
+  return (
+    <Stack
+      aria-label="Search results"
+      className="app-shell__search-results"
+      component="section"
+      spacing={2}
+    >
+      {resultUnavailable ? (
+        <Alert severity="error">Result unavailable. Page could not open.</Alert>
+      ) : null}
+
+      <Typography aria-atomic role="status" variant="body2">
+        {formatSearchResultsStatus(data.results.length)}
+      </Typography>
+
+      <List aria-label="Search results" dense>
+        {data.results.map((result) => (
+          <Box component="li" key={result.pageId}>
+            <ListItemButton
+              component="button"
+              onClick={() => onOpenResult(result.pageId)}
+              sx={{
+                alignItems: "flex-start",
+                display: "block",
+                textAlign: "left",
+                width: "100%",
+              }}
+            >
+              <ListItemText
+                primary={result.title}
+                secondary={
+                  <Box component="span">
+                    <Typography
+                      color="text.secondary"
+                      component="span"
+                      sx={{ display: "block" }}
+                      variant="body2"
+                    >
+                      {result.snippet}
+                    </Typography>
+                    <Typography
+                      color="text.secondary"
+                      component="span"
+                      sx={{ display: "block" }}
+                      variant="caption"
+                    >
+                      Matched {result.matchedFields.join(", ")}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItemButton>
+          </Box>
+        ))}
+      </List>
     </Stack>
   );
 }
@@ -1374,6 +1578,14 @@ function getActiveRouteDetails(
     };
   }
 
+  if (activeRoute.kind === "search") {
+    return {
+      eyebrow: "Search",
+      label: "Search",
+      summary: "Search results",
+    };
+  }
+
   return getPlaceholderRoute(activeRoute.routeId);
 }
 
@@ -1389,10 +1601,7 @@ function getPlaceholderRoute(
 }
 
 function getDeferredShellToolStatus(toolId: DeferredShellToolId): string {
-  if (toolId === "search") {
-    return "Search surface placeholder";
-  }
-
+  void toolId;
   return "Settings surface placeholder";
 }
 
@@ -2371,6 +2580,180 @@ function quickCaptureModalViewIsAvailable(runtime: AppRuntime): boolean {
   } catch {
     return false;
   }
+}
+
+function readSearchRouteData(
+  input: unknown,
+  expectedQuery: string,
+): SearchRouteData {
+  const payload = readExactPlainData(
+    input,
+    searchResultsDataKeys,
+    "Search results",
+  );
+
+  if (
+    payload.kind !== searchResultsKind ||
+    payload.query !== expectedQuery ||
+    typeof payload.query !== "string" ||
+    payload.query.length > maxSearchQueryLength
+  ) {
+    throw new Error("Search results unavailable");
+  }
+
+  return {
+    kind: searchResultsKind,
+    query: payload.query,
+    results: copyPlainArray(payload.results, maxSearchResults).map(
+      readSearchRouteResult,
+    ),
+  };
+}
+
+function readSearchRouteResult(input: unknown): SearchRouteResult {
+  const payload = readExactPlainData(
+    input,
+    searchResultItemKeys,
+    "Search result",
+  );
+  const matchedFields = copyPlainArray(
+    payload.matchedFields,
+    allowedSearchMatchedFields.size,
+  ).map(readSearchMatchedField);
+
+  if (
+    typeof payload.pageId !== "string" ||
+    payload.pageId.trim().length === 0 ||
+    payload.pageId.length > maxSearchPageIdLength ||
+    typeof payload.title !== "string" ||
+    payload.title.length > maxSearchTitleLength ||
+    typeof payload.snippet !== "string" ||
+    payload.snippet.length > maxSearchSnippetLength ||
+    matchedFields.length === 0
+  ) {
+    throw new Error("Search result unavailable");
+  }
+
+  return {
+    matchedFields,
+    pageId: payload.pageId,
+    snippet: payload.snippet,
+    title: payload.title,
+  };
+}
+
+function readSearchMatchedField(input: unknown): SearchMatchedField {
+  if (!allowedSearchMatchedFields.has(input as SearchMatchedField)) {
+    throw new Error("Search result unavailable");
+  }
+
+  return input as SearchMatchedField;
+}
+
+function readExactPlainData(
+  input: unknown,
+  requiredKeys: ReadonlySet<string>,
+  label: string,
+): Record<string, unknown> {
+  if (
+    typeof input !== "object" ||
+    input === null ||
+    Array.isArray(input) ||
+    Object.getPrototypeOf(input) !== Object.prototype
+  ) {
+    throw new Error(`${label} unavailable`);
+  }
+
+  const ownKeys = Reflect.ownKeys(input);
+
+  if (ownKeys.length !== requiredKeys.size) {
+    throw new Error(`${label} unavailable`);
+  }
+
+  for (const key of ownKeys) {
+    if (typeof key !== "string" || !requiredKeys.has(key)) {
+      throw new Error(`${label} unavailable`);
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throw new Error(`${label} unavailable`);
+    }
+  }
+
+  return input as Record<string, unknown>;
+}
+
+function copyPlainArray(input: unknown, maxItems: number): unknown[] {
+  if (!Array.isArray(input) || Object.getPrototypeOf(input) !== Array.prototype) {
+    throw new Error("Search results unavailable");
+  }
+
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length");
+
+  if (
+    lengthDescriptor === undefined ||
+    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
+    !Number.isSafeInteger(lengthDescriptor.value) ||
+    lengthDescriptor.value < 0 ||
+    lengthDescriptor.value > maxItems
+  ) {
+    throw new Error("Search results unavailable");
+  }
+
+  const length = lengthDescriptor.value;
+  const values: unknown[] = [];
+
+  for (const key of Reflect.ownKeys(input)) {
+    if (key === "length") {
+      continue;
+    }
+
+    if (typeof key !== "string" || readArrayIndex(key, length) === null) {
+      throw new Error("Search results unavailable");
+    }
+  }
+
+  for (let index = 0; index < length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, String(index));
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      throw new Error("Search results unavailable");
+    }
+
+    values.push(descriptor.value);
+  }
+
+  return values;
+}
+
+function readArrayIndex(key: string, length: number): number | null {
+  if (!/^(?:0|[1-9]\d*)$/u.test(key)) {
+    return null;
+  }
+
+  const index = Number(key);
+
+  return Number.isSafeInteger(index) && index >= 0 && index < length
+    ? index
+    : null;
+}
+
+function formatSearchResultsStatus(resultCount: number): string {
+  if (resultCount === 0) {
+    return "No results";
+  }
+
+  return resultCount === 1 ? "1 result" : `${resultCount} results`;
 }
 
 function isQuickCaptureSaveResult(value: unknown): value is {

@@ -81,7 +81,7 @@ TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `a
 
 TASK-035 shell coverage lives in `src/test/mui-shell-frame.test.tsx`, alongside existing app-shell boundary and runtime-provider tests. It should prove the baseline MUI shell behavior without treating placeholder route content as real ViewHost/SlotHost/editor implementation:
 
-- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar placeholder tools.
+- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar tools. Historical placeholder assertions should narrow as later M9 tasks land; after TASK-041, Search is functional while Settings remains a placeholder.
 - Prefer role/name queries for `banner`, `navigation`, `main`, buttons, startup loading, startup failure, and route status output.
 - Keep runtime boundary assertions explicit: `useRuntime()` exposes only a copied/frozen `{ app }` facade, startup failures stay visible and redacted, and raw runtime/native/plugin internals do not leak into the public provider or failure UI.
 - Keep static MUI guards narrow: use supported MUI path imports, require the TASK-035 MUI substrate imports, and reject stale/deprecated patterns such as `@material-ui/*`, MUI barrel imports, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, `ListItem button`, and deprecated `components` / `componentsProps` slot props.
@@ -193,6 +193,28 @@ git diff --check
 ```
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, release behavior, or schema-backed persistence. TASK-039 is a TypeScript/React/MUI app-shell slot-mounting task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent timer storage, or release surface.
+
+## TASK-041 Search Overlay And Results Route Guidance
+
+TASK-041 coverage lives primarily in `src/test/search-overlay-results-route.test.tsx`, with supporting shell and adjacent-dialog assertions in `src/test/mui-shell-frame.test.tsx`, `src/test/command-palette-quick-capture-dialog.test.tsx`, and `src/test/quick-capture-search-plugins.test.tsx`. It proves the top-bar Search control is no longer a placeholder while keeping Settings as a placeholder.
+
+- Search dialog tests should use React Testing Library plus `userEvent.setup()` for opening Search, focus placement, typing bounded queries, keyboard submit, button submit, Escape/cancel close, focus return, pending status, duplicate-submit prevention, generic errors, empty results, result rows, and result-click navigation.
+- Command execution coverage should assert the App Shell dispatches only active search-owned `search.query` with exact `{ query }`, not `limit` or route/private fields.
+- Results route coverage should assert the shell-owned bounded `{ kind: "search.results", query, results }` DTO shape, inert title/snippet/matched-field rendering, status/list/listitem semantics, existing-page validation before navigation, and no full page body or raw runtime/native/plugin-private leakage.
+- Stale async coverage should keep pending close invalidation locked: a later resolve/reject after Search closes must not navigate, open the results route, reopen the dialog, leak stale result text, or show stale errors.
+- Static guards should keep rejecting package/lockfile/Cargo/Tauri/capability/permission/IPC/release drift, Search private imports, native/worker/indexer/FTS additions, unsafe HTML/eval sinks, stale MUI/test APIs, and focused/skipped tests.
+
+Focused TASK-041 validation:
+
+```bash
+bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx
+bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/metadata-timer-timeline-slots.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, release behavior, or schema-backed persistence. TASK-041 is a TypeScript/React/MUI app-shell search-routing task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent search index, worker, SQLite FTS, native/global shortcut, or release surface.
 
 ## Focused Test Guidance
 
