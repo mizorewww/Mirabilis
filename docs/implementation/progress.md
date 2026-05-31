@@ -84,7 +84,7 @@ Status markers:
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
-- [ ] TASK-041: Add Search Overlay And Results Route
+- [~] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 20:09 CST - TASK-041 started
+
+- Branch: `feat/task-041-search-overlay-results-route`.
+- Start point: `master` after TASK-040 merge-validation commit `d3c256b`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: add a real MUI Search dialog/overlay and results route from the top app-shell Search control, execute `search.query` through Command Registry with bounded input, render results through `search.results` or a bounded DTO route, and navigate selected results through normal app-shell page route state.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event tests before production code; no persistent search index, worker, SQLite FTS, native/global search shortcut, ranking beyond existing plugin behavior, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, or release changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-041 red tests.
 
 ### 2026-05-31 20:08 CST - TASK-040 merged to master
 
