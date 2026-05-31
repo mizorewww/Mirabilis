@@ -10,6 +10,9 @@ import type {
 import { PluginRenderBoundary } from "./PluginRenderBoundary";
 
 type ControlledCallbacks = Record<string, (...args: unknown[]) => unknown>;
+type ControlledCommandBridge = {
+  execute(commandId: string, input?: unknown): Promise<unknown>;
+};
 type HostActions = Record<string, (...args: unknown[]) => unknown>;
 type CloneBudget = {
   depth: number;
@@ -29,6 +32,7 @@ type ViewHostProps = {
   error?: unknown;
   callbacks?: Record<string, unknown>;
   actions?: HostActions;
+  commandBridge?: ControlledCommandBridge;
   app?: AppRuntimeInfo;
   isPluginAvailable?: (pluginId: string) => boolean;
 };
@@ -36,6 +40,7 @@ type ViewHostProps = {
 type ViewComponentProps = Record<string, unknown> & {
   data: unknown;
   callbacks?: ControlledCallbacks;
+  commands?: ControlledCommandBridge;
   app?: AppRuntimeInfo;
 };
 
@@ -49,6 +54,7 @@ export function ViewHost({
   error,
   callbacks,
   actions,
+  commandBridge,
   app,
   isPluginAvailable,
 }: ViewHostProps) {
@@ -95,10 +101,13 @@ export function ViewHost({
     props === undefined ? {} : cloneControlledProps(props, { allowCallbacks: false });
   const clonedCallbacks =
     callbacks === undefined ? undefined : freezeCallbacks(callbacks, actions);
+  const clonedCommandBridge =
+    commandBridge === undefined ? undefined : freezeCommandBridge(commandBridge);
 
   if (
     clonedProps === undefined ||
-    (callbacks !== undefined && clonedCallbacks === undefined)
+    (callbacks !== undefined && clonedCallbacks === undefined) ||
+    (commandBridge !== undefined && clonedCommandBridge === undefined)
   ) {
     return <ViewUnavailable />;
   }
@@ -107,6 +116,9 @@ export function ViewHost({
     ...clonedProps,
     data: clonedData,
     ...(clonedCallbacks === undefined ? {} : { callbacks: clonedCallbacks }),
+    ...(clonedCommandBridge === undefined
+      ? {}
+      : { commands: clonedCommandBridge }),
     ...(app === undefined ? {} : { app: cloneAppInfo(app) }),
   });
   const component = view.component as ComponentType<ViewComponentProps>;
@@ -121,6 +133,31 @@ export function ViewHost({
       {createElement(component, controlledProps)}
     </PluginRenderBoundary>
   );
+}
+
+function freezeCommandBridge(
+  commandBridge: ControlledCommandBridge,
+): ControlledCommandBridge | undefined {
+  if (!isPlainRecord(commandBridge)) {
+    return undefined;
+  }
+
+  const descriptor = safeDescriptor(commandBridge, "execute");
+
+  if (
+    !isReadableDataDescriptor(descriptor) ||
+    typeof descriptor.value !== "function"
+  ) {
+    return undefined;
+  }
+
+  const execute = descriptor.value;
+
+  return Object.freeze({
+    execute(commandId, input) {
+      return execute(commandId, input) as Promise<unknown>;
+    },
+  });
 }
 
 function ViewUnavailable() {
