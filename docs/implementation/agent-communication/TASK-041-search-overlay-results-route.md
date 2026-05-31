@@ -84,3 +84,26 @@
   - `git diff --check` passed.
   - Forbidden test-pattern scans for `.only`, `.skip`, `fireEvent`, `react-dom/test-utils`, and `delay: null` returned no matches.
 - Parent decision: accept `2e58ca3` as the TASK-041 red baseline and delegate production implementation.
+
+## Implementation Outcome
+
+- Confucius (`implementer`) implemented the TASK-041 app-shell Search dialog and results route in commit `4b41067`.
+- Production files changed:
+  - `src/App.tsx`;
+  - `src/shell/dialogs/SearchDialog.tsx`;
+  - `src/shell/dialogs/index.ts`.
+- Delivered behavior:
+  - top-bar Search launches a named MUI `Dialog` with labelled query input, 200-character cap, Enter/button submit, cancel/Escape close, pending status, generic error, and focus return;
+  - Search executes only active `search`-owned `search.query` through Command Registry with exact `{ query }`;
+  - command results are copied into a shell-owned bounded `{ kind: "search.results", query, results }` DTO;
+  - Search results render as an accessible route with status, list/listitem rows, inert title/snippet/matched-field text, and no page bodies or raw runtime objects;
+  - clicking a result validates the page exists before navigating to the normal page editor route;
+  - Search no longer shows the deferred placeholder while Settings remains a visible placeholder.
+- Parent validation after implementation passed:
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx` (4 files / 65 tests).
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/metadata-timer-timeline-slots.test.tsx` (4 files / 55 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+  - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, Search private imports, native/Tauri bridge, worker/indexer/FTS, unsafe HTML/eval sinks, and filesystem/schema/release surfaces returned no matches.
+- Parent decision: accept implementation commit and run review agents.
