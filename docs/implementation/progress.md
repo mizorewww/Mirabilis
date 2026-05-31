@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 22:07 CST - TASK-042 post-implementation review found blockers
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Review agents: Harvey (`pr_explorer`), Maxwell (`reviewer`), James (`security_reviewer`), Zeno (`deprecation_auditor`), Aquinas (`docs_researcher`), and McClintock (`test_quality_reviewer`) completed read-only review.
+- Blocking findings: Reports can generate Chart-incompatible 200+ category DTOs; habit-completion and unnoted-session inputs can truncate rows without visible partial status; Reports overflow regression coverage is incomplete; product/architecture docs still describe delivered TASK-042 Calendar/Reports route behavior as deferred.
+- Additional non-blocking findings to address in the same review-fix pass: mounted Calendar/Reports route snapshots can go stale after runtime store mutation; wrong-owner route guards need explicit coverage; stale async rejected Reports results need coverage; TASK-042 route tests should flush pending fake timers before restoring real timers; very large source arrays are copied/sorted before caps apply.
+- Next action: delegate failing review regression tests to `test_writer`, then delegate production fixes to `implementer`, then delegate docs sync to `doc_writer`.
+
 ### 2026-05-31 22:00 CST - TASK-042 implementation validated
 
 - Branch: `feat/task-042-calendar-reporting-routes`.

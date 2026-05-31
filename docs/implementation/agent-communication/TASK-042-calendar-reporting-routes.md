@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation committed and validated; review delegation pending.
+- Status: post-implementation review complete; review-fix tests pending.
 
 ## Scope
 
@@ -30,6 +30,12 @@
 - Fermat (`deprecation_auditor`) completed read-only API guidance with no hard blocker. Official docs verified: MUI v9 install/path imports/migration, React 19 upgrade and test-utils warnings, Testing Library user-event/queries, Vite 7 migration, and Vitest 4 migration. Recommendation: keep MUI path imports, avoid stale MUI/React/testing APIs, and test the Calendar command bridge explicitly.
 - Franklin (`test_writer`) added failing TASK-042 projection and route tests in commit `2491bad`. Files changed: `src/test/calendar-reporting-projections.test.ts` and `src/test/calendar-reporting-routes.test.tsx`.
 - Popper (`implementer`) implemented Calendar/Reports routes, projection builders, and a narrow ViewHost command bridge in commit `6eb7365`; Popper fixed test compatibility without weakening assertions in commit `937af88`.
+- Harvey (`pr_explorer`) mapped changed paths and found a Reports partial-state bug for omitted habit events and timer notes.
+- Maxwell (`reviewer`) found merge-blocking correctness issues: Reports can generate Chart-incompatible 200+ category DTOs, habit/note overflow can be silently marked complete, and mounted Calendar/Reports snapshots can become stale after runtime store mutation.
+- James (`security_reviewer`) found no security-blocking issue and no native/Tauri/Rust/SQLite/package/schema/IPC drift; it noted the same habit/note overflow partial-state issue as non-security and a local availability/performance risk for very large source arrays before caps apply.
+- Zeno (`deprecation_auditor`) found no P0/P1/P2 API issue; it noted a P3 fake-timer cleanup hygiene gap in the TASK-042 route test.
+- Aquinas (`docs_researcher`) found merge-blocking docs drift in product and architecture docs that still describe TASK-042 Calendar/Reports routes as deferred, plus missing documentation for the new narrow `ViewHost` `commandBridge`.
+- McClintock (`test_quality_reviewer`) found merge-blocking test coverage gaps for Reports overflow bounds, plus P2 gaps for wrong-owner route coverage and stale async reject coverage.
 
 ## Parent Decisions
 
@@ -53,7 +59,8 @@
 - 2026-05-31 21:28 CST: pre-test planner, docs, security, and deprecation agents completed with no hard blockers.
 - 2026-05-31 21:40 CST: parent red validation ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx`. Expected red result: 2 failed files / 4 passed files, 10 failed / 84 passed tests. `calendar-reporting-projections.test.ts` fails because `../shell/projections/calendar-reporting` does not exist yet; route tests fail because Calendar route is absent and Reports still renders placeholder behavior. Adjacent suites passed. `git diff --check` passed.
 - 2026-05-31 22:00 CST: parent implementation validation passed after `6eb7365` and `937af88`: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- 2026-05-31 22:07 CST: post-implementation review completed. Merge is blocked by Reports Chart compatibility, habit/note overflow partial status, missing review regression coverage, and formal product/architecture/testing docs drift.
 
 ## Next Action
 
-- Spawn review agents for correctness, security, deprecation/API, docs, changed-path, and test quality.
+- Spawn `test_writer` to add failing review regression tests for Reports bounds/Chart compatibility, habit/note overflow partial status, wrong-owner route guards, stale async reject handling, mounted-route mutation refresh, and fake-timer cleanup hygiene.
