@@ -128,7 +128,6 @@ const calendarPluginId = "calendar";
 const calendarDayViewId = "calendar.day";
 const calendarWeekViewId = "calendar.week";
 const calendarOpenSegmentCommandId = "calendar.open-time-segment";
-const timerPluginId = "timer";
 const statsPluginId = "stats";
 const chartPluginId = "chart";
 const statsRunAggregationCommandId = "stats.run-aggregation";
@@ -213,7 +212,7 @@ describe("TASK-042 Calendar route", () => {
     expect(day).toBeVisible();
     expect(within(day).getByText("Focus Page")).toBeVisible();
     expect(capturedProps).not.toHaveLength(0);
-    expect(capturedProps.at(-1)?.data).toMatchObject({
+    expect(capturedProps[capturedProps.length - 1]?.data).toMatchObject({
       kind: "calendar.time-segments",
       segments: [
         expect.objectContaining({
@@ -278,7 +277,7 @@ describe("TASK-042 Calendar route", () => {
     expect(within(week).getByText("Week Carryover")).toBeVisible();
     expect(capturedDayProps).not.toHaveLength(0);
     expect(capturedWeekProps).not.toHaveLength(0);
-    expect(capturedWeekProps.at(-1)?.data).toMatchObject({
+    expect(capturedWeekProps[capturedWeekProps.length - 1]?.data).toMatchObject({
       kind: "calendar.time-segments",
       segments: [
         expect.objectContaining({ segmentId: "segment-week-carryover" }),
@@ -437,7 +436,7 @@ describe("TASK-042 Reports route", () => {
     const user = userEvent.setup({
       advanceTimers: (delay) => vi.advanceTimersByTime(delay),
     });
-    const statsHandler = vi.fn(async (payload: unknown) =>
+    const statsHandler = vi.fn(async () =>
       createCategorySeries("Reported time by page", [
         { label: "Report Page", value: 1_800 },
       ]),
@@ -470,7 +469,7 @@ describe("TASK-042 Reports route", () => {
     const chart = await screen.findByRole("region", { name: /^Bar chart$/i });
 
     expect(chart).toHaveTextContent("Reported time by page");
-    expect(capturedChartProps.at(-1)?.data).toStrictEqual(
+    expect(capturedChartProps[capturedChartProps.length - 1]?.data).toStrictEqual(
       createCategorySeries("Reported time by page", [
         { label: "Report Page", value: 1_800 },
       ]),
@@ -557,7 +556,7 @@ describe("TASK-042 Reports route", () => {
     );
 
     expect(await screen.findByText("Fresh time by tag result")).toBeVisible();
-    expect(capturedChartProps.at(-1)?.data).toMatchObject({
+    expect(capturedChartProps[capturedChartProps.length - 1]?.data).toMatchObject({
       kind: "chart.category-series",
       title: "Fresh time by tag result",
     });
@@ -1082,14 +1081,18 @@ async function expectReportsUnavailableState({
     startAt: "2026-05-20T16:00:00.000Z",
   });
   await mutateRuntime(runtime);
-  renderReadyApp(runtime);
+  const { unmount } = render(<App initializeRuntime={vi.fn(async () => runtime)} />);
 
-  await user.click(await findWorkspaceRouteButton(/^Reports\b/i));
+  try {
+    await user.click(await findWorkspaceRouteButton(/^Reports\b/i));
 
-  const state = await findRouteState(/unavailable|could not load|missing/i);
+    const state = await findRouteState(/unavailable|could not load|missing/i);
 
-  expect(state, label).toBeVisible();
-  expectNoRouteLeak(["PRIVATE_BODY_TOKEN", "SELECT *", "/home/aac6fef"]);
+    expect(state, label).toBeVisible();
+    expectNoRouteLeak(["PRIVATE_BODY_TOKEN", "SELECT *", "/home/aac6fef"]);
+  } finally {
+    unmount();
+  }
 }
 
 async function findRouteState(expectedText: RegExp): Promise<HTMLElement> {

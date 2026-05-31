@@ -446,7 +446,9 @@ describe("TASK-042 calendar and reporting projection builders", () => {
 
     expect(projection.data.segments).toHaveLength(1_000);
     expect(projection.data.segments[0]?.segmentId).toBe("segment-cap-0000");
-    expect(projection.data.segments.at(-1)?.segmentId).toBe(
+    expect(
+      projection.data.segments[projection.data.segments.length - 1]?.segmentId,
+    ).toBe(
       "segment-cap-0999",
     );
     expect(projection.status).toStrictEqual({
