@@ -44,7 +44,7 @@
 
 ## Current Next Action
 
-- Delegate `test_writer` for failing TASK-039 acceptance and boundary tests.
+- Run post-implementation review agents for correctness, security, deprecation, docs sync, test quality, and changed-path exploration.
 
 ## Pre-Test Guidance Outcomes
 
@@ -77,3 +77,19 @@
 - Use MUI `Portal` for `global.floating`; do not widen generic `SlotHost` to pass raw command objects. Require tests for a timer-scoped facade or host-owned callback path before implementation.
 - Allow at most a narrow public `metadata-ui` import path if implementation needs `MetadataBar`; keep direct App Shell imports from Task, Tag, Timer, raw Tauri/native, and plugin-private subpaths forbidden.
 - Require red tests first for real user interactions: tag add/remove typing/clicking, timer start/pause/resume/stop, active floating bar, timeline add/edit note typing/saving, route/page scoping, failure/redaction states, owner command boundaries, and no native/package drift.
+
+## TDD And Implementation Outcomes
+
+- Linnaeus (`test_writer`) added `src/test/metadata-timer-timeline-slots.test.tsx` in commit `cab15b1`.
+- Parent red validation failed for the expected reason: TASK-039 App Shell surfaces were not mounted yet. Adjacent metadata, timer, and host suites stayed green.
+- Ramanujan (`test_writer`) fixed a test-only lint issue in commit `d265d3c`, replacing direct DOM node access with user-visible role assertions while preserving inert tag coverage.
+- Kant (`implementer`) completed the main production implementation for page metadata, page timeline, and global floating timer surfaces.
+- Epicurus (`implementer`) corrected the pre-commit implementation to render registered plugin components through React-owned elements and error boundaries instead of direct component-function invocation.
+- Implementation commit: `d72d806` (`Kant+Epicurus(implementation)(Mount Metadata, Timer, And Timeline Slots): mount page slot surfaces`).
+- Parent validation after implementation passed:
+  - `bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx` (4 files / 68 tests).
+  - `bun run test:frontend -- src/test/metadata-timer-timeline-slots.test.tsx src/test/metadata-ui-plugin.test.tsx src/test/timer-plugin-runtime.test.tsx src/test/timer-time-segment-note.test.tsx src/test/view-slot-hosts.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx` (7 files / 117 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+- Parent decision: accept the implementation commit and run review agents before branch gate.
