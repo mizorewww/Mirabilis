@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 20:09 CST.
+Last updated: 2026-05-31 20:16 CST.
 
 ## Current Task
 
@@ -8,13 +8,15 @@ Last updated: 2026-05-31 20:09 CST.
 - Branch: `feat/task-041-search-overlay-results-route`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-041 started; parent is collecting pre-test guidance.
+- Current phase: TASK-041 pre-test guidance is complete; parent is delegating red tests.
 
 ## Current Outcome
 
 - TASK-040 is complete on `master`; merge-result validation passed in commit `d3c256b`.
 - TASK-041 branch was created from `master`.
 - Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Pre-test guidance completed by Volta (`planner`), Schrodinger (`docs_researcher`), Gibbs (`security_reviewer`), and Feynman (`deprecation_auditor`).
+- Parent decision: TASK-041 will use a shell-owned bounded Search results route DTO with clickable MUI result rows for navigation. The existing `search.results` plugin view remains inert and may be used only through exact `acceptedData` if needed; App Shell must not import Search plugin private modules.
 
 ## Initial TASK-041 Scope
 
@@ -42,4 +44,4 @@ Last updated: 2026-05-31 20:09 CST.
 
 ## Next Parent Actions
 
-- Run pre-test planner/docs/security/deprecation agents for TASK-041.
+- Spawn `test_writer` to add failing TASK-041 RTL/user-event acceptance tests.

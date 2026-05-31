@@ -43,4 +43,18 @@
 
 ## Current Next Action
 
-- Run pre-test planner, docs/current API, security, and deprecation agents before delegating red tests.
+- Spawn `test_writer` to add failing TASK-041 RTL/user-event acceptance tests.
+
+## Pre-Test Guidance Outcomes
+
+- Volta (`planner`) recommended a shell-owned `SearchDialog` launched from the top-bar Search button, exact active-owner-checked `search.query` execution, and a shell-owned `search-results` route state containing only copied bounded DTO fields. Result selection should validate the page still exists and then navigate through normal page route state.
+- Schrodinger (`docs_researcher`) verified current MUI v9 Dialog/TextField/List/Button/CircularProgress path-import usage, WAI-ARIA modal dialog/focus requirements, Testing Library/user-event async guidance, and Vitest async assertions. Guidance: use MUI `Dialog` with visible `DialogTitle`, labelled text input, search form/status/list semantics rather than combobox semantics, `slotProps.htmlInput` for `maxLength`, and no `check:full` unless native/package surfaces change.
+- Gibbs (`security_reviewer`) found no P0 blocker and raised one P1 parent decision: choose the TASK-041 rendering path before red tests. Recommendation accepted: use shell-owned interactive result rows for click/navigation; if `search.results` is mounted at all, mount it only through exact `acceptedData`.
+- Feynman (`deprecation_auditor`) found no P0/P1 blockers. Guidance: MUI path imports only, no MUI v9 removed props, no nested React roots, no private Search plugin imports, no stale `react-dom/test-utils`, no fake timer pitfalls, and no package/lock/native/Tauri/Rust drift.
+
+## Parent Decisions
+
+- Results route path: use a shell-owned bounded DTO route with `{ query, results: [{ pageId, title, snippet, matchedFields }] }` and MUI result rows/buttons so the shell can validate page existence before navigation.
+- Command payload: execute `search.query` with exact `{ query }` only. Query text is bounded to the existing 200-character Search plugin cap before dispatch.
+- Security boundary: dispatch only active `search`-owned `search.query`; fail closed for missing, inactive, foreign-owned, malformed, stale, oversized, or unexpected command results.
+- Deferred scope remains unchanged: persistent search indexing, background worker, SQLite FTS, ranking changes, native/global search shortcuts, package/lockfile, Tauri/Rust/IPC/capability/schema/release changes, and Search plugin private implementation changes are out of scope.
