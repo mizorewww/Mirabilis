@@ -107,3 +107,54 @@
   - `git diff --check`.
   - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, Search private imports, native/Tauri bridge, worker/indexer/FTS, unsafe HTML/eval sinks, and filesystem/schema/release surfaces returned no matches.
 - Parent decision: accept implementation commit and run review agents.
+
+## Review Outcome And Fixes
+
+- Hooke (`security_reviewer`) found no P0/P1/P2 security issues and confirmed active-owner `search.query` dispatch, exact bounded payloads, bounded DTO validation, inert rendering, existing-page navigation, generic errors, and no native/worker/indexer/FTS drift.
+- Laplace (`reviewer`) found no P0/P1/P2 correctness regressions.
+- Ohm (`deprecation_auditor`) found no P0/P1/P2 API/deprecation issues and confirmed MUI v9 path imports, no removed props, no private Search imports, and no stale React/test APIs.
+- Halley (`test_quality_reviewer`) found P2 test-quality gaps:
+  - DTO boundary coverage did not lock oversized fields, too many results, invalid/empty matched fields, query mismatch, accessors, symbol keys, prototype data, sparse arrays, or extra array keys;
+  - no-indexer/worker/FTS static guard scanned too narrow a production surface.
+  - Halley also noted a P3 missing `listitem` role assertion.
+- Hypatia (`docs_researcher`) found a P2 behavior issue: the Search dialog could trap users while `search.query` was pending because Escape/Cancel were blocked. Hypatia also found docs drift and the stale task-index Search anchor.
+- Sartre (`pr_explorer`) found P1 product and architecture docs drift: formal docs still described app-shell Search route/dialog work as deferred.
+
+## Review Regression Tests
+
+- Noether (`test-fix`) added review regression coverage in commit `8755359`.
+- Changed file:
+  - `src/test/search-overlay-results-route.test.tsx`.
+- Coverage added:
+  - pending `search.query` Escape close, focus return, and stale resolved result ignored;
+  - fail-closed table for oversized DTO fields, too many results, invalid/empty `matchedFields`, query mismatch, accessors, symbol keys, prototype data, sparse arrays, and extra array keys;
+  - `listitem` role assertion for result route;
+  - broader no-indexer/worker/FTS static guard over app-shell plus changed/new production `src` files, including `src/core` and `src/plugins` if changed.
+- Parent red validation failed as expected:
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx`.
+  - Result: 1 failed / 78 passed.
+  - Failure reason: pending Search dialog remained open after Escape while `search.query` was unresolved.
+- Parent validation after test-only changes:
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Forbidden test-pattern scans returned no matches.
+
+## Review Fix Outcome
+
+- Boyle (`review-fix`) fixed the pending Search close behavior in commit `af3cc6c`.
+- Production files changed:
+  - `src/App.tsx`;
+  - `src/shell/dialogs/SearchDialog.tsx`.
+- Delivered fixes:
+  - Search dialog can close with Escape while a search is pending and returns focus to the launcher;
+  - pending submissions are invalidated on close so later resolve/reject cannot navigate, open the Search results route, reopen the dialog, leak stale result text, or show stale errors;
+  - duplicate dispatch prevention and generic visible errors for active visible searches remain intact.
+- Parent validation after review-fix passed:
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx` (4 files / 79 tests).
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/home-workspace-editor.test.tsx src/test/metadata-timer-timeline-slots.test.tsx` (4 files / 69 tests).
+  - `bun run typecheck`.
+  - `bun run lint`.
+  - `git diff --check`.
+  - Forbidden production-surface scan for MUI barrels, removed MUI props, `createRoot`, Search private imports, native/Tauri bridge, worker/indexer/FTS, unsafe HTML/eval sinks, and filesystem/schema/release surfaces returned no matches.
+- Parent decision: accept review regression and review-fix commits, then sync docs before release readiness.
