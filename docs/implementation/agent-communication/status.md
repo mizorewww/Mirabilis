@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 20:16 CST.
+Last updated: 2026-05-31 20:26 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 20:16 CST.
 - Branch: `feat/task-041-search-overlay-results-route`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-041 pre-test guidance is complete; parent is delegating red tests.
+- Current phase: TASK-041 red tests are committed; parent is delegating production implementation.
 
 ## Current Outcome
 
@@ -17,6 +17,9 @@ Last updated: 2026-05-31 20:16 CST.
 - Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - Pre-test guidance completed by Volta (`planner`), Schrodinger (`docs_researcher`), Gibbs (`security_reviewer`), and Feynman (`deprecation_auditor`).
 - Parent decision: TASK-041 will use a shell-owned bounded Search results route DTO with clickable MUI result rows for navigation. The existing `search.results` plugin view remains inert and may be used only through exact `acceptedData` if needed; App Shell must not import Search plugin private modules.
+- Rawls (`test_writer`) added TASK-041 red acceptance tests in commit `2e58ca3`.
+- Parent red validation failed as expected with 2 failed files / 2 passed files and 13 failed / 52 passed tests because the App Shell still does not open an accessible `Search` dialog.
+- Parent validation after red tests passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden test-pattern scans.
 
 ## Initial TASK-041 Scope
 
@@ -44,4 +47,4 @@ Last updated: 2026-05-31 20:16 CST.
 
 ## Next Parent Actions
 
-- Spawn `test_writer` to add failing TASK-041 RTL/user-event acceptance tests.
+- Spawn `implementer` to add the minimum TASK-041 production code needed to satisfy the focused red tests.

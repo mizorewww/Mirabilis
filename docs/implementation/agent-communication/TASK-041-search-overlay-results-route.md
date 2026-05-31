@@ -58,3 +58,29 @@
 - Command payload: execute `search.query` with exact `{ query }` only. Query text is bounded to the existing 200-character Search plugin cap before dispatch.
 - Security boundary: dispatch only active `search`-owned `search.query`; fail closed for missing, inactive, foreign-owned, malformed, stale, oversized, or unexpected command results.
 - Deferred scope remains unchanged: persistent search indexing, background worker, SQLite FTS, ranking changes, native/global search shortcuts, package/lockfile, Tauri/Rust/IPC/capability/schema/release changes, and Search plugin private implementation changes are out of scope.
+
+## Test Writer Outcome
+
+- Rawls (`test_writer`) added TASK-041 red acceptance tests in commit `2e58ca3`.
+- Changed files:
+  - `src/test/search-overlay-results-route.test.tsx`;
+  - `src/test/mui-shell-frame.test.tsx`.
+- Coverage added:
+  - Search top-bar dialog open/focus/close/focus return;
+  - exact `{ query }` dispatch to active `search`-owned `search.query` with 200-character input cap;
+  - pending status and duplicate-dispatch prevention;
+  - empty, result, malformed-result, missing-command, inactive-plugin, foreign-owner, missing-page navigation, and thrown-error redacted states;
+  - bounded DTO rendering and result-click navigation through normal page route state;
+  - Command Palette and Search keyboard/focus-flow independence;
+  - Settings remains placeholder while Search no longer reports the deferred placeholder status;
+  - static guards for no package/native/Tauri/Rust/IPC/capability/schema/release/indexer/FTS drift, no private Search imports, no stale MUI/test APIs, and no skipped/focused tests.
+- Parent red validation failed as expected:
+  - `bun run test:frontend -- src/test/search-overlay-results-route.test.tsx src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/quick-capture-search-plugins.test.tsx`.
+  - Result: 2 failed files / 2 passed files, 13 failed / 52 passed tests.
+  - Failure reason: Search still does not open `role="dialog"` named `Search`.
+- Parent validation after red tests:
+  - `bun run typecheck` passed.
+  - `bun run lint` passed.
+  - `git diff --check` passed.
+  - Forbidden test-pattern scans for `.only`, `.skip`, `fireEvent`, `react-dom/test-utils`, and `delay: null` returned no matches.
+- Parent decision: accept `2e58ca3` as the TASK-041 red baseline and delegate production implementation.
