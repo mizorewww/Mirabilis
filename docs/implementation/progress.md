@@ -94,6 +94,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 20:08 CST - TASK-040 merged to master
+
+- Merge commit: `3f9251f` (`Merge TASK-040 command palette quick capture dialog`).
+- Merge-result validation: `bun run check:quick` passed on `master` with 44 frontend test files / 704 tests, Rust fmt, Rust clippy, and Rust tests.
+- Final status: TASK-040 remains `[x]` on `master`. Next action is push `master`, then continue autonomous M9 UI work with TASK-041, Add Search Overlay And Results Route.
+
 ### 2026-05-31 20:06 CST - TASK-040 branch gate passed and task closed
 
 - Branch: `feat/task-040-command-palette-quick-capture-dialog`.
