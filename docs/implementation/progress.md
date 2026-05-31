@@ -85,7 +85,7 @@ Status markers:
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [x] TASK-041: Add Search Overlay And Results Route
-- [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
+- [~] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
@@ -93,6 +93,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 21:21 CST - TASK-042 started
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Start point: `master` after TASK-041 merge-validation commit `8ded6b6`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: add MUI Calendar and Reports routes that build explicit bounded app-shell projections from public current-runtime data, mount `calendar.day` / `calendar.week` and Chart views through `ViewHost`, and execute `stats.run-aggregation` through Command Registry.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event and projection-builder tests before production code; no broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, native, or release changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-042 red tests.
 
 ### 2026-05-31 21:19 CST - TASK-041 merged to master
 
