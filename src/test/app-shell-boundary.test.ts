@@ -312,6 +312,8 @@ function collectStaticModuleSpecifiers(contents: string): string[] {
   const importExportPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
   const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const commonJsRequirePattern = /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
 
   for (const match of contents.matchAll(importExportPattern)) {
     const moduleSpecifier = match[1];
@@ -322,6 +324,22 @@ function collectStaticModuleSpecifiers(contents: string): string[] {
   }
 
   for (const match of contents.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of contents.matchAll(dynamicImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of contents.matchAll(commonJsRequirePattern)) {
     const moduleSpecifier = match[1];
 
     if (moduleSpecifier !== undefined) {

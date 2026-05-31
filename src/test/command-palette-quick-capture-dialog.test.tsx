@@ -205,19 +205,22 @@ describe("TASK-040 command palette dialog", () => {
     expect(within(list).getByText(/workspace/i)).toBeVisible();
     expect(within(list).getByText(/selection/i)).toBeVisible();
 
-    const inactiveCommand = within(list).queryByRole("button", {
-      name: /Inactive Review Command/i,
-    });
-    const missingOwnerCommand = within(list).queryByRole("button", {
-      name: /Export Secret Workspace/i,
-    });
-
-    if (inactiveCommand !== null) {
-      expect(inactiveCommand).toBeDisabled();
-    }
-    if (missingOwnerCommand !== null) {
-      expect(missingOwnerCommand).toBeDisabled();
-    }
+    expect(
+      within(list).queryByRole("button", {
+        name: /Inactive Review Command/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(list).queryByRole("button", {
+        name: /Export Secret Workspace/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(list).queryByText("ghost.export-secrets"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(list).queryByText("Export Secret Workspace"),
+    ).not.toBeInTheDocument();
 
     await user.type(search, "format");
 
@@ -229,6 +232,88 @@ describe("TASK-040 command palette dialog", () => {
     );
     expect(inactiveHandler).not.toHaveBeenCalled();
     expect(missingOwnerHandler).not.toHaveBeenCalled();
+  });
+
+  it("executes the selected descriptor with its exact raw command id instead of a normalized-looking id", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const rawCommandId = " quick-capture.raw-whitespace-command ";
+    const normalizedCommandId = "quick-capture.raw-whitespace-command";
+    const rawHandler = vi.fn(async () => ({ ok: "raw" }));
+    const normalizedHandler = vi.fn(async () => ({ ok: "normalized" }));
+    const execute = vi.spyOn(runtime.commands, "execute");
+
+    runtime.commands.register({
+      id: rawCommandId,
+      pluginId: quickCapturePluginId,
+      title: "Run Raw Whitespace Command",
+      handler: rawHandler,
+    });
+    runtime.commands.register({
+      id: normalizedCommandId,
+      pluginId: quickCapturePluginId,
+      title: "Run Normalized Trap Command",
+      handler: normalizedHandler,
+    });
+
+    renderReadyApp(runtime);
+
+    const { dialog, search } = await openCommandPalette(user);
+
+    await user.type(search, "Raw Whitespace");
+    const [rawCommandRow] = within(dialog).getAllByRole("button", {
+      name: /Run Raw Whitespace Command/i,
+    });
+
+    if (rawCommandRow === undefined) {
+      throw new Error("Expected raw whitespace command row");
+    }
+
+    await user.click(rawCommandRow);
+
+    await waitFor(() =>
+      expect(execute.mock.calls).toContainEqual([rawCommandId, {}]),
+    );
+    expect(rawHandler).toHaveBeenCalledTimes(1);
+    expect(normalizedHandler).not.toHaveBeenCalled();
+    expect(execute.mock.calls).not.toContainEqual([normalizedCommandId, {}]);
+  });
+
+  it("revalidates the selected command owner before executing a stale palette row", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const staleCommandId = "quick-capture.stale-owner-command";
+    const staleHandler = vi.fn(async () => ({ ok: true }));
+
+    runtime.commands.register({
+      id: staleCommandId,
+      pluginId: quickCapturePluginId,
+      title: "Stale Owner Command",
+      handler: staleHandler,
+    });
+
+    renderReadyApp(runtime);
+
+    const { dialog, search } = await openCommandPalette(user);
+
+    await user.type(search, "Stale Owner");
+    expect(
+      within(dialog).getByRole("button", { name: /Stale Owner Command/i }),
+    ).toBeVisible();
+
+    await deactivatePlugin(runtime, quickCapturePluginId);
+    await user.click(
+      within(dialog).getByRole("button", { name: /Stale Owner Command/i }),
+    );
+
+    expect(staleHandler).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: commandPaletteName }),
+    ).toBeVisible();
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /command could not run|command failed|unable to run command/i,
+    );
+    expectNoSensitiveDomLeak();
   });
 
   it("executes selected zero-payload commands by Enter and click with exact empty payloads and closes on success", async () => {
@@ -430,6 +515,39 @@ describe("TASK-040 Quick Capture dialog", () => {
     expect(markdown).toHaveFocus();
   });
 
+  it("refuses to launch when quick-capture.open is registered by another active plugin", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const foreignOpenHandler = vi.fn(async () => ({
+      kind: "quick-capture.open-result",
+      viewId: "quick-capture.modal",
+    }));
+
+    replaceCommandWithForeignOwner(
+      runtime,
+      quickCaptureOpenCommandId,
+      foreignOpenHandler,
+    );
+    renderReadyApp(runtime);
+
+    await user.click(await findTopBarButton(/^Quick Capture$/i));
+
+    expect(foreignOpenHandler).not.toHaveBeenCalled();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /quick capture|capture could not open|unable to open/i,
+    );
+    expect(
+      screen.queryByRole("dialog", { name: quickCaptureName }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expectNoSensitiveDomLeak();
+  });
+
   it("provides a labelled multiline Markdown form, disables blank saves, and closes by Cancel or Escape without saving", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -448,7 +566,10 @@ describe("TASK-040 Quick Capture dialog", () => {
     expect(saveButton).toBeDisabled();
     expect(saveAndOpenButton).toBeDisabled();
 
-    await user.type(firstOpen.markdown, "- [[ ] Cancelled capture{Enter}Second line");
+    await user.type(
+      firstOpen.markdown,
+      "- [[ ] Cancelled capture{Enter}Second line",
+    );
 
     expect(firstOpen.markdown).toHaveAccessibleName(/markdown/i);
     expect(firstOpen.markdown).toHaveValue("- [ ] Cancelled capture\nSecond line");
@@ -504,7 +625,7 @@ describe("TASK-040 Quick Capture dialog", () => {
 
     renderReadyApp(runtime);
 
-    const { dialog, markdown } = await openQuickCaptureDialog(user);
+    const { dialog, launcher, markdown } = await openQuickCaptureDialog(user);
 
     await user.type(markdown, "Pending capture");
     await user.click(within(dialog).getByRole("button", { name: /^Save$/i }));
@@ -513,7 +634,9 @@ describe("TASK-040 Quick Capture dialog", () => {
       expect(commandCallCount(execute, quickCaptureSaveCommandId)).toBe(1),
     );
     expect(markdown).toHaveValue("Pending capture");
-    expect(within(dialog).getByRole("button", { name: /^Save$/i })).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: /^Save$/i }),
+    ).toBeDisabled();
     expect(
       within(dialog).getByRole("button", { name: /save and open/i }),
     ).toBeDisabled();
@@ -535,6 +658,204 @@ describe("TASK-040 Quick Capture dialog", () => {
       kind: "quick-capture.save-result",
       pageId: "pending-inbox",
     });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: quickCaptureName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/Saving Quick Capture/i)).not.toBeInTheDocument();
+    expect(launcher).toHaveFocus();
+
+    const reopened = await openQuickCaptureDialog(user);
+
+    expect(reopened.markdown).toHaveValue("");
+    expect(
+      within(reopened.dialog).queryByRole("status", {
+        name: /quick capture save|saving/i,
+      }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(reopened.dialog).getByRole("button", { name: /cancel/i }),
+    );
+  });
+
+  it("cleans up pending save-and-open state, closes the dialog, navigates, and restores focus after success", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page", "pending-open-inbox"],
+    });
+    const user = userEvent.setup();
+    const saveAndOpenResult = createDeferred<unknown>();
+    const originalExecute = runtime.commands.execute.bind(runtime.commands);
+    const execute = vi
+      .spyOn(runtime.commands, "execute")
+      .mockImplementation((commandId, input) => {
+        if (commandId === quickCaptureSaveAndOpenCommandId) {
+          return saveAndOpenResult.promise;
+        }
+
+        return originalExecute(commandId, input);
+      });
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+    createRuntimePage(runtime, "Inbox", [
+      {
+        blockId: "pending-open-body",
+        text: "Pending save and open body",
+      },
+    ]);
+
+    const { dialog, launcher, markdown } = await openQuickCaptureDialog(user);
+
+    await user.type(markdown, "Pending save and open");
+    await user.click(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    );
+
+    await waitFor(() =>
+      expect(commandCallCount(execute, quickCaptureSaveAndOpenCommandId)).toBe(
+        1,
+      ),
+    );
+    expect(markdown).toHaveValue("Pending save and open");
+    expect(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("status", { name: /quick capture save|saving/i }),
+    ).toBeVisible();
+
+    saveAndOpenResult.resolve({
+      appendedBlockIds: ["pending-open-body"],
+      createdInbox: false,
+      kind: "quick-capture.save-result",
+      openPageId: "pending-open-inbox",
+      pageId: "pending-open-inbox",
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: quickCaptureName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/Saving Quick Capture/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^Inbox Workspace$/i }),
+    ).toBeVisible();
+    expect(launcher).toHaveFocus();
+
+    const reopened = await openQuickCaptureDialog(user);
+
+    expect(reopened.markdown).toHaveValue("");
+    await user.click(
+      within(reopened.dialog).getByRole("button", { name: /cancel/i }),
+    );
+  });
+
+  it("refuses to save when quick-capture.save is registered by another active plugin", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const foreignSaveHandler = vi.fn(async () => ({
+      appendedBlockIds: ["foreign-save"],
+      createdInbox: true,
+      kind: "quick-capture.save-result",
+      pageId: "foreign-save-inbox",
+    }));
+
+    renderReadyApp(runtime);
+
+    const { dialog, markdown } = await openQuickCaptureDialog(user);
+
+    replaceCommandWithForeignOwner(
+      runtime,
+      quickCaptureSaveCommandId,
+      foreignSaveHandler,
+    );
+
+    await user.type(markdown, "Foreign-owned save must stay local");
+    await user.click(within(dialog).getByRole("button", { name: /^Save$/i }));
+
+    expect(foreignSaveHandler).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: quickCaptureName }),
+    ).toBeVisible();
+    expect(markdown).toHaveValue("Foreign-owned save must stay local");
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /capture could not save|save failed|unable to save/i,
+    );
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expectNoSensitiveDomLeak();
+  });
+
+  it("refuses to save and open when quick-capture.save-and-open is registered by another active plugin", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page", "foreign-open-target"],
+    });
+    const user = userEvent.setup();
+    const foreignSaveAndOpenHandler = vi.fn(async () => ({
+      appendedBlockIds: ["foreign-open-target-body"],
+      createdInbox: false,
+      kind: "quick-capture.save-result",
+      openPageId: "foreign-open-target",
+      pageId: "foreign-open-target",
+    }));
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+    createRuntimePage(runtime, "Foreign Target", [
+      {
+        blockId: "foreign-open-target-body",
+        text: "Foreign-owned command target",
+      },
+    ]);
+
+    const { dialog, markdown } = await openQuickCaptureDialog(user);
+
+    replaceCommandWithForeignOwner(
+      runtime,
+      quickCaptureSaveAndOpenCommandId,
+      foreignSaveAndOpenHandler,
+    );
+
+    await user.type(markdown, "Foreign-owned save and open must not route");
+    await user.click(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    );
+
+    expect(foreignSaveAndOpenHandler).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: quickCaptureName }),
+    ).toBeVisible();
+    expect(markdown).toHaveValue("Foreign-owned save and open must not route");
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /capture could not save|save failed|unable to save/i,
+    );
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", {
+        hidden: true,
+        name: /^Foreign Target Workspace$/i,
+      }),
+    ).not.toBeInTheDocument();
+    expectNoSensitiveDomLeak();
   });
 
   it("saves through quick-capture.save with exact Markdown payload and preserves trusted Inbox semantics", async () => {
@@ -581,7 +902,13 @@ describe("TASK-040 Quick Capture dialog", () => {
     expect(
       exportStructuredDocumentToMarkdown(trustedInbox.body),
     ).toContain("Trusted Quick Capture body #inbox");
-    expect(runtime.metadata.get("trusted-inbox", quickCaptureNamespace, quickCaptureMetadataKey)).toMatchObject({
+    expect(
+      runtime.metadata.get(
+        "trusted-inbox",
+        quickCaptureNamespace,
+        quickCaptureMetadataKey,
+      ),
+    ).toMatchObject({
       pageId: "trusted-inbox",
       sourcePluginId: quickCapturePluginId,
       value: true,
@@ -637,6 +964,161 @@ describe("TASK-040 Quick Capture dialog", () => {
     expect(document.body.textContent ?? "").not.toMatch(
       /COMMAND_OUTPUT_PRIVATE_BODY|COMMAND_OUTPUT_PRIVATE_MARKDOWN|SELECT\s+\*|core_pages|\/home\/aac6fef|Bearer|SECRET/i,
     );
+  });
+
+  it("keeps save-and-open command rejections generic without changing route or clearing typed Markdown", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const originalExecute = runtime.commands.execute.bind(runtime.commands);
+    const execute = vi
+      .spyOn(runtime.commands, "execute")
+      .mockImplementation((commandId, input) => {
+        if (commandId === quickCaptureSaveAndOpenCommandId) {
+          return Promise.reject(createSensitiveError(commandId));
+        }
+
+        return originalExecute(commandId, input);
+      });
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+
+    const { dialog, markdown } = await openQuickCaptureDialog(user);
+
+    await user.type(markdown, "Rejected save and open");
+    await user.click(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    );
+
+    await waitFor(() =>
+      expect(execute.mock.calls).toContainEqual([
+        quickCaptureSaveAndOpenCommandId,
+        { markdown: "Rejected save and open" },
+      ]),
+    );
+    expect(
+      screen.getByRole("dialog", { name: quickCaptureName }),
+    ).toBeVisible();
+    expect(markdown).toHaveValue("Rejected save and open");
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /capture could not save|save failed|unable to save/i,
+    );
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expectNoSensitiveDomLeak();
+  });
+
+  it("keeps malformed save-and-open results generic without changing route or clearing typed Markdown", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const originalExecute = runtime.commands.execute.bind(runtime.commands);
+    const execute = vi
+      .spyOn(runtime.commands, "execute")
+      .mockImplementation((commandId, input) => {
+        if (commandId === quickCaptureSaveAndOpenCommandId) {
+          return Promise.resolve({
+            kind: "quick-capture.save-result",
+          });
+        }
+
+        return originalExecute(commandId, input);
+      });
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+
+    const { dialog, markdown } = await openQuickCaptureDialog(user);
+
+    await user.type(markdown, "Malformed save and open result");
+    await user.click(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    );
+
+    await waitFor(() =>
+      expect(execute.mock.calls).toContainEqual([
+        quickCaptureSaveAndOpenCommandId,
+        { markdown: "Malformed save and open result" },
+      ]),
+    );
+    expect(
+      screen.getByRole("dialog", { name: quickCaptureName }),
+    ).toBeVisible();
+    expect(markdown).toHaveValue("Malformed save and open result");
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /capture could not save|save failed|unable to save/i,
+    );
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expectNoSensitiveDomLeak();
+  });
+
+  it("keeps unknown save-and-open page ids generic without changing route or clearing typed Markdown", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const originalExecute = runtime.commands.execute.bind(runtime.commands);
+    const execute = vi
+      .spyOn(runtime.commands, "execute")
+      .mockImplementation((commandId, input) => {
+        if (commandId === quickCaptureSaveAndOpenCommandId) {
+          return Promise.resolve({
+            appendedBlockIds: ["missing-open-page-body"],
+            createdInbox: false,
+            kind: "quick-capture.save-result",
+            openPageId: "missing-open-page",
+            pageId: "missing-open-page",
+          });
+        }
+
+        return originalExecute(commandId, input);
+      });
+
+    renderReadyApp(runtime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+
+    const { dialog, markdown } = await openQuickCaptureDialog(user);
+
+    await user.type(markdown, "Unknown returned page");
+    await user.click(
+      within(dialog).getByRole("button", { name: /save and open/i }),
+    );
+
+    await waitFor(() =>
+      expect(execute.mock.calls).toContainEqual([
+        quickCaptureSaveAndOpenCommandId,
+        { markdown: "Unknown returned page" },
+      ]),
+    );
+    expect(
+      screen.getByRole("dialog", { name: quickCaptureName }),
+    ).toBeVisible();
+    expect(markdown).toHaveValue("Unknown returned page");
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      /capture could not save|save failed|unable to save/i,
+    );
+    expect(
+      screen.getByRole("heading", {
+        hidden: true,
+        name: /^Home Workspace$/i,
+      }),
+    ).toBeVisible();
+    expectNoSensitiveDomLeak();
   });
 
   it("redacts Quick Capture open failures without showing a dialog", async () => {
@@ -883,6 +1365,25 @@ function commandCallCount(execute: ExecuteSpy, commandId: string): number {
   return execute.mock.calls.filter((call) => call[0] === commandId).length;
 }
 
+function replaceCommandWithForeignOwner(
+  runtime: AppRuntime,
+  commandId: string,
+  handler: (input: unknown) => unknown | Promise<unknown>,
+): void {
+  try {
+    runtime.commands.unregister(commandId);
+  } catch {
+    // The replacement path is only used in tests that need a foreign descriptor.
+  }
+
+  runtime.commands.register({
+    id: commandId,
+    pluginId: searchPluginId,
+    title: `Foreign ${commandId}`,
+    handler,
+  });
+}
+
 async function deactivatePlugin(
   runtime: AppRuntime,
   pluginId: string,
@@ -1007,13 +1508,22 @@ function createNoopNativeBridge(): NativeBridge {
 }
 
 async function listTask040SurfaceChangesFromMaster(): Promise<string[]> {
-  return runGitLines([
+  const changedTrackedFiles = await runGitLines([
     "diff",
     "--name-only",
     "master",
     "--",
     ...task040SurfaceEntrypoints,
   ]);
+  const untrackedFiles = await runGitLines([
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "--",
+    ...task040SurfaceEntrypoints,
+  ]);
+
+  return [...new Set([...changedTrackedFiles, ...untrackedFiles])].sort();
 }
 
 async function listExistingSourceFiles(
@@ -1109,6 +1619,8 @@ function collectStaticModuleSpecifiers(contents: string): string[] {
   const importExportPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
   const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const commonJsRequirePattern = /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
 
   for (const match of contents.matchAll(importExportPattern)) {
     const moduleSpecifier = match[1];
@@ -1119,6 +1631,22 @@ function collectStaticModuleSpecifiers(contents: string): string[] {
   }
 
   for (const match of contents.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of contents.matchAll(dynamicImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of contents.matchAll(commonJsRequirePattern)) {
     const moduleSpecifier = match[1];
 
     if (moduleSpecifier !== undefined) {

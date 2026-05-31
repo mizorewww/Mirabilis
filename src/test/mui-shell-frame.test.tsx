@@ -217,6 +217,36 @@ describe("TASK-035 MUI shell frame", () => {
     expect(captureButton).toHaveFocus();
   });
 
+  it("keeps deferred Search and Settings top-bar controls as explicit visible placeholders", async () => {
+    const user = userEvent.setup();
+
+    renderReadyApp("0.1.0-deferred-tools");
+
+    expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
+
+    const topBar = within(screen.getByRole("banner", { name: /mirabilis/i }));
+    const searchButton = topBar.getByRole("button", { name: /^Search$/i });
+    const settingsButton = topBar.getByRole("button", { name: /^Settings$/i });
+
+    await user.click(searchButton);
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /^Search surface placeholder$/i,
+    );
+    expect(
+      screen.queryByRole("dialog", { name: /^Search$/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(settingsButton);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /^Settings surface placeholder$/i,
+    );
+    expect(
+      screen.queryByRole("dialog", { name: /^Settings$/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("changes the visible shell route through real user navigation", async () => {
     const user = userEvent.setup();
 
@@ -632,6 +662,8 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   const importExportPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
   const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const commonJsRequirePattern = /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
 
   for (const match of source.matchAll(importExportPattern)) {
     const moduleSpecifier = match[1];
@@ -642,6 +674,22 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   }
 
   for (const match of source.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(dynamicImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(commonJsRequirePattern)) {
     const moduleSpecifier = match[1];
 
     if (moduleSpecifier !== undefined) {
