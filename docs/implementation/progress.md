@@ -83,7 +83,7 @@ Status markers:
 - [x] TASK-037: Mount Home Workspace Editor
 - [x] TASK-038: Add Sidebar Page And Saved-Filter Navigation
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
-- [ ] TASK-040: Add Command Palette And Quick Capture Dialog
+- [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [ ] TASK-041: Add Search Overlay And Results Route
 - [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
@@ -93,6 +93,26 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-05-31 20:06 CST - TASK-040 branch gate passed and task closed
+
+- Branch: `feat/task-040-command-palette-quick-capture-dialog`.
+- Final feature-branch commit entering closeout: `a3382dc` (`Helmholtz(docs)(Add Command Palette And Quick Capture Dialog): align product UI status`).
+- Delivered scope: app-shell Command Palette and Quick Capture MUI dialogs launch from the top bar over the Markdown workspace; Command Palette filters active Command Registry descriptor DTOs and executes selected commands through exact `{}` payloads after active-owner/fingerprint revalidation; Quick Capture opens, saves, and save-and-opens through owner-checked public `quick-capture.*` commands and routes only to validated existing page IDs.
+- Review outcome: first review P1/P2 findings were fixed by `6ac3ce3` review regressions and `0cbd7f5` production hardening; targeted security, correctness, test-quality, and deprecation re-reviews found no remaining P0/P1/P2 code blockers. Newton found P1 product UI docs drift, fixed in `a3382dc`.
+- Parent branch gate: `bun run check:quick` passed with 44 frontend test files / 704 tests, TypeScript, ESLint, Rust fmt, Rust clippy, and Rust tests. `git diff --check master...HEAD` passed.
+- Release readiness: Leibniz (`release_checker`) found no blockers, confirmed the worktree was clean, confirmed no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/packaging/release surfaces changed, and confirmed `check:full` is not required for this UI-only task.
+- Residual non-blocking risks: Search dialog/results, Settings/Sync route and panel surfaces, native/global Quick Capture shortcut, mobile capture toolbar, background capture, persistent search index, Calendar/Reports projections, ML/AI panels, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks. Huygens noted a P3 gap for direct wrong-view/missing-view Quick Capture open-result regression coverage; production fails closed and existing open/foreign-owner tests cover the merge-critical paths.
+- Final status: TASK-040 is marked `[x]`. Next action is merge to `master`, validate the merge result, push `master`, then continue autonomous M9 UI work with TASK-041, Add Search Overlay And Results Route.
+
+### 2026-05-31 18:59 CST - TASK-040 started
+
+- Branch: `feat/task-040-command-palette-quick-capture-dialog`.
+- Start point: `master` after TASK-039 merge-validation commit `218d694`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: add real MUI command palette and Quick Capture dialogs from the top app-shell controls without replacing the Markdown workspace first screen; command execution and Quick Capture save/open flows must go through Command Registry and normal app-shell route state.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event tests before production code; no native/global shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, persistence beyond current runtime, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, or release changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-040 red tests.
 
 ### 2026-05-31 18:56 CST - TASK-039 merged to master
 

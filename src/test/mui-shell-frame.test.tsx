@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -158,7 +158,7 @@ describe("TASK-035 MUI shell frame", () => {
     ).toBeVisible();
   });
 
-  it("updates top-bar action pressed state and status through real user clicks", async () => {
+  it("keeps Command and Quick Capture top-bar controls as dialog launchers with focus return", async () => {
     const user = userEvent.setup();
 
     renderReadyApp("0.1.0-actions");
@@ -166,55 +166,85 @@ describe("TASK-035 MUI shell frame", () => {
     expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
 
     const topBar = within(screen.getByRole("banner", { name: /mirabilis/i }));
-    const status = getShellToolStatus();
-    const actionChecks = [
-      {
-        name: /^Command$/i,
-        status: /^Command surface placeholder$/i,
-      },
-      {
-        name: /^Search$/i,
-        status: /^Search surface placeholder$/i,
-      },
-      {
-        name: /^Quick Capture$/i,
-        status: /^Quick Capture surface placeholder$/i,
-      },
-      {
-        name: /^Settings$/i,
-        status: /^Settings surface placeholder$/i,
-      },
-    ] as const;
-
-    for (const action of actionChecks) {
-      const activeButton = topBar.getByRole("button", { name: action.name });
-
-      await user.click(activeButton);
-
-      expect(activeButton).toHaveAttribute("aria-pressed", "true");
-      expect(status).toHaveTextContent(action.status);
-
-      for (const otherAction of actionChecks.filter(
-        (candidate) => candidate !== action,
-      )) {
-        expect(
-          topBar.getByRole("button", { name: otherAction.name }),
-        ).toHaveAttribute("aria-pressed", "false");
-      }
-    }
-
     const commandButton = topBar.getByRole("button", { name: /^Command$/i });
-    const previouslyActiveButton = topBar.getByRole("button", {
-      name: /^Settings$/i,
+    const captureButton = topBar.getByRole("button", {
+      name: /^Quick Capture$/i,
     });
 
-    expect(previouslyActiveButton).toHaveAttribute("aria-pressed", "true");
+    expect(commandButton).not.toHaveAttribute("aria-pressed");
+    expect(captureButton).not.toHaveAttribute("aria-pressed");
 
     await user.click(commandButton);
 
-    expect(commandButton).toHaveAttribute("aria-pressed", "true");
-    expect(status).toHaveTextContent(/^Command surface placeholder$/i);
-    expect(previouslyActiveButton).toHaveAttribute("aria-pressed", "false");
+    const commandDialog = await screen.findByRole("dialog", {
+      name: /^Command Palette$/i,
+    });
+
+    expect(
+      within(commandDialog).getByRole("textbox", {
+        name: /command search|search commands/i,
+      }),
+    ).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /^Command Palette$/i }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(commandButton).toHaveFocus();
+
+    await user.click(captureButton);
+
+    const captureDialog = await screen.findByRole("dialog", {
+      name: /^Quick Capture$/i,
+    });
+
+    expect(
+      within(captureDialog).getByRole("textbox", { name: /markdown/i }),
+    ).toHaveFocus();
+
+    await user.click(
+      within(captureDialog).getByRole("button", { name: /cancel/i }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /^Quick Capture$/i }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(captureButton).toHaveFocus();
+  });
+
+  it("keeps deferred Search and Settings top-bar controls as explicit visible placeholders", async () => {
+    const user = userEvent.setup();
+
+    renderReadyApp("0.1.0-deferred-tools");
+
+    expect(await screen.findByText(/^Mirabilis$/i)).toBeVisible();
+
+    const topBar = within(screen.getByRole("banner", { name: /mirabilis/i }));
+    const searchButton = topBar.getByRole("button", { name: /^Search$/i });
+    const settingsButton = topBar.getByRole("button", { name: /^Settings$/i });
+
+    await user.click(searchButton);
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /^Search surface placeholder$/i,
+    );
+    expect(
+      screen.queryByRole("dialog", { name: /^Search$/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(settingsButton);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /^Settings surface placeholder$/i,
+    );
+    expect(
+      screen.queryByRole("dialog", { name: /^Settings$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("changes the visible shell route through real user navigation", async () => {
@@ -473,20 +503,6 @@ function createSingleUseIdFactory(firstId: string): () => string {
   };
 }
 
-function getShellToolStatus(): HTMLElement {
-  const status = screen
-    .getAllByRole("status")
-    .find((candidate) =>
-      /surface placeholder/i.test(candidate.textContent ?? ""),
-    );
-
-  if (status === undefined) {
-    throw new Error("Expected shell tool status to be visible");
-  }
-
-  return status;
-}
-
 function createUnsafeFullRuntime(version: string): RuntimeLike {
   return {
     app: {
@@ -646,6 +662,8 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   const importExportPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
   const sideEffectImportPattern = /\bimport\s*["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const commonJsRequirePattern = /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
 
   for (const match of source.matchAll(importExportPattern)) {
     const moduleSpecifier = match[1];
@@ -656,6 +674,22 @@ function collectStaticModuleSpecifiers(source: string): string[] {
   }
 
   for (const match of source.matchAll(sideEffectImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(dynamicImportPattern)) {
+    const moduleSpecifier = match[1];
+
+    if (moduleSpecifier !== undefined) {
+      specifiers.push(moduleSpecifier);
+    }
+  }
+
+  for (const match of source.matchAll(commonJsRequirePattern)) {
     const moduleSpecifier = match[1];
 
     if (moduleSpecifier !== undefined) {

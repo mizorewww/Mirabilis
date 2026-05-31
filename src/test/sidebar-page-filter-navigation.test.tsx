@@ -2102,7 +2102,7 @@ function findRemovedReactTestApiPatterns({
   source,
 }: SourceFile): string[] {
   const patterns = new Map<RegExp, string>([
-    [/from\s+["']react-dom\/test-utils["']/u, "react-dom/test-utils import"],
+    [/from\s+["']react-dom\/test-utils["']/u, "react-dom test utilities import"],
     [/\bReactDOM\.render\s*\(/u, "ReactDOM.render"],
     [/\bReactDOM\.hydrate\s*\(/u, "ReactDOM.hydrate"],
     [/\bunmountComponentAtNode\s*\(/u, "unmountComponentAtNode"],
