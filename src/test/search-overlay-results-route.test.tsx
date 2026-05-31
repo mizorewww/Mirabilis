@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -80,6 +80,11 @@ const searchCommandId = "search.query";
 const searchResultsKind = "search.results";
 const quickCapturePluginId = "quick-capture";
 const maxSearchQueryLength = 200;
+const maxSearchPageIdLength = 256;
+const maxSearchResults = 50;
+const maxSearchSnippetLength = 160;
+const maxSearchTitleLength = 200;
+const malformedDtoQuery = "dto boundary";
 const appShellEntrypoints = [
   "src/App.tsx",
   "src/main.tsx",
@@ -103,6 +108,173 @@ const task041SurfaceEntrypoints = [
   "CHANGELOG.md",
 ] as const;
 const sourceExtensions = new Set([".ts", ".tsx"]);
+const malformedSearchRouteDtoCases: Array<{
+  createResult(): unknown;
+  hiddenText: RegExp;
+  name: string;
+}> = [
+  {
+    name: "oversized pageId",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          pageId: "p".repeat(maxSearchPageIdLength + 1),
+          title: "Oversized Page Id Marker",
+        }),
+      ]),
+    hiddenText: /Oversized Page Id Marker/u,
+  },
+  {
+    name: "oversized title",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          title: `Oversized Title Marker ${"t".repeat(maxSearchTitleLength)}`,
+        }),
+      ]),
+    hiddenText: /Oversized Title Marker/u,
+  },
+  {
+    name: "oversized snippet",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          snippet: `Oversized Snippet Marker ${"s".repeat(maxSearchSnippetLength)}`,
+          title: "Oversized Snippet Result",
+        }),
+      ]),
+    hiddenText: /Oversized Snippet Marker|Oversized Snippet Result/u,
+  },
+  {
+    name: "too many results",
+    createResult: () =>
+      createSearchRouteDto(
+        Array.from({ length: maxSearchResults + 1 }, (_value, index) =>
+          createValidSearchRouteResult({
+            pageId: `too-many-${index}`,
+            title: `Too Many Results Marker ${index}`,
+          }),
+        ),
+      ),
+    hiddenText: /Too Many Results Marker/u,
+  },
+  {
+    name: "invalid matchedFields",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          matchedFields: ["metadata" as "body"],
+          title: "Invalid Matched Fields Marker",
+        }),
+      ]),
+    hiddenText: /Invalid Matched Fields Marker/u,
+  },
+  {
+    name: "empty matchedFields",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          matchedFields: [],
+          title: "Empty Matched Fields Marker",
+        }),
+      ]),
+    hiddenText: /Empty Matched Fields Marker/u,
+  },
+  {
+    name: "query mismatch",
+    createResult: () =>
+      createSearchRouteDto(
+        [
+          createValidSearchRouteResult({
+            title: "Query Mismatch Marker",
+          }),
+        ],
+        "different query",
+      ),
+    hiddenText: /Query Mismatch Marker/u,
+  },
+  {
+    name: "accessor properties",
+    createResult: () => {
+      const result = createValidSearchRouteResult();
+
+      Object.defineProperty(result, "title", {
+        enumerable: true,
+        get() {
+          return "Accessor Title Marker";
+        },
+      });
+
+      return createSearchRouteDto([result]);
+    },
+    hiddenText: /Accessor Title Marker/u,
+  },
+  {
+    name: "symbol keys",
+    createResult: () => {
+      const result = createValidSearchRouteResult({
+        title: "Symbol Key Marker",
+      });
+
+      Object.defineProperty(result, Symbol("search-result-extra"), {
+        enumerable: true,
+        value: "symbol-key-leak",
+      });
+
+      return createSearchRouteDto([result]);
+    },
+    hiddenText: /Symbol Key Marker|symbol-key-leak/u,
+  },
+  {
+    name: "prototype-carried data",
+    createResult: () =>
+      Object.create(
+        createSearchRouteDto([
+          createValidSearchRouteResult({
+            title: "Prototype Carried Marker",
+          }),
+        ]) as object,
+      ),
+    hiddenText: /Prototype Carried Marker/u,
+  },
+  {
+    name: "sparse results array",
+    createResult: () => {
+      const sparseResults = new Array(1) as unknown[];
+
+      return createSearchRouteDto(sparseResults);
+    },
+    hiddenText: /Search Workspace/u,
+  },
+  {
+    name: "sparse matchedFields array",
+    createResult: () =>
+      createSearchRouteDto([
+        createValidSearchRouteResult({
+          matchedFields: new Array(1) as Array<"body" | "title">,
+          title: "Sparse Matched Fields Marker",
+        }),
+      ]),
+    hiddenText: /Sparse Matched Fields Marker/u,
+  },
+  {
+    name: "extra array keys",
+    createResult: () => {
+      const results = [
+        createValidSearchRouteResult({
+          title: "Extra Array Key Marker",
+        }),
+      ];
+
+      Object.assign(results, {
+        extra: "extra-array-key-leak",
+      });
+
+      return createSearchRouteDto(results);
+    },
+    hiddenText: /Extra Array Key Marker|extra-array-key-leak/u,
+  },
+];
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -246,6 +418,72 @@ describe("TASK-041 Search dialog", () => {
     );
   });
 
+  it("closes with Escape while search.query is pending, restores focus, and ignores the stale resolved result", async () => {
+    const runtime = await createRuntime();
+    const user = userEvent.setup();
+    const deferredResults = createDeferred<SearchResultsData>();
+    const delayedPage = createRuntimePage(runtime, "Deferred Result", [
+      {
+        blockId: "deferred-result-body",
+        text: "STALE_RESULT_BODY_TOKEN should not open after pending close",
+      },
+    ]);
+    const execute = vi.spyOn(runtime.commands, "execute");
+
+    replaceSearchCommand(runtime, () => deferredResults.promise);
+    renderReadyApp(runtime);
+
+    const { dialog, launcher, query } = await openSearchDialog(user);
+
+    await user.type(query, "deferred query");
+    await user.click(within(dialog).getByRole("button", { name: /^Search$/i }));
+
+    await waitFor(() => expect(commandCallCount(execute, searchCommandId)).toBe(1));
+    expect(
+      within(dialog).getByRole("status", { name: /search|loading|pending/i }),
+    ).toHaveTextContent(/searching|loading/i);
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: searchDialogName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(launcher).toHaveFocus();
+
+    await act(async () => {
+      deferredResults.resolve(
+        createSearchResults(
+          { query: "deferred query" },
+          [
+            {
+              matchedFields: ["title"],
+              pageId: delayedPage.id,
+              snippet: "Deferred visible snippet",
+              title: delayedPage.title,
+            },
+          ],
+        ),
+      );
+      await deferredResults.promise;
+    });
+
+    expect(
+      screen.queryByRole("dialog", { name: searchDialogName }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("main", { name: /home/i })).toBeVisible();
+    expect(
+      screen.queryByRole("main", { name: /search/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /^Deferred Result Workspace$/i }),
+    ).not.toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Deferred visible snippet|STALE_RESULT_BODY_TOKEN/u,
+    );
+  });
+
   it("renders empty Search results as an accessible route state without raw runtime details", async () => {
     const runtime = await createRuntime();
     const user = userEvent.setup();
@@ -293,7 +531,13 @@ describe("TASK-041 Search dialog", () => {
 
     const main = await screen.findByRole("main", { name: /search/i });
     const list = within(main).getByRole("list", { name: /search results/i });
-    const result = within(list).getByRole("button", { name: /Alpha Plan/i });
+    const [resultItem] = within(list).getAllByRole("listitem");
+
+    expect(resultItem).toBeVisible();
+
+    const result = within(resultItem).getByRole("button", {
+      name: /Alpha Plan/i,
+    });
 
     expect(within(main).getByRole("status")).toHaveTextContent(/1 result/i);
     expect(result).toHaveTextContent("Alpha Plan");
@@ -343,6 +587,31 @@ describe("TASK-041 Search dialog", () => {
     expect(screen.queryByText("Visible title")).not.toBeInTheDocument();
     expectNoSensitiveDomLeak();
   });
+
+  it.each(malformedSearchRouteDtoCases)(
+    "fails closed generically for malformed Search command DTOs with $name",
+    async ({ createResult, hiddenText }) => {
+      const runtime = await createRuntime();
+      const user = userEvent.setup();
+
+      replaceSearchCommand(runtime, () => createResult());
+      renderReadyApp(runtime);
+
+      await submitSearch(user, malformedDtoQuery);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /search could not run|search unavailable|results could not load|unable to search/i,
+      );
+      expect(
+        screen.getByRole("main", { hidden: true, name: /home/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("main", { hidden: true, name: /search/i }),
+      ).not.toBeInTheDocument();
+      expect(document.body.textContent ?? "").not.toMatch(hiddenText);
+      expectNoSensitiveDomLeak();
+    },
+  );
 
   it("fails closed without dispatch when search.query is missing", async () => {
     const runtime = await createRuntime();
@@ -515,7 +784,7 @@ describe("TASK-041 Search dialog", () => {
 describe("TASK-041 Search static boundaries", () => {
   it("keeps package, lockfile, Tauri, Rust, IPC, capability, schema, release, native, worker, indexer, and FTS surfaces unchanged", async () => {
     const changedSurfaceFiles = await listTask041SurfaceChangesFromMaster();
-    const productionSources = await readAppShellSourceFiles();
+    const productionSources = await readTask041ProductionSourceFilesForSurfaceScan();
     const productionViolations = productionSources
       .filter(({ filePath }) => !filePath.startsWith("src/test/"))
       .flatMap(findForbiddenSearchSurfacePatterns);
@@ -654,6 +923,29 @@ function createSearchResults(
     kind: searchResultsKind,
     query,
     results,
+  };
+}
+
+function createSearchRouteDto(
+  results: unknown[],
+  query = malformedDtoQuery,
+): unknown {
+  return {
+    kind: searchResultsKind,
+    query,
+    results,
+  };
+}
+
+function createValidSearchRouteResult(
+  overrides: Partial<SearchResultItem> = {},
+): SearchResultItem {
+  return {
+    matchedFields: ["title"],
+    pageId: "route-dto-page",
+    snippet: "Visible DTO snippet",
+    title: "Visible DTO title",
+    ...overrides,
   };
 }
 
@@ -1014,6 +1306,86 @@ async function readAppShellSourceFiles(): Promise<SourceFile[]> {
 
   return fileGroups.flat().sort((left, right) =>
     left.filePath.localeCompare(right.filePath),
+  );
+}
+
+async function readTask041ProductionSourceFilesForSurfaceScan(): Promise<
+  SourceFile[]
+> {
+  const [appShellSources, changedSources] = await Promise.all([
+    readAppShellSourceFiles(),
+    readChangedProductionSourceFilesFromMaster(),
+  ]);
+  const sourceByPath = new Map<string, SourceFile>();
+
+  for (const sourceFile of [...appShellSources, ...changedSources]) {
+    if (isTask041ProductionSourcePath(sourceFile.filePath)) {
+      sourceByPath.set(sourceFile.filePath, sourceFile);
+    }
+  }
+
+  return [...sourceByPath.values()].sort((left, right) =>
+    left.filePath.localeCompare(right.filePath),
+  );
+}
+
+async function readChangedProductionSourceFilesFromMaster(): Promise<
+  SourceFile[]
+> {
+  const changedFiles = await listChangedProductionSourceFilesFromMaster();
+  const sourceFiles = await Promise.all(
+    changedFiles.map(async (filePath): Promise<SourceFile | undefined> => {
+      const absolutePath = path.join(repoRoot, filePath);
+      const entry = await statIfExists(absolutePath);
+
+      if (entry === undefined || !entry.isFile()) {
+        return undefined;
+      }
+
+      return {
+        filePath,
+        source: await readFile(absolutePath, "utf8"),
+      };
+    }),
+  );
+
+  return sourceFiles.filter(
+    (sourceFile): sourceFile is SourceFile => sourceFile !== undefined,
+  );
+}
+
+async function listChangedProductionSourceFilesFromMaster(): Promise<string[]> {
+  const changedTrackedFiles = await runGitLines([
+    "diff",
+    "--name-only",
+    "master",
+    "--",
+    "src",
+  ]);
+  const untrackedFiles = await runGitLines([
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "--",
+    "src",
+  ]);
+
+  return [...new Set([...changedTrackedFiles, ...untrackedFiles])]
+    .map((filePath) => filePath.replace(/\\/gu, "/"))
+    .filter(isTask041ProductionSourcePath)
+    .sort();
+}
+
+function isTask041ProductionSourcePath(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/gu, "/");
+
+  return (
+    normalized.startsWith("src/") &&
+    sourceExtensions.has(path.extname(normalized)) &&
+    !/^src\/test\//u.test(normalized) &&
+    !/(?:^|\/)__tests__\//u.test(normalized) &&
+    !/(?:^|\/)(?:__fixtures__|fixtures?|test-fixtures)\//u.test(normalized) &&
+    !/\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(normalized)
   );
 }
 
