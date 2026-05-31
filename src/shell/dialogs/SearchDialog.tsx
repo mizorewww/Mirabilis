@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -26,8 +26,16 @@ export function SearchDialog({
   const [errorVisible, setErrorVisible] = useState(false);
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const submissionGenerationRef = useRef(0);
 
   const canSubmit = !pending;
+
+  useEffect(() => {
+    if (pending) {
+      cancelButtonRef.current?.focus();
+    }
+  }, [pending]);
 
   const resetDialog = () => {
     setErrorVisible(false);
@@ -36,10 +44,9 @@ export function SearchDialog({
   };
 
   const closeDialog = () => {
-    if (!pending) {
-      resetDialog();
-      onClose();
-    }
+    submissionGenerationRef.current += 1;
+    resetDialog();
+    onClose();
   };
 
   const submit = async () => {
@@ -47,19 +54,29 @@ export function SearchDialog({
       return;
     }
 
+    const submissionGeneration = submissionGenerationRef.current + 1;
     const boundedQuery = query.slice(0, maxSearchQueryLength);
 
+    submissionGenerationRef.current = submissionGeneration;
     setErrorVisible(false);
     setPending(true);
 
     try {
       await onSearch(boundedQuery);
+      if (submissionGenerationRef.current !== submissionGeneration) {
+        return;
+      }
+
       resetDialog();
       onClose();
     } catch {
-      setErrorVisible(true);
+      if (submissionGenerationRef.current === submissionGeneration) {
+        setErrorVisible(true);
+      }
     } finally {
-      setPending(false);
+      if (submissionGenerationRef.current === submissionGeneration) {
+        setPending(false);
+      }
     }
   };
 
@@ -117,7 +134,7 @@ export function SearchDialog({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button disabled={pending} onClick={closeDialog} type="button">
+          <Button onClick={closeDialog} ref={cancelButtonRef} type="button">
             Cancel
           </Button>
           <Button disabled={!canSubmit} type="submit" variant="contained">

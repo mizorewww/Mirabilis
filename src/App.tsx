@@ -507,6 +507,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const [deferredShellTool, setDeferredShellTool] =
     useState<DeferredShellToolId>();
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const searchGenerationRef = useRef(0);
   const [quickCaptureDialogOpen, setQuickCaptureDialogOpen] = useState(false);
   const [quickCaptureOpenError, setQuickCaptureOpenError] = useState(false);
   const [quickCaptureOpenPending, setQuickCaptureOpenPending] = useState(false);
@@ -590,22 +591,49 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     },
     [runtimeSource],
   );
+  const closeSearchDialog = useCallback(() => {
+    searchGenerationRef.current += 1;
+    setSearchDialogOpen(false);
+  }, []);
   const runSearch = useCallback(
     async (query: string) => {
       const boundedQuery = query.slice(0, maxSearchQueryLength);
-      const result = await executeActiveOwnedCommand(
-        runtimeSource,
-        searchQueryCommandId,
-        searchPluginId,
-        { query: boundedQuery },
-      );
-      const data = readSearchRouteData(result, boundedQuery);
+      const searchGeneration = searchGenerationRef.current + 1;
+      const searchIsCurrent = () =>
+        searchGenerationRef.current === searchGeneration;
 
-      unsetCurrentPage(currentPageState);
-      setActiveRoute({
-        data,
-        kind: "search",
-      });
+      searchGenerationRef.current = searchGeneration;
+
+      try {
+        const result = await executeActiveOwnedCommand(
+          runtimeSource,
+          searchQueryCommandId,
+          searchPluginId,
+          { query: boundedQuery },
+        );
+
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        const data = readSearchRouteData(result, boundedQuery);
+
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        unsetCurrentPage(currentPageState);
+        setActiveRoute({
+          data,
+          kind: "search",
+        });
+      } catch (error) {
+        if (!searchIsCurrent()) {
+          return;
+        }
+
+        throw error;
+      }
     },
     [currentPageState, runtimeSource],
   );
@@ -950,7 +978,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         open={commandPaletteOpen}
       />
       <SearchDialog
-        onClose={() => setSearchDialogOpen(false)}
+        onClose={closeSearchDialog}
         onSearch={runSearch}
         open={searchDialogOpen}
       />
