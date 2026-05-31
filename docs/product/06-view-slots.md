@@ -63,7 +63,7 @@ Start executes timer.start through descriptor-owner scoped command execution
 timer.page-timeline.segments renders current-page Timer-owned segments and inert note text on page.timeline
 ```
 
-`MetadataBar` 是 reusable slice；production app-shell/editor 默认 mounting 仍是后续 integration，除非调用方已经显式挂载它。Manifest `metadataFields` 仍是 ownership descriptors/reservation inputs，不是 executable renderer/editor declarations。`timer.page-timeline.segments` 提供 accessible Add Note / Edit Note UI，并通过 `timer.add-note` 创建或更新 Markdown Page note；slot 渲染的 segment 和 note 文本保持 inert。
+`MetadataBar` 是 reusable slice；TASK-039 后，production app shell 在 page routes 上把 public `metadata-ui` `MetadataBar` 挂在 route title 下方、editor 上方。Manifest `metadataFields` 仍是 ownership descriptors/reservation inputs，不是 executable renderer/editor declarations。TASK-039 也在 page routes 上把 `page.timeline` 挂在 editor 下方，经 `SlotHost` 只传 `{ page: { id, title } }`；`timer.page-timeline.segments` 提供 accessible Add Note / Edit Note UI，并通过 `timer.add-note` 创建或更新 Markdown Page note；slot 渲染的 segment 和 note 文本保持 inert。Saved-filter routes、placeholder routes、`page.header.actions`、`page.sidebar.panel` 和 `page.body.after` 仍未挂载这些 page slot。
 
 TASK-030 当前 `ml.page-sidebar.prediction-panel` 使用与 `ml.prediction-panel` view 相同的 validated React component，只渲染调用方提供的 `ml.remaining-time-prediction` DTO。Malformed、wrong-kind 或 unbounded DTO fail closed to an inert unavailable state；app-shell/sidebar broad mounting remains deferred.
 
@@ -86,7 +86,7 @@ Command Plugin 在 global.command_palette 放所有命令
 Filter Plugin 在 left_sidebar 放 saved filters
 ```
 
-TASK-025 当前 `timer.global-active-bar` 显示 active page title、elapsed time，以及 Pause / Resume / Stop controls。它使用 Timer Plugin registration-scoped in-memory active timer state。Timer finalization creates event-backed Time Segments. TASK-026 Calendar day/week views can render caller-provided `calendar.time-segments` DTOs when a caller mounts the view; Calendar app-shell route/feed, Stats integration, Timer metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+TASK-025 当前 `timer.global-active-bar` 显示 active page title、elapsed time，以及 Pause / Resume / Stop controls。它使用 Timer Plugin registration-scoped in-memory active timer state。TASK-039 后，production app shell 通过 MUI `Portal` 挂载 `global.floating`，并把 contribution 作为 React-owned portal child 渲染，不创建 nested React root。该 floating surface 不接收 page props 或 raw `runtime.commands`；目前只给 Timer-owned contribution 一个 narrow command facade，允许 `timer.pause`、`timer.resume`、`timer.stop` 以 exact `{}` payload 执行。Timer finalization creates event-backed Time Segments. TASK-026 Calendar day/week views can render caller-provided `calendar.time-segments` DTOs when a caller mounts the view; Calendar app-shell route/feed, Stats integration, Timer metadata totals, Recently Worked, Unnoted Sessions, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
 ### 25.4 View 插槽
 

@@ -17,7 +17,7 @@
 - `docs/architecture/04-slots-editor-task.md`.
 - `docs/architecture/07-runtime-flows.md`.
 - `docs/testing/strategy.md`.
-- Current TASK-038 Drawer/page/filter navigation closeout.
+- TASK-038 Drawer/page/filter navigation closeout.
 
 ## Initial Parent Interpretation
 
@@ -44,7 +44,7 @@
 
 ## Current Next Action
 
-- Run post-implementation review agents for correctness, security, deprecation, docs sync, test quality, and changed-path exploration.
+- Parent runs branch gate/release-readiness closeout, decides final progress status, then merges to `master` when local checks pass.
 
 ## Pre-Test Guidance Outcomes
 
@@ -93,3 +93,22 @@
   - `bun run lint`.
   - `git diff --check`.
 - Parent decision: accept the implementation commit and run review agents before branch gate.
+
+## Review-Fix Outcomes
+
+- Review coverage commit: `3271046` (`Kierkegaard(test-fix)(Mount Metadata, Timer, And Timeline Slots): harden slot review coverage`).
+- Review-fix commit: `b3b23b9` (`Dirac(review-fix)(Mount Metadata, Timer, And Timeline Slots): keep floating slots in portal tree`).
+- Correctness P1 fixed: app-shell boundary tests now allow only the public `metadata-ui` import path for `MetadataBar`; Task, Tag, Timer private modules and raw native/Tauri imports remain forbidden.
+- Floating slot fix: `global.floating` remains in the React portal tree under MUI `Portal`; TASK-039 no longer uses nested `createRoot` for floating slot rendering.
+- Security review result: no P0/P1/P2 findings in the current TASK-039 scope.
+- Boundary hardening: floating timer controls keep the Timer-owned facade that allows only `timer.pause`, `timer.resume`, and `timer.stop` with exact `{}` payloads; foreign global floating command attempts fail closed.
+
+## Docs Sync Outcome
+
+- Docs updated to reflect delivered TASK-039 behavior:
+  - product UI and built-in plugin docs now describe page-route `MetadataBar`, page-route `page.timeline`, and Portal-backed `global.floating` mounting;
+  - architecture docs now record the narrow metadata/timeline/floating boundaries and the Timer-owned floating command facade;
+  - testing docs now include focused TASK-039 validation and review-fix coverage requirements;
+  - task index and progress docs now record delivered/deferred scope and keep TASK-039 `[~]` pending parent branch gate and merge closeout;
+  - live agent status was reset to the current TASK-039 state and no longer carries stale TASK-038 section labels.
+- Deferred scope preserved: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.

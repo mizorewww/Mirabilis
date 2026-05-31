@@ -94,6 +94,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-05-31 18:45 CST - TASK-039 docs sync applied after review fixes
+
+- Branch: `feat/task-039-metadata-timer-timeline-slots`.
+- Current commit entering docs sync: `b3b23b9` (`Dirac(review-fix)(Mount Metadata, Timer, And Timeline Slots): keep floating slots in portal tree`).
+- Delivered scope recorded: page routes mount public `metadata-ui` `MetadataBar` below the route title and above the editor; page routes mount `page.timeline` below the editor through `SlotHost` with only `{ page: { id, title } }`; `global.floating` mounts through MUI `Portal` as React-owned portal children and exposes only Timer-owned Pause / Resume / Stop command facade calls with exact `{}` payloads.
+- Review outcome recorded from the TASK-039 review-fix round: nested `createRoot` floating rendering was removed, durable app-shell boundary tests were hardened, security review found no P0/P1/P2, and the correctness P1 was fixed by allowing only the public `metadata-ui` path in app-shell boundary checks.
+- Docs sync: updated product, architecture, development, testing, task-index, progress, live status, and TASK-039 communication docs; preserved deferred scope for `page.header.actions`, `page.sidebar.panel`, `page.body.after`, command palette, search, Quick Capture dialog, Calendar/Reports, ML/AI, Settings/Sync, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, native persistence, package/Tauri/Rust, and release surfaces.
+- Validation: docs-only `git diff --check` passed; targeted stale-status and stale-slot-mounting grep checks returned no matches.
+- Progress status: TASK-039 remains `[~]`; parent still needs branch gate/release-readiness closeout, final validation, final progress status decision, and merge to `master`.
+
 ### 2026-05-26 07:15 CST - TASK-039 pre-test guidance complete
 
 - Branch: `feat/task-039-metadata-timer-timeline-slots`.

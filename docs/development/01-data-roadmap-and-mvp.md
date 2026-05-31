@@ -240,7 +240,7 @@ Timer Start control through scoped timer.start
 todo · #tag · due · Start
 ```
 
-`MetadataBar` 是 reusable component；production app-shell/editor 默认挂载、完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和 Timer tracked-total metadata 仍是后续范围。TASK-025 当前交付 `page.timeline` segment/note slot，但不会默认完成 app-shell/editor broad mounting。
+`MetadataBar` 是 reusable component；TASK-039 后，production app shell 在 page routes 上默认挂载 public `metadata-ui` `MetadataBar`，位置是 route title 下方、editor 上方。完整 metadata renderer/editor registry、date picker、estimate editor、完整 tag picker polish、save-time scanning/indexing 和 Timer tracked-total metadata 仍是后续范围。TASK-025 当前交付 `page.timeline` segment/note slot；TASK-039 后，它只在 trusted page routes 上通过 `SlotHost` 挂载，且只接收 `{ page: { id, title } }`。
 
 ### Phase 5：Timer Plugin
 
