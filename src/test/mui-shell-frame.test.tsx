@@ -217,7 +217,7 @@ describe("TASK-035 MUI shell frame", () => {
     expect(captureButton).toHaveFocus();
   });
 
-  it("keeps deferred Search and Settings top-bar controls as explicit visible placeholders", async () => {
+  it("treats Search as a dialog launcher while Settings remains an explicit visible placeholder", async () => {
     const user = userEvent.setup();
 
     renderReadyApp("0.1.0-deferred-tools");
@@ -230,12 +230,25 @@ describe("TASK-035 MUI shell frame", () => {
 
     await user.click(searchButton);
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      /^Search surface placeholder$/i,
-    );
+    const searchDialog = await screen.findByRole("dialog", {
+      name: /^Search$/i,
+    });
+
     expect(
-      screen.queryByRole("dialog", { name: /^Search$/i }),
+      within(searchDialog).getByRole("textbox", { name: /search query/i }),
+    ).toHaveFocus();
+    expect(
+      screen.queryByText(/^Search surface placeholder$/i),
     ).not.toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /^Search$/i }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(searchButton).toHaveFocus();
 
     await user.click(settingsButton);
 
