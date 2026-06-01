@@ -94,6 +94,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:34 CST - TASK-042 test-quality review retried
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Docs wording fix commit: `95ab7a9` (`Raman(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route status wording`).
+- Franklin (`test_quality_reviewer`) was spawned after previous thread-limit retry to review TASK-042 tests after all review fixes.
+- Next action: wait for Franklin final status, then run release gate and close out if clear.
+
 ### 2026-06-01 21:31 CST - TASK-042 non-page report cap fix committed
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
