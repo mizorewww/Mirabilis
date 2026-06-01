@@ -655,7 +655,7 @@ Acceptance criteria:
 - `timer.page-timeline.segments` on `page.timeline` renders current-page Timer-owned segments and note text inertly, with accessible Add Note / Edit Note UI that saves through `timer.add-note`.
 - MetadataBar command execution requires owner-aware `MetadataBarCommandRegistry` descriptor lookup and fails closed without lookup; slot UI still receives only a narrow `execute()` facade.
 - PluginHost's internal scoped command executor authorizes by registered command descriptor owner, not command ID prefix.
-- Metadata totals, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
+- Metadata totals, persistent Calendar/Reports feeds beyond later TASK-042 transient routes, trusted/persistent ML feed integration, native persistence/schema/Tauri/package/Rust changes, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and app-shell broad mounting remain deferred.
 - Known residual P2: hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` remains globally discoverable and duplicated between PluginHost and Timer; descriptor-owner checks protect execution, but a future API cleanup should replace it.
 
 Test plan:
@@ -685,7 +685,7 @@ Acceptance criteria:
 - Clicking a block executes `calendar.open-time-segment({ segmentId, pageId })` and renders read-only inert detail text.
 - DTO and command validation fails closed for malformed, wrong-owner, extra-field, accessor, symbol, prototype-carried, non-enumerable, blank, non-string, invalid-date, end-before-start, and non-positive/non-finite-duration inputs where applicable.
 - `calendar.open-time-segment` validation is runtime/view lifecycle scoped and does not leak across runtimes or survive unmount.
-- Manual segment creation/editing, `calendar.month`, snake_case aliases, app-shell route mounting/navigation, drag/drop, broad cross-plugin event query/read facade, Timer metadata totals, Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC/duration hardening, and stale detail clearing are explicitly deferred.
+- Manual segment creation/editing, `calendar.month`, snake_case aliases, drag/drop, broad cross-plugin event query/read facade, Timer metadata totals, persistent Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC/duration hardening, and stale detail clearing are explicitly deferred. TASK-042 later delivered the app-shell Calendar route mounting from explicit transient projections.
 
 Test plan:
 
@@ -978,7 +978,7 @@ Acceptance criteria:
 
 Delivered/deferred note for the TASK-035 branch:
 
-- Delivered: the MUI quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, placeholder Home/Inbox/Today/All Tasks/Reports routes, and initial top-bar affordances for Command, Search, Quick Capture, and Settings. Command, Quick Capture, and Search become functional in later M9 tasks; Settings remains placeholder scope.
+- Delivered: the MUI quartet, `ThemeProvider`, `CssBaseline`, top `AppBar`, left `Drawer`, central `main`, initial Home/Inbox/Today/All Tasks/Reports route status regions, and initial top-bar affordances for Command, Search, Quick Capture, and Settings. Command, Quick Capture, Search, Calendar, and Reports become functional in later M9 tasks; Settings remains placeholder scope.
 - Deferred: no full trusted runtime channel was introduced; `ViewHost`/`SlotHost`, editor mounting, dialogs, `Portal` floating slots, responsive polish, and real route data remain TASK-036+.
 - Security/native scope: TASK-035 adds no IPC, Tauri/native, Rust, capability, permission, schema, release, or broader security surface change.
 
@@ -1026,7 +1026,8 @@ Delivered/deferred note for the TASK-036 branch:
 - Delivered later by TASK-037: Home editor route mounting plus Home-scoped command and page bridge adapters.
 - Delivered later by TASK-038: sidebar page route and saved-filter route mounting for Home, recent pages, Inbox, Today, All Tasks, and public saved filters, using explicit route DTOs through `ViewHost` / `SlotHost`.
 - Delivered later by TASK-039: actual page-route metadata/timeline placement and `Portal`-backed global floating timer placement.
-- Deferred: lazy/Suspense host behavior, dialogs, Calendar/Reports/ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain TASK-040+ or later.
+- Delivered later by TASK-042: Calendar/Reports route projections and a Calendar-only route command bridge.
+- Deferred: lazy/Suspense host behavior, dialogs beyond delivered M9 workflows, ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain later work.
 - Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
 
 Test plan:
@@ -1077,7 +1078,8 @@ Delivered/deferred note for the TASK-037 branch:
 - Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
-- Deferred: Calendar/Reports routes, ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
+- Delivered later by TASK-042 before release closeout: Calendar/Reports Drawer routes from explicit transient projections.
+- Deferred: ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
 
 Test plan:
 
@@ -1130,7 +1132,8 @@ Delivered/deferred note for the TASK-038 branch:
 - Delivered later by TASK-039: page-route metadata/timeline slot placement and `Portal`-backed global floating timer placement.
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
-- Deferred: Reports, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, durable route storage, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
+- Delivered later by TASK-042 before release closeout: Calendar and Reports route projections through registered views/commands.
+- Deferred: ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, durable route storage, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
 
 Test plan:
 
@@ -1202,7 +1205,8 @@ Delivered/deferred note for the TASK-039 branch:
 - Security/native scope: App Shell still does not import Task, Tag, Timer private modules, raw Tauri/native modules, native persistence, package files, generated capabilities/permissions, Rust, IPC, filesystem, schema, or release surfaces for this task.
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
-- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, Calendar/Stats feeds, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
+- Delivered later by TASK-042 before release closeout: Calendar/Reports route projections through registered Calendar, Stats, and Chart surfaces.
+- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, persistent Calendar/Stats feeds beyond TASK-042, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
 
 ### TASK-040: Add Command Palette And Quick Capture Dialog
 
@@ -1306,16 +1310,19 @@ Source docs:
 Acceptance criteria:
 
 - Sidebar/plugin routes expose Calendar and Reports surfaces only through registered plugin views/commands.
-- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata and mount `calendar.day` / `calendar.week` through `ViewHost`.
-- Reporting routes build explicit bounded Stats input projections, execute `stats.run-aggregation` through Command Registry, and render Chart views through `ViewHost` when chart DTOs are available.
-- Empty, partial-data, loading, and unavailable states are visible and non-leaky.
+- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata, exclude missing/archived pages, cap projected segments at 1,000 with partial status, and mount `calendar.day` / `calendar.week` through `ViewHost`.
+- Calendar routes use a narrow `ViewHost` command bridge that delegates only `calendar.open-time-segment({ segmentId, pageId })` for current projected segments; no raw Command Registry or generic command facade reaches hosted views.
+- Reporting routes build explicit bounded Stats input projections, default to `stats.sum-time-by-page`, execute active stats-owned `stats.run-aggregation` through Command Registry, and render Chart DTOs through `chart.bar` / `ViewHost` when available.
+- Reports projection output remains Chart-compatible: time-by-page and time-by-tag categories cap at 200, segment `tagIds` are bounded to emitted tags, and habit event, habit summary, Timer note, task-estimate, and input-overflow limits surface partial status.
+- Empty, partial-data, loading, error, and unavailable states are visible and non-leaky route-level responsibilities.
+- Calendar and Reports refresh mounted route snapshots after user-triggered view or aggregation changes, and Reports rejects stale async aggregation results.
 - Projection builders are app-shell owned integration code and do not import plugin private stores, sibling plugin internals, raw Core stores from plugin-rendered UI, or native/SQLite APIs.
-- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, and native/schema changes remain deferred.
+- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, native calendar integration, Stats dashboards beyond registered DTO views, charting dependency expansion, package/lockfile changes, IPC/capability/permission changes, and native/schema changes remain deferred.
 
 Test plan:
 
-- Projection-builder unit tests for time segments, habit/task/tag/stat inputs, bounds, archived-page handling, malformed data, and wrong-owner data.
-- RTL route tests using `userEvent.setup()` for Calendar day/week route selection, segment click-to-detail, Reports aggregation, chart rendering, empty/error states, and keyboard navigation.
+- Projection-builder unit tests for time segments, habit/task/tag/stat inputs, bounds, missing/archived-page handling, malformed data, wrong-owner data, 1,000 Calendar cap, 200 Chart-category cap, emitted-tag bounded `tagIds`, and partial overflow states.
+- RTL route tests using `userEvent.setup()` for Calendar day/week route selection, segment click-to-detail through the narrow bridge, Reports aggregation, chart rendering, empty/partial/loading/error/unavailable states, stale async aggregation rejection, route snapshot refresh, wrong-owner route guards, and keyboard navigation.
 - Existing Calendar, Habit/Heatmap, Stats, and Chart plugin tests.
 - Static boundary tests for no sibling-private/native imports.
 
@@ -1329,6 +1336,15 @@ Docs to verify before implementation:
 
 - Local Calendar/Stats/Chart guidance in product, architecture, and testing docs.
 - Current RTL route-like state and async UI testing guidance.
+
+In-flight implementation note for branch `feat/task-042-calendar-reporting-routes` through review-fix commit `aa2413e`:
+
+- Implemented Calendar and Reports Drawer routes from explicit app-shell-owned transient projections; `progress.md` remains `[~]` until parent branch gate, progress closeout, and merge.
+- Calendar route derives `calendar.time-segments` from public current-runtime data, excludes missing/archived pages, caps visible segments at 1,000, mounts `calendar.day` / `calendar.week`, and exposes only the current-projection `calendar.open-time-segment({ segmentId, pageId })` bridge.
+- Reports route builds bounded Stats inputs, defaults to `stats.sum-time-by-page`, executes active stats-owned `stats.run-aggregation`, rejects stale async results, refreshes snapshots after aggregation changes, and renders returned Chart DTOs through `chart.bar`.
+- Reports keeps Chart-compatible output bounded: time-by-page and time-by-tag category outputs cap at 200, segment `tagIds` are bounded to emitted tags, and habit event, habit summary, Timer note, task-estimate, and input-overflow conditions surface partial status.
+- Empty, unavailable, partial, loading, and error states are route-level responsibilities.
+- No native/Tauri, package/lockfile, IPC schema, capability/permission, persistence schema, production charting dependency, or release surface changes were introduced.
 
 ### TASK-043: Add ML And AI Context Panels
 

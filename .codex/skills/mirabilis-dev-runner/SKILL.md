@@ -50,11 +50,23 @@ For each selected task:
 18. Merge the task branch into `master` after local checks pass, then push `master`.
 19. If the user asked for autonomous roadmap progress, continue to the next unblocked `[ ]` task.
 
-The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed or was explicitly cancelled, and that fallback reason is recorded.
+The parent thread is the orchestrator. It should delegate role work to agents, wait for blocking agent results, integrate outputs, validate, commit, and merge. It must not perform a delegated test-writing, implementation, or review step itself unless the assigned agent failed, became unavailable, wrote in the wrong branch/path, or was explicitly cancelled to protect the repository checkout, and that fallback reason is recorded first.
 
 The parent thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout only means no final status was returned to the parent in that wait window; it is not an agent status and must not be used to infer that the agent is idle, failed, output-free, or safe to replace.
 
-For a delegated blocking step, wait for the child agent's completion notification or final status before integrating or moving to the dependent step. If the run is unusually long, send one concise queued status request asking the agent to report a blocker or keep working until finished, then continue waiting. Stop, replace, or take over the delegated role only if the agent reports a blocker/final failure, becomes unavailable, writes in the wrong branch or path, or must be cancelled to protect the repository checkout. Record that reason before continuing.
+## Mandatory Blocking-Agent Wait Protocol
+
+Apply this protocol every time a spawned agent owns a blocking role such as planning, docs research, TDD tests, implementation, review, docs writing, or release checking:
+
+1. Put the agent in "waiting for final status" state in the parent plan or agent-communication note.
+2. Use the available wait tool in repeatable wait windows. If it times out, treat the result only as "no final status yet" and keep waiting.
+3. Do not infer agent health from silence, elapsed time, a wait timeout, or partial file edits. Partial edits are not final deliverables.
+4. If the run is unusually long, send exactly one concise queued status request: ask the agent to report a blocker/final failure or continue working until finished. After that, resume waiting; do not repeatedly ping.
+5. Integrate the work, commit it, or move to a dependent step only after the child agent returns completion notification/final status.
+6. Stop, replace, close, or take over the delegated role only if the agent reports a blocker/final failure, becomes unavailable, writes in the wrong branch or path, or must be cancelled to protect the repository checkout.
+7. Before any stop, replacement, close, or takeover, record the concrete reason in `docs/implementation/agent-communication/status.md` and the task-specific communication file. Without that recorded reason, the required action is to keep waiting.
+
+Every blocking child-agent prompt should include: "Return a final status when done or blocked. If asked for status before completion, either report a concrete blocker/final failure or continue working until finished."
 
 If a worktree was explicitly created, remove/prune it after the task is merged so Git branches and commits remain the only durable version-management surface.
 

@@ -81,7 +81,7 @@ TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `a
 
 TASK-035 shell coverage lives in `src/test/mui-shell-frame.test.tsx`, alongside existing app-shell boundary and runtime-provider tests. It should prove the baseline MUI shell behavior without treating placeholder route content as real ViewHost/SlotHost/editor implementation:
 
-- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar tools. Historical placeholder assertions should narrow as later M9 tasks land; after TASK-041, Search is functional while Settings remains a placeholder.
+- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar tools. Historical placeholder assertions should narrow as later M9 tasks land; after TASK-042, Search, Calendar, and Reports are functional while Settings remains a placeholder.
 - Prefer role/name queries for `banner`, `navigation`, `main`, buttons, startup loading, startup failure, and route status output.
 - Keep runtime boundary assertions explicit: `useRuntime()` exposes only a copied/frozen `{ app }` facade, startup failures stay visible and redacted, and raw runtime/native/plugin internals do not leak into the public provider or failure UI.
 - Keep static MUI guards narrow: use supported MUI path imports, require the TASK-035 MUI substrate imports, and reject stale/deprecated patterns such as `@material-ui/*`, MUI barrel imports, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, `ListItem button`, and deprecated `components` / `componentsProps` slot props.
@@ -106,7 +106,7 @@ TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves t
 - `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
 - `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
 - Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
-- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting; TASK-039 has since delivered page-route metadata/timeline placement plus global floating timer placement. Lazy/Suspense behavior and broader command/page adapters remain later work.
+- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting; TASK-039 has since delivered page-route metadata/timeline placement plus global floating timer placement; TASK-042 has since delivered Calendar/Reports route projections with a Calendar-only command bridge. Lazy/Suspense behavior and broader command/page adapters remain later work.
 
 Focused TASK-036 validation:
 
@@ -125,7 +125,7 @@ Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permiss
 TASK-037 coverage lives primarily in `src/test/home-workspace-editor.test.tsx`, with supporting static and shell assertions in `src/test/app-shell-boundary.test.ts` and `src/test/mui-shell-frame.test.tsx`. It proves the first real Home workspace without adding non-Home routes, dialogs, native behavior, package changes, or release surface.
 
 - Home workspace tests should use React Testing Library plus `userEvent.setup()` for observable typing and clicking: editing the Markdown textbox, toolbar snippet buttons, Save, task-title buttons, checkbox toggles, Home navigation, and non-Home route navigation.
-- The ready first screen should be the editable Home Markdown workspace, not startup copy, a landing page, a hero, or the old Home placeholder. MUI shell assertions should continue proving non-Home routes remain placeholders and that deprecated MUI APIs are not introduced.
+- The ready first screen should be the editable Home Markdown workspace, not startup copy, a landing page, a hero, or the old Home placeholder. MUI shell assertions should continue proving route status accurately as later tasks land: Home, Search, Calendar, and Reports now exercise real route surfaces, while Settings/Sync/ML/AI placeholders stay deferred until delivered, and deprecated MUI APIs are not introduced.
 - The Home editor must render registered `markdown.page-editor` / `page.editor` through `ViewHost`. Tests may replace the registered view to prove shell composition uses the registry path rather than directly importing `MarkdownPageEditor`.
 - Hosted editor props must remain narrow and frozen. Boundary tests should reject raw runtime, Core stores, registries, Plugin Host, NativeBridge, filesystem/path, raw command registry, raw page facade, and function leaks into plugin-rendered props.
 - App Shell boundary regressions should keep rejecting direct Markdown editor imports, plugin-private production imports, plugin-to-shell production imports, raw runtime source contexts, raw Tauri/native imports, and package/native/Tauri/Rust/IPC/capability/permission/release drift.
@@ -215,6 +215,28 @@ git diff --check
 ```
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, packaging, release behavior, or schema-backed persistence. TASK-041 is a TypeScript/React/MUI app-shell search-routing task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent search index, worker, SQLite FTS, native/global shortcut, or release surface.
+
+## TASK-042 Calendar And Reporting Routes Guidance
+
+TASK-042 coverage lives primarily in `src/test/calendar-reporting-projections.test.ts` and `src/test/calendar-reporting-routes.test.tsx`, with supporting shell, host, Calendar, Stats, and Chart assertions in `src/test/app-shell-boundary.test.ts`, `src/test/view-slot-hosts.test.tsx`, `src/test/calendar-plugin-baseline.test.tsx`, and `src/test/stats-chart-plugins.test.tsx`. It proves Calendar and Reports Drawer rows mount real app-shell route content.
+
+- Calendar projection coverage should assert shell-owned `{ kind: "calendar.time-segments" }` DTOs from public runtime pages/events/metadata, trusted Timer `time_segment_created` provenance, missing/archived-page exclusion, interval-overlap day/week ranges, malformed/wrong-owner filtering, a 1,000-segment cap, and visible partial status when truncated.
+- Calendar route coverage should use React Testing Library plus `userEvent.setup()` for Drawer activation, `aria-current`, day/week switching, mounted `calendar.day` / `calendar.week` through `ViewHost`, empty/partial/unavailable states, wrong-owner view/command fail-closed behavior, and projection refresh after user-triggered view changes.
+- Calendar command coverage should assert the route-owned `ViewHost` bridge delegates only `calendar.open-time-segment({ segmentId, pageId })` for current projected segment pairs, rejects stale/non-projected segment pairs and all other command ids, and never exposes raw Command Registry or broad runtime handles.
+- Reports projection coverage should assert default `stats.sum-time-by-page`, bounded Stats input from public Timer segment, Timer note, Habit event/summary, and Tag metadata projections, missing/archived-page exclusion, Chart-compatible 200-category caps for time-by-page and time-by-tag, segment `tagIds` bounded to emitted tags, task estimate unavailable partial state, and partial status for habit event, habit summary, and Timer note overflow.
+- Reports route coverage should assert active stats-owned `stats.run-aggregation` execution, `chart.bar` rendering through `ViewHost`, aggregation switching, loading/empty/partial/error/unavailable states, stale async resolve/reject rejection after route or aggregation changes, snapshot refresh after user-triggered aggregation changes, and keyboard route activation.
+- Static guards should keep rejecting private Calendar/Stats/Chart/Timer/Habit/Tag/Task imports from app-shell code, raw runtime/store/registry/Plugin Host/native handles in plugin-rendered props, package/lockfile/Cargo/Tauri/capability/permission/IPC/schema/release drift, charting-library/MUI X additions, workers/FTS/persistent indexers, execution sinks, broad query/feed/dashboard facades, stale MUI/React/testing APIs, and focused/skipped tests.
+
+Focused TASK-042 validation:
+
+```bash
+bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, production charting dependencies, or schema-backed Calendar/Reports persistence. TASK-042 is a TypeScript/React/MUI app-shell projection and routing task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, persistent feed/index, charting-library, or release surface.
 
 ## Focused Test Guidance
 
@@ -506,7 +528,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-025 Time Segment and Note Guidance
 
-TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, Calendar app-shell feed/routing, Stats/trusted ML feed integration, native/Tauri/package/Rust changes, or schema-backed storage:
+TASK-025 tests cover Timer-owned event-backed Time Segments, Markdown Page-backed notes, page timeline slot UI, and descriptor-owner command execution without adding Timer metadata totals, the later TASK-042 app-shell Calendar/Reports routes, Stats/trusted ML feed integration, native/Tauri/package/Rust changes, or schema-backed storage:
 
 - Registration coverage should assert built-in `timer` registers canonical commands `timer.start`, `timer.stop`, `timer.pause`, `timer.resume`, `timer.switch`, and `timer.add-note`; legacy underscore aliases should be rejected or absent.
 - Finalization coverage should assert `timer.stop`, active `timer.start`, and active `timer.switch` append `namespace: "timer"`, `type: "time_segment_created"` for the finalized timer, with `timer.stopped` before segment creation where applicable.

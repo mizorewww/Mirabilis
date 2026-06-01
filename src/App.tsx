@@ -11,6 +11,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ArticleIcon from "@mui/icons-material/Article";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HomeIcon from "@mui/icons-material/Home";
 import InboxIcon from "@mui/icons-material/Inbox";
 import KeyboardCommandKeyIcon from "@mui/icons-material/KeyboardCommandKey";
@@ -49,6 +50,7 @@ import {
   executeFilterQuery,
   exportStructuredDocumentToMarkdown,
   importMarkdownToStructuredDocument,
+  type AppEvent,
   type CommandDescriptor,
   type FilterDefinition,
   type MarkdownPage,
@@ -72,6 +74,12 @@ import {
   type CommandPaletteCommand,
 } from "./shell/dialogs";
 import { PluginRenderBoundary, SlotHost, ViewHost } from "./shell/hosts";
+import {
+  buildCalendarTimeSegmentsProjection,
+  buildReportsStatsInputProjection,
+  type CalendarTimeSegmentProjectionRow,
+  type ReportsAggregationId,
+} from "./shell/projections/time-review";
 import "./App.css";
 
 type AppProps = {
@@ -81,6 +89,8 @@ type AppProps = {
 type PageRouteRole = "home" | "recent" | "command-open";
 
 type FilterRouteRole = "inbox" | "all-tasks" | "today" | "saved";
+
+type CalendarRouteMode = "day" | "week";
 
 type PlaceholderRouteId = "reports";
 
@@ -109,6 +119,9 @@ type ActiveRoute =
       kind: "filter";
       filterId: string;
       role: FilterRouteRole;
+    }
+  | {
+      kind: "calendar";
     }
   | {
       kind: "placeholder";
@@ -150,6 +163,14 @@ type PlaceholderNavigationRoute = {
   eyebrow: string;
   summary: string;
   placeholders: readonly string[];
+  icon: NavigationIcon;
+};
+
+type CalendarNavigationRoute = {
+  kind: "calendar";
+  label: string;
+  eyebrow: string;
+  summary: string;
   icon: NavigationIcon;
 };
 
@@ -208,6 +229,16 @@ const quickCaptureModalViewId = "quick-capture.modal";
 const searchPluginId = "search";
 const searchQueryCommandId = "search.query";
 const searchResultsKind = "search.results";
+const calendarPluginId = "calendar";
+const calendarDayViewId = "calendar.day";
+const calendarWeekViewId = "calendar.week";
+const calendarOpenSegmentCommandId = "calendar.open-time-segment";
+const utcTimeZone = "UTC";
+const statsPluginId = "stats";
+const statsRunAggregationCommandId = "stats.run-aggregation";
+const chartPluginId = "chart";
+const chartBarViewType = "chart.bar";
+const defaultReportsAggregationId = "stats.sum-time-by-page";
 const pageTimelineSlot = "page.timeline";
 const globalFloatingSlot = "global.floating";
 const timerPluginId = "timer";
@@ -224,6 +255,7 @@ const timerFloatingCommandIds = new Set([
 ]);
 const primaryRouteLabels = new Set([
   "all tasks",
+  "calendar",
   "home",
   "inbox",
   "reports",
@@ -322,6 +354,7 @@ const primaryNavigationRoutes: readonly [
   FilterNavigationRoute,
   FilterNavigationRoute,
   FilterNavigationRoute,
+  CalendarNavigationRoute,
   PlaceholderNavigationRoute,
 ] = [
   {
@@ -360,11 +393,18 @@ const primaryNavigationRoutes: readonly [
     icon: ViewListIcon,
   },
   {
+    kind: "calendar",
+    label: "Calendar",
+    eyebrow: "Timeline",
+    summary: "Time segments by day or week",
+    icon: CalendarMonthIcon,
+  },
+  {
     kind: "placeholder",
     routeId: "reports",
     label: "Reports",
     eyebrow: "Review",
-    summary: "Reporting and chart workspace placeholder.",
+    summary: "Stats aggregations rendered through Chart views",
     placeholders: [
       "Stats projection placeholder",
       "Chart view placeholder",
@@ -539,6 +579,12 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       filterId,
       kind: "filter",
       role,
+    });
+  };
+  const selectCalendarRoute = () => {
+    unsetCurrentPage(currentPageState);
+    setActiveRoute({
+      kind: "calendar",
     });
   };
   const selectPlaceholderRoute = (routeId: PlaceholderRouteId) => {
@@ -831,6 +877,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                             selectPageRoute(homePageId, route.role);
                           } else if (route.kind === "filter") {
                             selectFilterRoute(route.filterId, route.role);
+                          } else if (route.kind === "calendar") {
+                            selectCalendarRoute();
                           } else {
                             selectPlaceholderRoute(route.routeId);
                           }
@@ -1029,6 +1077,10 @@ function WorkspaceRouteContent({
     );
   }
 
+  if (activeRoute.kind === "calendar") {
+    return <CalendarWorkspace runtime={runtime} />;
+  }
+
   if (activeRoute.kind === "search") {
     return (
       <SearchResultsWorkspace
@@ -1040,6 +1092,10 @@ function WorkspaceRouteContent({
   }
 
   const route = getPlaceholderRoute(activeRoute.routeId);
+
+  if (activeRoute.routeId === "reports") {
+    return <ReportsWorkspace runtime={runtime} />;
+  }
 
   return (
     <Stack
@@ -1054,6 +1110,314 @@ function WorkspaceRouteContent({
         </Box>
       ))}
     </Stack>
+  );
+}
+
+type ProjectionSourceSnapshot = {
+  events: AppEvent[];
+  metadata: MetadataRecord[];
+  pages: MarkdownPage[];
+};
+
+type ReportsViewState =
+  | {
+      status: "idle" | "loading";
+    }
+  | {
+      status: "ready";
+      chartData: unknown;
+    }
+  | {
+      status: "error";
+    };
+
+const reportsAggregationOptions: ReadonlyArray<{
+  id: ReportsAggregationId;
+  label: string;
+}> = [
+  {
+    id: defaultReportsAggregationId,
+    label: "Sum time by page",
+  },
+  {
+    id: "stats.sum-time-by-tag",
+    label: "Sum time by tag",
+  },
+  {
+    id: "stats.estimate-vs-actual",
+    label: "Estimate vs actual",
+  },
+  {
+    id: "stats.habit-completion-rate",
+    label: "Habit completion rate",
+  },
+  {
+    id: "stats.task-switch-count",
+    label: "Task switch count",
+  },
+  {
+    id: "stats.unnoted-sessions-count",
+    label: "Unnoted sessions count",
+  },
+];
+
+function CalendarWorkspace({ runtime }: { runtime: AppRuntime }) {
+  const [mode, setMode] = useState<CalendarRouteMode>("day");
+  const range = useMemo(() => getCalendarRouteRange(mode), [mode]);
+  const snapshot = readProjectionSnapshot(runtime);
+  const viewId = mode === "day" ? calendarDayViewId : calendarWeekViewId;
+
+  if (
+    snapshot === undefined ||
+    getActiveOwnedView(runtime, viewId, calendarPluginId, viewId) === undefined ||
+    getActiveOwnedCommandDescriptor(
+      runtime,
+      calendarOpenSegmentCommandId,
+      calendarPluginId,
+    ) === undefined
+  ) {
+    return <RouteUnavailable />;
+  }
+
+  const projection = buildCalendarTimeSegmentsProjection({
+    ...snapshot,
+    rangeEndAt: range.rangeEndAt,
+    rangeStartAt: range.rangeStartAt,
+  });
+
+  if (projection.status.kind === "unavailable") {
+    return <RouteUnavailable />;
+  }
+
+  const commandBridge = makeTimeSegmentCommandBridge({
+    runtime,
+    segments: projection.data.segments,
+  });
+
+  return (
+    <Stack
+      aria-label="Calendar route"
+      className="app-shell__calendar-route"
+      component="section"
+      spacing={2}
+    >
+      <Stack direction="row" spacing={1}>
+        <Button
+          aria-pressed={mode === "day"}
+          onClick={() => setMode("day")}
+          variant={mode === "day" ? "contained" : "outlined"}
+        >
+          Day
+        </Button>
+        <Button
+          aria-pressed={mode === "week"}
+          onClick={() => setMode("week")}
+          variant={mode === "week" ? "contained" : "outlined"}
+        >
+          Week
+        </Button>
+      </Stack>
+
+      <CalendarProjectionStatus status={projection.status} />
+
+      <ViewHost
+        acceptedData={projection.data}
+        commandBridge={commandBridge}
+        isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+        props={{
+          timeZone: utcTimeZone,
+          ...(mode === "day" ? { date: range.date } : { weekStart: range.weekStart }),
+        }}
+        registry={runtime.registries.views}
+        viewId={viewId}
+        viewType={viewId}
+      />
+    </Stack>
+  );
+}
+
+function CalendarProjectionStatus({
+  status,
+}: {
+  status: ReturnType<typeof buildCalendarTimeSegmentsProjection>["status"];
+}) {
+  if (status.kind === "complete") {
+    return null;
+  }
+
+  if (status.kind === "partial") {
+    return (
+      <Box aria-label="Calendar data" role="status">
+        Partial calendar data. Showing {formatCount(status.limit ?? 0)} time
+        segments.
+      </Box>
+    );
+  }
+
+  return (
+    <Box aria-label="Calendar data" role="status">
+      No time segments.
+    </Box>
+  );
+}
+
+function ReportsWorkspace({ runtime }: { runtime: AppRuntime }) {
+  const [aggregationId, setAggregationId] = useState<ReportsAggregationId>(
+    defaultReportsAggregationId,
+  );
+  const [viewState, setViewState] = useState<ReportsViewState>({
+    status: "loading",
+  });
+  const dateRange = useMemo(() => getReportsDateRange(), []);
+  const projection = useMemo(
+    () => {
+      const snapshot = readProjectionSnapshot(runtime);
+
+      return snapshot === undefined
+        ? undefined
+        : buildReportsStatsInputProjection({
+            ...snapshot,
+            aggregationId,
+            endDate: dateRange.endDate,
+            startDate: dateRange.startDate,
+          });
+    },
+    [aggregationId, dateRange.endDate, dateRange.startDate, runtime],
+  );
+  const routeAvailable =
+    projection !== undefined &&
+    getActiveOwnedCommandDescriptor(
+      runtime,
+      statsRunAggregationCommandId,
+      statsPluginId,
+    ) !== undefined &&
+    getActiveOwnedView(
+      runtime,
+      projection.chartViewId,
+      chartPluginId,
+      projection.chartViewId,
+    ) !== undefined;
+
+  useEffect(() => {
+    if (!routeAvailable || projection === undefined) {
+      return;
+    }
+
+    let active = true;
+
+    void executeActiveOwnedCommand(
+      runtime,
+      statsRunAggregationCommandId,
+      statsPluginId,
+      {
+        aggregationId: projection.aggregationId,
+        input: projection.input,
+      },
+    ).then(
+      (chartData) => {
+        if (active) {
+          setViewState({
+            chartData,
+            status: "ready",
+          });
+        }
+      },
+      () => {
+        if (active) {
+          setViewState({ status: "error" });
+        }
+      },
+    );
+
+    return () => {
+      active = false;
+    };
+  }, [projection, routeAvailable, runtime]);
+
+  if (!routeAvailable || projection === undefined) {
+    return <RouteUnavailable />;
+  }
+
+  return (
+    <Stack
+      aria-label="Reports route"
+      className="app-shell__reports-route"
+      component="section"
+      spacing={2}
+    >
+      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }} useFlexGap>
+        {reportsAggregationOptions.map((option) => (
+          <Button
+            aria-pressed={aggregationId === option.id}
+            key={option.id}
+            onClick={() => {
+              if (aggregationId !== option.id) {
+                setViewState({ status: "loading" });
+                setAggregationId(option.id);
+              }
+            }}
+            variant={aggregationId === option.id ? "contained" : "outlined"}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </Stack>
+
+      <ReportsProjectionStatus
+        aggregationId={projection.aggregationId}
+        status={projection.status}
+      />
+
+      {viewState.status === "loading" || viewState.status === "idle" ? (
+        <Box aria-label="Reports loading" role="status">
+          Running Reports aggregation.
+        </Box>
+      ) : null}
+
+      {viewState.status === "error" ? (
+        <Alert severity="error">
+          Reports aggregation unavailable. This workspace could not load.
+        </Alert>
+      ) : null}
+
+      {viewState.status === "ready" ? (
+        <ViewHost
+          acceptedData={viewState.chartData}
+          isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+          registry={runtime.registries.views}
+          viewId={projection.chartViewId}
+          viewType={chartBarViewType}
+        />
+      ) : null}
+    </Stack>
+  );
+}
+
+function ReportsProjectionStatus({
+  aggregationId,
+  status,
+}: {
+  aggregationId: ReportsAggregationId;
+  status: ReturnType<typeof buildReportsStatsInputProjection>["status"];
+}) {
+  if (status.kind === "complete") {
+    return null;
+  }
+
+  if (status.kind === "partial") {
+    return (
+      <Box aria-label="Reports data" role="status">
+        {aggregationId === "stats.estimate-vs-actual"
+          ? "Partial Reports data. Task estimate input is unavailable."
+          : "Partial Reports data. Some rows were omitted."}
+      </Box>
+    );
+  }
+
+  return (
+    <Box aria-label="Reports data" role="status">
+      No Reports data.
+    </Box>
   );
 }
 
@@ -1527,6 +1891,10 @@ function primaryRouteIsActive(
     );
   }
 
+  if (route.kind === "calendar") {
+    return activeRoute.kind === "calendar";
+  }
+
   return (
     activeRoute.kind === "placeholder" &&
     activeRoute.routeId === route.routeId
@@ -1586,6 +1954,21 @@ function getActiveRouteDetails(
     };
   }
 
+  if (activeRoute.kind === "calendar") {
+    const route = primaryNavigationRoutes.find(
+      (candidate): candidate is CalendarNavigationRoute =>
+        candidate.kind === "calendar",
+    );
+
+    return (
+      route ?? {
+        eyebrow: "Timeline",
+        label: "Calendar",
+        summary: "Time segments by day or week",
+      }
+    );
+  }
+
   return getPlaceholderRoute(activeRoute.routeId);
 }
 
@@ -1597,7 +1980,7 @@ function getPlaceholderRoute(
       candidate.kind === "placeholder" && candidate.routeId === routeId,
   );
 
-  return route ?? primaryNavigationRoutes[4];
+  return route ?? primaryNavigationRoutes[5];
 }
 
 function getDeferredShellToolStatus(toolId: DeferredShellToolId): string {
@@ -1686,6 +2069,239 @@ function getRouteFilter(
   } catch {
     return undefined;
   }
+}
+
+function readProjectionSnapshot(
+  runtime: AppRuntime,
+): ProjectionSourceSnapshot | undefined {
+  try {
+    return {
+      events: runtime.events.list(),
+      metadata: runtime.metadata.list(),
+      pages: runtime.pages.list({ includeArchived: true }),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function getActiveOwnedView(
+  runtime: AppRuntime,
+  viewId: string,
+  pluginId: string,
+  viewType: string,
+) {
+  if (!isPluginActive(runtime, pluginId)) {
+    return undefined;
+  }
+
+  try {
+    const view = runtime.registries.views.get(viewId);
+
+    return view.id === viewId &&
+      view.pluginId === pluginId &&
+      view.type === viewType
+      ? view
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getCalendarRouteRange(mode: CalendarRouteMode): {
+  date: string;
+  rangeEndAt: string;
+  rangeStartAt: string;
+  weekStart: string;
+} {
+  const today = utcDateOnly(Date.now());
+  const dayStartMs = Date.parse(`${today}T00:00:00.000Z`);
+  const weekStart = mondayUtcDateOnly(dayStartMs);
+  const weekStartMs = Date.parse(`${weekStart}T00:00:00.000Z`);
+  const startMs = mode === "day" ? dayStartMs : weekStartMs;
+  const endMs = startMs + (mode === "day" ? 1 : 7) * 24 * 60 * 60 * 1_000;
+
+  return {
+    date: today,
+    rangeEndAt: new Date(endMs).toISOString(),
+    rangeStartAt: new Date(startMs).toISOString(),
+    weekStart,
+  };
+}
+
+function getReportsDateRange(): {
+  endDate: string;
+  startDate: string;
+} {
+  const endDate = utcDateOnly(Date.now());
+  const endMs = Date.parse(`${endDate}T00:00:00.000Z`);
+
+  return {
+    endDate,
+    startDate: utcDateOnly(endMs - 6 * 24 * 60 * 60 * 1_000),
+  };
+}
+
+function makeTimeSegmentCommandBridge({
+  runtime,
+  segments,
+}: {
+  runtime: AppRuntime;
+  segments: readonly CalendarTimeSegmentProjectionRow[];
+}) {
+  const allowedSegments = new Set(segments.map(toSegmentRouteKey));
+  const unavailableMessage = "Calendar command unavailable";
+
+  return Object.freeze({
+    execute(commandId: string, input?: unknown): Promise<unknown> {
+      if (commandId !== calendarOpenSegmentCommandId) {
+        return rejectRouteCommand(unavailableMessage);
+      }
+
+      const payload = readTimeSegmentCommandInput(input);
+
+      if (payload === undefined || !allowedSegments.has(toSegmentRouteKey(payload))) {
+        return rejectRouteCommand(unavailableMessage);
+      }
+
+      const descriptor = getActiveOwnedCommandDescriptor(
+        runtime,
+        calendarOpenSegmentCommandId,
+        calendarPluginId,
+      );
+
+      if (descriptor === undefined) {
+        return rejectRouteCommand(unavailableMessage);
+      }
+
+      return runtime.commands.execute(descriptor.id, payload);
+    },
+  });
+}
+
+function rejectRouteCommand(message: string): Promise<unknown> {
+  const error = new Error(message);
+  const rejected = {
+    then<TResult1 = unknown, TResult2 = never>(
+      onfulfilled?:
+        | ((value: unknown) => TResult1 | PromiseLike<TResult1>)
+        | null,
+      onrejected?:
+        | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+        | null,
+    ): Promise<TResult1 | TResult2> {
+      void onfulfilled;
+
+      if (onrejected === undefined || onrejected === null) {
+        return Promise.reject(error);
+      }
+
+      try {
+        return Promise.resolve(onrejected(error));
+      } catch (rejection) {
+        return Promise.reject(rejection);
+      }
+    },
+    catch<TResult = never>(
+      onrejected?:
+        | ((reason: unknown) => TResult | PromiseLike<TResult>)
+        | null,
+    ): Promise<unknown | TResult> {
+      return rejected.then(undefined, onrejected);
+    },
+    finally(onfinally?: (() => void) | null): Promise<unknown> {
+      try {
+        onfinally?.();
+      } catch (rejection) {
+        return Promise.reject(rejection);
+      }
+
+      return Promise.reject(error);
+    },
+    [Symbol.toStringTag]: "Promise",
+  };
+
+  return rejected as Promise<unknown>;
+}
+
+function readTimeSegmentCommandInput(
+  input: unknown,
+): { pageId: string; segmentId: string } | undefined {
+  if (
+    !isRecord(input) ||
+    Object.getPrototypeOf(input) !== Object.prototype ||
+    Reflect.ownKeys(input).length !== 2
+  ) {
+    return undefined;
+  }
+
+  const pageId = readExactDataString(input, "pageId");
+  const segmentId = readExactDataString(input, "segmentId");
+
+  if (pageId === undefined || segmentId === undefined) {
+    return undefined;
+  }
+
+  return {
+    pageId,
+    segmentId,
+  };
+}
+
+function readExactDataString(
+  input: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const descriptor = Object.getOwnPropertyDescriptor(input, key);
+
+  if (
+    descriptor === undefined ||
+    !descriptor.enumerable ||
+    !Object.prototype.hasOwnProperty.call(descriptor, "value") ||
+    typeof descriptor.value !== "string" ||
+    descriptor.value.trim().length === 0
+  ) {
+    return undefined;
+  }
+
+  return descriptor.value;
+}
+
+function toSegmentRouteKey(input: { pageId: string; segmentId: string }): string {
+  return `${input.segmentId}\u0000${input.pageId}`;
+}
+
+function utcDateOnly(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function mondayUtcDateOnly(ms: number): string {
+  const date = new Date(ms);
+  const day = date.getUTCDay();
+  const offsetDays = day === 0 ? 6 : day - 1;
+
+  return utcDateOnly(ms - offsetDays * 24 * 60 * 60 * 1_000);
+}
+
+function formatCount(count: number): string {
+  if (!Number.isFinite(count) || count < 0) {
+    return "0";
+  }
+
+  const rounded = Math.trunc(count);
+
+  if (rounded < 1_000) {
+    return String(rounded);
+  }
+
+  const text = String(rounded);
+  const groups: string[] = [];
+
+  for (let end = text.length; end > 0; end -= 3) {
+    groups.unshift(text.slice(Math.max(0, end - 3), end));
+  }
+
+  return groups.join(",");
 }
 
 function executeRouteFilter(

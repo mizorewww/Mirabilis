@@ -309,7 +309,7 @@ TASK-025 implements the narrow event/page slice:
 - The original segment event remains immutable; timeline data derives the latest note page from note-link events.
 - `timer.page-timeline.segments` is the current page timeline contribution. It filters to current-page Timer-owned events and ignores malformed, wrong-owner, wrong-page, or unreadable note data.
 
-Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, Calendar app-shell feed/routing, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, app-shell broad mounting, native persistence, schema changes, and Tauri/package/Rust/native changes.
+Still deferred: `timer.total_tracked_time`, `timer.last_tracked_at`, `timer.active_segment_id` metadata, persistent Calendar/Reports feeds beyond the TASK-042 transient routes, trusted/persistent ML feed integration, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, app-shell broad mounting, production charting dependencies, native persistence, schema changes, and Tauri/package/Rust/native changes.
 
 ### 11.5 Calendar Plugin baseline
 
@@ -380,6 +380,8 @@ type CalendarTimeSegmentInput = {
 
 This is not a direct Timer event read path. Calendar does not import Timer internals, raw runtime stores, PluginHost, NativeBridge, Tauri APIs, markdown renderers, or HTML sinks. It does not call the plugin-facing event facade to query Timer-owned events. A future cross-plugin query/read facade must be reviewed before Calendar can read Timer events directly.
 
+TASK-042 adds the current app-shell Calendar route as a caller/view-host integration layer. The route snapshots public runtime pages/events/metadata, excludes missing or archived pages, derives bounded `calendar.time-segments` rows from trusted Timer segment events joined to active pages, caps route segments at 1,000 with partial status, and mounts `calendar.day` / `calendar.week` through `ViewHost`. The route passes a narrow command bridge that only delegates `calendar.open-time-segment({ segmentId, pageId })` for segment/page pairs present in the current projection; it does not pass raw runtime commands or a generic command facade into Calendar views.
+
 Current behavior:
 
 - `calendar.day` and `calendar.week` render accessible regions and native buttons.
@@ -390,7 +392,7 @@ Current behavior:
 - DTO and command inputs fail closed for malformed, wrong-owner, extra-field, accessor, symbol, prototype-carried, and non-enumerable shapes.
 - Command validity is scoped to the current `register(ctx)` runtime and to currently mounted/visible segments; unmount clears visibility.
 
-Deferred after TASK-026: `calendar.month`, manual segment creation/editing, snake_case aliases, app-shell route/navigation, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, Stats app-shell/feed integration, ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
+Deferred after TASK-026 / TASK-042: `calendar.month`, manual segment creation/editing, snake_case aliases, drag/drop editing, broad cross-plugin event query/read facade, Timer metadata totals, persistent Stats/ML/Habit/Task scheduled feeds, external calendar sync, native/Tauri/package/Rust/schema changes, strict UTC `Z`-only and duration-match validation, and stale detail clearing after data/date/week changes.
 
 ## 12. Habit / Heatmap 插件架构
 
@@ -583,7 +585,7 @@ stats.task-switch-count-input
 stats.unnoted-sessions-input
 ```
 
-Stats 输入来自调用方或 view host 准备的公开 DTO 投影，例如 Timer `time_segment_created` / `time_segment_note_added` events、Tag metadata、Task estimate metadata、Habit checked/unchecked events 和 habit summary。Stats 不读取 Timer/Habit/Task/Tag private data，不直接访问其他插件 store，也不在 Core 中放置统计业务逻辑。
+Stats 输入来自调用方或 view host 准备的公开 DTO 投影，例如 Timer `time_segment_created` / `time_segment_note_added` events、Tag metadata、Task estimate metadata、Habit checked/unchecked events 和 habit summary。Stats 不读取 Timer/Habit/Task/Tag private data，不直接访问其他插件 store，也不在 Core 中放置统计业务逻辑。TASK-042 的 Reports route 是当前 app-shell 调用方：它从 public runtime pages/events/metadata 构建 bounded Stats inputs，默认 `stats.sum-time-by-page`，执行 active stats-owned `stats.run-aggregation` command，并把返回的 Chart DTO 交给 `chart.bar` / `ViewHost`。
 
 输出使用 Chart DTO：
 
@@ -603,12 +605,13 @@ Trust boundary:
 - Top-level Stats arrays 当前最多 1,000 items。
 - Labels/ids/titles 必须是 bounded trusted strings；numeric values 必须 finite 且 magnitude capped。
 - Timer/Tag/Task/Habit DTO rows 必须带匹配 `sourcePluginId`、`namespace`、`type` 和 provenance；伪造 owner 或 malformed row 被忽略。
+- TASK-042 route projections cap Chart-compatible page/tag category output at 200 rows and mark the route partial when truncated. Tag report segment `tagIds` are bounded to the emitted tag rows. Habit event, habit summary, and Timer note overflows are route-level partial states rather than silently complete inputs.
 
-Stats dashboard、insight card views、saved filters、persistent indexes、ML/AI insight generation、broad cross-plugin query facade 和 app-shell routes 仍是后续范围。
+Stats dashboard、insight card views、saved filters、persistent indexes、ML/AI insight generation、broad cross-plugin query facade, and persistent dashboard/reporting routes beyond TASK-042 仍是后续范围。
 
 ### 13.2 Chart Plugin
 
-Chart Plugin 负责 generic chart DTO 的可访问渲染。Chart 是内置插件，不是 Stats 子模块，也不查询 Stats internals。
+Chart Plugin 负责 generic chart DTO 的可访问渲染。Chart 是内置插件，不是 Stats 子模块，也不查询 Stats internals。TASK-042 Reports route reuses `chart.bar` for returned Chart DTOs and does not add a production charting-library dependency.
 
 ```text
 src/plugins/chart/
@@ -654,7 +657,7 @@ Trust boundary:
 - Invalid DTOs fail closed to empty chart state。
 - Chart 不执行 HTML、Markdown 或 caller-provided rendering code。
 
-Production charting libraries、scatter/timeline/stacked chart polish、dashboard route integration 和 cross-plugin data query 仍是后续范围。
+Production charting libraries、scatter/timeline/stacked chart polish、dashboard route integration beyond TASK-042 Reports 和 cross-plugin data query 仍是后续范围。
 
 ### 13.3 Quick Capture / Search Plugin
 

@@ -85,7 +85,7 @@ Status markers:
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [x] TASK-041: Add Search Overlay And Results Route
-- [ ] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
+- [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
@@ -93,6 +93,122 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-01 21:45 CST - TASK-042 branch gate passed and task marked complete
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Head before closeout: `e30af56` (`Codex(progress)(Add Calendar And Reporting Routes With Explicit Data Projections): record bridge test completion`).
+- Delivered: Calendar and Reports Drawer routes from explicit app-shell-owned projections; Calendar day/week mounting with a narrow current-segment `calendar.open-time-segment` bridge; Reports Stats-to-Chart route flow with Chart-compatible caps for page/tag/habit/unnoted category outputs; empty, partial, unavailable, loading, and error states; documentation sync; and durable parent orchestration wait protocol updates.
+- Review outcome: post-review P1 findings were fixed; final test-quality review had no P0/P1 findings. The P2 same-command Calendar bridge coverage gap was closed by `cfbb6f3`.
+- Branch validation: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Local gate: `bun run check:quick` passed. Frontend: 47 files / 768 tests. Rust: `cargo fmt --check`, `cargo clippy --all-targets --all-features -D warnings`, and `cargo test --all-features` passed, including IPC, persistence, and SQLite suites.
+- Remaining risks: large local page/event/metadata arrays can still be copied/sorted before projection caps apply; this is a P2 local availability hardening follow-up, not a merge blocker. Broad/persistent Calendar/Reports feeds, dashboards, manual calendar editing, native calendar integration, schema/native/package changes, and production charting dependencies remain deferred.
+- Next action: commit closeout, merge to `master`, validate `master`, then continue with the next unblocked M9 UI task.
+
+### 2026-06-01 21:40 CST - TASK-042 bridge regression test committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`).
+- Pasteur added route-level coverage that `calendar.open-time-segment` with a stale/non-projected segment/page pair is rejected by the route-owned bridge before Command Registry execution.
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests; `git diff --check` passed.
+- Next action: run focused TASK-042 validation, release gate, progress closeout, and merge when clear.
+
+### 2026-06-01 21:37 CST - TASK-042 test-quality review found one P2
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Franklin (`test_quality_reviewer`) returned final status with no P0/P1 findings.
+- P2 finding: Calendar route tests cover valid `calendar.open-time-segment` and unrelated-command rejection, but not same-command stale/non-projected `{ segmentId, pageId }` rejection at the route-owned bridge.
+- Franklin validation: 7-file focused TASK-042 suite passed with 126 tests.
+- Next action: delegate a narrow P2 bridge-guard regression test before release gate.
+
+### 2026-06-01 21:34 CST - TASK-042 test-quality review retried
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Docs wording fix commit: `95ab7a9` (`Raman(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route status wording`).
+- Franklin (`test_quality_reviewer`) was spawned after previous thread-limit retry to review TASK-042 tests after all review fixes.
+- Next action: wait for Franklin final status, then run release gate and close out if clear.
+
+### 2026-06-01 21:31 CST - TASK-042 non-page report cap fix committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Production fix commit: `cfed230` (`Euclid(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cap non-page report categories`).
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx` passed with 3 files / 45 tests; broader TASK-042 suite passed with 7 files / 126 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Remaining review items: stale testing/development docs wording from Turing's P1/P2 findings, test-quality review retry after previous thread limit, release gate, progress closeout, and merge.
+- Next action: delegate docs wording fixes.
+
+### 2026-06-01 21:26 CST - TASK-042 review-fix implementation delegated
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `446be08` (`Wegener(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): add remaining report cap regressions`).
+- Parent red validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx` failed as expected with 2 projection cap failures; `calendar-reporting-routes.test.tsx` and `home-workspace-editor.test.tsx` passed.
+- Euclid (`implementer`) was spawned to make the non-page/tag Reports Chart cap tests pass with minimal production changes.
+- Next action: wait for Euclid final status, validate, and commit production fix.
+
+### 2026-06-01 21:21 CST - TASK-042 post-doc review found remaining blockers
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Review agents: Copernicus (`pr_explorer`), Chandrasekhar (`reviewer`), Laplace (`security_reviewer`), Godel (`deprecation_auditor`), and Turing (`docs_researcher`) returned final status. `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Blocking findings: Reports still can generate Chart-incompatible DTOs for non-page/tag aggregations (`habit-completion-rate` and `unnoted-sessions-count`) with 201+ categories; `home-workspace-editor` still has a stale Reports placeholder assertion and `docs/testing/strategy.md` still contains stale non-Home placeholder wording.
+- Additional P2 findings: qualify stale `docs/development/01-data-roadmap-and-mvp.md` Stats/Chart route wording; large local datasets can be copied/sorted before projection caps apply; keep static guards around generic `ViewHost` `commandBridge`.
+- No P0/P1 security issue and no P0/P1/P2 deprecation/API issue found. Godel verified current React 19, MUI v9, Testing Library/user-event/fake timers, Vitest, and Vite official docs.
+- Next action: delegate review-fix tests to `test_writer`, then delegate implementation/docs fixes.
+
+### 2026-06-01 21:14 CST - TASK-042 docs sync committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Docs sync commit: `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`).
+- McClintock (`doc_writer`) returned final status after replacing failed Bohr, completed formal product/architecture/development/testing/task-index docs sync, and confirmed no implementation code, tests, package, lockfile, Tauri/Rust, schema, capability, progress, or agent-communication ledger edits.
+- Parent validation before commit: docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks passed.
+- Next action: run post-doc review agents, branch gate, progress closeout, and merge when clear.
+
+### 2026-06-01 20:56 CST - TASK-042 docs sync agent failed and will be replaced
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Code review-fix commits since review: `e0eee79` (`Carver(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): add review regression coverage`) and `aa2413e` (`Bacon(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): bound reports projections`).
+- Parent validation after review fixes: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Docs sync blocker: Bohr (`doc_writer`) failed with `stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)`. This is a final agent failure, not silence or timeout. It left a partial edit in `docs/product/07-user-interface-design.md`.
+- Parent decision: replace Bohr with a fresh `doc_writer`; replacement must inspect, complete, or correct the partial product doc edit and finish the formal product/architecture/testing/task-index sync before merge.
+
+### 2026-05-31 22:07 CST - TASK-042 post-implementation review found blockers
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Review agents: Harvey (`pr_explorer`), Maxwell (`reviewer`), James (`security_reviewer`), Zeno (`deprecation_auditor`), Aquinas (`docs_researcher`), and McClintock (`test_quality_reviewer`) completed read-only review.
+- Blocking findings: Reports can generate Chart-incompatible 200+ category DTOs; habit-completion and unnoted-session inputs can truncate rows without visible partial status; Reports overflow regression coverage is incomplete; product/architecture docs still describe delivered TASK-042 Calendar/Reports route behavior as deferred.
+- Additional non-blocking findings to address in the same review-fix pass: mounted Calendar/Reports route snapshots can go stale after runtime store mutation; wrong-owner route guards need explicit coverage; stale async rejected Reports results need coverage; TASK-042 route tests should flush pending fake timers before restoring real timers; very large source arrays are copied/sorted before caps apply.
+- Next action: delegate failing review regression tests to `test_writer`, then delegate production fixes to `implementer`, then delegate docs sync to `doc_writer`.
+
+### 2026-05-31 22:00 CST - TASK-042 implementation validated
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Implementation commits: `6eb7365` (`Popper(implementation)(Add Calendar And Reporting Routes With Explicit Data Projections): implement calendar reporting routes`) and `937af88` (`Popper(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route test compatibility`).
+- Delivered so far: App Shell Calendar route, Reports route, explicit Calendar/Reports projection builders, and a narrow ViewHost command bridge for Calendar segment open commands.
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: run post-implementation review agents for correctness, security, deprecation/API, docs, changed paths, and test quality.
+
+### 2026-05-31 21:40 CST - TASK-042 red tests committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `2491bad` (`Franklin(test)(Add Calendar And Reporting Routes With Explicit Data Projections): add calendar reporting route tests`).
+- Red validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` failed as expected with 2 failed files / 4 passed files and 10 failed / 84 passed tests. The projection suite cannot resolve `../shell/projections/calendar-reporting` yet, Calendar route tests fail because the Drawer has no Calendar route yet, and Reports route tests fail because Reports still renders placeholder behavior. Adjacent suites passed.
+- `git diff --check` passed.
+- Next action: delegate implementation to `implementer`.
+
+### 2026-05-31 21:28 CST - TASK-042 pre-test guidance complete
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Agent guidance: Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
+- Parent decisions: TASK-042 projections exclude missing/archived pages, Calendar route projections cap at `1000` rows with deterministic partial-data behavior, Reports defaults to `stats.sum-time-by-page`, task estimate inputs remain optional unless public task-owned estimate metadata exists, and Calendar segment clicks must use a narrow command bridge rather than exposing a generic raw command facade.
+- External docs verified by agents: React 19 upgrade/`act` and test-utils guidance, Vite 7 migration and Node support, Vitest 4 timers/migration, Testing Library queries/async/user-event/setup, and MUI v9 install/path imports/migration/Tabs/ToggleButton/Dialog/Paper/Stack guidance.
+- Next action: delegate failing projection-builder, route, and static-boundary tests to `test_writer`.
+
+### 2026-05-31 21:21 CST - TASK-042 started
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Start point: `master` after TASK-041 merge-validation commit `8ded6b6`.
+- Agent/config validation: 11 `.codex/agents/*.toml` files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known non-blocking unrestricted sandbox/network notes and known `TERM=dumb` terminal failure.
+- Initial scope: add MUI Calendar and Reports routes that build explicit bounded app-shell projections from public current-runtime data, mount `calendar.day` / `calendar.week` and Chart views through `ViewHost`, and execute `stats.run-aggregation` through Command Registry.
+- Initial constraints: parent remains orchestration-only; write failing RTL/user-event and projection-builder tests before production code; no broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, native, or release changes.
+- Next action: collect planner, current-doc, security, and deprecation guidance before delegating TASK-042 red tests.
 
 ### 2026-05-31 21:19 CST - TASK-041 merged to master
 

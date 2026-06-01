@@ -1,62 +1,73 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 21:19 CST.
+Last updated: 2026-06-01 21:45 CST.
 
 ## Current Task
 
-- Task: TASK-041 - Add Search Overlay And Results Route.
-- Branch: `master` after merging `feat/task-041-search-overlay-results-route`.
+- Task: TASK-042 - Add Calendar And Reporting Routes With Explicit Data Projections.
+- Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-041 merged and master validation passed; parent is recording merge-result closeout before continuing to TASK-042.
+- Current phase: TASK-042 branch gate passed and closeout is ready to merge.
 
 ## Current Outcome
 
-- TASK-040 is complete on `master`; merge-result validation passed in commit `d3c256b`.
-- TASK-041 branch was created from `master`.
+- TASK-041 is complete on `master`; merge-result validation passed in commit `8ded6b6`.
+- TASK-042 branch was created from `master`.
 - Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
-- Pre-test guidance completed by Volta (`planner`), Schrodinger (`docs_researcher`), Gibbs (`security_reviewer`), and Feynman (`deprecation_auditor`).
-- Parent decision: TASK-041 will use a shell-owned bounded Search results route DTO with clickable MUI result rows for navigation. The existing `search.results` plugin view remains inert and may be used only through exact `acceptedData` if needed; App Shell must not import Search plugin private modules.
-- Rawls (`test_writer`) added TASK-041 red acceptance tests in commit `2e58ca3`.
-- Parent red validation failed as expected with 2 failed files / 2 passed files and 13 failed / 52 passed tests because the App Shell still does not open an accessible `Search` dialog.
-- Parent validation after red tests passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden test-pattern scans.
-- Confucius (`implementer`) implemented the app-shell Search dialog and bounded results route in commit `4b41067`.
-- Parent validation after implementation passed: focused TASK-041/adjacent suites (4 files / 65 tests and 4 files / 55 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden production-surface scans.
-- Post-implementation review found no P0/P1 blockers. Hooke (`security_reviewer`), Laplace (`reviewer`), and Ohm (`deprecation_auditor`) found no remaining P0/P1/P2 in their areas. Halley (`test_quality_reviewer`) found P2 coverage gaps; Hypatia (`docs_researcher`) found a P2 pending modal trap and docs drift; Sartre (`pr_explorer`) found P1 product/architecture docs drift.
-- Noether (`test-fix`) added review regression coverage in commit `8755359`; parent red validation failed as expected with one pending-close regression failure.
-- Boyle (`review-fix`) fixed pending search close and stale-result invalidation in commit `af3cc6c`.
-- Parent validation after review-fix passed: focused TASK-041/adjacent suites (4 files / 79 tests and 4 files / 69 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and forbidden production-surface scans.
-- Socrates (`doc_writer`) updated product, architecture, task-index, testing, and communication docs for delivered TASK-041 Search behavior and deferred scope. Docs-only `git diff --check` passed; stale Search deferred/placeholder/app-shell route and stale `#25-search-plugin` greps returned no matches.
-- Gauss (`test_quality_reviewer`) requested two remaining P2 test hardening items. Banach (`test-fix`) added stale reject and broader worker/FTS static guard coverage in commit `a1a1fb0`.
-- Sagan (`test_quality_reviewer`) confirmed no P0/P1/P2 test-quality findings remain after `a1a1fb0`.
-- Pascal (`release_checker`) passed the branch gate with `bun run check:quick`, `git diff --check master...HEAD`, clean worktree checks, docs/anchor checks, and no package/lockfile/Tauri/Rust/IPC/capability/permission/schema/release/native surface drift.
-- Parent merged TASK-041 into `master` with merge commit `3c88833`.
-- Parent merge-result validation passed: `bun run check:quick` completed on `master` with 45 frontend test files / 734 tests, TypeScript, ESLint, Rust fmt, Rust clippy, and Rust tests.
+- Parent selected TASK-042 as the first unblocked `[ ]` task in `docs/implementation/progress.md`.
+- Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
+- Parent decisions: exclude missing/archived pages from Calendar/Reports projections; cap Calendar route segments at `1000` with deterministic partial-data behavior; default Reports to `stats.sum-time-by-page`; treat task estimate data as optional unless public task-owned estimate metadata exists; require a narrow Calendar command bridge rather than a generic raw `commands.execute` facade.
+- Franklin (`test_writer`) added failing projection and route tests in commit `2491bad`.
+- Parent red validation passed as expected: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` failed with the intended missing projection module, absent Calendar route, and placeholder Reports route; adjacent suites passed with 84 tests. `git diff --check` passed.
+- Popper (`implementer`) implemented the Calendar/Reports route slice in commit `6eb7365` and committed test compatibility fixes in `937af88`.
+- Parent implementation validation passed: focused TASK-042 and adjacent suites passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Review outcome: no P0 findings. Merge is blocked by P1 correctness/test/docs findings. Maxwell found Reports can generate Chart-incompatible 200+ category DTOs and silently complete truncated habit/note inputs; McClintock found missing Reports bounds regression coverage; Aquinas found product/architecture docs still mark TASK-042 route behavior as deferred. Additional P2/P3 items cover mounted-route stale snapshots, wrong-owner route coverage, stale async reject coverage, fake-timer cleanup, and local very-large-input availability risk.
+- Carver (`test_writer`) added review regression coverage in commit `e0eee79`; Bacon (`implementer`) fixed the production regressions in commit `aa2413e`.
+- Parent review-fix validation passed: focused TASK-042/adjacent suites passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
+- McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. Parent will not integrate or commit docs sync until McClintock returns completion/final status.
+- McClintock returned final status and completed docs sync in commit `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`). Parent verified docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks before commit.
+- Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Post-doc review final outcome: merge is blocked. Copernicus and Chandrasekhar found P1 Reports Chart incompatibility for non-page/tag aggregations: `habit-completion-rate` and `unnoted-sessions-count` can still produce 201+ categories that `chart.bar` rejects. Turing found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still describes non-Home routes as placeholders. Turing also noted a P2 stale `docs/development/01-data-roadmap-and-mvp.md` Stats/Chart app-shell route wording. Laplace found no security P0/P1 and retained the large local dataset pre-cap availability risk as P2. Godel found no deprecation/API P0/P1/P2 and verified React 19, MUI v9, Testing Library, Vitest, and Vite official docs.
+- Wegener (`test_writer`) was spawned at 2026-06-01 21:22 CST to add failing review regression tests for non-page/tag Reports Chart caps and to correct stale Home workspace Reports placeholder expectations. Parent will wait for final status before integrating tests.
+- Wegener returned final status. Parent re-ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx`; expected red result remained 2 projection cap failures while route and Home workspace tests passed. Test commit `446be08` records the red review regressions.
+- Euclid (`implementer`) was spawned at 2026-06-01 21:26 CST to make the new non-page/tag Reports Chart cap tests pass with minimal production changes.
+- Euclid returned final status and completed production fix in commit `cfed230` (`Euclid(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cap non-page report categories`). Parent validation passed: changed-tests suite 3 files / 45 tests, broader TASK-042 suite 7 files / 126 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Raman (`doc_writer`) was spawned at 2026-06-01 21:32 CST to fix narrow stale wording in `docs/testing/strategy.md` and `docs/development/01-data-roadmap-and-mvp.md`.
+- Raman returned final status and completed docs wording fix in commit `95ab7a9` (`Raman(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route status wording`).
+- Franklin (`test_quality_reviewer`) was spawned at 2026-06-01 21:34 CST after previous thread-limit retry to review TASK-042 test quality after all review fixes.
+- Franklin returned final status with no P0/P1 findings. It found one P2: Calendar route tests cover a valid `calendar.open-time-segment` and rejection of unrelated `timer.stop`, but do not cover same-command stale/non-projected `{ segmentId, pageId }` rejection at the route bridge.
+- Pasteur (`test_writer`) was spawned at 2026-06-01 21:38 CST to add narrow route-level coverage for same-command stale/non-projected Calendar bridge rejection.
+- Pasteur returned final status and added the P2 regression test in commit `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`). Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests and `git diff --check` passed.
+- Final branch validation passed: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; `bun run check:quick` passed with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
 
-## Initial TASK-041 Scope
+## Initial TASK-042 Scope
 
-- Top app-shell Search control becomes a real accessible MUI Dialog or overlay while the Markdown workspace remains the first screen.
-- Search executes `search.query` through Command Registry with bounded query input.
-- Results render through registered `search.results` or a bounded route DTO, with loading, empty, result, and redacted error states.
-- Selecting a result navigates to that page through normal app-shell page route state.
-- Command Palette and Search keyboard/focus flows must not conflict.
+- Sidebar/plugin routes expose Calendar and Reports surfaces only through registered plugin views/commands.
+- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata and mount `calendar.day` / `calendar.week` through `ViewHost`.
+- Reporting routes build explicit bounded Stats input projections, execute `stats.run-aggregation` through Command Registry, and render Chart views through `ViewHost` when chart DTOs are available.
+- Empty, partial-data, loading, and unavailable states are visible and non-leaky.
+- Projection builders are app-shell owned integration code and do not import plugin private stores, sibling plugin internals, raw Core stores from plugin-rendered UI, or native/SQLite APIs.
 
 ## Constraints
 
 - Parent remains orchestration-only.
-- Write failing RTL/user-event tests before production code.
-- No native/global shortcut, mobile toolbar mounting, background capture, automatic Task/Tag/AI cleanup, persistence beyond current runtime, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, or release changes.
-- Persistent search indexing, search worker, SQLite FTS, native/global search shortcuts, ranking beyond current plugin behavior, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, and release surfaces remain deferred.
+- Write failing projection-builder and RTL/user-event route tests before production code.
+- No broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, native, or release changes.
+- Calendar, Stats, and Chart behavior remains plugin-owned; App Shell may only build reviewed bounded DTO projections and route them through registered views/commands.
 
 ## Validation Recorded
 
-- TASK-040 merge-result `bun run check:quick` passed on `master` before TASK-041 branch creation.
-- TASK-041 startup `git status --short --branch` was clean after branch creation.
+- TASK-041 merge-result `bun run check:quick` passed on `master` before TASK-042 branch creation.
+- TASK-042 startup `git status --short --branch` was clean before task-state edits.
+- 11 project agent TOML files parsed successfully before TASK-042 start.
+- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/websocket OK and only the known terminal `TERM=dumb` failure plus unrestricted-sandbox notes.
 
 ## Deferred Scope
 
-- Native/global Quick Capture shortcut, mobile toolbar mounting, background capture, persistent search index/worker/FTS, Calendar/Reports route projections, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
 
 ## Next Parent Actions
 
-- Commit TASK-041 merge-result closeout, confirm `master` is pushed, then continue with TASK-042.
+- Commit closeout, merge TASK-042 to `master`, validate `master`, then continue to the next unblocked task.

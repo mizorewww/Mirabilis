@@ -287,7 +287,7 @@ timer.add-note 为 stopped segment 创建或更新 Markdown Page note
 timer.page-timeline.segments 显示当前页面 Timer-owned segments 和 inert Note text
 ```
 
-Recently Worked / Unnoted Sessions saved filters、metadata totals、Calendar app-shell feed/routing、Timer-to-Stats feed normalization、trusted/persistent ML feed integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+Recently Worked / Unnoted Sessions saved filters、metadata totals、persistent Calendar feeds/dashboards beyond TASK-042 day/week route projection、Timer-to-Stats feed normalization、trusted/persistent ML feed integration、manual segment editing、calendar drag/drop、native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 ### Phase 6：Calendar Plugin
 
@@ -311,7 +311,7 @@ fail-closed DTO/command validation
 calendar.month
 manual segment creation/editing
 snake_case command aliases
-app-shell Calendar route/navigation
+persistent Calendar dashboards/feeds beyond TASK-042 day/week route projection
 drag/drop editing
 broad cross-plugin event read/query facade
 Timer metadata totals
@@ -363,7 +363,7 @@ chart.bar / chart.line / chart.pie
 chart.category-series / chart.time-series / chart.comparison-series
 ```
 
-Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 plugin output/event/metadata 投影；Chart 当前渲染 generic Chart DTO，不读取 Stats internals。Unnoted sessions 已作为 aggregation 覆盖，saved filter / dashboard / insight view / app-shell route 仍是后续范围。
+Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 plugin output/event/metadata 投影；Chart 当前渲染 generic Chart DTO，不读取 Stats internals。Unnoted sessions 已作为 aggregation 覆盖；TASK-042 已交付 transient Reports app-shell route。saved filters、persistent dashboards / insight views、broad reporting routes 仍是后续范围。
 
 ### Phase 9：ML Plugin
 
@@ -523,7 +523,7 @@ Note: 刚想清楚...
 设计 Plugin 系统 tracked 47m
 ```
 
-Calendar app-shell route/navigation、broad cross-plugin event query/read facade、Stats app-shell/feed integration、trusted/persistent ML feed integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
+TASK-042 后，App Shell 已用 explicit transient projections 挂载 Calendar day/week 和 Reports/Chart route surfaces。Broad cross-plugin event query/read facade、persistent Calendar/Reports feeds、trusted/persistent ML feed integration、Timer metadata totals、Recently Worked / Unnoted Sessions saved filters、manual segment editing、calendar drag/drop、Task/Habit scheduled feeds 和 native persistence/schema/Tauri/package/Rust changes 仍是后续范围。
 
 All Tasks 显示：
 
