@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: test-quality review completed; P2 bridge-guard test delegation pending.
+- Status: P2 bridge-guard `test_writer` Pasteur (`019e8367-dfe8-79c3-b6ee-d07c1c67f3b7`) is running; parent is waiting for final status.
 
 ## Scope
 
@@ -54,6 +54,7 @@
 - Raman returned final status and completed docs wording fix in commit `95ab7a9`.
 - Franklin (`test_quality_reviewer`) was spawned at 2026-06-01 21:34 CST to review TASK-042 test quality after review fixes.
 - Franklin returned final status with no P0/P1 findings. P2: add route-level coverage that `calendar.open-time-segment` with stale/non-projected `{ segmentId, pageId }` is rejected by the route-owned bridge.
+- Pasteur (`test_writer`) was spawned at 2026-06-01 21:38 CST to add that narrow bridge-guard regression test.
 
 ## Parent Decisions
 
@@ -92,7 +93,8 @@
 - 2026-06-01 21:33 CST: Raman returned final status. Parent verified docs diff and committed wording fix as `95ab7a9`.
 - 2026-06-01 21:34 CST: Franklin (`test_quality_reviewer`, agent `019e8364-143b-7630-abb9-a6205cd23793`) spawned after previous thread-limit retry. Parent state is waiting for completion/final status.
 - 2026-06-01 21:37 CST: Franklin returned final status. No P0/P1 findings; one P2 same-command stale/non-projected Calendar bridge coverage gap remains.
+- 2026-06-01 21:38 CST: Pasteur (`test_writer`, agent `019e8367-dfe8-79c3-b6ee-d07c1c67f3b7`) spawned for the P2 Calendar bridge regression test. Parent state is waiting for completion/final status.
 
 ## Next Action
 
-- Delegate a narrow P2 bridge-guard regression test, then run validation/release gate.
+- Wait for Pasteur (`test_writer`) final status before validating and committing the P2 regression test.
