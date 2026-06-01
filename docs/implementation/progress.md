@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 20:56 CST - TASK-042 docs sync agent failed and will be replaced
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Code review-fix commits since review: `e0eee79` (`Carver(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): add review regression coverage`) and `aa2413e` (`Bacon(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): bound reports projections`).
+- Parent validation after review fixes: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Docs sync blocker: Bohr (`doc_writer`) failed with `stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)`. This is a final agent failure, not silence or timeout. It left a partial edit in `docs/product/07-user-interface-design.md`.
+- Parent decision: replace Bohr with a fresh `doc_writer`; replacement must inspect, complete, or correct the partial product doc edit and finish the formal product/architecture/testing/task-index sync before merge.
+
 ### 2026-05-31 22:07 CST - TASK-042 post-implementation review found blockers
 
 - Branch: `feat/task-042-calendar-reporting-routes`.

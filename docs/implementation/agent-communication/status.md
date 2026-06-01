@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-05-31 22:07 CST.
+Last updated: 2026-06-01 20:56 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-31 22:07 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 post-implementation review complete; parent is preparing review-fix test delegation.
+- Current phase: TASK-042 code review-fixes are validated; docs sync is pending replacement after failed doc_writer stream.
 
 ## Current Outcome
 
@@ -23,6 +23,9 @@ Last updated: 2026-05-31 22:07 CST.
 - Popper (`implementer`) implemented the Calendar/Reports route slice in commit `6eb7365` and committed test compatibility fixes in `937af88`.
 - Parent implementation validation passed: focused TASK-042 and adjacent suites passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - Review outcome: no P0 findings. Merge is blocked by P1 correctness/test/docs findings. Maxwell found Reports can generate Chart-incompatible 200+ category DTOs and silently complete truncated habit/note inputs; McClintock found missing Reports bounds regression coverage; Aquinas found product/architecture docs still mark TASK-042 route behavior as deferred. Additional P2/P3 items cover mounted-route stale snapshots, wrong-owner route coverage, stale async reject coverage, fake-timer cleanup, and local very-large-input availability risk.
+- Carver (`test_writer`) added review regression coverage in commit `e0eee79`; Bacon (`implementer`) fixed the production regressions in commit `aa2413e`.
+- Parent review-fix validation passed: focused TASK-042/adjacent suites passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
 
 ## Initial TASK-042 Scope
 
@@ -52,4 +55,4 @@ Last updated: 2026-05-31 22:07 CST.
 
 ## Next Parent Actions
 
-- Commit review findings, then delegate review regression tests to `test_writer`.
+- Commit Bohr failure/replacement record, then delegate docs sync to a replacement `doc_writer`.

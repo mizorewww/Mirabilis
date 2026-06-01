@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: post-implementation review complete; review-fix tests pending.
+- Status: review-fix code validated; docs sync replacement pending after failed doc_writer stream.
 
 ## Scope
 
@@ -36,6 +36,9 @@
 - Zeno (`deprecation_auditor`) found no P0/P1/P2 API issue; it noted a P3 fake-timer cleanup hygiene gap in the TASK-042 route test.
 - Aquinas (`docs_researcher`) found merge-blocking docs drift in product and architecture docs that still describe TASK-042 Calendar/Reports routes as deferred, plus missing documentation for the new narrow `ViewHost` `commandBridge`.
 - McClintock (`test_quality_reviewer`) found merge-blocking test coverage gaps for Reports overflow bounds, plus P2 gaps for wrong-owner route coverage and stale async reject coverage.
+- Carver (`test_writer`) added review regression coverage in commit `e0eee79` for Reports Chart compatibility, habit/note overflow partial status, mounted route snapshot refresh, wrong-owner route guards, stale rejected Reports results, and fake-timer cleanup.
+- Bacon (`implementer`) fixed review regressions in commit `aa2413e`, bounding Reports projections for Chart compatibility and refreshing Calendar/Reports snapshots on user-triggered route changes.
+- Bohr (`doc_writer`) was delegated TASK-042 docs sync but failed with `stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)`. It left a partial edit in `docs/product/07-user-interface-design.md`; parent will replace Bohr with a fresh `doc_writer` and require it to inspect, complete, or correct the partial edit before docs commit.
 
 ## Parent Decisions
 
@@ -60,7 +63,9 @@
 - 2026-05-31 21:40 CST: parent red validation ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx`. Expected red result: 2 failed files / 4 passed files, 10 failed / 84 passed tests. `calendar-reporting-projections.test.ts` fails because `../shell/projections/calendar-reporting` does not exist yet; route tests fail because Calendar route is absent and Reports still renders placeholder behavior. Adjacent suites passed. `git diff --check` passed.
 - 2026-05-31 22:00 CST: parent implementation validation passed after `6eb7365` and `937af88`: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - 2026-05-31 22:07 CST: post-implementation review completed. Merge is blocked by Reports Chart compatibility, habit/note overflow partial status, missing review regression coverage, and formal product/architecture/testing docs drift.
+- 2026-05-31 22:22 CST: parent validation after `e0eee79` and `aa2413e` passed: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- 2026-06-01 20:56 CST: Bohr (`doc_writer`) failed before final status due stream disconnect while syncing docs; partial product UI doc edits remain in the worktree for replacement doc writer review.
 
 ## Next Action
 
-- Spawn `test_writer` to add failing review regression tests for Reports bounds/Chart compatibility, habit/note overflow partial status, wrong-owner route guards, stale async reject handling, mounted-route mutation refresh, and fake-timer cleanup hygiene.
+- Spawn a replacement `doc_writer` to complete formal product, architecture, testing, and task-index documentation sync for TASK-042.
