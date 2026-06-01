@@ -102,9 +102,10 @@ The main Codex thread is the parent orchestration agent. Its job is to route wor
 - Give each agent a concrete prompt with worktree path, task ID, write scope, read-only/write permission, expected checks, and exact output format.
 - After spawning an agent that owns a blocking step, wait for that agent or use `send_input` to clarify. Do not implement the same step in the parent thread while the delegated agent owns it.
 - The parent thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout is only a parent-side wait-window expiry, not evidence that the child agent is idle, failed, or done producing useful work.
-- Do not assume a quiet agent has stopped. For a long-running blocking step, wait for the completion notification/final status; if the wait exceeds the expected window, send one short queued status request such as "report blocked or keep working, and return when finished", then keep waiting.
+- Do not assume a quiet agent has stopped. For a long-running blocking step, wait for the completion notification/final status; if the wait exceeds the expected window, send exactly one short queued status request such as "report blocked or keep working, and return when finished", then keep waiting.
+- Treat partial file edits by a child agent as in-progress evidence only. Do not integrate, commit, or build on them as final work until the child agent returns final status.
 - When steps depend on each other, make the dependency explicit: for example, `implementer` starts only after `test_writer` reports the failing test files and expected failure.
-- Stop, replace, or take over an agent only when it reports a blocker/final failure, becomes unavailable, writes in the wrong worktree, or must be cancelled to protect the task. Record the stop reason in the run log or commit/progress context when it affects the task.
+- Stop, replace, close, or take over an agent only when it reports a blocker/final failure, becomes unavailable, writes in the wrong branch/path, or must be cancelled to protect the task. Record the concrete reason in `docs/implementation/agent-communication/status.md` and the task-specific communication file before taking that action.
 - Keep the parent thread responsible for integration: review changed files, run checks, stage focused commits, update progress, merge, and report.
 
 ## Agent Communication State
@@ -283,7 +284,8 @@ Rules:
 - pr_explorer, reviewer, deprecation_auditor, security_reviewer, docs_researcher, and test_quality_reviewer are read-only unless explicitly asked to patch.
 - doc_writer may update docs only.
 - Do not modify implementation code.
-- Wait for all agents.
+- Wait for all agents' completion notifications or final statuses. A `wait_agent` timeout is not completion, failure, or permission for the parent to take over.
+- If an agent is unusually long-running, send exactly one queued status request asking it to report a blocker/final failure or continue until finished, then keep waiting.
 - Deduplicate findings.
 - Group findings by severity.
 - Provide fix plan before applying fixes.

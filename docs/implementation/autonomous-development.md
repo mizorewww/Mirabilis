@@ -5,7 +5,7 @@ This runbook explains how to let Codex progress Mirabilis from the docs for long
 ## Persistent Sources Of Truth
 
 - `AGENTS.md`: always-loaded project rules and short-command routing.
-- `.agents/skills/mirabilis-dev-runner/SKILL.md`: the full autonomous development loop.
+- `.codex/skills/mirabilis-dev-runner/SKILL.md`: the full autonomous development loop.
 - `docs/implementation/task-index.md`: task definitions and acceptance criteria.
 - `docs/implementation/progress.md`: task status ledger.
 - `docs/testing/strategy.md`: local validation gates.
@@ -76,6 +76,9 @@ For software implementation tasks, follow the full TDD loop:
 - spawn implementer for minimum implementation
 - run focused tests
 - spawn pr_explorer, reviewer, deprecation_auditor, security_reviewer, docs_researcher, test_quality_reviewer, and doc_writer
+- for every spawned blocking agent, wait for its completion notification/final status; a `wait_agent` timeout only means no final status yet
+- if a blocking agent runs unusually long, send exactly one queued status request asking it to report a blocker/final failure or continue until finished, then keep waiting
+- do not infer state from silence, elapsed time, wait timeouts, or partial file edits; stop/replace/take over only after a final blocker/failure, unavailability, wrong branch/path, or repository-safety cancellation has been recorded
 - fix P0/P1
 - run the appropriate local gate
 - update docs

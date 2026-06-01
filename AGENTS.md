@@ -60,9 +60,17 @@ Config-only, docs-only, or agent-setup changes may use the lighter config/docume
 - Review-oriented agents may have full access, but they should stay read-only unless the parent task explicitly asks them to edit files.
 - The main Codex thread is the orchestration agent. It selects tasks, creates branches, delegates to focused agents, waits for their outputs, integrates results, validates, commits, and merges.
 - The main thread must not take over test writing, implementation, or review work that has been delegated unless the delegated agent fails, is unavailable, or is explicitly cancelled; in that case, stop and record the reason before continuing.
-- The main thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout only means the parent did not receive a final status during that wait window; it is not evidence that the child agent is idle, failed, or output-free.
-- For a delegated blocking step, wait for the child agent's completion notification or final status. If the run is unusually long, send one concise queued status request asking it to report a blocker or continue until finished, then keep waiting. Do not guess from elapsed time, do not replace or close the agent, and do not take over delegated work unless the agent reports a blocker/final failure, becomes unavailable, writes in the wrong branch or path, or must be cancelled to protect the repository checkout.
 - If a specialized agent type is unavailable, stop all running agents and debug `.codex/agents/*.toml` validity, project trust/config loading, and `features.multi_agent` before doing more development work.
+
+## Blocking Agent Wait Protocol
+
+- The main thread cannot see a child agent's live, non-file streaming output. A `wait_agent` timeout only means the parent did not receive a final status during that wait window; it is not evidence that the child agent is idle, failed, output-free, or safe to replace.
+- For every delegated blocking step, the parent must wait for the child agent's completion notification or final status before integrating that role's work or moving to a dependent step.
+- A timeout, quiet period, or elapsed-time guess must resolve to "keep waiting", not "agent failed", "agent idle", or "parent should take over".
+- If the run is unusually long, send exactly one concise queued status request asking the child agent to report a blocker/final failure or continue until finished, then resume waiting for the final status. Do not send repeated nudges.
+- Partial file edits made by a child agent are in-progress evidence only. Do not treat them as a final result unless the child agent has returned final status or must be stopped for repository safety.
+- Stop, replace, close, or take over a delegated agent only when it reports a blocker/final failure, becomes unavailable, writes in the wrong branch or path, or must be cancelled to protect the repository checkout.
+- Before stopping, replacing, closing, or taking over a delegated agent, record the concrete reason in `docs/implementation/agent-communication/status.md` and the task-specific communication file. If no such reason exists, keep waiting.
 
 ## Development Order
 
