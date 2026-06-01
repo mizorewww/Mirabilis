@@ -363,7 +363,7 @@ chart.bar / chart.line / chart.pie
 chart.category-series / chart.time-series / chart.comparison-series
 ```
 
-Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 plugin output/event/metadata 投影；Chart 当前渲染 generic Chart DTO，不读取 Stats internals。Unnoted sessions 已作为 aggregation 覆盖，saved filter / dashboard / insight view / app-shell route 仍是后续范围。
+Stats 当前消费调用方提供的 normalized DTO input，可以来自公开 plugin output/event/metadata 投影；Chart 当前渲染 generic Chart DTO，不读取 Stats internals。Unnoted sessions 已作为 aggregation 覆盖；TASK-042 已交付 transient Reports app-shell route。saved filters、persistent dashboards / insight views、broad reporting routes 仍是后续范围。
 
 ### Phase 9：ML Plugin
 
