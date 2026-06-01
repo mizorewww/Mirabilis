@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: started; pre-test guidance delegation pending.
+- Status: pre-test guidance agents are running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -25,7 +25,10 @@
 
 ## Agent Notes
 
-- Pending pre-test guidance from planner, docs/API researcher, security reviewer, and deprecation auditor.
+- Einstein (`planner`, agent `019e8370-810b-7512-9862-87eee2292ead`) spawned at 2026-06-01 21:47 CST for task slicing and red-test guidance.
+- Banach (`docs_researcher`, agent `019e8370-84d8-7210-b78a-5af43ddddb82`) spawned at 2026-06-01 21:47 CST for local docs and current API guidance.
+- Avicenna (`security_reviewer`, agent `019e8370-882d-7140-854e-0bf527f9cc34`) spawned at 2026-06-01 21:47 CST for AI/secret/network/runtime boundary guidance.
+- Aristotle (`deprecation_auditor`, agent `019e8370-8c9d-7cc2-b999-f7941a0c6db3`) spawned at 2026-06-01 21:47 CST for MUI/React/testing API guidance.
 
 ## Parent Decisions
 
@@ -36,7 +39,8 @@
 - 2026-06-01 21:46 CST: branch created from clean validated `master`.
 - 2026-06-01 21:46 CST: 11 project agent TOML files parsed successfully.
 - 2026-06-01 21:46 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- 2026-06-01 21:47 CST: pre-test guidance agents spawned; parent is waiting for completion/final statuses.
 
 ## Next Action
 
-- Delegate planner, docs/API, security, and deprecation guidance before TDD tests.
+- Wait for pre-test guidance final statuses before delegating TDD tests.
