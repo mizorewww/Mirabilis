@@ -94,7 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
-### 2026-06-01 21:45 CST - TASK-042 branch gate passed and task marked complete
+### 2026-06-01 21:44 CST - TASK-042 merged to master
+
+- Branch merged: `feat/task-042-calendar-reporting-routes`.
+- Merge commit: `19711d0` (`Codex(merge)(Add Calendar And Reporting Routes With Explicit Data Projections): merge TASK-042`).
+- Master validation: `bun run check:quick` passed after merge. Frontend: 47 files / 768 tests. Rust: `cargo fmt --check`, `cargo clippy --all-targets --all-features -D warnings`, and `cargo test --all-features` passed, including IPC, persistence, and SQLite suites.
+- Final status: TASK-042 is `[x]` on `master`.
+- Next action: push `master`, then continue autonomous M9 UI work with TASK-043, Add ML And AI Context Panels.
+
+### 2026-06-01 21:43 CST - TASK-042 branch gate passed and task marked complete
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Head before closeout: `e30af56` (`Codex(progress)(Add Calendar And Reporting Routes With Explicit Data Projections): record bridge test completion`).
