@@ -273,7 +273,17 @@ export function buildReportsStatsInputProjection(
     }
     case "stats.habit-completion-rate": {
       const habitRows = collectHabitSummaries(input.metadata, activePages);
-      const habitBound = boundRows(habitRows, statsRowsLimit);
+      const chartHabitCategoryIds = collectHabitCompletionCategoryIds(
+        input.events,
+        new Set(habitRows.map((habit) => habit.habitPageId)),
+        input.startDate,
+        input.endDate,
+      );
+      const habitLimit =
+        chartHabitCategoryIds.size > chartCategoryLimit
+          ? chartCategoryLimit
+          : statsRowsLimit;
+      const habitBound = boundRows(habitRows, habitLimit);
       const habitIds = new Set(
         habitBound.rows.map((habit) => habit.habitPageId),
       );
@@ -293,7 +303,13 @@ export function buildReportsStatsInputProjection(
         status: createReportsStatus(
           eventBound.rows.length + habitBound.rows.length,
           [
-            toOverflow(habitBound, statsRowsLimit, "stats.input-limit"),
+            toOverflow(
+              habitBound,
+              habitLimit,
+              habitLimit === chartCategoryLimit
+                ? "chart.category-limit"
+                : "stats.input-limit",
+            ),
             toOverflow(eventBound, statsRowsLimit, "stats.input-limit"),
           ],
         ),
@@ -318,6 +334,11 @@ export function buildReportsStatsInputProjection(
     case "stats.unnoted-sessions-count": {
       const notes = collectTimerNotes(input.events, activePages);
       const noteBound = boundRows(notes, statsRowsLimit);
+      const pageBound = boundTimerSegmentsByPageCategory(
+        timerSegments,
+        chartCategoryLimit,
+      );
+      const segmentBound = boundRows(pageBound.rows, statsRowsLimit);
 
       return {
         aggregationId,
@@ -325,14 +346,15 @@ export function buildReportsStatsInputProjection(
         input: {
           kind: "stats.unnoted-sessions-input",
           notes: noteBound.rows,
-          segments: statsSegmentLimit.rows.map((segment) =>
+          segments: segmentBound.rows.map((segment) =>
             toStatsSegmentRow(segment, tagIdsByPageId.get(segment.pageId) ?? []),
           ),
         },
         status: createReportsStatus(
-          statsSegmentLimit.rows.length + noteBound.rows.length,
+          segmentBound.rows.length + noteBound.rows.length,
           [
-            toOverflow(statsSegmentLimit, statsRowsLimit, "stats.input-limit"),
+            toOverflow(pageBound, chartCategoryLimit, "chart.category-limit"),
+            toOverflow(segmentBound, statsRowsLimit, "stats.input-limit"),
             toOverflow(noteBound, statsRowsLimit, "stats.input-limit"),
           ],
         ),
@@ -731,6 +753,47 @@ function collectHabitEvents(
       left.payload.date.localeCompare(right.payload.date) ||
       left.type.localeCompare(right.type),
   );
+}
+
+function collectHabitCompletionCategoryIds(
+  eventsInput: readonly AppEvent[],
+  habitIds: ReadonlySet<string>,
+  startDate: string,
+  endDate: string,
+): Set<string> {
+  const startMs = parseDateOnly(startDate);
+  const endMs = parseDateOnly(endDate);
+
+  if (startMs === null || endMs === null || endMs < startMs) {
+    return new Set();
+  }
+
+  const terminalEvents = new Map<string, HabitEventProjection>();
+
+  for (const event of collectHabitEvents(eventsInput, habitIds)) {
+    const eventDateMs = parseDateOnly(event.payload.date);
+
+    if (eventDateMs === null || eventDateMs < startMs || eventDateMs > endMs) {
+      continue;
+    }
+
+    const key = `${event.payload.habitPageId}\u0000${event.payload.date}`;
+    const previous = terminalEvents.get(key);
+
+    if (previous === undefined || previous.createdAt <= event.createdAt) {
+      terminalEvents.set(key, event);
+    }
+  }
+
+  const completedHabitIds = new Set<string>();
+
+  for (const event of terminalEvents.values()) {
+    if (event.type === "checked") {
+      completedHabitIds.add(event.payload.habitPageId);
+    }
+  }
+
+  return completedHabitIds;
 }
 
 function readHabitEvent(
