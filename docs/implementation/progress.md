@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:37 CST - TASK-042 test-quality review found one P2
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Franklin (`test_quality_reviewer`) returned final status with no P0/P1 findings.
+- P2 finding: Calendar route tests cover valid `calendar.open-time-segment` and unrelated-command rejection, but not same-command stale/non-projected `{ segmentId, pageId }` rejection at the route-owned bridge.
+- Franklin validation: 7-file focused TASK-042 suite passed with 126 tests.
+- Next action: delegate a narrow P2 bridge-guard regression test before release gate.
+
 ### 2026-06-01 21:34 CST - TASK-042 test-quality review retried
 
 - Branch: `feat/task-042-calendar-reporting-routes`.

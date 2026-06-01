@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: `test_quality_reviewer` Franklin (`019e8364-143b-7630-abb9-a6205cd23793`) is running; parent is waiting for final status.
+- Status: test-quality review completed; P2 bridge-guard test delegation pending.
 
 ## Scope
 
@@ -53,6 +53,7 @@
 - Raman (`doc_writer`) was spawned at 2026-06-01 21:32 CST to fix Turing's stale testing/development docs wording findings.
 - Raman returned final status and completed docs wording fix in commit `95ab7a9`.
 - Franklin (`test_quality_reviewer`) was spawned at 2026-06-01 21:34 CST to review TASK-042 test quality after review fixes.
+- Franklin returned final status with no P0/P1 findings. P2: add route-level coverage that `calendar.open-time-segment` with stale/non-projected `{ segmentId, pageId }` is rejected by the route-owned bridge.
 
 ## Parent Decisions
 
@@ -90,7 +91,8 @@
 - 2026-06-01 21:32 CST: Raman (`doc_writer`, agent `019e8362-31ad-7ea1-8922-3ba89d4c9b5f`) spawned for narrow docs wording fixes. Parent state is waiting for completion/final status.
 - 2026-06-01 21:33 CST: Raman returned final status. Parent verified docs diff and committed wording fix as `95ab7a9`.
 - 2026-06-01 21:34 CST: Franklin (`test_quality_reviewer`, agent `019e8364-143b-7630-abb9-a6205cd23793`) spawned after previous thread-limit retry. Parent state is waiting for completion/final status.
+- 2026-06-01 21:37 CST: Franklin returned final status. No P0/P1 findings; one P2 same-command stale/non-projected Calendar bridge coverage gap remains.
 
 ## Next Action
 
-- Wait for Franklin (`test_quality_reviewer`) final status before release gate and closeout.
+- Delegate a narrow P2 bridge-guard regression test, then run validation/release gate.
