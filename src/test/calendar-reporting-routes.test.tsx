@@ -438,6 +438,54 @@ describe("TASK-042 Calendar route", () => {
     expect(commandWasExecuted(execute, "timer.stop")).toBe(false);
   });
 
+  it("rejects stale same-command Calendar payloads before Command Registry execution", async () => {
+    const runtime = await createRuntime({
+      eventIds: ["event-stale-bridge"],
+      pageIds: ["home-page", "stale-bridge-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+    const execute = vi.spyOn(runtime.commands, "execute");
+    const stalePayload = {
+      pageId: "never-projected-page",
+      segmentId: "never-projected-segment",
+    };
+
+    createRuntimePage(runtime, homeTitle, []);
+    const bridgePage = createRuntimePage(runtime, "Stale Bridge Page", []);
+
+    appendTimerSegment(runtime, bridgePage, {
+      durationSeconds: 900,
+      endAt: "2026-05-20T10:15:00.000Z",
+      segmentId: "segment-stale-bridge",
+      startAt: "2026-05-20T10:00:00.000Z",
+    });
+    replaceCalendarViewWithCommandProbe(runtime, stalePayload);
+    renderReadyApp(runtime);
+
+    await user.click(await findWorkspaceRouteButton(/^Calendar\b/i));
+
+    const day = await screen.findByRole("region", { name: /^Calendar day$/i });
+
+    await user.click(
+      within(day).getByRole("button", {
+        name: /^Try stale Calendar segment$/i,
+      }),
+    );
+
+    expect(
+      await within(day).findByRole("status", { name: /calendar bridge/i }),
+    ).toHaveTextContent(/stale rejected/i);
+    expect(commandWasExecuted(execute, calendarOpenSegmentCommandId)).toBe(
+      false,
+    );
+    expect(execute).not.toHaveBeenCalledWith(
+      calendarOpenSegmentCommandId,
+      stalePayload,
+    );
+  });
+
   it("shows empty, partial-data, missing-view, and missing-command Calendar states without leaking raw data", async () => {
     await expectCalendarState({
       createRuntimeOptions: { pageIds: ["home-page"] },
@@ -1173,7 +1221,13 @@ function replaceCalendarOpenSegmentCommand(
   });
 }
 
-function replaceCalendarViewWithCommandProbe(runtime: AppRuntime): void {
+function replaceCalendarViewWithCommandProbe(
+  runtime: AppRuntime,
+  stalePayload: { pageId: string; segmentId: string } = {
+    pageId: "never-projected-page",
+    segmentId: "never-projected-segment",
+  },
+): void {
   runtime.registries.views.unregister(calendarDayViewId);
   runtime.registries.views.register({
     accepts: { kind: "calendar.time-segments" },
@@ -1209,6 +1263,19 @@ function replaceCalendarViewWithCommandProbe(runtime: AppRuntime): void {
             type="button"
           >
             Try raw command facade
+          </button>
+          <button
+            onClick={() => {
+              void props.commands
+                ?.execute(calendarOpenSegmentCommandId, stalePayload)
+                .then(
+                  () => setStatus("stale accepted"),
+                  () => setStatus("stale rejected"),
+                );
+            }}
+            type="button"
+          >
+            Try stale Calendar segment
           </button>
           <p aria-label="Calendar bridge" role="status">
             {status}
