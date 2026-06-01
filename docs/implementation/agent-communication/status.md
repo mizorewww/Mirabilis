@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:02 CST.
+Last updated: 2026-06-01 21:14 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-01 21:02 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 replacement `doc_writer` McClintock (`019e8347-33ae-7173-bed4-61344590f23a`) is running; parent is waiting for final status.
+- Current phase: TASK-042 docs sync committed; post-doc review and branch gate pending.
 
 ## Current Outcome
 
@@ -27,6 +27,7 @@ Last updated: 2026-06-01 21:02 CST.
 - Parent review-fix validation passed: focused TASK-042/adjacent suites passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
 - McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. Parent will not integrate or commit docs sync until McClintock returns completion/final status.
+- McClintock returned final status and completed docs sync in commit `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`). Parent verified docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks before commit.
 
 ## Initial TASK-042 Scope
 
@@ -56,4 +57,4 @@ Last updated: 2026-06-01 21:02 CST.
 
 ## Next Parent Actions
 
-- Wait for McClintock (`doc_writer`) final status. If waiting is unusually long, send one queued status request, then keep waiting.
+- Run post-doc review agents, focused validation, release gate, progress closeout, and merge when clear.

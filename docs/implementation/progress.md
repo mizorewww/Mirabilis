@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:14 CST - TASK-042 docs sync committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Docs sync commit: `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`).
+- McClintock (`doc_writer`) returned final status after replacing failed Bohr, completed formal product/architecture/development/testing/task-index docs sync, and confirmed no implementation code, tests, package, lockfile, Tauri/Rust, schema, capability, progress, or agent-communication ledger edits.
+- Parent validation before commit: docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks passed.
+- Next action: run post-doc review agents, branch gate, progress closeout, and merge when clear.
+
 ### 2026-06-01 20:56 CST - TASK-042 docs sync agent failed and will be replaced
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
