@@ -212,6 +212,15 @@ App Shell copies valid search.results data into a shell-owned bounded results ro
 Search results route renders inert rows and validates selected pages before normal page-route navigation
 Closing pending Search invalidates stale later resolve/reject results
 
+TASK-042 当前:
+App Shell opens Calendar and Reports as real Drawer routes with mounted route content
+Calendar route snapshots public current-runtime pages/events/metadata, excludes missing or archived pages, and builds bounded kind calendar.time-segments data
+Calendar route mounts calendar.day / calendar.week through ViewHost and refreshes the route snapshot after user-triggered view changes
+Calendar route commandBridge delegates only calendar.open-time-segment({ segmentId, pageId }) for current projected segment pairs
+Reports route builds bounded Stats inputs from public runtime data, defaults to stats.sum-time-by-page, and executes active stats-owned stats.run-aggregation
+Reports route renders returned Chart DTOs through chart.bar / ViewHost, rejects stale async resolves/rejects after route or aggregation changes, and refreshes route snapshots after aggregation changes
+Calendar/Reports route-level states own empty, unavailable, partial, loading, and error UI
+
 TASK-030 当前:
 MlPlugin registers ml.run-prediction, ml.prediction-panel, and ml.page-sidebar.prediction-panel
 MlPlugin contributes inert algorithm descriptor ml.predict-remaining-time, metadata descriptors ml.predictedRemainingTime / ml.predictionConfidence, and event descriptor ml.prediction-generated
@@ -224,7 +233,7 @@ PredictionPanel validates DTOs and fails closed/inertly for malformed or wrong-k
 TASK-038 已交付 current app-shell Drawer saved-filter routes for public filters; broader global/persistent saved-filter navigation remains future scope
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
-Timer metadata totals, Calendar/Habit/Heatmap app-shell route/feed, Stats dashboard/saved-filter/persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, page.header.actions/sidebar/body-after slot placement, and native/schema surfaces
+Timer metadata totals, Heatmap app-shell route/feed, persistent Calendar/Reports dashboards or saved filters beyond TASK-042, Stats persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, page.header.actions/sidebar/body-after slot placement, and native/schema surfaces
 Quick Capture desktop global shortcuts/native entry point, Quick Capture mobile toolbar mounting, persistent Search indexing, Search indexer worker, SQLite/FTS search, native/global Search shortcuts, and Search ranking beyond existing plugin behavior
 ```
 
@@ -379,11 +388,11 @@ timer.page-timeline.segments rendered on page.timeline
 → Timeline refreshes and renders note text inertly
 ```
 
-`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Calendar app-shell route/feed, Timer-to-Stats feed normalization, trusted/persistent ML feed integration, metadata totals, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, and native persistence/schema/Tauri/package/Rust changes remain deferred.
+`timer.add-note` rejects active-only, unknown, malformed, wrong-owner, or unsafe payloads without mutating pages/events/state. The internal scoped executor is still a hidden `Symbol.for("mirabilis.internal.pluginScopedCommandExecutor")` channel duplicated between Plugin Host and Timer; it is protected by descriptor-owner checks, but remains a future API cleanup target. Persistent Calendar/Reports feeds beyond TASK-042, trusted/persistent ML feed integration, metadata totals, Recently Worked / Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, production charting dependencies, and native persistence/schema/Tauri/package/Rust changes remain deferred.
 
-### 18.9 Caller opens Calendar day/week
+### 18.9 User opens Calendar day/week
 
-TASK-026 current flow:
+TASK-026 plugin-view flow:
 
 ```text
 Caller/view host prepares CalendarTimeSegmentsData
@@ -402,19 +411,35 @@ Caller/view host prepares CalendarTimeSegmentsData
 
 Calendar does not call `ctx.events.list(...)` to read Timer-owned events in this slice. Plugin-facing event reads remain scoped to the calling plugin, so a reviewed cross-plugin query/read facade is required before Calendar can directly query Timer events. The current Timer integration test normalizes a public `time_segment_created` event in the test harness, which models caller/view-host behavior rather than Calendar-owned event reads.
 
+TASK-042 app-shell route flow:
+
+```text
+User clicks Calendar in the MUI Drawer
+→ App Shell snapshots public current-runtime pages/events/metadata
+→ Projection excludes missing and archived pages
+→ Projection keeps trusted Timer time_segment_created events in the selected UTC day/week range
+→ Projection caps calendar.time-segments rows at 1,000 and marks partial when truncated
+→ App Shell verifies active calendar-owned view and command descriptors
+→ ViewHost mounts calendar.day or calendar.week with the bounded projection
+→ Calendar view receives a route-owned commandBridge
+→ commandBridge only delegates calendar.open-time-segment({ segmentId, pageId }) for current projected segment pairs
+→ User-triggered Day/Week changes rebuild the route snapshot before remounting the view
+```
+
+The route bridge rejects every other command id and stale/non-projected segment pair before Command Registry execution. It is not a raw Command Registry facade and does not expose broad runtime handles to the Calendar view.
+
 Calendar date inputs are UTC date-only strings. If `date` or `weekStart` is absent, the implementation derives the selected range from the current UTC date; deterministic tests pass explicit date/weekStart values or set the system clock. TASK-026 still accepts any `Date.parse`-parseable instant for segment `startAt`/`endAt`; strict `Z`-only UTC and duration-match validation remain future hardening.
 
-Deferred after TASK-026:
+Deferred after TASK-026 / TASK-042:
 
 ```text
 calendar.month
 manual segment creation/editing
 snake_case command aliases
-app-shell Calendar route/navigation
 drag/drop editing
 broad cross-plugin event read/query facade
 Timer metadata totals
-Stats/ML/Habit/Task scheduled feeds
+Persistent Stats/ML/Habit/Task scheduled feeds
 external calendar sync
 native/Tauri/package/Rust/schema changes
 strict UTC Z-only and duration-match hardening
@@ -452,9 +477,9 @@ native/Tauri/package/Rust/schema changes
 
 ---
 
-### 18.11 Caller runs Stats aggregation and opens Chart view
+### 18.11 User opens Reports and runs Stats aggregation
 
-TASK-028 current flow:
+TASK-028 plugin-view flow:
 
 ```text
 Caller/view host prepares normalized Stats input from public plugin outputs/events/metadata
@@ -468,7 +493,25 @@ Caller/view host prepares normalized Stats input from public plugin outputs/even
 
 Stats does not query Timer/Habit/Task/Tag internals or private stores. Chart does not query Stats internals; it only renders supplied `chart.category-series`, `chart.time-series`, or `chart.comparison-series` DTOs. Both plugins avoid HTML/Markdown execution sinks.
 
-Deferred after TASK-028:
+TASK-042 app-shell Reports route flow:
+
+```text
+User clicks Reports in the MUI Drawer
+→ App Shell snapshots public current-runtime pages/events/metadata
+→ Projection excludes missing and archived pages
+→ Projection builds bounded Stats input; default aggregation is stats.sum-time-by-page
+→ Time-by-page and time-by-tag category outputs are capped at 200 Chart-compatible categories
+→ Time-by-tag segment tagIds are limited to emitted tag rows
+→ Habit event, habit summary, Timer note, and Stats input overflows mark partial route state
+→ App Shell verifies active stats-owned stats.run-aggregation and chart-owned chart.bar descriptors
+→ CommandRegistry executes stats.run-aggregation({ aggregationId, input })
+→ Stale async resolve/reject results are ignored after route or aggregation changes
+→ ViewHost renders the returned Chart DTO through chart.bar
+```
+
+Reports owns route-level empty, partial, loading, error, and unavailable states. It does not add a persistent stats index, saved reporting route, production chart dependency, native/Tauri/IPC/schema surface, or broad cross-plugin query/feed facade.
+
+Deferred after TASK-028 / TASK-042:
 
 ```text
 Stats dashboard and insight views
@@ -477,7 +520,7 @@ persistent stats indexes
 production charting libraries
 ML/AI insight generation
 broad cross-plugin query/read facade
-app-shell Stats/Chart routes
+saved or persistent reporting dashboards beyond TASK-042
 ```
 
 ---
