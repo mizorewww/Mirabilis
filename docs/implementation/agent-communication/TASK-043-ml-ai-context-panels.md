@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance complete; parent decisions recorded and TDD test delegation pending.
+- Status: `test_writer` Anscombe (`019e8379-1dc1-7dc1-aea5-26a217549ddf`) is running; parent is waiting for final status.
 
 ## Scope
 
@@ -33,6 +33,7 @@
 - Avicenna (`security_reviewer`) completed with no blocker. It recommended projection, hosted-prop, mutation, and static guard tests; flagged P0/P1 risks around live provider/network/secrets/native/schema expansion, AI mutation, raw runtime handles, provider settings, full workspace data, and raw errors.
 - Einstein (`planner`) completed with no blocker. It recommended a right-side shell-owned `ContextPanel`, current-page-route gating, exact `ViewHost` ids, no broad `page.sidebar.panel` mounting, new `src/shell/projections/ml-ai-context.ts`, new projection/panel tests, and adjacent ML/AI/ViewHost boundary suites.
 - Aristotle (`deprecation_auditor`) completed with no P0 blocker. It warned to avoid removed MUI v9 props (`componentsProps`, `PaperProps`, `BackdropProps`, old system props), keep AI `ViewHost` data kinds equal to registered view ids, avoid live AI provider execution, and add stale async guards.
+- Anscombe (`test_writer`) was spawned at 2026-06-01 21:57 CST to add failing projection, panel, and static-boundary tests.
 
 ## Parent Decisions
 
@@ -49,7 +50,8 @@
 - 2026-06-01 21:46 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - 2026-06-01 21:47 CST: pre-test guidance agents spawned; parent is waiting for completion/final statuses.
 - 2026-06-01 21:55 CST: pre-test guidance agents completed with no hard blockers. Parent decisions recorded above.
+- 2026-06-01 21:57 CST: Anscombe (`test_writer`, agent `019e8379-1dc1-7dc1-aea5-26a217549ddf`) spawned for red tests. Parent state is waiting for completion/final status.
 
 ## Next Action
 
-- Delegate failing projection, panel, and static-boundary tests to `test_writer`.
+- Wait for Anscombe (`test_writer`) final status before validating and committing red tests.
