@@ -86,13 +86,21 @@ Status markers:
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [x] TASK-041: Add Search Overlay And Results Route
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
-- [ ] TASK-043: Add ML And AI Context Panels
+- [~] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-01 21:46 CST - TASK-043 started
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Started from clean `master` after TASK-042 merge and master validation.
+- Scope: add optional right context panel surfaces for current-page ML and AI context without covering the Markdown workspace; build exact bounded current-page projections; run `ml.run-prediction` through Command Registry; render ML/AI panel views through registered hosts; keep AI advisory and non-mutating; defer live provider execution, secrets, settings UI, native/network/schema/package changes, and durable suggestion acceptance.
+- Agent/config validation: 11 project agent TOML files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Next action: delegate planner, docs/API, security, and deprecation guidance before TDD tests.
 
 ### 2026-06-01 21:44 CST - TASK-042 merged to master
 

@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:44 CST.
+Last updated: 2026-06-01 21:46 CST.
 
 ## Current Task
 
-- Task: TASK-042 - Add Calendar And Reporting Routes With Explicit Data Projections.
-- Branch: `feat/task-042-calendar-reporting-routes`.
+- Task: TASK-043 - Add ML And AI Context Panels.
+- Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 merged to `master`; master validation passed; next task selection pending.
+- Current phase: TASK-043 started; pre-test guidance delegation pending.
 
 ## Current Outcome
 
@@ -42,14 +42,17 @@ Last updated: 2026-06-01 21:44 CST.
 - Pasteur returned final status and added the P2 regression test in commit `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`). Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests and `git diff --check` passed.
 - Final branch validation passed: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; `bun run check:quick` passed with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
 - TASK-042 merged to `master` in merge commit `19711d0`. Master `bun run check:quick` passed after merge with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
+- TASK-043 branch was created from validated `master`.
+- Agent/config validation passed for TASK-043 startup: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
-## Initial TASK-042 Scope
+## Initial TASK-043 Scope
 
-- Sidebar/plugin routes expose Calendar and Reports surfaces only through registered plugin views/commands.
-- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata and mount `calendar.day` / `calendar.week` through `ViewHost`.
-- Reporting routes build explicit bounded Stats input projections, execute `stats.run-aggregation` through Command Registry, and render Chart views through `ViewHost` when chart DTOs are available.
-- Empty, partial-data, loading, and unavailable states are visible and non-leaky.
-- Projection builders are app-shell owned integration code and do not import plugin private stores, sibling plugin internals, raw Core stores from plugin-rendered UI, or native/SQLite APIs.
+- Optional right context panel can show current-page ML and AI panels without covering the Markdown workspace.
+- ML panel builds exact bounded current-page projections, executes `ml.run-prediction` through Command Registry, and renders `ml.page-sidebar.prediction-panel` / `ml.prediction-panel` through registered hosts.
+- AI panel renders advisory `ai.suggestion-panel` and `ai.review-panel` with explicit caller-provided DTOs and exact bounded projections.
+- AI output remains advisory; shell integration must not mutate pages, metadata, events, filters, sibling plugin data, settings, or secrets.
+- Live provider execution, provider settings UI, secret/keychain storage, durable AI suggestion acceptance, network/native execution, package, Tauri, Rust, capability, permission, and schema changes remain deferred.
+- ML/AI panels fail closed for malformed, unavailable, or rejected data and do not expose full workspace data, raw runtime handles, provider settings, raw errors, or secrets.
 
 ## Constraints
 
@@ -67,8 +70,8 @@ Last updated: 2026-06-01 21:44 CST.
 
 ## Deferred Scope
 
-- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+- Settings/Sync placeholders, responsive/persistent navigation polish, live AI providers, provider settings UI, secrets/keychain, durable AI acceptance, network/native execution, package/Tauri/Rust/capability/schema changes, and release surfaces remain later tasks.
 
 ## Next Parent Actions
 
-- Push `master`, then continue with TASK-043 - Add ML And AI Context Panels.
+- Delegate planner, docs/API, security, and deprecation guidance before TDD tests.
