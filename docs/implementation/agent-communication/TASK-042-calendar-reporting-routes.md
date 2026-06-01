@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix code and docs sync committed; post-doc review and branch gate pending.
+- Status: review-fix code and docs sync committed; five post-doc review agents are running and parent is waiting for final statuses.
 
 ## Scope
 
@@ -41,6 +41,7 @@
 - Bohr (`doc_writer`) was delegated TASK-042 docs sync but failed with `stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)`. It left a partial edit in `docs/product/07-user-interface-design.md`; parent will replace Bohr with a fresh `doc_writer` and require it to inspect, complete, or correct the partial edit before docs commit.
 - McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. It owns docs-writing for TASK-042 and is expected to inspect Bohr's partial `docs/product/07-user-interface-design.md` edit, update formal product/architecture/testing/task-index docs, and return final status before parent integrates.
 - McClintock returned final status and completed docs sync in commit `9bfd714`. Changed docs: `docs/product/03-plugin-platform.md`, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/product/06-view-slots.md`, `docs/product/07-user-interface-design.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/05-plugin-implementations.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and `docs/implementation/task-index.md`.
+- Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). A `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
 
 ## Parent Decisions
 
@@ -69,7 +70,8 @@
 - 2026-06-01 20:56 CST: Bohr (`doc_writer`) failed before final status due stream disconnect while syncing docs; partial product UI doc edits remain in the worktree for replacement doc writer review.
 - 2026-06-01 21:02 CST: McClintock (`doc_writer`, agent `019e8347-33ae-7173-bed4-61344590f23a`) spawned for replacement docs sync. Parent state is waiting for completion/final status; no docs integration or commit until final status returns.
 - 2026-06-01 21:14 CST: McClintock (`doc_writer`) returned final status. Parent verified docs-only paths, `git diff --check`, and targeted stale-route `rg` checks, then committed docs sync as `9bfd714`.
+- 2026-06-01 21:15 CST: parent spawned five read-only post-doc review agents and is waiting for their final statuses. `test_quality_reviewer` spawn hit current agent thread limit and will be retried after capacity frees.
 
 ## Next Action
 
-- Run post-doc review agents, focused validation, release gate, progress closeout, and merge when clear.
+- Wait for the five running post-doc review agents' final statuses, then retry `test_quality_reviewer`, run focused validation/release gate, and merge when clear.

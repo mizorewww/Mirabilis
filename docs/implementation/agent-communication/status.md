@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:14 CST.
+Last updated: 2026-06-01 21:15 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-01 21:14 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 docs sync committed; post-doc review and branch gate pending.
+- Current phase: TASK-042 post-doc review agents are running; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -28,6 +28,7 @@ Last updated: 2026-06-01 21:14 CST.
 - Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
 - McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. Parent will not integrate or commit docs sync until McClintock returns completion/final status.
 - McClintock returned final status and completed docs sync in commit `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`). Parent verified docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks before commit.
+- Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
 
 ## Initial TASK-042 Scope
 
@@ -57,4 +58,4 @@ Last updated: 2026-06-01 21:14 CST.
 
 ## Next Parent Actions
 
-- Run post-doc review agents, focused validation, release gate, progress closeout, and merge when clear.
+- Wait for the five running post-doc review agents' final statuses, then retry `test_quality_reviewer`, run focused validation/release gate, and merge when clear.
