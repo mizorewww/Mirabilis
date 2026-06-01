@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix `test_writer` Wegener (`019e8359-d00a-7d50-bb4d-a9622193e97e`) is running; parent is waiting for final status.
+- Status: review-fix `implementer` Euclid (`019e835c-bd9a-7b92-8f86-e971294d5ff5`) is running; parent is waiting for final status.
 
 ## Scope
 
@@ -47,6 +47,8 @@
 - Turing (`docs_researcher`) found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still says non-Home routes remain placeholders. Turing also found P2 stale `docs/development/01-data-roadmap-and-mvp.md` wording that should qualify only saved/persistent/broad Stats/Chart routes as future scope.
 - Laplace (`security_reviewer`) found no P0/P1 security issue; retained P2 local availability risk for very large pages/events/metadata arrays copied/sorted before caps. Godel (`deprecation_auditor`) found no P0/P1/P2 API issue and verified current React/MUI/Testing Library/Vitest/Vite docs.
 - Wegener (`test_writer`) was spawned at 2026-06-01 21:22 CST to add failing tests for non-page/tag Reports Chart caps and to correct stale Home workspace Reports route assertions.
+- Wegener returned final status. Parent re-ran the focused changed-test command and confirmed the intended red state: only the two new non-page/tag Reports cap assertions failed, while Calendar routes and Home workspace passed. Test commit: `446be08`.
+- Euclid (`implementer`) was spawned at 2026-06-01 21:26 CST to make those tests pass with minimal production changes in app-shell projection logic.
 
 ## Parent Decisions
 
@@ -78,7 +80,9 @@
 - 2026-06-01 21:15 CST: parent spawned five read-only post-doc review agents and is waiting for their final statuses. `test_quality_reviewer` spawn hit current agent thread limit and will be retried after capacity frees.
 - 2026-06-01 21:21 CST: post-doc review final statuses received. Merge blocked by P1 non-page/tag Reports Chart cap gap and P1 stale Reports placeholder test/docs drift. Parent will delegate review-fix tests before implementation/docs fixes.
 - 2026-06-01 21:22 CST: Wegener (`test_writer`, agent `019e8359-d00a-7d50-bb4d-a9622193e97e`) spawned for review-fix tests. Parent state is waiting for completion/final status.
+- 2026-06-01 21:25 CST: Wegener returned final status. Parent red validation matched expected remaining failures and committed tests as `446be08`.
+- 2026-06-01 21:26 CST: Euclid (`implementer`, agent `019e835c-bd9a-7b92-8f86-e971294d5ff5`) spawned for the production review fix. Parent state is waiting for completion/final status.
 
 ## Next Action
 
-- Wait for Wegener (`test_writer`) final status before validating and committing review-fix tests.
+- Wait for Euclid (`implementer`) final status before validating and committing production fixes.

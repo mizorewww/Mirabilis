@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:26 CST - TASK-042 review-fix implementation delegated
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `446be08` (`Wegener(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): add remaining report cap regressions`).
+- Parent red validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx` failed as expected with 2 projection cap failures; `calendar-reporting-routes.test.tsx` and `home-workspace-editor.test.tsx` passed.
+- Euclid (`implementer`) was spawned to make the non-page/tag Reports Chart cap tests pass with minimal production changes.
+- Next action: wait for Euclid final status, validate, and commit production fix.
+
 ### 2026-06-01 21:21 CST - TASK-042 post-doc review found remaining blockers
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
