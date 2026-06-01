@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:31 CST - TASK-042 non-page report cap fix committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Production fix commit: `cfed230` (`Euclid(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cap non-page report categories`).
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx` passed with 3 files / 45 tests; broader TASK-042 suite passed with 7 files / 126 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Remaining review items: stale testing/development docs wording from Turing's P1/P2 findings, test-quality review retry after previous thread limit, release gate, progress closeout, and merge.
+- Next action: delegate docs wording fixes.
+
 ### 2026-06-01 21:26 CST - TASK-042 review-fix implementation delegated
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
