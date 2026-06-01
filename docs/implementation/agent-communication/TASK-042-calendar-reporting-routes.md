@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review fixes complete; release gate and closeout pending.
+- Status: branch gate passed and closeout is ready to merge.
 
 ## Scope
 
@@ -56,6 +56,7 @@
 - Franklin returned final status with no P0/P1 findings. P2: add route-level coverage that `calendar.open-time-segment` with stale/non-projected `{ segmentId, pageId }` is rejected by the route-owned bridge.
 - Pasteur (`test_writer`) was spawned at 2026-06-01 21:38 CST to add that narrow bridge-guard regression test.
 - Pasteur returned final status and added the P2 regression test in commit `cfbb6f3`. The test passed without implementation changes, confirming the route-owned bridge already rejects stale/non-projected same-command payloads before Command Registry execution.
+- Final branch validation passed: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and `bun run check:quick` passed.
 
 ## Parent Decisions
 
@@ -96,7 +97,8 @@
 - 2026-06-01 21:37 CST: Franklin returned final status. No P0/P1 findings; one P2 same-command stale/non-projected Calendar bridge coverage gap remains.
 - 2026-06-01 21:38 CST: Pasteur (`test_writer`, agent `019e8367-dfe8-79c3-b6ee-d07c1c67f3b7`) spawned for the P2 Calendar bridge regression test. Parent state is waiting for completion/final status.
 - 2026-06-01 21:40 CST: Pasteur returned final status. Parent validation passed: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests and `git diff --check` passed. Test committed as `cfbb6f3`.
+- 2026-06-01 21:45 CST: final branch validation passed. Focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; `bun run check:quick` passed with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
 
 ## Next Action
 
-- Run focused TASK-042 validation, `check:quick`, progress closeout, and merge when clear.
+- Commit closeout, merge TASK-042 to `master`, validate `master`, then continue to the next unblocked task.

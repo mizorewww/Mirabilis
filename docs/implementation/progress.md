@@ -85,7 +85,7 @@ Status markers:
 - [x] TASK-039: Mount Metadata, Timer, And Timeline Slots
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [x] TASK-041: Add Search Overlay And Results Route
-- [~] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
+- [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [ ] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
@@ -93,6 +93,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-01 21:45 CST - TASK-042 branch gate passed and task marked complete
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Head before closeout: `e30af56` (`Codex(progress)(Add Calendar And Reporting Routes With Explicit Data Projections): record bridge test completion`).
+- Delivered: Calendar and Reports Drawer routes from explicit app-shell-owned projections; Calendar day/week mounting with a narrow current-segment `calendar.open-time-segment` bridge; Reports Stats-to-Chart route flow with Chart-compatible caps for page/tag/habit/unnoted category outputs; empty, partial, unavailable, loading, and error states; documentation sync; and durable parent orchestration wait protocol updates.
+- Review outcome: post-review P1 findings were fixed; final test-quality review had no P0/P1 findings. The P2 same-command Calendar bridge coverage gap was closed by `cfbb6f3`.
+- Branch validation: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Local gate: `bun run check:quick` passed. Frontend: 47 files / 768 tests. Rust: `cargo fmt --check`, `cargo clippy --all-targets --all-features -D warnings`, and `cargo test --all-features` passed, including IPC, persistence, and SQLite suites.
+- Remaining risks: large local page/event/metadata arrays can still be copied/sorted before projection caps apply; this is a P2 local availability hardening follow-up, not a merge blocker. Broad/persistent Calendar/Reports feeds, dashboards, manual calendar editing, native calendar integration, schema/native/package changes, and production charting dependencies remain deferred.
+- Next action: commit closeout, merge to `master`, validate `master`, then continue with the next unblocked M9 UI task.
 
 ### 2026-06-01 21:40 CST - TASK-042 bridge regression test committed
 
