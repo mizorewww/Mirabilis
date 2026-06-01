@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix code and docs sync committed; five post-doc review agents are running and parent is waiting for final statuses.
+- Status: post-doc review completed with P1 blockers; review-fix test delegation pending.
 
 ## Scope
 
@@ -42,6 +42,10 @@
 - McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. It owns docs-writing for TASK-042 and is expected to inspect Bohr's partial `docs/product/07-user-interface-design.md` edit, update formal product/architecture/testing/task-index docs, and return final status before parent integrates.
 - McClintock returned final status and completed docs sync in commit `9bfd714`. Changed docs: `docs/product/03-plugin-platform.md`, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md`, `docs/product/06-view-slots.md`, `docs/product/07-user-interface-design.md`, `docs/architecture/04-slots-editor-task.md`, `docs/architecture/05-plugin-implementations.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, and `docs/implementation/task-index.md`.
 - Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). A `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Copernicus (`pr_explorer`) found P1 that Reports can still produce Chart-incompatible DTOs for non-page/tag aggregations. Habit completion and unnoted sessions can emit 201+ chart categories while `chart.bar` rejects arrays over 200.
+- Chandrasekhar (`reviewer`) independently confirmed the same P1 with read-only probes: 201 valid habit completions and 201 unnoted pages both produced `status: complete` with `categoryCount: 201`.
+- Turing (`docs_researcher`) found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still says non-Home routes remain placeholders. Turing also found P2 stale `docs/development/01-data-roadmap-and-mvp.md` wording that should qualify only saved/persistent/broad Stats/Chart routes as future scope.
+- Laplace (`security_reviewer`) found no P0/P1 security issue; retained P2 local availability risk for very large pages/events/metadata arrays copied/sorted before caps. Godel (`deprecation_auditor`) found no P0/P1/P2 API issue and verified current React/MUI/Testing Library/Vitest/Vite docs.
 
 ## Parent Decisions
 
@@ -71,7 +75,8 @@
 - 2026-06-01 21:02 CST: McClintock (`doc_writer`, agent `019e8347-33ae-7173-bed4-61344590f23a`) spawned for replacement docs sync. Parent state is waiting for completion/final status; no docs integration or commit until final status returns.
 - 2026-06-01 21:14 CST: McClintock (`doc_writer`) returned final status. Parent verified docs-only paths, `git diff --check`, and targeted stale-route `rg` checks, then committed docs sync as `9bfd714`.
 - 2026-06-01 21:15 CST: parent spawned five read-only post-doc review agents and is waiting for their final statuses. `test_quality_reviewer` spawn hit current agent thread limit and will be retried after capacity frees.
+- 2026-06-01 21:21 CST: post-doc review final statuses received. Merge blocked by P1 non-page/tag Reports Chart cap gap and P1 stale Reports placeholder test/docs drift. Parent will delegate review-fix tests before implementation/docs fixes.
 
 ## Next Action
 
-- Wait for the five running post-doc review agents' final statuses, then retry `test_quality_reviewer`, run focused validation/release gate, and merge when clear.
+- Delegate review-fix tests to `test_writer` for non-page/tag Reports Chart caps and stale Home workspace route assertion, then delegate implementation/docs fixes.

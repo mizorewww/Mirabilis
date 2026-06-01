@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:21 CST - TASK-042 post-doc review found remaining blockers
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Review agents: Copernicus (`pr_explorer`), Chandrasekhar (`reviewer`), Laplace (`security_reviewer`), Godel (`deprecation_auditor`), and Turing (`docs_researcher`) returned final status. `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Blocking findings: Reports still can generate Chart-incompatible DTOs for non-page/tag aggregations (`habit-completion-rate` and `unnoted-sessions-count`) with 201+ categories; `home-workspace-editor` still has a stale Reports placeholder assertion and `docs/testing/strategy.md` still contains stale non-Home placeholder wording.
+- Additional P2 findings: qualify stale `docs/development/01-data-roadmap-and-mvp.md` Stats/Chart route wording; large local datasets can be copied/sorted before projection caps apply; keep static guards around generic `ViewHost` `commandBridge`.
+- No P0/P1 security issue and no P0/P1/P2 deprecation/API issue found. Godel verified current React 19, MUI v9, Testing Library/user-event/fake timers, Vitest, and Vite official docs.
+- Next action: delegate review-fix tests to `test_writer`, then delegate implementation/docs fixes.
+
 ### 2026-06-01 21:14 CST - TASK-042 docs sync committed
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
