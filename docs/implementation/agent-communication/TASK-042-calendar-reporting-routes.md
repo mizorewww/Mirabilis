@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: non-page/tag Reports cap fix committed; docs wording fix delegation pending.
+- Status: docs wording `doc_writer` Raman (`019e8362-31ad-7ea1-8922-3ba89d4c9b5f`) is running; parent is waiting for final status.
 
 ## Scope
 
@@ -50,6 +50,7 @@
 - Wegener returned final status. Parent re-ran the focused changed-test command and confirmed the intended red state: only the two new non-page/tag Reports cap assertions failed, while Calendar routes and Home workspace passed. Test commit: `446be08`.
 - Euclid (`implementer`) was spawned at 2026-06-01 21:26 CST to make those tests pass with minimal production changes in app-shell projection logic.
 - Euclid returned final status and completed production fix in commit `cfed230`, capping `stats.habit-completion-rate` and `stats.unnoted-sessions-count` inputs to Chart-compatible categories with partial `chart.category-limit` status.
+- Raman (`doc_writer`) was spawned at 2026-06-01 21:32 CST to fix Turing's stale testing/development docs wording findings.
 
 ## Parent Decisions
 
@@ -84,7 +85,8 @@
 - 2026-06-01 21:25 CST: Wegener returned final status. Parent red validation matched expected remaining failures and committed tests as `446be08`.
 - 2026-06-01 21:26 CST: Euclid (`implementer`, agent `019e835c-bd9a-7b92-8f86-e971294d5ff5`) spawned for the production review fix. Parent state is waiting for completion/final status.
 - 2026-06-01 21:31 CST: Euclid returned final status. Parent validation passed: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx` passed with 3 files / 45 tests; broader TASK-042 suite passed with 7 files / 126 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Production fix committed as `cfed230`.
+- 2026-06-01 21:32 CST: Raman (`doc_writer`, agent `019e8362-31ad-7ea1-8922-3ba89d4c9b5f`) spawned for narrow docs wording fixes. Parent state is waiting for completion/final status.
 
 ## Next Action
 
-- Delegate docs wording fixes for stale testing/development docs, then run test-quality review and release gate.
+- Wait for Raman (`doc_writer`) final status before validating and committing docs wording fixes.

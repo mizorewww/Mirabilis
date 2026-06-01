@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:31 CST.
+Last updated: 2026-06-01 21:32 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-01 21:31 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 non-page/tag Reports cap fix committed; docs wording fix delegation pending.
+- Current phase: TASK-042 docs wording `doc_writer` Raman (`019e8362-31ad-7ea1-8922-3ba89d4c9b5f`) is running; parent is waiting for final status.
 
 ## Current Outcome
 
@@ -34,6 +34,7 @@ Last updated: 2026-06-01 21:31 CST.
 - Wegener returned final status. Parent re-ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx`; expected red result remained 2 projection cap failures while route and Home workspace tests passed. Test commit `446be08` records the red review regressions.
 - Euclid (`implementer`) was spawned at 2026-06-01 21:26 CST to make the new non-page/tag Reports Chart cap tests pass with minimal production changes.
 - Euclid returned final status and completed production fix in commit `cfed230` (`Euclid(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cap non-page report categories`). Parent validation passed: changed-tests suite 3 files / 45 tests, broader TASK-042 suite 7 files / 126 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Raman (`doc_writer`) was spawned at 2026-06-01 21:32 CST to fix narrow stale wording in `docs/testing/strategy.md` and `docs/development/01-data-roadmap-and-mvp.md`.
 
 ## Initial TASK-042 Scope
 
@@ -63,4 +64,4 @@ Last updated: 2026-06-01 21:31 CST.
 
 ## Next Parent Actions
 
-- Delegate docs wording fixes for stale testing/development docs, then run test-quality review and release gate.
+- Wait for Raman (`doc_writer`) final status before validating and committing docs wording fixes.
