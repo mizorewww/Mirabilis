@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:40 CST - TASK-042 bridge regression test committed
+
+- Branch: `feat/task-042-calendar-reporting-routes`.
+- Test commit: `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`).
+- Pasteur added route-level coverage that `calendar.open-time-segment` with a stale/non-projected segment/page pair is rejected by the route-owned bridge before Command Registry execution.
+- Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests; `git diff --check` passed.
+- Next action: run focused TASK-042 validation, release gate, progress closeout, and merge when clear.
+
 ### 2026-06-01 21:37 CST - TASK-042 test-quality review found one P2
 
 - Branch: `feat/task-042-calendar-reporting-routes`.
