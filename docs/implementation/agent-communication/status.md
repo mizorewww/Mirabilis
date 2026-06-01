@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 20:56 CST.
+Last updated: 2026-06-01 21:02 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-01 20:56 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 code review-fixes are validated; docs sync is pending replacement after failed doc_writer stream.
+- Current phase: TASK-042 replacement `doc_writer` McClintock (`019e8347-33ae-7173-bed4-61344590f23a`) is running; parent is waiting for final status.
 
 ## Current Outcome
 
@@ -26,6 +26,7 @@ Last updated: 2026-06-01 20:56 CST.
 - Carver (`test_writer`) added review regression coverage in commit `e0eee79`; Bacon (`implementer`) fixed the production regressions in commit `aa2413e`.
 - Parent review-fix validation passed: focused TASK-042/adjacent suites passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
+- McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. Parent will not integrate or commit docs sync until McClintock returns completion/final status.
 
 ## Initial TASK-042 Scope
 
@@ -55,4 +56,4 @@ Last updated: 2026-06-01 20:56 CST.
 
 ## Next Parent Actions
 
-- Commit Bohr failure/replacement record, then delegate docs sync to a replacement `doc_writer`.
+- Wait for McClintock (`doc_writer`) final status. If waiting is unusually long, send one queued status request, then keep waiting.

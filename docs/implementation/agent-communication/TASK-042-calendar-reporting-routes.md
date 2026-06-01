@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix code validated; docs sync replacement pending after failed doc_writer stream.
+- Status: review-fix code validated; replacement `doc_writer` McClintock (`019e8347-33ae-7173-bed4-61344590f23a`) is running and parent is waiting for final status.
 
 ## Scope
 
@@ -39,6 +39,7 @@
 - Carver (`test_writer`) added review regression coverage in commit `e0eee79` for Reports Chart compatibility, habit/note overflow partial status, mounted route snapshot refresh, wrong-owner route guards, stale rejected Reports results, and fake-timer cleanup.
 - Bacon (`implementer`) fixed review regressions in commit `aa2413e`, bounding Reports projections for Chart compatibility and refreshing Calendar/Reports snapshots on user-triggered route changes.
 - Bohr (`doc_writer`) was delegated TASK-042 docs sync but failed with `stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)`. It left a partial edit in `docs/product/07-user-interface-design.md`; parent will replace Bohr with a fresh `doc_writer` and require it to inspect, complete, or correct the partial edit before docs commit.
+- McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. It owns docs-writing for TASK-042 and is expected to inspect Bohr's partial `docs/product/07-user-interface-design.md` edit, update formal product/architecture/testing/task-index docs, and return final status before parent integrates.
 
 ## Parent Decisions
 
@@ -65,7 +66,8 @@
 - 2026-05-31 22:07 CST: post-implementation review completed. Merge is blocked by Reports Chart compatibility, habit/note overflow partial status, missing review regression coverage, and formal product/architecture/testing docs drift.
 - 2026-05-31 22:22 CST: parent validation after `e0eee79` and `aa2413e` passed: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - 2026-06-01 20:56 CST: Bohr (`doc_writer`) failed before final status due stream disconnect while syncing docs; partial product UI doc edits remain in the worktree for replacement doc writer review.
+- 2026-06-01 21:02 CST: McClintock (`doc_writer`, agent `019e8347-33ae-7173-bed4-61344590f23a`) spawned for replacement docs sync. Parent state is waiting for completion/final status; no docs integration or commit until final status returns.
 
 ## Next Action
 
-- Spawn a replacement `doc_writer` to complete formal product, architecture, testing, and task-index documentation sync for TASK-042.
+- Wait for McClintock (`doc_writer`) final status before integrating docs sync.
