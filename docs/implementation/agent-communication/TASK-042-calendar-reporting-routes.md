@@ -6,7 +6,7 @@
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: post-doc review completed with P1 blockers; review-fix test delegation pending.
+- Status: review-fix `test_writer` Wegener (`019e8359-d00a-7d50-bb4d-a9622193e97e`) is running; parent is waiting for final status.
 
 ## Scope
 
@@ -46,6 +46,7 @@
 - Chandrasekhar (`reviewer`) independently confirmed the same P1 with read-only probes: 201 valid habit completions and 201 unnoted pages both produced `status: complete` with `categoryCount: 201`.
 - Turing (`docs_researcher`) found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still says non-Home routes remain placeholders. Turing also found P2 stale `docs/development/01-data-roadmap-and-mvp.md` wording that should qualify only saved/persistent/broad Stats/Chart routes as future scope.
 - Laplace (`security_reviewer`) found no P0/P1 security issue; retained P2 local availability risk for very large pages/events/metadata arrays copied/sorted before caps. Godel (`deprecation_auditor`) found no P0/P1/P2 API issue and verified current React/MUI/Testing Library/Vitest/Vite docs.
+- Wegener (`test_writer`) was spawned at 2026-06-01 21:22 CST to add failing tests for non-page/tag Reports Chart caps and to correct stale Home workspace Reports route assertions.
 
 ## Parent Decisions
 
@@ -76,7 +77,8 @@
 - 2026-06-01 21:14 CST: McClintock (`doc_writer`) returned final status. Parent verified docs-only paths, `git diff --check`, and targeted stale-route `rg` checks, then committed docs sync as `9bfd714`.
 - 2026-06-01 21:15 CST: parent spawned five read-only post-doc review agents and is waiting for their final statuses. `test_quality_reviewer` spawn hit current agent thread limit and will be retried after capacity frees.
 - 2026-06-01 21:21 CST: post-doc review final statuses received. Merge blocked by P1 non-page/tag Reports Chart cap gap and P1 stale Reports placeholder test/docs drift. Parent will delegate review-fix tests before implementation/docs fixes.
+- 2026-06-01 21:22 CST: Wegener (`test_writer`, agent `019e8359-d00a-7d50-bb4d-a9622193e97e`) spawned for review-fix tests. Parent state is waiting for completion/final status.
 
 ## Next Action
 
-- Delegate review-fix tests to `test_writer` for non-page/tag Reports Chart caps and stale Home workspace route assertion, then delegate implementation/docs fixes.
+- Wait for Wegener (`test_writer`) final status before validating and committing review-fix tests.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:21 CST.
+Last updated: 2026-06-01 21:22 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-01 21:21 CST.
 - Branch: `feat/task-042-calendar-reporting-routes`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 post-doc review completed with P1 blockers; parent is preparing review-fix test delegation.
+- Current phase: TASK-042 review-fix `test_writer` Wegener (`019e8359-d00a-7d50-bb4d-a9622193e97e`) is running; parent is waiting for final status.
 
 ## Current Outcome
 
@@ -30,6 +30,7 @@ Last updated: 2026-06-01 21:21 CST.
 - McClintock returned final status and completed docs sync in commit `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`). Parent verified docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks before commit.
 - Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
 - Post-doc review final outcome: merge is blocked. Copernicus and Chandrasekhar found P1 Reports Chart incompatibility for non-page/tag aggregations: `habit-completion-rate` and `unnoted-sessions-count` can still produce 201+ categories that `chart.bar` rejects. Turing found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still describes non-Home routes as placeholders. Turing also noted a P2 stale `docs/development/01-data-roadmap-and-mvp.md` Stats/Chart app-shell route wording. Laplace found no security P0/P1 and retained the large local dataset pre-cap availability risk as P2. Godel found no deprecation/API P0/P1/P2 and verified React 19, MUI v9, Testing Library, Vitest, and Vite official docs.
+- Wegener (`test_writer`) was spawned at 2026-06-01 21:22 CST to add failing review regression tests for non-page/tag Reports Chart caps and to correct stale Home workspace Reports placeholder expectations. Parent will wait for final status before integrating tests.
 
 ## Initial TASK-042 Scope
 
@@ -59,4 +60,4 @@ Last updated: 2026-06-01 21:21 CST.
 
 ## Next Parent Actions
 
-- Delegate review-fix tests to `test_writer` for the non-page/tag Reports Chart cap and stale Home workspace route assertion, then delegate implementation/docs fixes.
+- Wait for Wegener (`test_writer`) final status before validating and committing review-fix tests.
