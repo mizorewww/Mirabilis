@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-01 21:55 CST - TASK-043 pre-test guidance complete
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Agents completed with no hard blockers: Einstein (`planner`), Banach (`docs_researcher`), Avicenna (`security_reviewer`), and Aristotle (`deprecation_auditor`).
+- Official docs verified by agents: MUI v9 Drawer/Tabs/Box/Stack/migration/useMediaQuery, React 19/19.2 StrictMode/createRoot/test-utils guidance, Testing Library queries/async/user-event/fake timers, Vitest fake timers, and Vite 7 migration. OpenAI docs were not checked because TASK-043 does not change live provider/request behavior.
+- Parent decisions: right-side current-page context panel; exact `ViewHost` ids for ML/AI; broad `page.sidebar.panel` SlotHost mounting deferred; current-page advisory AI allowlist is `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` only after a valid ML prediction; ML projection cap 1,000; AI projection cap 100; no live provider, secrets, native, package, or schema changes.
+- Next action: delegate failing projection, panel, and static-boundary tests to `test_writer`.
+
 ### 2026-06-01 21:47 CST - TASK-043 pre-test guidance delegated
 
 - Branch: `feat/task-043-ml-ai-context-panels`.
