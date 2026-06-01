@@ -564,6 +564,110 @@ describe("TASK-042 calendar and reporting projection builders", () => {
     });
   });
 
+  it("bounds Reports habit-completion inputs to Chart-compatible habit categories with partial status", () => {
+    const habitPages = Array.from({ length: 201 }, (_value, index) =>
+      createPage(
+        `page-habit-chart-${String(index).padStart(3, "0")}`,
+        `Habit Chart ${String(index).padStart(3, "0")}`,
+      ),
+    );
+    const metadata = habitPages.map((page, index) =>
+      createMetadata({
+        id: `metadata-habit-chart-${String(index).padStart(3, "0")}`,
+        key: "enabled",
+        namespace: "habit",
+        pageId: page.id,
+        sourcePluginId: "habit",
+        value: true,
+        valueType: "boolean",
+      }),
+    );
+    const events = habitPages.map((page, index) =>
+      createHabitEvent({
+        date: "2026-05-20",
+        habitPageId: page.id,
+        id: `event-habit-chart-${String(index).padStart(3, "0")}`,
+        type: "checked",
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.habit-completion-rate",
+      createProjectionSource({ events, metadata, pages: habitPages }),
+    );
+    const habits = projection.input.habits as Array<{ habitPageId?: string }>;
+    const projectedEvents = projection.input.events as Array<{
+      payload?: { habitPageId?: string };
+    }>;
+
+    expect(habits).toHaveLength(200);
+    expect(habits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ habitPageId: "page-habit-chart-000" }),
+        expect.objectContaining({ habitPageId: "page-habit-chart-199" }),
+      ]),
+    );
+    expect(habits).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ habitPageId: "page-habit-chart-200" }),
+      ]),
+    );
+    expect(projectedEvents).toHaveLength(200);
+    expect(
+      projectedEvents.map((event) => event.payload?.habitPageId),
+    ).not.toContain("page-habit-chart-200");
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 200,
+      omittedRows: 1,
+      reasons: expect.arrayContaining(["chart.category-limit"]),
+    });
+  });
+
+  it("bounds Reports unnoted-session inputs to Chart-compatible page categories with partial status", () => {
+    const pages = Array.from({ length: 201 }, (_value, index) =>
+      createPage(
+        `page-unnoted-chart-${String(index).padStart(3, "0")}`,
+        `Unnoted Chart ${String(index).padStart(3, "0")}`,
+      ),
+    );
+    const events = pages.map((page, index) =>
+      createTimerSegmentEvent({
+        durationSeconds: 60,
+        endAt: minuteInstant(index + 1),
+        id: `event-unnoted-chart-${String(index).padStart(3, "0")}`,
+        pageId: page.id,
+        segmentId: `segment-unnoted-chart-${String(index).padStart(3, "0")}`,
+        startAt: minuteInstant(index),
+      }),
+    );
+
+    const projection = buildReports(
+      "stats.unnoted-sessions-count",
+      createProjectionSource({ events, pages }),
+    );
+    const segments = projection.input.segments as Array<{ pageId?: string }>;
+
+    expect(segments).toHaveLength(200);
+    expect(segments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pageId: "page-unnoted-chart-000" }),
+        expect.objectContaining({ pageId: "page-unnoted-chart-199" }),
+      ]),
+    );
+    expect(segments).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ pageId: "page-unnoted-chart-200" }),
+      ]),
+    );
+    expect(projection.status).toMatchObject({
+      kind: "partial",
+      limit: 200,
+      omittedRows: 1,
+      reasons: expect.arrayContaining(["chart.category-limit"]),
+    });
+  });
+
   it("defaults Reports to stats.sum-time-by-page with trusted timer segments and no raw leakage", () => {
     const focusPage = createPage("page-focus", "Focus Page", [
       "PRIVATE_BODY_TOKEN",

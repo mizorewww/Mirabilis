@@ -644,7 +644,7 @@ describe("TASK-037 Home workspace editor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps saved-filter and placeholder routes from mounting the Markdown editor", async () => {
+  it("keeps saved-filter and Reports routes from mounting the Markdown editor", async () => {
     const runtime = await createRuntime({
       pageIds: ["home-session-page"],
     });
@@ -669,10 +669,6 @@ describe("TASK-037 Home workspace editor", () => {
         name: /all tasks/i,
         expectedText: /^All Tasks has no pages\.$/i,
       },
-      {
-        name: /reports/i,
-        expectedText: /^Stats projection placeholder$/i,
-      },
     ]) {
       await user.click(
         within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
@@ -688,6 +684,25 @@ describe("TASK-037 Home workspace editor", () => {
         within(main).queryByRole("textbox", { name: /markdown/i }),
       ).not.toBeInTheDocument();
     }
+
+    await user.click(
+      within(screen.getByRole("navigation", { name: /workspace/i })).getByRole(
+        "button",
+        { name: /reports/i },
+      ),
+    );
+
+    const reportsMain = await screen.findByRole("main", { name: /reports/i });
+
+    expect(
+      within(reportsMain).getByRole("region", { name: /^Reports route$/i }),
+    ).toBeVisible();
+    expect(
+      within(reportsMain).queryByText(/^Stats projection placeholder$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(reportsMain).queryByRole("textbox", { name: /markdown/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps TASK-037 free of package, native, Tauri, IPC, capability, permission, and release drift", async () => {
