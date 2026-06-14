@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: rollback P1 implementation delegated; parent is waiting for Rawls's final status.
+- Status: rollback P1 implementation green; parent is preparing focused targeted re-review.
 
 ## Scope
 
@@ -152,7 +152,10 @@
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - Boole was closed after final status and validation were recorded.
 - Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned at 2026-06-14 23:22 CST to fix the direct-store rollback isolation P1. Rawls owns production changes and must return final status before the parent validates or commits implementation.
+- Rawls returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`. Commit `ef6fb18` (`Rawls(implementation-fix)(Wire SQLite-backed Runtime Persistence): isolate direct-write rollback`) records the fix.
+- Rawls changed direct write-through rollback so failed direct page write-through and failed plugin direct page/metadata/event/filter native commits roll back only the direct session's own live-memory delta. Unrelated Core transaction state committed after a direct-write snapshot is preserved.
+- Parent validation passed after Rawls: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 
 ## Next Action
 
-- Wait for Rawls's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Close Rawls and run focused targeted re-review for Averroes's rollback isolation P1 closure. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.

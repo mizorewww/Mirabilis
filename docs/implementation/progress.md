@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:29 CST - TASK-046 rollback P1 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Rawls (`implementer`) returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`.
+- Commit: `ef6fb18` (`Rawls(implementation-fix)(Wire SQLite-backed Runtime Persistence): isolate direct-write rollback`).
+- Fixed: failed direct page write-through and failed plugin direct page/metadata/event/filter native commits now roll back only the direct session's own live-memory delta, preserving unrelated Core transaction state committed after the direct-write snapshot.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; `bun run test:frontend` passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close Rawls and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
 ### 2026-06-14 23:22 CST - TASK-046 rollback P1 implementation delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

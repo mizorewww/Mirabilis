@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:22 CST.
+Last updated: 2026-06-14 23:29 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:22 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 rollback P1 implementation delegated; parent is waiting for Rawls's final status.
+- Current phase: TASK-046 rollback P1 implementation green; parent is preparing focused targeted re-review.
 
 ## Current Outcome
 
@@ -84,6 +84,9 @@ Last updated: 2026-06-14 23:22 CST.
 - Parent red validation matched Averroes's P1: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/plugin-host-lifecycle.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 2 failures and 77 passing tests. Both new failures reach `runtime.pages.get(transactionResult.pageId)` after failed direct rollback and get `PAGE_NOT_FOUND`, proving stale whole-store rollback erased the committed Core page.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - Boole was closed after final status and validation were recorded. Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned at 2026-06-14 23:22 CST to fix the direct-store rollback isolation P1.
+- Rawls returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`. Commit `ef6fb18` records the implementation fix.
+- Rawls changed direct write-through rollback so failed direct page write-through and failed plugin direct page/metadata/event/filter native commits roll back only the direct session's own live-memory delta. Unrelated Core transaction state committed after a direct-write snapshot is preserved.
+- Parent validation passed after Rawls: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -171,5 +174,6 @@ Last updated: 2026-06-14 23:22 CST.
 
 ## Next Parent Actions
 
-- Wait for Rawls's final status. A wait timeout is not a failure or idle signal.
-- Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.
+- Close Rawls after this record is committed.
+- Run focused targeted re-review for Averroes's rollback isolation P1 closure before `release_checker`. A wait timeout is not a failure or idle signal.
+- Retry `release_checker` only after targeted re-review clears P0/P1 findings.
