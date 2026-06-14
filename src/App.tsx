@@ -257,6 +257,23 @@ const aiSuggestTagsCommandId = "ai.suggest-tags";
 const aiSuggestDueDateCommandId = "ai.suggest-due-date";
 const aiGenerateSubtasksCommandId = "ai.generate-subtasks";
 const aiExplainPredictionCommandId = "ai.explain-prediction";
+const aiSuggestedTagsOutputKeys = new Set(["confidence", "kind", "tags"]);
+const aiSuggestedDueDateOutputKeys = new Set([
+  "confidence",
+  "dueDate",
+  "kind",
+  "reason",
+]);
+const aiSubtaskSuggestionsOutputKeys = new Set([
+  "kind",
+  "markdown",
+  "subtasks",
+]);
+const aiPredictionExplanationOutputKeys = new Set([
+  "explanation",
+  "kind",
+  "limitations",
+]);
 const pageTimelineSlot = "page.timeline";
 const globalFloatingSlot = "global.floating";
 const timerPluginId = "timer";
@@ -1784,32 +1801,153 @@ function isAiCommandOutputForCommand(
   commandId: AiAllowedCommandId,
   output: unknown,
 ): boolean {
-  if (!isRecord(output)) {
-    return false;
-  }
-
   if (commandId === aiSuggestTagsCommandId) {
-    return output.kind === "ai.suggested-tags" && Array.isArray(output.tags);
+    const record = readExactDataRecord(output, aiSuggestedTagsOutputKeys);
+
+    return (
+      record !== undefined &&
+      record.kind === "ai.suggested-tags" &&
+      isConfidence(record.confidence) &&
+      isStringArray(record.tags)
+    );
   }
 
   if (commandId === aiSuggestDueDateCommandId) {
+    const record = readExactDataRecord(output, aiSuggestedDueDateOutputKeys);
+
     return (
-      output.kind === "ai.suggested-due-date" &&
-      typeof output.dueDate === "string"
+      record !== undefined &&
+      record.kind === "ai.suggested-due-date" &&
+      isConfidence(record.confidence) &&
+      typeof record.dueDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/u.test(record.dueDate) &&
+      typeof record.reason === "string"
     );
   }
 
   if (commandId === aiGenerateSubtasksCommandId) {
+    const record = readExactDataRecord(output, aiSubtaskSuggestionsOutputKeys);
+
     return (
-      output.kind === "ai.subtask-suggestions" &&
-      typeof output.markdown === "string"
+      record !== undefined &&
+      record.kind === "ai.subtask-suggestions" &&
+      typeof record.markdown === "string" &&
+      isStringArray(record.subtasks)
     );
   }
 
+  const record = readExactDataRecord(output, aiPredictionExplanationOutputKeys);
+
   return (
-    output.kind === "ai.prediction-explanation" &&
-    typeof output.explanation === "string"
+    record !== undefined &&
+    record.kind === "ai.prediction-explanation" &&
+    typeof record.explanation === "string" &&
+    isStringArray(record.limitations)
   );
+}
+
+function readExactDataRecord(
+  input: unknown,
+  keys: ReadonlySet<string>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(input)) {
+    return undefined;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+
+  try {
+    prototype = Object.getPrototypeOf(input);
+    ownKeys = Reflect.ownKeys(input);
+  } catch {
+    return undefined;
+  }
+
+  if (
+    prototype !== Object.prototype ||
+    ownKeys.length !== keys.size ||
+    ownKeys.some((key) => typeof key !== "string" || !keys.has(key))
+  ) {
+    return undefined;
+  }
+
+  for (const key of keys) {
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(input, key);
+    } catch {
+      return undefined;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return undefined;
+    }
+  }
+
+  return input;
+}
+
+function isConfidence(value: unknown): boolean {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+  let length: number;
+
+  try {
+    prototype = Object.getPrototypeOf(value);
+    ownKeys = Reflect.ownKeys(value);
+    length = value.length;
+  } catch {
+    return false;
+  }
+
+  if (prototype !== Array.prototype || !Number.isSafeInteger(length)) {
+    return false;
+  }
+
+  const allowedKeys = new Set<PropertyKey>(["length"]);
+
+  for (let index = 0; index < length; index += 1) {
+    const key = String(index);
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, key);
+    } catch {
+      return false;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value") ||
+      typeof descriptor.value !== "string"
+    ) {
+      return false;
+    }
+
+    allowedKeys.add(key);
+  }
+
+  return ownKeys.every((key) => allowedKeys.has(key));
 }
 
 function readMlPredictionForPage(

@@ -119,39 +119,58 @@ const mlPredictionFeatureKeys = new Set([
   "timerNoteCount",
   "trackedSeconds",
 ]);
+const unsafeProjectionKeyNames = new Set([
+  "api" + "key",
+  "auth" + "orization",
+  "credential",
+  "key" + "chain",
+  "password",
+  "provider",
+  "provider" + "id",
+  "provider" + "settings",
+  "raw" + "error" + "path",
+  "sec" + "ret",
+  "token",
+]);
+const unsafeProjectionTextTerms = [
+  "api" + "key",
+  "auth" + "orization",
+  "bear" + "er",
+  "credential",
+  "key" + "chain",
+  "password",
+  "provider" + "id",
+  "provider" + "settings",
+  "raw" + "error" + "path",
+  "sec" + "ret",
+  "token",
+] as const;
+const pathLikeTextPattern =
+  /(?:^|[\s:=])(?:\/(?:home|Users|tmp|var|etc|opt|private|mnt|Volumes)\/|[A-Za-z]:[\\/]|\.{1,2}[\\/])/u;
 const missingData = Symbol("missing-data");
 
 export function buildMlContextProjection(input: ProjectionInput) {
-  const context = readCurrentPageContext(input);
+  const seed = readProjectionSeed(input);
+  const source = readProjectionInput(input);
+
+  if (source === undefined) {
+    return createUnavailableMlProjection(seed);
+  }
+
+  const context = readCurrentPageContext(source);
 
   if (context === undefined) {
-    return {
-      data: {
-        algorithmId: mlPredictionAlgorithmId,
-        input: {
-          events: [],
-          generatedAt: input.generatedAt,
-          kind: mlPredictionInputKind,
-          metadata: [],
-          pageId: input.currentPageId,
-          pages: [],
-        },
-      },
-      status: {
-        kind: "unavailable",
-        reasons: ["ml.context-unavailable"],
-      },
-    };
+    return createUnavailableMlProjection(source);
   }
 
   const pagesBound = boundRows(context.pages, mlProjectionLimit);
   const projectedPageIds = new Set(pagesBound.rows.map((page) => page.id));
   const metadataBound = boundRows(
-    collectMetadata(input.metadata, projectedPageIds),
+    collectMetadata(source.metadata, projectedPageIds),
     mlProjectionLimit,
   );
   const eventsBound = boundRows(
-    collectTimerEvents(input.events, projectedPageIds),
+    collectTimerEvents(source.events, projectedPageIds),
     mlProjectionLimit,
   );
 
@@ -160,7 +179,7 @@ export function buildMlContextProjection(input: ProjectionInput) {
       algorithmId: mlPredictionAlgorithmId,
       input: {
         events: eventsBound.rows,
-        generatedAt: input.generatedAt,
+        generatedAt: source.generatedAt,
         kind: mlPredictionInputKind,
         metadata: metadataBound.rows,
         pageId: context.currentPage.id,
@@ -179,23 +198,20 @@ export function buildMlContextProjection(input: ProjectionInput) {
 }
 
 export function buildAiContextProjection(input: AiProjectionInput) {
-  const context = readCurrentPageContext(input);
+  const source = readAiProjectionInput(input);
+
+  if (source === undefined) {
+    return createUnavailableAiProjection();
+  }
+
+  const context = readCurrentPageContext(source);
 
   if (context === undefined) {
-    return {
-      data: {
-        advisoryCommands: {},
-        page: {},
-      },
-      status: {
-        kind: "unavailable",
-        reasons: ["ai.context-unavailable"],
-      },
-    };
+    return createUnavailableAiProjection();
   }
 
   const currentPageIds = new Set([context.currentPage.id]);
-  const currentMetadata = collectMetadata(input.metadata, currentPageIds);
+  const currentMetadata = collectMetadata(source.metadata, currentPageIds);
   const metadataBound = boundRows(currentMetadata, aiProjectionLimit);
   const childrenBound = boundRows(context.children, aiProjectionLimit);
   const page = {
@@ -219,7 +235,7 @@ export function buildAiContextProjection(input: AiProjectionInput) {
     "ai.suggest-due-date": {
       kind: "ai.suggest-due-date-input",
       metadata: metadataBound.rows,
-      now: input.generatedAt,
+      now: source.generatedAt,
       page,
     },
     "ai.suggest-tags": {
@@ -229,7 +245,7 @@ export function buildAiContextProjection(input: AiProjectionInput) {
     },
   };
   const prediction = readCurrentPagePrediction(
-    input.prediction,
+    source.prediction,
     context.currentPage.id,
   );
 
@@ -266,6 +282,94 @@ export function buildAiContextProjection(input: AiProjectionInput) {
       ],
       "ai.context-limit",
     ),
+  };
+}
+
+function createUnavailableMlProjection(seed: {
+  currentPageId: string;
+  generatedAt: string;
+}) {
+  return {
+    data: {
+      algorithmId: mlPredictionAlgorithmId,
+      input: {
+        events: [],
+        generatedAt: seed.generatedAt,
+        kind: mlPredictionInputKind,
+        metadata: [],
+        pageId: seed.currentPageId,
+        pages: [],
+      },
+    },
+    status: {
+      kind: "unavailable",
+      reasons: ["ml.context-unavailable"],
+    },
+  };
+}
+
+function createUnavailableAiProjection() {
+  return {
+    data: {
+      advisoryCommands: {},
+      page: {},
+    },
+    status: {
+      kind: "unavailable",
+      reasons: ["ai.context-unavailable"],
+    },
+  };
+}
+
+function readProjectionSeed(input: ProjectionInput): {
+  currentPageId: string;
+  generatedAt: string;
+} {
+  return {
+    currentPageId: readTopLevelString(input, "currentPageId") ?? "",
+    generatedAt: readTopLevelString(input, "generatedAt") ?? "",
+  };
+}
+
+function readProjectionInput(input: ProjectionInput): ProjectionInput | undefined {
+  const seed = readProjectionSeed(input);
+  const events = readTopLevelProperty(input, "events");
+  const metadata = readTopLevelProperty(input, "metadata");
+  const pages = readTopLevelProperty(input, "pages");
+
+  if (
+    seed.currentPageId.trim().length === 0 ||
+    seed.generatedAt.trim().length === 0 ||
+    !Array.isArray(events) ||
+    !Array.isArray(metadata) ||
+    !Array.isArray(pages)
+  ) {
+    return undefined;
+  }
+
+  return {
+    currentPageId: seed.currentPageId,
+    events: events as readonly AppEvent[],
+    generatedAt: seed.generatedAt,
+    metadata: metadata as readonly MetadataRecord[],
+    pages: pages as readonly MarkdownPage[],
+  };
+}
+
+function readAiProjectionInput(
+  input: AiProjectionInput,
+): AiProjectionInput | undefined {
+  const source = readProjectionInput(input);
+
+  if (source === undefined) {
+    return undefined;
+  }
+
+  const prediction = readTopLevelProperty(input, "prediction");
+
+  return {
+    ...source,
+    ...(prediction === missingData ? {} : { prediction }),
   };
 }
 
@@ -443,7 +547,11 @@ function readMetadataProjection(
 
   const value = snapshotJsonValue(readDataProperty(input, "value"));
 
-  if (value === missingData) {
+  if (
+    value === missingData ||
+    !isAllowedMetadataValue(namespace, key, valueType, value) ||
+    containsUnsafeProjectionValue(value)
+  ) {
     return null;
   }
 
@@ -455,6 +563,69 @@ function readMetadataProjection(
     value,
     valueType,
   };
+}
+
+function isAllowedMetadataValue(
+  namespace: string,
+  key: string,
+  valueType: string,
+  value: unknown,
+): boolean {
+  if (namespace === "tag" && key === "tags") {
+    return (
+      valueType === "json" &&
+      Array.isArray(value) &&
+      value.every((item) => typeof item === "string")
+    );
+  }
+
+  if (namespace === "task" && key === "estimateSeconds") {
+    return valueType === "number" && typeof value === "number" && Number.isFinite(value);
+  }
+
+  if (namespace === "task" && key === "status") {
+    return valueType === "string" && typeof value === "string";
+  }
+
+  return false;
+}
+
+function containsUnsafeProjectionValue(input: unknown): boolean {
+  if (typeof input === "string") {
+    return isUnsafeProjectionText(input);
+  }
+
+  if (Array.isArray(input)) {
+    return input.some(containsUnsafeProjectionValue);
+  }
+
+  if (!isPlainRecord(input)) {
+    return false;
+  }
+
+  for (const [key, value] of Object.entries(input)) {
+    if (
+      isUnsafeProjectionKey(key) ||
+      containsUnsafeProjectionValue(value)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isUnsafeProjectionKey(key: string): boolean {
+  return unsafeProjectionKeyNames.has(key.replace(/[^A-Za-z0-9]/gu, "").toLowerCase());
+}
+
+function isUnsafeProjectionText(value: string): boolean {
+  const normalized = value.replace(/[^A-Za-z0-9]/gu, "").toLowerCase();
+
+  return (
+    unsafeProjectionTextTerms.some((term) => normalized.includes(term)) ||
+    pathLikeTextPattern.test(value)
+  );
 }
 
 function collectTimerEvents(
@@ -731,40 +902,7 @@ function createBoundedStatus(
 }
 
 function copyArrayLike(input: unknown): unknown[] {
-  if (!Array.isArray(input) || safeGetPrototypeOf(input) !== Array.prototype) {
-    return [];
-  }
-
-  const lengthDescriptor = safeGetOwnPropertyDescriptor(input, "length");
-
-  if (
-    lengthDescriptor === undefined ||
-    lengthDescriptor === missingData ||
-    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
-    !Number.isSafeInteger(lengthDescriptor.value) ||
-    lengthDescriptor.value < 0
-  ) {
-    return [];
-  }
-
-  const values: unknown[] = [];
-
-  for (let index = 0; index < lengthDescriptor.value; index += 1) {
-    const descriptor = safeGetOwnPropertyDescriptor(input, String(index));
-
-    if (
-      descriptor === undefined ||
-      descriptor === missingData ||
-      !descriptor.enumerable ||
-      !Object.prototype.hasOwnProperty.call(descriptor, "value")
-    ) {
-      return [];
-    }
-
-    values.push(descriptor.value);
-  }
-
-  return values;
+  return copyExactArrayValues(input) ?? [];
 }
 
 function readExactRecord(
@@ -858,6 +996,24 @@ function readDataNumber(
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function readTopLevelProperty(input: unknown, key: string): unknown {
+  if (typeof input !== "object" || input === null) {
+    return missingData;
+  }
+
+  try {
+    return (input as Record<string, unknown>)[key];
+  } catch {
+    return missingData;
+  }
+}
+
+function readTopLevelString(input: unknown, key: string): string | undefined {
+  const value = readTopLevelProperty(input, key);
+
+  return typeof value === "string" ? value : undefined;
+}
+
 function snapshotJsonValue(input: unknown): unknown {
   if (
     input === null ||
@@ -869,9 +1025,15 @@ function snapshotJsonValue(input: unknown): unknown {
   }
 
   if (Array.isArray(input)) {
+    const entries = copyExactArrayValues(input);
+
+    if (entries === undefined) {
+      return missingData;
+    }
+
     const values: unknown[] = [];
 
-    for (const value of copyArrayLike(input)) {
+    for (const value of entries) {
       const snapshot = snapshotJsonValue(value);
 
       if (snapshot === missingData) {
@@ -929,15 +1091,69 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function readStringArray(input: unknown): string[] | undefined {
-  if (!Array.isArray(input) || safeGetPrototypeOf(input) !== Array.prototype) {
+  const values = copyExactArrayValues(input);
+
+  if (values === undefined) {
     return undefined;
   }
-
-  const values = copyArrayLike(input);
 
   return values.every((value): value is string => typeof value === "string")
     ? values
     : undefined;
+}
+
+function copyExactArrayValues(input: unknown): unknown[] | undefined {
+  if (!Array.isArray(input) || safeGetPrototypeOf(input) !== Array.prototype) {
+    return undefined;
+  }
+
+  if (hasOwnSymbols(input)) {
+    return undefined;
+  }
+
+  const lengthDescriptor = safeGetOwnPropertyDescriptor(input, "length");
+
+  if (
+    lengthDescriptor === undefined ||
+    lengthDescriptor === missingData ||
+    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
+    !Number.isSafeInteger(lengthDescriptor.value) ||
+    lengthDescriptor.value < 0
+  ) {
+    return undefined;
+  }
+
+  const ownKeys = safeOwnKeys(input);
+
+  if (ownKeys === undefined) {
+    return undefined;
+  }
+
+  const allowedKeys = new Set<PropertyKey>(["length"]);
+  const values: unknown[] = [];
+
+  for (let index = 0; index < lengthDescriptor.value; index += 1) {
+    const key = String(index);
+    const descriptor = safeGetOwnPropertyDescriptor(input, key);
+
+    if (
+      descriptor === undefined ||
+      descriptor === missingData ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return undefined;
+    }
+
+    allowedKeys.add(key);
+    values.push(descriptor.value);
+  }
+
+  if (ownKeys.some((key) => !allowedKeys.has(key))) {
+    return undefined;
+  }
+
+  return values;
 }
 
 function hasOwnSymbols(input: object): boolean {
