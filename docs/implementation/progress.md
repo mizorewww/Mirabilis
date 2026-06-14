@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:42 CST - TASK-046 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Dewey was closed after final status and validation were recorded.
+- Targeted re-review running: Curie (`reviewer`, agent `019ec5f0-a139-7fb1-b9a0-2f3aaf449f44`), Singer (`security_reviewer`, agent `019ec5f0-f79f-72d0-8894-ef458fd79189`), Confucius (`test_quality_reviewer`, agent `019ec5f0-fa27-7661-8319-97b300b53e75`), Pauli (`docs_researcher`, agent `019ec5f0-fcc1-7de3-a3d3-eddf67fd0394`), and Turing (`deprecation_auditor`, agent `019ec5f0-ff46-7d53-a99c-30a245e792c4`).
+- Parent state: waiting for final statuses before release checker or completion decisions. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 19:40 CST - TASK-046 docs sync committed
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

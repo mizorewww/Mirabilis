@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: docs sync committed; targeted re-review is next.
+- Status: targeted re-review running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -100,7 +100,9 @@
 - Dewey completed docs-only sync at 2026-06-14 19:37 CST. Files updated: `docs/architecture/07-runtime-flows.md`, `docs/architecture/06-filter-native-database.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, `docs/implementation/task-index.md`, `docs/implementation/progress.md`, `docs/implementation/agent-communication/status.md`, and this TASK-046 communication file.
 - Parent requested one follow-up for historical TASK-015 `in-memory-core` wording that could be misread as current state; Dewey fixed it. Commit `a032b7d` (`Dewey(docs-fix)(Wire SQLite-backed Runtime Persistence): sync runtime persistence docs`) records the docs sync and follow-up.
 - Parent docs validation passed: `git diff --check`; focused stale wording scans for old `in-memory-core` / deferred runtime persistence claims returned no matches. Godel's docs P1/P2 are addressed, pending targeted re-review.
+- Dewey was closed after final status and validation were recorded.
+- Targeted re-review started at 2026-06-14 19:42 CST: Curie (`reviewer`, agent `019ec5f0-a139-7fb1-b9a0-2f3aaf449f44`), Singer (`security_reviewer`, agent `019ec5f0-f79f-72d0-8894-ef458fd79189`), Confucius (`test_quality_reviewer`, agent `019ec5f0-fa27-7661-8319-97b300b53e75`), Pauli (`docs_researcher`, agent `019ec5f0-fcc1-7de3-a3d3-eddf67fd0394`), and Turing (`deprecation_auditor`, agent `019ec5f0-ff46-7d53-a99c-30a245e792c4`).
 
 ## Next Action
 
-- Close Dewey after this status is recorded, then run targeted re-review and the remaining release/final gates. Do not mark TASK-046 complete until targeted re-review, release readiness, and final `check:full` pass.
+- Wait for targeted re-review final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted re-review, release readiness, and final `check:full` pass.
