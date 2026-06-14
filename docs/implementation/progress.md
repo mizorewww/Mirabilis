@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:13 CST - TASK-047 review-fix implementation recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Review-fix implementation commit: `07bc304` (`Anscombe(review-fix)(Add Durable Navigation And Route State): fix durable route review blockers`).
+- Anscombe (`implementer`) changed `src/App.tsx` and `src/shell/navigation/route-state.ts` to keep recent pages visible on filter routes, move durable navigation startup out of render/state initializer paths, serialize latest-wins route persistence, scrub fail-closed route metadata to safe Home, and exact-key clone active route DTOs before metadata serialization.
+- Parent validation passed at 2026-06-15 01:11 CST: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (18 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` / direct `userEvent.*` scan, and package/native/docs/Search/Sync/AI/release drift checks.
+- Parent state: preparing targeted re-review for Dewey/Sagan/Pauli/Bohr/Popper findings. Anscombe will be closed only after this status is committed.
+
 ### 2026-06-15 01:02 CST - TASK-047 review-fix implementation delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

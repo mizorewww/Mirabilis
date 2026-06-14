@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix implementer running; parent is waiting for final status.
+- Status: review-fix implementation committed; parent is preparing targeted re-review.
 
 ## Scope
 
@@ -71,7 +71,8 @@
 - Carver returned final status with docs-only changes in `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`. Parent validation at 2026-06-15 00:55 CST passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`). Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
 - Avicenna returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:00 CST matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Failures cover recent pages hidden on filter routes, stale Route A persistence after Route B rapid navigation, missing Home/scrub persistence, stale/malformed metadata not overwritten, and serializer retaining unsafe extra keys. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan. Commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
 - Anscombe (`implementer`, agent `019ec715-dd5f-78b0-b384-9fbdaed15751`) was spawned at 2026-06-15 01:02 CST to make Avicenna's review-fix red tests pass and address Dewey/Sagan/Pauli P1 findings plus adjacent Bohr P2 hardening without package/native/Tauri/docs drift.
+- Anscombe returned final status with production changes in `src/App.tsx` and `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:11 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (18 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` / direct `userEvent.*` scan, and package/native/docs/Search/Sync/AI/release drift checks. Commit: `07bc304` (`Anscombe(review-fix)(Add Durable Navigation And Route State): fix durable route review blockers`).
 
 ## Next Action
 
-- Wait for Anscombe final status before validating review-fix implementation. A wait timeout is not a failure or idle signal.
+- Close Anscombe after this status is committed, then spawn targeted re-review agents for Dewey/Sagan/Pauli/Bohr/Popper findings.
