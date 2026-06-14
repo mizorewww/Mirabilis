@@ -407,6 +407,184 @@ describe("runtime SQLite persistence", () => {
     });
   });
 
+  it("keeps plugin direct metadata, event, and filter writes in live memory after an in-flight persisted transaction commits", async () => {
+    const targetPage = pageRecord(
+      "page-plugin-direct-target",
+      "Plugin direct target",
+    );
+    const bridge = createRecordingNativeBridge({
+      pages: [targetPage],
+    });
+    const releaseTransactionCommit = createDeferred<void>();
+    const transactionCommitStarted = createDeferred<readonly DbQuery[]>();
+    const directWritePersisted = createDeferred<void>();
+    const originalTransaction = bridge.db.transaction.bind(bridge.db);
+    let delayedTransactionCommit = false;
+    let observedDirectWritePersistence = false;
+    const concurrentWriter = createPlugin("concurrent-writer", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "concurrent-writer.write-facts",
+          title: "Write concurrent facts",
+          handler(_input, commandContext) {
+            commandContext.metadata.set({
+              pageId: targetPage.id,
+              namespace: "concurrent-writer",
+              key: "state",
+              value: "written-during-core-commit",
+              valueType: "string",
+            });
+            commandContext.events.append({
+              pageId: targetPage.id,
+              namespace: "concurrent-writer",
+              type: "fact-written",
+              payload: { state: "written-during-core-commit" },
+            });
+
+            const filter = commandContext.filters.save({
+              id: "concurrent-writer.filter.live",
+              name: "Concurrent writer live filter",
+              query: {
+                where: [
+                  {
+                    field: "metadata.concurrent-writer.state",
+                    op: "eq",
+                    value: "written-during-core-commit",
+                  },
+                ],
+              },
+              viewType: "page.list",
+            });
+
+            return {
+              filterId: filter.id,
+            };
+          },
+        });
+      },
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [concurrentWriter],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.db.transaction = async <Response,>(
+      queries: DbQuery[],
+    ): Promise<NativeBridgeTransactionResult<Response>> => {
+      if (
+        !delayedTransactionCommit &&
+        queries.some((query) =>
+          queryCreatesPageWithTitle(query, "In-flight core transaction page"),
+        )
+      ) {
+        delayedTransactionCommit = true;
+        transactionCommitStarted.resolve(queries);
+        await releaseTransactionCommit.promise;
+      }
+
+      const result = await originalTransaction<Response>(queries);
+      const operations = queries.map((query) => query.operation);
+
+      if (
+        !observedDirectWritePersistence &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.metadataSet) &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.eventsAppend) &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.filtersSave)
+      ) {
+        observedDirectWritePersistence = true;
+        directWritePersisted.resolve(undefined);
+      }
+
+      return result;
+    };
+
+    bridge.clearCalls();
+
+    const transactionCommit = runtime.transaction.run((tx) => {
+      const page = tx.pages.create({
+        title: "In-flight core transaction page",
+        body: documentWithLine("in-flight-core-line", "Staged core body"),
+      });
+
+      return { pageId: page.id };
+    });
+    const transactionBatch = await transactionCommitStarted.promise;
+
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+
+    const directWrite = runtime.commands.execute(
+      "concurrent-writer.write-facts",
+      {},
+    );
+
+    await directWritePersisted.promise;
+    await expect(directWrite).resolves.toStrictEqual({
+      filterId: "concurrent-writer.filter.live",
+    });
+    expect(runtime.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "concurrent-writer",
+          key: "state",
+          value: "written-during-core-commit",
+          sourcePluginId: "concurrent-writer",
+        }),
+      ]),
+    );
+    expect(runtime.events.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "concurrent-writer",
+          type: "fact-written",
+          payload: { state: "written-during-core-commit" },
+          sourcePluginId: "concurrent-writer",
+        }),
+      ]),
+    );
+    expect(runtime.filters.get("concurrent-writer.filter.live")).toMatchObject({
+      id: "concurrent-writer.filter.live",
+      sourcePluginId: "concurrent-writer",
+      viewType: "page.list",
+    });
+
+    releaseTransactionCommit.resolve(undefined);
+
+    await expect(transactionCommit).resolves.toMatchObject({
+      pageId: expect.stringMatching(/^page_/u),
+    });
+    expect(runtime.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "concurrent-writer",
+          key: "state",
+          value: "written-during-core-commit",
+          sourcePluginId: "concurrent-writer",
+        }),
+      ]),
+    );
+    expect(runtime.events.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "concurrent-writer",
+          type: "fact-written",
+          payload: { state: "written-during-core-commit" },
+          sourcePluginId: "concurrent-writer",
+        }),
+      ]),
+    );
+    expect(runtime.filters.get("concurrent-writer.filter.live")).toMatchObject({
+      id: "concurrent-writer.filter.live",
+      sourcePluginId: "concurrent-writer",
+      viewType: "page.list",
+    });
+  });
+
   it("does not let plugin direct store writes bypass SQLite transaction semantics", async () => {
     const bridge = createRecordingNativeBridge();
     const directWriter = createPlugin("direct-writer", {
