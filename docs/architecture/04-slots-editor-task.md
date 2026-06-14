@@ -232,7 +232,7 @@ runtime.markdown.pages.save({ pageId, markdown });
 }
 ```
 
-这个 facade 也不表示 Core stores 已经整体改为 SQLite-backed；`storage.persistence` 仍是 `"in-memory-core"`，当前只为 Markdown editor save/reopen 提供 narrow NativeBridge page path。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
+这段 narrow page facade 的早期含义是 TASK-046 前的历史状态：TASK-016/TASK-017 只为 Markdown editor save/reopen 提供 `core.pages.get` / `core.pages.update` NativeBridge page path，当时整体 Core stores 仍报告 `storage.persistence: "in-memory-core"`。TASK-046 后，默认 runtime 现在报告 `storage.persistence: "sqlite-core"`，并只把 Core pages/metadata/events/filters 接到 reviewed SQLite/NativeBridge hydration and write-through path；这里的 Markdown facade 说明仍限定 editor page DTO behavior，不扩展到 route state、Search FTS、plugin settings、sync transport 或其他 future store surfaces。Markdown 里的 raw HTML、`javascript:`-like 链接文本、task syntax、tag text 和 page-link text 都停留在 textarea 文本里，不经过 HTML rendering sink。结构化 body 的 `attrs` / `marks` 校验会拒绝 event-handler-like keys、`javascript:` / `data:` URL-like 值和 malformed marks。
 
 TASK-018 后，内置 Task Plugin 已提供 `task.checkbox` task block syntax descriptor，syntax 为 `- [ ]`。它和 Markdown Plugin 的 descriptor 一样只是 inert manifest metadata；编辑器保存时不会因为收集到 descriptor 而自动创建任务页。真正的 TASK-018 创建行为发生在 `task.resolve-task-block` command handler 中。TASK-020 后，编辑器使用该 descriptor 作为允许渲染 structured-body task-title buttons 和 checkbox 的信号；点击按钮执行 `task.open-task-page`，点击 checkbox 执行 `task.toggle-status`，仍不会在保存时自动扫描全部 task block。
 
