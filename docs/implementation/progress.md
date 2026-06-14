@@ -87,12 +87,21 @@ Status markers:
 - [x] TASK-041: Add Search Overlay And Results Route
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [x] TASK-043: Add ML And AI Context Panels
-- [ ] TASK-044: Add Settings And Sync Placeholders
+- [~] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 14:04 CST - TASK-044 started
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Base: validated `master` merge commit `6e394fa`.
+- TASK-043 was merged to `master` and post-merge `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Agent/config validation passed for TASK-044 startup: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Scope decision: Settings/Sync placeholders stay inert and informational; no secrets, provider settings inputs, keychain, network/native sync, background jobs, conflict UI, package/native/Tauri/Rust/IPC/capability/schema/release changes.
+- Next action: pre-test guidance agents before TDD tests.
 
 ### 2026-06-14 14:01 CST - TASK-043 complete on branch
 
