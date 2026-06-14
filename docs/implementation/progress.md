@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:30 CST - TASK-046 rollback P1 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Rawls was closed after final status and validation were recorded.
+- Targeted re-review running: Mencius (`security_reviewer`, agent `019ec6c1-995e-78f1-9790-4a9e6a72ff22`) for Averroes P1 security/native-boundary closure; Singer (`reviewer`, agent `019ec6c1-9c72-7913-a84d-e50745709694`) for rollback/interleaving correctness closure; Copernicus (`test_quality_reviewer`, agent `019ec6c1-9eeb-78e0-9d12-8ea9e2894f0d`) for Boole rollback test quality.
+- Parent state: waiting for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 23:29 CST - TASK-046 rollback P1 implementation green
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

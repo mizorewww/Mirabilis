@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: rollback P1 implementation green; parent is preparing focused targeted re-review.
+- Status: rollback P1 targeted re-review running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -155,7 +155,9 @@
 - Rawls returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`. Commit `ef6fb18` (`Rawls(implementation-fix)(Wire SQLite-backed Runtime Persistence): isolate direct-write rollback`) records the fix.
 - Rawls changed direct write-through rollback so failed direct page write-through and failed plugin direct page/metadata/event/filter native commits roll back only the direct session's own live-memory delta. Unrelated Core transaction state committed after a direct-write snapshot is preserved.
 - Parent validation passed after Rawls: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Rawls was closed after final status and validation were recorded.
+- Targeted re-review started at 2026-06-14 23:30 CST: Mencius (`security_reviewer`, agent `019ec6c1-995e-78f1-9790-4a9e6a72ff22`) for Averroes P1 security/native-boundary closure; Singer (`reviewer`, agent `019ec6c1-9c72-7913-a84d-e50745709694`) for rollback/interleaving correctness closure; Copernicus (`test_quality_reviewer`, agent `019ec6c1-9eeb-78e0-9d12-8ea9e2894f0d`) for Boole rollback test quality.
 
 ## Next Action
 
-- Close Rawls and run focused targeted re-review for Averroes's rollback isolation P1 closure. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
+- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
