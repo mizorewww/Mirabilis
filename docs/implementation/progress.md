@@ -87,12 +87,21 @@ Status markers:
 - [x] TASK-041: Add Search Overlay And Results Route
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [x] TASK-043: Add ML And AI Context Panels
-- [~] TASK-044: Add Settings And Sync Placeholders
+- [x] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 17:28 CST - TASK-044 completed on feature branch
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Completion commit sequence includes red tests (`9a90de1`), implementation (`b1f4318`), docs sync (`50347b8`), review-fix tests (`4a37998`), doc-version wording fix (`27a1a68`), and orchestration/progress commits.
+- Final local gate passed with `bun run check:quick`: typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Targeted re-review closed Cicero's P1, Raman's P2 test-quality items, and Poincare's docs P2. No P0/P1/P2 blockers remain for TASK-044.
+- Scope preserved: Settings is an inert workspace route with app/runtime facts, public settings descriptors, inert `ai.provider-settings`, and embedded Sync skeleton status. TASK-044 adds no settings persistence, provider configuration form, keychain, network/native sync, background jobs, conflict UI, package/native/Tauri/Rust/IPC/capability/schema/release changes, or Sync transport.
+- Next action: merge `feat/task-044-settings-sync-placeholders` into `master`, validate `master`, push, then continue to TASK-045.
 
 ### 2026-06-14 14:52 CST - TASK-044 doc-fix completed
 
