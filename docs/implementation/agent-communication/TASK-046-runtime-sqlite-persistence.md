@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Pasteur P2 targeted re-review running; parent is waiting for final statuses.
+- Status: targeted re-review completed with rollback P1; parent is preparing TDD follow-up.
 
 ## Scope
 
@@ -140,7 +140,12 @@
 - Parent validation passed after James: focused TASK-046/plugin-host/bootstrap/provider suite passed with 77 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; full frontend passed with 52 files and 829 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - James was closed after final status and validation were recorded.
 - Targeted re-review started at 2026-06-14 23:12 CST: Aristotle (`reviewer`, agent `019ec6b0-9831-7cc1-ac93-00543f4797be`) for Pasteur P2 correctness closure; Plato (`test_quality_reviewer`, agent `019ec6b0-9bc3-7281-b71a-bf6837f721cc`) for Hume regression test quality; Averroes (`security_reviewer`, agent `019ec6b0-9e73-7fe2-91da-de0cd5f86fe8`) for plugin/native boundary and drift risk.
+- Targeted re-review completed at 2026-06-14 23:16 CST.
+- Plato (`test_quality_reviewer`) found no P0/P1/P2 findings. Hume's regression test uses a real plugin command path, pauses the Core transaction's persisted commit, proves plugin direct metadata/event/filter writes persist through NativeBridge and are visible before release, and verifies visibility after James's merge fix.
+- Aristotle (`reviewer`) found no P0/P1 correctness findings and verified Pasteur's success-path P2 is closed. Aristotle found one P2: failed plugin direct-store native commits can restore whole pre-write snapshots and erase already committed Core transaction changes from live memory.
+- Averroes (`security_reviewer`) found no P0 findings and no NativeBridge/raw DB/SQL/native-handle exposure, owner-boundary broadening, allowlist bypass, or package/Tauri/capability/permission drift. Averroes escalated the rollback issue to P1 because a normal plugin direct write that later fails natively can erase unrelated committed live state.
+- Parent decision: fix Averroes's P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation for TASK-046's durable runtime persistence boundary.
 
 ## Next Action
 
-- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
+- Close completed targeted re-review agents, delegate red regression coverage for Averroes's rollback isolation P1 to `test_writer`, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.

@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:16 CST - TASK-046 targeted re-review found rollback P1
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Plato (`test_quality_reviewer`) returned final status with no P0/P1/P2 test-quality findings. Hume's interleaving regression test is meaningful and the focused suite passed with 77 tests.
+- Aristotle (`reviewer`) returned final status with no P0/P1 correctness findings and verified Pasteur's success-path P2 is closed. Aristotle found one P2: a failed plugin direct-store native commit can restore a whole pre-write snapshot and remove an already committed Core transaction from live memory.
+- Averroes (`security_reviewer`) returned final status with no P0 findings and no NativeBridge/raw DB/SQL/native-handle exposure, owner-boundary broadening, allowlist bypass, or package/Tauri/capability/permission drift. Averroes escalated the rollback issue to P1 because a normal plugin direct write that later fails natively can erase unrelated committed live state.
+- Parent decision: TASK-046 is not release-ready. Fix Averroes's P1 before `release_checker` or final `bun run check:full`. Next action is to close completed re-review agents, delegate red regression coverage to `test_writer`, validate the expected red state, commit tests, then delegate `implementer`.
+
 ### 2026-06-14 23:12 CST - TASK-046 Pasteur P2 targeted re-review delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
