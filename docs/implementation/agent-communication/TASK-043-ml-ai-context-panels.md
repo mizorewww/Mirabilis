@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review fixes are committed and validated; targeted re-review is next.
+- Status: targeted re-review is running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -52,6 +52,7 @@
 - Hypatia (`implementer`, agent `019ec48a-afa6-7d02-88ff-9188a19c9597`) was spawned at 2026-06-14 13:11 CST for production fixes to satisfy Tesla's review-fix tests.
 - Hypatia returned final status with production fixes and a small test-maintenance change. Parent found one boundary issue in the first Hypatia patch (`sourceIndex === limit` could skip a valid row), sent it back, and Hypatia corrected it before integration.
 - Hypatia review fixes were committed as `9a5c6e2` (`Hypatia(test-fix)(Add ML And AI Context Panels): tighten review regression tests`) and `5574bdd` (`Hypatia(review-fix)(Add ML And AI Context Panels): harden context panel boundaries`).
+- Bacon (`reviewer`, agent `019ec497-e610-7ec2-ab79-1150556bacb0`), Fermat (`security_reviewer`, agent `019ec497-e9a2-7782-878a-0f49dec7e306`), Planck (`test_quality_reviewer`, agent `019ec497-ff73-75c0-ad81-f4f84ce239f3`), and James (`deprecation_auditor`, agent `019ec498-0271-73b3-b420-e394853ea863`) were spawned for targeted re-review at 2026-06-14 13:26 CST.
 
 ## Parent Decisions
 
@@ -82,7 +83,8 @@
 - 2026-06-14 13:10 CST: Tesla returned final status. Parent red validation ran `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx`; expected red result was 8 failures and 16 passing tests, matching the review findings. `git diff --check` passed. Tests were committed as `7884458`.
 - 2026-06-14 13:11 CST: Hypatia spawned as `implementer`; parent state is waiting for completion/final status before validating or committing production fixes.
 - 2026-06-14 13:24 CST: Hypatia returned final status and corrected the parent-spotted cap-boundary issue before integration. Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 24 tests; broader TASK-043 suite passed with 6 files / 96 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- 2026-06-14 13:26 CST: targeted re-review agents spawned; parent is waiting for final statuses before deciding merge readiness.
 
 ## Next Action
 
-- Spawn targeted re-review for the review fixes and wait for completion/final statuses before deciding merge readiness.
+- Wait for targeted re-review completion/final statuses before deciding merge readiness.
