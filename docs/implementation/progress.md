@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:45 CST - TASK-047 partial review findings recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Carson (`pr_explorer`) mapped changed files and review focus; no files modified.
+- Popper (`docs_researcher`) found P1 stale product docs in `docs/product/07-user-interface-design.md`, P1 stale runtime-flow docs in `docs/architecture/07-runtime-flows.md`, and P2 missing TASK-047 testing strategy guidance; no files modified.
+- Pauli (`test_quality_reviewer`) found P1 test-quality gaps for filter persistence from a user action, persisted saved-filter/`SlotHost` restore, and fail-closed restoration coverage; also P2 missing direct parser/serializer unit coverage; no files modified.
+- Dewey (`reviewer`) found P1 correctness regressions: recent pages are filtered away on trusted filter routes, and rapid navigation can drop the latest persisted route when overlapping Core transactions reject without retry; no files modified.
+- Parent state: waiting for Bohr (`security_reviewer`) and Sagan (`deprecation_auditor`) final statuses before assigning review fixes. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:43 CST - TASK-047 review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
