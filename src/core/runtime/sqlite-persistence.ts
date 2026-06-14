@@ -56,6 +56,26 @@ type NativeFilterRecord = Omit<
 
 type MetadataIndex = Map<string, Map<string, Map<string, MetadataRecord>>>;
 
+type PageTransactionParticipant = NonNullable<
+  ReturnType<typeof getInMemoryPageStoreTransactionParticipant>
+>;
+type MetadataTransactionParticipant = NonNullable<
+  ReturnType<typeof getInMemoryMetadataStoreTransactionParticipant>
+>;
+type EventTransactionParticipant = NonNullable<
+  ReturnType<typeof getInMemoryEventStoreTransactionParticipant>
+>;
+type FilterTransactionParticipant = NonNullable<
+  ReturnType<typeof getInMemoryFilterStoreTransactionParticipant>
+>;
+
+type PageSnapshot = ReturnType<PageTransactionParticipant["snapshot"]>;
+type MetadataSnapshot = ReturnType<
+  MetadataTransactionParticipant["snapshot"]
+>;
+type EventSnapshot = ReturnType<EventTransactionParticipant["snapshot"]>;
+type FilterSnapshot = ReturnType<FilterTransactionParticipant["snapshot"]>;
+
 export type NativeDirectWriteCoordinator = {
   persist(queries: readonly DbQuery[], rollback: () => void): void;
   flush(): Promise<void>;
@@ -66,27 +86,18 @@ export type NativePageWriteThrough = {
   flush(): Promise<void>;
 };
 
-type DirectStoreRollbackSnapshot = {
-  pages: ReturnType<
-    NonNullable<
-      ReturnType<typeof getInMemoryPageStoreTransactionParticipant>
-    >["snapshot"]
-  >;
-  metadata: ReturnType<
-    NonNullable<
-      ReturnType<typeof getInMemoryMetadataStoreTransactionParticipant>
-    >["snapshot"]
-  >;
-  events: ReturnType<
-    NonNullable<
-      ReturnType<typeof getInMemoryEventStoreTransactionParticipant>
-    >["snapshot"]
-  >;
-  filters: ReturnType<
-    NonNullable<
-      ReturnType<typeof getInMemoryFilterStoreTransactionParticipant>
-    >["snapshot"]
-  >;
+type DirectStoreSnapshot = {
+  pages: PageSnapshot;
+  metadata: MetadataSnapshot;
+  events: EventSnapshot;
+  filters: FilterSnapshot;
+};
+
+type DirectStoreParticipants = {
+  pages: PageTransactionParticipant;
+  metadata: MetadataTransactionParticipant;
+  events: EventTransactionParticipant;
+  filters: FilterTransactionParticipant;
 };
 
 class RuntimePersistenceError extends Error {
@@ -292,15 +303,14 @@ function createNativeTransactionPersistenceScope(
 
 function createPersistentDirectPageStore(
   pages: PageStore,
-  participant: NonNullable<
-    ReturnType<typeof getInMemoryPageStoreTransactionParticipant>
-  >,
+  participant: PageTransactionParticipant,
   coordinator: NativeDirectWriteCoordinator,
 ): PageStore {
   return {
     create(input) {
       const rollbackSnapshot = participant.snapshot();
       const page = pages.create(input);
+      const writeSnapshot = participant.snapshot();
 
       coordinator.persist(
         [
@@ -310,7 +320,11 @@ function createPersistentDirectPageStore(
           },
         ],
         () => {
-          participant.replaceState(rollbackSnapshot);
+          rollbackPageStoreDelta(
+            participant,
+            rollbackSnapshot,
+            writeSnapshot,
+          );
         },
       );
 
@@ -320,6 +334,7 @@ function createPersistentDirectPageStore(
     update(pageId, input) {
       const rollbackSnapshot = participant.snapshot();
       const page = pages.update(pageId, input);
+      const writeSnapshot = participant.snapshot();
 
       coordinator.persist(
         [
@@ -329,7 +344,11 @@ function createPersistentDirectPageStore(
           },
         ],
         () => {
-          participant.replaceState(rollbackSnapshot);
+          rollbackPageStoreDelta(
+            participant,
+            rollbackSnapshot,
+            writeSnapshot,
+          );
         },
       );
 
@@ -338,6 +357,7 @@ function createPersistentDirectPageStore(
     archive(pageId) {
       const rollbackSnapshot = participant.snapshot();
       const page = pages.archive(pageId);
+      const writeSnapshot = participant.snapshot();
 
       coordinator.persist(
         [
@@ -350,7 +370,11 @@ function createPersistentDirectPageStore(
           },
         ],
         () => {
-          participant.replaceState(rollbackSnapshot);
+          rollbackPageStoreDelta(
+            participant,
+            rollbackSnapshot,
+            writeSnapshot,
+          );
         },
       );
 
@@ -385,7 +409,8 @@ function createNativeDirectStoreSession(stores: CoreStores): {
     "filter",
   );
   const queries: DbQuery[] = [];
-  let rollbackSnapshot: DirectStoreRollbackSnapshot | undefined;
+  let rollbackSnapshot: DirectStoreSnapshot | undefined;
+  let writeSnapshot: DirectStoreSnapshot | undefined;
   let committed = false;
 
   function prepareWrite(): void {
@@ -393,12 +418,12 @@ function createNativeDirectStoreSession(stores: CoreStores): {
       return;
     }
 
-    rollbackSnapshot = {
-      pages: pageParticipant.snapshot(),
-      metadata: metadataParticipant.snapshot(),
-      events: eventParticipant.snapshot(),
-      filters: filterParticipant.snapshot(),
-    };
+    rollbackSnapshot = snapshotDirectStores(
+      pageParticipant,
+      metadataParticipant,
+      eventParticipant,
+      filterParticipant,
+    );
   }
 
   function rollback(): void {
@@ -406,10 +431,25 @@ function createNativeDirectStoreSession(stores: CoreStores): {
       return;
     }
 
-    pageParticipant.replaceState(rollbackSnapshot.pages);
-    metadataParticipant.replaceState(rollbackSnapshot.metadata);
-    eventParticipant.replaceState(rollbackSnapshot.events);
-    filterParticipant.replaceState(rollbackSnapshot.filters);
+    const snapshotToRollback =
+      writeSnapshot ??
+      snapshotDirectStores(
+        pageParticipant,
+        metadataParticipant,
+        eventParticipant,
+        filterParticipant,
+      );
+
+    rollbackDirectStoreDelta(
+      {
+        pages: pageParticipant,
+        metadata: metadataParticipant,
+        events: eventParticipant,
+        filters: filterParticipant,
+      },
+      rollbackSnapshot,
+      snapshotToRollback,
+    );
   }
 
   return {
@@ -440,6 +480,13 @@ function createNativeDirectStoreSession(stores: CoreStores): {
         committed = true;
         return;
       }
+
+      writeSnapshot = snapshotDirectStores(
+        pageParticipant,
+        metadataParticipant,
+        eventParticipant,
+        filterParticipant,
+      );
 
       try {
         await options.beforeCommit?.();
@@ -859,6 +906,304 @@ function requireHydratableParticipant<Participant>(
   return participant;
 }
 
+function snapshotDirectStores(
+  pages: PageTransactionParticipant,
+  metadata: MetadataTransactionParticipant,
+  events: EventTransactionParticipant,
+  filters: FilterTransactionParticipant,
+): DirectStoreSnapshot {
+  return {
+    pages: pages.snapshot(),
+    metadata: metadata.snapshot(),
+    events: events.snapshot(),
+    filters: filters.snapshot(),
+  };
+}
+
+function rollbackDirectStoreDelta(
+  participants: DirectStoreParticipants,
+  initial: DirectStoreSnapshot,
+  written: DirectStoreSnapshot,
+): void {
+  rollbackPageStoreDelta(participants.pages, initial.pages, written.pages);
+  participants.metadata.replaceState(
+    rollbackMetadataDelta(
+      initial.metadata,
+      written.metadata,
+      participants.metadata.snapshot(),
+    ),
+  );
+  participants.events.replaceState(
+    rollbackEventDelta(
+      initial.events,
+      written.events,
+      participants.events.snapshot(),
+    ),
+  );
+  participants.filters.replaceState(
+    rollbackFilterDelta(
+      initial.filters,
+      written.filters,
+      participants.filters.snapshot(),
+    ),
+  );
+}
+
+function rollbackPageStoreDelta(
+  participant: PageTransactionParticipant,
+  initial: PageSnapshot,
+  written: PageSnapshot,
+): void {
+  participant.replaceState(
+    rollbackPageDelta(initial, written, participant.snapshot()),
+  );
+}
+
+function rollbackPageDelta(
+  initial: PageSnapshot,
+  written: PageSnapshot,
+  live: PageSnapshot,
+): PageSnapshot {
+  const pages = new Map(live.pages);
+
+  for (const [pageId, writtenPage] of written.pages) {
+    const initialPage = initial.pages.get(pageId);
+
+    if (persistenceValuesEqual(writtenPage, initialPage)) {
+      continue;
+    }
+
+    const livePage = pages.get(pageId);
+
+    if (
+      livePage !== undefined &&
+      !persistenceValuesEqual(livePage, writtenPage)
+    ) {
+      continue;
+    }
+
+    if (initialPage === undefined) {
+      pages.delete(pageId);
+    } else {
+      pages.set(pageId, initialPage);
+    }
+  }
+
+  for (const [pageId, initialPage] of initial.pages) {
+    if (written.pages.has(pageId) || pages.has(pageId)) {
+      continue;
+    }
+
+    pages.set(pageId, initialPage);
+  }
+
+  return {
+    ...live,
+    pages,
+  };
+}
+
+function rollbackMetadataDelta(
+  initial: MetadataSnapshot,
+  written: MetadataSnapshot,
+  live: MetadataSnapshot,
+): MetadataSnapshot {
+  const records = [...live.records];
+  const initialRecords = createMetadataRecordMap(initial.records);
+  const writtenRecords = createMetadataRecordMap(written.records);
+
+  for (const [identity, writtenRecord] of writtenRecords) {
+    const initialRecord = initialRecords.get(identity);
+
+    if (persistenceValuesEqual(writtenRecord, initialRecord)) {
+      continue;
+    }
+
+    const liveRecord = findMetadataRecord(records, identity);
+
+    if (
+      liveRecord !== undefined &&
+      !persistenceValuesEqual(liveRecord, writtenRecord)
+    ) {
+      continue;
+    }
+
+    if (initialRecord === undefined) {
+      deleteMetadataRecord(records, identity);
+    } else {
+      upsertMetadataRecord(records, initialRecord);
+    }
+  }
+
+  for (const [identity, initialRecord] of initialRecords) {
+    if (
+      writtenRecords.has(identity) ||
+      findMetadataRecord(records, identity) !== undefined
+    ) {
+      continue;
+    }
+
+    upsertMetadataRecord(records, initialRecord);
+  }
+
+  return {
+    records,
+    recordsByIdentity: createMetadataIndex(records),
+  };
+}
+
+function rollbackEventDelta(
+  initial: EventSnapshot,
+  written: EventSnapshot,
+  live: EventSnapshot,
+): EventSnapshot {
+  const events = [...live.events];
+  const initialEvents = new Map(
+    initial.events.map((event) => [event.id, event]),
+  );
+  const writtenEvents = new Map(
+    written.events.map((event) => [event.id, event]),
+  );
+
+  for (const [eventId, writtenEvent] of writtenEvents) {
+    const initialEvent = initialEvents.get(eventId);
+
+    if (persistenceValuesEqual(writtenEvent, initialEvent)) {
+      continue;
+    }
+
+    const liveIndex = events.findIndex((event) => event.id === eventId);
+    const liveEvent = liveIndex >= 0 ? events[liveIndex] : undefined;
+
+    if (
+      liveEvent !== undefined &&
+      !persistenceValuesEqual(liveEvent, writtenEvent)
+    ) {
+      continue;
+    }
+
+    if (initialEvent === undefined) {
+      if (liveIndex >= 0) {
+        events.splice(liveIndex, 1);
+      }
+    } else if (liveIndex >= 0) {
+      events[liveIndex] = initialEvent;
+    } else {
+      events.push(initialEvent);
+    }
+  }
+
+  for (const [eventId, initialEvent] of initialEvents) {
+    if (
+      writtenEvents.has(eventId) ||
+      events.some((event) => event.id === eventId)
+    ) {
+      continue;
+    }
+
+    events.push(initialEvent);
+  }
+
+  return {
+    events,
+  };
+}
+
+function rollbackFilterDelta(
+  initial: FilterSnapshot,
+  written: FilterSnapshot,
+  live: FilterSnapshot,
+): FilterSnapshot {
+  const filters = new Map(live.filters);
+
+  for (const [filterId, writtenFilter] of written.filters) {
+    const initialFilter = initial.filters.get(filterId);
+
+    if (persistenceValuesEqual(writtenFilter, initialFilter)) {
+      continue;
+    }
+
+    const liveFilter = filters.get(filterId);
+
+    if (
+      liveFilter !== undefined &&
+      !persistenceValuesEqual(liveFilter, writtenFilter)
+    ) {
+      continue;
+    }
+
+    if (initialFilter === undefined) {
+      filters.delete(filterId);
+    } else {
+      filters.set(filterId, initialFilter);
+    }
+  }
+
+  for (const [filterId, initialFilter] of initial.filters) {
+    if (written.filters.has(filterId) || filters.has(filterId)) {
+      continue;
+    }
+
+    filters.set(filterId, initialFilter);
+  }
+
+  return {
+    ...live,
+    filters,
+  };
+}
+
+function createMetadataRecordMap(
+  records: readonly MetadataRecord[],
+): Map<string, MetadataRecord> {
+  return new Map(
+    records.map((record) => [metadataIdentityKey(record), record]),
+  );
+}
+
+function metadataIdentityKey(
+  record: Pick<MetadataRecord, "pageId" | "namespace" | "key">,
+): string {
+  return JSON.stringify([record.pageId, record.namespace, record.key]);
+}
+
+function findMetadataRecord(
+  records: readonly MetadataRecord[],
+  identity: string,
+): MetadataRecord | undefined {
+  return records.find((record) => metadataIdentityKey(record) === identity);
+}
+
+function upsertMetadataRecord(
+  records: MetadataRecord[],
+  record: MetadataRecord,
+): void {
+  const identity = metadataIdentityKey(record);
+  const index = records.findIndex(
+    (candidate) => metadataIdentityKey(candidate) === identity,
+  );
+
+  if (index >= 0) {
+    records[index] = record;
+    return;
+  }
+
+  records.push(record);
+}
+
+function deleteMetadataRecord(
+  records: MetadataRecord[],
+  identity: string,
+): void {
+  const index = records.findIndex(
+    (record) => metadataIdentityKey(record) === identity,
+  );
+
+  if (index >= 0) {
+    records.splice(index, 1);
+  }
+}
+
 function createMetadataIndex(
   records: readonly MetadataRecord[],
 ): MetadataIndex {
@@ -883,6 +1228,18 @@ function createMetadataIndex(
   }
 
   return index;
+}
+
+function persistenceValuesEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) {
+    return true;
+  }
+
+  try {
+    return JSON.stringify(left) === JSON.stringify(right);
+  } catch {
+    return false;
+  }
 }
 
 function normalizeArrayResponse<Record>(
