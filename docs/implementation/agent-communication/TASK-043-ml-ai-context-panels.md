@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation is committed and parent validation is green; review delegation is next.
+- Status: review agents are running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -37,6 +37,8 @@
 - Anscombe returned final status with test-only changes. It added `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`, covering bounded current-page projections, cap and fail-closed behavior, the user-visible right context panel, ML/AI `ViewHost` ids, advisory command allowlists, stale async/page-switch handling, redaction, non-mutation, and static no-native/no-network/no-secret boundaries.
 - Huygens (`implementer`, agent `019ec46c-9844-7c22-a701-6ca383afa318`) was spawned at 2026-06-14 12:38 CST to implement the minimum production code needed to pass the committed red tests.
 - Huygens returned final status with implementation plus narrow test-maintenance fixes. Parent accepted the test edits as maintenance for ES2020/typecheck/matcher/helper-scope/panel-only leak assertions rather than weakening. Commits: `83164bf` (`Huygens(test-fix)(Add ML And AI Context Panels): repair context panel test expectations`) and `148084d` (`Huygens(implementation)(Add ML And AI Context Panels): implement context panel projections`).
+- Ptolemy (`pr_explorer`, agent `019ec47a-e32d-7c71-a9c3-837265fed88a`), Beauvoir (`reviewer`, agent `019ec47a-e637-7b01-b93c-2f6f4def74b3`), Lovelace (`deprecation_auditor`, agent `019ec47a-e8cd-7431-aaa2-f3960d45806d`), Galileo (`security_reviewer`, agent `019ec47a-eb36-7f22-95bc-dfb01a0817ee`), Socrates (`docs_researcher`, agent `019ec47a-edd8-77f0-9628-57805d1e8dd0`), and Maxwell (`test_quality_reviewer`, agent `019ec47a-f17a-73f1-9767-a290e5f0fe22`) were spawned for review at 2026-06-14 12:54 CST.
+- `doc_writer` review spawn hit the current agent thread limit and will be retried after capacity frees.
 
 ## Parent Decisions
 
@@ -59,7 +61,8 @@
 - 2026-06-14 12:38 CST: Huygens spawned as `implementer`; parent state is waiting for completion/final status before integrating implementation work.
 - 2026-06-14 12:52 CST: Huygens returned final status. Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` passed with 6 files / 88 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - 2026-06-14 12:52 CST: Implementation integration committed in `83164bf` and `148084d`; branch is clean and synced to origin.
+- 2026-06-14 12:54 CST: six review agents spawned; `doc_writer` spawn deferred because the current agent thread limit was reached.
 
 ## Next Action
 
-- Spawn review agents for correctness, deprecation/API, security, docs, test quality, and branch exploration. Wait for all completion/final statuses before deciding fixes or merge readiness.
+- Wait for the running review agents' completion/final statuses, retry `doc_writer` when capacity frees, then decide fixes or merge readiness.
