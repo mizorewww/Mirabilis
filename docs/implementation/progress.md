@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:35 CST - TASK-047 recent-page accessor red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `8360851` (`Erdos(test-fix)(Add Durable Navigation And Route State): add recent-page accessor red tests`).
+- Erdos (`test_writer`) added focused tests in `src/test/durable-navigation-route-state.test.tsx` for accessor-backed `recentPageIds` arrays during parse and serialize.
+- Parent red validation matched Bernoulli's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 20 passing tests because `recentPageIds[0]` getter was invoked and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for the recent-page accessor hardening fix.
+
 ### 2026-06-15 01:32 CST - TASK-047 recent-page accessor red tests delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
