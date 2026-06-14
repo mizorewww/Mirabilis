@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:15 CST - TASK-047 targeted re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Anscombe was closed after its final status and parent validation were committed in `2bb68b3`.
+- Targeted re-review agents running: Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) for Dewey P1 correctness closure; Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) for Sagan P1 StrictMode/API closure; Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) for Pauli P1/P2 test-quality closure; Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) for Bohr P2 and boundary closure; Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) for Popper docs closure.
+- Parent state: waiting for targeted re-review final statuses before deciding whether TASK-047 is release-gate ready. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:13 CST - TASK-047 review-fix implementation recorded
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

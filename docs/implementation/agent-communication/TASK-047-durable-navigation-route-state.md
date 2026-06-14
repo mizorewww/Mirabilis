@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix implementation committed; parent is preparing targeted re-review.
+- Status: targeted re-review running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -72,7 +72,9 @@
 - Avicenna returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:00 CST matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Failures cover recent pages hidden on filter routes, stale Route A persistence after Route B rapid navigation, missing Home/scrub persistence, stale/malformed metadata not overwritten, and serializer retaining unsafe extra keys. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan. Commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
 - Anscombe (`implementer`, agent `019ec715-dd5f-78b0-b384-9fbdaed15751`) was spawned at 2026-06-15 01:02 CST to make Avicenna's review-fix red tests pass and address Dewey/Sagan/Pauli P1 findings plus adjacent Bohr P2 hardening without package/native/Tauri/docs drift.
 - Anscombe returned final status with production changes in `src/App.tsx` and `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:11 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (18 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` / direct `userEvent.*` scan, and package/native/docs/Search/Sync/AI/release drift checks. Commit: `07bc304` (`Anscombe(review-fix)(Add Durable Navigation And Route State): fix durable route review blockers`).
+- Anscombe was closed after its final status and validation were committed.
+- Targeted re-review started at 2026-06-15 01:15 CST: Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) for Dewey P1 correctness closure; Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) for Sagan P1 StrictMode/API closure; Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) for Pauli P1/P2 test-quality closure; Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) for Bohr P2 and boundary closure; Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) for Popper docs closure.
 
 ## Next Action
 
-- Close Anscombe after this status is committed, then spawn targeted re-review agents for Dewey/Sagan/Pauli/Bohr/Popper findings.
+- Wait for targeted re-review final statuses from Goodall, Socrates, Newton, Faraday, and Curie before deciding whether TASK-047 is release-gate ready. A wait timeout is not a failure or idle signal.
