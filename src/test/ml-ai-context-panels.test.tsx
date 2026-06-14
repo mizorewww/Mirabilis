@@ -646,6 +646,10 @@ describe("TASK-043 ML and AI context panel shell", () => {
       kind: "ai.suggested-tags",
       tags: [],
     }));
+    replaceAiCommand(runtime, "ai.suggest-due-date", async () => ({
+      dueDate: "2026-06-03",
+      kind: "ai.suggested-due-date",
+    }));
     replaceAiCommand(runtime, "ai.generate-subtasks", async () => ({
       kind: "ai.subtask-suggestions",
       markdown: "- [ ] Malformed subtask text",
@@ -666,6 +670,9 @@ describe("TASK-043 ML and AI context panel shell", () => {
     await user.click(within(panel).getByRole("tab", { name: /suggestions/i }));
     await user.click(within(panel).getByRole("button", { name: /^Suggest tags$/i }));
     await user.click(
+      within(panel).getByRole("button", { name: /^Suggest due date$/i }),
+    );
+    await user.click(
       within(panel).getByRole("button", { name: /^Generate subtasks$/i }),
     );
     await user.click(
@@ -675,7 +682,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
     await waitFor(() => {
       const alerts = within(panel).getAllByRole("alert");
 
-      expect(alerts).toHaveLength(3);
+      expect(alerts).toHaveLength(4);
       for (const alert of alerts) {
         expect(alert).toHaveTextContent(
           /AI suggestion unavailable|could not generate/i,
@@ -684,6 +691,9 @@ describe("TASK-043 ML and AI context panel shell", () => {
     });
     expect(within(panel).queryByText(/AI suggestion ready/i)).not.toBeInTheDocument();
     expect(within(panel).queryByText(/Suggested tags ready/i)).not.toBeInTheDocument();
+    expect(
+      within(panel).queryByText(/Suggested due date: 2026-06-03/i),
+    ).not.toBeInTheDocument();
     expect(
       within(panel).queryByText(/Generated subtasks: - \[ \] Malformed subtask text/i),
     ).not.toBeInTheDocument();
