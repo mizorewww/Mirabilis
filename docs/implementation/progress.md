@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:01 CST - TASK-047 review-fix red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
+- Avicenna (`test_writer`) added review-fix coverage in `src/test/durable-navigation-route-state.test.tsx` only.
+- Parent red validation matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan.
+- Parent state: preparing to spawn `implementer` for review fixes.
+
 ### 2026-06-15 00:55 CST - TASK-047 docs sync committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

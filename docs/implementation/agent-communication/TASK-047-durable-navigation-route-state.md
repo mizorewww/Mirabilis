@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: docs sync committed; review-fix test agent still running.
+- Status: review-fix red tests committed; parent is preparing implementation fix delegation.
 
 ## Scope
 
@@ -69,7 +69,8 @@
 - Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned at 2026-06-15 00:50 CST for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only and must return final status before parent validates or commits.
 - Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
 - Carver returned final status with docs-only changes in `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`. Parent validation at 2026-06-15 00:55 CST passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`). Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
+- Avicenna returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:00 CST matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Failures cover recent pages hidden on filter routes, stale Route A persistence after Route B rapid navigation, missing Home/scrub persistence, stale/malformed metadata not overwritten, and serializer retaining unsafe extra keys. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan. Commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
 
 ## Next Action
 
-- Wait for Avicenna final status. A wait timeout is not a failure or idle signal.
+- Spawn `implementer` to make Avicenna's review-fix red tests pass and address review P1/P2 findings.
