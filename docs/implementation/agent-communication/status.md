@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:41 CST.
+Last updated: 2026-06-15 00:43 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:41 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 implementation committed; parent is preparing review agents.
+- Current phase: TASK-047 review agents running; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -28,6 +28,7 @@ Last updated: 2026-06-15 00:41 CST.
 - Hilbert returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 00:28 CST matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Expected failures cover no durable route metadata after page selection, seeded saved-filter route not restored, persisted Home ID/title not reused, recent pages still session-derived rather than persisted/capped/deduped, and static guard missing `app-shell.navigation` / `route-state` production source. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan. Commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
 - Huygens (`implementer`, agent `019ec6f8-3c76-7620-92e2-1045b5a782f5`) was spawned at 2026-06-15 00:30 CST to make Hilbert's red tests pass with minimum production changes while preserving package/native/Tauri/docs surfaces unless it reports a blocker.
 - Huygens returned final status with changes in `src/App.tsx`, `src/shell/navigation/route-state.ts`, and `src/test/durable-navigation-route-state.test.tsx`. Parent validation at 2026-06-15 00:40 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (9 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/app-shell-boundary.test.ts` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (33 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` scan, and package/native/Tauri surface drift checks. Commit: `87c43fe` (`Huygens(implementation)(Add Durable Navigation And Route State): implement durable route persistence`).
+- TASK-047 review started at 2026-06-15 00:43 CST: Carson (`pr_explorer`, agent `019ec703-bce7-7bb3-8cad-11a026b81944`) for diff map and review focus; Dewey (`reviewer`, agent `019ec703-bf48-71d2-8de3-7d6f7675b849`) for correctness; Bohr (`security_reviewer`, agent `019ec703-c21f-7892-8a7b-5686f72500e3`) for persistence/security boundary; Sagan (`deprecation_auditor`, agent `019ec703-c48e-7682-a1ff-e335076a97ff`) for stale API/deprecation risk; Popper (`docs_researcher`, agent `019ec703-c79e-78a1-95cc-a2b31877feff`) for docs consistency; Pauli (`test_quality_reviewer`, agent `019ec703-ca60-7343-9c61-30d53d77861d`) for test quality. `doc_writer` was deferred because the agent thread limit was reached and will be spawned after a slot is freed.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -216,4 +217,4 @@ Last updated: 2026-06-15 00:41 CST.
 
 ## Next Parent Actions
 
-- Spawn TASK-047 review agents.
+- Wait for TASK-047 review final statuses. A wait timeout is not a failure or idle signal. Spawn `doc_writer` after a review slot is freed.

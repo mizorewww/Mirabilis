@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:43 CST - TASK-047 review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Review agents running: Carson (`pr_explorer`, agent `019ec703-bce7-7bb3-8cad-11a026b81944`), Dewey (`reviewer`, agent `019ec703-bf48-71d2-8de3-7d6f7675b849`), Bohr (`security_reviewer`, agent `019ec703-c21f-7892-8a7b-5686f72500e3`), Sagan (`deprecation_auditor`, agent `019ec703-c48e-7682-a1ff-e335076a97ff`), Popper (`docs_researcher`, agent `019ec703-c79e-78a1-95cc-a2b31877feff`), and Pauli (`test_quality_reviewer`, agent `019ec703-ca60-7343-9c61-30d53d77861d`).
+- `doc_writer` was deferred because the agent thread limit was reached; parent will spawn it after a slot is freed.
+- Parent state: waiting for review final statuses. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:41 CST - TASK-047 implementation committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
