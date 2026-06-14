@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:31 CST.
+Last updated: 2026-06-14 19:37 CST.
 
 ## Current Task
 
@@ -8,16 +8,16 @@ Last updated: 2026-06-14 19:31 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 docs sync delegated; parent is waiting for Dewey's final status.
+- Current phase: TASK-046 docs sync completed by Dewey; parent validation, commit, targeted re-review, release readiness, and final `check:full` remain pending.
 
 ## Current Outcome
 
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
-- TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
+- TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
 - TASK-046 is native/IPC/runtime-persistence work. Final gate should use `bun run check:full` unless agents narrow the accepted scope and record why full packaging is unnecessary.
 - TASK-046 pre-test guidance running as of 2026-06-14 18:31 CST: Mendel (`planner`, `019ec5af-e817-7bd0-a143-e2ec3f5c0977`) for implementation slicing and TDD plan; Kepler (`docs_researcher`, `019ec5af-fd6c-7b33-aeb9-a01c8585554d`) for current official Tauri and rusqlite docs; Linnaeus (`security_reviewer`, `019ec5af-ffda-7232-8825-34825fb124bf`) for Tauri/IPC/NativeBridge/plugin-boundary security guidance; Hubble (`deprecation_auditor`, `019ec5b0-1579-7783-a631-379954e34c0e`) for stale API and version guidance.
-- TASK-046 pre-test guidance completed at 2026-06-14 18:37 CST. Mendel recommended the branch-sized slice: hydrate pages/metadata/events/filters from existing NativeBridge DB allowlist during `createAppRuntime()`, keep hydrated synchronous stores for reads, route production durable writes through an awaited async transaction path using `NativeBridge.db.transaction`, preserve plugin facades, and update `storage.persistence` only for active SQLite-backed runtime persistence. Mendel explicitly recommended deferring full async Core Store migration, arbitrary direct sync store write-through, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export.
+- TASK-046 pre-test guidance completed at 2026-06-14 18:37 CST. Mendel recommended the branch-sized slice: hydrate pages/metadata/events/filters from existing NativeBridge DB allowlist during `createAppRuntime()`, keep hydrated synchronous stores for reads, route production durable writes through an awaited async transaction path using `NativeBridge.db.transaction`, preserve plugin facades, and update `storage.persistence` only for active SQLite-backed runtime persistence. Mendel explicitly recommended deferring full async Core Store migration, arbitrary future direct store surfaces outside the reviewed runtime/plugin paths, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export.
 - Kepler found no upstream docs blocker and verified current official Tauri command/state/capability/path and `rusqlite` transaction docs. Linnaeus identified security P0/P1 red-test targets for exact DB allowlist, no NativeBridge/raw DB exposure, owner-boundary preservation, atomic `db_transaction` rollback, redacted errors, app-data DB path ownership, startup hydration before plugin activation, and correct `storage.persistence`. Hubble found no P0 deprecated API blockers but flagged P1 design risks around synchronous store APIs vs async NativeBridge, `FilterStore.update()` lacking a DB allowlist operation, and transaction manager needing a persistence-aware adapter.
 - Russell (`test_writer`, `019ec5b5-f552-7d73-8352-a7122c635240`) was spawned at 2026-06-14 18:38 CST to add failing TASK-046 tests for startup hydration, persistence mode reporting, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, error redaction, and static native/DB boundary guards.
 - Russell returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Parent red validation matched the expected missing TASK-046 behavior: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 7 new TASK-046 failures and 14 passing tests. Expected failures cover absent startup hydration, absent SQLite persistence marker, no native transaction call, rollback rejection not surfacing, missing filter hydration/update persistence strategy, missing durable plugin transaction batch, and startup hydration failure not redacting through the provider alert. Supporting checks passed: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
@@ -43,6 +43,7 @@ Last updated: 2026-06-14 19:31 CST.
 - Mencius triaged timer timeline failures as stale test runtime setup, not a production regression. It updated static native-surface guards to accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff, made legacy AI/Sync/timer runtime tests explicitly use `in-memory-core` where SQLite persistence is not under test, cleared startup hydration calls before Markdown page facade assertions, and allowed Quick Capture's reviewed durable `db.transaction` path while still rejecting shortcut/file/notification/raw execute calls.
 - Parent validation passed after Mencius: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and an exact `.only` / `.skip` scan on edited tests passed.
 - Mencius was closed after final status and validation were recorded. Dewey (`doc_writer`, `019ec5e6-8ace-74b1-b160-5a4e623d6645`) was spawned at 2026-06-14 19:31 CST for Godel's docs P1/P2 only. Dewey must not mark TASK-046 complete; parent will do that after re-review, release readiness, and the final `check:full` gate.
+- Dewey completed docs-only sync at 2026-06-14 19:37 CST. Updated runtime-flow, NativeBridge/SQLite, development constraints, testing strategy, task index, progress, and TASK-046 communication docs to match reviewed SQLite-backed runtime persistence. Godel's docs P1/P2 are addressed from Dewey's scope, pending parent validation and re-review.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -98,7 +99,8 @@ Last updated: 2026-06-14 19:31 CST.
 ## Current TASK-046 Scope
 
 - Runtime stores for pages, metadata, events, and filters hydrate from SQLite through the allowlisted NativeBridge DB operations.
-- Runtime store writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- Transaction-managed runtime and plugin writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- Reviewed direct runtime page writes and plugin-facing direct Core store writes run through the Core persistence path without exposing native handles.
 - `storage.persistence` no longer claims `in-memory-core` when SQLite-backed runtime persistence is active.
 - Plugin facades keep owner boundaries and do not expose NativeBridge, raw SQLite, filesystem paths, SQL, raw stores, or full runtime handles.
 - Startup, NativeBridge, IPC, and persistence errors remain typed and redacted.
@@ -125,9 +127,9 @@ Last updated: 2026-06-14 19:31 CST.
 - 2026-06-14 18:29 CST: branch created from `master` commit `60c7e06`.
 - 2026-06-14 18:29 CST: 11 project agent TOML files parsed successfully.
 - 2026-06-14 18:29 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- 2026-06-14 19:37 CST: Dewey docs sync validation passed with `git diff --check` and stale wording scans for pre-TASK-046 `in-memory-core` / deferred runtime persistence claims.
 
 ## Next Parent Actions
 
-- Wait for Dewey's final status. A wait timeout is not a failure or idle signal.
-- After Dewey returns, validate docs, commit docs sync, then run targeted re-review for correctness/security/test/docs/deprecation as needed.
+- Review and commit Dewey's docs sync, then run targeted re-review for correctness/security/test/docs/deprecation as needed.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.

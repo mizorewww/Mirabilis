@@ -9,16 +9,41 @@ async function createAppRuntime() {
   const nativeBridge = await createTauriNativeBridge();
 
   const storage = {
-    persistence: "in-memory-core"
+    persistence: "sqlite-core"
   };
 
-  const stores = await createCoreStores();
+  const stores = createCoreStores();
+
+  await hydrateCoreStoresFromNativeBridge(stores, nativeBridge);
 
   const registries = await createCoreRegistries();
 
-  const services = await createCoreServices({
+  const pageWriteThrough = createNativePageWriteThrough(
+    stores.pages,
+    nativeBridge
+  );
+
+  const transactionPersistence = createNativeTransactionPersistence(
+    nativeBridge,
+    {
+      beforeCommit: pageWriteThrough.flush
+    }
+  );
+
+  const rawServices = await createCoreServices({
     stores,
-    registries
+    registries,
+    transactionPersistence
+  });
+
+  const services = await createCoreServices({
+    stores: {
+      ...stores,
+      pages: pageWriteThrough.pages
+    },
+    registries,
+    transaction: rawServices.transaction,
+    directTransactionRunner: rawServices.transaction
   });
 
   const app = {
@@ -52,9 +77,18 @@ async function createAppRuntime() {
 }
 ```
 
-当前实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> `createCoreStores()` -> `createCoreRegistries()` -> `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
+当前默认实现顺序是：`createTauriNativeBridge()` -> storage facade `{ persistence: "sqlite-core" }` -> `createCoreStores()` -> `hydrateCoreStoresFromNativeBridge()` -> `createCoreRegistries()` -> persistence-aware `createCoreServices()` -> `PluginHost` -> runtime object with `runtime.markdown` -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`。
 
-`storage.persistence = "in-memory-core"` 是诚实的能力标记，不表示 Core stores 已经接入 SQLite persistence。TASK-016/TASK-021 没有做 broad Core store-to-SQLite rewiring。
+TASK-046 makes the default runtime SQLite-backed for Core pages, metadata, events, and filters. Startup hydrates pages with `includeArchived: true`, then page-scoped metadata, events, and filters through the existing NativeBridge DB allowlist before any built-in plugin is activated. A malformed, `null`, or rejected hydration response fails startup; `RuntimeProvider` still shows the generic redacted startup failure UI.
+
+The runtime still uses synchronous in-memory Core store implementations for read paths after hydration. Durable Core writes are added at the service layer:
+
+- `services.transaction.run(...)` stages in-memory changes and commits the corresponding `DbQuery[]` with `NativeBridge.db.transaction(...)` before replacing live state.
+- Direct runtime page writes exposed through `services.pages.create/update/archive` are write-through: they update the in-memory page store, queue a native transaction, and roll back that page snapshot if the pending native write fails.
+- Pending direct page writes are flushed before a later persisted Core transaction commits, so transaction-managed metadata/event/filter/page writes do not race a missing SQLite page row.
+- Plugin lifecycle and command contexts run plugin-facing direct `ctx.pages`, `ctx.metadata`, `ctx.events`, and `ctx.filters` mutations inside the Core transaction path via `directTransactionRunner`; nested `ctx.transaction.run(...)` reuses the current transaction context.
+
+This TASK-046 slice is durable only for Core pages, metadata, events, and filters through the reviewed NativeBridge DB operations. Plugin-private runtime state such as Timer active state, injected AI/provider test state, route state, settings panels, sync transport state, search indexes, and future plugin-owned indexes remain in memory or deferred unless represented as Core pages/metadata/events/filters by existing plugin code or delivered by later tasks.
 
 `BUILT_IN_PLUGINS` 在 TASK-032 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin`、`MlPlugin`、`AiPlugin` 和 `SyncPlugin`。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
@@ -62,17 +96,17 @@ async function createAppRuntime() {
 
 TASK-017 后，`runtime.markdown.pages.load()` 从 `core.pages.get` 读取 body，把结构化 `markdown.line` blocks 导出为 editor Markdown；仅对 TASK-016 旧的 exact one-node `markdown.text` body 做 load-only fallback。TASK-020 后，load result 在结构化 body 可用时也携带 `body`，让 loaded `pageId/pageFacade` 编辑器模式可以从真实 runtime page facade 渲染 task-title buttons 和 checkbox。`runtime.markdown.pages.save()` 把 editor Markdown 导入为结构化 body 并通过 `core.pages.update` 保存，导入时使用上一版结构化 document 作为上下文来保留稳定 block IDs；save result 也携带 saved structured body。新保存不写 legacy `markdown.text` body。
 
-TASK-018 的 `task.resolve-task-block`、TASK-019 的 `task.open-task-page` 和 TASK-020 的 `task.toggle-status` 运行在当前 in-memory Core/plugin runtime 内：Command Registry 调用 Plugin Host 包装过的 Task Plugin handler，Plugin Host 为本次 command execution 创建 fresh `PluginContext`，handler 通过 plugin-facing transaction、page store、metadata store 和 event store 创建或复用任务页、写 metadata、绑定 source block、切换 source checkbox marker，并追加 task events。`task.open-task-page` 共享 source relation 行为并只返回 `{ pageId }`；`task.toggle-status` 接收 `{ sourcePageId, sourceBlockId }` 并返回 `{ pageId, status }`。这个流程不新增 NativeBridge/Tauri IPC、权限、filesystem 或 package/Rust surface。
+TASK-018 的 `task.resolve-task-block`、TASK-019 的 `task.open-task-page` 和 TASK-020 的 `task.toggle-status` 运行在当前 Core/plugin runtime 内：Command Registry 调用 Plugin Host 包装过的 Task Plugin handler，Plugin Host 为本次 command execution 创建 fresh `PluginContext`，handler 通过 plugin-facing transaction、page store、metadata store 和 event store 创建或复用任务页、写 metadata、绑定 source block、切换 source checkbox marker，并追加 task events。TASK-046 后，这些 Core page/metadata/event writes 通过现有 `db_transaction` NativeBridge path 持久化；原 TASK-018/TASK-020 slice 没有新增 DB operation、权限、filesystem、package/Cargo 或 Rust surface。`task.open-task-page` 共享 source relation 行为并只返回 `{ pageId }`；`task.toggle-status` 接收 `{ sourcePageId, sourceBlockId }` 并返回 `{ pageId, status }`。
 
-TASK-021 的 `tag.refresh-tags`、`tag.add-tag`、`tag.remove-tag` 和 `tag.create-filter` 也运行在当前 in-memory Core/plugin runtime 内：Command Registry 调用 Plugin Host 包装过的 Tag Plugin handler，Plugin Host 为本次 command execution 创建 fresh `PluginContext`，handler 通过 plugin-facing transaction、metadata store 和 filter store 更新 `tag.tags` 或保存 filter definition。这个流程不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo 或 Rust surface。
+TASK-021 的 `tag.refresh-tags`、`tag.add-tag`、`tag.remove-tag` 和 `tag.create-filter` 也运行在当前 Core/plugin runtime 内：Command Registry 调用 Plugin Host 包装过的 Tag Plugin handler，Plugin Host 为本次 command execution 创建 fresh `PluginContext`，handler 通过 plugin-facing transaction、metadata store 和 filter store 更新 `tag.tags` 或保存 filter definition。TASK-046 后，这些 metadata/filter writes 通过 existing allowlisted NativeBridge DB operations 持久化；TASK-021 本身没有新增 DB operation、权限、filesystem、package/Cargo 或 Rust surface。
 
-TASK-024 的 `timer.start`、`timer.stop`、`timer.pause`、`timer.resume` 和 `timer.switch` 同样运行在当前 in-memory Core/plugin runtime 内。Timer Plugin 在 `register(ctx)` 中创建 registration-scoped active timer store；Command Registry 调用 Plugin Host 包装过的 Timer handler，handler 通过 plugin-facing transaction 读取 page、append timer lifecycle events，并更新 Timer Plugin-owned in-memory active state。这个流程不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface、persistence schema 或 Core-owned Timer state。
+TASK-024 的 `timer.start`、`timer.stop`、`timer.pause`、`timer.resume` 和 `timer.switch` 同样运行在当前 Core/plugin runtime 内。Timer Plugin 在 `register(ctx)` 中创建 registration-scoped active timer store；Command Registry 调用 Plugin Host 包装过的 Timer handler，handler 通过 plugin-facing transaction 读取 page、append timer lifecycle events，并更新 Timer Plugin-owned in-memory active state。TASK-046 后，Timer lifecycle events written to Core Event Store are durable through `db_transaction`; Timer active state remains Timer-owned in-memory state and is not a Core-owned persisted timer store.
 
-TASK-027 的 `habit.refresh-habit`、`habit.check-today`、`habit.uncheck-today` 和 `habit.set-frequency` 也运行在当前 in-memory Core/plugin runtime 内。Habit Plugin 通过 plugin-facing transaction 读取 page、写 Habit-owned metadata、append `namespace: "habit"` / `type: "checked" | "unchecked"` events，并 upsert Habits / Today Habits filters。Heatmap Plugin 在 register 阶段只注册 `heatmap.calendar` view，消费调用方传入的 `heatmap.date-series` DTO；它不读取 Habit events，不导入 Habit internals，也不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface 或 schema。
+TASK-027 的 `habit.refresh-habit`、`habit.check-today`、`habit.uncheck-today` 和 `habit.set-frequency` 也运行在当前 Core/plugin runtime 内。Habit Plugin 通过 plugin-facing transaction 读取 page、写 Habit-owned metadata、append `namespace: "habit"` / `type: "checked" | "unchecked"` events，并 upsert Habits / Today Habits filters。TASK-046 后，这些 Core metadata/event/filter writes are durable through the same transaction-backed persistence path. Heatmap Plugin 在 register 阶段只注册 `heatmap.calendar` view，消费调用方传入的 `heatmap.date-series` DTO；它不读取 Habit events，不导入 Habit internals，也不新增 NativeBridge/Tauri IPC operation、权限、filesystem、package/Cargo、Rust surface 或 schema。
 
 TASK-028 的 `stats.run-aggregation`、`chart.bar`、`chart.line` 和 `chart.pie` 同样只运行在 TypeScript plugin/view runtime 内。Stats 消费调用方传入的 normalized DTO，Chart 渲染调用方传入的 chart DTO；二者不读取 sibling plugin internals，也不新增 NativeBridge/Tauri IPC、权限、filesystem、package/Cargo、Rust surface 或 schema。
 
-TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open` 和 `search.query` 也运行在当前 in-memory Core/plugin runtime 内。Quick Capture 通过 plugin-facing transaction 创建或追加 trusted plugin-marked Inbox Page，并写 `quick-capture.unprocessed` metadata / `quick-capture.filter.inbox` filter；Search 每次命令执行时 transient scan 当前未 archived pages 的 title 和 structured body text。二者不新增 NativeBridge/Tauri IPC、global shortcut、filesystem、notification、package/Cargo、Rust surface、schema 或 Tauri capability。
+TASK-029 的 `quick-capture.open`、`quick-capture.save`、`quick-capture.save-and-open` 和 `search.query` 也运行在当前 Core/plugin runtime 内。Quick Capture 通过 plugin-facing transaction 创建或追加 trusted plugin-marked Inbox Page，并写 `quick-capture.unprocessed` metadata / `quick-capture.filter.inbox` filter；TASK-046 后这些 Core writes use the durable `db_transaction` path. Search 每次命令执行时 transient scan 当前 hydrated in-memory pages 的 title 和 structured body text；它仍没有 persistent indexer、Search worker、SQLite FTS、native/global shortcut 或 ranking persistence。
 
 TASK-030 的 `ml.run-prediction` 同样只运行在 TypeScript plugin/runtime 内。`ml.predict-remaining-time` 是 inert algorithm descriptor；Command Registry 是当前 runtime execution entry。ML 消费 caller-provided exact bounded page/metadata/event projections，返回 deterministic `ml.remaining-time-prediction` DTO，不读取 sibling plugin private stores/facades，不持久化 caller-provided projection evidence 为 ML metadata/events，也不新增 NativeBridge/Tauri IPC、network、filesystem、worker、model storage/training、package/Cargo、Rust surface、schema 或 Tauri capability。
 

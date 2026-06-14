@@ -303,6 +303,32 @@ git diff --check
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, keychain/secret storage, sync transport/background jobs, conflict UI, or schema-backed settings/sync persistence. TASK-045 is a UI-only TypeScript/React/MUI app-shell polish task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, executable provider settings UI, secret-storage, sync transport, conflict UI, persistent settings, or release surface.
 
+## TASK-046 Runtime SQLite Persistence Guidance
+
+TASK-046 coverage lives primarily in `src/test/runtime-sqlite-persistence.test.ts`, with supporting bootstrap/provider, plugin-host, NativeBridge, and Rust IPC coverage. It proves the existing SQLite/NativeBridge boundary is now used by trusted runtime persistence without exposing native handles to UI or plugins.
+
+- Runtime hydration coverage should assert default `createAppRuntime()` reports `storage.persistence: "sqlite-core"`, calls the reviewed DB allowlist before `loadBuiltInPlugins()` / `activateAll()`, hydrates pages including archived pages, page-scoped metadata, events, and filters with full field preservation, and fails startup closed with redacted UI on rejected, malformed, or `null` native responses.
+- Transaction coverage should assert `services.transaction.run(...)` and plugin `ctx.transaction.run(...)` persist ordered Core page/metadata/event/filter mutations through `NativeBridge.db.transaction`, preserve native rollback/result ordering, and surface only redacted `NativeBridgeError` / runtime persistence failures.
+- Direct-write coverage should assert runtime page `create/update/archive` paths are write-through with pending native flush and rollback on failed pending writes, and plugin-facing direct `ctx.pages`, `ctx.metadata`, `ctx.events`, and `ctx.filters` writes run inside the Core transaction path while preserving owner boundaries.
+- Filter update coverage should assert updates persist as ordered `core.filters.get` plus merged `core.filters.save`; a missing native get must fail the transaction and roll back instead of recreating the filter.
+- NativeBridge and IPC coverage should keep `src/test/native-bridge.test.ts` and Rust `ipc_persistence` tests aligned with rollback, ordered results, redacted errors, DTO validation, fail-closed response validation, and Rust's frontend event `type` alias.
+- Static native-surface guards should be updated only for the reviewed TASK-046 surface, especially the exact `src-tauri/src/commands/db.rs` behavior change. They should continue rejecting raw SQL/params/db-path DTOs, raw Tauri imports in UI/plugin code, new Tauri commands, unreviewed capabilities/permissions, shortcut/file/notification expansion, package/Cargo drift, and broad native handles in hosted views.
+
+Focused TASK-046 validation commands:
+
+```bash
+bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx
+bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts
+cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence
+bun run typecheck
+bun run lint
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+git diff --check
+```
+
+Because TASK-046 changes app-runtime persistence wiring and the Tauri/Rust IPC behavior used by that wiring, the final branch gate is `bun run check:full`.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:
@@ -341,7 +367,7 @@ For TASK-014 DB IPC, the durable gate is: `db_execute` / `db_transaction` are th
 
 TASK-015 tests should cover the observable app bootstrap/provider contract without adding business plugin behavior:
 
-- Ordered `createAppRuntime()` bootstrap with injected factories: `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. Later runtime facades such as TASK-016 `runtime.markdown` may be added to the runtime object without changing this ordering.
+- Ordered `createAppRuntime()` bootstrap with injected factories. For the historical TASK-015 in-memory baseline this was `createTauriNativeBridge()` -> storage facade `{ persistence: "in-memory-core" }` -> Core stores -> Core registries -> Core services -> `PluginHost` -> runtime object -> `loadBuiltInPlugins(BUILT_IN_PLUGINS)` -> `activateAll()`. After TASK-046, default production bootstrap uses `{ persistence: "sqlite-core" }`, hydrates Core stores before plugin activation, and injects persistence-aware services; tests that need the old in-memory mode should opt into it explicitly with injected factories.
 - TASK-015 originally asserted an explicit empty production `BUILT_IN_PLUGINS`. After TASK-021, production `BUILT_IN_PLUGINS` contains the built-in `markdown`, `task`, and `tag` plugins; bootstrap tests should inject explicit empty or fake plugin lists when they need to isolate load/activation behavior.
 - Rejection propagation for startup failures, including `loadBuiltInPlugins()` and `activateAll()` failures; startup must not report a ready runtime after those failures.
 - React StrictMode single-flight initialization so bootstrap and plugin activation are not duplicated during development double-mount behavior.

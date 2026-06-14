@@ -6,12 +6,13 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: docs sync delegated to Dewey; parent is waiting for final status.
+- Status: docs sync completed by Dewey; parent validation, commit, re-review, release readiness, and final `check:full` remain pending.
 
 ## Scope
 
 - Wire runtime stores for pages, metadata, events, and filters to hydrate from SQLite through the existing allowlisted NativeBridge DB operations.
-- Wire runtime store writes for pages, metadata, events, and filters through the same allowlisted NativeBridge DB operations.
+- Wire transaction-managed runtime and plugin writes for pages, metadata, events, and filters through the same allowlisted NativeBridge DB operations.
+- Cover reviewed direct runtime page writes and plugin-facing direct Core store writes through the Core persistence path without exposing native handles.
 - Update `storage.persistence` so it no longer reports `in-memory-core` when SQLite-backed runtime persistence is active.
 - Preserve plugin-facing owner boundaries: no plugin or hosted UI may receive NativeBridge, raw SQLite, filesystem paths, SQL, full runtime handles, raw stores, or unrestricted DB facades.
 - Keep startup, NativeBridge, IPC, and persistence errors typed and redacted.
@@ -56,7 +57,7 @@
 - Kepler returned final status with docs research and no upstream docs blocker. It verified official Tauri command/state/capability/path guidance and `rusqlite` transaction guidance. It confirmed `rusqlite::Transaction::new_unchecked(..., TransactionBehavior::Immediate)` remains valid in 0.39 for the current single app-owned DB state, and rollback-on-drop is documented. Official docs consulted include Tauri calling Rust, state management, permissions, capabilities, path API, Manager/PathResolver/AppManifest docs.rs, and rusqlite Connection/Transaction/TransactionBehavior docs.
 - Hubble returned final status with no P0 deprecated API blockers. It flagged P1 design risks: synchronous Core/plugin store APIs conflict with async NativeBridge persistence, `FilterStore.update()` has no matching DB allowlist operation, and current transaction manager only works with in-memory transaction participants. It confirmed local versions `@tauri-apps/api@2.11.0`, `@tauri-apps/cli@2.11.2`, React `19.2.6`, Vite `7.3.3`, Vitest `4.1.6`, RTL `16.3.2`, user-event `14.6.1`, Tauri `2.11.2`, and `rusqlite@0.39.0`.
 - Mendel returned final status with the accepted implementation slice: hydrate pages, metadata, events, and filters during `createAppRuntime()` from the existing NativeBridge DB allowlist; use hydrated synchronous Core stores for reads; route production durable writes through an awaited async persisted transaction path using `NativeBridge.db.transaction`; keep plugin facades intact; and change the runtime storage marker only when SQLite-backed runtime persistence is active.
-- Parent decision: accept Mendel's slice for red tests. Full async Core Store API migration, arbitrary direct sync store write-through outside `transaction.run`, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export remain deferred unless a child agent reports a blocker/final failure requiring scope reconsideration.
+- Parent decision: accept Mendel's slice for red tests. Full async Core Store API migration, arbitrary future direct store surfaces outside the reviewed runtime/plugin paths, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export remain deferred unless a child agent reports a blocker/final failure requiring scope reconsideration.
 - Russell (`test_writer`, agent `019ec5b5-f552-7d73-8352-a7122c635240`) was spawned at 2026-06-14 18:38 CST to add failing TASK-046 tests only. Expected coverage: startup hydration, `storage.persistence` marker, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, redacted startup/bridge failures, and static native/raw DB guardrails.
 - Russell returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
 - Parent red validation matched the expected missing TASK-046 behavior: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 7 new TASK-046 failures and 14 passing tests. Expected failures cover absent startup hydration, absent SQLite persistence marker, no native transaction call, rollback rejection not surfacing, missing filter hydration/update persistence strategy, missing durable plugin transaction batch, and startup hydration failure not redacting through the provider alert.
@@ -96,7 +97,9 @@
 - Parent validation passed after Mencius: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and an exact `.only` / `.skip` scan on edited tests passed.
 - Mencius was closed after final status and validation were recorded.
 - Dewey (`doc_writer`, agent `019ec5e6-8ace-74b1-b160-5a4e623d6645`) was spawned at 2026-06-14 19:31 CST for Godel's docs P1/P2. Dewey owns docs only and must not mark TASK-046 complete.
+- Dewey completed docs-only sync at 2026-06-14 19:37 CST. Files updated: `docs/architecture/07-runtime-flows.md`, `docs/architecture/06-filter-native-database.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, `docs/implementation/task-index.md`, `docs/implementation/progress.md`, `docs/implementation/agent-communication/status.md`, and this TASK-046 communication file.
+- Dewey validation passed: `git diff --check`; stale wording scans for old `in-memory-core` / deferred runtime persistence claims. Godel's docs P1/P2 are addressed from Dewey's docs scope, pending parent validation and re-review.
 
 ## Next Action
 
-- Wait for Dewey's final status. A wait timeout is not a failure or idle signal.
+- Parent should review and commit Dewey's docs sync, then run targeted re-review and the remaining release/final gates. Do not mark TASK-046 complete until parent validation, release readiness, and final `check:full` pass.
