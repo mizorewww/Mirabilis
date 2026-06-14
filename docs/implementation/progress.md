@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:31 CST - TASK-047 recent-page accessor P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bernoulli (`security_reviewer`, agent `019ec72e-6505-7a12-ae67-96bcc20c934f`) returned final status with no files modified. Faraday's nested `activeRoute` accessor finding is closed, and no P0/P1 findings remain.
+- Bernoulli reported one remaining P2 boundary item: `recentPageIds` still accepts accessor-backed arrays during inbound parse and outbound serialization, can invoke an index getter, and can return or persist getter-returned path/token-shaped strings.
+- Checks run by Bernoulli: focused TASK-047 suite (20 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift scans, and a focused `bun -e` boundary probe.
+- Parent state: prepare focused red tests for the `recentPageIds` accessor-array P2.
+
 ### 2026-06-15 01:29 CST - TASK-047 Faraday P2 security re-review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
