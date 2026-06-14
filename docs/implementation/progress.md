@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:36 CST - TASK-046 targeted re-review found async rollback P1
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Copernicus (`test_quality_reviewer`) returned final status with no P0/P1/P2 test-quality findings. Boole's rollback isolation tests meaningfully cover the synchronous/native-pending P1 scope and the focused suite passed with 79 tests.
+- Mencius (`security_reviewer`) returned final status with one P1: async plugin direct-store handlers still have a rollback isolation gap. `writeSnapshot` is captured only after an awaited handler returns, so unrelated live state committed during the handler await can be included in the failed direct session snapshot and then erased on native failure.
+- Singer (`reviewer`) returned final status with the same P1 from correctness scope: direct-session rollback still infers the session delta from whole-store snapshots, so async handler interleavings can restore or revert unrelated Core transaction update/delete state. Singer confirmed with a read-only inline repro involving unrelated metadata deletion being restored.
+- Parent decision: TASK-046 is not release-ready. Fix the async direct-session rollback P1 before `release_checker` or final `bun run check:full`. Next action is to close completed re-review agents, delegate red regression coverage to `test_writer`, validate the expected red state, commit tests, then delegate `implementer`.
+
 ### 2026-06-14 23:30 CST - TASK-046 rollback P1 targeted re-review delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:30 CST.
+Last updated: 2026-06-14 23:36 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:30 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 rollback P1 targeted re-review running; parent is waiting for final statuses.
+- Current phase: TASK-046 targeted re-review completed with async rollback P1; parent is recording findings and preparing TDD follow-up.
 
 ## Current Outcome
 
@@ -89,6 +89,8 @@ Last updated: 2026-06-14 23:30 CST.
 - Parent validation passed after Rawls: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - Rawls was closed after final status and validation were recorded.
 - Targeted re-review started at 2026-06-14 23:30 CST: Mencius (`security_reviewer`, agent `019ec6c1-995e-78f1-9790-4a9e6a72ff22`) for Averroes P1 security/native-boundary closure; Singer (`reviewer`, agent `019ec6c1-9c72-7913-a84d-e50745709694`) for rollback/interleaving correctness closure; Copernicus (`test_quality_reviewer`, agent `019ec6c1-9eeb-78e0-9d12-8ea9e2894f0d`) for Boole rollback test quality.
+- Targeted re-review completed at 2026-06-14 23:36 CST. Copernicus found no P0/P1/P2 test-quality findings and called Boole's rollback isolation tests meaningful for the synchronous/native-pending P1 scope. Mencius found one P1 from security scope: async plugin direct-store handlers still have a rollback isolation gap because `writeSnapshot` is captured only after an awaited handler returns, so unrelated live commits during the await can be included in the failed direct session snapshot. Singer found the same P1 from correctness scope and confirmed with a read-only inline repro that unrelated deleted metadata can be restored by failed direct-session rollback.
+- Parent decision: fix the async direct-session rollback P1 before `release_checker` or final gate. Do not accept it as a deferral because it still violates TASK-046 rollback isolation through normal plugin APIs.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -176,5 +178,6 @@ Last updated: 2026-06-14 23:30 CST.
 
 ## Next Parent Actions
 
-- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
-- Retry `release_checker` only after targeted re-review clears P0/P1 findings.
+- Close completed targeted re-review agents after this record is committed.
+- Delegate red regression coverage for the async direct-session rollback P1 to `test_writer`. A wait timeout is not a failure or idle signal.
+- Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.

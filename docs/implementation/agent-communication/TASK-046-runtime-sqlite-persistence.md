@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: rollback P1 targeted re-review running; parent is waiting for final statuses.
+- Status: targeted re-review completed with async rollback P1; parent is preparing TDD follow-up.
 
 ## Scope
 
@@ -157,7 +157,12 @@
 - Parent validation passed after Rawls: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - Rawls was closed after final status and validation were recorded.
 - Targeted re-review started at 2026-06-14 23:30 CST: Mencius (`security_reviewer`, agent `019ec6c1-995e-78f1-9790-4a9e6a72ff22`) for Averroes P1 security/native-boundary closure; Singer (`reviewer`, agent `019ec6c1-9c72-7913-a84d-e50745709694`) for rollback/interleaving correctness closure; Copernicus (`test_quality_reviewer`, agent `019ec6c1-9eeb-78e0-9d12-8ea9e2894f0d`) for Boole rollback test quality.
+- Targeted re-review completed at 2026-06-14 23:36 CST.
+- Copernicus (`test_quality_reviewer`) found no P0/P1/P2 findings. Boole's rollback isolation tests meaningfully cover direct page write-through rollback and plugin direct metadata/event/filter rollback for the synchronous/native-pending P1 scope; the focused suite passed with 79 tests.
+- Mencius (`security_reviewer`) found one P1: async plugin direct-store handlers still have a rollback isolation gap because `writeSnapshot` is captured only after the awaited handler returns. Unrelated Core transaction or plugin live state committed during that await can be included in the failed direct session snapshot and erased on native commit failure.
+- Singer (`reviewer`) found the same P1 from correctness scope: direct-session rollback still infers session delta from whole-store snapshots, so async handler interleavings can restore or revert unrelated update/delete state. Singer confirmed with a read-only inline repro involving unrelated metadata deletion being restored.
+- Parent decision: fix the async direct-session rollback P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation through normal plugin APIs.
 
 ## Next Action
 
-- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
+- Close completed targeted re-review agents, delegate red regression coverage for the async direct-session rollback P1 to `test_writer`, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
