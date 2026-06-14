@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:47 CST - TASK-047 inbound recent-page normalization red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `78c821b` (`Peirce(test-fix)(Add Durable Navigation And Route State): add inbound recent-page normalization tests`).
+- Peirce (`test_writer`) added one focused test in `src/test/durable-navigation-route-state.test.tsx` proving inbound parser boundary should drop Home, dedupe, and cap `recentPageIds`.
+- Parent red validation matched Harvey's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 1 failure and 22 passing tests because inbound parser returned Home, duplicate, and over-cap recent IDs unchanged. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for inbound `recentPageIds` parser normalization.
+
 ### 2026-06-15 01:45 CST - TASK-047 inbound recent-page normalization red tests delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
