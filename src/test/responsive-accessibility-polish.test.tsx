@@ -51,6 +51,7 @@ const repoRoot = path.resolve(
 const execFileAsync = promisify(execFile);
 const viewportRestores: ViewportRestore[] = [];
 const desktopWidth = 1280;
+const tabletWidth = 820;
 const narrowWidth = 640;
 const commandPaletteName = /^Command Palette$/i;
 const searchDialogName = /^Search$/i;
@@ -165,6 +166,54 @@ describe("TASK-045 responsive and accessible shell behavior", () => {
     expect(within(main).getByRole("textbox", { name: /markdown/i })).toBeVisible();
   });
 
+  it("collapses top-bar actions to compact accessible icon controls before the narrow shell breakpoint", async () => {
+    installViewport(tabletWidth);
+    const user = userEvent.setup();
+    const runtime = await createRuntime({ pageIds: ["tablet-home"] });
+
+    createRuntimePage(runtime, "Home", [
+      { blockId: "tablet-body", text: "Tablet home body" },
+    ]);
+    renderReadyApp(runtime);
+
+    const banner = await screen.findByRole("banner", { name: /mirabilis/i });
+
+    expect(
+      within(banner).getByRole("button", {
+        name: /^Workspace navigation$/i,
+      }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(
+      await screen.findByRole("main", { name: /home/i }),
+    ).toBeVisible();
+
+    await assertCompactTopBarAction(user, banner, {
+      accessibleName: /command/i,
+      visibleLabel: /Command/i,
+      tooltipName: /command/i,
+    });
+    await assertCompactTopBarAction(user, banner, {
+      accessibleName: /search/i,
+      visibleLabel: /Search/i,
+      tooltipName: /search/i,
+    });
+    await assertCompactTopBarAction(user, banner, {
+      accessibleName: /quick capture/i,
+      visibleLabel: /Quick Capture/i,
+      tooltipName: /capture/i,
+    });
+    await assertCompactTopBarAction(user, banner, {
+      accessibleName: /settings/i,
+      visibleLabel: /Settings/i,
+      tooltipName: /settings/i,
+    });
+    await assertCompactTopBarAction(user, banner, {
+      accessibleName: /context panel/i,
+      visibleLabel: /Context Panel/i,
+      tooltipName: /context/i,
+    });
+  });
+
   it("uses narrow temporary navigation that closes on route selection, restores focus, and preserves active route state", async () => {
     installViewport(narrowWidth);
     const user = userEvent.setup();
@@ -223,7 +272,9 @@ describe("TASK-045 responsive and accessible shell behavior", () => {
     renderReadyApp(runtime);
 
     const main = await screen.findByRole("main", { name: /home/i });
-    const editor = within(main).getByRole("textbox", { name: /markdown/i });
+    const editor = await within(main).findByRole("textbox", {
+      name: /markdown/i,
+    });
     const launcher = await screen.findByRole("button", {
       name: /^Context Panel$/i,
     });
@@ -332,6 +383,98 @@ describe("TASK-045 responsive and accessible shell behavior", () => {
         }) as HTMLTextAreaElement
       ).value,
     ).toContain("Narrow panel keeps editor mounted");
+  });
+
+  it("keeps narrow Command, Search, and Quick Capture overlays composed above the workspace with focus return", async () => {
+    installViewport(narrowWidth);
+    const user = userEvent.setup();
+    const runtime = await createRuntime({ pageIds: ["narrow-overlay-home"] });
+
+    createRuntimePage(runtime, "Home", [
+      { blockId: "narrow-overlay-body", text: "Narrow overlay body" },
+    ]);
+    runtime.commands.register({
+      handler: async () => ({ ok: true }),
+      id: "quick-capture.narrow-overlay-review",
+      pluginId: "quick-capture",
+      title: "Narrow Overlay Review",
+    });
+    renderReadyApp(runtime);
+
+    const main = await screen.findByRole("main", { name: /home/i });
+    const editor = await within(main).findByRole("textbox", {
+      name: /markdown/i,
+    });
+
+    expect(editor).toBeVisible();
+
+    const commandButton = await findTopBarButton(/^Command$/i);
+
+    await user.click(commandButton);
+
+    const commandDialog = await screen.findByRole("dialog", {
+      name: commandPaletteName,
+    });
+
+    expect(commandDialog).toBeVisible();
+    expect(within(commandDialog).getByRole("textbox", { name: /command/i }))
+      .toHaveFocus();
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: commandPaletteName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(commandButton).toHaveFocus();
+    expect(editor).toBeVisible();
+
+    const searchButton = await findTopBarButton(/^Search$/i);
+
+    await user.click(searchButton);
+
+    const searchDialog = await screen.findByRole("dialog", {
+      name: searchDialogName,
+    });
+
+    expect(searchDialog).toBeVisible();
+    expect(within(searchDialog).getByRole("textbox", { name: /search query/i }))
+      .toHaveFocus();
+
+    await user.click(within(searchDialog).getByRole("button", { name: /cancel/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: searchDialogName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(searchButton).toHaveFocus();
+    expect(editor).toBeVisible();
+
+    const quickCaptureButton = await findTopBarButton(/^Quick Capture$/i);
+
+    await user.click(quickCaptureButton);
+
+    const quickCaptureDialog = await screen.findByRole("dialog", {
+      name: quickCaptureName,
+    });
+
+    expect(quickCaptureDialog).toBeVisible();
+    expect(within(quickCaptureDialog).getByRole("textbox", { name: /markdown/i }))
+      .toHaveFocus();
+
+    await user.click(
+      within(quickCaptureDialog).getByRole("button", { name: /cancel/i }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: quickCaptureName }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(quickCaptureButton).toHaveFocus();
+    expect(editor).toBeVisible();
   });
 
   it("keeps Command Palette, Search, and Quick Capture dialogs named, initially focused, trapped, and focus-returning", async () => {
@@ -526,6 +669,35 @@ async function findTopBarButton(name: RegExp): Promise<HTMLElement> {
   const banner = await screen.findByRole("banner", { name: /mirabilis/i });
 
   return within(banner).findByRole("button", { name });
+}
+
+async function assertCompactTopBarAction(
+  user: ReturnType<typeof userEvent.setup>,
+  banner: HTMLElement,
+  {
+    accessibleName,
+    tooltipName,
+    visibleLabel,
+  }: {
+    accessibleName: RegExp;
+    tooltipName: RegExp;
+    visibleLabel: RegExp;
+  },
+): Promise<void> {
+  const action = within(banner).getByRole("button", { name: accessibleName });
+
+  expect(action).toBeVisible();
+  expect(action).not.toHaveTextContent(visibleLabel);
+
+  await user.hover(action);
+
+  expect(await screen.findByRole("tooltip", { name: tooltipName })).toBeVisible();
+
+  await user.unhover(action);
+
+  await waitFor(() =>
+    expect(screen.queryByRole("tooltip", { name: tooltipName })).not.toBeInTheDocument(),
+  );
 }
 
 function installViewport(width: number): void {
