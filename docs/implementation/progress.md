@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:48 CST - TASK-047 inbound recent-page normalization implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Lagrange (`implementer`, agent `019ec740-20e8-7461-9ff0-2d7da0a075c6`) was spawned to make Peirce's inbound recent-page normalization red test pass with minimum production hardening.
+- Lagrange owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Lagrange final status before validating or committing the inbound recent-page parser-normalization implementation fix. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:47 CST - TASK-047 inbound recent-page normalization red tests committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
