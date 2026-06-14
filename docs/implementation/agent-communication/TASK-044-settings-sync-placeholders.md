@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: red tests are delegated to Bohr; parent is waiting for completion/final status.
+- Status: red tests are committed; parent is preparing implementation delegation.
 
 ## Scope
 
@@ -59,7 +59,8 @@
 - Kuhn returned final status with no blocker. It verified MUI v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path-import docs, React 19.2 act/upgrade guidance, Testing Library role/query/user-event guidance, and Vitest v4.1.7 docs. OpenAI docs were not checked because TASK-044 must not change live provider behavior.
 - Hegel returned final status with no blocker. It reinforced MUI path imports, no stale MUI APIs, non-urgent placeholder `Alert role="status"`, React 19 testing patterns, awaited user-event interactions, and no focused/skipped tests.
 - Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing RTL/static tests for TASK-044.
+- Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Commit `9a90de1` records the red tests.
 
 ## Next Action
 
-- Wait for Bohr completion/final status before validation, commit, or implementation delegation.
+- Spawn `implementer` to make Bohr's red tests pass, then wait for completion/final status.
