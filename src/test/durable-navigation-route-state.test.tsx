@@ -1199,6 +1199,54 @@ describe("TASK-047 route-state serializer boundary", () => {
     });
   });
 
+  it("normalizes inbound recent page ids while parsing route-state DTOs", () => {
+    const parsed = parseRouteStateDto({
+      activeRoute: {
+        kind: "page",
+        pageId: "beta-page",
+        role: "recent",
+      },
+      homePageId: "home-page",
+      recentPageIds: [
+        "home-page",
+        "alpha-page",
+        "beta-page",
+        "alpha-page",
+        "gamma-page",
+        "home-page",
+        "delta-page",
+        "epsilon-page",
+        "zeta-page",
+        "eta-page",
+        "theta-page",
+        "iota-page",
+        "kappa-page",
+      ],
+      version: durableRouteStateVersion,
+    });
+
+    expect(parsed).toStrictEqual({
+      activeRoute: {
+        kind: "page",
+        pageId: "beta-page",
+        role: "recent",
+      },
+      homePageId: "home-page",
+      recentPageIds: [
+        "alpha-page",
+        "beta-page",
+        "gamma-page",
+        "delta-page",
+        "epsilon-page",
+        "zeta-page",
+        "eta-page",
+        "theta-page",
+      ],
+      version: durableRouteStateVersion,
+    });
+    expect(parsed?.recentPageIds).toHaveLength(maxRecentPageIds);
+  });
+
   it("omits accessor-backed recent page arrays while serializing without persisting unsafe getter values", () => {
     const getterInvocations: string[] = [];
     const state = createRouteStateDto({
