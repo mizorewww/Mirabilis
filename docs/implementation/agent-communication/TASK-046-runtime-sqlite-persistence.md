@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Pasteur P2 red regression committed; parent is preparing implementation delegation.
+- Status: Pasteur P2 implementation delegated; parent is waiting for James's final status.
 
 ## Scope
 
@@ -133,7 +133,9 @@
 - Hume returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `b61e357` (`Hume(test-fix)(Wire SQLite-backed Runtime Persistence): cover plugin write interleaving`) records the new regression test.
 - Parent red validation matched Pasteur's P2: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 76 passing tests. The failure is the new regression only: after the in-flight Core transaction commit resolves, `runtime.metadata.list()` loses the plugin-written `concurrent-writer` record despite the test proving metadata, event, and filter writes persisted and were visible before commit release.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
+- Hume was closed after final status and validation were recorded.
+- James (`implementer`, agent `019ec6aa-85d0-7170-a6e4-98ba9bc37b66`) was spawned at 2026-06-14 23:05 CST to fix the plugin direct metadata/event/filter live-memory interleaving regression. James owns production changes and must return final status before the parent validates or commits implementation.
 
 ## Next Action
 
-- Close Hume, delegate an `implementer` to fix the red regression, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.
+- Wait for James's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.
