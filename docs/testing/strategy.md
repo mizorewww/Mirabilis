@@ -81,7 +81,7 @@ TASK-033 does not harden Tauri CSP. The shipped config keeps the pre-existing `a
 
 TASK-035 shell coverage lives in `src/test/mui-shell-frame.test.tsx`, alongside existing app-shell boundary and runtime-provider tests. It should prove the baseline MUI shell behavior without treating placeholder route content as real ViewHost/SlotHost/editor implementation:
 
-- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar tools. Historical placeholder assertions should narrow as later M9 tasks land; after TASK-042, Search, Calendar, and Reports are functional while Settings remains a placeholder.
+- Use React Testing Library with `userEvent.setup()` and awaited user actions for shell controls, including drawer/navigation and top-bar tools. Historical placeholder assertions should narrow as later M9 tasks land; after TASK-044, Search, Calendar, Reports, ML/AI page context, and the Settings workspace route have delivered bounded surfaces. Settings remains inert display-only scope with embedded Sync skeleton status, not executable settings persistence or Sync transport.
 - Prefer role/name queries for `banner`, `navigation`, `main`, buttons, startup loading, startup failure, and route status output.
 - Keep runtime boundary assertions explicit: `useRuntime()` exposes only a copied/frozen `{ app }` facade, startup failures stay visible and redacted, and raw runtime/native/plugin internals do not leak into the public provider or failure UI.
 - Keep static MUI guards narrow: use supported MUI path imports, require the TASK-035 MUI substrate imports, and reject stale/deprecated patterns such as `@material-ui/*`, MUI barrel imports, `createMuiTheme`, `MuiThemeProvider`, `makeStyles`, `Hidden`, `GridLegacy`, `ListItem button`, and deprecated `components` / `componentsProps` slot props.
@@ -106,7 +106,7 @@ TASK-036 host coverage lives in `src/test/view-slot-hosts.test.tsx`. It proves t
 - `ViewHost` coverage includes exact-id and unambiguous-type render, missing or ambiguous view fail-closed states, accepted-data kind checks, malformed/getter/proxy/trap DTO fail-closed behavior, loading/empty/error/unavailable states, thrown-render recovery through `PluginRenderBoundary`, same-id reset behavior, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and public `useRuntime()` facade isolation.
 - `SlotHost` coverage includes registry ordering, true/false/thrown/non-boolean `when` behavior, per-contribution render isolation, controlled props only, user-event descriptor-backed `host.action` wrappers, mutation isolation, unsafe key and native/secret alias redaction, prototype-key fail-closed behavior, recursion budgets, and proxy/trap fail-closed behavior.
 - Static guards should prove no package, lockfile, native, Tauri, Rust, capability, permission, IPC, schema, or release drift, and no forbidden host imports or direct business-plugin private imports.
-- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting; TASK-039 has since delivered page-route metadata/timeline placement plus global floating timer placement; TASK-042 has since delivered Calendar/Reports route projections with a Calendar-only command bridge; TASK-043 has since delivered the page-only ML / AI context panel with exact `ViewHost` ids and advisory command allowlists. Lazy/Suspense behavior and broader command/page adapters remain later work.
+- TASK-036 deliberately deferred lazy/Suspense host behavior, route/editor mounting, real command adapter wiring, real `pageFacade` adapter wiring, and actual product slot placement. TASK-037 has since delivered Home editor route mounting plus the Home-scoped Markdown workspace bridge; TASK-038 has since delivered sidebar page and saved-filter route mounting; TASK-039 has since delivered page-route metadata/timeline placement plus global floating timer placement; TASK-042 has since delivered Calendar/Reports route projections with a Calendar-only command bridge; TASK-043 has since delivered the page-only ML / AI context panel with exact `ViewHost` ids and advisory command allowlists; TASK-044 has since delivered the inert Settings workspace route with embedded Sync skeleton status. Lazy/Suspense behavior and broader command/page adapters remain later work.
 
 Focused TASK-036 validation:
 
@@ -125,7 +125,7 @@ Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permiss
 TASK-037 coverage lives primarily in `src/test/home-workspace-editor.test.tsx`, with supporting static and shell assertions in `src/test/app-shell-boundary.test.ts` and `src/test/mui-shell-frame.test.tsx`. It proves the first real Home workspace without adding non-Home routes, dialogs, native behavior, package changes, or release surface.
 
 - Home workspace tests should use React Testing Library plus `userEvent.setup()` for observable typing and clicking: editing the Markdown textbox, toolbar snippet buttons, Save, task-title buttons, checkbox toggles, Home navigation, and non-Home route navigation.
-- The ready first screen should be the editable Home Markdown workspace, not startup copy, a landing page, a hero, or the old Home placeholder. MUI shell assertions should continue proving route status accurately as later tasks land: Home, Search, Calendar, Reports, and the page-only ML / AI context panel now exercise real route or panel surfaces, while Settings/Sync placeholders stay deferred until delivered, and deprecated MUI APIs are not introduced.
+- The ready first screen should be the editable Home Markdown workspace, not startup copy, a landing page, a hero, or the old Home placeholder. MUI shell assertions should continue proving route status accurately as later tasks land: Home, Search, Calendar, Reports, the page-only ML / AI context panel, and the TASK-044 Settings workspace route now exercise real route or panel surfaces. The Settings route stays inert and descriptor-only, with embedded Sync skeleton status but no settings persistence, provider configuration, sync transport, or secret fields.
 - The Home editor must render registered `markdown.page-editor` / `page.editor` through `ViewHost`. Tests may replace the registered view to prove shell composition uses the registry path rather than directly importing `MarkdownPageEditor`.
 - Hosted editor props must remain narrow and frozen. Boundary tests should reject raw runtime, Core stores, registries, Plugin Host, NativeBridge, filesystem/path, raw command registry, raw page facade, and function leaks into plugin-rendered props.
 - App Shell boundary regressions should keep rejecting direct Markdown editor imports, plugin-private production imports, plugin-to-shell production imports, raw runtime source contexts, raw Tauri/native imports, and package/native/Tauri/Rust/IPC/capability/permission/release drift.
@@ -196,7 +196,7 @@ Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permiss
 
 ## TASK-041 Search Overlay And Results Route Guidance
 
-TASK-041 coverage lives primarily in `src/test/search-overlay-results-route.test.tsx`, with supporting shell and adjacent-dialog assertions in `src/test/mui-shell-frame.test.tsx`, `src/test/command-palette-quick-capture-dialog.test.tsx`, and `src/test/quick-capture-search-plugins.test.tsx`. It proves the top-bar Search control is no longer a placeholder while keeping Settings as a placeholder.
+TASK-041 coverage lives primarily in `src/test/search-overlay-results-route.test.tsx`, with supporting shell and adjacent-dialog assertions in `src/test/mui-shell-frame.test.tsx`, `src/test/command-palette-quick-capture-dialog.test.tsx`, and `src/test/quick-capture-search-plugins.test.tsx`. It proves the top-bar Search control is no longer a placeholder. TASK-044 later replaced the old Settings placeholder assertion with a visible inert Settings workspace route.
 
 - Search dialog tests should use React Testing Library plus `userEvent.setup()` for opening Search, focus placement, typing bounded queries, keyboard submit, button submit, Escape/cancel close, focus return, pending status, duplicate-submit prevention, generic errors, empty results, result rows, and result-click navigation.
 - Command execution coverage should assert the App Shell dispatches only active search-owned `search.query` with exact `{ query }`, not `limit` or route/private fields.
@@ -258,7 +258,27 @@ bun run lint
 git diff --check
 ```
 
-Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, OpenAI SDK/package dependencies, keychain/secret storage, ML model storage/training, or schema-backed AI/ML persistence. TASK-043 is a TypeScript/React/MUI app-shell projection and context-panel task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, provider settings UI, secret-storage, persistent feed/index, or release surface.
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, OpenAI SDK/package dependencies, keychain/secret storage, ML model storage/training, or schema-backed AI/ML persistence. TASK-043 is a TypeScript/React/MUI app-shell projection and context-panel task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, executable provider settings UI, secret-storage, persistent feed/index, or release surface.
+
+## TASK-044 Settings And Sync Placeholders Guidance
+
+TASK-044 coverage lives primarily in `src/test/settings-sync-placeholders.test.tsx`, with supporting shell assertions in `src/test/mui-shell-frame.test.tsx`. It proves the top-bar Settings control opens a visible Settings workspace route with app/runtime facts, public plugin settings descriptors, inert `ai.provider-settings`, and an embedded Sync skeleton status panel.
+
+- Route coverage should use React Testing Library plus `userEvent.setup()` for opening Settings from the top bar, preserving navigation/workspace landmarks, visible `Settings Workspace` route state, app version and Plugin API version facts, and absence of the old `Settings surface placeholder` copy.
+- Descriptor coverage should list public manifest settings descriptors only. `ai.provider-settings` must remain inert/descriptor-only with no executable settings panel, provider form, API key/model/endpoint inputs, or settings persistence.
+- Sync skeleton coverage should assert manifest id `sync` plus explicit no-runtime-command, no-view, no-settings-panel, no-transport, no-remote-endpoint, no-background-job, no-conflict-UI, and no-settings-persistence status. It should not expose `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, or `sync.configure-remote` actions.
+- Static guards should keep app-shell Settings/Sync code free of package/lockfile/Cargo/Tauri/capability/permission/IPC/schema/release drift, private AI/Sync imports, live provider execution, secret/keychain/storage/network/native APIs, remote endpoint forms, filesystem/path fields, unsafe execution sinks, stale MUI/React/testing APIs, and focused/skipped tests.
+
+Focused TASK-044 validation:
+
+```bash
+bun run test:frontend -- src/test/settings-sync-placeholders.test.tsx src/test/mui-shell-frame.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, keychain/secret storage, remote endpoint configuration, sync transport/background jobs, conflict UI, or schema-backed settings/sync persistence. TASK-044 is a TypeScript/React/MUI app-shell route/status task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, executable provider settings UI, secret-storage, sync transport, conflict UI, persistent settings, or release surface.
 
 ## Focused Test Guidance
 
@@ -628,7 +648,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-031 AI Plugin Provider Abstraction Guidance
 
-TASK-031 tests cover the built-in `ai` plugin provider abstraction without adding package/native/Tauri/Rust/schema/capability changes, live OpenAI calls, SDK dependencies, raw network APIs, persistent settings, settings UI, secret storage, or durable AI writes:
+TASK-031 tests cover the built-in `ai` plugin provider abstraction without adding package/native/Tauri/Rust/schema/capability changes, live OpenAI calls, SDK dependencies, raw network APIs, persistent settings, executable provider settings UI, secret storage, or durable AI writes:
 
 - Registration coverage should assert built-in plugin id `ai`, canonical commands `ai.cleanup-inbox`, `ai.turn-text-into-task`, `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, `ai.generate-filter`, `ai.summarize-time-notes`, `ai.generate-weekly-review`, and `ai.explain-prediction`, views `ai.suggestion-panel` / `ai.review-panel`, metadata descriptors `ai.summary` / `ai.suggestedTags` / `ai.suggestedEstimate`, event descriptors `ai.suggestion-generated` / `ai.summary-generated`, and inert settings descriptor `ai.provider-settings`.
 - Stale-id coverage should prove underscore ids such as `ai.cleanup_inbox`, `ai.turn_text_into_task`, `ai.suggest_tags`, `ai.suggest_due_date`, `ai.generate_subtasks`, `ai.generate_filter`, `ai.summarize_time_notes`, `ai.generate_weekly_review`, and `ai.explain_prediction` are not aliases.
@@ -655,7 +675,7 @@ Run `bun run check:full` only if later edits add or change Tauri IPC, permission
 
 ## TASK-032 Sync Plugin Skeleton Guidance
 
-TASK-032 tests cover the built-in `sync` plugin skeleton and sync contract helpers without adding runtime sync commands, views, settings panels, transport, package/native/Tauri/Rust/schema/capability changes, network calls, persistent plugin settings, settings UI, or secret storage:
+TASK-032 tests cover the built-in `sync` plugin skeleton and sync contract helpers without adding runtime sync commands, views, settings panels, transport, package/native/Tauri/Rust/schema/capability changes, network calls, persistent plugin settings, executable sync settings UI, or secret storage:
 
 - Registration coverage should assert built-in plugin id `sync`, plugin name `Sync Plugin`, and no runtime commands, views, slots, settings panels, indexers, algorithms, or mobile toolbar items.
 - Stale-id coverage should prove `sync-plugin`, `sync_plugin`, `core.sync`, `sync.page`, `sync.pages`, `sync.markdown_page`, `sync.plugin_settings`, `sync.indexer`, `sync.indexes`, `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, and `sync.configure-remote` are not aliases.
@@ -676,7 +696,7 @@ bun run lint
 git diff --check
 ```
 
-Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live sync execution, keychain/secret storage, or schema-backed sync state. TASK-032 itself is TypeScript plugin/runtime contract behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, live network, transport, settings UI, or secret-storage surface.
+Run `bun run check:full` only if later edits add or change Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live sync execution, keychain/secret storage, or schema-backed sync state. TASK-032 itself is TypeScript plugin/runtime contract behavior with no new native, IPC, permission, filesystem, package, Cargo, Rust, schema, live network, transport, executable sync settings UI, or secret-storage surface.
 
 ## Merge Gate
 

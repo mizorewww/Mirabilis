@@ -1030,7 +1030,7 @@ native/package/Rust/schema/Tauri capability changes
 
 ## 22. AI Plugin
 
-AI Plugin 是内置插件，manifest id 是 `ai`。TASK-031 当前交付的是 plugin-owned provider abstraction 和 advisory command baseline，不是完整 AI workspace automation、settings UI、secret storage、native HTTP transport 或 live OpenAI execution。
+AI Plugin 是内置插件，manifest id 是 `ai`。TASK-031 当前交付的是 plugin-owned provider abstraction 和 advisory command baseline，不是完整 AI workspace automation、executable provider settings UI、secret storage、native HTTP transport 或 live OpenAI execution。
 
 ### 22.1 AI Plugin 注册能力
 
@@ -1121,11 +1121,11 @@ AI commands do not mutate Markdown Pages, metadata, events, filters, sibling plu
 
 ### 22.4 Settings and Views
 
-`ai.provider-settings` is currently an inert manifest settings panel descriptor. The runtime settings state used by TASK-031 is AI-plugin-owned and injectable for tests/runtime configuration; it defaults to unconfigured. Persistent plugin settings, settings UI, OS keychain/secret storage, Core settings facade, native HTTP transport, and live provider execution are deferred.
+`ai.provider-settings` is currently an inert manifest settings panel descriptor. The runtime settings state used by TASK-031 is AI-plugin-owned and injectable for tests/runtime configuration; it defaults to unconfigured. TASK-044 may list the descriptor in the app-shell Settings workspace, but it remains descriptor-only with no provider form, secret field, persistence, or execution path. Persistent plugin settings, executable provider settings UI, OS keychain/secret storage, Core settings facade, native HTTP transport, and live provider execution are deferred.
 
 `ai.suggestion-panel` and `ai.review-panel` are accessible fail-closed views. They render loading or unavailable status text through React text sinks and intentionally ignore unsafe caller data, provider output, or errors.
 
-TASK-043 adds the current app-shell AI consumer inside the optional page-only `Page context` panel. The Suggestions tab renders `ai.suggestion-panel` through exact `ViewHost` id/type `ai.suggestion-panel`; the Review tab renders `ai.review-panel` through exact `ViewHost` id/type `ai.review-panel`. The shell builds explicit bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page `ml.remaining-time-prediction` exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned command descriptors, reports redacted unavailable/error states, ignores stale async results after page switches, and does not write pages, metadata, events, filters, sibling plugin data, settings, secrets, provider configuration, or durable AI metadata/events. Live provider execution, provider settings UI, persistent plugin settings, secret/keychain storage, network/native execution, package changes, and suggestion acceptance/apply workflows remain deferred.
+TASK-043 adds the current app-shell AI consumer inside the optional page-only `Page context` panel. The Suggestions tab renders `ai.suggestion-panel` through exact `ViewHost` id/type `ai.suggestion-panel`; the Review tab renders `ai.review-panel` through exact `ViewHost` id/type `ai.review-panel`. The shell builds explicit bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page `ml.remaining-time-prediction` exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned command descriptors, reports redacted unavailable/error states, ignores stale async results after page switches, and does not write pages, metadata, events, filters, sibling plugin data, settings, secrets, provider configuration, or durable AI metadata/events. Live provider execution, executable provider settings UI, persistent plugin settings, secret/keychain storage, network/native execution, package changes, and suggestion acceptance/apply workflows remain deferred.
 
 ### 22.5 快速收集箱 AI
 
@@ -1153,7 +1153,7 @@ task.estimate = 1h
 ### 22.6 Deferred / Residual AI Scope
 
 ```text
-persistent plugin settings and settings UI
+persistent plugin settings and executable provider settings UI
 OS keychain / secret storage
 native HTTP / OpenAI SDK / live provider execution
 provider execution outside injected/mocked tests
@@ -1170,7 +1170,7 @@ generate-filter parity with the broader Core filter executor, including neq / ex
 
 ## 23. Sync Plugin
 
-Sync Plugin 是内置插件，manifest id 是 `sync`。TASK-032 当前交付的是 sync contract skeleton，不是完整同步产品、账户登录、远端连接、后台任务、conflict UI、settings UI 或 native/network transport。
+Sync Plugin 是内置插件，manifest id 是 `sync`。TASK-032 当前交付的是 sync contract skeleton，不是完整同步产品、账户登录、远端连接、后台任务、conflict UI、executable sync settings UI 或 native/network transport。
 
 ### 23.1 Sync Plugin 注册能力
 
@@ -1194,7 +1194,7 @@ Transport:
 none
 ```
 
-Sync 当前没有 `sync.start`、`sync.push`、`sync.pull`、`sync.connect`、`sync.login`、`sync.apply`、`sync.import` 或 `sync.configure-remote` 等 runtime command。它也没有 app-shell route、view、settings panel、background indexer、remote endpoint setting、NativeBridge/Tauri IPC 或 Rust/native transport。
+Sync 当前没有 `sync.start`、`sync.push`、`sync.pull`、`sync.connect`、`sync.login`、`sync.apply`、`sync.import` 或 `sync.configure-remote` 等 runtime command。它也没有 Sync-owned app-shell route、view、settings panel、background indexer、remote endpoint setting、NativeBridge/Tauri IPC 或 Rust/native transport。TASK-044 的 Settings workspace 只展示 public Sync skeleton status；它不是 Sync transport、account setup, conflict UI, or executable settings panel。
 
 ### 23.2 Syncable Units
 
@@ -1210,7 +1210,7 @@ sync.unit.plugin-settings   key: pluginId + key
 
 Serializers return DTO snapshots for Markdown Page, Metadata, Event, Filter, and Plugin Settings. These snapshots clone JSON-compatible values and reject executable/runtime-shaped data rather than keeping live object references.
 
-Plugin Settings are represented only as explicit DTO snapshots with `{ pluginId, key, state, updatedAt }`. TASK-032 does not add persistent plugin settings, a settings UI, a Core settings facade, keychain/secret storage, remote endpoint persistence, or any sync-specific settings panel. Top-level or nested secret/auth/credential/remote-endpoint-like setting keys are rejected by the serializer and are not durable sync units; future settings sync should be based on explicit allowlists and separate keychain-backed storage for secrets and remote credentials.
+Plugin Settings are represented only as explicit DTO snapshots with `{ pluginId, key, state, updatedAt }`. TASK-032 does not add persistent plugin settings, executable sync settings UI, a Core settings facade, keychain/secret storage, remote endpoint persistence, or any sync-specific settings panel. Top-level or nested secret/auth/credential/remote-endpoint-like setting keys are rejected by the serializer and are not durable sync units; future settings sync should be based on explicit allowlists and separate keychain-backed storage for secrets and remote credentials.
 
 ### 23.3 Rebuildable Indexes
 
@@ -1250,7 +1250,7 @@ For event conflict classification, event units and `syncKey` must be plain recor
 ### 23.5 Deferred / Residual Sync Scope
 
 ```text
-settings UI and persistent plugin settings facade
+executable sync settings UI and persistent plugin settings facade
 OS keychain / secret storage
 remote account/login/provider setup
 network/native sync transport
