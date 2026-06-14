@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:47 CST - TASK-046 targeted re-review findings recorded
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Targeted re-review final statuses received from Curie (`reviewer`), Singer (`security_reviewer`), Confucius (`test_quality_reviewer`), Pauli (`docs_researcher`), and Turing (`deprecation_auditor`).
+- Cleared: security/native-boundary and API/deprecation scopes have no P0/P1/P2 findings. Correctness has no P0/P1 blockers and Dalton's P1 is verified closed. Godel's requested docs scope is verified closed.
+- P1 to fix: Confucius found direct runtime and plugin direct-write tests still accept thrown-write behavior as a passing fallback; they must require successful reviewed native transaction persistence.
+- P2s to fix: Curie found direct page writes can still be overwritten from live memory during an in-flight persisted transaction commit, and broad transaction wrapping can make unrelated slow read-only plugin commands fail under the transaction lock. Pauli found stale current-state `in-memory-core` wording in `docs/architecture/04-slots-editor-task.md`.
+- Parent decision: fix the P1 and adjacent P2s before release checker or final `check:full`.
+
 ### 2026-06-14 19:42 CST - TASK-046 targeted re-review delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

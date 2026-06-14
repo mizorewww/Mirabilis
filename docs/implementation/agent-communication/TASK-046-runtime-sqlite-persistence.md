@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review running; parent is waiting for final statuses.
+- Status: targeted re-review completed with follow-up findings; fixes are next.
 
 ## Scope
 
@@ -102,7 +102,14 @@
 - Parent docs validation passed: `git diff --check`; focused stale wording scans for old `in-memory-core` / deferred runtime persistence claims returned no matches. Godel's docs P1/P2 are addressed, pending targeted re-review.
 - Dewey was closed after final status and validation were recorded.
 - Targeted re-review started at 2026-06-14 19:42 CST: Curie (`reviewer`, agent `019ec5f0-a139-7fb1-b9a0-2f3aaf449f44`), Singer (`security_reviewer`, agent `019ec5f0-f79f-72d0-8894-ef458fd79189`), Confucius (`test_quality_reviewer`, agent `019ec5f0-fa27-7661-8319-97b300b53e75`), Pauli (`docs_researcher`, agent `019ec5f0-fcc1-7de3-a3d3-eddf67fd0394`), and Turing (`deprecation_auditor`, agent `019ec5f0-ff46-7d53-a99c-30a245e792c4`).
+- Targeted re-review completed by 2026-06-14 19:47 CST.
+- Curie (`reviewer`) found no P0/P1 correctness blockers and verified Dalton's P1 is closed. Curie found two P2s to fix or explicitly accept: direct page writes can still be lost from live memory during an in-flight persisted transaction commit, and wrapping every plugin command/lifecycle handler in a transaction causes unrelated slow read-only commands to fail under the transaction lock.
+- Singer (`security_reviewer`) found no P0/P1/P2 security/native-boundary issues and called the branch merge-ready from security scope.
+- Confucius (`test_quality_reviewer`) found one P1: direct runtime and plugin direct-write tests still allow thrown-write behavior as a passing fallback instead of requiring successful native transaction persistence.
+- Pauli (`docs_researcher`) found no P0/P1 docs issues and confirmed Godel's requested scope is closed. Pauli found one broader docs P2 in `docs/architecture/04-slots-editor-task.md` about stale current `in-memory-core` wording.
+- Turing (`deprecation_auditor`) found no P0/P1/P2 API/deprecation issues and called the branch merge-ready from API/deprecation scope.
+- Parent decision: fix Confucius's P1, Curie's two P2s, and Pauli's docs P2 before release checker/final gate.
 
 ## Next Action
 
-- Wait for targeted re-review final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted re-review, release readiness, and final `check:full` pass.
+- Close targeted re-review agents after this status is recorded. Spawn `test_writer` for Confucius/Curie coverage and `doc_writer` for Pauli's docs P2. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.

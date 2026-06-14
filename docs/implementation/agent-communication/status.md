@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:42 CST.
+Last updated: 2026-06-14 19:47 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:42 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 targeted re-review running; parent is waiting for final statuses.
+- Current phase: TASK-046 targeted re-review completed with one P1 test-quality finding and selected P2 follow-ups; parent will delegate fixes.
 
 ## Current Outcome
 
@@ -47,6 +47,11 @@ Last updated: 2026-06-14 19:42 CST.
 - Dewey closed Godel's docs P1/P2 by documenting `sqlite-core` default runtime hydration before plugin activation, transaction-managed NativeBridge `db.transaction` writes, direct runtime page write-through/pending flush, plugin direct Core store writes through the Core transaction path, archived page hydration, fail-closed null hydration, filter update `get` + `save` rollback semantics, unchanged DB allowlist/capability boundary, and Rust's frontend event `type` alias.
 - Parent docs validation passed: `git diff --check`; focused stale wording scans for pre-TASK-046 `in-memory-core` / deferred runtime-persistence claims returned no matches.
 - Dewey was closed after final status and validation were recorded. Targeted re-review started at 2026-06-14 19:42 CST: Curie (`reviewer`, `019ec5f0-a139-7fb1-b9a0-2f3aaf449f44`) for correctness closure; Singer (`security_reviewer`, `019ec5f0-f79f-72d0-8894-ef458fd79189`) for security/native boundary closure; Confucius (`test_quality_reviewer`, `019ec5f0-fa27-7661-8319-97b300b53e75`) for test-quality closure; Pauli (`docs_researcher`, `019ec5f0-fcc1-7de3-a3d3-eddf67fd0394`) for docs closure; Turing (`deprecation_auditor`, `019ec5f0-ff46-7d53-a99c-30a245e792c4`) for API/deprecation closure.
+- Targeted re-review completed by 2026-06-14 19:47 CST. Singer found no P0/P1/P2 security/native-boundary issues and called the branch merge-ready from security scope. Turing found no P0/P1/P2 API/deprecation issues and called the branch merge-ready from API/deprecation scope.
+- Curie found no P0/P1 correctness blockers and verified Dalton's P1 direct runtime/App page persistence issue is closed. Curie found two correctness P2s: direct runtime page writes can still be overwritten from live memory if they occur while a persisted transaction commit is in flight, and wrapping every plugin command/lifecycle handler in a transaction creates a broad transaction-lock regression for unrelated slow read-only commands.
+- Confucius found one P1 test-quality issue: direct runtime and plugin direct-write tests still accept thrown-write behavior as a passing fallback. Those tests must require successful persistence through the reviewed `db.transaction` path.
+- Pauli found no P0/P1 docs blockers and confirmed Godel's requested docs scope is closed. Pauli found one broader docs P2: `docs/architecture/04-slots-editor-task.md` still describes current `storage.persistence` as `in-memory-core` with only the Markdown narrow page facade using NativeBridge.
+- Parent decision: TASK-046 is not ready for release checker or final gate until Confucius's P1 test-quality finding is fixed. Also fix Curie's two correctness P2s and Pauli's docs P2 instead of accepting them, because they are adjacent to the reviewed persistence path and cheap to validate before final merge.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -134,5 +139,8 @@ Last updated: 2026-06-14 19:42 CST.
 
 ## Next Parent Actions
 
-- Wait for targeted re-review final statuses. A wait timeout is not a failure or idle signal.
-- Retry `release_checker` after targeted re-review clears P0/P1 findings. A wait timeout is not a failure or idle signal.
+- Close targeted re-review agents after final statuses are recorded.
+- Spawn `test_writer` for Confucius's P1 and Curie's two P2 regression tests.
+- Spawn `doc_writer` for Pauli's docs P2.
+- After test fixes are committed and any new red signal is validated, spawn `implementer` for Curie's correctness P2 fixes.
+- Retry `release_checker` after targeted fixes and re-review clear P0/P1 findings. A wait timeout is not a failure or idle signal.
