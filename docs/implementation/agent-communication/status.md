@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:11 CST.
+Last updated: 2026-06-15 00:13 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:11 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 pre-test guidance complete; parent is preparing `test_writer` delegation.
+- Current phase: TASK-047 `test_writer` running; parent is waiting for Hilbert final status.
 
 ## Current Outcome
 
@@ -24,6 +24,7 @@ Last updated: 2026-06-15 00:11 CST.
 - Laplace (`security_reviewer`) returned final status at 2026-06-15 00:09 CST with no files modified and no tests run. Parent accepted the guidance as mandatory TASK-047 constraints: route-state serialization must reject raw page bodies, DTOs, SQL/path/secret/native/runtime handles and unsafe object shapes; page/filter/Home/recent restoration must revalidate current runtime ownership and availability; unavailable or malformed state must fail closed without leaking private titles, bodies, filter queries, raw errors, SQL, paths, tokens, or native details.
 - Archimedes (`docs_researcher`) returned final status at 2026-06-15 00:10 CST with no files modified. Parent accepted the guidance: current MUI Drawer/List/ListItemButton and WAI-ARIA guidance require explicit `aria-current="page"` beyond selected styling; Testing Library coverage should use awaited `userEvent.setup()` with role/name queries; React effect usage should stay narrow and canonical; TASK-047 should avoid Tauri Store/new permission surface and instead use a shell-owned route-state parse/serialize/validate boundary with only versioned Home/page/filter/recent ID data.
 - Poincare (`deprecation_auditor`) returned final status at 2026-06-15 00:11 CST with no files modified and no blockers. Parent accepted the audit constraints: keep `ListItemButton` plus explicit `aria-current="page"`; avoid removed MUI v9 props and legacy List/ListItemText APIs; avoid removed React 19 APIs and `react-dom/test-utils`; make persistence effects StrictMode-safe; use `const user = userEvent.setup()` with awaited interactions; reset shared Vitest mocks explicitly; add static guards for MUI/React/test API drift, package/Cargo/Tauri/capability drift, direct user-event calls, and route persistence allowlist.
+- Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned at 2026-06-15 00:13 CST for failing TASK-047 tests only. It owns test/test-helper changes, must not modify production/package/native/docs files, and must return final status before parent validates or commits tests.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -212,4 +213,4 @@ Last updated: 2026-06-15 00:11 CST.
 
 ## Next Parent Actions
 
-- Spawn TASK-047 `test_writer` for failing tests only. Include all pre-test guidance final constraints in the prompt.
+- Wait for Hilbert TASK-047 `test_writer` final status before validating red tests. A wait timeout is not a failure or idle signal.

@@ -116,6 +116,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:13 CST - TASK-047 red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned for failing TASK-047 tests only. It owns test/test-helper changes and must not modify production/package/native/docs files.
+- Parent state: waiting for Hilbert final status before validating the expected red state. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:11 CST - TASK-047 pre-test guidance complete
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

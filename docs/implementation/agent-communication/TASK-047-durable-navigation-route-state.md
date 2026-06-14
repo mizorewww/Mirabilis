@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance complete; parent is preparing `test_writer` delegation.
+- Status: `test_writer` running; parent is waiting for final status.
 
 ## Scope
 
@@ -55,7 +55,8 @@
 - Laplace returned final status at 2026-06-15 00:09 CST with no files modified and no tests run. P0 guidance: tests must prove route-state serialization rejects raw page bodies, snippets, metadata/event/filter objects, full route DTOs, SQL/params/table names, filesystem paths, secrets/tokens/provider values, NativeBridge, stores, registries, command registry, plugin host, functions/accessors/symbols/prototypes/runtime handles; page restoration must validate existence, runtime ownership, and non-archived state before rendering; Home restoration must reuse a valid persisted Home ID without creating duplicates; filter restoration must re-run filter/source-plugin/view/metadata-owner checks; recent pages must be bounded and drop foreign/missing/archived IDs; errors must not leak titles, bodies, filter names/queries, plugin IDs where unsafe, raw errors, stacks, SQL, paths, tokens, or native/provider details. Parent decision: pass these as mandatory red-test and implementer constraints.
 - Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) was spawned at 2026-06-15 00:06 CST for stale MUI/React/testing API risk.
 - Poincare returned final status at 2026-06-15 00:11 CST with no files modified and no blockers. Parent accepted the audit constraints: keep `ListItemButton` plus explicit `aria-current="page"`; avoid removed MUI v9 props and legacy List/ListItemText APIs; avoid removed React 19 APIs and `react-dom/test-utils`; make persistence effects StrictMode-safe; use `const user = userEvent.setup()` with awaited interactions; reset shared Vitest mocks explicitly; add static guards for MUI/React/test API drift, package/Cargo/Tauri/capability drift, direct user-event calls, and route persistence allowlist.
+- Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned at 2026-06-15 00:13 CST for failing TASK-047 tests only. It owns test/test-helper changes, must not modify production/package/native/docs files, and must return final status before parent validates or commits tests.
 
 ## Next Action
 
-- Spawn `test_writer` for failing TASK-047 tests only. Include all pre-test guidance final constraints in the prompt.
+- Wait for Hilbert final status before validating red tests. A wait timeout is not a failure or idle signal.
