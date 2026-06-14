@@ -24,10 +24,16 @@ import {
   type DbQuery,
   type MarkdownPage,
   type MetadataJsonValue,
+  type MetadataRecord,
   type NativeBridge,
   type StructuredMarkdownDocument,
 } from "../core";
 import { useMarkdownWorkspaceBridge } from "../shell/hosts";
+import {
+  createDurableRouteState as createRouteStateDto,
+  readDurableRouteState as parseRouteStateDto,
+  type DurableActiveRoute as RouteStateDtoActiveRoute,
+} from "../shell/navigation/route-state";
 import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
@@ -56,6 +62,12 @@ type SourceFile = {
   source: string;
 };
 
+type DeferredPromise<T> = {
+  promise: Promise<T>;
+  reject(reason?: unknown): void;
+  resolve(value: T): void;
+};
+
 type DurableRouteState = {
   activeRoute?: {
     filterId?: string;
@@ -68,6 +80,10 @@ type DurableRouteState = {
   recentPageIds: string[];
   version: 1;
 };
+
+type MetadataSetInput = Parameters<AppRuntime["metadata"]["set"]>[0];
+type TransactionHandlerInput = Parameters<AppRuntime["transaction"]["run"]>[0];
+type TransactionScope = Parameters<TransactionHandlerInput>[0];
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -87,6 +103,8 @@ const taskPageListViewId = "task.page-list";
 const pageListViewType = "page.list";
 const filterResultsKind = "filter-results.markdown-pages";
 const allTasksFilterId = "task.filter.all-tasks";
+const todayFilterId = "task.filter.today";
+const taskEmptyStateSlotId = "task.filter-empty-state";
 const appShellEntrypoints = [
   "src/App.tsx",
   "src/main.tsx",
@@ -559,6 +577,492 @@ describe("TASK-047 durable navigation route state", () => {
 
     expect(selectedProject).toHaveAttribute("aria-current", "page");
   });
+
+  it("keeps recent task pages available on trusted filter routes and navigates from them", async () => {
+    const runtime = await createRuntime({
+      metadataIds: [
+        "route-state-record",
+        "task-enabled-record",
+        "task-status-record",
+      ],
+      pageIds: ["home-page", "trusted-task-page"],
+    });
+    const home = createRuntimePage(runtime, homeTitle, []);
+    const taskPage = createRuntimePage(runtime, "Trusted Recent Task", [
+      { blockId: "trusted-task-body", text: "- [ ] Trusted Recent Task" },
+    ]);
+    const capturedEditorProps: CapturedProps[] = [];
+    const capturedPageListProps: CapturedProps[] = [];
+    const user = userEvent.setup();
+
+    setTaskMetadata(runtime, taskPage);
+    seedDurableRouteState(runtime, home.id, {
+      activeRoute: {
+        kind: "page",
+        pageId: home.id,
+        role: "home",
+      },
+      homePageId: home.id,
+      recentPageIds: [taskPage.id],
+      version: durableRouteStateVersion,
+    });
+    replaceRegisteredPageEditor(
+      runtime,
+      createBridgeLoadingPageEditor(capturedEditorProps),
+    );
+    replaceTaskPageListView(runtime, capturedPageListProps);
+    renderReadyApp(runtime);
+
+    await user.click(await findNavigationButton(/^All Tasks\b/i));
+
+    expect(
+      await screen.findByRole("heading", { name: /^All Tasks Workspace$/i }),
+    ).toBeVisible();
+    expectLatestFilterViewPropsArePageSummaries(capturedPageListProps, [
+      taskPage.title,
+    ]);
+
+    const allTasksRoute = await findNavigationButton(/^All Tasks\b/i);
+    const recentTaskRoute = await findRecentPageButton(/Trusted Recent Task/i);
+
+    expect(allTasksRoute).toHaveAttribute("aria-current", "page");
+    expect(recentTaskRoute).not.toHaveAttribute("aria-current");
+
+    await user.click(recentTaskRoute);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /^Trusted Recent Task Workspace$/i,
+      }),
+    ).toBeVisible();
+    expect(
+      await screen.findByRole("status", {
+        name: /Registered editor page body/i,
+      }),
+    ).toHaveTextContent("Trusted Recent Task");
+    expect(latestCapturedPageId(capturedEditorProps)).toBe(taskPage.id);
+    expect(await findRecentPageButton(/Trusted Recent Task/i)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(await findNavigationButton(/^All Tasks\b/i)).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
+
+  it("persists the latest page route after overlapping route-state transactions reject", async () => {
+    const runtime = await createRuntime({
+      metadataIds: ["route-state-record"],
+      pageIds: ["home-page", "route-a-page", "route-b-page"],
+    });
+    const home = createRuntimePage(runtime, homeTitle, []);
+    const routeA = createRuntimePage(runtime, "Route A", [
+      { blockId: "route-a-body", text: "Route A body" },
+    ]);
+    const routeB = createRuntimePage(runtime, "Route B", [
+      { blockId: "route-b-body", text: "Route B body" },
+    ]);
+    const capturedEditorProps: CapturedProps[] = [];
+    const user = userEvent.setup();
+    const persistence = installControlledRoutePersistence(runtime);
+
+    seedDurableRouteState(runtime, home.id, {
+      activeRoute: {
+        kind: "page",
+        pageId: home.id,
+        role: "home",
+      },
+      homePageId: home.id,
+      recentPageIds: [routeA.id, routeB.id],
+      version: durableRouteStateVersion,
+    });
+    replaceRegisteredPageEditor(
+      runtime,
+      createBridgeLoadingPageEditor(capturedEditorProps),
+    );
+    const view = renderReadyApp(runtime);
+
+    await user.click(await findRecentPageButton(/Route A/i));
+    await persistence.firstCommitStarted;
+    expect(persistence.isCommitInFlight()).toBe(true);
+
+    await user.click(await findRecentPageButton(/Route B/i));
+
+    expect(
+      await screen.findByRole("heading", { name: /^Route B Workspace$/i }),
+    ).toBeVisible();
+    expect(latestCapturedPageId(capturedEditorProps)).toBe(routeB.id);
+
+    persistence.releaseFirstCommit();
+
+    await waitFor(() => {
+      expect(readDurableRouteState(runtime, home.id)).toMatchObject({
+        activeRoute: {
+          kind: "page",
+          pageId: routeB.id,
+          role: "recent",
+        },
+        homePageId: home.id,
+      });
+    });
+
+    const persistedRouteState = readDurableRouteState(runtime, home.id);
+
+    view.unmount();
+
+    const restartedRuntime = await createRuntime({
+      metadataIds: ["route-state-record"],
+      pageIds: ["home-page", "route-a-page", "route-b-page"],
+    });
+    const restartedHome = createRuntimePage(restartedRuntime, homeTitle, []);
+
+    createRuntimePage(restartedRuntime, "Route A", [
+      { blockId: "restarted-route-a-body", text: "Restarted Route A body" },
+    ]);
+    const restartedRouteB = createRuntimePage(restartedRuntime, "Route B", [
+      { blockId: "restarted-route-b-body", text: "Restarted Route B body" },
+    ]);
+
+    seedDurableRouteState(
+      restartedRuntime,
+      restartedHome.id,
+      persistedRouteState,
+    );
+    renderReadyApp(restartedRuntime);
+
+    expect(
+      await screen.findByRole("heading", { name: /^Route B Workspace$/i }),
+    ).toBeVisible();
+    expect(await findRecentPageButton(/Route B/i)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(readDurableRouteState(restartedRuntime, restartedHome.id)).toMatchObject(
+      {
+        activeRoute: {
+          kind: "page",
+          pageId: restartedRouteB.id,
+          role: "recent",
+        },
+      },
+    );
+  });
+
+  it("creates and persists only one durable Home page during StrictMode startup", async () => {
+    const runtime = await createRuntime({
+      metadataIds: ["route-state-record"],
+      pageIds: ["home-page", "duplicate-home-page"],
+    });
+    const createSpy = vi.spyOn(runtime.pages, "create");
+
+    renderReadyApp(runtime, { strictMode: true });
+
+    expect(
+      await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+    ).toBeVisible();
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(
+      runtime.pages
+        .list({ includeArchived: true })
+        .filter((page) => page.title === homeTitle),
+    ).toHaveLength(1);
+
+    const [home] = runtime.pages.list({ includeArchived: true });
+
+    expect(home).toBeDefined();
+
+    if (home !== undefined) {
+      await expectPersistedSafeHomeRoute(runtime, home.id);
+    }
+  });
+
+  it("persists a trusted filter route from a real user navigation action", async () => {
+    const runtime = await createRuntime({
+      metadataIds: ["route-state-record"],
+      pageIds: ["home-page"],
+    });
+    const home = createRuntimePage(runtime, homeTitle, []);
+    const user = userEvent.setup();
+
+    renderReadyApp(runtime);
+
+    await user.click(await findNavigationButton(/^Today\b/i));
+
+    expect(
+      await screen.findByRole("heading", { name: /^Today Workspace$/i }),
+    ).toBeVisible();
+    expect(await findNavigationButton(/^Today\b/i)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await waitFor(() => {
+      expect(readDurableRouteState(runtime, home.id)).toMatchObject({
+        activeRoute: {
+          filterId: todayFilterId,
+          kind: "filter",
+          role: "today",
+        },
+        homePageId: home.id,
+      });
+    });
+  });
+
+  it("restores a public saved filter role and renders empty results through SlotHost", async () => {
+    const runtime = await createRuntime({
+      filterIds: ["task.filter.waiting"],
+      metadataIds: ["route-state-record"],
+      pageIds: ["home-page"],
+    });
+    const home = createRuntimePage(runtime, homeTitle, []);
+    const capturedEmptyStateProps: CapturedProps[] = [];
+    const savedFilter = runtime.filters.save({
+      id: "task.filter.waiting",
+      name: "Waiting",
+      query: {
+        where: [{ field: "metadata.task.status", op: "eq", value: "waiting" }],
+      },
+      sourcePluginId: taskPluginId,
+      viewType: pageListViewType,
+    });
+
+    replaceFilterEmptyStateSlot(runtime, capturedEmptyStateProps);
+    seedDurableRouteState(runtime, home.id, {
+      activeRoute: {
+        filterId: savedFilter.id,
+        kind: "filter",
+        role: "saved",
+      },
+      homePageId: home.id,
+      recentPageIds: [],
+      version: durableRouteStateVersion,
+    });
+    renderReadyApp(runtime, { strictMode: true });
+
+    expect(
+      await screen.findByRole("heading", { name: /^Waiting Workspace$/i }),
+    ).toBeVisible();
+    expect(
+      await screen.findByRole("status", { name: /filter empty state/i }),
+    ).toHaveTextContent("Waiting empty via SlotHost");
+    expect(capturedEmptyStateProps.length).toBeGreaterThanOrEqual(1);
+    expect(
+      capturedEmptyStateProps.every(
+        (props) =>
+          Object.keys(props).length === 1 && props.filterName === "Waiting",
+      ),
+    ).toBe(true);
+
+    const savedFilters = await screen.findByRole("list", {
+      name: /^Saved filters$/i,
+    });
+
+    expect(
+      within(savedFilters).getByRole("button", { name: /^Waiting$/i }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("fails stale persisted page and filter routes closed to Home and overwrites route metadata", async () => {
+    const cases: Array<{
+      label: string;
+      mutateRuntime?(runtime: AppRuntime): Promise<void> | void;
+      state: DurableRouteState;
+    }> = [
+      {
+        label: "missing page",
+        state: {
+          activeRoute: {
+            kind: "page",
+            pageId: "missing-page",
+            role: "recent",
+          },
+          homePageId: "home-page",
+          recentPageIds: ["missing-page"],
+          version: durableRouteStateVersion,
+        },
+      },
+      {
+        label: "missing filter",
+        state: {
+          activeRoute: {
+            filterId: "missing-filter",
+            kind: "filter",
+            role: "saved",
+          },
+          homePageId: "home-page",
+          recentPageIds: [],
+          version: durableRouteStateVersion,
+        },
+      },
+      {
+        label: "missing view",
+        mutateRuntime(runtime) {
+          runtime.registries.views.unregister(taskPageListViewId);
+        },
+        state: {
+          activeRoute: {
+            filterId: allTasksFilterId,
+            kind: "filter",
+            role: "all-tasks",
+          },
+          homePageId: "home-page",
+          recentPageIds: [],
+          version: durableRouteStateVersion,
+        },
+      },
+      {
+        label: "inactive metadata owner",
+        async mutateRuntime(runtime) {
+          await deactivatePlugin(runtime, taskPluginId);
+        },
+        state: {
+          activeRoute: {
+            filterId: allTasksFilterId,
+            kind: "filter",
+            role: "all-tasks",
+          },
+          homePageId: "home-page",
+          recentPageIds: [],
+          version: durableRouteStateVersion,
+        },
+      },
+      {
+        label: "unowned metadata owner",
+        mutateRuntime(runtime) {
+          runtime.filters.save({
+            id: "task.filter.orphan-secret",
+            name: "Unowned Metadata",
+            query: {
+              where: [
+                {
+                  field: "metadata.orphan.secret",
+                  op: "eq",
+                  value: true,
+                },
+              ],
+            },
+            sourcePluginId: taskPluginId,
+            viewType: pageListViewType,
+          });
+        },
+        state: {
+          activeRoute: {
+            filterId: "task.filter.orphan-secret",
+            kind: "filter",
+            role: "saved",
+          },
+          homePageId: "home-page",
+          recentPageIds: [],
+          version: durableRouteStateVersion,
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const runtime = await createRuntime({
+        filterIds: ["task.filter.orphan-secret"],
+        metadataIds: ["route-state-record"],
+        pageIds: ["home-page"],
+      });
+      const home = createRuntimePage(runtime, homeTitle, [
+        {
+          blockId: `${testCase.label}-home-body`,
+          text: "Safe Home body",
+        },
+      ]);
+
+      await testCase.mutateRuntime?.(runtime);
+      seedDurableRouteState(runtime, home.id, {
+        ...testCase.state,
+        homePageId: home.id,
+      });
+      const view = renderReadyApp(runtime, { strictMode: true });
+
+      await expectHomeRouteActive();
+      expect(document.body.textContent ?? "").not.toMatch(
+        /missing-page|missing-filter|route unavailable/i,
+      );
+      await expectPersistedSafeHomeRoute(runtime, home.id);
+
+      view.unmount();
+    }
+  });
+
+  it("rejects malformed persisted route records and scrubs them to the safe Home route", async () => {
+    const getterInvocations: string[] = [];
+    const cases: Array<{
+      label: string;
+      state: unknown;
+    }> = [
+      {
+        label: "malformed recent array",
+        state: {
+          activeRoute: {
+            kind: "page",
+            pageId: "runtime-handle-page",
+            role: "recent",
+          },
+          homePageId: "home-page",
+          recentPageIds: ["runtime-handle-page", { NativeBridge: "handle" }],
+          version: durableRouteStateVersion,
+        },
+      },
+      {
+        label: "accessor route state",
+        state: createAccessorRouteState("home-page", getterInvocations),
+      },
+      {
+        label: "symbol-keyed route state",
+        state: createSymbolKeyedRouteState("home-page"),
+      },
+      {
+        label: "non-plain prototype route state",
+        state: createNonPlainRouteState("home-page"),
+      },
+      {
+        label: "function runtime handle route state",
+        state: {
+          activeRoute: {
+            kind: "page",
+            pageId: "runtime-handle-page",
+            role: "recent",
+            runtime: {
+              transaction() {
+                return undefined;
+              },
+            },
+          },
+          homePageId: "home-page",
+          recentPageIds: [],
+          version: durableRouteStateVersion,
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const runtime = await createRuntime({
+        metadataIds: ["route-state-record"],
+        pageIds: ["home-page"],
+      });
+      const home = createRuntimePage(runtime, homeTitle, [
+        {
+          blockId: `${testCase.label}-home-body`,
+          text: "Safe Home body",
+        },
+      ]);
+
+      installForgedStoredRouteStateRecord(runtime, home.id, testCase.state);
+      const view = renderReadyApp(runtime, { strictMode: true });
+
+      await expectHomeRouteActive();
+      expect(getterInvocations).toStrictEqual([]);
+      expect(document.body.textContent ?? "").not.toMatch(
+        /runtime-handle|NativeBridge|PluginHost|function|PRIVATE|secret/i,
+      );
+      await expectPersistedSafeHomeRoute(runtime, home.id);
+
+      view.unmount();
+    }
+  });
 });
 
 describe("TASK-047 route-state static guards", () => {
@@ -599,6 +1103,65 @@ describe("TASK-047 route-state static guards", () => {
       ...testFiles.flatMap(findDirectUserEventCalls),
       ...testFiles.flatMap(findFocusedOrSkippedTests),
     ]).toStrictEqual([]);
+  });
+});
+
+describe("TASK-047 route-state serializer boundary", () => {
+  it("exact-key clones active routes before writing durable route state", () => {
+    const unsafeRoute = {
+      body: "PRIVATE_MARKDOWN_SNIPPET",
+      filterId: "task.filter.waiting",
+      kind: "filter",
+      query: "SELECT * FROM core_pages",
+      role: "saved",
+      title: "Private title",
+    } as unknown as RouteStateDtoActiveRoute;
+
+    const state = createRouteStateDto({
+      activeRoute: unsafeRoute,
+      homePageId: "home-page",
+      recentPageIds: ["waiting-page"],
+    });
+
+    expect(state).toStrictEqual({
+      activeRoute: {
+        filterId: "task.filter.waiting",
+        kind: "filter",
+        role: "saved",
+      },
+      homePageId: "home-page",
+      recentPageIds: ["waiting-page"],
+      version: durableRouteStateVersion,
+    });
+    expectRouteStateIsIdsOnly(state);
+  });
+
+  it("rejects malformed route-state records instead of normalizing unsafe keys", () => {
+    expect(
+      parseRouteStateDto({
+        activeRoute: {
+          kind: "page",
+          pageId: "project-page",
+          role: "recent",
+          title: "Private Project",
+        },
+        homePageId: "home-page",
+        recentPageIds: ["project-page"],
+        version: durableRouteStateVersion,
+      }),
+    ).toBeUndefined();
+    expect(
+      parseRouteStateDto({
+        activeRoute: {
+          filterId: "task.filter.today",
+          kind: "filter",
+          role: "today",
+        },
+        homePageId: "home-page",
+        recentPageIds: ["project-page", 42],
+        version: durableRouteStateVersion,
+      }),
+    ).toBeUndefined();
   });
 });
 
@@ -710,6 +1273,43 @@ function seedDurableRouteState(
   });
 }
 
+function installForgedStoredRouteStateRecord(
+  runtime: AppRuntime,
+  homePageId: string,
+  value: unknown,
+): void {
+  const originalList = runtime.metadata.list.bind(runtime.metadata);
+  const forgedRecord: MetadataRecord = {
+    createdAt: "2026-06-15T00:00:00.000Z",
+    id: "forged-route-state-record",
+    key: appShellRouteKey,
+    namespace: appShellRouteNamespace,
+    pageId: homePageId,
+    sourcePluginId: appShellRouteOwner,
+    updatedAt: "9999-12-31T23:59:59.999Z",
+    value: value as MetadataJsonValue,
+    valueType: "json",
+  };
+
+  runtime.metadata.list = ((options = {}) => {
+    const records = originalList(options);
+
+    return metadataListOptionsIncludeRouteState(options)
+      ? [forgedRecord, ...records]
+      : records;
+  }) as AppRuntime["metadata"]["list"];
+}
+
+function metadataListOptionsIncludeRouteState(
+  options: Parameters<AppRuntime["metadata"]["list"]>[0] = {},
+): boolean {
+  return (
+    (options.namespace === undefined ||
+      options.namespace === appShellRouteNamespace) &&
+    (options.key === undefined || options.key === appShellRouteKey)
+  );
+}
+
 function readDurableRouteState(
   runtime: AppRuntime,
   homePageId: string,
@@ -725,6 +1325,24 @@ function readDurableRouteState(
   expect(isRecord(record.value)).toBe(true);
 
   return record.value as DurableRouteState;
+}
+
+async function expectPersistedSafeHomeRoute(
+  runtime: AppRuntime,
+  homePageId: string,
+): Promise<void> {
+  await waitFor(() => {
+    expect(readDurableRouteState(runtime, homePageId)).toStrictEqual({
+      activeRoute: {
+        kind: "page",
+        pageId: homePageId,
+        role: "home",
+      },
+      homePageId,
+      recentPageIds: [],
+      version: durableRouteStateVersion,
+    });
+  });
 }
 
 function expectRouteStateIsIdsOnly(value: unknown): void {
@@ -862,6 +1480,28 @@ function setTaskMetadata(runtime: AppRuntime, page: MarkdownPage): void {
     sourcePluginId: taskPluginId,
     value: "todo",
     valueType: "string",
+  });
+}
+
+function replaceFilterEmptyStateSlot(
+  runtime: AppRuntime,
+  capturedProps: CapturedProps[],
+): void {
+  runtime.registries.slots.unregister(taskEmptyStateSlotId);
+  runtime.registries.slots.register({
+    component: (props: CapturedProps) => {
+      capturedProps.push(props);
+
+      return (
+        <p aria-label="Filter empty state" role="status">
+          {String(props.filterName)} empty via SlotHost
+        </p>
+      );
+    },
+    id: taskEmptyStateSlotId,
+    order: 100,
+    pluginId: taskPluginId,
+    slot: "filter.empty_state",
   });
 }
 
@@ -1077,6 +1717,24 @@ async function findRecentPageButton(name: RegExp): Promise<HTMLElement> {
   return within(recentPages).findByRole("button", { name });
 }
 
+async function findNavigationButton(name: RegExp): Promise<HTMLElement> {
+  const navigation = await screen.findByRole("navigation", {
+    name: /^Workspace$/i,
+  });
+
+  return within(navigation).findByRole("button", { name });
+}
+
+async function expectHomeRouteActive(): Promise<void> {
+  expect(
+    await screen.findByRole("heading", { name: /^Home Workspace$/i }),
+  ).toBeVisible();
+  expect(await findNavigationButton(/^Home\b/i)).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+}
+
 function latestCapturedPageId(capturedProps: readonly CapturedProps[]): string {
   const latestProps = capturedProps[capturedProps.length - 1];
   const pageId = latestProps === undefined ? undefined : readCapturedPageId(latestProps);
@@ -1086,6 +1744,68 @@ function latestCapturedPageId(capturedProps: readonly CapturedProps[]): string {
   }
 
   return pageId;
+}
+
+function installControlledRoutePersistence(runtime: AppRuntime): {
+  firstCommitStarted: Promise<void>;
+  isCommitInFlight(): boolean;
+  releaseFirstCommit(): void;
+} {
+  const firstCommit = createDeferred<void>();
+  const firstCommitStarted = createDeferred<void>();
+  let active = false;
+  let commitCount = 0;
+
+  runtime.transaction.run = (async (handler: TransactionHandlerInput) => {
+    if (active) {
+      throw new Error("A Core transaction is already running");
+    }
+
+    active = true;
+
+    try {
+      let stagedMetadataSet: MetadataSetInput | undefined;
+      const transaction = {
+        events: runtime.events,
+        filters: runtime.filters,
+        metadata: {
+          ...runtime.metadata,
+          set(input: MetadataSetInput) {
+            stagedMetadataSet = input;
+
+            return input as unknown as ReturnType<AppRuntime["metadata"]["set"]>;
+          },
+        },
+        pages: runtime.pages,
+      } as TransactionScope;
+      const result = await handler(transaction);
+
+      commitCount += 1;
+
+      if (commitCount === 1) {
+        firstCommitStarted.resolve(undefined);
+        await firstCommit.promise;
+      }
+
+      if (stagedMetadataSet !== undefined) {
+        runtime.metadata.set(stagedMetadataSet);
+      }
+
+      return result;
+    } finally {
+      active = false;
+    }
+  }) as AppRuntime["transaction"]["run"];
+
+  return {
+    firstCommitStarted: firstCommitStarted.promise,
+    isCommitInFlight() {
+      return active;
+    },
+    releaseFirstCommit() {
+      firstCommit.resolve(undefined);
+    },
+  };
 }
 
 function readCapturedPageId(props: CapturedProps): string | undefined {
@@ -1112,6 +1832,89 @@ function createSequenceFactory(values: readonly string[]): () => string {
 
     return value;
   };
+}
+
+function createDeferred<T>(): DeferredPromise<T> {
+  let rejectPromise: (reason?: unknown) => void = () => undefined;
+  let resolvePromise: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+
+  return {
+    promise,
+    reject: rejectPromise,
+    resolve: resolvePromise,
+  };
+}
+
+async function deactivatePlugin(
+  runtime: AppRuntime,
+  pluginId: string,
+): Promise<void> {
+  const host = runtime.pluginHost as AppRuntime["pluginHost"] & {
+    deactivate?(pluginId: string): Promise<unknown>;
+  };
+
+  if (host.deactivate === undefined) {
+    throw new Error("Expected test runtime PluginHost to support deactivation");
+  }
+
+  await host.deactivate(pluginId);
+}
+
+function createAccessorRouteState(
+  homePageId: string,
+  getterInvocations: string[],
+): unknown {
+  const state = {
+    homePageId,
+    recentPageIds: [],
+    version: durableRouteStateVersion,
+  };
+
+  Object.defineProperty(state, "activeRoute", {
+    enumerable: true,
+    get() {
+      getterInvocations.push("activeRoute");
+
+      return {
+        kind: "page",
+        pageId: "runtime-handle-page",
+        role: "recent",
+      };
+    },
+  });
+
+  return state;
+}
+
+function createSymbolKeyedRouteState(homePageId: string): unknown {
+  return {
+    [Symbol("runtime")]: "NativeBridge",
+    activeRoute: {
+      kind: "page",
+      pageId: "runtime-handle-page",
+      role: "recent",
+    },
+    homePageId,
+    recentPageIds: [],
+    version: durableRouteStateVersion,
+  };
+}
+
+function createNonPlainRouteState(homePageId: string): unknown {
+  return Object.assign(Object.create({ NativeBridge: "PRIVATE_HANDLE" }), {
+    activeRoute: {
+      kind: "page",
+      pageId: "runtime-handle-page",
+      role: "recent",
+    },
+    homePageId,
+    recentPageIds: [],
+    version: durableRouteStateVersion,
+  });
 }
 
 function createNoopNativeBridge(): NativeBridge {
