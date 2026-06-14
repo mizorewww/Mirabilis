@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 17:36 CST - TASK-045 pre-test guidance complete
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Jason (`planner`) recommended the smallest slice: shell-level responsive/accessibility polish in `src/App.tsx` and `src/App.css`, with focused tests in `src/test/responsive-accessibility-polish.test.tsx`.
+- Locke (`docs_researcher`) found no local-doc mismatch and verified official WAI-ARIA APG modal dialog/disclosure guidance, MUI v9 Drawer/Dialog/breakpoint/useMediaQuery guidance, Testing Library/user-event v14 guidance, and React 19 testing guidance. Local install is `@mui/material@9.0.1`; current MUI docs show v9.1.1, and relevant APIs align.
+- Herschel (`security_reviewer`) found no current security merge blocker. It recommended P0/P1 red tests for native/package drift, non-leaky state text, plugin boundary props, command boundaries, deferred scope, dialog semantics, narrow temporary drawer behavior, stale async safety, inert Settings/Sync behavior, and state consistency.
+- Aquinas (`deprecation_auditor`) found no P0/P1 blocker. It confirmed local versions and warned to avoid stale MUI/React/test APIs, MUI focus-trap disabling props, and committed focused/skipped tests. It noted `matchMedia` needs a deterministic test helper because jsdom lacks it.
+- Parent decision: delegate red tests to `test_writer`; tests should stay user-perspective RTL/user-event coverage with static guards and no production implementation.
+
 ### 2026-06-14 17:32 CST - TASK-045 pre-test guidance delegated
 
 - Branch: `feat/task-045-responsive-accessibility-polish`.

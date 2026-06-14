@@ -6,7 +6,7 @@
 - Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance is running; parent is waiting for child-agent completion/final statuses before red-test delegation.
+- Status: pre-test guidance completed; parent is preparing red-test delegation.
 
 ## Scope
 
@@ -54,7 +54,23 @@
 - Locke (`docs_researcher`, agent `019ec579-69f1-7d52-84a5-67e83c3bfa20`) spawned at 2026-06-14 17:32 CST for local docs plus current official WAI-ARIA, MUI responsive Drawer/Dialog/breakpoint, React Testing Library/user-event, and React testing guidance.
 - Herschel (`security_reviewer`, agent `019ec579-6c46-7633-a2ef-47b1a73d4b9c`) spawned at 2026-06-14 17:32 CST for UI-only security/privacy boundary guidance.
 - Aquinas (`deprecation_auditor`, agent `019ec579-6ebd-7853-b5a4-f7ef6069b349`) spawned at 2026-06-14 17:32 CST for stale MUI/React/testing API guidance.
+- Jason returned final status with no blocker and recommended a shell-level slice: responsive state in `src/App.tsx` / `src/App.css`, narrow temporary navigation, narrow temporary context panel, compact accessible top-bar controls, and focused tests in `src/test/responsive-accessibility-polish.test.tsx`.
+- Locke returned final status with no local-doc mismatch. It verified official WAI-ARIA APG modal dialog/disclosure guidance, MUI v9 Drawer/Dialog/breakpoint/useMediaQuery guidance, Testing Library/user-event v14 guidance, and React 19 testing guidance. It noted local `@mui/material@9.0.1` while current MUI docs show v9.1.1; the relevant APIs align.
+- Herschel returned final status with no current security merge blocker and P0/P1 red-test targets for native/package drift, non-leaky state text, plugin boundary props, command boundary preservation, deferred scope, modal/dialog semantics, narrow drawer behavior, stale async safety, inert Settings/Sync behavior, and consistent status/error semantics.
+- Aquinas returned final status with no P0/P1 blocker. It confirmed local installed versions, deprecated MUI/React/testing APIs to avoid, MUI `slots` / `slotProps` guidance, no focus-trap disabling props, no committed `.only`/`.skip`, and the need for a deterministic `matchMedia` helper in responsive tests.
+
+## Red-Test Guidance Accepted By Parent
+
+- Create or focus `src/test/responsive-accessibility-polish.test.tsx`.
+- Use `userEvent.setup()` and awaited user actions.
+- Add deterministic narrow/desktop `matchMedia` helper without package drift.
+- Cover desktop landmarks/navigation/editor baseline.
+- Cover narrow temporary navigation open/close, `aria-expanded`, route selection closing the drawer, focus return, and active route state.
+- Cover page context panel desktop/narrow accessibility, close/Escape behavior, focus return, and editor remaining mounted.
+- Cover Command Palette, Search, and Quick Capture dialog names, initial focus, Escape/Cancel close, focus trap where practical, and focus return.
+- Cover non-leaky state/status/error text where practical.
+- Add static guards for native/package/Tauri/Rust/capability/permission/IPC/schema drift, stale MUI/React/testing APIs, focus-trap disabling props, deferred scope, and focused/skipped tests.
 
 ## Next Action
 
-- Wait for Jason, Locke, Herschel, and Aquinas completion/final statuses before red-test delegation. A wait timeout is not a failure or idle signal.
+- Commit the pre-test guidance outcome, close completed guidance agents, then spawn `test_writer` for TASK-045 red tests.
