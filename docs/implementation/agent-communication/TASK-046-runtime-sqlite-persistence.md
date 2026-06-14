@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance completed; parent is preparing red-test delegation.
+- Status: red tests are delegated; parent is waiting for Russell's final status.
 
 ## Scope
 
@@ -57,7 +57,8 @@
 - Hubble returned final status with no P0 deprecated API blockers. It flagged P1 design risks: synchronous Core/plugin store APIs conflict with async NativeBridge persistence, `FilterStore.update()` has no matching DB allowlist operation, and current transaction manager only works with in-memory transaction participants. It confirmed local versions `@tauri-apps/api@2.11.0`, `@tauri-apps/cli@2.11.2`, React `19.2.6`, Vite `7.3.3`, Vitest `4.1.6`, RTL `16.3.2`, user-event `14.6.1`, Tauri `2.11.2`, and `rusqlite@0.39.0`.
 - Mendel returned final status with the accepted implementation slice: hydrate pages, metadata, events, and filters during `createAppRuntime()` from the existing NativeBridge DB allowlist; use hydrated synchronous Core stores for reads; route production durable writes through an awaited async persisted transaction path using `NativeBridge.db.transaction`; keep plugin facades intact; and change the runtime storage marker only when SQLite-backed runtime persistence is active.
 - Parent decision: accept Mendel's slice for red tests. Full async Core Store API migration, arbitrary direct sync store write-through outside `transaction.run`, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export remain deferred unless a child agent reports a blocker/final failure requiring scope reconsideration.
+- Russell (`test_writer`, agent `019ec5b5-f552-7d73-8352-a7122c635240`) was spawned at 2026-06-14 18:38 CST to add failing TASK-046 tests only. Expected coverage: startup hydration, `storage.persistence` marker, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, redacted startup/bridge failures, and static native/raw DB guardrails.
 
 ## Next Action
 
-- Delegate red tests to `test_writer` for startup hydration, persistence mode reporting, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, and no native/raw DB leaks.
+- Wait for Russell completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
