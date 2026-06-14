@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:54 CST - TASK-047 inbound recent-page normalization implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `986cbd1` (`Lagrange(review-fix)(Add Durable Navigation And Route State): normalize inbound recent pages`).
+- Lagrange (`implementer`) changed `src/shell/navigation/route-state.ts` so parser output drops Home, dedupes, and caps inbound recent IDs while preserving accessor-safe validation, plus a narrow restore-candidate wiring change in `src/App.tsx` so runtime validation can still recover valid pages after missing/archived candidates.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (44 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (47 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Harvey's inbound recent-page normalization P2 closure.
+
 ### 2026-06-15 01:48 CST - TASK-047 inbound recent-page normalization implementation delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
