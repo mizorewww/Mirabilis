@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: recent-page accessor red tests committed; parent is preparing implementation delegation.
+- Status: recent-page accessor implementation delegated; parent is waiting for Turing final status.
 
 ## Scope
 
@@ -87,7 +87,8 @@
 - Bernoulli returned final status at 2026-06-15 01:31 CST with no files modified. It confirmed Faraday's nested `activeRoute` accessor finding is closed and found no P0/P1 findings, but reported one remaining P2 boundary item: `recentPageIds` still accepts accessor-backed arrays during inbound parse and outbound serialization, can invoke an index getter, and can return or persist getter-returned path/token-shaped strings. Bernoulli ran the focused TASK-047 suite (20 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift scans, and a focused `bun -e` boundary probe.
 - Erdos (`test_writer`, agent `019ec731-6527-7cf0-8b2e-b045ba08dbc5`) was spawned at 2026-06-15 01:32 CST to write focused failing tests for Bernoulli's `recentPageIds` accessor-array P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
 - Erdos returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:34 CST matched Bernoulli's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 20 passing tests because `recentPageIds[0]` getter was invoked during parse/serialize and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans. Commit: `8360851` (`Erdos(test-fix)(Add Durable Navigation And Route State): add recent-page accessor red tests`).
+- Turing (`implementer`, agent `019ec734-7143-77c2-87d6-b0b064fbb430`) was spawned at 2026-06-15 01:36 CST to make Erdos's recent-page accessor red tests pass with minimum production hardening. It owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
 
 ## Next Action
 
-- Close Erdos after this status is committed, then spawn an implementer for the `recentPageIds` accessor-array P2.
+- Wait for Turing final status before validating or committing the recent-page accessor implementation fix. A wait timeout is not a failure or idle signal.

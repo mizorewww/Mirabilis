@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:36 CST - TASK-047 recent-page accessor implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Turing (`implementer`, agent `019ec734-7143-77c2-87d6-b0b064fbb430`) was spawned to make Erdos's recent-page accessor red tests pass with minimum production hardening.
+- Turing owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Turing final status before validating or committing the recent-page accessor implementation fix. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:35 CST - TASK-047 recent-page accessor red tests committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
