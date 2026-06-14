@@ -16,14 +16,17 @@ This index converts the product, architecture, and development docs into focused
 | M7: Calendar and reporting | Calendar, habit, heatmap, stats, and chart plugins present events and metadata as views. | Time and habit data are visible in calendar/heatmap/chart views. |
 | M8: ML, AI, sync, and polish | Prediction, AI commands, quick capture, search, sync, packaging, and release readiness land. | Advanced plugins stay plugin-owned and do not pollute Core. |
 | M9: MUI user-visible app shell and workspace | Design the full MUI workbench first, then replace the startup card with a Markdown-first app shell, route hosts, slot hosts, navigation, command/search/capture surfaces, contextual panels, settings/sync placeholders, and responsive polish. | The first screen is a usable MUI Markdown workspace with safe route/slot/view composition through existing registries and command execution, without broadening native/Tauri/security surfaces. |
+| M10: Durable runtime and advanced plugin surfaces | Wire the existing SQLite/native boundary into runtime stores, then add durable route state, plugin-owned refresh/index/settings/query/feed surfaces, native opt-in boundaries, and release hardening. | Advanced surfaces are persistent where documented, remain plugin-owned, use reviewed native capabilities, and keep secrets, sync, AI, and query/feed boundaries explicit. |
 
 ## Cross-Cutting Risks And Unknowns
 
-- Current repo is still the default Tauri skeleton; the docs describe a future monorepo layout that does not exist yet.
-- The package currently lacks Vitest, React Testing Library, ESLint, and check scripts.
-- SQLite crate choice is not documented yet; verify current Tauri/Rust recommendations before implementation.
+- Early architecture docs still include future monorepo layout assumptions; implementation tasks must check the actual repo layout before moving files or adding packages.
+- Frontend test, lint, typecheck, and local check scripts exist; new tasks should prefer focused checks first and `check:full` for persistence, native, security, or release changes.
+- SQLite repositories and DB IPC already exist through Rust `rusqlite` and allowlisted `db_execute` / `db_transaction`; runtime store hydration, write-through semantics, and async transaction behavior remain deferred.
 - Tiptap/ProseMirror dependency choice is documented as recommended, not installed.
-- Tauri capabilities are currently minimal (`core:default`, `opener:default`); filesystem, SQLite, shortcut, notification, tray, and sync permissions must be reviewed before use.
+- Tauri capabilities already include reviewed DB IPC permissions (`allow-db-execute`, `allow-db-transaction`); filesystem, shortcut, notification, tray, sync/network, updater, and release permissions must be reviewed before use.
+- `storage.persistence` wording is easy to misread because the editor has a narrow SQLite page path while Core runtime stores are still in-memory until TASK-046.
+- Durable route-state schema, cross-plugin query/feed API shape, Sync settings/secrets/conflict policy, and live AI provider secret handling remain underspecified and must be resolved in their focused tasks.
 - WebDriver E2E should wait until the app has a stable UI path.
 
 ## Task List
@@ -1480,3 +1483,633 @@ Docs to verify before implementation:
 - Current WAI-ARIA Authoring Practices for dialog and navigation patterns.
 - Current MUI responsive Drawer/Dialog guidance.
 - Current React Testing Library and user-event guidance.
+
+## Continuation Backlog: Durable Runtime And Advanced Plugin Surfaces
+
+### TASK-046: Wire SQLite-backed Runtime Persistence
+
+Source docs:
+
+- `docs/architecture/06-filter-native-database.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- Runtime stores for pages, metadata, events, and filters hydrate from SQLite through the allowlisted NativeBridge DB operations.
+- Runtime store writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- `storage.persistence` no longer claims the runtime is in-memory-only when SQLite-backed runtime persistence is active.
+- Plugin facades keep current owner boundaries and do not expose NativeBridge, raw SQLite, filesystem paths, SQL, or full runtime handles.
+- Startup, NativeBridge, IPC, and persistence errors remain typed and redacted.
+- Transaction behavior preserves documented rollback and result-order semantics across the async bridge.
+
+Test plan:
+
+- Rust IPC and repository tests for hydration, write-through, allowlisted operations, transaction rollback, and redacted errors.
+- Frontend NativeBridge/runtime provider tests for startup hydration, store writes, bridge failures, and persistence-mode reporting.
+- Plugin facade boundary regression tests for owner-scoped page, metadata, event, and filter access.
+- `bun run check:full`.
+
+Dependencies:
+
+- TASK-013.
+- TASK-014.
+- TASK-015.
+- TASK-045.
+
+Docs to verify before implementation:
+
+- Current official Tauri v2 command, capability, and path docs.
+- Current `rusqlite` transaction guidance.
+- Local NativeBridge and SQLite boundary docs.
+
+### TASK-047: Add Durable Navigation And Route State
+
+Source docs:
+
+- `docs/product/07-user-interface-design.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/implementation/task-index.md#task-038-add-sidebar-page-and-saved-filter-navigation`
+
+Acceptance criteria:
+
+- Active page route, active filter route, durable Home identity, recent pages, and safe route restoration survive app restart.
+- Route state stores only opaque page IDs, filter IDs, route tokens, or bounded route DTO keys, not raw page bodies, plugin-private data, SQL, paths, secrets, or runtime handles.
+- Home restoration is stable and does not create duplicate Home pages when persisted state already points at an available Home page.
+- Unavailable, archived, malformed, wrong-owner, or missing pages and filters fail closed to a safe route with visible non-leaky state.
+- Existing navigation, saved-filter, ViewHost, SlotHost, and command-boundary behavior continues to work.
+
+Test plan:
+
+- RTL route restoration tests with persistence mocks for Home, page, filter, recent-page, unavailable, and malformed state paths.
+- Provider/unit tests for route-state serialization, restoration, and fail-closed fallback.
+- Static boundary tests for no raw runtime, page body, SQL, filesystem path, or plugin-private route persistence.
+
+Dependencies:
+
+- TASK-046.
+
+Docs to verify before implementation:
+
+- MUI Drawer and List docs.
+- React state and effect guidance for persistence boundaries.
+- Local TASK-038 deferred navigation notes.
+
+### TASK-048: Add Save-Time Semantic Refresh Pipeline
+
+Source docs:
+
+- `docs/product/04-editor-and-workflows.md`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/development/02-implementation-roadmap-and-constraints.md`
+
+Acceptance criteria:
+
+- Editor save explicitly invokes plugin-owned refresh or resolve commands for task, tag, and habit semantics where those plugins declare the behavior.
+- Core and the Markdown editor do not gain task, tag, habit, timer, calendar, heatmap, stats, chart, ML, AI, or sync business logic.
+- Refresh failures are visible to the user as bounded, non-leaky state and do not corrupt the saved Markdown page.
+- No background indexer, worker, or automatic global scanner is introduced in this task.
+- Plugin command execution remains owner-checked and all resulting mutations go through Command Registry and plugin facades.
+
+Test plan:
+
+- Editor save integration tests for command invocation order, success, failure, non-leaky error state, and saved document preservation.
+- Command-boundary tests proving semantic refresh commands are plugin-owned and cannot mutate sibling private data.
+- Existing task, tag, habit, and editor tests for regression coverage.
+
+Dependencies:
+
+- TASK-046 preferred.
+
+Docs to verify before implementation:
+
+- Local Command Registry and Plugin Host docs.
+- Local editor save and Markdown syntax descriptor docs.
+
+### TASK-049: Add Metadata Field Editors And Date/Page Link UX
+
+Source docs:
+
+- `docs/product/04-editor-and-workflows.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/product/03-plugin-platform.md`
+- `docs/architecture/04-slots-editor-task.md`
+
+Acceptance criteria:
+
+- A plugin-driven metadata editor registry or controlled slot path supports due date, scheduled date, estimate, and tag picker editing.
+- `@date` and `[[page]]` remain Markdown-first syntax and do not create hidden native or plugin-private records outside documented commands.
+- Metadata mutations go through Command Registry and owner-scoped plugin facades.
+- Editor and metadata UI handle unavailable plugins, invalid descriptors, malformed dates, and missing pages with visible non-leaky states.
+- Core stays plugin-agnostic and does not hard-code task, tag, habit, timer, or calendar business behavior.
+
+Test plan:
+
+- RTL editor and metadata tests for date entry, page-link entry, tag picker behavior, command execution, disabled/unavailable states, and non-leaky errors.
+- Unit tests for descriptor validation and command-boundary enforcement.
+- Existing MetadataBar, Task, Tag, and editor tests.
+
+Dependencies:
+
+- TASK-048 preferred.
+
+Docs to verify before implementation:
+
+- MUI picker and input docs if new picker components are introduced.
+- Local metadata field descriptor and slot docs.
+- Local Markdown editor workflow docs.
+
+### TASK-050: Mount Mobile Quick Capture Toolbar
+
+Source docs:
+
+- `docs/product/04-editor-and-workflows.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/06-view-slots.md`
+- `docs/product/07-user-interface-design.md`
+
+Acceptance criteria:
+
+- Narrow/mobile-width editor surfaces expose the Quick Capture mobile input and syntax buttons through the documented plugin contribution path.
+- Toolbar controls are keyboard reachable, touch-friendly, labelled, and do not overlap editor content or app-shell navigation.
+- Quick Capture actions still execute through Command Registry and existing Quick Capture plugin commands.
+- No native mobile app, native/global shortcut, background capture, package, Tauri, Rust, IPC, or capability surface is added.
+- Desktop command palette and Quick Capture dialog behavior remains intact.
+
+Test plan:
+
+- RTL narrow viewport tests using `userEvent.setup()` for toolbar visibility, focus order, syntax button activation, capture save, cancel, and non-leaky errors.
+- Responsive/static tests for no native, package, or capability drift.
+- Existing Quick Capture and app-shell dialog tests.
+
+Dependencies:
+
+- TASK-045.
+
+Docs to verify before implementation:
+
+- MUI responsive toolbar and Dialog guidance.
+- Local Quick Capture, mobile toolbar, and slot docs.
+
+### TASK-051: Add Native Shortcut Boundary For Capture And Search
+
+Source docs:
+
+- `docs/architecture/06-filter-native-database.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/07-user-interface-design.md`
+
+Acceptance criteria:
+
+- Reviewed Tauri global shortcut NativeBridge APIs register capture and search entry points through minimal app-owned native commands.
+- Tauri capabilities and permissions are minimal, documented, and scoped to the reviewed shortcut commands.
+- Native shortcut events enter the UI through existing Command Registry paths for Quick Capture and Search.
+- Shortcut registration, unregistration, duplicate registration, unavailable platform behavior, and startup failures surface bounded non-leaky errors.
+- No plugin receives raw Tauri, NativeBridge, filesystem, path, or shortcut handles.
+
+Test plan:
+
+- Rust/native bridge contract tests for shortcut registration, event dispatch DTOs, error redaction, and capability exposure.
+- Frontend tests for capture/search command entry from mocked native shortcut events.
+- Security review focused on Tauri capabilities, IPC, native handles, and command boundaries.
+- `bun run check:full`.
+
+Dependencies:
+
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Current official Tauri v2 global shortcut docs.
+- Current official Tauri v2 command and capability docs.
+- Local NativeBridge and command-boundary docs.
+
+### TASK-052: Add Persistent Search Index And SQLite FTS
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#search-plugin`
+- `docs/architecture/01-overview-and-monorepo.md`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/architecture/06-filter-native-database.md`
+
+Acceptance criteria:
+
+- Search owns a rebuildable persistent index path, including SQLite FTS where supported by the bundled SQLite/rusqlite setup.
+- Page edits update or rebuild the Search index through plugin-owned commands or reviewed index hooks.
+- Search results remain bounded, redacted, and route-safe, and do not expose full page bodies except where the existing UI already renders current page content.
+- Frontend code and plugin UI do not issue raw SQL or receive SQL strings, database paths, or native handles.
+- Index rebuild failure and stale index states are visible and non-leaky.
+
+Test plan:
+
+- Rust migration/repository tests for FTS schema, rebuild behavior, page update integration, and redacted errors.
+- Search plugin tests for index update, bounded query, result shape, and fallback/rebuild behavior.
+- App-shell search overlay and results route regression tests.
+- `bun run check:full`.
+
+Dependencies:
+
+- TASK-046.
+- TASK-048 preferred.
+
+Docs to verify before implementation:
+
+- SQLite FTS support through the bundled SQLite/rusqlite environment.
+- Local Search plugin, NativeBridge, and persistence docs.
+
+### TASK-053: Add Plugin Settings Runtime And Settings Panel Host
+
+Source docs:
+
+- `docs/product/03-plugin-platform.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/implementation/task-index.md#task-044-add-settings-and-sync-placeholders`
+
+Acceptance criteria:
+
+- Runtime exposes a non-secret plugin settings facade with descriptors, validation, persistence, and owner-scoped access.
+- Settings route hosts controlled plugin settings panels through registered descriptors.
+- Settings persistence rejects provider secrets, tokens, credentials, remote endpoints, filesystem paths, and sync transport secrets unless a later secret-specific task adds a reviewed boundary.
+- AI provider settings and Sync settings remain descriptor or placeholder-only unless TASK-054 or TASK-062 explicitly enables them.
+- Settings panel failures, unavailable plugins, invalid descriptors, and persistence failures show visible non-leaky state.
+
+Test plan:
+
+- Plugin settings unit tests for descriptor validation, persistence, owner scope, secret-shaped key rejection, and unavailable plugin behavior.
+- Settings route RTL tests for panel hosting, disabled/placeholder states, save/cancel, and non-leaky errors.
+- Static secret, network, native, and sync-transport guards.
+
+Dependencies:
+
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Local Plugin API, settings descriptor, AI, and Sync docs.
+- Tauri storage or key-value docs only if a new native storage API is introduced.
+
+### TASK-054: Add AI Provider Settings, Secret Storage, And Live Execution
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#ai-plugin`
+- `docs/development/01-data-roadmap-and-mvp.md#phase-10ai-plugin`
+- `docs/testing/strategy.md`
+
+Acceptance criteria:
+
+- AI provider settings UI lets users configure provider choices without exposing secrets in ordinary settings persistence.
+- Provider secrets use a reviewed secret/keychain boundary and are never stored in SQLite, sync snapshots, logs, route state, visible UI text, or plugin settings JSON.
+- Live provider execution is opt-in, plugin-owned, bounded, cancellable where practical, and separated from mocked/provider-abstraction tests.
+- AI command outputs remain advisory unless a later acceptance workflow task applies them through user-confirmed plugin commands.
+- Provider, transport, keychain, and IPC errors are typed and redacted.
+
+Test plan:
+
+- Mocked transport and keychain tests for provider configuration, secret read/write/delete, live execution request shaping, cancellation/error handling, and no-secret leakage.
+- RTL provider settings tests with secret field behavior, save/cancel, disabled/unavailable states, and non-leaky errors.
+- Static guards for no secrets in SQLite, sync snapshots, logs, route state, or visible output.
+- No live provider calls in CI.
+
+Dependencies:
+
+- TASK-053.
+
+Docs to verify before implementation:
+
+- Current official OpenAI Responses and model docs.
+- Current Tauri keychain/secret-storage and HTTP/network capability docs for the chosen implementation.
+- Local AI provider boundary and security docs.
+
+### TASK-055: Define Cross-Plugin Query And Feed Facade
+
+Source docs:
+
+- `docs/product/03-plugin-platform.md`
+- `docs/product/05-built-in-plugins.md`
+- `docs/architecture/02-core-kernel.md`
+- `docs/architecture/03-plugin-api-and-host.md`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+
+Acceptance criteria:
+
+- Public query/feed API exposes reviewed Event, Metadata, and Page facts without giving plugins direct access to sibling private stores.
+- Query/feed responses include owner/provenance checks so plugin-owned data can be trusted by Calendar, Stats, ML, and related consumers.
+- API shape supports documented Calendar, Stats, ML, Timer, Habit, Task, and reporting feed use cases without adding their business logic to Core.
+- Malformed, unavailable, wrong-owner, over-broad, or unsupported queries fail closed with typed non-leaky errors.
+- Feed results are bounded and do not expose raw runtime handles, NativeBridge, SQL, filesystem paths, secrets, or provider data.
+
+Test plan:
+
+- Core/query unit tests for accepted query shapes, owner/provenance filtering, bounds, unsupported operators, and redacted errors.
+- Plugin-boundary tests proving consumers cannot access sibling private stores or mutate through read feeds.
+- Regression tests for Calendar/Reports/ML transient projection consumers where applicable.
+
+Dependencies:
+
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Local Core, Plugin Host, Filter, Event, Metadata, Calendar, Stats, and ML architecture docs.
+- Add or request an ADR before implementation if the query/feed API shape changes the accepted architecture.
+
+### TASK-056: Add Persistent Calendar, Reports, And Dashboard Feeds
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md`
+- `docs/product/07-user-interface-design.md`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+- `docs/implementation/task-index.md#task-042-add-calendar-and-reporting-routes-with-explicit-data-projections`
+
+Acceptance criteria:
+
+- Calendar and Reports consume saved reporting feeds or dashboards beyond the transient TASK-042 route projections.
+- Calendar and Reports refresh from the public query/feed facade, not sibling plugin internals.
+- Dashboard/feed state is persisted only through documented plugin-owned or Core-owned persistence paths.
+- Charting dependency expansion is avoided unless a focused scoped decision and tests are added.
+- Empty, partial, stale, unavailable, and feed-error states are visible and non-leaky.
+
+Test plan:
+
+- Projection/feed tests for saved Calendar and Reports feeds, refresh behavior, bounds, owner/provenance checks, and stale data.
+- RTL route tests for Calendar/Reports/dashboard loading, empty, partial, error, and refresh states.
+- Existing Calendar, Stats, Chart, and app-shell route tests.
+
+Dependencies:
+
+- TASK-055.
+
+Docs to verify before implementation:
+
+- Local Calendar, Stats, Chart, route, and query/feed docs.
+- MUI route and chart accessibility guidance if visuals expand.
+
+### TASK-057: Add Timer Totals And Saved Timer Filters
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#timer-plugin`
+- `docs/product/05-built-in-plugins.md#filter-plugin`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+
+Acceptance criteria:
+
+- Timer owns tracked-total metadata and updates it through Timer commands or documented feed refresh paths.
+- Recently Worked, Tracked Today, and Unnoted Sessions saved filters are persisted and executable through the existing filter/view path.
+- Timer totals and filters consume public query/feed data or Timer-owned data without adding timer business logic to Core.
+- Wrong-owner, malformed, missing-page, archived-page, and stale segment cases fail closed with visible non-leaky state.
+- Existing active timer, segment, note, Calendar, and Reports behavior remains intact.
+
+Test plan:
+
+- Timer plugin tests for totals metadata, saved filter creation/update, segment changes, and owner boundaries.
+- Filter execution tests for Recently Worked, Tracked Today, and Unnoted Sessions.
+- App-shell route/slot regression tests for timer metadata, timeline, and floating bar surfaces.
+
+Dependencies:
+
+- TASK-055.
+
+Docs to verify before implementation:
+
+- Local Timer, Filter, Metadata, Event, and query/feed docs.
+
+### TASK-058: Add Calendar Month And Manual Segment Editing
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#calendar-plugin`
+- `docs/product/05-built-in-plugins.md#timer-plugin`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+
+Acceptance criteria:
+
+- Calendar exposes `calendar.month` using normalized Calendar DTOs and the reviewed query/feed path.
+- Manual time segment create/edit commands are Timer-owned and preserve Event Store immutability by appending corrective events or documented metadata instead of mutating historical events.
+- Optional drag/drop editing is included only if it is accessible, keyboard reachable, and testable in the chosen UI.
+- Segment editing does not let Calendar mutate Timer private data directly.
+- Missing, invalid, overlapping, stale, wrong-owner, and archived-page cases fail closed with visible non-leaky state.
+
+Test plan:
+
+- Calendar component tests for month rendering, keyboard navigation, empty/partial/error states, and optional drag/drop behavior if introduced.
+- Timer command tests for manual segment create/edit, event immutability, validation, owner boundaries, and redacted errors.
+- App-shell route regression tests for Calendar day/week/month surfaces.
+
+Dependencies:
+
+- TASK-057 preferred.
+
+Docs to verify before implementation:
+
+- Local Calendar, Timer, Event Store, and query/feed docs.
+- MUI drag/drop or selected interaction-library docs only if drag/drop is introduced.
+
+### TASK-059: Add Habit And Heatmap App-Shell Surfaces
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#habit-plugin`
+- `docs/product/05-built-in-plugins.md#heatmap-view-plugin`
+- `docs/product/07-user-interface-design.md`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
+
+Acceptance criteria:
+
+- Habit and Heatmap routes consume normalized DTOs from the reviewed query/feed or projection path.
+- Habit review and habit list surfaces are polished enough for the app shell and remain keyboard reachable and accessible.
+- Heatmap consumes normalized public DTOs and does not import Habit internals or private stores.
+- Habit mutations go through Habit-owned commands and do not bypass Command Registry.
+- Empty, partial, unavailable, wrong-owner, and stale data states are visible and non-leaky.
+
+Test plan:
+
+- Route projection tests for Habit and Heatmap DTO creation, owner/provenance filtering, bounds, and stale data.
+- RTL route tests for Habit list/review, Heatmap rendering, command execution, keyboard navigation, and empty/error states.
+- Existing Habit and Heatmap plugin tests plus static no-private-import guards.
+
+Dependencies:
+
+- TASK-055.
+
+Docs to verify before implementation:
+
+- Local Habit, Heatmap, route, command, and query/feed docs.
+
+### TASK-060: Add ML Durable Prediction Feed And Model Refresh
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#ml-plugin`
+- `docs/architecture/05-plugin-implementations.md`
+- `docs/development/01-data-roadmap-and-mvp.md#phase-9ml-plugin`
+
+Acceptance criteria:
+
+- Trusted query/feed input can write ML-owned prediction metadata and events through ML-owned commands or documented feed refresh paths.
+- Model refresh is bounded, deterministic or mocked where appropriate, and owned by the ML plugin.
+- Core does not gain ML business logic, scoring, model state, or prediction-specific persistence rules.
+- ML outputs include provenance and fail closed for stale, malformed, unavailable, wrong-owner, or over-broad feed inputs.
+- No external worker, network, package, native, or storage API is introduced unless explicitly scoped and reviewed.
+
+Test plan:
+
+- ML command/feed tests for trusted input, durable metadata/event writes, model refresh, bounds, provenance, and redacted errors.
+- Persistence tests for ML-owned metadata/events through the runtime persistence path.
+- App-shell ML panel regression tests for durable prediction display and stale data handling.
+
+Dependencies:
+
+- TASK-055.
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Local ML, Metadata, Event, and query/feed docs.
+- No external docs unless a new worker, storage, package, or native API is introduced.
+
+### TASK-061: Add AI Suggestion Acceptance Workflows
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#ai-plugin`
+- `docs/product/05-built-in-plugins.md#task-plugin`
+- `docs/product/05-built-in-plugins.md#tag-plugin`
+- `docs/product/02-core-data-model.md#42-metadata`
+- `docs/architecture/05-plugin-implementations.md`
+
+Acceptance criteria:
+
+- User-confirmed AI suggestions apply through plugin-owned commands such as task, tag, metadata, or AI acceptance commands.
+- Durable AI metadata and events, if added, are AI-owned and do not let AI mutate sibling plugin private data directly.
+- AI suggestions never apply hidden mutations without explicit user confirmation.
+- Accepted suggestions preserve Command Registry, owner/provenance, auditability, and non-leaky error boundaries.
+- Provider settings, live execution, and acceptance UI stay separated so mocked/provider-abstraction flows remain testable.
+
+Test plan:
+
+- RTL acceptance tests for accepting, rejecting, previewing, and applying AI suggestions with visible command outcomes.
+- Mutation-boundary tests proving accepted suggestions dispatch plugin-owned commands and cannot write sibling private stores directly.
+- Existing AI, Task, Tag, Metadata UI, and app-shell panel tests.
+
+Dependencies:
+
+- TASK-054 preferred.
+- TASK-048.
+
+Docs to verify before implementation:
+
+- Local AI, Task, Tag, Metadata, Command Registry, and Plugin Host docs.
+- Current OpenAI docs only if provider behavior or request shaping changes.
+
+### TASK-062: Add Sync Settings, Transport, And Conflict UI
+
+Source docs:
+
+- `docs/product/05-built-in-plugins.md#sync-plugin`
+- `docs/architecture/05-plugin-implementations.md#sync-plugin`
+- `docs/architecture/06-filter-native-database.md`
+- `docs/implementation/task-index.md#task-044-add-settings-and-sync-placeholders`
+
+Acceptance criteria:
+
+- Sync exposes explicit remote settings through the reviewed settings and secret boundaries.
+- Sync snapshots exclude secrets, tokens, credentials, provider keys, local filesystem paths, and native handles.
+- Sync commands and transport are plugin-owned, bounded, and covered by documented capability/network decisions.
+- Background job policy, tombstone/delete model, and conflict semantics are documented before implementation and reflected in code.
+- Manual conflict UI lets users inspect and resolve conflicts without leaking raw transport errors or secrets.
+
+Test plan:
+
+- Sync unit tests for snapshot serialization, secret exclusion, tombstones, conflict policy, command ownership, transport mock behavior, and redacted errors.
+- Conflict UI RTL tests for listing, inspecting, choosing resolutions, cancellation, and error states.
+- Security review for settings, secrets, sync snapshots, transport, IPC, Tauri capabilities, and logs.
+- `bun run check:full`.
+
+Dependencies:
+
+- TASK-053.
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Current official Tauri networking and capability docs.
+- Local Sync, settings, secret, NativeBridge, and persistence docs.
+- Add or request an ADR before implementation if sync conflict/delete semantics are not settled.
+
+### TASK-063: Add Native Markdown Import/Export
+
+Source docs:
+
+- `docs/product/04-editor-and-workflows.md`
+- `docs/architecture/04-slots-editor-task.md`
+- `docs/architecture/06-filter-native-database.md`
+- `docs/development/02-implementation-roadmap-and-constraints.md`
+
+Acceptance criteria:
+
+- NativeBridge file import/export uses user-approved paths through reviewed Tauri dialog/filesystem capabilities.
+- Imported Markdown remains inert structured content and passes the existing Markdown import/export validation boundaries.
+- Export writes only the selected Markdown content to user-approved locations and never grants arbitrary filesystem access to plugins.
+- Filesystem, path, IPC, and parsing errors are typed and redacted.
+- No plugin receives raw filesystem, path, Tauri, NativeBridge, or native handles.
+
+Test plan:
+
+- Rust path, dialog/filesystem IPC, and capability tests for user-approved import/export paths, denial paths, and redacted errors.
+- Frontend NativeBridge contract tests for import/export success, cancel, denied path, parse failure, and non-leaky error states.
+- Editor import/export regression tests for Markdown validation and structured body preservation.
+- `bun run check:full`.
+
+Dependencies:
+
+- TASK-046.
+
+Docs to verify before implementation:
+
+- Current official Tauri filesystem and dialog capability docs.
+- Local Markdown import/export, NativeBridge, and security docs.
+
+### TASK-064: Harden Release Surfaces
+
+Source docs:
+
+- `docs/implementation/task-index.md#task-033-add-release-packaging-and-local-full-gate`
+- `docs/testing/strategy.md`
+- `docs/development/02-implementation-roadmap-and-constraints.md`
+
+Acceptance criteria:
+
+- CSP hardening plan and implementation are documented and tested against the current Tauri/frontend surface.
+- AppImage builder validation is controlled and documented so release artifacts are reproducible enough for local verification.
+- Updater, signing, publishing, and CI scope are documented and tested or explicitly deferred with reasons.
+- Release hardening reflects any native shortcut, filesystem, network, sync, AI, keychain, updater, or capability changes that landed before this task.
+- No release process stores or logs secrets, provider keys, signing keys, sync credentials, local filesystem paths, or raw native errors.
+
+Test plan:
+
+- `bun run check:full`.
+- `release_checker` or equivalent release validation command if available.
+- Package validation for AppImage and any configured bundle targets.
+- Security review focused on CSP, updater, signing, publishing, capabilities, logs, and CI secret handling.
+
+Dependencies:
+
+- Native, filesystem, network, sync, AI secret, updater, or release-surface tasks that land before release hardening.
+
+Docs to verify before implementation:
+
+- Current official Tauri CSP, updater, signing, and bundler docs.
+- Local TASK-033 release notes and testing strategy.
