@@ -94,6 +94,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 13:50 CST - TASK-043 third review-fix tests delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Hooke (`test_writer`, agent `019ec4ae-0e16-7702-8a41-b9c2624f4d90`) spawned to add failing tests for malformed `ai.suggest-due-date` success DTO handling and path-shaped metadata filtering.
+- Parent state: waiting for Hooke completion/final status before validating, committing, or delegating implementation fixes.
+
 ### 2026-06-14 13:49 CST - TASK-043 final targeted re-review found remaining P2
 
 - Branch: `feat/task-043-ml-ai-context-panels`.

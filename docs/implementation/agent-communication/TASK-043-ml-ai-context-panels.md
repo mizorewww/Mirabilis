@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: final targeted re-review found remaining P2 findings; parent is delegating red tests before any implementation work.
+- Status: third review-fix red tests are delegated to Hooke; parent is waiting for completion/final status.
 
 ## Scope
 
@@ -65,6 +65,7 @@
 - Popper (`test_quality_reviewer`) returned final status with no P0/P1 and one P2: strict malformed success-shaped AI output tests cover tags, subtasks, and explain-prediction, but not `ai.suggest-due-date`.
 - Laplace (`reviewer`) returned final status with no remaining P0/P1/P2 correctness findings and verified strict advisory DTO validation, previous provider failure DTO handling, exact ML prediction gating, bounded metadata filtering, stale async guards, and tab/CSS regressions.
 - Chandrasekhar (`security_reviewer`) returned final status with one P2: path-shaped allowed metadata can still reach ML/AI payloads through allowed metadata values, including `/root/.ssh/id_rsa`, `/workspace/private.md`, `/dev/shm/file.log`, `/proc/self/environ`, `/run/user/1000/app.sock`, and `~/private.md`.
+- Hooke (`test_writer`, agent `019ec4ae-0e16-7702-8a41-b9c2624f4d90`) was spawned at 2026-06-14 13:50 CST for third review-fix red tests covering malformed `ai.suggest-due-date` success DTO handling and path-shaped metadata filtering.
 
 ## Parent Decisions
 
@@ -104,7 +105,8 @@
 - 2026-06-14 13:43 CST: Mill returned final status. Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed. Production fix committed as `e1cec91`.
 - 2026-06-14 13:44 CST: final targeted re-review agents spawned; parent is waiting for final statuses before final gate and merge readiness.
 - 2026-06-14 13:49 CST: final targeted re-review completed. Laplace found no remaining correctness P0/P1/P2; Popper found one P2 strict DTO test gap for `ai.suggest-due-date`; Chandrasekhar found one P2 path-shaped metadata leak. Parent will delegate third review-fix tests before implementation.
+- 2026-06-14 13:50 CST: Hooke spawned as `test_writer`; parent state is waiting for completion/final status before validating or committing third review-fix tests.
 
 ## Next Action
 
-- Spawn a third review-fix `test_writer` for the Popper/Chandrasekhar P2 findings, then wait for completion/final status before validation or implementation.
+- Wait for Hooke completion/final status before validation, commit, or implementation delegation.
