@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:10 CST - TASK-046 review-fix red tests validated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Kant (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `50cfe52` (`Kant(test-fix)(Wire SQLite-backed Runtime Persistence): add persistence review-fix coverage`).
+- Parent red validation matched the expected review findings: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Failures cover missing direct runtime `core.pages.create` transaction persistence, missing plugin direct write native transaction batch, and null native hydration responses not failing closed with a redacted startup error.
+- Supporting checks: `git diff --check` passed; an exact `.only` / `.skip` scan on `src/test/runtime-sqlite-persistence.test.ts` found no matches.
+- Next action: close Kant, then delegate implementation review fixes. Parent remains orchestration-only.
+
 ### 2026-06-14 19:03 CST - TASK-046 review-fix tests delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

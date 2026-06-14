@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:03 CST.
+Last updated: 2026-06-14 19:10 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:03 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 review-fix red tests delegated; parent is waiting for Kant's final status.
+- Current phase: TASK-046 review-fix red tests committed; parent will close Kant and delegate implementation fixes.
 
 ## Current Outcome
 
@@ -32,6 +32,8 @@ Last updated: 2026-06-14 19:03 CST.
 - Godel (`docs_researcher`) found P1 stale docs in `docs/architecture/07-runtime-flows.md`, `docs/architecture/06-filter-native-database.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`; Godel also flagged P2 wording drift in `docs/implementation/task-index.md` and TASK-046 communication notes.
 - Parent decision: TASK-046 is not merge-ready. P1s must be fixed before final gate. Delegate review-fix tests first, then production fixes, then docs sync. P2s should be fixed where they are naturally adjacent or explicitly recorded as accepted deferrals after targeted review. `release_checker` will be retried after agent capacity frees and review fixes are green.
 - Completed review agents were closed after their final statuses were recorded. Kant (`test_writer`, `019ec5cd-18c1-7af0-a3d1-f9301305134c`) was spawned at 2026-06-14 19:03 CST for TASK-046 review-fix red tests covering direct App/plugin persistence bypass, stronger hydration fields, transaction write-through gaps, and adjacent P2s.
+- Kant returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `50cfe52` records review-fix coverage for direct runtime and plugin store persistence bypass, full hydration fields including archived pages, transaction write-through for `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`, missing native filter update semantics, and fail-closed null hydration responses.
+- Parent red validation confirmed the intended review-fix failures: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Expected failures cover missing direct runtime `core.pages.create` native transaction, missing plugin direct write native transaction batch, and null native hydration response not failing closed. `git diff --check` passed and an exact `.only` / `.skip` scan found no matches.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -117,7 +119,7 @@ Last updated: 2026-06-14 19:03 CST.
 
 ## Next Parent Actions
 
-- Wait for Kant's final status. A wait timeout is not a failure or idle signal.
-- After Kant returns, run the focused red validation, commit the review-fix tests, and spawn `implementer` for the production review fixes.
+- Close Kant after this final status and red validation are recorded.
+- Spawn `implementer` for the production review fixes required by Kant's red tests plus Dalton/Nietzsche/Dirac P1s and accepted adjacent P2s.
 - Spawn `doc_writer` for Godel's docs P1/P2 after implementation behavior is stable enough to document.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.

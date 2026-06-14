@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix red tests delegated to Kant; parent is waiting for final status.
+- Status: review-fix red tests committed; implementation fix delegation is next.
 
 ## Scope
 
@@ -82,7 +82,9 @@
 - Parent decision: TASK-046 is not merge-ready. Delegate review-fix red tests before production fixes for the Dalton/Nietzsche/Dirac P1s, then delegate implementation, then delegate docs sync for Godel's P1/P2. Do not merge until P1s are fixed, targeted re-review is clean, `release_checker` has run, and `bun run check:full` passes.
 - Completed review agents were closed after their final statuses were recorded in the communication files.
 - Kant (`test_writer`, agent `019ec5cd-18c1-7af0-a3d1-f9301305134c`) was spawned at 2026-06-14 19:03 CST for review-fix red tests only. Test targets: direct App/plugin persistence bypass, full hydration field preservation, transaction write-through for `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`, and adjacent P2s where natural.
+- Kant returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `50cfe52` (`Kant(test-fix)(Wire SQLite-backed Runtime Persistence): add persistence review-fix coverage`) records the test changes.
+- Parent red validation confirmed the intended state: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Failures cover missing direct runtime page create native transaction, missing plugin direct write native transaction batch, and null native hydration responses starting successfully instead of failing closed. `git diff --check` passed and an exact `.only` / `.skip` scan found no matches.
 
 ## Next Action
 
-- Wait for Kant's final status. A wait timeout is not a failure or idle signal. After Kant returns, validate the red signal, commit tests, and spawn implementation review fixes.
+- Close Kant after this status is recorded, then spawn implementation review fixes. A wait timeout is not a failure or idle signal.
