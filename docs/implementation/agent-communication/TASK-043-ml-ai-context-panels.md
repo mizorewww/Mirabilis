@@ -39,6 +39,12 @@
 - Huygens returned final status with implementation plus narrow test-maintenance fixes. Parent accepted the test edits as maintenance for ES2020/typecheck/matcher/helper-scope/panel-only leak assertions rather than weakening. Commits: `83164bf` (`Huygens(test-fix)(Add ML And AI Context Panels): repair context panel test expectations`) and `148084d` (`Huygens(implementation)(Add ML And AI Context Panels): implement context panel projections`).
 - Ptolemy (`pr_explorer`, agent `019ec47a-e32d-7c71-a9c3-837265fed88a`), Beauvoir (`reviewer`, agent `019ec47a-e637-7b01-b93c-2f6f4def74b3`), Lovelace (`deprecation_auditor`, agent `019ec47a-e8cd-7431-aaa2-f3960d45806d`), Galileo (`security_reviewer`, agent `019ec47a-eb36-7f22-95bc-dfb01a0817ee`), Socrates (`docs_researcher`, agent `019ec47a-edd8-77f0-9628-57805d1e8dd0`), and Maxwell (`test_quality_reviewer`, agent `019ec47a-f17a-73f1-9767-a290e5f0fe22`) were spawned for review at 2026-06-14 12:54 CST.
 - `doc_writer` review spawn hit the current agent thread limit and will be retried after capacity frees.
+- Ptolemy (`pr_explorer`) returned final status with no blocker. It mapped changed paths and flagged review hotspots: missing context-panel CSS, ML scan-cap semantics, AI output redaction/bounding, intentional `ml.prediction-panel`-only mounting, and unrun full local gate.
+- Lorentz (`doc_writer`, agent `019ec47d-95a4-7e22-8abf-7805c70f865e`) was spawned at 2026-06-14 12:57 CST after capacity freed.
+- Lovelace (`deprecation_auditor`) returned final status with no P0/P1 and one P2: inactive tabs have `aria-controls` pointing at unmounted tabpanel ids.
+- Maxwell (`test_quality_reviewer`) returned final status with no P0/P1. It found P2 coverage gaps for AI advisory command execution and payload assertions, AI stale async page-switch behavior, and weakened ML metadata/event overflow assertions.
+- Socrates (`docs_researcher`) returned final status with no P0/P1. It verified current MUI v9, React 19, Testing Library, user-event, and Vitest guidance; OpenAI docs were not checked because live provider/request execution remains deferred. It repeated P2 findings for unmounted controlled tabpanels and missing context-panel CSS/layout coverage.
+- Galileo (`security_reviewer`) returned final status with no P0/P1. It found one P2: non-exact ML prediction DTOs can flow into `ai.explain-prediction`, including provider/secret-shaped fields; and one P3: projection builders can throw on Proxy trap input instead of failing closed.
 
 ## Parent Decisions
 
@@ -62,7 +68,8 @@
 - 2026-06-14 12:52 CST: Huygens returned final status. Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` passed with 6 files / 88 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - 2026-06-14 12:52 CST: Implementation integration committed in `83164bf` and `148084d`; branch is clean and synced to origin.
 - 2026-06-14 12:54 CST: six review agents spawned; `doc_writer` spawn deferred because the current agent thread limit was reached.
+- 2026-06-14 12:57 CST: Ptolemy, Lovelace, Maxwell, Socrates, and Galileo returned final statuses; Lorentz was spawned as replacement docs writer after capacity freed. Parent is waiting for Beauvoir and Lorentz before deciding review-fix delegation.
 
 ## Next Action
 
-- Wait for the running review agents' completion/final statuses, retry `doc_writer` when capacity frees, then decide fixes or merge readiness.
+- Wait for Beauvoir (`reviewer`) and Lorentz (`doc_writer`) completion/final statuses, then decide review-fix delegation for known P2/P3 findings.

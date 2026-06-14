@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 12:57 CST - TASK-043 review findings partially returned
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Completed review agents with no P0/P1 so far: Ptolemy (`pr_explorer`), Lovelace (`deprecation_auditor`), Maxwell (`test_quality_reviewer`), Socrates (`docs_researcher`), and Galileo (`security_reviewer`).
+- Known P2/P3 review items: inactive tabs reference unmounted tabpanels; AI advisory command execution/payload and stale async coverage needs strengthening; ML metadata/event overflow assertions need strengthening; context-panel CSS/layout coverage is missing; non-exact ML prediction DTOs can flow into `ai.explain-prediction`; projection builders can throw on Proxy trap input (P3).
+- Lorentz (`doc_writer`) spawned after capacity freed.
+- Parent state: waiting for Beauvoir (`reviewer`) and Lorentz (`doc_writer`) final statuses before deciding review-fix delegation.
+
 ### 2026-06-14 12:54 CST - TASK-043 review delegated
 
 - Branch: `feat/task-043-ml-ai-context-panels`.
