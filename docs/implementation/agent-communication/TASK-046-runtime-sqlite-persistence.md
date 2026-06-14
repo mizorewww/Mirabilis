@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: async rollback P1 red test committed; parent is preparing implementation delegation.
+- Status: async rollback P1 implementation delegated; parent is waiting for Ohm's final status.
 
 ## Scope
 
@@ -167,7 +167,9 @@
 - Cicero returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `ce38770` (`Cicero(test-fix)(Wire SQLite-backed Runtime Persistence): cover async rollback isolation`) records the red test.
 - Parent red validation matched Mencius/Singer's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 79 passing tests. The failure is the new async rollback isolation regression only: after failed async plugin direct native commit, plugin writes roll back but unrelated Core metadata/filter delete, page update, and event append are incorrectly reverted.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
+- Cicero was closed after final status and validation were recorded.
+- Ohm (`implementer`, agent `019ec6cb-c730-7cd0-ad49-740a7e0c38da`) was spawned at 2026-06-14 23:41 CST to fix the async direct-session rollback P1. Ohm owns production changes and must return final status before the parent validates or commits implementation.
 
 ## Next Action
 
-- Close Cicero, delegate an `implementer` to fix the async direct-session rollback P1, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Wait for Ohm's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
