@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: focused re-review retry running; parent is waiting for final statuses.
+- Status: focused re-review retry completed with one new correctness P2; parent is preparing a TDD follow-up.
 
 ## Scope
 
@@ -123,7 +123,12 @@
 - Parent decision: these agents are unavailable/failed, not successful reviews. Record and close them, then retry focused re-review now that local time is past the reported reset time.
 - Errored focused re-review agents were no longer present when close was attempted.
 - Focused re-review retry started at 2026-06-14 22:50 CST: Beauvoir (`test_quality_reviewer`, agent `019ec69c-6228-7a52-b012-30a6daa90246`), Pasteur (`reviewer`, agent `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`), and Lorentz (`docs_researcher`, agent `019ec69c-676c-70d3-a672-9f351af6833d`).
+- Beauvoir returned final status with no P0/P1/P2 test-quality findings. Confucius's P1 is closed; the direct runtime page write and plugin direct-write tests now require successful reviewed native transaction persistence instead of accepting thrown-write fallback branches. Beauvoir ran the focused TASK-046 suite, the full frontend suite, diff-check, `.only` / `.skip` scans, and clean-status checks from its scope.
+- Lorentz returned final status with no docs findings. Pauli's stale `docs/architecture/04-slots-editor-task.md` P2 is closed; the doc now frames `in-memory-core` as pre-TASK-046 history, records current default `sqlite-core`, and preserves future-scope exclusions for route state, Search FTS, plugin settings, sync transport, and other store surfaces.
+- Pasteur returned final status with no P0/P1 correctness blocker and verified Curie's two specific P2s are closed. Direct runtime page writes survive in-flight transaction commits, and unrelated read-only plugin commands no longer fail under a broad transaction lock.
+- Pasteur found one new P2: plugin direct metadata/events/filters writes can still be overwritten in live memory if they occur while a persisted Core transaction commit is in flight. Pasteur reproduced metadata that stayed persisted natively but disappeared from live memory until restart after the transaction manager replaced metadata/events/filters with staged snapshots.
+- Parent decision: fix Pasteur's new P2 before release checker and final `bun run check:full`. This remains in TASK-046's persistence-consistency boundary and should be handled through the normal TDD loop: red regression coverage first, implementation second, then targeted re-review.
 
 ## Next Action
 
-- Wait for retried focused re-review final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
+- Commit this orchestration record, close completed re-review agents, delegate red regression coverage for Pasteur's new P2 to `test_writer`, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.

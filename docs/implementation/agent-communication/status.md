@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 22:50 CST.
+Last updated: 2026-06-14 22:59 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 22:50 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 focused re-review retry running; parent is waiting for final statuses.
+- Current phase: TASK-046 focused re-review retry completed; parent is recording Pasteur's new P2 and preparing a TDD follow-up delegation.
 
 ## Current Outcome
 
@@ -62,6 +62,9 @@ Last updated: 2026-06-14 22:50 CST.
 - Plato was closed after final status and validation were recorded. Focused re-review was attempted with Wegener (`test_quality_reviewer`, `019ec602-cf6e-7f71-ac2c-c0b0f65ae057`), Franklin (`reviewer`, `019ec602-d230-7b11-a390-766d26e9a06e`), and Archimedes (`docs_researcher`, `019ec602-d4ba-76f2-bc08-c8704ced104d`). All three returned final errored status due the Codex usage limit: "You've hit your usage limit ... try again at 10:27 PM." This is a concrete agent-unavailable condition, not a wait timeout.
 - Parent decision: do not treat these errored agents as successful review. Record and close them, then retry focused re-review now that local time is past the reported reset time.
 - Errored focused re-review agents were no longer present when close was attempted. Focused re-review retry started at 2026-06-14 22:50 CST: Beauvoir (`test_quality_reviewer`, `019ec69c-6228-7a52-b012-30a6daa90246`) for Confucius P1 closure; Pasteur (`reviewer`, `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`) for Curie P2 closure; Lorentz (`docs_researcher`, `019ec69c-676c-70d3-a672-9f351af6833d`) for Pauli P2 closure.
+- Focused re-review retry completed at 2026-06-14 22:59 CST. Beauvoir found no P0/P1/P2 test-quality findings and verified Confucius's P1 is closed. Lorentz found no docs findings and verified Pauli's `docs/architecture/04-slots-editor-task.md` P2 is closed. Pasteur found no P0/P1 correctness blocker and verified Curie's two specific P2s are closed.
+- Pasteur found one new correctness P2: plugin direct metadata/events/filters writes can be persisted through `NativeBridge.db.transaction` while a Core transaction commit is in flight, but then disappear from live memory when `createTransactionManager` replaces metadata/events/filters with staged transaction snapshots after the Core transaction's native commit returns. Pasteur reproduced the metadata case and reported no file changes.
+- Parent decision: do not accept this P2 as a deferral. Fix it before release checker/final gate because it is in the same TASK-046 durable runtime consistency boundary. Next action is to close completed re-review agents after this status is committed, delegate red regression coverage to `test_writer`, validate the expected red state, commit tests, then delegate `implementer`.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -149,5 +152,7 @@ Last updated: 2026-06-14 22:50 CST.
 
 ## Next Parent Actions
 
-- Wait for retried focused re-review final statuses. A wait timeout is not a failure or idle signal.
-- Retry `release_checker` after targeted re-review clears P0/P1 findings. A wait timeout is not a failure or idle signal.
+- Close completed focused re-review agents after committing this orchestration record.
+- Delegate a `test_writer` red regression for Pasteur's plugin direct non-page write/live-memory interleaving P2. A wait timeout is not a failure or idle signal.
+- Delegate an `implementer` only after the test writer returns final status and the parent validates the expected red state.
+- Retry `release_checker` after the P2 fix and targeted re-review clear P0/P1 findings. A wait timeout is not a failure or idle signal.
