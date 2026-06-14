@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:40 CST - TASK-047 recent-page accessor implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `6da71d4` (`Turing(review-fix)(Add Durable Navigation And Route State): harden recent-page accessors`).
+- Turing (`implementer`) changed `src/shell/navigation/route-state.ts` to harden `recentPageIds` parsing/normalization so accessor-backed arrays do not invoke getters or persist getter-returned path/token-shaped values.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (22 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (43 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (46 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Bernoulli's recent-page accessor P2 closure.
+
 ### 2026-06-15 01:36 CST - TASK-047 recent-page accessor implementation delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: recent-page accessor implementation delegated; parent is waiting for Turing final status.
+- Status: recent-page accessor implementation committed; parent is preparing focused security re-review.
 
 ## Scope
 
@@ -88,7 +88,8 @@
 - Erdos (`test_writer`, agent `019ec731-6527-7cf0-8b2e-b045ba08dbc5`) was spawned at 2026-06-15 01:32 CST to write focused failing tests for Bernoulli's `recentPageIds` accessor-array P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
 - Erdos returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:34 CST matched Bernoulli's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 20 passing tests because `recentPageIds[0]` getter was invoked during parse/serialize and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans. Commit: `8360851` (`Erdos(test-fix)(Add Durable Navigation And Route State): add recent-page accessor red tests`).
 - Turing (`implementer`, agent `019ec734-7143-77c2-87d6-b0b064fbb430`) was spawned at 2026-06-15 01:36 CST to make Erdos's recent-page accessor red tests pass with minimum production hardening. It owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Turing returned final status with production changes in `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:40 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (22 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (43 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (46 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks. Commit: `6da71d4` (`Turing(review-fix)(Add Durable Navigation And Route State): harden recent-page accessors`).
 
 ## Next Action
 
-- Wait for Turing final status before validating or committing the recent-page accessor implementation fix. A wait timeout is not a failure or idle signal.
+- Close Turing after this status is committed, then spawn a focused security re-review for Bernoulli's recent-page accessor P2 closure.
