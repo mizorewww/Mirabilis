@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix tests are committed and green; parent is preparing targeted re-review.
+- Status: doc-fix completed by Sartre; parent can review, commit, and proceed with the final gate.
 
 ## Scope
 
@@ -51,12 +51,12 @@
 ## Agent Notes
 
 - Darwin (`planner`, agent `019ec4bb-f239-77c2-8ae2-4ad86405f398`) spawned at 2026-06-14 14:05 CST for task slicing, acceptance criteria, and red-test guidance.
-- Kuhn (`docs_researcher`, agent `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`) spawned at 2026-06-14 14:05 CST for local docs plus current MUI/React/Testing Library guidance.
+- Kuhn (`docs_researcher`, agent `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`) spawned at 2026-06-14 14:05 CST for local docs plus official MUI/React/Testing Library guidance.
 - Leibniz (`security_reviewer`, agent `019ec4bb-f804-7993-8bb5-87ec28b47c6a`) spawned at 2026-06-14 14:05 CST for secret/settings/sync boundary guidance.
 - Hegel (`deprecation_auditor`, agent `019ec4bb-fa7b-7df2-a9f1-8fde208b0cb1`) spawned at 2026-06-14 14:05 CST for MUI/React/testing deprecation guidance.
 - Leibniz returned final status with no blocker and P0 red-test targets for no secret surfaces, no Sync activation, no native/package drift, no raw runtime leaks, and no execution/render sinks.
 - Darwin returned final status with no blocker and recommended a Settings route with embedded Sync skeleton panel. Suggested red tests cover Settings route/runtime facts, public settings descriptor listing, Sync skeleton status, and boundary/no-drift guards.
-- Kuhn returned final status with no blocker. It verified MUI v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path-import docs, React 19.2 act/upgrade guidance, Testing Library role/query/user-event guidance, and Vitest v4.1.7 docs. OpenAI docs were not checked because TASK-044 must not change live provider behavior.
+- Kuhn returned final status with no blocker. It verified official docs-site guidance for MUI docs site v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path imports, React docs site 19.2 act/upgrade guidance, Testing Library role/query/user-event guidance, and Vitest docs site v4.1.7. These are docs site versions checked, not local installed dependency versions. Local installed versions verified with `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0`: `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`.
 - Hegel returned final status with no blocker. It reinforced MUI path imports, no stale MUI APIs, non-urgent placeholder `Alert role="status"`, React 19 testing patterns, awaited user-event interactions, and no focused/skipped tests.
 - Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing RTL/static tests for TASK-044.
 - Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Commit `9a90de1` records the red tests.
@@ -73,7 +73,17 @@
 - Volta (`doc_writer`) returned final status and updated product, architecture, and testing docs. Commit `50347b8` records the docs sync.
 - Goodall (`test_writer`, agent `019ec4dc-ebd4-77f2-a349-e3f60ba568c1`) was spawned at 2026-06-14 14:41 CST to address the P1 focused-test failure and Raman's P2 test-quality cleanup.
 - Goodall returned final status with test-only fixes in `src/test/settings-sync-placeholders.test.tsx`. Commit `4a37998` records the review-fix tests.
+- Newton (`test_quality_reviewer`, agent `019ec4e2-1243-7db3-a169-cd4cd60b5495`) was spawned at 2026-06-14 14:48 CST for targeted re-review of Raman P2 closure and test-strength preservation.
+- Arendt (`deprecation_auditor`, agent `019ec4e2-1600-7a03-b50c-3694dc59c5d6`) was spawned at 2026-06-14 14:48 CST for targeted re-review of Cicero P1 closure and stale MUI/React/testing API risk.
+- Poincare (`docs_researcher`, agent `019ec4e2-18e0-7bf2-943b-98077424bc72`) was spawned at 2026-06-14 14:48 CST for targeted re-review of Volta docs sync, deferred scope clarity, and misleading version-note risk.
+- Newton returned final status with no findings: Goodall's tests resolved the closed test-quality findings, no focus/skip remained, and the branch is merge-ready from targeted test-quality scope.
+- Arendt returned final status with no P0/P1/P2 findings: Cicero's P1 is closed and no stale MUI/React/testing API issue was found in TASK-044 changed files.
+- Poincare returned final status with one docs P2: notes in this task communication file, `status.md`, and `progress.md` should clarify that MUI `v9.1.1` and Vitest `v4.1.7` were official docs site versions checked, not local installed dependency versions. Local installed versions are `@mui/material@9.0.1` and `vitest@4.1.6`.
+- Parent decision: accept Poincare's P2 and delegate a doc-only wording fix. Newton, Arendt, and Poincare are complete and safe to close because their final statuses have been recorded.
+- Newton, Arendt, and Poincare were closed after final statuses were recorded.
+- Sartre (`doc_writer`, agent `019ec4e4-a173-7062-a59d-d5594a6d41ca`) was spawned at 2026-06-14 14:52 CST to clarify official-docs-version wording versus local installed dependency versions in task communication and progress docs.
+- Sartre completed the doc-only wording fix by clarifying docs-site versions versus local installed package versions and recording the local versions above. This closes Poincare's docs P2.
 
 ## Next Action
 
-- Spawn targeted re-review for the closed P1/P2 findings and docs sync, then wait for completion/final statuses.
+- Parent should review and commit Sartre's doc-only wording fix, then proceed with the TASK-044 final gate if no new blockers appear.

@@ -94,6 +94,28 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 14:52 CST - TASK-044 doc-fix completed
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Closed completed targeted re-review agents Newton, Arendt, and Poincare after recording their final statuses.
+- Sartre (`doc_writer`, agent `019ec4e4-a173-7062-a59d-d5594a6d41ca`) spawned to clarify official-docs-version wording versus local installed dependency versions in task communication and progress docs.
+- Sartre completed the doc-only wording fix. TASK-044 notes now distinguish official docs-site versions checked from local installed dependency versions and record local versions verified by `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0`: `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`.
+- Poincare's docs P2 is closed; parent can review, commit, and proceed with the final gate if no blockers remain.
+
+### 2026-06-14 14:51 CST - TASK-044 targeted re-review completed
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Newton (`test_quality_reviewer`) found no remaining targeted test-quality findings and called the branch merge-ready from that scope.
+- Arendt (`deprecation_auditor`) found no P0/P1/P2 stale API findings and confirmed Cicero's P1 focused-test failure is closed.
+- Poincare (`docs_researcher`) found one remaining docs P2: task communication and progress notes should clarify that MUI `v9.1.1` and Vitest `v4.1.7` were official docs site versions checked, not local installed dependency versions. Local installed versions are `@mui/material@9.0.1` and `vitest@4.1.6`.
+- Parent decision: accept Poincare's P2 and delegate a doc-only wording fix before final gate.
+
+### 2026-06-14 14:48 CST - TASK-044 targeted re-review delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Targeted re-review agents running: Newton (`test_quality_reviewer`, agent `019ec4e2-1243-7db3-a169-cd4cd60b5495`) for Raman P2 closure and test-strength preservation; Arendt (`deprecation_auditor`, agent `019ec4e2-1600-7a03-b50c-3694dc59c5d6`) for Cicero P1 closure and stale MUI/React/testing API risk; Poincare (`docs_researcher`, agent `019ec4e2-18e0-7bf2-943b-98077424bc72`) for Volta docs sync, deferred scope clarity, and misleading version-note risk.
+- Parent state: waiting for targeted re-review completion/final statuses before final gate or merge decisions. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 14:45 CST - TASK-044 review-fix tests green
 
 - Branch: `feat/task-044-settings-sync-placeholders`.
@@ -159,7 +181,7 @@ Add newest entries at the top.
 - Darwin (`planner`), Kuhn (`docs_researcher`), Leibniz (`security_reviewer`), and Hegel (`deprecation_auditor`) returned final statuses with no blockers.
 - Parent decision: use the existing top-bar Settings control to open a visible Settings workspace route, with Sync as an embedded skeleton section/panel rather than a top-level Sync Drawer route.
 - Parent decision: settings descriptors are public manifest descriptor DTOs only; `ai.provider-settings` is listed as inert and no provider/API key/model/endpoint inputs are added.
-- Docs verified externally by agents: current MUI v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path-import guidance, React 19.2, Testing Library role/query/user-event guidance, and Vitest v4.1.7. OpenAI docs were not checked because TASK-044 does not change live provider behavior.
+- Docs verified externally by agents: official docs-site guidance for MUI docs site v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path imports, React docs site 19.2, Testing Library role/query/user-event guidance, and Vitest docs site v4.1.7. These are docs site versions checked, not local installed dependency versions. Local installed versions verified with `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0`: `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`. OpenAI docs were not checked because TASK-044 does not change live provider behavior.
 - Next action: delegate failing RTL/static tests to `test_writer`.
 
 ### 2026-06-14 14:05 CST - TASK-044 pre-test guidance delegated
