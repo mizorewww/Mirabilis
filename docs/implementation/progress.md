@@ -116,6 +116,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:06 CST - TASK-047 pre-test guidance delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Pre-test guidance running: Gibbs (`planner`, agent `019ec6e2-918b-7862-9881-dfd2dbe4c5ec`) for implementation slice and TDD plan; Archimedes (`docs_researcher`, agent `019ec6e2-940a-7963-ab0c-c42d9276e0e6`) for current MUI, React, Testing Library/user-event, and local TASK-038 navigation notes; Laplace (`security_reviewer`, agent `019ec6e2-973f-7883-a54b-57688677304b`) for route-state persistence/security red-test targets; Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) for stale MUI/React/testing API risk.
+- Parent state: waiting for pre-test guidance final statuses before spawning `test_writer`. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:05 CST - TASK-047 started
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

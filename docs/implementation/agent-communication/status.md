@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:05 CST.
+Last updated: 2026-06-15 00:06 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:05 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 startup; parent is preparing pre-test guidance agents.
+- Current phase: TASK-047 pre-test guidance running; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -19,6 +19,7 @@ Last updated: 2026-06-15 00:05 CST.
 - TASK-047 must not persist raw page bodies, plugin-private data, SQL, filesystem paths, secrets, runtime handles, NativeBridge, or full route DTOs. Unavailable, archived, malformed, wrong-owner, or missing pages/filters must fail closed to safe non-leaky route state.
 - Local docs read by parent before delegation: TASK-047 task index section, `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, TASK-038 delivered/deferred notes, and navigation/testing guidance in `docs/testing/strategy.md`.
 - Parent decision: run planner/docs/security/deprecation pre-test guidance because TASK-047 touches React/MUI navigation, route restoration, persistence boundaries, and the post-TASK-046 runtime persistence surface.
+- TASK-047 pre-test guidance started at 2026-06-15 00:06 CST: Gibbs (`planner`, agent `019ec6e2-918b-7862-9881-dfd2dbe4c5ec`) for implementation slice and TDD plan; Archimedes (`docs_researcher`, agent `019ec6e2-940a-7963-ab0c-c42d9276e0e6`) for current MUI, React, Testing Library/user-event, and local TASK-038 navigation notes; Laplace (`security_reviewer`, agent `019ec6e2-973f-7883-a54b-57688677304b`) for route-state persistence/security red-test targets; Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) for stale MUI/React/testing API risk.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -207,4 +208,4 @@ Last updated: 2026-06-15 00:05 CST.
 
 ## Next Parent Actions
 
-- Spawn TASK-047 planner/docs_researcher/security_reviewer/deprecation_auditor pre-test guidance agents and wait for final statuses. A wait timeout is not a failure or idle signal.
+- Wait for TASK-047 pre-test guidance final statuses before spawning `test_writer`. A wait timeout is not a failure or idle signal.
