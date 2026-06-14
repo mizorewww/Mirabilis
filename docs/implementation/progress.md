@@ -116,6 +116,17 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:02 CST - TASK-046 review findings recorded
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Review final statuses received from Aristotle (`pr_explorer`), Dalton (`reviewer`), Nietzsche (`security_reviewer`), Hume (`deprecation_auditor`), Godel (`docs_researcher`), and Dirac (`test_quality_reviewer`).
+- Merge readiness: not ready. P1s must be fixed before the final gate.
+- P1 correctness/security findings: direct App Shell page/editor writes and plugin-facing direct store facades can mutate in-memory runtime state outside SQLite-backed `NativeBridge.db.transaction`, bypassing durability and rollback; fresh-DB Home pages can later fail persisted transactions because SQLite has no target row.
+- P1 test-quality findings: strengthen hydration coverage across full page/metadata/event/filter fields and add executable coverage for transaction-backed `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`.
+- P1 docs findings: sync runtime-flow, native database, development roadmap, and testing-strategy docs to the SQLite-backed runtime behavior once review fixes land.
+- P2s to handle or explicitly accept: archived-page hydration, native filter update semantics, async interleaving during persistence commit, hydration validation strictness, brittle exact hydration-order assertions, and wording drift around transaction-managed versus direct-write persistence.
+- Parent decision: delegate review-fix tests first, then implementation, then docs sync. Retry `release_checker` after capacity frees and review fixes are green. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 18:57 CST - TASK-046 review delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

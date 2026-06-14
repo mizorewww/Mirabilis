@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review is running; parent is waiting for final statuses.
+- Status: review completed with P1 findings; review-fix delegation is next.
 
 ## Scope
 
@@ -73,7 +73,14 @@
 - Godel (`docs_researcher`, agent `019ec5c7-a017-7f61-a405-6a538111e3d3`) was spawned at 2026-06-14 18:57 CST for docs sync review.
 - Dirac (`test_quality_reviewer`, agent `019ec5c7-a377-7560-a463-c3445ac899ff`) was spawned at 2026-06-14 18:57 CST for test-quality review.
 - `release_checker` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Aristotle returned final status with no file edits. It mapped the TASK-046 diff and highlighted the key risk surfaces: direct non-transaction App Shell/plugin writes, N+1 page metadata hydration, stale docs, and the still-required `check:full` gate.
+- Hume returned final status with no P0/P1/P2 deprecation or API findings. It verified current Tauri v2 invoke/state/permissions/capabilities patterns, `rusqlite` 0.39 transaction compatibility, the event `type` alias, and ran focused frontend/native checks plus Rust fmt and diff-check.
+- Dalton returned final status with one P1 correctness finding: direct App Shell Home creation and editor saves still use live runtime stores outside `transaction.run`, so fresh-DB pages can exist only in memory and later SQLite-backed transactions against them fail. Dalton also found P2s for missing archived-page hydration, filter update `get + save` not enforcing native update semantics, and an async interleaving window between live snapshot conflict check and live-state replacement.
+- Nietzsche returned final status with one P1 security/persistence-boundary finding: plugin-facing direct store facades can bypass SQLite persistence and native transaction rollback because persistence wrapping only applies inside `transaction.run`. Nietzsche also found a P2 that native hydration response validation is too permissive and should fail closed instead of silently accepting null/undefined or malformed records.
+- Dirac returned final status with P1 test-quality gaps: startup hydration coverage is too shallow, and durable transaction tests do not cover `pages.update`, `pages.archive`, `metadata.delete`, or `filters.delete`. Dirac also found a P2 brittle exact hydration-order assertion.
+- Godel returned final status with no P0 but docs P1 findings: runtime-flow, native-database, development roadmap, and testing-strategy docs still describe the old in-memory bootstrap/runtime persistence model. Godel also found P2 wording drift in the task index and task communication notes around delivered write-through scope.
+- Parent decision: TASK-046 is not merge-ready. Delegate review-fix red tests before production fixes for the Dalton/Nietzsche/Dirac P1s, then delegate implementation, then delegate docs sync for Godel's P1/P2. Do not merge until P1s are fixed, targeted re-review is clean, `release_checker` has run, and `bun run check:full` passes.
 
 ## Next Action
 
-- Wait for review final statuses. Retry `release_checker` after capacity frees. A wait timeout is not a failure or idle signal.
+- Commit the review outcome record, close completed reviewers, spawn review-fix `test_writer`, then continue with implementation and docs agents after their blocking predecessors return final statuses.
