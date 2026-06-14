@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:37 CST - TASK-046 async rollback P1 red test delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed targeted re-review agents Mencius, Singer, and Copernicus were closed after their final statuses were recorded and committed.
+- Cicero (`test_writer`, agent `019ec6c7-d3ba-7763-85b5-83577e8aec00`) was spawned for test-only red regression coverage of the async direct-session rollback P1 found by Mencius and Singer.
+- Parent state: waiting for Cicero's completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 23:36 CST - TASK-046 targeted re-review found async rollback P1
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

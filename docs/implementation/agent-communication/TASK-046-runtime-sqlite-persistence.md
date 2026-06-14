@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review completed with async rollback P1; parent is preparing TDD follow-up.
+- Status: async rollback P1 red regression delegated; parent is waiting for Cicero's final status.
 
 ## Scope
 
@@ -162,7 +162,9 @@
 - Mencius (`security_reviewer`) found one P1: async plugin direct-store handlers still have a rollback isolation gap because `writeSnapshot` is captured only after the awaited handler returns. Unrelated Core transaction or plugin live state committed during that await can be included in the failed direct session snapshot and erased on native commit failure.
 - Singer (`reviewer`) found the same P1 from correctness scope: direct-session rollback still infers session delta from whole-store snapshots, so async handler interleavings can restore or revert unrelated update/delete state. Singer confirmed with a read-only inline repro involving unrelated metadata deletion being restored.
 - Parent decision: fix the async direct-session rollback P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation through normal plugin APIs.
+- Completed targeted re-review agents Mencius, Singer, and Copernicus were closed after final statuses were recorded and committed.
+- Cicero (`test_writer`, agent `019ec6c7-d3ba-7763-85b5-83577e8aec00`) was spawned at 2026-06-14 23:37 CST for test-only red regression coverage of the async direct-session rollback P1. Preferred write scope is `src/test/runtime-sqlite-persistence.test.ts`, with no production changes.
 
 ## Next Action
 
-- Close completed targeted re-review agents, delegate red regression coverage for the async direct-session rollback P1 to `test_writer`, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Wait for Cicero's final status, then validate the expected red state and commit the test-only change. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
