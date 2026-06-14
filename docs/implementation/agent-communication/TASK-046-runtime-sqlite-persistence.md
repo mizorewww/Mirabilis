@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: started; parent is preparing pre-test agent guidance.
+- Status: pre-test guidance is running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -48,8 +48,11 @@
 
 ## Agent Notes
 
-- Pending pre-test guidance delegation.
+- Mendel (`planner`, agent `019ec5af-e817-7bd0-a143-e2ec3f5c0977`) was spawned at 2026-06-14 18:31 CST for TASK-046 implementation slicing and TDD plan.
+- Kepler (`docs_researcher`, agent `019ec5af-fd6c-7b33-aeb9-a01c8585554d`) was spawned at 2026-06-14 18:31 CST for current official Tauri command/capability/path/state guidance and `rusqlite` transaction guidance.
+- Linnaeus (`security_reviewer`, agent `019ec5af-ffda-7232-8825-34825fb124bf`) was spawned at 2026-06-14 18:31 CST for Tauri/IPC/NativeBridge/plugin-boundary security guidance.
+- Hubble (`deprecation_auditor`, agent `019ec5b0-1579-7783-a631-379954e34c0e`) was spawned at 2026-06-14 18:31 CST for stale/deprecated API and version guidance.
 
 ## Next Action
 
-- Delegate pre-test planning, official docs research, security boundary guidance, and deprecation/API guidance; then wait for final statuses before test writing.
+- Wait for pre-test guidance final statuses before test writing. A wait timeout is not a failure or idle signal.
