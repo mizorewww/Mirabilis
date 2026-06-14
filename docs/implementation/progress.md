@@ -93,7 +93,7 @@ Status markers:
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
 - [x] TASK-046: Wire SQLite-backed Runtime Persistence
-- [ ] TASK-047: Add Durable Navigation And Route State
+- [~] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
 - [ ] TASK-050: Mount Mobile Quick Capture Toolbar
@@ -115,6 +115,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-15 00:05 CST - TASK-047 started
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Selected next unblocked task after TASK-046 merge: TASK-047 - Add Durable Navigation And Route State.
+- Agent/config validation: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
+- Local docs read by parent before delegation: TASK-047 task index section, `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, TASK-038 delivered/deferred notes, and navigation/testing guidance in `docs/testing/strategy.md`.
+- Scope: persist and restore active page route, active filter route, durable Home identity, recent pages, and safe route fallback without storing raw page bodies, plugin-private data, SQL, paths, secrets, or runtime handles.
+- Parent state: preparing pre-test guidance agents. Parent remains orchestration-only.
 
 ### 2026-06-15 00:04 CST - TASK-046 merged and post-merge full gate passed
 

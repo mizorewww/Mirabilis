@@ -1,17 +1,24 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:04 CST.
+Last updated: 2026-06-15 00:05 CST.
 
 ## Current Task
 
-- Task: TASK-046 - Wire SQLite-backed Runtime Persistence.
-- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Task: TASK-047 - Add Durable Navigation And Route State.
+- Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 merged to `master`; post-merge `bun run check:full` passed.
+- Current phase: TASK-047 startup; parent is preparing pre-test guidance agents.
 
 ## Current Outcome
 
+- TASK-046 is complete and merged to `master`; post-merge `bun run check:full` passed at 2026-06-15 00:04 CST.
+- TASK-047 was selected as the next unblocked task after TASK-046 and branch `feat/task-047-durable-navigation-route-state` was created from pushed `master`.
+- Agent/config validation for TASK-047 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
+- TASK-047 scope: add durable navigation and route state so active page route, active filter route, durable Home identity, recent pages, and safe route restoration survive app restart while storing only opaque page IDs, filter IDs, route tokens, or bounded route DTO keys.
+- TASK-047 must not persist raw page bodies, plugin-private data, SQL, filesystem paths, secrets, runtime handles, NativeBridge, or full route DTOs. Unavailable, archived, malformed, wrong-owner, or missing pages/filters must fail closed to safe non-leaky route state.
+- Local docs read by parent before delegation: TASK-047 task index section, `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, TASK-038 delivered/deferred notes, and navigation/testing guidance in `docs/testing/strategy.md`.
+- Parent decision: run planner/docs/security/deprecation pre-test guidance because TASK-047 touches React/MUI navigation, route restoration, persistence boundaries, and the post-TASK-046 runtime persistence surface.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -200,4 +207,4 @@ Last updated: 2026-06-15 00:04 CST.
 
 ## Next Parent Actions
 
-- Continue autonomous roadmap development with TASK-047 - Add Durable Navigation And Route State.
+- Spawn TASK-047 planner/docs_researcher/security_reviewer/deprecation_auditor pre-test guidance agents and wait for final statuses. A wait timeout is not a failure or idle signal.
