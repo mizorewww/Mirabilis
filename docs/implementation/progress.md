@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:11 CST - TASK-046 implementation review fixes delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Kant was closed after final status and red validation were recorded.
+- Erdos (`implementer`, agent `019ec5d4-a5e0-7543-98cc-dac74be917c0`) spawned to make Kant's red tests pass and fix direct runtime/App and plugin direct write persistence bypass, null hydration fail-closed behavior, and adjacent P2s in the same production paths.
+- Parent state: waiting for Erdos's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 19:10 CST - TASK-046 review-fix red tests validated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

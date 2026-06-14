@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix red tests committed; implementation fix delegation is next.
+- Status: implementation review fixes delegated to Erdos; parent is waiting for final status.
 
 ## Scope
 
@@ -84,7 +84,9 @@
 - Kant (`test_writer`, agent `019ec5cd-18c1-7af0-a3d1-f9301305134c`) was spawned at 2026-06-14 19:03 CST for review-fix red tests only. Test targets: direct App/plugin persistence bypass, full hydration field preservation, transaction write-through for `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`, and adjacent P2s where natural.
 - Kant returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `50cfe52` (`Kant(test-fix)(Wire SQLite-backed Runtime Persistence): add persistence review-fix coverage`) records the test changes.
 - Parent red validation confirmed the intended state: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Failures cover missing direct runtime page create native transaction, missing plugin direct write native transaction batch, and null native hydration responses starting successfully instead of failing closed. `git diff --check` passed and an exact `.only` / `.skip` scan found no matches.
+- Kant was closed after final status and red validation were recorded.
+- Erdos (`implementer`, agent `019ec5d4-a5e0-7543-98cc-dac74be917c0`) was spawned at 2026-06-14 19:11 CST for production review fixes. Scope: make Kant's red tests pass, fix direct runtime/App and plugin direct write persistence bypass, fail closed on invalid hydration responses, and handle adjacent P2s in the same code paths without broadening NativeBridge or plugin-native access.
 
 ## Next Action
 
-- Close Kant after this status is recorded, then spawn implementation review fixes. A wait timeout is not a failure or idle signal.
+- Wait for Erdos's final status. A wait timeout is not a failure or idle signal. After Erdos returns, run focused green validation and commit implementation fixes if they pass.
