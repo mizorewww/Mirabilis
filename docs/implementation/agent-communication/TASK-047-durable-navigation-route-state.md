@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review agents running; parent is waiting for final statuses.
+- Status: review-fix test and docs agents running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -66,7 +66,9 @@
 - Dewey returned final status at 2026-06-15 00:45 CST with no files modified. Findings: P1 regression because `filterRecentPagesForActiveRoute` removes pages from Recent pages when they appear in trusted filter results, violating TASK-038's contract that recent pages stay available on trusted filter routes; P1 durable route persistence can drop the latest route during rapid navigation because the effect fire-and-forgets `persistDurableRouteState`, sets `persistedRouteSignatureRef` before commit, and overlapping Core transactions can reject without retry, leaving stale route state for restart. Dewey found no P0/P2 findings and said merge should wait on both P1 fixes.
 - Bohr returned final status at 2026-06-15 00:47 CST with no files modified. Security findings: no P0/P1. P2 hardening: `createDurableRouteState` stores the passed `activeRoute` object as-is, so future callers could pass structurally compatible objects with extra `title/body/query` fields unless the serializer exact-key clones; malformed `app-shell.navigation` route-state records fail closed for UI but are not scrubbed because the initial persisted signature can match normalized fallback state and skip overwrite/delete. Bohr confirmed no package/Tauri capability/Rust command/native bridge/provider/sync/search drift.
 - Sagan returned final status at 2026-06-15 00:48 CST with no files modified. Findings: no deprecated API or stale MUI/React/test API usage and no package/native drift. P1 React/StrictMode issue because `MirabilisShell` calls `createInitialNavigationState(runtimeSource)` inside a `useState` initializer, which can call `runtime.pages.create(...)`; React StrictMode double-calls state initializers in development, and with SQLite write-through this can create/persist duplicate Home pages. P1 durable route persistence can drop the latest route during rapid navigation, matching Dewey's overlapping transaction finding. Merge should wait for these P1 fixes.
+- Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned at 2026-06-15 00:50 CST for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only and must return final status before parent validates or commits.
+- Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
 
 ## Next Action
 
-- Close completed review agents after this status is committed. Then spawn `test_writer` for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and Bohr P2 hardening where adjacent, plus spawn `doc_writer` for Popper docs P1/P2 after a slot is available.
+- Wait for Avicenna and Carver final statuses. A wait timeout is not a failure or idle signal.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:48 CST.
+Last updated: 2026-06-15 00:50 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:48 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 review complete; parent is preparing review-fix test and docs delegation.
+- Current phase: TASK-047 review-fix test and docs agents running; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -36,6 +36,8 @@ Last updated: 2026-06-15 00:48 CST.
 - Bohr (`security_reviewer`) returned final status at 2026-06-15 00:47 CST with no files modified. Security findings: no P0/P1. P2 hardening: exact-key clone active routes inside `createDurableRouteState`, and scrub or overwrite malformed `app-shell.navigation` route-state records instead of only failing closed in UI. Bohr confirmed no package/Tauri capability/Rust command/native bridge/provider/sync/search drift.
 - Sagan (`deprecation_auditor`) returned final status at 2026-06-15 00:48 CST with no files modified. Findings: no deprecated API or stale MUI/React/test API usage and no package/native drift. P1 React/StrictMode issue because `MirabilisShell` calls `createInitialNavigationState(runtimeSource)` inside a `useState` initializer that can call `runtime.pages.create(...)`; StrictMode can double-call state initializers and SQLite write-through can persist duplicate Home pages. P1 durable route persistence can drop the latest route during rapid navigation, matching Dewey's overlapping transaction finding.
 - Parent decision: TASK-047 is not merge-ready. Fix review P1s before release/final gate. Delegate review-fix tests first, then implementation fixes. Popper's docs P1/P2 also need docs sync before completion; Bohr's P2 hardening should be included if adjacent to the P1 fix path.
+- Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned at 2026-06-15 00:50 CST for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only and must return final status before parent validates or commits.
+- Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -224,4 +226,4 @@ Last updated: 2026-06-15 00:48 CST.
 
 ## Next Parent Actions
 
-- Close completed review agents after this status is committed. Then spawn TASK-047 review-fix `test_writer` for Dewey/Sagan/Pauli P1 coverage and adjacent Bohr P2 hardening, and spawn `doc_writer` for Popper docs findings after a slot is available.
+- Wait for Avicenna and Carver TASK-047 final statuses. A wait timeout is not a failure or idle signal.

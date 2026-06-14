@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:50 CST - TASK-047 review-fix tests and docs delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only.
+- Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned for Popper's product/architecture/testing docs P1/P2 only and must not mark TASK-047 complete.
+- Parent state: waiting for Avicenna and Carver final statuses. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:48 CST - TASK-047 review complete, fixes required
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
