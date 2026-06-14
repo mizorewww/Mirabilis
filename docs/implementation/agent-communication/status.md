@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:02 CST.
+Last updated: 2026-06-14 19:03 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:02 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 review completed with P1 findings; parent is recording outcomes and will delegate review-fix tests, implementation, and docs.
+- Current phase: TASK-046 review-fix red tests delegated; parent is waiting for Kant's final status.
 
 ## Current Outcome
 
@@ -31,6 +31,7 @@ Last updated: 2026-06-14 19:02 CST.
 - Dirac (`test_quality_reviewer`) found P1 test gaps: hydration tests check too few fields, and transaction write-through tests miss `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`. Dirac also found a P2 brittle hydration-order assertion.
 - Godel (`docs_researcher`) found P1 stale docs in `docs/architecture/07-runtime-flows.md`, `docs/architecture/06-filter-native-database.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`; Godel also flagged P2 wording drift in `docs/implementation/task-index.md` and TASK-046 communication notes.
 - Parent decision: TASK-046 is not merge-ready. P1s must be fixed before final gate. Delegate review-fix tests first, then production fixes, then docs sync. P2s should be fixed where they are naturally adjacent or explicitly recorded as accepted deferrals after targeted review. `release_checker` will be retried after agent capacity frees and review fixes are green.
+- Completed review agents were closed after their final statuses were recorded. Kant (`test_writer`, `019ec5cd-18c1-7af0-a3d1-f9301305134c`) was spawned at 2026-06-14 19:03 CST for TASK-046 review-fix red tests covering direct App/plugin persistence bypass, stronger hydration fields, transaction write-through gaps, and adjacent P2s.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -116,9 +117,7 @@ Last updated: 2026-06-14 19:02 CST.
 
 ## Next Parent Actions
 
-- Commit the recorded TASK-046 review outcome.
-- Close completed review agents after their final statuses are recorded.
-- Spawn `test_writer` for review-fix red tests covering the Dalton/Nietzsche/Dirac P1s and adjacent P2s that need executable coverage.
-- After those tests are committed and red/green validated, spawn `implementer` for the production review fixes.
+- Wait for Kant's final status. A wait timeout is not a failure or idle signal.
+- After Kant returns, run the focused red validation, commit the review-fix tests, and spawn `implementer` for the production review fixes.
 - Spawn `doc_writer` for Godel's docs P1/P2 after implementation behavior is stable enough to document.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.

@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:03 CST - TASK-046 review-fix tests delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed review agents were closed after their final statuses were recorded.
+- Kant (`test_writer`, agent `019ec5cd-18c1-7af0-a3d1-f9301305134c`) spawned to add review-fix red tests for direct App/plugin persistence bypass, stronger hydration field assertions, missing transaction write-through paths, and adjacent P2 coverage.
+- Parent state: waiting for Kant's completion/final status before red validation or implementation handoff. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 19:02 CST - TASK-046 review findings recorded
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

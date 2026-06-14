@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review completed with P1 findings; review-fix delegation is next.
+- Status: review-fix red tests delegated to Kant; parent is waiting for final status.
 
 ## Scope
 
@@ -80,7 +80,9 @@
 - Dirac returned final status with P1 test-quality gaps: startup hydration coverage is too shallow, and durable transaction tests do not cover `pages.update`, `pages.archive`, `metadata.delete`, or `filters.delete`. Dirac also found a P2 brittle exact hydration-order assertion.
 - Godel returned final status with no P0 but docs P1 findings: runtime-flow, native-database, development roadmap, and testing-strategy docs still describe the old in-memory bootstrap/runtime persistence model. Godel also found P2 wording drift in the task index and task communication notes around delivered write-through scope.
 - Parent decision: TASK-046 is not merge-ready. Delegate review-fix red tests before production fixes for the Dalton/Nietzsche/Dirac P1s, then delegate implementation, then delegate docs sync for Godel's P1/P2. Do not merge until P1s are fixed, targeted re-review is clean, `release_checker` has run, and `bun run check:full` passes.
+- Completed review agents were closed after their final statuses were recorded in the communication files.
+- Kant (`test_writer`, agent `019ec5cd-18c1-7af0-a3d1-f9301305134c`) was spawned at 2026-06-14 19:03 CST for review-fix red tests only. Test targets: direct App/plugin persistence bypass, full hydration field preservation, transaction write-through for `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`, and adjacent P2s where natural.
 
 ## Next Action
 
-- Commit the review outcome record, close completed reviewers, spawn review-fix `test_writer`, then continue with implementation and docs agents after their blocking predecessors return final statuses.
+- Wait for Kant's final status. A wait timeout is not a failure or idle signal. After Kant returns, validate the red signal, commit tests, and spawn implementation review fixes.
