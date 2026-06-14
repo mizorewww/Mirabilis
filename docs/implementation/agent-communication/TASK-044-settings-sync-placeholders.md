@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review found one P1 test issue and P2 test-quality cleanup; parent is preparing test-fix delegation.
+- Status: review-fix tests are delegated to Goodall; parent is waiting for completion/final status.
 
 ## Scope
 
@@ -71,7 +71,8 @@
 - Boole (`docs_researcher`) returned final status with one P2 docs-sync finding and no implementation/test P0/P1 mismatch. It also noted local installed versions differ from some official docs versions cited in progress notes.
 - Banach (`reviewer`) returned final status with no P0/P1/P2 correctness findings and merge-ready correctness status.
 - Volta (`doc_writer`) returned final status and updated product, architecture, and testing docs. Commit `50347b8` records the docs sync.
+- Goodall (`test_writer`, agent `019ec4dc-ebd4-77f2-a349-e3f60ba568c1`) was spawned at 2026-06-14 14:41 CST to address the P1 focused-test failure and Raman's P2 test-quality cleanup.
 
 ## Next Action
 
-- Spawn `test_writer` to address the P1 focused-test failure and Raman's P2 test-quality cleanup, then wait for completion/final status.
+- Wait for Goodall completion/final status before validation or commit.
