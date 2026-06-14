@@ -116,6 +116,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:30 CST - TASK-047 implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Huygens (`implementer`, agent `019ec6f8-3c76-7620-92e2-1045b5a782f5`) was spawned to make Hilbert's red tests pass with minimum production changes while preserving package/native/Tauri/docs surfaces unless it reports a blocker.
+- Parent state: waiting for Huygens final status before validating implementation. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:29 CST - TASK-047 red tests committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

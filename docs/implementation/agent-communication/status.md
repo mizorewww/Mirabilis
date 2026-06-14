@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:29 CST.
+Last updated: 2026-06-15 00:30 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:29 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 red tests committed; parent is preparing `implementer` delegation.
+- Current phase: TASK-047 `implementer` running; parent is waiting for Huygens final status.
 
 ## Current Outcome
 
@@ -26,6 +26,7 @@ Last updated: 2026-06-15 00:29 CST.
 - Poincare (`deprecation_auditor`) returned final status at 2026-06-15 00:11 CST with no files modified and no blockers. Parent accepted the audit constraints: keep `ListItemButton` plus explicit `aria-current="page"`; avoid removed MUI v9 props and legacy List/ListItemText APIs; avoid removed React 19 APIs and `react-dom/test-utils`; make persistence effects StrictMode-safe; use `const user = userEvent.setup()` with awaited interactions; reset shared Vitest mocks explicitly; add static guards for MUI/React/test API drift, package/Cargo/Tauri/capability drift, direct user-event calls, and route persistence allowlist.
 - Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned at 2026-06-15 00:13 CST for failing TASK-047 tests only. It owns test/test-helper changes, must not modify production/package/native/docs files, and must return final status before parent validates or commits tests.
 - Hilbert returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 00:28 CST matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Expected failures cover no durable route metadata after page selection, seeded saved-filter route not restored, persisted Home ID/title not reused, recent pages still session-derived rather than persisted/capped/deduped, and static guard missing `app-shell.navigation` / `route-state` production source. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan. Commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
+- Huygens (`implementer`, agent `019ec6f8-3c76-7620-92e2-1045b5a782f5`) was spawned at 2026-06-15 00:30 CST to make Hilbert's red tests pass with minimum production changes while preserving package/native/Tauri/docs surfaces unless it reports a blocker.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -214,4 +215,4 @@ Last updated: 2026-06-15 00:29 CST.
 
 ## Next Parent Actions
 
-- Spawn TASK-047 `implementer` to make Hilbert's red tests pass with minimum production changes.
+- Wait for Huygens TASK-047 `implementer` final status before validating implementation. A wait timeout is not a failure or idle signal.
