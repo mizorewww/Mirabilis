@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:46 CST - TASK-046 async rollback P1 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Ohm (`implementer`) returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`.
+- Commit: `d3fcd67` (`Ohm(implementation-fix)(Wire SQLite-backed Runtime Persistence): track direct-write rollback identities`).
+- Fixed: async plugin direct-store sessions now track exact page/metadata/event/filter identities mutated at write time. Failed native direct commits roll back only those touched identities and only when live state still matches the direct session's own write, so unrelated Core updates/deletes/appends committed during the plugin await window remain live.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 80 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; `bun run test:frontend` passed with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close Ohm and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
 ### 2026-06-14 23:41 CST - TASK-046 async rollback P1 implementation delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

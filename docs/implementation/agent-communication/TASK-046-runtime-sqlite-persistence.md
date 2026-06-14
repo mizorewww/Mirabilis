@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: async rollback P1 implementation delegated; parent is waiting for Ohm's final status.
+- Status: async rollback P1 implementation green; parent is preparing focused targeted re-review.
 
 ## Scope
 
@@ -169,7 +169,10 @@
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - Cicero was closed after final status and validation were recorded.
 - Ohm (`implementer`, agent `019ec6cb-c730-7cd0-ad49-740a7e0c38da`) was spawned at 2026-06-14 23:41 CST to fix the async direct-session rollback P1. Ohm owns production changes and must return final status before the parent validates or commits implementation.
+- Ohm returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`. Commit `d3fcd67` (`Ohm(implementation-fix)(Wire SQLite-backed Runtime Persistence): track direct-write rollback identities`) records the fix.
+- Ohm changed async plugin direct-store rollback so sessions track exact page/metadata/event/filter identities mutated at write time. Failed native direct commits roll back only those touched identities and only when live state still matches the direct session's own write. Unrelated Core updates/deletes/appends committed during the plugin await window remain live.
+- Parent validation passed after Ohm: focused TASK-046/plugin-host/bootstrap/provider suite passed with 80 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 
 ## Next Action
 
-- Wait for Ohm's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Close Ohm and run focused targeted re-review for Mencius/Singer's async rollback P1 closure. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.

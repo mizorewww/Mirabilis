@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:41 CST.
+Last updated: 2026-06-14 23:46 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:41 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 async rollback P1 implementation delegated; parent is waiting for Ohm's final status.
+- Current phase: TASK-046 async rollback P1 implementation green; parent is preparing focused targeted re-review.
 
 ## Current Outcome
 
@@ -97,6 +97,9 @@ Last updated: 2026-06-14 23:41 CST.
 - Parent red validation matched Mencius/Singer's P1: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/plugin-host-lifecycle.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 1 failure and 79 passing tests. The failure is the new regression only: after the failed async plugin direct native commit, plugin writes are removed but unrelated Core state is incorrectly rolled back, with deleted metadata/filter restored, page update reverted, and unrelated event append removed.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - Cicero was closed after final status and validation were recorded. Ohm (`implementer`, agent `019ec6cb-c730-7cd0-ad49-740a7e0c38da`) was spawned at 2026-06-14 23:41 CST to fix the async direct-session rollback P1.
+- Ohm returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`. Commit `d3fcd67` records the implementation fix.
+- Ohm changed async plugin direct-store rollback so sessions track exact page/metadata/event/filter identities mutated at write time. Failed native direct commits roll back only those touched identities and only when live state still matches the direct session's own write. Unrelated Core updates/deletes/appends committed during the plugin await window remain live.
+- Parent validation passed after Ohm: focused TASK-046/plugin-host/bootstrap/provider suite passed with 80 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -184,5 +187,6 @@ Last updated: 2026-06-14 23:41 CST.
 
 ## Next Parent Actions
 
-- Wait for Ohm's final status. A wait timeout is not a failure or idle signal.
-- Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.
+- Close Ohm after this record is committed.
+- Run focused targeted re-review for Mencius/Singer's async rollback P1 closure before `release_checker`. A wait timeout is not a failure or idle signal.
+- Retry `release_checker` only after targeted re-review clears P0/P1 findings.
