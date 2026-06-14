@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 18:46 CST - TASK-046 red tests validated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Russell (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Parent red validation matched expected missing TASK-046 behavior: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 7 new TASK-046 failures and 14 passing tests. Expected failures cover absent startup hydration, absent SQLite persistence marker, no native transaction call, rollback rejection not surfacing, missing filter hydration/update persistence strategy, missing durable plugin transaction batch, and startup hydration failure not redacting through the provider alert.
+- Supporting checks passed: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: commit red tests, then delegate implementation.
+
 ### 2026-06-14 18:38 CST - TASK-046 red tests delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

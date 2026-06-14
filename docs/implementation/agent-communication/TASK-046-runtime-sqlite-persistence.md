@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: red tests are delegated; parent is waiting for Russell's final status.
+- Status: red tests are validated; parent is preparing the test commit.
 
 ## Scope
 
@@ -58,7 +58,10 @@
 - Mendel returned final status with the accepted implementation slice: hydrate pages, metadata, events, and filters during `createAppRuntime()` from the existing NativeBridge DB allowlist; use hydrated synchronous Core stores for reads; route production durable writes through an awaited async persisted transaction path using `NativeBridge.db.transaction`; keep plugin facades intact; and change the runtime storage marker only when SQLite-backed runtime persistence is active.
 - Parent decision: accept Mendel's slice for red tests. Full async Core Store API migration, arbitrary direct sync store write-through outside `transaction.run`, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export remain deferred unless a child agent reports a blocker/final failure requiring scope reconsideration.
 - Russell (`test_writer`, agent `019ec5b5-f552-7d73-8352-a7122c635240`) was spawned at 2026-06-14 18:38 CST to add failing TASK-046 tests only. Expected coverage: startup hydration, `storage.persistence` marker, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, redacted startup/bridge failures, and static native/raw DB guardrails.
+- Russell returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Parent red validation matched the expected missing TASK-046 behavior: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 7 new TASK-046 failures and 14 passing tests. Expected failures cover absent startup hydration, absent SQLite persistence marker, no native transaction call, rollback rejection not surfacing, missing filter hydration/update persistence strategy, missing durable plugin transaction batch, and startup hydration failure not redacting through the provider alert.
+- Supporting checks passed: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` passed with 65 tests; `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` passed with 13 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 
 ## Next Action
 
-- Wait for Russell completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+- Commit Russell's red tests, then delegate implementation to `implementer`.
