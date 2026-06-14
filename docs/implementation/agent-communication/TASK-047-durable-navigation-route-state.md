@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix test and docs agents running; parent is waiting for final statuses.
+- Status: docs sync committed; review-fix test agent still running.
 
 ## Scope
 
@@ -68,7 +68,8 @@
 - Sagan returned final status at 2026-06-15 00:48 CST with no files modified. Findings: no deprecated API or stale MUI/React/test API usage and no package/native drift. P1 React/StrictMode issue because `MirabilisShell` calls `createInitialNavigationState(runtimeSource)` inside a `useState` initializer, which can call `runtime.pages.create(...)`; React StrictMode double-calls state initializers in development, and with SQLite write-through this can create/persist duplicate Home pages. P1 durable route persistence can drop the latest route during rapid navigation, matching Dewey's overlapping transaction finding. Merge should wait for these P1 fixes.
 - Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned at 2026-06-15 00:50 CST for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only and must return final status before parent validates or commits.
 - Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
+- Carver returned final status with docs-only changes in `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`. Parent validation at 2026-06-15 00:55 CST passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`). Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
 
 ## Next Action
 
-- Wait for Avicenna and Carver final statuses. A wait timeout is not a failure or idle signal.
+- Wait for Avicenna final status. A wait timeout is not a failure or idle signal.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 00:50 CST.
+Last updated: 2026-06-15 00:55 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 00:50 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 review-fix test and docs agents running; parent is waiting for final statuses.
+- Current phase: TASK-047 docs sync committed; review-fix test agent still running.
 
 ## Current Outcome
 
@@ -38,6 +38,7 @@ Last updated: 2026-06-15 00:50 CST.
 - Parent decision: TASK-047 is not merge-ready. Fix review P1s before release/final gate. Delegate review-fix tests first, then implementation fixes. Popper's docs P1/P2 also need docs sync before completion; Bohr's P2 hardening should be included if adjacent to the P1 fix path.
 - Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned at 2026-06-15 00:50 CST for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only and must return final status before parent validates or commits.
 - Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
+- Carver returned final status with docs-only changes in `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`. Parent validation at 2026-06-15 00:55 CST passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`). Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -226,4 +227,4 @@ Last updated: 2026-06-15 00:50 CST.
 
 ## Next Parent Actions
 
-- Wait for Avicenna and Carver TASK-047 final statuses. A wait timeout is not a failure or idle signal.
+- Wait for Avicenna TASK-047 review-fix test final status. A wait timeout is not a failure or idle signal.

@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:55 CST - TASK-047 docs sync committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Docs commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`).
+- Carver (`doc_writer`) updated `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md` for Popper's docs P1/P2 findings.
+- Parent validation passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
+- Parent state: waiting for Avicenna (`test_writer`) final status. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 00:50 CST - TASK-047 review-fix tests and docs delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
