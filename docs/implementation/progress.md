@@ -92,7 +92,7 @@ Status markers:
 
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
-- [ ] TASK-046: Wire SQLite-backed Runtime Persistence
+- [~] TASK-046: Wire SQLite-backed Runtime Persistence
 - [ ] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
@@ -115,6 +115,15 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 18:29 CST - TASK-046 started
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Base: `master` commit `60c7e06` after TASK-045 merge and M10 roadmap backlog merge.
+- Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Scope decision: TASK-046 wires SQLite-backed runtime persistence for Core pages, metadata, events, and filters through the existing NativeBridge DB allowlist. This is a native/IPC/runtime persistence task and should use `bun run check:full` for the final gate.
+- Parent context read so far: `docs/architecture/06-filter-native-database.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/testing/strategy.md`, `src/bootstrap/create-app-runtime.ts`, `src/core/native/native-bridge.ts`, `src/core/runtime/markdown-pages.ts`, and Core store files.
+- Next action: delegate pre-test planning, official docs research, security boundary guidance, and deprecation/API guidance, then wait for child-agent completion/final statuses before test writing.
 
 ### 2026-06-14 18:24 CST - Roadmap backlog continuation docs updated
 

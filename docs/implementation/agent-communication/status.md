@@ -1,18 +1,21 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 18:24 CST.
+Last updated: 2026-06-14 18:29 CST.
 
 ## Current Task
 
-- Task: Roadmap backlog continuation for TASK-046 through TASK-064.
-- Branch: `docs/task-046-roadmap-backlog`.
+- Task: TASK-046 - Wire SQLite-backed Runtime Persistence.
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
-- Parent role: roadmap documentation writer.
-- Current phase: docs-only roadmap backlog update on `docs/task-046-roadmap-backlog`; TASK-046 is expected to be the next unblocked implementation task after this docs branch is merged.
+- Parent role: orchestration only.
+- Current phase: TASK-046 started; parent is preparing pre-test agent guidance.
 
 ## Current Outcome
 
-- Roadmap docs are being updated to add Einstein's proposed TASK-046 through TASK-064 continuation backlog. No source, test, package, native, or production files are in scope for this branch.
+- TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
+- Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
+- TASK-046 is native/IPC/runtime-persistence work. Final gate should use `bun run check:full` unless agents narrow the accepted scope and record why full packaging is unnecessary.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -65,41 +68,38 @@ Last updated: 2026-06-14 18:24 CST.
 - TASK-045 was merged into `master` in merge commit `4db2963` and pushed to `origin/master`. Post-merge `master` validation passed at 2026-06-14 18:15 CST with `bun run check:quick`: typecheck, lint, 51 frontend test files / 813 tests, Rust fmt check, Rust clippy, and Rust tests.
 - After TASK-045 merge and before this docs branch, the progress scan found no remaining `[ ]` tasks in `docs/implementation/progress.md`. Einstein (`planner`, `019ec5a4-9332-72a2-b60e-4ba92c1e0efb`) completed a read-only backlog audit and recommended adding TASK-046 through TASK-064, with TASK-046 "Wire SQLite-backed Runtime Persistence" as the first next unblocked task because persistent navigation, search FTS, plugin settings, sync, and feed work depend on runtime SQLite persistence.
 
-## Initial TASK-045 Scope
+## Current TASK-046 Scope
 
-- Desktop and narrow layouts keep the Markdown workspace usable while sidebar, top controls, contextual panel, floating surfaces, dialogs, and route content adapt without incoherent overlap.
-- Sidebar collapse/drawer behavior, command palette, search overlay, Quick Capture dialog, editor, metadata/timer/timeline slots, Calendar/Reports routes, ML/AI panels, and Settings/Sync placeholders are keyboard reachable with predictable focus return.
-- Loading, empty, unavailable, and error states are consistent across workbench, routes, `ViewHost`, `SlotHost`, overlays, and contextual panels.
-- State text must not leak raw errors, paths, SQL, tokens, provider details, secrets, or full runtime handles.
-- App-shell landmarks, headings, labels, status regions, dialog semantics, focus management, and route navigation are accessible from the user's perspective.
-- Visual polish remains dense and work-focused; no marketing landing page, hero UI, decorative sections, or card-heavy replacement for the workspace.
-- No native/Tauri/Rust/package/capability/permission/IPC/schema/release changes are in scope.
+- Runtime stores for pages, metadata, events, and filters hydrate from SQLite through the allowlisted NativeBridge DB operations.
+- Runtime store writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- `storage.persistence` no longer claims `in-memory-core` when SQLite-backed runtime persistence is active.
+- Plugin facades keep owner boundaries and do not expose NativeBridge, raw SQLite, filesystem paths, SQL, raw stores, or full runtime handles.
+- Startup, NativeBridge, IPC, and persistence errors remain typed and redacted.
+- Transaction behavior preserves documented rollback and ordered result semantics across the async bridge.
 
 ## Relevant Local Docs
 
-- `docs/implementation/task-index.md#TASK-045`
-- `docs/product/07-user-interface-design.md`
-- `docs/product/04-editor-and-workflows.md`
-- `docs/product/06-view-slots.md`
+- `docs/implementation/task-index.md#TASK-046`
+- `docs/architecture/06-filter-native-database.md`
 - `docs/architecture/07-runtime-flows.md`
+- `docs/development/01-data-roadmap-and-mvp.md`
 - `docs/testing/strategy.md`
 
 ## Parent Decisions
 
-- Treat TASK-045 as an app-shell polish and accessibility task, not a new plugin behavior task.
-- Preserve existing route/data security boundaries from TASK-035 through TASK-044.
-- Use RTL/user-event tests from the user's perspective: role/name landmarks, keyboard flows, visible state, focus return, and narrow-layout controls.
-- Keep the Markdown workspace primary at all widths; avoid marketing/hero/card-heavy replacement surfaces.
-- Prefer MUI breakpoint/responsive props and existing shell patterns over new dependencies or custom platform surfaces.
+- Treat TASK-046 as the persistence foundation for later navigation, search FTS, settings, sync, and feed tasks.
+- Preserve existing TASK-014 NativeBridge DB allowlist and Tauri capability boundary.
+- Reuse current NativeBridge DTO contract and redacted `NativeBridgeError` behavior.
+- Do not broaden plugin or UI access to native handles; runtime persistence must remain behind trusted Core/bootstrap code.
+- Run docs/security/deprecation pre-test guidance because TASK-046 touches Tauri IPC/capabilities, Rust SQLite, NativeBridge, and app runtime persistence wiring.
 
 ## Validation Recorded
 
-- 2026-06-14 17:30 CST: branch created from validated `master` commit `1de3ec0`.
-- 2026-06-14 17:30 CST: 11 project agent TOML files parsed successfully.
-- 2026-06-14 17:30 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- 2026-06-14 18:29 CST: branch created from `master` commit `60c7e06`.
+- 2026-06-14 18:29 CST: 11 project agent TOML files parsed successfully.
+- 2026-06-14 18:29 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
 ## Next Parent Actions
 
-- Validate the docs-only backlog update on `docs/task-046-roadmap-backlog` with `git diff --check` and the targeted TASK-046/TASK-064 roadmap `rg` check.
-- Merge `docs/task-046-roadmap-backlog` to `master` after validation.
-- Start TASK-046 `Wire SQLite-backed Runtime Persistence` as the next unblocked implementation task after merge.
+- Delegate TASK-046 pre-test planning, official docs research, security guidance, and deprecation/API guidance.
+- Wait for child-agent completion/final statuses before test writing. A wait timeout is not a failure or idle signal.
