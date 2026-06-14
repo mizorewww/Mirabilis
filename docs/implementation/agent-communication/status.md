@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:30 CST.
+Last updated: 2026-06-14 19:31 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:30 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 full frontend test-fix committed; docs sync is next.
+- Current phase: TASK-046 docs sync delegated; parent is waiting for Dewey's final status.
 
 ## Current Outcome
 
@@ -42,6 +42,7 @@ Last updated: 2026-06-14 19:30 CST.
 - Mencius returned final status with test-only changes in `src/test/native-surface-guard.ts`, AI/Sync/timer runtime tests, Markdown page persistence tests, Quick Capture tests, and static boundary tests. Commit `046b273` records the test fixes.
 - Mencius triaged timer timeline failures as stale test runtime setup, not a production regression. It updated static native-surface guards to accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff, made legacy AI/Sync/timer runtime tests explicitly use `in-memory-core` where SQLite persistence is not under test, cleared startup hydration calls before Markdown page facade assertions, and allowed Quick Capture's reviewed durable `db.transaction` path while still rejecting shortcut/file/notification/raw execute calls.
 - Parent validation passed after Mencius: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and an exact `.only` / `.skip` scan on edited tests passed.
+- Mencius was closed after final status and validation were recorded. Dewey (`doc_writer`, `019ec5e6-8ace-74b1-b160-5a4e623d6645`) was spawned at 2026-06-14 19:31 CST for Godel's docs P1/P2 only. Dewey must not mark TASK-046 complete; parent will do that after re-review, release readiness, and the final `check:full` gate.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -127,6 +128,6 @@ Last updated: 2026-06-14 19:30 CST.
 
 ## Next Parent Actions
 
-- Close Mencius after final status and validation are recorded.
-- Spawn `doc_writer` for Godel's docs P1/P2 now that implementation behavior and frontend tests are stable.
+- Wait for Dewey's final status. A wait timeout is not a failure or idle signal.
+- After Dewey returns, validate docs, commit docs sync, then run targeted re-review for correctness/security/test/docs/deprecation as needed.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.
