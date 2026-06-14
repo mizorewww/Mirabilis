@@ -116,6 +116,19 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:04 CST - TASK-046 merged and post-merge full gate passed
+
+- Branch merged: `feat/task-046-runtime-sqlite-persistence`.
+- Merge commit on `master`: `1f29d41` (`Merge TASK-046 SQLite-backed runtime persistence`).
+- `master` was pushed to `origin/master`.
+- Post-merge validation on `master` passed: `bun run check:full`.
+- Post-merge `check:quick` coverage passed: `bun run typecheck`; `bun run lint`; `bun run test:frontend` with 52 files and 832 tests; Rust fmt check; Rust clippy; `cargo test` with Rust IPC/repository/boundary suites.
+- Post-merge Tauri release packaging passed for the documented local targets: `deb` and `rpm`.
+- Bundles produced in ignored build output: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- AppImage remains intentionally not validated locally, per `docs/testing/strategy.md`.
+- Worktree remained clean after validation; `dist/` and `src-tauri/target/` are ignored build outputs.
+- Next unblocked task in autonomous mode: TASK-047 - Add Durable Navigation And Route State.
+
 ### 2026-06-14 23:59 CST - TASK-046 final full gate passed
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

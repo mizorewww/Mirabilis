@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: final `bun run check:full` passed; parent is preparing merge to `master`.
+- Status: merged to `master`; post-merge `bun run check:full` passed.
 
 ## Scope
 
@@ -188,7 +188,9 @@
 - Bundles produced in ignored build output: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
 - AppImage remains intentionally deferred per `docs/testing/strategy.md`.
 - TASK-046 status changed to `[x]` in `docs/implementation/progress.md` for merge preparation.
+- TASK-046 was merged into `master` in merge commit `1f29d41` and pushed to `origin/master`.
+- Post-merge validation on `master` passed at 2026-06-15 00:04 CST with `bun run check:full`: typecheck, lint, 52 frontend test files / 832 tests, Rust fmt check, Rust clippy, Rust tests, production build, and Tauri `deb` / `rpm` packaging.
 
 ## Next Action
 
-- Commit final TASK-046 progress/status update, merge `feat/task-046-runtime-sqlite-persistence` into `master`, push `master`, then run post-merge validation.
+- TASK-046 is complete and merged. Continue autonomous roadmap development with TASK-047 - Add Durable Navigation And Route State.
