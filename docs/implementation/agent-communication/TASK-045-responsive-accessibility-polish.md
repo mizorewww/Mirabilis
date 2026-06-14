@@ -6,7 +6,7 @@
 - Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance completed; parent is preparing red-test delegation.
+- Status: red tests delegated; parent is waiting for Pasteur's completion/final status before red validation or commit.
 
 ## Scope
 
@@ -58,6 +58,7 @@
 - Locke returned final status with no local-doc mismatch. It verified official WAI-ARIA APG modal dialog/disclosure guidance, MUI v9 Drawer/Dialog/breakpoint/useMediaQuery guidance, Testing Library/user-event v14 guidance, and React 19 testing guidance. It noted local `@mui/material@9.0.1` while current MUI docs show v9.1.1; the relevant APIs align.
 - Herschel returned final status with no current security merge blocker and P0/P1 red-test targets for native/package drift, non-leaky state text, plugin boundary props, command boundary preservation, deferred scope, modal/dialog semantics, narrow drawer behavior, stale async safety, inert Settings/Sync behavior, and consistent status/error semantics.
 - Aquinas returned final status with no P0/P1 blocker. It confirmed local installed versions, deprecated MUI/React/testing APIs to avoid, MUI `slots` / `slotProps` guidance, no focus-trap disabling props, no committed `.only`/`.skip`, and the need for a deterministic `matchMedia` helper in responsive tests.
+- Pasteur (`test_writer`, agent `019ec57e-7005-7db1-b8da-c3d9c677d602`) was spawned at 2026-06-14 17:37 CST to add failing TASK-045 responsive/accessibility RTL/static tests. Pasteur owns test changes only and must not edit production files.
 
 ## Red-Test Guidance Accepted By Parent
 
@@ -73,4 +74,4 @@
 
 ## Next Action
 
-- Commit the pre-test guidance outcome, close completed guidance agents, then spawn `test_writer` for TASK-045 red tests.
+- Wait for Pasteur completion/final status. A wait timeout is not a failure or idle signal.
