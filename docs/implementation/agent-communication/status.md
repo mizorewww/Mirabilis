@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 01:01 CST.
+Last updated: 2026-06-15 01:02 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 01:01 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 review-fix red tests committed; parent is preparing implementation fix delegation.
+- Current phase: TASK-047 review-fix implementer running; parent is waiting for Anscombe final status.
 
 ## Current Outcome
 
@@ -40,6 +40,7 @@ Last updated: 2026-06-15 01:01 CST.
 - Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned at 2026-06-15 00:50 CST for Popper's product/architecture/testing docs P1/P2 only. It must not mark TASK-047 complete.
 - Carver returned final status with docs-only changes in `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md`. Parent validation at 2026-06-15 00:55 CST passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`). Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
 - Avicenna returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:00 CST matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Failures cover recent pages hidden on filter routes, stale Route A persistence after Route B rapid navigation, missing Home/scrub persistence, stale/malformed metadata not overwritten, and serializer retaining unsafe extra keys. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan. Commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
+- Anscombe (`implementer`, agent `019ec715-dd5f-78b0-b384-9fbdaed15751`) was spawned at 2026-06-15 01:02 CST to make Avicenna's review-fix red tests pass and address Dewey/Sagan/Pauli P1 findings plus adjacent Bohr P2 hardening without package/native/Tauri/docs drift.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -228,4 +229,4 @@ Last updated: 2026-06-15 01:01 CST.
 
 ## Next Parent Actions
 
-- Spawn TASK-047 `implementer` to make Avicenna's review-fix red tests pass and address review P1/P2 findings.
+- Wait for Anscombe TASK-047 final status before validating review-fix implementation. A wait timeout is not a failure or idle signal.
