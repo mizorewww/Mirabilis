@@ -133,6 +133,8 @@ describe("Markdown page persistence", () => {
       return;
     }
 
+    nativeBridge.db.execute.mockClear();
+
     const user = userEvent.setup();
     const savedMarkdown = [
       "# Runtime facade",

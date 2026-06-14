@@ -92,7 +92,7 @@ Status markers:
 
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
-- [ ] TASK-046: Wire SQLite-backed Runtime Persistence
+- [x] TASK-046: Wire SQLite-backed Runtime Persistence
 - [ ] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
@@ -115,6 +115,392 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 23:59 CST - TASK-046 final full gate passed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Final parent-run gate passed: `bun run check:full`.
+- `check:quick` coverage inside the full gate passed: `bun run typecheck`; `bun run lint`; `bun run test:frontend` with 52 files and 832 tests; Rust fmt check; Rust clippy; `cargo test` with Rust IPC/repository/boundary suites.
+- Tauri release packaging passed for the documented local targets: `deb` and `rpm`.
+- Bundles produced in ignored build output: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- AppImage remains intentionally not validated locally, per `docs/testing/strategy.md`.
+- Worktree remains clean after the full gate; `dist/` and `src-tauri/target/` are ignored build outputs.
+- TASK-046 status changed to `[x]` for the merge commit preparation. Next action: merge `feat/task-046-runtime-sqlite-persistence` into `master`, push, then run post-merge validation on `master`.
+
+### 2026-06-14 23:57 CST - TASK-046 release checker clean
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Tesla (`release_checker`) returned final status with no findings and no file changes.
+- Tesla checks passed: focused TASK-046 frontend suite with 80 tests; full frontend suite with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; Rust fmt check; Rust clippy; `cargo test`; `git diff --check`; clean branch/status; `master` / `origin/master` ancestry checks.
+- Release surface: `check:full` correctly runs `check:quick && bun run tauri build --ci --bundles deb,rpm`; AppImage remains intentionally deferred; versions are synchronized at `0.1.0`; no package/Cargo/Tauri config/capability/permission dependency drift; no tracked artifacts, logs, env files, bundle files, or release leftovers.
+- Parent decision: proceed to final parent-run `bun run check:full`.
+
+### 2026-06-14 23:54 CST - TASK-046 release checker delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed targeted re-review agents Nietzsche, Euclid, and Hegel were closed after their final statuses were recorded and committed.
+- Tesla (`release_checker`, agent `019ec6d7-5fd8-76b3-9ae2-854d04bbb2a1`) was spawned for read-only release readiness before the parent final `bun run check:full`.
+- Parent state: waiting for Tesla's completion/final status before final local gate. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:53 CST - TASK-046 async rollback targeted re-review clean
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hegel (`test_quality_reviewer`) returned final status with no P0/P1/P2 test-quality findings. Cicero's async rollback test meaningfully covers the awaited handler window and complements Hume/Boole coverage.
+- Euclid (`reviewer`) returned final status with no P0/P1/P2 correctness findings. The Hume/Boole/Cicero rollback/interleaving fixes hold together for direct page write-through, plugin direct metadata/event/filter writes, transaction overlay merge, rollback isolation, and ordered native batch behavior.
+- Nietzsche (`security_reviewer`) returned final status with no findings. Mencius/Singer's async rollback P1 is closed; no NativeBridge/raw DB/SQL/native-handle exposure, plugin owner-boundary broadening, allowlist bypass, or package/Tauri/Rust/capability/permission drift was found.
+- Parent decision: targeted re-review is clean. Next action is to close completed re-review agents, run `release_checker`, then run final `bun run check:full` if release readiness is clean.
+
+### 2026-06-14 23:48 CST - TASK-046 async rollback P1 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Ohm was closed after final status and validation were recorded.
+- Targeted re-review running: Nietzsche (`security_reviewer`, agent `019ec6d1-7a88-7983-a786-2327a2c42312`) for Mencius/Singer P1 security/native-boundary closure; Euclid (`reviewer`, agent `019ec6d1-7e7a-7f50-aae1-a267e6ab85e1`) for direct-write/interleaving rollback correctness closure; Hegel (`test_quality_reviewer`, agent `019ec6d1-81e6-7082-9e58-7b3f6628e1b4`) for Cicero test quality.
+- Parent state: waiting for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:46 CST - TASK-046 async rollback P1 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Ohm (`implementer`) returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`.
+- Commit: `d3fcd67` (`Ohm(implementation-fix)(Wire SQLite-backed Runtime Persistence): track direct-write rollback identities`).
+- Fixed: async plugin direct-store sessions now track exact page/metadata/event/filter identities mutated at write time. Failed native direct commits roll back only those touched identities and only when live state still matches the direct session's own write, so unrelated Core updates/deletes/appends committed during the plugin await window remain live.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 80 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; `bun run test:frontend` passed with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close Ohm and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
+### 2026-06-14 23:41 CST - TASK-046 async rollback P1 implementation delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Cicero was closed after final status and red validation were recorded.
+- Ohm (`implementer`, agent `019ec6cb-c730-7cd0-ad49-740a7e0c38da`) was spawned to fix the async direct-session rollback P1 covered by Cicero's red test.
+- Parent state: waiting for Ohm's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:40 CST - TASK-046 async rollback P1 red test committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Cicero (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `ce38770` (`Cicero(test-fix)(Wire SQLite-backed Runtime Persistence): cover async rollback isolation`).
+- Parent red validation matched Mencius/Singer's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 79 passing tests. Failure is the new regression only: after a failed async plugin direct native commit, plugin writes are removed but unrelated Core state is incorrectly rolled back: deleted metadata/filter are restored, a page update is reverted, and an unrelated event append disappears.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Cicero and delegate an `implementer` production fix. Parent remains orchestration-only.
+
+### 2026-06-14 23:37 CST - TASK-046 async rollback P1 red test delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed targeted re-review agents Mencius, Singer, and Copernicus were closed after their final statuses were recorded and committed.
+- Cicero (`test_writer`, agent `019ec6c7-d3ba-7763-85b5-83577e8aec00`) was spawned for test-only red regression coverage of the async direct-session rollback P1 found by Mencius and Singer.
+- Parent state: waiting for Cicero's completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:36 CST - TASK-046 targeted re-review found async rollback P1
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Copernicus (`test_quality_reviewer`) returned final status with no P0/P1/P2 test-quality findings. Boole's rollback isolation tests meaningfully cover the synchronous/native-pending P1 scope and the focused suite passed with 79 tests.
+- Mencius (`security_reviewer`) returned final status with one P1: async plugin direct-store handlers still have a rollback isolation gap. `writeSnapshot` is captured only after an awaited handler returns, so unrelated live state committed during the handler await can be included in the failed direct session snapshot and then erased on native failure.
+- Singer (`reviewer`) returned final status with the same P1 from correctness scope: direct-session rollback still infers the session delta from whole-store snapshots, so async handler interleavings can restore or revert unrelated Core transaction update/delete state. Singer confirmed with a read-only inline repro involving unrelated metadata deletion being restored.
+- Parent decision: TASK-046 is not release-ready. Fix the async direct-session rollback P1 before `release_checker` or final `bun run check:full`. Next action is to close completed re-review agents, delegate red regression coverage to `test_writer`, validate the expected red state, commit tests, then delegate `implementer`.
+
+### 2026-06-14 23:30 CST - TASK-046 rollback P1 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Rawls was closed after final status and validation were recorded.
+- Targeted re-review running: Mencius (`security_reviewer`, agent `019ec6c1-995e-78f1-9790-4a9e6a72ff22`) for Averroes P1 security/native-boundary closure; Singer (`reviewer`, agent `019ec6c1-9c72-7913-a84d-e50745709694`) for rollback/interleaving correctness closure; Copernicus (`test_quality_reviewer`, agent `019ec6c1-9eeb-78e0-9d12-8ea9e2894f0d`) for Boole rollback test quality.
+- Parent state: waiting for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:29 CST - TASK-046 rollback P1 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Rawls (`implementer`) returned final status with production changes in `src/core/runtime/sqlite-persistence.ts`.
+- Commit: `ef6fb18` (`Rawls(implementation-fix)(Wire SQLite-backed Runtime Persistence): isolate direct-write rollback`).
+- Fixed: failed direct page write-through and failed plugin direct page/metadata/event/filter native commits now roll back only the direct session's own live-memory delta, preserving unrelated Core transaction state committed after the direct-write snapshot.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 79 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; `bun run test:frontend` passed with 52 files and 831 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close Rawls and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
+### 2026-06-14 23:22 CST - TASK-046 rollback P1 implementation delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Boole was closed after final status and red validation were recorded.
+- Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned to fix the direct-store rollback isolation P1 covered by Boole's red tests.
+- Parent state: waiting for Rawls's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:21 CST - TASK-046 rollback P1 red tests committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Boole (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `58f020a` (`Boole(test-fix)(Wire SQLite-backed Runtime Persistence): cover rollback isolation regressions`).
+- Parent red validation matched Averroes's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 2 failures and 77 passing tests. Failures are the new regressions only: failed direct page write-through rollback and failed plugin direct metadata/event/filter rollback both erase a committed Core transaction page from live memory.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Boole and delegate an `implementer` production fix. Parent remains orchestration-only.
+
+### 2026-06-14 23:17 CST - TASK-046 rollback P1 red test delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed targeted re-review agents Aristotle, Plato, and Averroes were closed after their final statuses were recorded and committed.
+- Boole (`test_writer`, agent `019ec6b5-5d8f-7662-a4ba-5e064ab8bb52`) was spawned for test-only red regression coverage of Averroes's direct-store rollback isolation P1.
+- Parent state: waiting for Boole's completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:16 CST - TASK-046 targeted re-review found rollback P1
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Plato (`test_quality_reviewer`) returned final status with no P0/P1/P2 test-quality findings. Hume's interleaving regression test is meaningful and the focused suite passed with 77 tests.
+- Aristotle (`reviewer`) returned final status with no P0/P1 correctness findings and verified Pasteur's success-path P2 is closed. Aristotle found one P2: a failed plugin direct-store native commit can restore a whole pre-write snapshot and remove an already committed Core transaction from live memory.
+- Averroes (`security_reviewer`) returned final status with no P0 findings and no NativeBridge/raw DB/SQL/native-handle exposure, owner-boundary broadening, allowlist bypass, or package/Tauri/capability/permission drift. Averroes escalated the rollback issue to P1 because a normal plugin direct write that later fails natively can erase unrelated committed live state.
+- Parent decision: TASK-046 is not release-ready. Fix Averroes's P1 before `release_checker` or final `bun run check:full`. Next action is to close completed re-review agents, delegate red regression coverage to `test_writer`, validate the expected red state, commit tests, then delegate `implementer`.
+
+### 2026-06-14 23:12 CST - TASK-046 Pasteur P2 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- James was closed after final status and validation were recorded.
+- Targeted re-review running: Aristotle (`reviewer`, agent `019ec6b0-9831-7cc1-ac93-00543f4797be`) for Pasteur P2 correctness closure; Plato (`test_quality_reviewer`, agent `019ec6b0-9bc3-7281-b71a-bf6837f721cc`) for Hume regression test quality; Averroes (`security_reviewer`, agent `019ec6b0-9e73-7fe2-91da-de0cd5f86fe8`) for plugin/native boundary and drift risk after James's merge fix.
+- Parent state: waiting for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:10 CST - TASK-046 Pasteur P2 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- James (`implementer`) returned final status with production changes in `src/core/services/transaction-manager.ts`.
+- Commit: `db227ab` (`James(implementation-fix)(Wire SQLite-backed Runtime Persistence): merge plugin direct writes after commit`).
+- Fixed: after an async persisted Core transaction commit resolves, the transaction manager now merges live post-commit metadata, event, and filter state so plugin direct non-page writes made during the commit window remain visible in live memory. Transaction changes still win for the same metadata identity, event id, or filter id.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 77 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; `bun run test:frontend` passed with 52 files and 829 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close James and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
+### 2026-06-14 23:05 CST - TASK-046 Pasteur P2 implementation delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hume was closed after final status and red validation were recorded.
+- James (`implementer`, agent `019ec6aa-85d0-7170-a6e4-98ba9bc37b66`) was spawned to fix the plugin direct metadata/event/filter live-memory interleaving regression covered by Hume's red test.
+- Parent state: waiting for James's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 23:04 CST - TASK-046 Pasteur P2 red test committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hume (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `b61e357` (`Hume(test-fix)(Wire SQLite-backed Runtime Persistence): cover plugin write interleaving`).
+- Parent red validation matched Pasteur's new P2: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 76 passing tests. Failure is the new regression only: after an in-flight Core transaction commit resolves, plugin-written metadata disappears from live memory even though the test proves metadata, event, and filter writes were persisted and visible before commit release.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Hume and delegate an `implementer` production fix. Parent remains orchestration-only.
+
+### 2026-06-14 23:01 CST - TASK-046 Pasteur P2 red test delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed focused re-review agents Beauvoir, Pasteur, and Lorentz were closed after their final statuses were recorded and committed.
+- Hume (`test_writer`, agent `019ec6a6-8837-7333-8304-e9f7620cad1b`) was spawned for test-only red regression coverage of Pasteur's plugin direct non-page write/live-memory interleaving P2.
+- Parent state: waiting for Hume's completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 22:59 CST - TASK-046 focused re-review retry completed with new P2
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Beauvoir (`test_quality_reviewer`, agent `019ec69c-6228-7a52-b012-30a6daa90246`) returned final status with no P0/P1/P2 test-quality findings. Confucius's P1 is closed; focused TASK-046 suite, full frontend suite, diff-check, `.only` / `.skip` scan, and clean-status check passed from Beauvoir's scope.
+- Lorentz (`docs_researcher`, agent `019ec69c-676c-70d3-a672-9f351af6833d`) returned final status with no docs findings. Pauli's `docs/architecture/04-slots-editor-task.md` P2 is closed; `git diff --check` passed from Lorentz's scope.
+- Pasteur (`reviewer`, agent `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`) returned final status with no P0/P1 correctness blocker. Curie's two specific P2s are closed, but Pasteur found a new P2: plugin direct metadata/events/filters writes can be persisted natively during an in-flight Core transaction commit and then disappear from live memory when the transaction manager replaces those stores with staged snapshots.
+- Parent decision: fix Pasteur's new P2 before release checker and final `bun run check:full`, because it is in the same TASK-046 persistence-consistency boundary and was reproduced by review. Next action is to delegate red regression coverage to `test_writer`, then delegate the production fix to `implementer`.
+
+### 2026-06-14 22:50 CST - TASK-046 focused re-review retried
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Errored focused re-review agents were no longer present when close was attempted.
+- Focused re-review retry running: Beauvoir (`test_quality_reviewer`, agent `019ec69c-6228-7a52-b012-30a6daa90246`) for Confucius P1 closure; Pasteur (`reviewer`, agent `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`) for Curie P2 closure; Lorentz (`docs_researcher`, agent `019ec69c-676c-70d3-a672-9f351af6833d`) for Pauli P2 closure.
+- Parent state: waiting for retried focused re-review final statuses. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 22:48 CST - TASK-046 focused re-review retry required
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Focused re-review agents Wegener (`test_quality_reviewer`, agent `019ec602-cf6e-7f71-ac2c-c0b0f65ae057`), Franklin (`reviewer`, agent `019ec602-d230-7b11-a390-766d26e9a06e`), and Archimedes (`docs_researcher`, agent `019ec602-d4ba-76f2-bc08-c8704ced104d`) returned final errored status due the Codex usage limit, with reset guidance to try again at 10:27 PM.
+- Parent decision: treat this as agent unavailable/failure, not a wait timeout or successful review. Record and close the errored agents, then retry focused re-review now that local time is past the reported reset time.
+
+### 2026-06-14 20:01 CST - TASK-046 targeted implementation follow-up green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Plato (`implementer`) returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, and `src/core/services/transaction-manager.ts`.
+- Commit: `60bdf27` (`Plato(implementation-fix)(Wire SQLite-backed Runtime Persistence): resolve concurrency follow-up findings`).
+- Fixed: direct runtime page writes made during an in-flight persisted transaction commit remain in live memory after commit; read-only plugin commands no longer take the Core transaction lock, while direct plugin writes still emit native transactions only when writes occur.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 76 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; `bun run test:frontend` passed with 52 files and 828 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close Plato and run focused targeted re-review for Confucius's P1, Curie's two P2s, and Pauli's docs P2 closure.
+
+### 2026-06-14 19:53 CST - TASK-046 targeted implementation follow-up delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hilbert and Nash were closed after final statuses were recorded.
+- Plato (`implementer`, agent `019ec5fa-b404-7561-b245-6976105a42f1`) spawned to fix Curie's two P2 production regressions: direct page writes lost during in-flight persisted transaction commits and broad transaction locking of unrelated read-only plugin commands.
+- Parent state: waiting for Plato's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:52 CST - TASK-046 targeted follow-up tests and docs committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hilbert (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `41882da` (`Hilbert(test-fix)(Wire SQLite-backed Runtime Persistence): cover concurrency follow-up regressions`).
+- Parent red validation matched Curie's P2s: focused TASK-046/plugin-host/app-bootstrap/runtime-provider suite failed with 2 failures and 74 passing tests. Failures cover direct page write lost during an in-flight persisted transaction commit and unrelated read-only plugin command rejected by broad transaction lock.
+- Nash (`doc_writer`) returned final status with docs-only changes in `docs/architecture/04-slots-editor-task.md`.
+- Commit: `a7dbb0a` (`Nash(docs-fix)(Wire SQLite-backed Runtime Persistence): clarify editor facade persistence history`).
+- Closed: Pauli's docs P2 stale current-state `in-memory-core` wording.
+- Next action: close Hilbert/Nash and delegate implementation fixes for Curie's two P2s.
+
+### 2026-06-14 19:48 CST - TASK-046 targeted follow-up fixes delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Targeted re-review agents were closed after their final statuses were recorded.
+- Hilbert (`test_writer`, agent `019ec5f6-3113-7b90-b4ee-e55aadf857d4`) spawned for Confucius's P1 direct-write test hardening and Curie's two P2 regression tests.
+- Nash (`doc_writer`, agent `019ec5f6-337b-74c2-9e99-25422dc728ae`) spawned for Pauli's stale `docs/architecture/04-slots-editor-task.md` P2.
+- Parent state: waiting for Hilbert and Nash final statuses. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:47 CST - TASK-046 targeted re-review findings recorded
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Targeted re-review final statuses received from Curie (`reviewer`), Singer (`security_reviewer`), Confucius (`test_quality_reviewer`), Pauli (`docs_researcher`), and Turing (`deprecation_auditor`).
+- Cleared: security/native-boundary and API/deprecation scopes have no P0/P1/P2 findings. Correctness has no P0/P1 blockers and Dalton's P1 is verified closed. Godel's requested docs scope is verified closed.
+- P1 to fix: Confucius found direct runtime and plugin direct-write tests still accept thrown-write behavior as a passing fallback; they must require successful reviewed native transaction persistence.
+- P2s to fix: Curie found direct page writes can still be overwritten from live memory during an in-flight persisted transaction commit, and broad transaction wrapping can make unrelated slow read-only plugin commands fail under the transaction lock. Pauli found stale current-state `in-memory-core` wording in `docs/architecture/04-slots-editor-task.md`.
+- Parent decision: fix the P1 and adjacent P2s before release checker or final `check:full`.
+
+### 2026-06-14 19:42 CST - TASK-046 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Dewey was closed after final status and validation were recorded.
+- Targeted re-review running: Curie (`reviewer`, agent `019ec5f0-a139-7fb1-b9a0-2f3aaf449f44`), Singer (`security_reviewer`, agent `019ec5f0-f79f-72d0-8894-ef458fd79189`), Confucius (`test_quality_reviewer`, agent `019ec5f0-fa27-7661-8319-97b300b53e75`), Pauli (`docs_researcher`, agent `019ec5f0-fcc1-7de3-a3d3-eddf67fd0394`), and Turing (`deprecation_auditor`, agent `019ec5f0-ff46-7d53-a99c-30a245e792c4`).
+- Parent state: waiting for final statuses before release checker or completion decisions. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:40 CST - TASK-046 docs sync committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Dewey (`doc_writer`) completed docs-only sync and one parent-requested follow-up for historical TASK-015 `in-memory-core` wording.
+- Commit: `a032b7d` (`Dewey(docs-fix)(Wire SQLite-backed Runtime Persistence): sync runtime persistence docs`).
+- Closed: Godel's docs P1/P2 for runtime-flow, native-database, development-roadmap, testing-strategy, task-index, and TASK-046 communication wording.
+- Parent docs validation passed: `git diff --check`; focused stale wording scans for old pre-TASK-046 runtime-persistence claims returned no matches.
+- Next action: close Dewey and run targeted re-review for correctness, security, docs, test quality, and deprecated/API risks.
+
+### 2026-06-14 19:37 CST - TASK-046 docs sync completed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Dewey (`doc_writer`) completed Godel's docs P1/P2 sync without editing production code, tests, configs, package files, Rust code, generated files, capabilities, or permissions.
+- Updated docs: runtime-flow startup/persistence behavior, NativeBridge/SQLite TASK-046 contract, development constraints, testing strategy, task index delivered/future scope, progress historical notes, and TASK-046 communication state.
+- Closure from Dewey scope: docs now describe `sqlite-core` default runtime hydration before plugin activation, transaction-managed NativeBridge `db.transaction` writes, direct runtime page write-through/pending flush, plugin direct Core store writes through the Core transaction path, archived page hydration, fail-closed null hydration, filter update `get` + `save` rollback semantics, unchanged DB allowlist/capability boundary, and Rust's frontend event `type` alias.
+- Validation: `git diff --check` passed; stale wording scans found no remaining stale pre-TASK-046 runtime-persistence deferral claims. Remaining `in-memory-core` mentions are historical or explicit "no longer claims" wording.
+- TASK-046 remains `[~]`; parent still owns commit, targeted re-review, release readiness, final `bun run check:full`, and completion/merge decisions.
+
+### 2026-06-14 19:31 CST - TASK-046 docs sync delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Mencius was closed after final status and validation were recorded.
+- Dewey (`doc_writer`, agent `019ec5e6-8ace-74b1-b160-5a4e623d6645`) spawned for Godel's docs P1/P2 only.
+- Scope: update architecture, native database, development constraints, testing strategy, task index, and TASK-046 communication wording to match reviewed SQLite-backed runtime persistence. Dewey must not mark TASK-046 complete.
+- Parent state: waiting for Dewey's completion/final status. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:30 CST - TASK-046 full frontend test-fix green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Mencius (`test_writer`) returned final status with test-only changes and no real-regression blockers. Timer timeline failures were stale test runtime setup, not production regression.
+- Commit: `046b273` (`Mencius(test-fix)(Wire SQLite-backed Runtime Persistence): align frontend guards with durable runtime`).
+- Fixed: static native-surface guards now accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff; legacy AI/Sync/timer tests use `in-memory-core` where SQLite persistence is not under test; Markdown page facade tests clear startup hydration calls; Quick Capture tests accept reviewed durable `db.transaction` while still rejecting shortcut/file/notification/raw execute calls.
+- Parent validation passed: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`; `bun run lint`; `git diff --check`; exact `.only` / `.skip` scan on edited tests.
+- Next action: close Mencius and delegate docs sync for Godel's docs P1/P2.
+
+### 2026-06-14 19:23 CST - TASK-046 full frontend test-fix delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Erdos was closed after final status and validation were recorded.
+- Mencius (`test_writer`, agent `019ec5df-ad1c-7b60-b65b-6febd7322eaf`) spawned for full frontend test-fix/triage only.
+- Scope: update stale static boundary tests and test NativeBridge helpers for the reviewed TASK-046 persistence path, preserve TASK-046 coverage, and report a blocker instead of masking any real timer timeline production regression.
+- Parent state: waiting for Mencius's completion/final status. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:22 CST - TASK-046 implementation review fixes green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Erdos (`implementer`) returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/plugin-host/plugin-host.ts`, and `src-tauri/src/commands/db.rs`.
+- Commit: `0b75f18` (`Erdos(implementation-fix)(Wire SQLite-backed Runtime Persistence): close persistence bypass findings`).
+- Fixed: direct runtime page writes now persist through allowlisted native page transactions; plugin lifecycle/command direct store writes run inside the Core transaction path; archived pages hydrate; filter update miss in a native transaction rolls back instead of silently upserting; null hydration responses fail closed with redacted errors.
+- Parent focused validation passed: TASK-046/app-bootstrap/runtime-provider suite passed with 26 tests; plugin-host/native-bridge suite passed with 65 tests; Rust `ipc_persistence` passed with 13 tests; `bun run typecheck`; `bun run lint`; Rust fmt check; Rust clippy; `git diff --check`.
+- Full frontend probe remains red: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failure categories include stale static native-drift guards, old test no-op NativeBridge assumptions, Quick Capture direct write expectations, and timer timeline behavior needing targeted triage.
+- Next action: close Erdos, then delegate a focused test-fix/triage agent. Parent remains orchestration-only.
+
+### 2026-06-14 19:11 CST - TASK-046 implementation review fixes delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Kant was closed after final status and red validation were recorded.
+- Erdos (`implementer`, agent `019ec5d4-a5e0-7543-98cc-dac74be917c0`) spawned to make Kant's red tests pass and fix direct runtime/App and plugin direct write persistence bypass, null hydration fail-closed behavior, and adjacent P2s in the same production paths.
+- Parent state: waiting for Erdos's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:10 CST - TASK-046 review-fix red tests validated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Kant (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `50cfe52` (`Kant(test-fix)(Wire SQLite-backed Runtime Persistence): add persistence review-fix coverage`).
+- Parent red validation matched the expected review findings: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Failures cover missing direct runtime `core.pages.create` transaction persistence, missing plugin direct write native transaction batch, and null native hydration responses not failing closed with a redacted startup error.
+- Supporting checks: `git diff --check` passed; an exact `.only` / `.skip` scan on `src/test/runtime-sqlite-persistence.test.ts` found no matches.
+- Next action: close Kant, then delegate implementation review fixes. Parent remains orchestration-only.
+
+### 2026-06-14 19:03 CST - TASK-046 review-fix tests delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed review agents were closed after their final statuses were recorded.
+- Kant (`test_writer`, agent `019ec5cd-18c1-7af0-a3d1-f9301305134c`) spawned to add review-fix red tests for direct App/plugin persistence bypass, stronger hydration field assertions, missing transaction write-through paths, and adjacent P2 coverage.
+- Parent state: waiting for Kant's completion/final status before red validation or implementation handoff. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 19:02 CST - TASK-046 review findings recorded
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Review final statuses received from Aristotle (`pr_explorer`), Dalton (`reviewer`), Nietzsche (`security_reviewer`), Hume (`deprecation_auditor`), Godel (`docs_researcher`), and Dirac (`test_quality_reviewer`).
+- Merge readiness: not ready. P1s must be fixed before the final gate.
+- P1 correctness/security findings: direct App Shell page/editor writes and plugin-facing direct store facades can mutate in-memory runtime state outside SQLite-backed `NativeBridge.db.transaction`, bypassing durability and rollback; fresh-DB Home pages can later fail persisted transactions because SQLite has no target row.
+- P1 test-quality findings: strengthen hydration coverage across full page/metadata/event/filter fields and add executable coverage for transaction-backed `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`.
+- P1 docs findings: sync runtime-flow, native database, development roadmap, and testing-strategy docs to the SQLite-backed runtime behavior once review fixes land.
+- P2s to handle or explicitly accept: archived-page hydration, native filter update semantics, async interleaving during persistence commit, hydration validation strictness, brittle exact hydration-order assertions, and wording drift around transaction-managed versus direct-write persistence.
+- Parent decision: delegate review-fix tests first, then implementation, then docs sync. Retry `release_checker` after capacity frees and review fixes are green. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:57 CST - TASK-046 review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Review agents running: Aristotle (`pr_explorer`, agent `019ec5c7-94a3-7b32-abe0-0f00cb10833b`), Dalton (`reviewer`, agent `019ec5c7-9756-7370-9e35-b32756017499`), Nietzsche (`security_reviewer`, agent `019ec5c7-99e1-7ca1-b24e-793018402cfb`), Hume (`deprecation_auditor`, agent `019ec5c7-9d14-7832-84b0-eaa8ecd364b8`), Godel (`docs_researcher`, agent `019ec5c7-a017-7f61-a405-6a538111e3d3`), and Dirac (`test_quality_reviewer`, agent `019ec5c7-a377-7560-a463-c3445ac899ff`).
+- `release_checker` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Parent state: waiting for review completion/final statuses before deciding merge readiness or review fixes. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:56 CST - TASK-046 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Gibbs (`implementer`) returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/services/transaction-manager.ts`, and `src-tauri/src/commands/db.rs`.
+- Commit: `41d8dd3` (`Gibbs(implementation)(Wire SQLite-backed Runtime Persistence): add sqlite runtime persistence`).
+- Delivered so far: default runtime reports `sqlite-core`, hydrates Core pages/metadata/events/filters before plugin activation, persists `transaction.run` / plugin transaction facade writes through awaited `NativeBridge.db.transaction`, rolls back live state on native transaction rejection, persists filter updates as `core.filters.get` plus merged `core.filters.save`, and accepts Core-facing event `type` payloads in Rust IPC.
+- Parent implementation validation passed: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` (21 tests), `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: run review agents for correctness, security, deprecated APIs, docs, test quality, PR exploration, and release readiness.
+
+### 2026-06-14 18:47 CST - TASK-046 implementation delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Russell's red tests were committed in `d710e94` (`Russell(test)(Wire SQLite-backed Runtime Persistence): add runtime persistence red tests`).
+- Gibbs (`implementer`, agent `019ec5be-77a8-73a0-8180-d71c75e63824`) spawned to make the TASK-046 red tests pass with minimum production changes.
+- Parent state: waiting for Gibbs completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:46 CST - TASK-046 red tests validated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Russell (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Parent red validation matched expected missing TASK-046 behavior: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 7 new TASK-046 failures and 14 passing tests. Expected failures cover absent startup hydration, absent SQLite persistence marker, no native transaction call, rollback rejection not surfacing, missing filter hydration/update persistence strategy, missing durable plugin transaction batch, and startup hydration failure not redacting through the provider alert.
+- Supporting checks passed: `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: commit red tests, then delegate implementation.
+
+### 2026-06-14 18:38 CST - TASK-046 red tests delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Russell (`test_writer`, agent `019ec5b5-f552-7d73-8352-a7122c635240`) spawned to add failing TASK-046 tests for startup hydration, persistence mode reporting, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, error redaction, and static native/DB boundary guards.
+- Parent state: waiting for Russell completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:37 CST - TASK-046 pre-test guidance completed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Mendel (`planner`) recommended the branch-sized slice: hydrate pages/metadata/events/filters from the existing NativeBridge DB allowlist during `createAppRuntime()`, keep hydrated synchronous stores for reads, route production durable writes through an awaited async transaction path using `NativeBridge.db.transaction`, preserve plugin facades, and update `storage.persistence` only for active SQLite-backed runtime persistence.
+- Kepler (`docs_researcher`) found no upstream docs blocker and verified current official Tauri command/state/capability/path and `rusqlite` transaction docs. Linnaeus (`security_reviewer`) identified P0/P1 red-test targets for exact DB allowlist, no native/raw DB exposure, owner-boundary preservation, atomic rollback, error redaction, app-data DB path ownership, startup hydration before plugin activation, and correct `storage.persistence`. Hubble (`deprecation_auditor`) found no P0 deprecated API blocker but flagged P1 design risks around synchronous store APIs vs async NativeBridge, `FilterStore.update()` lacking a DB allowlist operation, and transaction manager needing a persistence-aware adapter.
+- Parent decision: accept Mendel's slice for red tests. Defer full async Core Store API migration, arbitrary future direct store surfaces outside the reviewed runtime/plugin paths, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export.
+- Next action: delegate `test_writer` to add failing TASK-046 tests.
+
+### 2026-06-14 18:31 CST - TASK-046 pre-test guidance delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Pre-test agents running: Mendel (`planner`, agent `019ec5af-e817-7bd0-a143-e2ec3f5c0977`) for implementation slicing and TDD plan; Kepler (`docs_researcher`, agent `019ec5af-fd6c-7b33-aeb9-a01c8585554d`) for current official Tauri and rusqlite docs; Linnaeus (`security_reviewer`, agent `019ec5af-ffda-7232-8825-34825fb124bf`) for Tauri/IPC/NativeBridge/plugin-boundary security guidance; Hubble (`deprecation_auditor`, agent `019ec5b0-1579-7783-a631-379954e34c0e`) for stale API and version guidance.
+- Parent state: waiting for child-agent completion/final statuses before red-test delegation. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:29 CST - TASK-046 started
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Base: `master` commit `60c7e06` after TASK-045 merge and M10 roadmap backlog merge.
+- Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Scope decision: TASK-046 wires SQLite-backed runtime persistence for Core pages, metadata, events, and filters through the existing NativeBridge DB allowlist. This is a native/IPC/runtime persistence task and should use `bun run check:full` for the final gate.
+- Parent context read so far: `docs/architecture/06-filter-native-database.md`, `docs/architecture/07-runtime-flows.md`, `docs/development/01-data-roadmap-and-mvp.md`, `docs/testing/strategy.md`, `src/bootstrap/create-app-runtime.ts`, `src/core/native/native-bridge.ts`, `src/core/runtime/markdown-pages.ts`, and Core store files.
+- Next action: delegate pre-test planning, official docs research, security boundary guidance, and deprecation/API guidance, then wait for child-agent completion/final statuses before test writing.
 
 ### 2026-06-14 18:24 CST - Roadmap backlog continuation docs updated
 
@@ -1663,7 +2049,7 @@ Add newest entries at the top.
 - `check:full`: not run for TASK-016 because the branch does not add or modify Tauri commands, capabilities, generated permissions, Rust code, package/Cargo dependencies, filesystem/native behavior, packaging, or release behavior. It reuses the existing TASK-014 DB IPC allowlist through a narrow frontend runtime facade.
 - Review: planner, docs/current-guidance, deprecation/API, security, correctness, test-quality, changed-surface, and docs-writing agents completed. Review-fix loops addressed P1 findings for production NativeBridge page persistence coverage, editor runtime extension collection, trusted extension `pluginId` ownership, and async insert stale-result races. Focused re-review cleared remaining P0/P1/P2 async insert findings.
 - External docs verified by agents: React controlled `<textarea>`, `useRef`, `useEffect` async race cleanup guidance, `useLayoutEffect`, React hooks refs lint guidance, Testing Library `user-event`, Vitest, Vite, Tauri v2 invoke/capabilities/permissions, Tiptap React/Markdown beta docs, and ProseMirror guide.
-- Remaining risk: TASK-016 intentionally keeps semantic task/tag/page-link behavior, `@date`, autocomplete, slash menu, stable block IDs, Markdown import/export, rich editor behavior, stronger Markdown DTO/body size validation, load/save error UX, insert-only command capability props, and custom plugin-host extension-listing hardening for later tasks. `storage.persistence = "in-memory-core"` remains accurate for Core stores; only the Markdown runtime page facade uses existing allowlisted NativeBridge page DTOs.
+- Remaining risk: TASK-016 intentionally keeps semantic task/tag/page-link behavior, `@date`, autocomplete, slash menu, stable block IDs, Markdown import/export, rich editor behavior, stronger Markdown DTO/body size validation, load/save error UX, insert-only command capability props, and custom plugin-host extension-listing hardening for later tasks. At TASK-016 merge time, `storage.persistence = "in-memory-core"` remained accurate for Core stores and only the Markdown runtime page facade used existing allowlisted NativeBridge page DTOs; TASK-046 later supersedes that current-state claim for the default runtime with `sqlite-core`.
 
 ### 2026-05-21 07:35 CST - TASK-016 started
 
@@ -1679,11 +2065,11 @@ Add newest entries at the top.
 - Branch: `feat/task-015-app-bootstrap-runtime-provider`.
 - Task: Build app bootstrap and runtime provider.
 - Commits: `e8bd284` start task orchestration, `2714e39` pre-test agents, `78c37e0` pre-test guidance, `75e3bc7` bootstrap/provider acceptance tests, `529fb48` red test result, `04f7edf` implementation handoff, `96d229e` runtime bootstrap provider implementation, `69a594e` implementation result, `3b0b8e4` review findings, `49f6554` review-fix tests, `3b11328` review-fix red tests, `06186bb` narrowed runtime provider surface, `1f469ca` review-fix implementation result, `05333f7` focused re-review summary, `e79659a` initialized runtime facade test follow-up, `4efa19e` test-strength follow-up record, `506b3e5` runtime provider docs sync, and `98895d3` docs sync record.
-- Delivered: injectable `createAppRuntime()` bootstrap in current flat `src/bootstrap/*`; explicit empty `BUILT_IN_PLUGINS`; honest `{ persistence: "in-memory-core" }` storage facade; NativeBridge/Core stores/registries/services/Plugin Host/runtime/built-in load/activation ordering; plugin load/activation failure rejection; React `RuntimeProvider`; public `useRuntime()` facade exposing only copied/frozen app info; rejected-initializer retry after failure; StrictMode single-flight for pending/successful initialization; neutral Mirabilis App Shell with loading and generic startup failure UI; App Shell/native-surface boundary tests; architecture/development/testing docs synced to the final TASK-015 behavior.
+- Delivered: injectable `createAppRuntime()` bootstrap in current flat `src/bootstrap/*`; explicit empty `BUILT_IN_PLUGINS`; honest TASK-015-era `{ persistence: "in-memory-core" }` storage facade; NativeBridge/Core stores/registries/services/Plugin Host/runtime/built-in load/activation ordering; plugin load/activation failure rejection; React `RuntimeProvider`; public `useRuntime()` facade exposing only copied/frozen app info; rejected-initializer retry after failure; StrictMode single-flight for pending/successful initialization; neutral Mirabilis App Shell with loading and generic startup failure UI; App Shell/native-surface boundary tests; architecture/development/testing docs synced to the final TASK-015 behavior. TASK-046 later changes the default runtime marker to `sqlite-core`.
 - Validation: focused TASK-015 frontend tests passed with 3 files and 18 tests: `bun run test:frontend -- src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx src/test/app-shell-boundary.test.ts`. `bun run typecheck` passed. `bun run lint` passed. `bun run build` passed. `bun run check:quick` passed with 17 frontend test files / 265 tests, Rust fmt, Rust clippy, and full Rust tests. `git diff --check` passed.
 - Review: planner, docs/current-guidance, deprecation/API, security, correctness, test-quality, changed-surface, and docs-writing agents completed. Review-fix work addressed P1 findings for public runtime provider surface exposure, plugin load/activation failure coverage, native-surface guard strength, rejected initializer cache clearing, and initialized-runtime safe facade coverage. Focused re-review found no P0/P1/P2 security or correctness findings. Remaining P2/P3 items are non-blocking: mounted providers treat `initializeRuntime` as mount-only, React 19 prefers direct context provider syntax over `.Provider`, and the public runtime app type can become explicitly readonly later.
 - External docs verified by agents: React 19 `createContext`, `useEffect`, `StrictMode`, `createRoot`, and release notes; React Testing Library render and async-query guidance; Vitest 4 mock/migration docs; Vite 7 migration/support guidance; Tauri v2 commands, capabilities, permissions, and mock API docs.
-- Remaining risk: TASK-015 intentionally does not wire Core stores to SQLite persistence, does not call DB IPC from bootstrap, does not add Tauri commands/capabilities/permissions, and keeps production built-ins empty until later plugin tasks. Future plugin-rendered UI must continue to receive `PluginContext`, plugin-scoped facades, or controlled props rather than full runtime handles.
+- Remaining risk: TASK-015 intentionally did not wire Core stores to SQLite persistence, did not call DB IPC from bootstrap, did not add Tauri commands/capabilities/permissions, and kept production built-ins empty until later plugin tasks. TASK-046 later wires trusted runtime SQLite persistence without exposing full runtime or NativeBridge handles to plugin-rendered UI, which must continue to receive `PluginContext`, plugin-scoped facades, or controlled props.
 
 ### 2026-05-21 06:30 CST - TASK-015 started
 

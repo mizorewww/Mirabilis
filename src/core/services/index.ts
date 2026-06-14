@@ -20,6 +20,8 @@ import {
 import type { CommandService, SlotRegistry, ViewRegistry } from "../types";
 import {
   createTransactionManager,
+  type CoreDirectStoreRunner,
+  type TransactionPersistence,
   type TransactionManager,
 } from "./transaction-manager";
 
@@ -36,10 +38,18 @@ export type CoreRegistries = {
   slots: SlotRegistry;
 };
 
+export const coreDirectTransactionRunnerKey: unique symbol = Symbol(
+  "mirabilis.internal.coreDirectTransactionRunner",
+);
+
 export type CoreServices = CoreStores &
   CoreRegistries & {
     transaction: TransactionManager;
   };
+
+type CoreServicesWithDirectTransactionRunner = CoreServices & {
+  [coreDirectTransactionRunnerKey]?: CoreDirectStoreRunner;
+};
 
 type CreateCoreStoresOptions = {
   pages?: CreateInMemoryPageStoreOptions;
@@ -52,6 +62,8 @@ type CreateCoreServicesOptions = {
   stores: CoreStores;
   registries: CoreRegistries;
   transaction?: TransactionManager;
+  transactionPersistence?: TransactionPersistence;
+  directTransactionRunner?: CoreDirectStoreRunner;
 };
 
 export function createCoreStores(
@@ -77,8 +89,10 @@ export function createCoreServices({
   stores,
   registries,
   transaction,
+  transactionPersistence,
+  directTransactionRunner,
 }: CreateCoreServicesOptions): CoreServices {
-  return {
+  const services: CoreServices = {
     pages: stores.pages,
     metadata: stores.metadata,
     events: stores.events,
@@ -86,12 +100,38 @@ export function createCoreServices({
     commands: registries.commands,
     views: registries.views,
     slots: registries.slots,
-    transaction: transaction ?? createTransactionManager(stores),
+    transaction:
+      transaction ??
+      createTransactionManager(stores, {
+        persistence: transactionPersistence,
+      }),
   };
+
+  if (directTransactionRunner !== undefined) {
+    Object.defineProperty(services, coreDirectTransactionRunnerKey, {
+      configurable: false,
+      enumerable: false,
+      value: directTransactionRunner,
+      writable: false,
+    });
+  }
+
+  return services;
+}
+
+export function getCoreDirectTransactionRunner(
+  services: CoreServices,
+): CoreDirectStoreRunner | undefined {
+  return (services as CoreServicesWithDirectTransactionRunner)[
+    coreDirectTransactionRunnerKey
+  ];
 }
 
 export type {
   CoreTransaction,
+  CoreDirectStoreRunner,
   TransactionHandler,
   TransactionManager,
+  TransactionPersistence,
+  TransactionPersistenceScope,
 } from "./transaction-manager";

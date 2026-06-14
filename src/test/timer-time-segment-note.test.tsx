@@ -651,6 +651,7 @@ async function createRuntime(
 
   return createAppRuntime({
     createNativeBridge: () => createNoopNativeBridge(),
+    createStorageFacade: () => ({ persistence: "in-memory-core" }),
     ...(createPageId === undefined && createEventId === undefined
       ? {}
       : {

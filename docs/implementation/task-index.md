@@ -22,11 +22,11 @@ This index converts the product, architecture, and development docs into focused
 
 - Early architecture docs still include future monorepo layout assumptions; implementation tasks must check the actual repo layout before moving files or adding packages.
 - Frontend test, lint, typecheck, and local check scripts exist; new tasks should prefer focused checks first and `check:full` for persistence, native, security, or release changes.
-- SQLite repositories and DB IPC already exist through Rust `rusqlite` and allowlisted `db_execute` / `db_transaction`; runtime store hydration, write-through semantics, and async transaction behavior remain deferred.
+- SQLite repositories and DB IPC already exist through Rust `rusqlite` and allowlisted `db_execute` / `db_transaction`; TASK-046 delivers the transaction-backed runtime persistence slice for Core pages, metadata, events, and filters.
 - Tiptap/ProseMirror dependency choice is documented as recommended, not installed.
 - Tauri capabilities already include reviewed DB IPC permissions (`allow-db-execute`, `allow-db-transaction`); filesystem, shortcut, notification, tray, sync/network, updater, and release permissions must be reviewed before use.
-- `storage.persistence` wording is easy to misread because the editor has a narrow SQLite page path while Core runtime stores are still in-memory until TASK-046.
-- Durable route-state schema, cross-plugin query/feed API shape, Sync settings/secrets/conflict policy, and live AI provider secret handling remain underspecified and must be resolved in their focused tasks.
+- `storage.persistence` wording is easy to misread in older task notes because TASK-016/TASK-017 delivered a narrow SQLite editor page facade before TASK-046 delivered the default `sqlite-core` runtime marker.
+- Durable route-state schema, Search FTS/indexing, plugin settings persistence, cross-plugin query/feed API shape, Sync settings/secrets/conflict policy, filesystem import/export, and live AI provider secret handling remain underspecified and must be resolved in their focused tasks.
 - WebDriver E2E should wait until the app has a stable UI path.
 
 ## Task List
@@ -1498,7 +1498,8 @@ Source docs:
 Acceptance criteria:
 
 - Runtime stores for pages, metadata, events, and filters hydrate from SQLite through the allowlisted NativeBridge DB operations.
-- Runtime store writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- Transaction-managed runtime and plugin writes for pages, metadata, events, and filters write through the same allowlisted NativeBridge DB operations.
+- Reviewed direct runtime page writes and plugin-facing direct Core store writes use the Core persistence path without exposing native handles.
 - `storage.persistence` no longer claims the runtime is in-memory-only when SQLite-backed runtime persistence is active.
 - Plugin facades keep current owner boundaries and do not expose NativeBridge, raw SQLite, filesystem paths, SQL, or full runtime handles.
 - Startup, NativeBridge, IPC, and persistence errors remain typed and redacted.
@@ -1510,6 +1511,11 @@ Test plan:
 - Frontend NativeBridge/runtime provider tests for startup hydration, store writes, bridge failures, and persistence-mode reporting.
 - Plugin facade boundary regression tests for owner-scoped page, metadata, event, and filter access.
 - `bun run check:full`.
+
+Delivered scope note:
+
+- TASK-046 covers SQLite hydration, transaction-backed write-through, reviewed direct page/plugin Core write paths, rollback, error redaction, and NativeBridge boundary preservation for Core pages/metadata/events/filters.
+- Broader persistence work remains later scope: durable route state, persistent Search index/SQLite FTS, plugin settings, sync transport/conflict UI, cross-plugin query/feed surfaces, route/dashboard/feed persistence, native import/export, and release hardening.
 
 Dependencies:
 

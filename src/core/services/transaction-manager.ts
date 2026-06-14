@@ -38,10 +38,44 @@ export type TransactionManager = {
   ): Promise<Awaited<Result>>;
 };
 
+export type CoreDirectStoreRunner = {
+  run<Result>(
+    handler: TransactionHandler<Result>,
+  ): Promise<Awaited<Result>>;
+};
+
+export type TransactionPersistenceScope = {
+  transaction: CoreTransaction;
+  commit(): Promise<void>;
+};
+
+export type TransactionPersistence = {
+  createScope(transaction: CoreTransaction): TransactionPersistenceScope;
+};
+
+type PageSnapshot = ReturnType<
+  InMemoryPageStoreTransactionParticipant["snapshot"]
+>;
+type MetadataSnapshot = ReturnType<
+  InMemoryMetadataStoreTransactionParticipant["snapshot"]
+>;
+type MetadataSnapshotRecord = MetadataSnapshot["records"][number];
+type EventSnapshot = ReturnType<
+  InMemoryEventStoreTransactionParticipant["snapshot"]
+>;
+type EventSnapshotRecord = EventSnapshot["events"][number];
+type FilterSnapshot = ReturnType<
+  InMemoryFilterStoreTransactionParticipant["snapshot"]
+>;
+
 export function createTransactionManager(
   stores: CoreTransaction,
+  options: {
+    persistence?: TransactionPersistence;
+  } = {},
 ): TransactionManager {
   let active = false;
+  const persistence = options.persistence;
 
   return {
     async run<Result>(
@@ -81,8 +115,10 @@ export function createTransactionManager(
           events: stagedEvents,
           filters: stagedFilters,
         };
+        const persistenceScope = persistence?.createScope(transaction);
+        const handlerTransaction = persistenceScope?.transaction ?? transaction;
 
-        const result = await handler(transaction);
+        const result = await handler(handlerTransaction);
         const stagedPageParticipant = requirePageParticipant(stagedPages);
         const stagedMetadataParticipant =
           requireMetadataParticipant(stagedMetadata);
@@ -110,10 +146,53 @@ export function createTransactionManager(
           initialFilterState,
         );
 
-        pageParticipant.replaceState(nextPageState);
-        metadataParticipant.replaceState(nextMetadataState);
-        eventParticipant.replaceState(nextEventState);
-        filterParticipant.replaceState(nextFilterState);
+        await persistenceScope?.commit();
+
+        const committedLivePageState = pageParticipant.snapshot();
+        const committedLiveMetadataState = metadataParticipant.snapshot();
+        const committedLiveEventState = eventParticipant.snapshot();
+        const committedLiveFilterState = filterParticipant.snapshot();
+        const finalPageState =
+          persistenceScope !== undefined &&
+          !snapshotsEqual(committedLivePageState, livePageState)
+            ? mergePageTransactionState(
+                initialPageState,
+                nextPageState,
+                committedLivePageState,
+              )
+            : nextPageState;
+        const finalMetadataState =
+          persistenceScope !== undefined &&
+          !snapshotsEqual(committedLiveMetadataState, liveMetadataState)
+            ? mergeMetadataTransactionState(
+                initialMetadataState,
+                nextMetadataState,
+                committedLiveMetadataState,
+              )
+            : nextMetadataState;
+        const finalEventState =
+          persistenceScope !== undefined &&
+          !snapshotsEqual(committedLiveEventState, liveEventState)
+            ? mergeEventTransactionState(
+                initialEventState,
+                nextEventState,
+                committedLiveEventState,
+              )
+            : nextEventState;
+        const finalFilterState =
+          persistenceScope !== undefined &&
+          !snapshotsEqual(committedLiveFilterState, liveFilterState)
+            ? mergeFilterTransactionState(
+                initialFilterState,
+                nextFilterState,
+                committedLiveFilterState,
+              )
+            : nextFilterState;
+
+        pageParticipant.replaceState(finalPageState);
+        metadataParticipant.replaceState(finalMetadataState);
+        eventParticipant.replaceState(finalEventState);
+        filterParticipant.replaceState(finalFilterState);
 
         return result;
       } finally {
@@ -182,6 +261,195 @@ function assertLiveSnapshotUnchanged(
       `Core transaction conflict: live ${storeName} store changed before commit`,
     );
   }
+}
+
+function mergePageTransactionState(
+  initialState: PageSnapshot,
+  nextState: PageSnapshot,
+  liveState: PageSnapshot,
+): PageSnapshot {
+  const pages = new Map(liveState.pages);
+
+  for (const [pageId, nextPage] of nextState.pages) {
+    const initialPage = initialState.pages.get(pageId);
+
+    if (!snapshotsEqual(nextPage, initialPage)) {
+      pages.set(pageId, nextPage);
+    }
+  }
+
+  for (const [pageId, initialPage] of initialState.pages) {
+    if (
+      !nextState.pages.has(pageId) &&
+      snapshotsEqual(liveState.pages.get(pageId), initialPage)
+    ) {
+      pages.delete(pageId);
+    }
+  }
+
+  return {
+    ...liveState,
+    pages,
+  };
+}
+
+function mergeMetadataTransactionState(
+  initialState: MetadataSnapshot,
+  nextState: MetadataSnapshot,
+  liveState: MetadataSnapshot,
+): MetadataSnapshot {
+  const records = [...liveState.records];
+  const initialRecords = createMetadataRecordMap(initialState.records);
+  const nextRecords = createMetadataRecordMap(nextState.records);
+
+  for (const nextRecord of nextState.records) {
+    const identity = metadataIdentityKey(nextRecord);
+    const initialRecord = initialRecords.get(identity);
+
+    if (!snapshotsEqual(nextRecord, initialRecord)) {
+      upsertMetadataRecord(records, nextRecord);
+    }
+  }
+
+  for (const [identity, initialRecord] of initialRecords) {
+    if (!nextRecords.has(identity)) {
+      deleteMetadataRecord(records, initialRecord);
+    }
+  }
+
+  return {
+    records,
+    recordsByIdentity: createMetadataIndex(records),
+  };
+}
+
+function mergeEventTransactionState(
+  initialState: EventSnapshot,
+  nextState: EventSnapshot,
+  liveState: EventSnapshot,
+): EventSnapshot {
+  const events = [...liveState.events];
+  const initialEvents = new Map(
+    initialState.events.map((event) => [event.id, event]),
+  );
+
+  for (const nextEvent of nextState.events) {
+    const initialEvent = initialEvents.get(nextEvent.id);
+
+    if (!snapshotsEqual(nextEvent, initialEvent)) {
+      upsertEvent(events, nextEvent);
+    }
+  }
+
+  return {
+    events,
+  };
+}
+
+function mergeFilterTransactionState(
+  initialState: FilterSnapshot,
+  nextState: FilterSnapshot,
+  liveState: FilterSnapshot,
+): FilterSnapshot {
+  const filters = new Map(liveState.filters);
+
+  for (const [filterId, nextFilter] of nextState.filters) {
+    const initialFilter = initialState.filters.get(filterId);
+
+    if (!snapshotsEqual(nextFilter, initialFilter)) {
+      filters.set(filterId, nextFilter);
+    }
+  }
+
+  for (const filterId of initialState.filters.keys()) {
+    if (!nextState.filters.has(filterId)) {
+      filters.delete(filterId);
+    }
+  }
+
+  return {
+    filters,
+  };
+}
+
+function createMetadataRecordMap(
+  records: readonly MetadataSnapshotRecord[],
+): Map<string, MetadataSnapshotRecord> {
+  return new Map(records.map((record) => [metadataIdentityKey(record), record]));
+}
+
+function metadataIdentityKey(record: MetadataSnapshotRecord): string {
+  return JSON.stringify([record.pageId, record.namespace, record.key]);
+}
+
+function upsertMetadataRecord(
+  records: MetadataSnapshotRecord[],
+  nextRecord: MetadataSnapshotRecord,
+): void {
+  const index = records.findIndex(
+    (record) => metadataIdentityKey(record) === metadataIdentityKey(nextRecord),
+  );
+
+  if (index >= 0) {
+    records[index] = nextRecord;
+    return;
+  }
+
+  records.push(nextRecord);
+}
+
+function deleteMetadataRecord(
+  records: MetadataSnapshotRecord[],
+  recordToDelete: MetadataSnapshotRecord,
+): void {
+  const index = records.findIndex(
+    (record) =>
+      metadataIdentityKey(record) === metadataIdentityKey(recordToDelete),
+  );
+
+  if (index >= 0) {
+    records.splice(index, 1);
+  }
+}
+
+function upsertEvent(
+  events: EventSnapshotRecord[],
+  nextEvent: EventSnapshotRecord,
+): void {
+  const index = events.findIndex((event) => event.id === nextEvent.id);
+
+  if (index >= 0) {
+    events[index] = nextEvent;
+    return;
+  }
+
+  events.push(nextEvent);
+}
+
+function createMetadataIndex(
+  records: readonly MetadataSnapshotRecord[],
+): MetadataSnapshot["recordsByIdentity"] {
+  const index: MetadataSnapshot["recordsByIdentity"] = new Map();
+
+  for (const record of records) {
+    let namespaceIndex = index.get(record.pageId);
+
+    if (namespaceIndex === undefined) {
+      namespaceIndex = new Map();
+      index.set(record.pageId, namespaceIndex);
+    }
+
+    let keyIndex = namespaceIndex.get(record.namespace);
+
+    if (keyIndex === undefined) {
+      keyIndex = new Map();
+      namespaceIndex.set(record.namespace, keyIndex);
+    }
+
+    keyIndex.set(record.key, record);
+  }
+
+  return index;
 }
 
 function snapshotsEqual(left: unknown, right: unknown): boolean {

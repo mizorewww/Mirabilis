@@ -32,7 +32,12 @@ import type {
   PluginDependencyReference,
   PluginManifest,
 } from "../plugin-api";
-import type { CoreRegistries, CoreServices } from "../services";
+import {
+  getCoreDirectTransactionRunner,
+  type CoreRegistries,
+  type CoreServices,
+  type CoreTransaction,
+} from "../services";
 import type {
   EventStore,
   FilterStore,
@@ -585,7 +590,7 @@ class PluginHostImpl implements PluginHostInstance {
     record.lifecycleScopes.add(scope);
 
     try {
-      await hook(this.createPluginContext(scope));
+      await this.runWithPluginDirectStores(scope, (context) => hook(context));
       this.assertLifecycleScopeStillCurrent(record, scope);
     } catch (cause) {
       throw new PluginHostError(
@@ -638,7 +643,9 @@ class PluginHostImpl implements PluginHostInstance {
     record.lifecycleScopes.add(scope);
 
     try {
-      await record.plugin.register(this.createPluginContext(scope));
+      await this.runWithPluginDirectStores(scope, (context) =>
+        record.plugin.register(context),
+      );
       this.assertLifecycleScopeStillCurrent(record, scope);
     } catch (cause) {
       this.rollbackScopeRegistrationTracker(scope);
@@ -672,22 +679,26 @@ class PluginHostImpl implements PluginHostInstance {
     record.status = "registered";
   }
 
-  private createPluginContext(scope: PluginContextScope): PluginContext {
+  private createPluginContext(
+    scope: PluginContextScope,
+    transactionStores?: CoreTransaction,
+  ): PluginContext {
+    const stores = transactionStores ?? this.services;
     const context: PluginContext = {
       pluginId: scope.pluginId,
       app: cloneAppRuntimeInfo(this.app),
-      pages: createPluginPageStore(scope, this.services.pages),
+      pages: createPluginPageStore(scope, stores.pages),
       metadata: createPluginMetadataStore(
         scope,
-        this.services.metadata,
+        stores.metadata,
         () => this.getMetadataOwnerReservations(scope.metadataOwnerReservations),
       ),
-      events: createPluginEventStore(scope, this.services.events),
-      filters: createPluginFilterStore(scope, this.services.filters),
+      events: createPluginEventStore(scope, stores.events),
+      filters: createPluginFilterStore(scope, stores.filters),
       commands: this.createPluginCommandRegistry(scope),
       views: this.createPluginViewRegistry(scope),
       slots: this.createPluginSlotRegistry(scope),
-      transaction: this.createPluginTransactionManager(scope),
+      transaction: this.createPluginTransactionManager(scope, transactionStores),
     };
 
     Object.defineProperty(context, pluginScopedCommandExecutorKey, {
@@ -696,6 +707,23 @@ class PluginHostImpl implements PluginHostInstance {
     });
 
     return context;
+  }
+
+  private runWithPluginDirectStores<Result>(
+    scope: PluginContextScope,
+    handler: (context: PluginContext) => Result | Promise<Result>,
+  ): Promise<Awaited<Result>> {
+    const directTransactionRunner = getCoreDirectTransactionRunner(
+      this.services,
+    );
+
+    if (directTransactionRunner === undefined) {
+      return Promise.resolve(handler(this.createPluginContext(scope)));
+    }
+
+    return directTransactionRunner.run((transaction) =>
+      handler(this.createPluginContext(scope, transaction)),
+    );
   }
 
   private createPluginScopedCommandExecutor(
@@ -718,7 +746,33 @@ class PluginHostImpl implements PluginHostInstance {
 
   private createPluginTransactionManager(
     scope: PluginContextScope,
+    currentTransaction?: CoreTransaction,
   ): PluginTransactionManager {
+    if (currentTransaction !== undefined) {
+      return {
+        run: async <Result>(
+          handler: PluginTransactionHandler<Result>,
+        ): Promise<Awaited<Result>> => {
+          assertCanMutatePluginData(scope);
+
+          const result = await handler(
+            createPluginTransaction(
+              scope,
+              currentTransaction,
+              () =>
+                this.getMetadataOwnerReservations(
+                  scope.metadataOwnerReservations,
+                ),
+            ),
+          );
+
+          assertCanMutatePluginData(scope);
+
+          return result;
+        },
+      };
+    }
+
     return {
       run: <Result>(
         handler: PluginTransactionHandler<Result>,
@@ -800,7 +854,9 @@ class PluginHostImpl implements PluginHostInstance {
     record.lifecycleScopes.add(scope);
 
     try {
-      const result = await handler(input, this.createPluginContext(scope));
+      const result = await this.runWithPluginDirectStores(scope, (context) =>
+        handler(input, context),
+      );
 
       this.assertLifecycleScopeStillCurrent(record, scope);
 

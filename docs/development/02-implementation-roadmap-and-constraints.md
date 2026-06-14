@@ -70,7 +70,9 @@ Rust IPC structured body validation for core.pages.create / core.pages.update
 
 可以正常输入、保存、重新打开。
 
-当前保存/重新打开只通过 Markdown runtime 的 narrow page facade 走 allowlisted NativeBridge `core.pages.get` / `core.pages.update` DTO。`load` 把结构化 body 导出为 editor Markdown；`save` 把 editor Markdown 导入为带稳定 `blockId` 的结构化 body。`storage.persistence = "in-memory-core"` 仍然属实，Core stores 没有整体改为 SQLite-backed。
+TASK-016/TASK-017 的保存/重新打开切片只通过 Markdown runtime 的 narrow page facade 走 allowlisted NativeBridge `core.pages.get` / `core.pages.update` DTO。`load` 把结构化 body 导出为 editor Markdown；`save` 把 editor Markdown 导入为带稳定 `blockId` 的结构化 body。该历史切片没有整体改造 Core stores。
+
+TASK-046 后，默认 app runtime 的 `storage.persistence` 是 `sqlite-core`：trusted bootstrap/runtime persistence wiring 会先从 SQLite hydrate Core pages/metadata/events/filters，再让 transaction-managed Core/plugin writes 通过 `NativeBridge.db.transaction` 持久化。Markdown narrow page facade 仍只使用 reviewed page DTOs；route state、Search FTS、plugin settings、sync transport、filesystem import/export 和 broader persistence surfaces 仍是后续任务。
 
 延后实现：
 
@@ -569,7 +571,8 @@ Plugins
 	    MarkdownEditorPlugin 从结构化 body 渲染 task-title buttons 和 checkbox
     MarkdownEditorPlugin 点击 task title 时发送 sourcePageId/sourceBlockId 并打开返回的 pageId
     MarkdownEditorPlugin 点击 checkbox 时发送 sourcePageId/sourceBlockId 并应用返回的 status
-    NativeBridge/Tauri surface 保持不变
+    TASK-046 runtime persistence reuses the existing NativeBridge DB allowlist for those Core writes
+    Task/Tag command slices still do not add new DB operations, permissions, filesystem, package, or Rust surfaces
 
 React App Shell
   负责：
@@ -626,7 +629,8 @@ TASK-015 App Shell 边界：
 
 - App Shell 可以组合 `RuntimeProvider`、启动 loading state、通用启动失败 alert，以及基于 public runtime `{ app }` info 的 shell status。
 - App Shell 不实现 task、habit、timer、calendar、editor 或其他业务插件行为。
-- App Shell 不直接 import Tauri API，不直接调用 `NativeBridge`，不接入 DB IPC 或 persistence wiring。
+- App Shell UI 不直接 import Tauri API，不直接调用 `NativeBridge`，不直接接入 DB IPC。
+- Trusted bootstrap/runtime persistence wiring may call `NativeBridge` inside `createAppRuntime()` / Core services for TASK-046 SQLite-backed Core persistence, but that native handle is not exposed to App Shell UI, plugins, hosted views, or `useRuntime()` descendants.
 - App Shell / `useRuntime()` 不向 React descendants 暴露 full Core runtime handles，包括 stores、registries、services、pluginHost、NativeBridge、storage、db、filesystem 或 path APIs。
 
 用户写：
@@ -641,7 +645,7 @@ TASK-015 App Shell 边界：
 - [ ] 任务2
 ```
 
-当前 roadmap state through TASK-032：
+当前 roadmap state through TASK-046：
 
 ```text
 MarkdownEditorPlugin 解析文档
@@ -658,6 +662,7 @@ ViewRegistry 渲染视图
 MLPlugin 返回 deterministic prediction DTO
 AIPlugin 通过 injected/mocked openai provider boundary 返回 advisory suggestion/review DTO
 SyncPlugin 定义 durable syncable unit DTO descriptors/serializers、rebuildable index policy 和 conflict policy
+TASK-046 hydrates Core pages/metadata/events/filters from SQLite and writes reviewed Core mutations through NativeBridge db.transaction
 ```
 
 这不是完整当前行为。TASK-018 当前只在调用 `runtime.commands.execute("task.resolve-task-block", { sourcePageId, sourceBlockId })` 时解析指定 unchecked source block，创建或复用任务页，写入 `task.enabled`、`task.status`、`task.sourcePageId`、`task.sourceBlockId`，并在验证 source relation 后通过 `attrs.boundPageId` 绑定 source block。TASK-019 当前在点击结构化 task title 时调用 `runtime.commands.execute("task.open-task-page", { sourcePageId, sourceBlockId })`，共享 source relation 行为，并只把返回的 `{ pageId }` 用于导航；TASK-020 后它也可以为尚未绑定的 checked source task line 创建、绑定并打开 `done` 任务页，且不写 completion/reopen event。TASK-020 当前在点击 checkbox 时调用 `runtime.commands.execute("task.toggle-status", { sourcePageId, sourceBlockId })`，返回 `{ pageId, status }`，写回 source marker、更新 `task.status`，并追加 `namespace: "task", type: "completed" | "reopened"` event。TASK-021 当前在调用 `runtime.commands.execute("tag.refresh-tags", { pageId })` 时扫描已保存 structured `markdown.line` source 并替换 `tag.tags`；`tag.add-tag` / `tag.remove-tag` 直接更新页面 scoped tag metadata；`tag.create-filter` 保存 `page.list` filter definition。TASK-022 当前可显式执行/渲染 Task/Tag 这类 `page.list` saved filters；TASK-038 当前把 public saved filters 接入 production app-shell Drawer route，通过 owner checks、`executeFilterQuery`、`ViewHost` 和 `SlotHost` 渲染并只传 route-token/title DTO，但仍没有保存时自动刷新、broader global/persistent saved-filter navigation 或 Event/plugin-index `within` route execution。TASK-023 当前交付 reusable `MetadataBar` 和 Task/Tag/Timer metadata slot contributions；TASK-024 当前把 Timer slot 接到 `timer.start`，并交付 Timer-owned in-memory active state、lifecycle commands/events 和 `timer.global-active-bar`。TASK-025 当前追加 Time Segment events、Markdown Page-backed Time Segment Notes、`timer.add-note` 和 `timer.page-timeline.segments`。TASK-039 当前把 page-route `MetadataBar` 挂到 title 和 editor 之间，把 page-route `page.timeline` 挂到 editor 下方并只传 `{ page: { id, title } }`，并通过 MUI `Portal` 挂载 `global.floating` active timer bar，floating command facade 只允许 timer-owned Pause / Resume / Stop exact `{}` payloads。TASK-026 当前注册内置 `calendar` plugin、`calendar.day` / `calendar.week` views、`calendar.open-time-segment` command，并渲染调用方提供的 normalized `calendar.time-segments` DTO；Calendar 不直接通过 plugin-facing event facade 读取 Timer-owned events。TASK-027 当前注册内置 `habit` 和 `heatmap` plugins；Habit 通过显式 commands 识别 `#habit`、写 `habit.enabled` / `habit.frequency` / `habit.lastCheckedAt` / `habit.nextDue` metadata、追加 `namespace: "habit"` / `type: "checked" | "unchecked"` events，并保存 Habits / Today Habits filters；Heatmap 注册 `heatmap.calendar` view 并只消费调用方提供的 normalized `heatmap.date-series` DTO。TASK-028 当前注册内置 `stats` 和 `chart` plugins；Stats 通过 `stats.run-aggregation` 聚合 normalized DTO input，Chart 通过 `chart.bar` / `chart.line` / `chart.pie` 渲染 generic Chart DTO。TASK-042 当前把 public runtime pages/events/metadata 临时投影为 Calendar 和 Reports route DTOs，挂载 `calendar.day` / `calendar.week`，通过 active stats-owned `stats.run-aggregation` 运行 Reports，并通过 `chart.bar` 渲染返回 Chart DTO；它不新增 persistent feeds、charting dependency、native/Tauri/Rust/schema/capability surface。TASK-030 当前注册内置 `ml` plugin；`ml.run-prediction` 只消费调用方提供的 exact bounded projections，返回 deterministic `ml.remaining-time-prediction` DTO，不持久化 caller-provided projection evidence。TASK-031 当前注册内置 `ai` plugin；AI commands 只消费调用方提供的 exact bounded projections，通过 plugin-owned `openai` provider boundary 形成 Responses-style requests，并返回 advisory DTO，不持久化 AI metadata/events、不调用 live OpenAI、不新增 package/native/Tauri/Rust/schema/capability surface。TASK-032 当前注册内置 `sync` plugin skeleton；Sync 只导出 Markdown Page / Metadata / Event / Filter / Plugin Settings DTO snapshot serializers、rebuildable plugin-index policy 和 conflict policy，没有 commands/views/settings panels/transport。TASK-037/TASK-039/TASK-042 后已有 Home/editor 默认挂载、sidebar page/saved-filter routes、page metadata/timeline slots、global active timer floating surface、Calendar routes 和 Reports route；仍没有完整 field renderer/editor registry、Task checkbox 自动桥接 Habit、Timer metadata totals、Habit/Heatmap/AI/Sync route/navigation、broad cross-plugin read/query facade、trusted/persistent ML feed integration、AI settings UI/secret storage/live provider execution、Sync settings UI/secret storage/network/native transport 或 native/schema changes。`attrs.boundPageId` 是 source binding 数据，不是直接导航目标；malformed、伪造或不匹配值按未绑定/不可信处理。

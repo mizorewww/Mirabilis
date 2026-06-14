@@ -71,7 +71,7 @@ Relative Today uses:
 { "kind": "relative-date", "value": "today" }
 ```
 
-Date metadata must have `valueType: "date"` and a local `YYYY-MM-DD` string value. Tests inject deterministic `currentDate`; production app-shell filter routing is not wired yet.
+Date metadata must have `valueType: "date"` and a local `YYYY-MM-DD` string value. Tests can inject deterministic `currentDate`; production app-shell saved-filter routing uses the executor's current local date default when no date is supplied.
 
 Metadata ownership is explicit and business-agnostic. The executor does not hard-code Task or Tag metadata trust rules; callers that need built-in trust boundaries must pass Plugin Host-derived `metadataOwnerReservations`, for example `{ namespace: "task", sourcePluginId: "task" }` and `{ namespace: "tag", sourcePluginId: "tag" }`.
 
@@ -253,9 +253,30 @@ Repositories accept typed Rust DTOs, serialize JSON fields through `serde_json::
 
 TASK-013 intentionally did not add Rust IPC command handlers. TASK-014 now exposes the reviewed `db_execute` and `db_transaction` commands described in this document. Runtime provider/bootstrap wiring, UI persistence flows, filesystem import/export behavior, global shortcut behavior, notification behavior, and WAL / `busy_timeout` / `trusted_schema` hardening remain outside TASK-014 unless a later task changes connection policy or app bootstrap.
 
-TASK-015 initializes `NativeBridge` during app bootstrap so the runtime composition has the native boundary available. It does not call DB IPC, does not call `nativeBridge.db.execute` or `nativeBridge.db.transaction`, and does not wire Core stores to SQLite persistence. The TASK-015 storage facade is still `{ persistence: "in-memory-core" }`.
+In the historical TASK-015 bootstrap slice, `NativeBridge` was initialized during app bootstrap so the runtime composition had the native boundary available, but that slice did not call DB IPC, did not call `nativeBridge.db.execute` or `nativeBridge.db.transaction`, and did not wire Core stores to SQLite persistence. Its storage facade was `{ persistence: "in-memory-core" }`. For the current default TASK-046 runtime behavior, see the next section.
 
 TASK-015 also does not add Tauri commands, capabilities, permissions, filesystem import/export behavior, global shortcuts, notifications, `tauri-plugin-sql`, WAL policy, `busy_timeout`, or `PRAGMA trusted_schema` changes.
+
+### 15.3.1 TASK-046 runtime SQLite persistence
+
+TASK-046 wires the trusted runtime/bootstrap layer to the existing TASK-014 NativeBridge DB boundary. The default app runtime now reports `storage.persistence: "sqlite-core"` and hydrates Core pages, metadata, events, and filters before built-in plugin activation. Hydration uses the existing allowlisted operations only: `core.pages.list` with `includeArchived: true`, `core.metadata.listForPage` for hydrated pages, `core.events.list`, and `core.filters.list`.
+
+Hydration is fail-closed. A rejected native call, malformed response, or `null` response becomes a redacted runtime persistence failure, so `createAppRuntime()` does not return a ready runtime and `RuntimeProvider` keeps startup errors generic. `undefined` list responses are still treated as empty lists by the TypeScript bridge normalization.
+
+TASK-046 adds no new Tauri command, generated permission, capability grant, raw SQL DTO, database path DTO, or frontend SQL executor. Runtime persistence continues to use `db_execute` / `db_transaction`, `DbPersistenceOperation`, and the default capability entries documented for TASK-014. UI components and plugins still do not receive NativeBridge, raw SQLite, filesystem paths, SQL, or database handles.
+
+Transaction-managed Core writes use `NativeBridge.db.transaction(...)` with the existing operation allowlist:
+
+- pages: `core.pages.create`, `core.pages.update`, `core.pages.archive`
+- metadata: `core.metadata.set`, `core.metadata.delete`
+- events: `core.events.append`
+- filters: `core.filters.save`, `core.filters.delete`
+
+`FilterStore.update()` still has no native `core.filters.update` operation. The runtime persists filter updates as an ordered `core.filters.get` followed by the merged `core.filters.save`. In Rust transaction context, a missing `core.filters.get` records the missing id; a later `core.filters.save` for that id fails the transaction, causing rollback instead of recreating a filter that the in-memory update expected to exist.
+
+Direct runtime page writes are write-through for `create`, `update`, and `archive`: they mutate the hydrated in-memory page store, queue an allowlisted native transaction, and roll back the page snapshot if that pending write fails. The transaction persistence layer flushes pending direct page writes before a later Core transaction commit. Plugin lifecycle and command handlers run plugin-facing direct store facades through the Core transaction path when a direct transaction runner is available, so reviewed direct plugin writes to Core pages, metadata, events, and filters get the same native rollback boundary.
+
+Rust IPC accepts frontend event payloads with `type` as an alias for the Rust-side `eventType` field. Rust event responses still serialize `eventType`; the TypeScript runtime hydration layer accepts either `type` or `eventType` and normalizes Core `AppEvent.type`.
 
 ### 15.4 TASK-014 DB IPC allowlist and capability boundary
 
