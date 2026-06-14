@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   afterEach,
@@ -624,6 +624,72 @@ describe("TASK-043 ML and AI context panel shell", () => {
       "OPENAI_SECRET",
       "/home/aac6fef",
     ]);
+  });
+
+  it("fails closed for malformed success-shaped AI command DTOs instead of rendering advisory output", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    const home = createRuntimePage(runtime, homeTitle, [
+      { blockId: "home-ai-malformed", text: "Current page only." },
+    ]);
+
+    replaceMlRunPredictionCommand(runtime, async () =>
+      createPredictionResult(home.id, home.title),
+    );
+    replaceMlPredictionView(runtime, []);
+    replaceAiCommand(runtime, "ai.suggest-tags", async () => ({
+      kind: "ai.suggested-tags",
+      tags: [],
+    }));
+    replaceAiCommand(runtime, "ai.generate-subtasks", async () => ({
+      kind: "ai.subtask-suggestions",
+      markdown: "- [ ] Malformed subtask text",
+    }));
+    replaceAiCommand(runtime, "ai.explain-prediction", async () => ({
+      explanation: "Malformed explanation text.",
+      kind: "ai.prediction-explanation",
+    }));
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: /context panel/i }));
+
+    const panel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+
+    await user.click(await within(panel).findByRole("button", { name: /run prediction/i }));
+    await user.click(within(panel).getByRole("tab", { name: /suggestions/i }));
+    await user.click(within(panel).getByRole("button", { name: /^Suggest tags$/i }));
+    await user.click(
+      within(panel).getByRole("button", { name: /^Generate subtasks$/i }),
+    );
+    await user.click(
+      await within(panel).findByRole("button", { name: /^Explain prediction$/i }),
+    );
+
+    await waitFor(() => {
+      const alerts = within(panel).getAllByRole("alert");
+
+      expect(alerts).toHaveLength(3);
+      for (const alert of alerts) {
+        expect(alert).toHaveTextContent(
+          /AI suggestion unavailable|could not generate/i,
+        );
+      }
+    });
+    expect(within(panel).queryByText(/AI suggestion ready/i)).not.toBeInTheDocument();
+    expect(within(panel).queryByText(/Suggested tags ready/i)).not.toBeInTheDocument();
+    expect(
+      within(panel).queryByText(/Generated subtasks: - \[ \] Malformed subtask text/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(panel).queryByText(/Malformed explanation text/i),
+    ).not.toBeInTheDocument();
   });
 
   it("enables explain-prediction only after a current-page ML prediction succeeds", async () => {

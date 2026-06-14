@@ -582,6 +582,110 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     ]);
   });
 
+  it("filters or redacts provider, secret, and path-shaped values from allowed metadata while preserving safe rows", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const safeTags = {
+      key: "tags",
+      namespace: "tag",
+      pageId: currentPage.id,
+      sourcePluginId: "tag",
+      value: ["deep-work", "safe-context"],
+      valueType: "json",
+    };
+    const safeEstimate = {
+      key: "estimateSeconds",
+      namespace: "task",
+      pageId: currentPage.id,
+      sourcePluginId: "task",
+      value: 3_600,
+      valueType: "number",
+    };
+    const safeStatus = {
+      key: "status",
+      namespace: "task",
+      pageId: currentPage.id,
+      sourcePluginId: "task",
+      value: "in-progress",
+      valueType: "string",
+    };
+    const source = createProjectionSource({
+      metadata: [
+        createMetadata(
+          "metadata-safe-tags",
+          currentPage.id,
+          safeTags.namespace,
+          safeTags.key,
+          safeTags.value,
+          "json",
+        ),
+        createMetadata(
+          "metadata-safe-estimate",
+          currentPage.id,
+          safeEstimate.namespace,
+          safeEstimate.key,
+          safeEstimate.value,
+          "number",
+        ),
+        createMetadata(
+          "metadata-safe-status",
+          currentPage.id,
+          safeStatus.namespace,
+          safeStatus.key,
+          safeStatus.value,
+          "string",
+        ),
+        createMetadata(
+          "metadata-json-secret-shaped-tags",
+          currentPage.id,
+          "tag",
+          "tags",
+          {
+            providerSettings: {
+              apiKey: "sk-metadata-json-secret",
+              providerId: "openai",
+            },
+            rawErrorPath: "/home/aac6fef/private/provider.log",
+          },
+          "json",
+        ),
+        createMetadata(
+          "metadata-string-secret-shaped-status",
+          currentPage.id,
+          "task",
+          "status",
+          "providerSettings.apiKey=sk-metadata-string-secret rawErrorPath=/home/aac6fef/private/status.json",
+          "string",
+        ),
+      ],
+      pages: [currentPage],
+    });
+    const mlProjection = buildMl(source);
+    const aiProjection = buildAi(source);
+    const suggestDueDatePayload =
+      aiProjection.data.advisoryCommands["ai.suggest-due-date"];
+
+    expect(mlProjection.data.input.metadata).toEqual(
+      expect.arrayContaining([safeTags, safeEstimate, safeStatus]),
+    );
+    expect(suggestDueDatePayload.metadata).toEqual(
+      expect.arrayContaining([safeTags, safeEstimate, safeStatus]),
+    );
+    expectSerializedProjectionToExclude(
+      [mlProjection.data.input.metadata, suggestDueDatePayload.metadata],
+      [
+        "providerSettings",
+        "apiKey",
+        "providerId",
+        "rawErrorPath",
+        "sk-metadata-json-secret",
+        "sk-metadata-string-secret",
+        "openai",
+        "/home/aac6fef/private/provider.log",
+        "/home/aac6fef/private/status.json",
+      ],
+    );
+  });
+
   it("bounds current-page text and excludes explain-prediction until a valid ML prediction exists", () => {
     const longBody = "A".repeat(maxAiCurrentPageTextLength + 250);
     const currentPage = createPage(currentPageId, currentPageTitle, [longBody]);
@@ -642,6 +746,37 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     ]);
   });
 
+  it("omits explain-prediction when ML prediction arrays carry extra own provider or secret-shaped fields", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const source = createProjectionSource({ pages: [currentPage] });
+    const unsafePrediction = createPredictionResult(
+      currentPage.id,
+      currentPage.title,
+    );
+    const features = unsafePrediction.features as Record<string, unknown>;
+    const tagIds = ["deep-work"] as string[] & {
+      apiKey: string;
+      rawErrorPath: string;
+    };
+
+    tagIds.apiKey = "sk-tag-array-secret";
+    tagIds.rawErrorPath = "/home/aac6fef/private/tag-ids.json";
+    features.tagIds = tagIds;
+
+    const projection = buildAi(source, {
+      prediction: unsafePrediction,
+    });
+
+    expect(projection.data.advisoryCommands).not.toHaveProperty(
+      "ai.explain-prediction",
+    );
+    expectSerializedProjectionToExclude(projection, [
+      "sk-tag-array-secret",
+      "rawErrorPath",
+      "/home/aac6fef/private/tag-ids.json",
+    ]);
+  });
+
   it("fails closed instead of throwing on proxy-trap metadata and event inputs", () => {
     const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
     const trap = () => {
@@ -692,6 +827,50 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
       "PROXY_TRAP_SHOULD_NOT_THROW",
       "PROXY_TAG_SHOULD_NOT_LEAK",
       "segment-proxy",
+    ]);
+  });
+
+  it("fails closed instead of throwing when top-level source arrays are proxy traps", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const topLevelSource = new Proxy(
+      {
+        currentPageId,
+        events: [],
+        generatedAt: currentGeneratedAt,
+        metadata: [],
+        pages: [currentPage],
+      },
+      {
+        get(target, property, receiver) {
+          if (
+            property === "events" ||
+            property === "metadata" ||
+            property === "pages"
+          ) {
+            throw new Error("TOP_LEVEL_PROXY_SHOULD_NOT_THROW");
+          }
+
+          return Reflect.get(target, property, receiver);
+        },
+      },
+    ) as Parameters<typeof buildMlContextProjection>[0];
+    let mlProjection: MlContextProjection | undefined;
+    let aiProjection: AiContextProjection | undefined;
+
+    expect(() => {
+      mlProjection = buildMlContextProjection(topLevelSource) as MlContextProjection;
+      aiProjection = buildAiContextProjection(
+        topLevelSource as Parameters<typeof buildAiContextProjection>[0],
+      ) as AiContextProjection;
+    }).not.toThrow();
+    expect(mlProjection?.status).toMatchObject({
+      kind: "unavailable",
+    });
+    expect(aiProjection?.status).toMatchObject({
+      kind: "unavailable",
+    });
+    expectSerializedProjectionToExclude([mlProjection, aiProjection], [
+      "TOP_LEVEL_PROXY_SHOULD_NOT_THROW",
     ]);
   });
 });
