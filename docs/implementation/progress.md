@@ -116,6 +116,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:41 CST - TASK-047 recent-page accessor security re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Harvey (`security_reviewer`, agent `019ec739-0806-7c03-9717-b6c75cbd02cd`) was spawned for read-only focused security re-review of Bernoulli's recent-page accessor P2 closure after Erdos's red tests and Turing's implementation fix.
+- Parent state: waiting for Harvey final status before deciding whether TASK-047 can proceed to final release gate. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:40 CST - TASK-047 recent-page accessor implementation committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
