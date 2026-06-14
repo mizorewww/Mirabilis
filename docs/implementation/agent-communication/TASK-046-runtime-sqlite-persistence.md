@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted follow-up implementation delegated; parent is waiting for Plato's final status.
+- Status: targeted follow-up implementation committed; focused re-review is next.
 
 ## Scope
 
@@ -116,7 +116,9 @@
 - Nash returned final status with docs-only changes. Commit `a7dbb0a` (`Nash(docs-fix)(Wire SQLite-backed Runtime Persistence): clarify editor facade persistence history`) records Pauli's docs P2 closure.
 - Hilbert and Nash were closed after final statuses were recorded.
 - Plato (`implementer`, agent `019ec5fa-b404-7561-b245-6976105a42f1`) was spawned at 2026-06-14 19:53 CST for Curie's two P2 production fixes.
+- Plato returned final status with production changes. Commit `60bdf27` (`Plato(implementation-fix)(Wire SQLite-backed Runtime Persistence): resolve concurrency follow-up findings`) records the implementation follow-up.
+- Parent validation passed after Plato: focused TASK-046/plugin-host/bootstrap/provider suite passed with 76 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; full frontend passed with 52 files and 828 tests; typecheck, lint, and diff-check passed.
 
 ## Next Action
 
-- Wait for Plato's final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
+- Close Plato after this status is recorded, then spawn focused targeted re-review for the follow-up findings. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
