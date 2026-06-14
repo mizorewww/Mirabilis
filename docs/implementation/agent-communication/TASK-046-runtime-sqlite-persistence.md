@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Pasteur P2 implementation green; parent is preparing focused targeted re-review.
+- Status: Pasteur P2 targeted re-review running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -138,7 +138,9 @@
 - James returned final status with production changes in `src/core/services/transaction-manager.ts`. Commit `db227ab` (`James(implementation-fix)(Wire SQLite-backed Runtime Persistence): merge plugin direct writes after commit`) records the fix.
 - James changed the transaction manager so, after an async persisted Core transaction commit resolves, live post-commit metadata, event, and filter state are merged with the transaction snapshots. Plugin direct metadata/event/filter writes made during the Core commit window remain visible after commit, while Core transaction changes still win for the same metadata identity, event id, or filter id.
 - Parent validation passed after James: focused TASK-046/plugin-host/bootstrap/provider suite passed with 77 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; full frontend passed with 52 files and 829 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- James was closed after final status and validation were recorded.
+- Targeted re-review started at 2026-06-14 23:12 CST: Aristotle (`reviewer`, agent `019ec6b0-9831-7cc1-ac93-00543f4797be`) for Pasteur P2 correctness closure; Plato (`test_quality_reviewer`, agent `019ec6b0-9bc3-7281-b71a-bf6837f721cc`) for Hume regression test quality; Averroes (`security_reviewer`, agent `019ec6b0-9e73-7fe2-91da-de0cd5f86fe8`) for plugin/native boundary and drift risk.
 
 ## Next Action
 
-- Close James and run focused targeted re-review for Pasteur's new P2 closure. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
+- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
