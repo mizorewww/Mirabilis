@@ -38,10 +38,23 @@ export type TransactionManager = {
   ): Promise<Awaited<Result>>;
 };
 
+export type TransactionPersistenceScope = {
+  transaction: CoreTransaction;
+  commit(): Promise<void>;
+};
+
+export type TransactionPersistence = {
+  createScope(transaction: CoreTransaction): TransactionPersistenceScope;
+};
+
 export function createTransactionManager(
   stores: CoreTransaction,
+  options: {
+    persistence?: TransactionPersistence;
+  } = {},
 ): TransactionManager {
   let active = false;
+  const persistence = options.persistence;
 
   return {
     async run<Result>(
@@ -81,8 +94,10 @@ export function createTransactionManager(
           events: stagedEvents,
           filters: stagedFilters,
         };
+        const persistenceScope = persistence?.createScope(transaction);
+        const handlerTransaction = persistenceScope?.transaction ?? transaction;
 
-        const result = await handler(transaction);
+        const result = await handler(handlerTransaction);
         const stagedPageParticipant = requirePageParticipant(stagedPages);
         const stagedMetadataParticipant =
           requireMetadataParticipant(stagedMetadata);
@@ -109,6 +124,8 @@ export function createTransactionManager(
           liveFilterState,
           initialFilterState,
         );
+
+        await persistenceScope?.commit();
 
         pageParticipant.replaceState(nextPageState);
         metadataParticipant.replaceState(nextMetadataState);

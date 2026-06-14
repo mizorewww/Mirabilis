@@ -20,6 +20,7 @@ import {
 import type { CommandService, SlotRegistry, ViewRegistry } from "../types";
 import {
   createTransactionManager,
+  type TransactionPersistence,
   type TransactionManager,
 } from "./transaction-manager";
 
@@ -52,6 +53,7 @@ type CreateCoreServicesOptions = {
   stores: CoreStores;
   registries: CoreRegistries;
   transaction?: TransactionManager;
+  transactionPersistence?: TransactionPersistence;
 };
 
 export function createCoreStores(
@@ -77,6 +79,7 @@ export function createCoreServices({
   stores,
   registries,
   transaction,
+  transactionPersistence,
 }: CreateCoreServicesOptions): CoreServices {
   return {
     pages: stores.pages,
@@ -86,7 +89,11 @@ export function createCoreServices({
     commands: registries.commands,
     views: registries.views,
     slots: registries.slots,
-    transaction: transaction ?? createTransactionManager(stores),
+    transaction:
+      transaction ??
+      createTransactionManager(stores, {
+        persistence: transactionPersistence,
+      }),
   };
 }
 
@@ -94,4 +101,6 @@ export type {
   CoreTransaction,
   TransactionHandler,
   TransactionManager,
+  TransactionPersistence,
+  TransactionPersistenceScope,
 } from "./transaction-manager";

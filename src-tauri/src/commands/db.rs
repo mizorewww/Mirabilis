@@ -566,6 +566,7 @@ struct EventAppendPayload {
     id: String,
     page_id: Option<String>,
     namespace: String,
+    #[serde(alias = "type")]
     event_type: String,
     payload: Value,
     source_plugin_id: String,

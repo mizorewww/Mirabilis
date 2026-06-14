@@ -15,6 +15,10 @@ import {
   type NativeBridge,
   type PluginHostRecord,
 } from "../core";
+import {
+  createNativeTransactionPersistence,
+  hydrateCoreStoresFromNativeBridge,
+} from "../core/runtime/sqlite-persistence";
 
 import { BUILT_IN_PLUGINS } from "./built-in-plugins";
 
@@ -28,6 +32,7 @@ export type AppPluginHost = {
 
 export type AppRuntime = CoreServices & {
   app: AppRuntimeInfo;
+  storage: StorageFacade;
   markdown: MarkdownRuntimeFacade;
   stores: CoreStores;
   registries: CoreRegistries;
@@ -36,7 +41,7 @@ export type AppRuntime = CoreServices & {
 };
 
 export type StorageFacade = {
-  readonly persistence: "in-memory-core";
+  readonly persistence: "in-memory-core" | "sqlite-core";
 };
 
 export type AppBootstrapOptions<Runtime extends object = AppRuntime> = {
@@ -52,6 +57,7 @@ export type AppBootstrapOptions<Runtime extends object = AppRuntime> = {
   }) => unknown | Promise<unknown>;
   createRegistries?: () => unknown | Promise<unknown>;
   createServices?: (dependencies: {
+    nativeBridge: unknown;
     stores: unknown;
     registries: unknown;
     storage: unknown;
@@ -67,6 +73,7 @@ export type AppBootstrapOptions<Runtime extends object = AppRuntime> = {
     registries: unknown;
     services: unknown;
     pluginHost: AppPluginHost;
+    storage: unknown;
     app: AppRuntimeInfo;
   }) => Runtime | Promise<Runtime>;
 };
@@ -93,7 +100,12 @@ export async function createAppRuntime<Runtime extends object = AppRuntime>(
   const storage = await createStorage({ nativeBridge });
   const stores = await createStores({ nativeBridge, storage });
   const registries = await createRegistries();
-  const services = await createServices({ stores, registries, storage });
+  const services = await createServices({
+    nativeBridge,
+    stores,
+    registries,
+    storage,
+  });
   const pluginHost = createPluginHost({ services, registries, app });
   const runtime = await createRuntime({
     nativeBridge,
@@ -101,6 +113,7 @@ export async function createAppRuntime<Runtime extends object = AppRuntime>(
     registries,
     services,
     pluginHost,
+    storage,
     app,
   });
 
@@ -112,25 +125,48 @@ export async function createAppRuntime<Runtime extends object = AppRuntime>(
 
 function createStorageFacade(): StorageFacade {
   return {
-    persistence: "in-memory-core",
+    persistence: "sqlite-core",
   };
 }
 
-function createDefaultStores(): CoreStores {
-  return createCoreStores();
+async function createDefaultStores({
+  nativeBridge,
+  storage,
+}: {
+  nativeBridge: unknown;
+  storage: unknown;
+}): Promise<CoreStores> {
+  const stores = createCoreStores();
+
+  if (usesSqlitePersistence(storage)) {
+    await hydrateCoreStoresFromNativeBridge(
+      stores,
+      nativeBridge as NativeBridge,
+    );
+  }
+
+  return stores;
 }
 
 function createDefaultServices({
+  nativeBridge,
   stores,
   registries,
+  storage,
 }: {
+  nativeBridge: unknown;
   stores: unknown;
   registries: unknown;
   storage: unknown;
 }): CoreServices {
+  const transactionPersistence = usesSqlitePersistence(storage)
+    ? createNativeTransactionPersistence(nativeBridge as NativeBridge)
+    : undefined;
+
   return createCoreServices({
     stores: stores as CoreStores,
     registries: registries as CoreRegistries,
+    transactionPersistence,
   });
 }
 
@@ -156,6 +192,7 @@ function createDefaultRuntime({
   registries,
   services,
   pluginHost,
+  storage,
   app,
 }: {
   nativeBridge: unknown;
@@ -163,11 +200,11 @@ function createDefaultRuntime({
   registries: unknown;
   services: unknown;
   pluginHost: AppPluginHost;
+  storage: unknown;
   app: AppRuntimeInfo;
 }): AppRuntime {
   const coreServices = services as CoreServices;
-
-  return {
+  const runtime = {
     app,
     markdown: createMarkdownRuntimeFacade(pluginHost, {
       pages: createMarkdownPageRuntimeFacade(nativeBridge as NativeBridge),
@@ -178,4 +215,23 @@ function createDefaultRuntime({
     pluginHost,
     ...coreServices,
   };
+
+  Object.defineProperty(runtime, "storage", {
+    configurable: false,
+    enumerable: false,
+    value: storage as StorageFacade,
+    writable: false,
+  });
+
+  return runtime as AppRuntime;
+}
+
+function usesSqlitePersistence(storage: unknown): boolean {
+  return (
+    typeof storage === "object" &&
+    storage !== null &&
+    "persistence" in storage &&
+    typeof storage.persistence === "string" &&
+    /sqlite/iu.test(storage.persistence)
+  );
 }
