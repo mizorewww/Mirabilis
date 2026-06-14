@@ -100,6 +100,13 @@ type DirectStoreParticipants = {
   filters: FilterTransactionParticipant;
 };
 
+type DirectStoreWrites = {
+  pages: Map<string, MarkdownPage | undefined>;
+  metadata: Map<string, MetadataRecord | undefined>;
+  events: Map<string, AppEvent | undefined>;
+  filters: Map<string, FilterDefinition | undefined>;
+};
+
 class RuntimePersistenceError extends Error {
   readonly code = "PERSISTENCE_FAILED";
 
@@ -409,8 +416,8 @@ function createNativeDirectStoreSession(stores: CoreStores): {
     "filter",
   );
   const queries: DbQuery[] = [];
+  const writes = createDirectStoreWrites();
   let rollbackSnapshot: DirectStoreSnapshot | undefined;
-  let writeSnapshot: DirectStoreSnapshot | undefined;
   let committed = false;
 
   function prepareWrite(): void {
@@ -431,16 +438,7 @@ function createNativeDirectStoreSession(stores: CoreStores): {
       return;
     }
 
-    const snapshotToRollback =
-      writeSnapshot ??
-      snapshotDirectStores(
-        pageParticipant,
-        metadataParticipant,
-        eventParticipant,
-        filterParticipant,
-      );
-
-    rollbackDirectStoreDelta(
+    rollbackDirectStoreWrites(
       {
         pages: pageParticipant,
         metadata: metadataParticipant,
@@ -448,7 +446,7 @@ function createNativeDirectStoreSession(stores: CoreStores): {
         filters: filterParticipant,
       },
       rollbackSnapshot,
-      snapshotToRollback,
+      writes,
     );
   }
 
@@ -458,21 +456,25 @@ function createNativeDirectStoreSession(stores: CoreStores): {
         stores.pages,
         queries,
         prepareWrite,
+        writes,
       ),
       metadata: createTrackedDirectMetadataStore(
         stores.metadata,
         queries,
         prepareWrite,
+        writes,
       ),
       events: createTrackedDirectEventStore(
         stores.events,
         queries,
         prepareWrite,
+        writes,
       ),
       filters: createTrackedDirectFilterStore(
         stores.filters,
         queries,
         prepareWrite,
+        writes,
       ),
     },
     async commit(nativeBridge, options) {
@@ -480,13 +482,6 @@ function createNativeDirectStoreSession(stores: CoreStores): {
         committed = true;
         return;
       }
-
-      writeSnapshot = snapshotDirectStores(
-        pageParticipant,
-        metadataParticipant,
-        eventParticipant,
-        filterParticipant,
-      );
 
       try {
         await options.beforeCommit?.();
@@ -505,11 +500,13 @@ function createTrackedDirectPageStore(
   pages: PageStore,
   queries: DbQuery[],
   prepareWrite: () => void,
+  writes: DirectStoreWrites,
 ): PageStore {
   return {
     create(input) {
       prepareWrite();
       const page = pages.create(input);
+      writes.pages.set(page.id, page);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.pagesCreate,
@@ -522,6 +519,7 @@ function createTrackedDirectPageStore(
     update(pageId, input) {
       prepareWrite();
       const page = pages.update(pageId, input);
+      writes.pages.set(page.id, page);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
@@ -533,6 +531,7 @@ function createTrackedDirectPageStore(
     archive(pageId) {
       prepareWrite();
       const page = pages.archive(pageId);
+      writes.pages.set(page.id, page);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.pagesArchive,
@@ -552,11 +551,13 @@ function createTrackedDirectMetadataStore(
   metadata: MetadataStore,
   queries: DbQuery[],
   prepareWrite: () => void,
+  writes: DirectStoreWrites,
 ): MetadataStore {
   return {
     set(input) {
       prepareWrite();
       const record = metadata.set(input);
+      writes.metadata.set(metadataIdentityKey(record), record);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.metadataSet,
@@ -570,6 +571,7 @@ function createTrackedDirectMetadataStore(
     delete(pageId, namespace, key) {
       prepareWrite();
       const record = metadata.delete(pageId, namespace, key);
+      writes.metadata.set(metadataIdentityKey(record), undefined);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.metadataDelete,
@@ -589,11 +591,13 @@ function createTrackedDirectEventStore(
   events: EventStore,
   queries: DbQuery[],
   prepareWrite: () => void,
+  writes: DirectStoreWrites,
 ): EventStore {
   return {
     append(input) {
       prepareWrite();
       const event = events.append(input);
+      writes.events.set(event.id, event);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.eventsAppend,
@@ -610,11 +614,13 @@ function createTrackedDirectFilterStore(
   filters: FilterStore,
   queries: DbQuery[],
   prepareWrite: () => void,
+  writes: DirectStoreWrites,
 ): FilterStore {
   return {
     save(input) {
       prepareWrite();
       const filter = filters.save(input);
+      writes.filters.set(filter.id, filter);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.filtersSave,
@@ -627,6 +633,7 @@ function createTrackedDirectFilterStore(
     update(filterId, input) {
       prepareWrite();
       const filter = filters.update(filterId, input);
+      writes.filters.set(filter.id, filter);
 
       queries.push(
         {
@@ -647,6 +654,7 @@ function createTrackedDirectFilterStore(
     delete(filterId) {
       prepareWrite();
       const filter = filters.delete(filterId);
+      writes.filters.set(filter.id, undefined);
 
       queries.push({
         operation: DB_PERSISTENCE_OPERATIONS.filtersDelete,
@@ -920,30 +928,45 @@ function snapshotDirectStores(
   };
 }
 
-function rollbackDirectStoreDelta(
+function createDirectStoreWrites(): DirectStoreWrites {
+  return {
+    pages: new Map(),
+    metadata: new Map(),
+    events: new Map(),
+    filters: new Map(),
+  };
+}
+
+function rollbackDirectStoreWrites(
   participants: DirectStoreParticipants,
   initial: DirectStoreSnapshot,
-  written: DirectStoreSnapshot,
+  writes: DirectStoreWrites,
 ): void {
-  rollbackPageStoreDelta(participants.pages, initial.pages, written.pages);
+  participants.pages.replaceState(
+    rollbackPageWrites(
+      initial.pages,
+      writes.pages,
+      participants.pages.snapshot(),
+    ),
+  );
   participants.metadata.replaceState(
-    rollbackMetadataDelta(
+    rollbackMetadataWrites(
       initial.metadata,
-      written.metadata,
+      writes.metadata,
       participants.metadata.snapshot(),
     ),
   );
   participants.events.replaceState(
-    rollbackEventDelta(
+    rollbackEventWrites(
       initial.events,
-      written.events,
+      writes.events,
       participants.events.snapshot(),
     ),
   );
   participants.filters.replaceState(
-    rollbackFilterDelta(
+    rollbackFilterWrites(
       initial.filters,
-      written.filters,
+      writes.filters,
       participants.filters.snapshot(),
     ),
   );
@@ -1003,26 +1026,75 @@ function rollbackPageDelta(
   };
 }
 
-function rollbackMetadataDelta(
+function rollbackPageWrites(
+  initial: PageSnapshot,
+  writes: ReadonlyMap<string, MarkdownPage | undefined>,
+  live: PageSnapshot,
+): PageSnapshot {
+  const pages = new Map(live.pages);
+
+  for (const [pageId, writtenPage] of writes) {
+    const initialPage = initial.pages.get(pageId);
+    const livePage = pages.get(pageId);
+
+    if (writtenPage === undefined) {
+      if (livePage !== undefined) {
+        continue;
+      }
+
+      if (initialPage !== undefined) {
+        pages.set(pageId, initialPage);
+      }
+
+      continue;
+    }
+
+    if (
+      livePage === undefined ||
+      !persistenceValuesEqual(livePage, writtenPage)
+    ) {
+      continue;
+    }
+
+    if (initialPage === undefined) {
+      pages.delete(pageId);
+    } else {
+      pages.set(pageId, initialPage);
+    }
+  }
+
+  return {
+    ...live,
+    pages,
+  };
+}
+
+function rollbackMetadataWrites(
   initial: MetadataSnapshot,
-  written: MetadataSnapshot,
+  writes: ReadonlyMap<string, MetadataRecord | undefined>,
   live: MetadataSnapshot,
 ): MetadataSnapshot {
   const records = [...live.records];
   const initialRecords = createMetadataRecordMap(initial.records);
-  const writtenRecords = createMetadataRecordMap(written.records);
 
-  for (const [identity, writtenRecord] of writtenRecords) {
+  for (const [identity, writtenRecord] of writes) {
     const initialRecord = initialRecords.get(identity);
+    const liveRecord = findMetadataRecord(records, identity);
 
-    if (persistenceValuesEqual(writtenRecord, initialRecord)) {
+    if (writtenRecord === undefined) {
+      if (liveRecord !== undefined) {
+        continue;
+      }
+
+      if (initialRecord !== undefined) {
+        upsertMetadataRecord(records, initialRecord);
+      }
+
       continue;
     }
 
-    const liveRecord = findMetadataRecord(records, identity);
-
     if (
-      liveRecord !== undefined &&
+      liveRecord === undefined ||
       !persistenceValuesEqual(liveRecord, writtenRecord)
     ) {
       continue;
@@ -1035,48 +1107,41 @@ function rollbackMetadataDelta(
     }
   }
 
-  for (const [identity, initialRecord] of initialRecords) {
-    if (
-      writtenRecords.has(identity) ||
-      findMetadataRecord(records, identity) !== undefined
-    ) {
-      continue;
-    }
-
-    upsertMetadataRecord(records, initialRecord);
-  }
-
   return {
     records,
     recordsByIdentity: createMetadataIndex(records),
   };
 }
 
-function rollbackEventDelta(
+function rollbackEventWrites(
   initial: EventSnapshot,
-  written: EventSnapshot,
+  writes: ReadonlyMap<string, AppEvent | undefined>,
   live: EventSnapshot,
 ): EventSnapshot {
   const events = [...live.events];
   const initialEvents = new Map(
     initial.events.map((event) => [event.id, event]),
   );
-  const writtenEvents = new Map(
-    written.events.map((event) => [event.id, event]),
-  );
 
-  for (const [eventId, writtenEvent] of writtenEvents) {
+  for (const [eventId, writtenEvent] of writes) {
     const initialEvent = initialEvents.get(eventId);
-
-    if (persistenceValuesEqual(writtenEvent, initialEvent)) {
-      continue;
-    }
-
     const liveIndex = events.findIndex((event) => event.id === eventId);
     const liveEvent = liveIndex >= 0 ? events[liveIndex] : undefined;
 
+    if (writtenEvent === undefined) {
+      if (liveEvent !== undefined) {
+        continue;
+      }
+
+      if (initialEvent !== undefined) {
+        events.push(initialEvent);
+      }
+
+      continue;
+    }
+
     if (
-      liveEvent !== undefined &&
+      liveEvent === undefined ||
       !persistenceValuesEqual(liveEvent, writtenEvent)
     ) {
       continue;
@@ -1093,40 +1158,36 @@ function rollbackEventDelta(
     }
   }
 
-  for (const [eventId, initialEvent] of initialEvents) {
-    if (
-      writtenEvents.has(eventId) ||
-      events.some((event) => event.id === eventId)
-    ) {
-      continue;
-    }
-
-    events.push(initialEvent);
-  }
-
   return {
     events,
   };
 }
 
-function rollbackFilterDelta(
+function rollbackFilterWrites(
   initial: FilterSnapshot,
-  written: FilterSnapshot,
+  writes: ReadonlyMap<string, FilterDefinition | undefined>,
   live: FilterSnapshot,
 ): FilterSnapshot {
   const filters = new Map(live.filters);
 
-  for (const [filterId, writtenFilter] of written.filters) {
+  for (const [filterId, writtenFilter] of writes) {
     const initialFilter = initial.filters.get(filterId);
+    const liveFilter = filters.get(filterId);
 
-    if (persistenceValuesEqual(writtenFilter, initialFilter)) {
+    if (writtenFilter === undefined) {
+      if (liveFilter !== undefined) {
+        continue;
+      }
+
+      if (initialFilter !== undefined) {
+        filters.set(filterId, initialFilter);
+      }
+
       continue;
     }
 
-    const liveFilter = filters.get(filterId);
-
     if (
-      liveFilter !== undefined &&
+      liveFilter === undefined ||
       !persistenceValuesEqual(liveFilter, writtenFilter)
     ) {
       continue;
@@ -1137,14 +1198,6 @@ function rollbackFilterDelta(
     } else {
       filters.set(filterId, initialFilter);
     }
-  }
-
-  for (const [filterId, initialFilter] of initial.filters) {
-    if (written.filters.has(filterId) || filters.has(filterId)) {
-      continue;
-    }
-
-    filters.set(filterId, initialFilter);
   }
 
   return {
