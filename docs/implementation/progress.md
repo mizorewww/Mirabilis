@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 18:37 CST - TASK-046 pre-test guidance completed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Mendel (`planner`) recommended the branch-sized slice: hydrate pages/metadata/events/filters from the existing NativeBridge DB allowlist during `createAppRuntime()`, keep hydrated synchronous stores for reads, route production durable writes through an awaited async transaction path using `NativeBridge.db.transaction`, preserve plugin facades, and update `storage.persistence` only for active SQLite-backed runtime persistence.
+- Kepler (`docs_researcher`) found no upstream docs blocker and verified current official Tauri command/state/capability/path and `rusqlite` transaction docs. Linnaeus (`security_reviewer`) identified P0/P1 red-test targets for exact DB allowlist, no native/raw DB exposure, owner-boundary preservation, atomic rollback, error redaction, app-data DB path ownership, startup hydration before plugin activation, and correct `storage.persistence`. Hubble (`deprecation_auditor`) found no P0 deprecated API blocker but flagged P1 design risks around synchronous store APIs vs async NativeBridge, `FilterStore.update()` lacking a DB allowlist operation, and transaction manager needing a persistence-aware adapter.
+- Parent decision: accept Mendel's slice for red tests. Defer full async Core Store API migration, arbitrary direct sync store write-through outside `transaction.run`, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export.
+- Next action: delegate `test_writer` to add failing TASK-046 tests.
+
 ### 2026-06-14 18:31 CST - TASK-046 pre-test guidance delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

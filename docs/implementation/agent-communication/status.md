@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 18:31 CST.
+Last updated: 2026-06-14 18:37 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 18:31 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 pre-test guidance is running; parent is waiting for final statuses.
+- Current phase: TASK-046 pre-test guidance completed; parent is preparing red-test delegation.
 
 ## Current Outcome
 
@@ -17,6 +17,8 @@ Last updated: 2026-06-14 18:31 CST.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
 - TASK-046 is native/IPC/runtime-persistence work. Final gate should use `bun run check:full` unless agents narrow the accepted scope and record why full packaging is unnecessary.
 - TASK-046 pre-test guidance running as of 2026-06-14 18:31 CST: Mendel (`planner`, `019ec5af-e817-7bd0-a143-e2ec3f5c0977`) for implementation slicing and TDD plan; Kepler (`docs_researcher`, `019ec5af-fd6c-7b33-aeb9-a01c8585554d`) for current official Tauri and rusqlite docs; Linnaeus (`security_reviewer`, `019ec5af-ffda-7232-8825-34825fb124bf`) for Tauri/IPC/NativeBridge/plugin-boundary security guidance; Hubble (`deprecation_auditor`, `019ec5b0-1579-7783-a631-379954e34c0e`) for stale API and version guidance.
+- TASK-046 pre-test guidance completed at 2026-06-14 18:37 CST. Mendel recommended the branch-sized slice: hydrate pages/metadata/events/filters from existing NativeBridge DB allowlist during `createAppRuntime()`, keep hydrated synchronous stores for reads, route production durable writes through an awaited async transaction path using `NativeBridge.db.transaction`, preserve plugin facades, and update `storage.persistence` only for active SQLite-backed runtime persistence. Mendel explicitly recommended deferring full async Core Store migration, arbitrary direct sync store write-through, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export.
+- Kepler found no upstream docs blocker and verified current official Tauri command/state/capability/path and `rusqlite` transaction docs. Linnaeus identified security P0/P1 red-test targets for exact DB allowlist, no NativeBridge/raw DB exposure, owner-boundary preservation, atomic `db_transaction` rollback, redacted errors, app-data DB path ownership, startup hydration before plugin activation, and correct `storage.persistence`. Hubble found no P0 deprecated API blockers but flagged P1 design risks around synchronous store APIs vs async NativeBridge, `FilterStore.update()` lacking a DB allowlist operation, and transaction manager needing a persistence-aware adapter.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -102,4 +104,4 @@ Last updated: 2026-06-14 18:31 CST.
 
 ## Next Parent Actions
 
-- Wait for TASK-046 pre-test guidance final statuses before test writing. A wait timeout is not a failure or idle signal.
+- Delegate TASK-046 red tests to `test_writer`. Tests should make the current in-memory runtime fail for hydration, storage persistence reporting, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, and no native/raw DB leaks.

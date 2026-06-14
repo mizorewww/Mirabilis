@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance is running; parent is waiting for final statuses.
+- Status: pre-test guidance completed; parent is preparing red-test delegation.
 
 ## Scope
 
@@ -52,7 +52,12 @@
 - Kepler (`docs_researcher`, agent `019ec5af-fd6c-7b33-aeb9-a01c8585554d`) was spawned at 2026-06-14 18:31 CST for current official Tauri command/capability/path/state guidance and `rusqlite` transaction guidance.
 - Linnaeus (`security_reviewer`, agent `019ec5af-ffda-7232-8825-34825fb124bf`) was spawned at 2026-06-14 18:31 CST for Tauri/IPC/NativeBridge/plugin-boundary security guidance.
 - Hubble (`deprecation_auditor`, agent `019ec5b0-1579-7783-a631-379954e34c0e`) was spawned at 2026-06-14 18:31 CST for stale/deprecated API and version guidance.
+- Linnaeus returned final status with security guidance and no file edits. It identified P0 red-test targets for exact 15-operation DB allowlist, no raw SQL/params/db path/generic executor fields, no NativeBridge/raw DB exposure through plugins or hosted UI, owner-boundary preservation after hydration/restart, atomic `db_transaction` rollback and ordered results, redacted startup/IPC/persistence errors, and Rust-owned app data DB path.
+- Kepler returned final status with docs research and no upstream docs blocker. It verified official Tauri command/state/capability/path guidance and `rusqlite` transaction guidance. It confirmed `rusqlite::Transaction::new_unchecked(..., TransactionBehavior::Immediate)` remains valid in 0.39 for the current single app-owned DB state, and rollback-on-drop is documented. Official docs consulted include Tauri calling Rust, state management, permissions, capabilities, path API, Manager/PathResolver/AppManifest docs.rs, and rusqlite Connection/Transaction/TransactionBehavior docs.
+- Hubble returned final status with no P0 deprecated API blockers. It flagged P1 design risks: synchronous Core/plugin store APIs conflict with async NativeBridge persistence, `FilterStore.update()` has no matching DB allowlist operation, and current transaction manager only works with in-memory transaction participants. It confirmed local versions `@tauri-apps/api@2.11.0`, `@tauri-apps/cli@2.11.2`, React `19.2.6`, Vite `7.3.3`, Vitest `4.1.6`, RTL `16.3.2`, user-event `14.6.1`, Tauri `2.11.2`, and `rusqlite@0.39.0`.
+- Mendel returned final status with the accepted implementation slice: hydrate pages, metadata, events, and filters during `createAppRuntime()` from the existing NativeBridge DB allowlist; use hydrated synchronous Core stores for reads; route production durable writes through an awaited async persisted transaction path using `NativeBridge.db.transaction`; keep plugin facades intact; and change the runtime storage marker only when SQLite-backed runtime persistence is active.
+- Parent decision: accept Mendel's slice for red tests. Full async Core Store API migration, arbitrary direct sync store write-through outside `transaction.run`, new DB operations such as global metadata list, WAL/busy_timeout/trusted_schema, FTS, plugin settings, route state, sync, keychain, shortcuts, and filesystem import/export remain deferred unless a child agent reports a blocker/final failure requiring scope reconsideration.
 
 ## Next Action
 
-- Wait for pre-test guidance final statuses before test writing. A wait timeout is not a failure or idle signal.
+- Delegate red tests to `test_writer` for startup hydration, persistence mode reporting, transaction-backed durable writes/rollback, filter update persistence strategy, plugin facade owner boundaries, and no native/raw DB leaks.
