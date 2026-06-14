@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:19 CST - TASK-047 targeted re-review completed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) returned final status with no files modified and no remaining P0/P1/P2 correctness findings. Dewey's prior recent-page and latest-wins persistence P1s are closed; adjacent TASK-038/TASK-045 checks stayed green.
+- Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) returned final status with no files modified and no remaining P0/P1/P2 deprecation/API findings. Sagan's StrictMode startup and latest-wins persistence P1s are closed; no package/native/Cargo/Tauri/capability/permission drift was found. Official docs consulted: React `useState`, StrictMode, effects; MUI `ListItemButton` and deprecated API migration; Testing Library user-event v14 intro/setup.
+- Combined targeted re-review state: correctness, deprecation/API, test-quality, docs, and original security P0/P1 scopes are clear. One Faraday P2 security hardening item remains for nested route DTO accessor validation in `src/shell/navigation/route-state.ts`.
+- Parent state: delegate Faraday P2 red tests first, then implementation.
+
 ### 2026-06-15 01:17 CST - TASK-047 test-quality cleared, security P2 recorded
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
