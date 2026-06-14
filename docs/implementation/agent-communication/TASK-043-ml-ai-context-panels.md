@@ -6,7 +6,7 @@
 - Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review is running; parent is waiting for final statuses.
+- Status: targeted re-review found remaining P2/P3 issues; second review-fix test delegation is next.
 
 ## Scope
 
@@ -53,6 +53,10 @@
 - Hypatia returned final status with production fixes and a small test-maintenance change. Parent found one boundary issue in the first Hypatia patch (`sourceIndex === limit` could skip a valid row), sent it back, and Hypatia corrected it before integration.
 - Hypatia review fixes were committed as `9a5c6e2` (`Hypatia(test-fix)(Add ML And AI Context Panels): tighten review regression tests`) and `5574bdd` (`Hypatia(review-fix)(Add ML And AI Context Panels): harden context panel boundaries`).
 - Bacon (`reviewer`, agent `019ec497-e610-7ec2-ab79-1150556bacb0`), Fermat (`security_reviewer`, agent `019ec497-e9a2-7782-878a-0f49dec7e306`), Planck (`test_quality_reviewer`, agent `019ec497-ff73-75c0-ad81-f4f84ce239f3`), and James (`deprecation_auditor`, agent `019ec498-0271-73b3-b420-e394853ea863`) were spawned for targeted re-review at 2026-06-14 13:26 CST.
+- Planck (`test_quality_reviewer`) returned final status with no remaining P0/P1/P2 test-quality findings.
+- James (`deprecation_auditor`) returned final status with no remaining P0/P1/P2 accessibility/deprecation findings and verified the previous tabpanel accessibility issue is fixed.
+- Bacon (`reviewer`) returned final status with no P0/P1 and one remaining P2: malformed success-shaped AI command DTOs still render as successful advisory output when they have the expected `kind` plus one display field but omit other exact contract fields.
+- Fermat (`security_reviewer`) returned final status with one P2 and two P3 findings: allowed metadata JSON values can carry secret/provider/path-shaped values into ML/AI payloads; top-level proxy input can still throw; and non-exact ML prediction arrays with extra own fields can be normalized and still enable `ai.explain-prediction`.
 
 ## Parent Decisions
 
@@ -84,7 +88,8 @@
 - 2026-06-14 13:11 CST: Hypatia spawned as `implementer`; parent state is waiting for completion/final status before validating or committing production fixes.
 - 2026-06-14 13:24 CST: Hypatia returned final status and corrected the parent-spotted cap-boundary issue before integration. Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 24 tests; broader TASK-043 suite passed with 6 files / 96 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
 - 2026-06-14 13:26 CST: targeted re-review agents spawned; parent is waiting for final statuses before deciding merge readiness.
+- 2026-06-14 13:29 CST: targeted re-review completed. Planck and James found no remaining P0/P1/P2 in their scopes. Bacon found one remaining P2 for malformed success-shaped AI output DTO validation. Fermat found one P2 metadata value leak and two P3 strict/fail-closed gaps. Parent will delegate second review-fix tests.
 
 ## Next Action
 
-- Wait for targeted re-review completion/final statuses before deciding merge readiness.
+- Spawn `test_writer` for second review-fix regression coverage, then wait for completion/final status before implementation.
