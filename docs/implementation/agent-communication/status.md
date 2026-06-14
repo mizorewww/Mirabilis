@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 17:28 CST.
+Last updated: 2026-06-14 17:30 CST.
 
 ## Current Task
 
-- Task: TASK-044 - Add Settings And Sync Placeholders.
-- Branch: `feat/task-044-settings-sync-placeholders`.
+- Task: TASK-045 - Responsive State And Accessibility Polish.
+- Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-044 final gate passed on the feature branch; parent is ready to merge into `master`.
+- Current phase: TASK-045 startup complete; parent is preparing pre-test agent delegation.
 
 ## Current Outcome
 
@@ -35,44 +35,45 @@ Last updated: 2026-06-14 17:28 CST.
 - Sartre completed the doc-only wording fix. The TASK-044 communication and progress notes now distinguish official docs-site versions checked from local installed dependency versions and record the local package versions. Poincare's docs P2 is closed.
 - Sartre's doc-fix was committed as `27a1a68` (`Sartre(docs-fix)(Add Settings And Sync Placeholders): clarify docs version notes`) and auto-pushed to `origin/feat/task-044-settings-sync-placeholders`.
 - Final feature-branch gate passed at 2026-06-14 17:28 CST with `bun run check:quick`: typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
-- TASK-044 is marked complete in `docs/implementation/progress.md`. No P0/P1/P2 blockers remain.
+- TASK-044 was merged into `master` in merge commit `1de3ec0` and pushed to `origin/master`.
+- Post-merge `master` validation passed for TASK-044: `bun run check:quick` passed with typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- TASK-045 branch was created from validated `master` commit `1de3ec0`.
+- Agent/config validation passed for TASK-045 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-045 scope: responsive state and accessibility polish across desktop and narrow layouts, sidebar/drawer behavior, top controls, contextual panel, floating surfaces, dialogs, route content, loading/empty/error states, and role/name/focus semantics. It must stay TypeScript/React/MUI-only with no native/Tauri/Rust/package/capability/permission/IPC/schema/release changes.
 
-## Initial TASK-044 Scope
+## Initial TASK-045 Scope
 
-- Add Settings and Sync placeholder route/panel surfaces to the current MUI app shell.
-- Settings must list app/runtime information and existing plugin settings descriptors, including inert `ai.provider-settings` and Sync skeleton status.
-- Sync must clearly present skeleton status: no runtime sync commands, transport, remote endpoint, conflict UI, background jobs, or settings persistence are enabled.
-- Placeholder controls must be accessible and visible without claiming unsupported behavior.
-- Settings/Sync surfaces must not accept, store, render, or log API keys, tokens, credentials, remote endpoints, filesystem paths, provider secrets, or other secret-like values.
-- Any settings action that exists must go through registered commands; this task should avoid adding mutation actions unless explicitly supported by current public descriptors.
-- No Tauri/native/Rust/package/lockfile/capability/permission/IPC/schema/keychain/network/release changes are in scope.
+- Desktop and narrow layouts keep the Markdown workspace usable while sidebar, top controls, contextual panel, floating surfaces, dialogs, and route content adapt without incoherent overlap.
+- Sidebar collapse/drawer behavior, command palette, search overlay, Quick Capture dialog, editor, metadata/timer/timeline slots, Calendar/Reports routes, ML/AI panels, and Settings/Sync placeholders are keyboard reachable with predictable focus return.
+- Loading, empty, unavailable, and error states are consistent across workbench, routes, `ViewHost`, `SlotHost`, overlays, and contextual panels.
+- State text must not leak raw errors, paths, SQL, tokens, provider details, secrets, or full runtime handles.
+- App-shell landmarks, headings, labels, status regions, dialog semantics, focus management, and route navigation are accessible from the user's perspective.
+- Visual polish remains dense and work-focused; no marketing landing page, hero UI, decorative sections, or card-heavy replacement for the workspace.
+- No native/Tauri/Rust/package/capability/permission/IPC/schema/release changes are in scope.
 
 ## Relevant Local Docs
 
-- `docs/implementation/task-index.md#TASK-044`
+- `docs/implementation/task-index.md#TASK-045`
 - `docs/product/07-user-interface-design.md`
-- `docs/product/03-plugin-platform.md`
-- `docs/product/05-built-in-plugins.md#23-sync-plugin`
-- `docs/architecture/05-plugin-implementations.md#15-sync-plugin`
-- `docs/architecture/07-runtime-flows.md#1817-sync-skeleton-contract`
-- `docs/testing/strategy.md#task-032-sync-plugin-skeleton-guidance`
+- `docs/product/04-editor-and-workflows.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md`
 
 ## Parent Decisions
 
-- Treat TASK-044 as an inert app-shell route task, not a settings persistence, provider configuration, keychain, or sync-transport task.
-- Expose only public runtime/plugin manifest facts and descriptor DTOs; do not pass raw runtime handles, stores, registries, NativeBridge/Tauri handles, provider settings, secrets, or plugin-private objects to placeholder UI.
-- Keep Sync status tied to the TASK-032 skeleton contract: plugin id `sync`, no runtime commands/views/settings panels/transport, syncable unit descriptors are informational only.
-- Keep AI provider settings descriptor informational/inert; do not create provider settings inputs or secret fields.
-- Use the existing top-bar Settings affordance to open a visible Settings workspace route; include Sync as a named skeleton section/panel inside Settings, not a separate top-level Drawer route for this task.
-- Red tests should primarily live in `src/test/settings-sync-placeholders.test.tsx`, with a narrow `src/test/mui-shell-frame.test.tsx` update if existing Settings placeholder expectations need to change.
+- Treat TASK-045 as an app-shell polish and accessibility task, not a new plugin behavior task.
+- Preserve existing route/data security boundaries from TASK-035 through TASK-044.
+- Use RTL/user-event tests from the user's perspective: role/name landmarks, keyboard flows, visible state, focus return, and narrow-layout controls.
+- Keep the Markdown workspace primary at all widths; avoid marketing/hero/card-heavy replacement surfaces.
+- Prefer MUI breakpoint/responsive props and existing shell patterns over new dependencies or custom platform surfaces.
 
 ## Validation Recorded
 
-- 2026-06-14 14:04 CST: branch created from validated `master`.
-- 2026-06-14 14:04 CST: 11 project agent TOML files parsed successfully.
-- 2026-06-14 14:04 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- 2026-06-14 17:30 CST: branch created from validated `master` commit `1de3ec0`.
+- 2026-06-14 17:30 CST: 11 project agent TOML files parsed successfully.
+- 2026-06-14 17:30 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
 ## Next Parent Actions
 
-- Commit the TASK-044 completion status update.
-- Merge `feat/task-044-settings-sync-placeholders` into `master`, validate `master`, push, then continue to TASK-045.
+- Spawn pre-test guidance agents for TASK-045, then wait for completion/final statuses before red-test delegation.
