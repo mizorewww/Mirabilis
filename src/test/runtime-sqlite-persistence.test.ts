@@ -86,6 +86,12 @@ type RecordingNativeBridgeOptions = {
   rejectOperations?: ReadonlySet<DbPersistenceOperation>;
 };
 
+type Deferred<Value> = {
+  promise: Promise<Value>;
+  resolve(value: Value | PromiseLike<Value>): void;
+  reject(error: unknown): void;
+};
+
 type JsonRecord = Record<string, unknown>;
 
 const repoRoot = path.resolve(
@@ -285,27 +291,13 @@ describe("runtime SQLite persistence", () => {
       builtInPlugins: [],
       createNativeBridge: () => bridge,
     })) as RuntimeWithStorage;
-    let createdPage: MarkdownPage | undefined;
 
     bridge.clearCalls();
 
-    const createError = captureSyncError(() => {
-      createdPage = runtime.pages.create({
-        title: "Direct Home Page",
-        body: documentWithLine("direct-home-line", "Direct home draft"),
-      });
+    const createdPage = runtime.pages.create({
+      title: "Direct Home Page",
+      body: documentWithLine("direct-home-line", "Direct home draft"),
     });
-
-    if (createError !== undefined) {
-      expect(runtime.pages.list({ includeArchived: true })).not.toContainEqual(
-        expect.objectContaining({ title: "Direct Home Page" }),
-      );
-      expect(bridge.calls).toStrictEqual([]);
-
-      return;
-    }
-
-    expect(createdPage).toBeDefined();
 
     const createBatch = findNativeTransactionContaining(
       bridge,
@@ -316,7 +308,7 @@ describe("runtime SQLite persistence", () => {
       DB_PERSISTENCE_OPERATIONS.pagesCreate,
     ]);
     expect(payloadRecord(createBatch?.[0])).toMatchObject({
-      id: createdPage?.id,
+      id: createdPage.id,
       title: "Direct Home Page",
       body: documentWithLine("direct-home-line", "Direct home draft"),
     });
@@ -325,17 +317,94 @@ describe("runtime SQLite persistence", () => {
 
     await expect(
       runtime.transaction.run((tx) =>
-        tx.pages.update(expectDefined(createdPage).id, {
+        tx.pages.update(createdPage.id, {
           title: "Direct Home Page Saved",
           body: documentWithLine("direct-home-line-2", "Direct home saved"),
         }),
       ),
     ).resolves.toMatchObject({
-      id: createdPage?.id,
+      id: createdPage.id,
       title: "Direct Home Page Saved",
     });
     expect(expectSingleNativeTransaction(bridge).map((query) => query.operation))
       .toStrictEqual([DB_PERSISTENCE_OPERATIONS.pagesUpdate]);
+  });
+
+  it("keeps a direct runtime page write in live memory after an in-flight persisted transaction commits", async () => {
+    const bridge = createRecordingNativeBridge();
+    const releaseTransactionCommit = createDeferred<void>();
+    const transactionCommitStarted = createDeferred<readonly DbQuery[]>();
+    const directWriteResolved = createDeferred<void>();
+    const originalTransaction = bridge.db.transaction.bind(bridge.db);
+    let delayedTransactionCommit = false;
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.db.transaction = async <Response,>(
+      queries: DbQuery[],
+    ): Promise<NativeBridgeTransactionResult<Response>> => {
+      if (
+        !delayedTransactionCommit &&
+        queries.some((query) =>
+          queryCreatesPageWithTitle(query, "In-flight transaction page"),
+        )
+      ) {
+        delayedTransactionCommit = true;
+        transactionCommitStarted.resolve(queries);
+        await releaseTransactionCommit.promise;
+      }
+
+      const result = await originalTransaction<Response>(queries);
+
+      if (
+        queries.some((query) =>
+          queryCreatesPageWithTitle(query, "Concurrent direct page"),
+        )
+      ) {
+        directWriteResolved.resolve(undefined);
+      }
+
+      return result;
+    };
+
+    bridge.clearCalls();
+
+    const transactionCommit = runtime.transaction.run((tx) => {
+      const page = tx.pages.create({
+        title: "In-flight transaction page",
+        body: documentWithLine("in-flight-line", "Staged transaction body"),
+      });
+
+      return { pageId: page.id };
+    });
+    const transactionBatch = await transactionCommitStarted.promise;
+
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+
+    const directPage = runtime.pages.create({
+      title: "Concurrent direct page",
+      body: documentWithLine("concurrent-direct-line", "Direct write body"),
+    });
+
+    await directWriteResolved.promise;
+    expect(runtime.pages.get(directPage.id)).toMatchObject({
+      title: "Concurrent direct page",
+    });
+
+    releaseTransactionCommit.resolve(undefined);
+
+    const transactionResult = await transactionCommit;
+
+    expect(runtime.pages.get(transactionResult.pageId)).toMatchObject({
+      title: "In-flight transaction page",
+    });
+    expect(runtime.pages.get(directPage.id)).toMatchObject({
+      title: "Concurrent direct page",
+    });
   });
 
   it("does not let plugin direct store writes bypass SQLite transaction semantics", async () => {
@@ -395,27 +464,10 @@ describe("runtime SQLite persistence", () => {
 
     bridge.clearCalls();
 
-    let commandResult: unknown;
-    const commandError = await captureError(async () => {
-      commandResult = await runtime.commands.execute("direct-writer.write", {});
-    });
-
-    if (commandError !== undefined) {
-      expect(runtime.pages.list({ includeArchived: true })).not.toContainEqual(
-        expect.objectContaining({ title: "Plugin direct page" }),
-      );
-      expect(runtime.metadata.list()).not.toContainEqual(
-        expect.objectContaining({ namespace: "direct-writer", key: "state" }),
-      );
-      expect(runtime.events.list()).not.toContainEqual(
-        expect.objectContaining({ namespace: "direct-writer" }),
-      );
-      expect(runtime.filters.list()).not.toContainEqual(
-        expect.objectContaining({ id: "direct-writer.filter.direct" }),
-      );
-
-      return;
-    }
+    const commandResult = await runtime.commands.execute(
+      "direct-writer.write",
+      {},
+    );
 
     expect(commandResult).toMatchObject({
       filterId: "direct-writer.filter.direct",
@@ -452,6 +504,75 @@ describe("runtime SQLite persistence", () => {
         }),
       ]),
     );
+  });
+
+  it("does not reject unrelated read-only plugin commands while another command is pending", async () => {
+    const readablePage = pageRecord("page-readable", "Readable page", {
+      body: documentWithLine("readable-line", "Readable body"),
+    });
+    const slowCommandStarted = createDeferred<void>();
+    const releaseSlowCommand = createDeferred<void>();
+    const bridge = createRecordingNativeBridge({
+      pages: [readablePage],
+    });
+    const slowReader = createPlugin("slow-reader", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "slow-reader.wait",
+          title: "Slow read-only command",
+          async handler(_input, commandContext) {
+            expect(commandContext.pages.list()).toStrictEqual([readablePage]);
+            slowCommandStarted.resolve(undefined);
+            await releaseSlowCommand.promise;
+
+            return {
+              pageCount: commandContext.pages.list().length,
+            };
+          },
+        });
+      },
+    });
+    const fastReader = createPlugin("fast-reader", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "fast-reader.read",
+          title: "Fast read-only command",
+          handler(_input, commandContext) {
+            return {
+              pageTitles: commandContext.pages
+                .list()
+                .map((page) => page.title),
+            };
+          },
+        });
+      },
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [slowReader, fastReader],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.clearCalls();
+
+    const slowCommand = runtime.commands.execute("slow-reader.wait", {});
+
+    await slowCommandStarted.promise;
+
+    const fastCommand = runtime.commands.execute("fast-reader.read", {});
+    const fastExpectation = expect(fastCommand).resolves.toStrictEqual({
+      pageTitles: ["Readable page"],
+    });
+
+    await Promise.resolve();
+    releaseSlowCommand.resolve(undefined);
+
+    await fastExpectation;
+    await expect(slowCommand).resolves.toStrictEqual({
+      pageCount: 1,
+    });
+    expect(
+      bridge.calls.filter((call) => call.kind === "transaction"),
+    ).toStrictEqual([]);
   });
 
   it("persists runtime.transaction.run multi-store writes through one ordered native transaction", async () => {
@@ -1559,6 +1680,38 @@ function findNativeTransactionContaining(
     )
     .map((call) => call.queries)
     .find((queries) => queries.some((query) => query.operation === operation));
+}
+
+function queryCreatesPageWithTitle(query: DbQuery, title: string): boolean {
+  return (
+    query.operation === DB_PERSISTENCE_OPERATIONS.pagesCreate &&
+    payloadRecord(query).title === title
+  );
+}
+
+function createDeferred<Value>(): Deferred<Value> {
+  let resolveDeferred:
+    | ((value: Value | PromiseLike<Value>) => void)
+    | undefined;
+  let rejectDeferred: ((error: unknown) => void) | undefined;
+  const promise = new Promise<Value>((resolve, reject) => {
+    resolveDeferred = resolve;
+    rejectDeferred = reject;
+  });
+
+  return {
+    promise,
+    resolve(value) {
+      expect(resolveDeferred).toBeDefined();
+      expect(rejectDeferred).toBeDefined();
+      expectDefined(resolveDeferred)(value);
+    },
+    reject(error) {
+      expect(resolveDeferred).toBeDefined();
+      expect(rejectDeferred).toBeDefined();
+      expectDefined(rejectDeferred)(error);
+    },
+  };
 }
 
 function expectDefined<Value>(value: Value | undefined): Value {
