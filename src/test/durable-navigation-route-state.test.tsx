@@ -1136,6 +1136,45 @@ describe("TASK-047 route-state serializer boundary", () => {
     expectRouteStateIsIdsOnly(state);
   });
 
+  it("rejects nested active-route accessors while parsing without invoking them", () => {
+    const getterInvocations: string[] = [];
+
+    expect(
+      parseRouteStateDto({
+        activeRoute: createAccessorBackedPageRoute({
+          getterInvocations,
+          pageId: "runtime-handle-page",
+        }),
+        homePageId: "home-page",
+        recentPageIds: [],
+        version: durableRouteStateVersion,
+      }),
+    ).toBeUndefined();
+    expect(getterInvocations).toStrictEqual([]);
+  });
+
+  it("omits accessor-backed active routes while serializing without persisting unsafe getter values", () => {
+    const getterInvocations: string[] = [];
+    const state = createRouteStateDto({
+      activeRoute: createAccessorBackedPageRoute({
+        getterInvocations,
+        pageId: "/home/aac6fef/private.sqlite?token=sk-test-secret",
+      }) as RouteStateDtoActiveRoute,
+      homePageId: "home-page",
+      recentPageIds: ["safe-recent-page"],
+    });
+
+    expect({ getterInvocations, state }).toStrictEqual({
+      getterInvocations: [],
+      state: {
+        homePageId: "home-page",
+        recentPageIds: ["safe-recent-page"],
+        version: durableRouteStateVersion,
+      },
+    });
+    expectRouteStateIsIdsOnly(state);
+  });
+
   it("rejects malformed route-state records instead of normalizing unsafe keys", () => {
     expect(
       parseRouteStateDto({
@@ -1888,6 +1927,45 @@ function createAccessorRouteState(
   });
 
   return state;
+}
+
+function createAccessorBackedPageRoute({
+  getterInvocations,
+  pageId,
+}: {
+  getterInvocations: string[];
+  pageId: string;
+}): unknown {
+  const activeRoute: Record<string, unknown> = {};
+
+  Object.defineProperties(activeRoute, {
+    kind: {
+      enumerable: true,
+      get() {
+        getterInvocations.push("kind");
+
+        return "page";
+      },
+    },
+    pageId: {
+      enumerable: true,
+      get() {
+        getterInvocations.push("pageId");
+
+        return pageId;
+      },
+    },
+    role: {
+      enumerable: true,
+      get() {
+        getterInvocations.push("role");
+
+        return "recent";
+      },
+    },
+  });
+
+  return activeRoute;
 }
 
 function createSymbolKeyedRouteState(homePageId: string): unknown {
