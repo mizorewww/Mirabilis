@@ -6,7 +6,7 @@
 - Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: top-bar implementation fix is committed and green; parent is preparing targeted re-review.
+- Status: targeted re-review is running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -81,6 +81,11 @@
 - Carson (`implementer`, agent `019ec597-c3ec-77a3-973d-fdfb966f7b50`) was spawned at 2026-06-14 18:05 CST to make the review-fix top-bar compact/icon-only red test pass.
 - Carson returned final status with production changes in `src/App.tsx`. Below the `md` breakpoint, top-bar actions now render as MUI `Tooltip` + `IconButton` controls with accessible labels and no visible text; desktop keeps the existing text/icon `Button` controls. Commit `547d45f` (`Carson(review-fix)(Responsive State And Accessibility Polish): compact narrow top-bar actions`) records the fix.
 - Parent validation passed: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` passed with 12 tests; `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/search-overlay-results-route.test.tsx` passed with 65 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Epicurus (`reviewer`, agent `019ec59c-d7cf-7232-bbc6-24cd4baaa18e`) was spawned at 2026-06-14 18:10 CST for targeted correctness re-review of Ramanujan's top-bar P2 closure and Carson regression risk.
+- Rawls (`test_quality_reviewer`, agent `019ec59c-dab0-78d0-8027-8ef68a2cd759`) was spawned at 2026-06-14 18:10 CST for targeted test-quality review of Lagrange's P2 coverage recommendations and Meitner/Carson red-to-green evidence.
+- Ohm (`docs_researcher`, agent `019ec59c-dcfc-7a13-942d-4c8af71912e4`) was spawned at 2026-06-14 18:10 CST for targeted docs review of Heisenberg's P1/P2 closure and Carson top-bar doc accuracy.
+- Parfit (`deprecation_auditor`, agent `019ec59c-e00e-7802-93bd-dcdcbee28b79`) was spawned at 2026-06-14 18:10 CST for fresh MUI Tooltip/IconButton, breakpoint, React, and testing API risk review.
+- Avicenna (`security_reviewer`, agent `019ec59c-e293-7c70-bab6-f91996ada782`) was spawned at 2026-06-14 18:10 CST for targeted UI-only security/privacy and drift review after Carson's fix.
 
 ## Red-Test Guidance Accepted By Parent
 
@@ -96,4 +101,4 @@
 
 ## Next Action
 
-- Delegate targeted re-review for Ramanujan's top-bar P2 closure, Lagrange's narrow coverage P2 closure, Heisenberg's docs closure, and fresh MUI Tooltip/IconButton API/security risk after Carson's fix.
+- Wait for targeted re-review final statuses. A wait timeout is not a failure or idle signal.
