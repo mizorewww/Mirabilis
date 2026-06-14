@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: docs sync completed by Dewey; parent validation, commit, re-review, release readiness, and final `check:full` remain pending.
+- Status: docs sync committed; targeted re-review is next.
 
 ## Scope
 
@@ -98,8 +98,9 @@
 - Mencius was closed after final status and validation were recorded.
 - Dewey (`doc_writer`, agent `019ec5e6-8ace-74b1-b160-5a4e623d6645`) was spawned at 2026-06-14 19:31 CST for Godel's docs P1/P2. Dewey owns docs only and must not mark TASK-046 complete.
 - Dewey completed docs-only sync at 2026-06-14 19:37 CST. Files updated: `docs/architecture/07-runtime-flows.md`, `docs/architecture/06-filter-native-database.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, `docs/testing/strategy.md`, `docs/implementation/task-index.md`, `docs/implementation/progress.md`, `docs/implementation/agent-communication/status.md`, and this TASK-046 communication file.
-- Dewey validation passed: `git diff --check`; stale wording scans for old `in-memory-core` / deferred runtime persistence claims. Godel's docs P1/P2 are addressed from Dewey's docs scope, pending parent validation and re-review.
+- Parent requested one follow-up for historical TASK-015 `in-memory-core` wording that could be misread as current state; Dewey fixed it. Commit `a032b7d` (`Dewey(docs-fix)(Wire SQLite-backed Runtime Persistence): sync runtime persistence docs`) records the docs sync and follow-up.
+- Parent docs validation passed: `git diff --check`; focused stale wording scans for old `in-memory-core` / deferred runtime persistence claims returned no matches. Godel's docs P1/P2 are addressed, pending targeted re-review.
 
 ## Next Action
 
-- Parent should review and commit Dewey's docs sync, then run targeted re-review and the remaining release/final gates. Do not mark TASK-046 complete until parent validation, release readiness, and final `check:full` pass.
+- Close Dewey after this status is recorded, then run targeted re-review and the remaining release/final gates. Do not mark TASK-046 complete until targeted re-review, release readiness, and final `check:full` pass.

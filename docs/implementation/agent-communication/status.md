@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:37 CST.
+Last updated: 2026-06-14 19:40 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:37 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 docs sync completed by Dewey; parent validation, commit, targeted re-review, release readiness, and final `check:full` remain pending.
+- Current phase: TASK-046 docs sync committed; targeted re-review is next.
 
 ## Current Outcome
 
@@ -43,7 +43,9 @@ Last updated: 2026-06-14 19:37 CST.
 - Mencius triaged timer timeline failures as stale test runtime setup, not a production regression. It updated static native-surface guards to accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff, made legacy AI/Sync/timer runtime tests explicitly use `in-memory-core` where SQLite persistence is not under test, cleared startup hydration calls before Markdown page facade assertions, and allowed Quick Capture's reviewed durable `db.transaction` path while still rejecting shortcut/file/notification/raw execute calls.
 - Parent validation passed after Mencius: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and an exact `.only` / `.skip` scan on edited tests passed.
 - Mencius was closed after final status and validation were recorded. Dewey (`doc_writer`, `019ec5e6-8ace-74b1-b160-5a4e623d6645`) was spawned at 2026-06-14 19:31 CST for Godel's docs P1/P2 only. Dewey must not mark TASK-046 complete; parent will do that after re-review, release readiness, and the final `check:full` gate.
-- Dewey completed docs-only sync at 2026-06-14 19:37 CST. Updated runtime-flow, NativeBridge/SQLite, development constraints, testing strategy, task index, progress, and TASK-046 communication docs to match reviewed SQLite-backed runtime persistence. Godel's docs P1/P2 are addressed from Dewey's scope, pending parent validation and re-review.
+- Dewey completed docs-only sync at 2026-06-14 19:37 CST. Parent requested one follow-up for historical TASK-015 `in-memory-core` wording that could be misread as current state; Dewey fixed it. Commit `a032b7d` records the docs sync and follow-up.
+- Dewey closed Godel's docs P1/P2 by documenting `sqlite-core` default runtime hydration before plugin activation, transaction-managed NativeBridge `db.transaction` writes, direct runtime page write-through/pending flush, plugin direct Core store writes through the Core transaction path, archived page hydration, fail-closed null hydration, filter update `get` + `save` rollback semantics, unchanged DB allowlist/capability boundary, and Rust's frontend event `type` alias.
+- Parent docs validation passed: `git diff --check`; focused stale wording scans for pre-TASK-046 `in-memory-core` / deferred runtime-persistence claims returned no matches.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -131,5 +133,6 @@ Last updated: 2026-06-14 19:37 CST.
 
 ## Next Parent Actions
 
-- Review and commit Dewey's docs sync, then run targeted re-review for correctness/security/test/docs/deprecation as needed.
-- Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.
+- Close Dewey after final status and validation are recorded.
+- Spawn targeted re-review for correctness, security, docs, test quality, and deprecated/API risks.
+- Retry `release_checker` after targeted re-review clears P0/P1 findings. A wait timeout is not a failure or idle signal.
