@@ -926,36 +926,51 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           >
             {shellTools.map((tool) => {
               const ToolIcon = tool.icon;
+              const handleToolClick = () => {
+                if (tool.id === "command") {
+                  setDeferredShellTool(undefined);
+                  setCommandPaletteOpen(true);
+                  return;
+                }
+
+                if (tool.id === "capture") {
+                  void openQuickCaptureDialog();
+                  return;
+                }
+
+                if (tool.id === "search") {
+                  setQuickCaptureOpenError(false);
+                  setDeferredShellTool(undefined);
+                  setSearchDialogOpen(true);
+                  return;
+                }
+
+                if (tool.id === "settings") {
+                  setQuickCaptureOpenError(false);
+                  setDeferredShellTool(undefined);
+                  selectSettingsRoute();
+                }
+              };
+
+              if (isNarrowLayout) {
+                return (
+                  <Tooltip key={tool.id} title={tool.label}>
+                    <IconButton
+                      aria-label={tool.label}
+                      color="inherit"
+                      onClick={handleToolClick}
+                    >
+                      <ToolIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                );
+              }
 
               return (
                 <Button
                   color="inherit"
                   key={tool.id}
-                  onClick={() => {
-                    if (tool.id === "command") {
-                      setDeferredShellTool(undefined);
-                      setCommandPaletteOpen(true);
-                      return;
-                    }
-
-                    if (tool.id === "capture") {
-                      void openQuickCaptureDialog();
-                      return;
-                    }
-
-                    if (tool.id === "search") {
-                      setQuickCaptureOpenError(false);
-                      setDeferredShellTool(undefined);
-                      setSearchDialogOpen(true);
-                      return;
-                    }
-
-                    if (tool.id === "settings") {
-                      setQuickCaptureOpenError(false);
-                      setDeferredShellTool(undefined);
-                      selectSettingsRoute();
-                    }
-                  }}
+                  onClick={handleToolClick}
                   startIcon={<ToolIcon fontSize="small" />}
                   variant="text"
                 >
@@ -964,15 +979,30 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
               );
             })}
             {contextPanelPage !== undefined ? (
-              <Button
-                aria-controls="page-context-panel"
-                aria-expanded={contextPanelOpen}
-                onClick={() => setContextPanelOpen((open) => !open)}
-                ref={contextPanelToggleRef}
-                variant="text"
-              >
-                Context Panel
-              </Button>
+              isNarrowLayout ? (
+                <Tooltip title="Context Panel">
+                  <IconButton
+                    aria-controls="page-context-panel"
+                    aria-expanded={contextPanelOpen}
+                    aria-label="Context Panel"
+                    color="inherit"
+                    onClick={() => setContextPanelOpen((open) => !open)}
+                    ref={contextPanelToggleRef}
+                  >
+                    <ArticleIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Button
+                  aria-controls="page-context-panel"
+                  aria-expanded={contextPanelOpen}
+                  onClick={() => setContextPanelOpen((open) => !open)}
+                  ref={contextPanelToggleRef}
+                  variant="text"
+                >
+                  Context Panel
+                </Button>
+              )
             ) : null}
           </Stack>
         </Toolbar>
