@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:37 CST.
+Last updated: 2026-06-14 23:40 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:37 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 async rollback P1 red regression delegated; parent is waiting for Cicero's final status.
+- Current phase: TASK-046 async rollback P1 red test committed; parent is preparing implementation delegation.
 
 ## Current Outcome
 
@@ -93,6 +93,9 @@ Last updated: 2026-06-14 23:37 CST.
 - Parent decision: fix the async direct-session rollback P1 before `release_checker` or final gate. Do not accept it as a deferral because it still violates TASK-046 rollback isolation through normal plugin APIs.
 - Completed targeted re-review agents Mencius, Singer, and Copernicus were closed after final statuses were recorded and committed.
 - Cicero (`test_writer`, agent `019ec6c7-d3ba-7763-85b5-83577e8aec00`) was spawned at 2026-06-14 23:37 CST for test-only red regression coverage of the async direct-session rollback P1.
+- Cicero returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `ce38770` records red regression coverage for async plugin direct rollback isolation.
+- Parent red validation matched Mencius/Singer's P1: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/plugin-host-lifecycle.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 1 failure and 79 passing tests. The failure is the new regression only: after the failed async plugin direct native commit, plugin writes are removed but unrelated Core state is incorrectly rolled back, with deleted metadata/filter restored, page update reverted, and unrelated event append removed.
+- Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -180,5 +183,6 @@ Last updated: 2026-06-14 23:37 CST.
 
 ## Next Parent Actions
 
-- Wait for Cicero's final status. A wait timeout is not a failure or idle signal.
+- Close Cicero after this record is committed.
+- Delegate an `implementer` to fix the async direct-session rollback P1. A wait timeout is not a failure or idle signal.
 - Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.

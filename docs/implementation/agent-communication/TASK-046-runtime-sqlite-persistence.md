@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: async rollback P1 red regression delegated; parent is waiting for Cicero's final status.
+- Status: async rollback P1 red test committed; parent is preparing implementation delegation.
 
 ## Scope
 
@@ -164,7 +164,10 @@
 - Parent decision: fix the async direct-session rollback P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation through normal plugin APIs.
 - Completed targeted re-review agents Mencius, Singer, and Copernicus were closed after final statuses were recorded and committed.
 - Cicero (`test_writer`, agent `019ec6c7-d3ba-7763-85b5-83577e8aec00`) was spawned at 2026-06-14 23:37 CST for test-only red regression coverage of the async direct-session rollback P1. Preferred write scope is `src/test/runtime-sqlite-persistence.test.ts`, with no production changes.
+- Cicero returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `ce38770` (`Cicero(test-fix)(Wire SQLite-backed Runtime Persistence): cover async rollback isolation`) records the red test.
+- Parent red validation matched Mencius/Singer's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 79 passing tests. The failure is the new async rollback isolation regression only: after failed async plugin direct native commit, plugin writes roll back but unrelated Core metadata/filter delete, page update, and event append are incorrectly reverted.
+- Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 
 ## Next Action
 
-- Wait for Cicero's final status, then validate the expected red state and commit the test-only change. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Close Cicero, delegate an `implementer` to fix the async direct-session rollback P1, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.

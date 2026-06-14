@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:40 CST - TASK-046 async rollback P1 red test committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Cicero (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `ce38770` (`Cicero(test-fix)(Wire SQLite-backed Runtime Persistence): cover async rollback isolation`).
+- Parent red validation matched Mencius/Singer's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 79 passing tests. Failure is the new regression only: after a failed async plugin direct native commit, plugin writes are removed but unrelated Core state is incorrectly rolled back: deleted metadata/filter are restored, a page update is reverted, and an unrelated event append disappears.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Cicero and delegate an `implementer` production fix. Parent remains orchestration-only.
+
 ### 2026-06-14 23:37 CST - TASK-046 async rollback P1 red test delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
