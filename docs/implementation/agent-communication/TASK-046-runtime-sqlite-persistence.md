@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: release checker clean; parent is preparing final `bun run check:full`.
+- Status: final `bun run check:full` passed; parent is preparing merge to `master`.
 
 ## Scope
 
@@ -184,7 +184,11 @@
 - Tesla returned final status with no findings and no file changes. Tesla checks passed: focused TASK-046 frontend suite with 80 tests; full frontend suite with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; Rust fmt check; Rust clippy; `cargo test`; `git diff --check`; clean branch/status; `master` / `origin/master` ancestry checks.
 - Tesla release-surface checks passed: `check:full` correctly runs `check:quick && bun run tauri build --ci --bundles deb,rpm`; AppImage remains intentionally deferred; versions are synchronized at `0.1.0`; no package/Cargo/Tauri config/capability/permission dependency drift; no tracked artifacts, logs, env files, bundle files, or release leftovers.
 - Parent decision: proceed to final parent-run `bun run check:full`.
+- Parent final gate passed at 2026-06-14 23:59 CST with `bun run check:full`: typecheck, lint, 52 frontend test files / 832 tests, Rust fmt check, Rust clippy, Rust tests, production build, and Tauri `deb` / `rpm` packaging.
+- Bundles produced in ignored build output: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- AppImage remains intentionally deferred per `docs/testing/strategy.md`.
+- TASK-046 status changed to `[x]` in `docs/implementation/progress.md` for merge preparation.
 
 ## Next Action
 
-- Close Tesla and run final `bun run check:full`. Do not mark TASK-046 complete until final `check:full` passes.
+- Commit final TASK-046 progress/status update, merge `feat/task-046-runtime-sqlite-persistence` into `master`, push `master`, then run post-merge validation.

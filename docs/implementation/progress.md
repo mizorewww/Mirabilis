@@ -92,7 +92,7 @@ Status markers:
 
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
-- [~] TASK-046: Wire SQLite-backed Runtime Persistence
+- [x] TASK-046: Wire SQLite-backed Runtime Persistence
 - [ ] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
@@ -115,6 +115,17 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 23:59 CST - TASK-046 final full gate passed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Final parent-run gate passed: `bun run check:full`.
+- `check:quick` coverage inside the full gate passed: `bun run typecheck`; `bun run lint`; `bun run test:frontend` with 52 files and 832 tests; Rust fmt check; Rust clippy; `cargo test` with Rust IPC/repository/boundary suites.
+- Tauri release packaging passed for the documented local targets: `deb` and `rpm`.
+- Bundles produced in ignored build output: `src-tauri/target/release/bundle/deb/mirabilis_0.1.0_amd64.deb` and `src-tauri/target/release/bundle/rpm/mirabilis-0.1.0-1.x86_64.rpm`.
+- AppImage remains intentionally not validated locally, per `docs/testing/strategy.md`.
+- Worktree remains clean after the full gate; `dist/` and `src-tauri/target/` are ignored build outputs.
+- TASK-046 status changed to `[x]` for the merge commit preparation. Next action: merge `feat/task-046-runtime-sqlite-persistence` into `master`, push, then run post-merge validation on `master`.
 
 ### 2026-06-14 23:57 CST - TASK-046 release checker clean
 
