@@ -355,12 +355,8 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     const aiProjection = buildAi(source);
 
     expect(mlProjection.data.input.pages).toHaveLength(maxMlProjectionItems);
-    expect(mlProjection.data.input.metadata.length).toBeLessThanOrEqual(
-      maxMlProjectionItems,
-    );
-    expect(mlProjection.data.input.events.length).toBeLessThanOrEqual(
-      maxMlProjectionItems,
-    );
+    expect(mlProjection.data.input.metadata).toHaveLength(maxMlProjectionItems);
+    expect(mlProjection.data.input.events).toHaveLength(maxMlProjectionItems);
     expect(
       mlProjection.data.input.pages[
         mlProjection.data.input.pages.length - 1
@@ -390,6 +386,95 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
       "page-child-0999",
       "segment-cap-1000",
       "tag-1000",
+    ]);
+  });
+
+  it("applies ML metadata and event caps after filtering valid current-page rows", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const unrelatedPage = createPage("page-unrelated", "Unrelated", [
+      "UNRELATED_BODY_MUST_NOT_LEAK",
+    ]);
+    const ignoredMetadata = Array.from({ length: maxMlProjectionItems }, (_value, index) =>
+      index % 2 === 0
+        ? createMetadata(
+            `metadata-unrelated-${index}`,
+            unrelatedPage.id,
+            "tag",
+            "tags",
+            [`unrelated-${index}`],
+            "json",
+          )
+        : createMetadata(
+            `metadata-wrong-owner-${index}`,
+            currentPage.id,
+            "tag",
+            "tags",
+            [`wrong-owner-${index}`],
+            "json",
+            "ai",
+          ),
+    );
+    const ignoredEvents = Array.from({ length: maxMlProjectionItems }, (_value, index) =>
+      index % 2 === 0
+        ? createTimerSegmentEvent(
+            `event-unrelated-${index}`,
+            unrelatedPage.id,
+            `segment-unrelated-${index}`,
+          )
+        : createTimerSegmentEvent(
+            `event-wrong-owner-${index}`,
+            currentPage.id,
+            `segment-wrong-owner-${index}`,
+            "ai",
+          ),
+    );
+    const validMetadata = createMetadata(
+      "metadata-valid-after-invalid-prefix",
+      currentPage.id,
+      "tag",
+      "tags",
+      ["valid-after-invalid-prefix"],
+      "json",
+    );
+    const validEvent = createTimerSegmentEvent(
+      "event-valid-after-invalid-prefix",
+      currentPage.id,
+      "segment-valid-after-invalid-prefix",
+    );
+    const projection = buildMl(
+      createProjectionSource({
+        events: [...ignoredEvents, validEvent],
+        metadata: [...ignoredMetadata, validMetadata],
+        pages: [currentPage, unrelatedPage],
+      }),
+    );
+
+    expect(projection.data.input.metadata).toStrictEqual([
+      {
+        key: "tags",
+        namespace: "tag",
+        pageId: currentPage.id,
+        sourcePluginId: "tag",
+        value: ["valid-after-invalid-prefix"],
+        valueType: "json",
+      },
+    ]);
+    expect(projection.data.input.events).toStrictEqual([
+      expect.objectContaining({
+        pageId: currentPage.id,
+        payload: expect.objectContaining({
+          segmentId: "segment-valid-after-invalid-prefix",
+        }),
+        sourcePluginId: "timer",
+        type: "time_segment_created",
+      }),
+    ]);
+    expectSerializedProjectionToExclude(projection, [
+      "UNRELATED_BODY_MUST_NOT_LEAK",
+      "unrelated-0",
+      "wrong-owner-1",
+      "segment-unrelated-0",
+      "segment-wrong-owner-1",
     ]);
   });
 
@@ -510,6 +595,87 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     );
     expectSerializedProjectionToExclude(withPrediction, [
       "A".repeat(maxAiCurrentPageTextLength + 1),
+    ]);
+  });
+
+  it("omits explain-prediction for non-exact ML prediction DTOs with provider or secret-shaped fields", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const source = createProjectionSource({ pages: [currentPage] });
+    const unsafePrediction = {
+      ...createPredictionResult(currentPage.id, currentPage.title),
+      apiKey: "sk-unsafe-prediction-secret",
+      providerSettings: {
+        model: "gpt-5.5",
+        providerId: "openai",
+      },
+      rawErrorPath: "/home/aac6fef/private/provider.log",
+    };
+    const projection = buildAi(source, {
+      prediction: unsafePrediction,
+    });
+
+    expect(projection.data.advisoryCommands).not.toHaveProperty(
+      "ai.explain-prediction",
+    );
+    expectSerializedProjectionToExclude(projection, [
+      "sk-unsafe-prediction-secret",
+      "providerSettings",
+      "openai",
+      "/home/aac6fef/private/provider.log",
+      "rawErrorPath",
+    ]);
+  });
+
+  it("fails closed instead of throwing on proxy-trap metadata and event inputs", () => {
+    const currentPage = createPage(currentPageId, currentPageTitle, ["Current"]);
+    const trap = () => {
+      throw new Error("PROXY_TRAP_SHOULD_NOT_THROW");
+    };
+    const source = createProjectionSource({
+      events: [
+        new Proxy(createTimerSegmentEvent("event-proxy", currentPage.id, "segment-proxy"), {
+          getOwnPropertyDescriptor: trap,
+          getPrototypeOf: trap,
+          ownKeys: trap,
+        }) as AppEvent,
+      ],
+      metadata: [
+        new Proxy(
+          createMetadata(
+            "metadata-proxy",
+            currentPage.id,
+            "tag",
+            "tags",
+            ["PROXY_TAG_SHOULD_NOT_LEAK"],
+            "json",
+          ),
+          {
+            getOwnPropertyDescriptor: trap,
+            getPrototypeOf: trap,
+            ownKeys: trap,
+          },
+        ) as MetadataRecord,
+      ],
+      pages: [currentPage],
+    });
+    let mlProjection: MlContextProjection | undefined;
+    let aiProjection: AiContextProjection | undefined;
+
+    expect(() => {
+      mlProjection = buildMl(source);
+      aiProjection = buildAi(source);
+    }).not.toThrow();
+    expect(mlProjection?.data.input.metadata).toStrictEqual([]);
+    expect(mlProjection?.data.input.events).toStrictEqual([]);
+    expect(
+      aiProjection?.data.advisoryCommands["ai.suggest-tags"],
+    ).toMatchObject({
+      existingTags: [],
+    });
+    expectSerializedProjectionToExclude([mlProjection, aiProjection], [
+      "PROXY_TRAP_SHOULD_NOT_THROW",
+      "PROXY_TAG_SHOULD_NOT_LEAK",
+      "segment-proxy",
     ]);
   });
 });

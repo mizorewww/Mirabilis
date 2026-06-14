@@ -287,6 +287,40 @@ describe("TASK-043 ML and AI context panel shell", () => {
     );
   });
 
+  it("keeps every Page context tab aria-controls target mounted", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, [{ blockId: "home", text: "Home" }]);
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: /context panel/i }));
+
+    const panel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+    const controlledPanelIds = within(panel)
+      .getAllByRole("tab")
+      .map((tab) => tab.getAttribute("aria-controls"));
+
+    expect(controlledPanelIds).toStrictEqual([
+      "page-context-ml-panel",
+      "page-context-suggestions-panel",
+      "page-context-review-panel",
+    ]);
+
+    for (const controlledPanelId of controlledPanelIds) {
+      expect(controlledPanelId).toEqual(expect.any(String));
+      expect(document.getElementById(controlledPanelId ?? "")).toBeInstanceOf(
+        HTMLElement,
+      );
+    }
+  });
+
   it("runs ML prediction through Command Registry with an exact current-page payload and renders ml.prediction-panel", async () => {
     const runtime = await createRuntime({
       eventIds: ["event-current-timer", "event-foreign-timer"],
@@ -403,6 +437,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
       pageIds: ["home-page"],
     });
     const capturedAiPayloads = new Map<string, unknown[]>();
+    const execute = vi.spyOn(runtime.commands, "execute");
     const user = userEvent.setup({
       advanceTimers: (delay) => vi.advanceTimersByTime(delay),
     });
@@ -472,39 +507,119 @@ describe("TASK-043 ML and AI context panel shell", () => {
     const suggestTagsPayloads = capturedAiPayloads.get("ai.suggest-tags") ?? [];
     const suggestDueDatePayloads =
       capturedAiPayloads.get("ai.suggest-due-date") ?? [];
-
-    expect(suggestTagsPayloads[suggestTagsPayloads.length - 1]).toStrictEqual({
+    const generateSubtasksPayloads =
+      capturedAiPayloads.get("ai.generate-subtasks") ?? [];
+    const expectedPagePayload = {
+      bodyMarkdown: "Suggest only from this current page.",
+      id: home.id,
+      title: home.title,
+    };
+    const expectedSuggestTagsPayload = {
       existingTags: ["context"],
       kind: "ai.suggest-tags-input",
-      page: {
-        bodyMarkdown: "Suggest only from this current page.",
-        id: home.id,
-        title: home.title,
-      },
-    });
+      page: expectedPagePayload,
+    };
+    const expectedSuggestDueDatePayload = {
+      kind: "ai.suggest-due-date-input",
+      metadata: [
+        {
+          key: "tags",
+          namespace: "tag",
+          pageId: home.id,
+          sourcePluginId: "tag",
+          value: ["context"],
+          valueType: "json",
+        },
+      ],
+      now: fixedNow.toISOString(),
+      page: expectedPagePayload,
+    };
+    const expectedGenerateSubtasksPayload = {
+      existingChildren: [],
+      kind: "ai.generate-subtasks-input",
+      page: expectedPagePayload,
+    };
+
+    expect(suggestTagsPayloads[suggestTagsPayloads.length - 1]).toStrictEqual(
+      expectedSuggestTagsPayload,
+    );
     expect(
       suggestDueDatePayloads[suggestDueDatePayloads.length - 1],
-    ).toStrictEqual({
-        kind: "ai.suggest-due-date-input",
-        metadata: [
-          {
-            key: "tags",
-            namespace: "tag",
-            pageId: home.id,
-            sourcePluginId: "tag",
-            value: ["context"],
-            valueType: "json",
-          },
-        ],
-        now: fixedNow.toISOString(),
-        page: {
-          bodyMarkdown: "Suggest only from this current page.",
-          id: home.id,
-          title: home.title,
-        },
-      });
+    ).toStrictEqual(expectedSuggestDueDatePayload);
+    expect(
+      generateSubtasksPayloads[generateSubtasksPayloads.length - 1],
+    ).toStrictEqual(expectedGenerateSubtasksPayload);
+    expect(execute).toHaveBeenCalledWith(
+      "ai.suggest-tags",
+      expectedSuggestTagsPayload,
+    );
+    expect(execute).toHaveBeenCalledWith(
+      "ai.suggest-due-date",
+      expectedSuggestDueDatePayload,
+    );
+    expect(execute).toHaveBeenCalledWith(
+      "ai.generate-subtasks",
+      expectedGenerateSubtasksPayload,
+    );
+    expect(
+      execute.mock.calls.some(
+        ([commandId]) => commandId === "ai.explain-prediction",
+      ),
+    ).toBe(false);
     expect(capturedAiPayloads.has("ai.explain-prediction")).toBe(false);
     expect(snapshotRuntimeState(runtime)).toStrictEqual(snapshotBefore);
+  });
+
+  it("renders real AI failure DTOs as unavailable instead of successful suggestions", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page"],
+    });
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, [
+      { blockId: "home-ai-failure", text: "Current page only." },
+    ]);
+    replaceAiCommand(runtime, "ai.suggest-tags", async () => ({
+      kind: "ai.provider-unconfigured",
+    }));
+    replaceAiCommand(runtime, "ai.suggest-due-date", async () => ({
+      kind: "ai.provider-unavailable",
+    }));
+    replaceAiCommand(runtime, "ai.generate-subtasks", async () => ({
+      kind: "ai.provider-output-invalid",
+    }));
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: /context panel/i }));
+
+    const panel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+
+    await user.click(within(panel).getByRole("tab", { name: /suggestions/i }));
+    await user.click(within(panel).getByRole("button", { name: /^Suggest tags$/i }));
+    await user.click(
+      within(panel).getByRole("button", { name: /^Suggest due date$/i }),
+    );
+    await user.click(
+      within(panel).getByRole("button", { name: /^Generate subtasks$/i }),
+    );
+
+    const alerts = await within(panel).findAllByRole("alert");
+
+    expect(alerts).toHaveLength(3);
+    for (const alert of alerts) {
+      expect(alert).toHaveTextContent(/AI suggestion unavailable|could not generate/i);
+    }
+    expect(within(panel).queryByText(/AI suggestion ready/i)).not.toBeInTheDocument();
+    expectNoVisibleLeakWithin(panel, [
+      "providerSettings",
+      "apiKey",
+      "OPENAI_SECRET",
+      "/home/aac6fef",
+    ]);
   });
 
   it("enables explain-prediction only after a current-page ML prediction succeeds", async () => {
@@ -512,6 +627,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
       pageIds: ["home-page"],
     });
     const capturedExplainPayloads: unknown[] = [];
+    const execute = vi.spyOn(runtime.commands, "execute");
     const user = userEvent.setup({
       advanceTimers: (delay) => vi.advanceTimersByTime(delay),
     });
@@ -569,6 +685,66 @@ describe("TASK-043 ML and AI context panel shell", () => {
         },
         prediction: createPredictionResult(home.id, home.title),
       },
+    ]);
+    expect(execute).toHaveBeenCalledWith(
+      "ai.explain-prediction",
+      capturedExplainPayloads[0],
+    );
+  });
+
+  it("omits explain-prediction when the ML result carries provider or secret-shaped fields", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page"],
+    });
+    const capturedExplainPayloads: unknown[] = [];
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    const home = createRuntimePage(runtime, homeTitle, [
+      { blockId: "home-explain-secret", text: "Do not forward secrets." },
+    ]);
+    const unsafePrediction = {
+      ...createPredictionResult(home.id, home.title),
+      apiKey: "sk-unsafe-prediction-secret",
+      providerSettings: {
+        providerId: "openai",
+      },
+      rawErrorPath: "/home/aac6fef/private/provider.log",
+    };
+
+    replaceMlRunPredictionCommand(runtime, async () => unsafePrediction);
+    replaceMlPredictionView(runtime, []);
+    replaceAiCommand(runtime, "ai.explain-prediction", async (payload) => {
+      capturedExplainPayloads.push(payload);
+
+      return {
+        explanation: "Should not be reachable.",
+        kind: "ai.prediction-explanation",
+        limitations: [],
+      };
+    });
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: /context panel/i }));
+
+    const panel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+
+    await user.click(await within(panel).findByRole("button", { name: /run prediction/i }));
+    await user.click(within(panel).getByRole("tab", { name: /suggestions/i }));
+
+    expect(
+      within(panel).queryByRole("button", { name: /^Explain prediction$/i }),
+    ).not.toBeInTheDocument();
+    expect(capturedExplainPayloads).toStrictEqual([]);
+    expectNoVisibleLeakWithin(panel, [
+      "sk-unsafe-prediction-secret",
+      "providerSettings",
+      "openai",
+      "/home/aac6fef/private/provider.log",
+      "rawErrorPath",
     ]);
   });
 
@@ -629,6 +805,82 @@ describe("TASK-043 ML and AI context panel shell", () => {
     expect(panel).toHaveTextContent("Second Page");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expectNoVisibleLeak(["Home stale source", "OPENAI_SECRET", "/home/aac6fef"]);
+  });
+
+  it("ignores stale AI advisory resolves and rejects after switching pages", async () => {
+    const runtime = await createRuntime({
+      pageIds: ["home-page", "second-page"],
+    });
+    const staleTags = createDeferred<Record<string, unknown>>();
+    const staleDueDate = createDeferred<Record<string, unknown>>();
+    const user = userEvent.setup({
+      advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+    });
+
+    createRuntimePage(runtime, homeTitle, [
+      { blockId: "home-ai-stale", text: "HOME_AI_STALE_SOURCE" },
+    ]);
+    createRuntimePage(runtime, "Second Page", [
+      { blockId: "second-ai-current", text: "Second page current source" },
+    ]);
+    replaceAiCommand(runtime, "ai.suggest-tags", async (payload) => {
+      const pageId = readAiPayloadPageId(payload);
+
+      return pageId === "home-page"
+        ? staleTags.promise
+        : createAiResult("ai.suggest-tags");
+    });
+    replaceAiCommand(runtime, "ai.suggest-due-date", async (payload) => {
+      const pageId = readAiPayloadPageId(payload);
+
+      return pageId === "home-page"
+        ? staleDueDate.promise
+        : createAiResult("ai.suggest-due-date");
+    });
+    const snapshotBefore = snapshotRuntimeState(runtime);
+
+    renderReadyApp(runtime);
+
+    await user.click(await screen.findByRole("button", { name: /context panel/i }));
+
+    const homePanel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+
+    await user.click(within(homePanel).getByRole("tab", { name: /suggestions/i }));
+    await user.click(
+      within(homePanel).getByRole("button", { name: /^Suggest tags$/i }),
+    );
+    await user.click(
+      within(homePanel).getByRole("button", { name: /^Suggest due date$/i }),
+    );
+    await user.click(await findWorkspaceRouteButton(/^Second Page\b/i));
+
+    await act(async () => {
+      staleTags.resolve({
+        kind: "ai.suggested-tags",
+        tags: ["STALE_HOME_AI_TAG"],
+      });
+      staleDueDate.reject(createSensitivePanelError());
+      await Promise.allSettled([staleTags.promise, staleDueDate.promise]);
+      await Promise.resolve();
+    });
+
+    const currentPanel = await screen.findByRole("complementary", {
+      name: /page context/i,
+    });
+
+    expect(currentPanel).toHaveTextContent(/Second Page/i);
+    expect(screen.queryByText(/STALE_HOME_AI_TAG/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(snapshotRuntimeState(runtime)).toStrictEqual(snapshotBefore);
+    expectNoVisibleLeak([
+      "HOME_AI_STALE_SOURCE",
+      "OPENAI_SECRET",
+      "providerSettings",
+      "apiKey=sk-test-secret",
+      "/home/aac6fef",
+    ]);
   });
 
   it("fails closed for unavailable or malformed ML/AI surfaces without exposing raw errors, secrets, or provider settings UI", async () => {
@@ -729,6 +981,17 @@ describe("TASK-043 static shell boundaries", () => {
     }
 
     expect(violations).toStrictEqual([]);
+  });
+
+  it("backs the context panel with explicit right-side non-overlay layout CSS", async () => {
+    const appCss = await readFile(path.join(repoRoot, "src/App.css"), "utf8");
+    const frameRule = extractCssRule(appCss, ".app-shell__frame");
+    const panelRule = extractCssRule(appCss, ".app-shell__context-panel");
+
+    expect(frameRule).toMatch(/\bdisplay\s*:\s*flex\b/u);
+    expect(panelRule).toMatch(/\bflex\s*:\s*0\s+0\b|\bflex-basis\s*:/u);
+    expect(panelRule).toMatch(/\bwidth\s*:|\bmin-width\s*:|\bmax-width\s*:/u);
+    expect(panelRule).not.toMatch(/\bposition\s*:\s*(?:absolute|fixed)\b/u);
   });
 });
 
@@ -1007,6 +1270,18 @@ function readPayloadPageId(payload: unknown): string {
   throw new Error("Expected ML payload to include input.pageId");
 }
 
+function readAiPayloadPageId(payload: unknown): string {
+  if (
+    isRecord(payload) &&
+    isRecord(payload.page) &&
+    typeof payload.page.id === "string"
+  ) {
+    return payload.page.id;
+  }
+
+  throw new Error("Expected AI payload to include page.id");
+}
+
 function snapshotRuntimeState(runtime: AppRuntime): RuntimeSnapshot {
   return {
     events: runtime.events.list().map(cloneJsonCompatible),
@@ -1274,6 +1549,14 @@ function isAppShellOrProjectionPath(filePath: string): boolean {
     filePath.startsWith("src/shell/") ||
     filePath.startsWith("src/providers/")
   );
+}
+
+function extractCssRule(source: string, selector: string): string {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const match = new RegExp(`${escapedSelector}\\s*\\{(?<body>[^}]*)\\}`, "u")
+    .exec(source);
+
+  return match?.groups?.body ?? "";
 }
 
 function toRepoRelativePath(absolutePath: string): string {
