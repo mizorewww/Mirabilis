@@ -124,15 +124,17 @@ export function normalizeRecentPageIds(
   pageIds: readonly unknown[],
   homePageId: string,
 ): string[] {
+  const safePageIds = readRecentPageIdStrings(pageIds);
+
+  if (safePageIds === undefined) {
+    return [];
+  }
+
   const seen = new Set<string>();
   const normalized: string[] = [];
 
-  for (const pageId of pageIds) {
-    if (
-      !isNonEmptyString(pageId) ||
-      pageId === homePageId ||
-      seen.has(pageId)
-    ) {
+  for (const pageId of safePageIds) {
+    if (pageId === homePageId || seen.has(pageId)) {
       continue;
     }
 
@@ -379,24 +381,81 @@ function readDataString(
   return isNonEmptyString(value) ? value : undefined;
 }
 
-function readRecentPageIdStrings(value: unknown[]): string[] | undefined {
-  const prototype = Object.getPrototypeOf(value);
+function readRecentPageIdStrings(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
 
-  if (prototype !== Array.prototype) {
+  let lengthDescriptor: PropertyDescriptor | undefined;
+  let ownKeys: readonly PropertyKey[];
+  let prototype: object | null;
+
+  try {
+    lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
+    ownKeys = Reflect.ownKeys(value);
+    prototype = Object.getPrototypeOf(value);
+  } catch {
+    return undefined;
+  }
+
+  if (
+    prototype !== Array.prototype ||
+    lengthDescriptor === undefined ||
+    !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
+    typeof lengthDescriptor.value !== "number" ||
+    !Number.isSafeInteger(lengthDescriptor.value) ||
+    lengthDescriptor.value < 0
+  ) {
+    return undefined;
+  }
+
+  const length = lengthDescriptor.value;
+
+  if (
+    ownKeys.some(
+      (key) =>
+        typeof key !== "string" ||
+        (key !== "length" && !isArrayIndexKeyWithinLength(key, length)),
+    )
+  ) {
     return undefined;
   }
 
   const pageIds: string[] = [];
 
-  for (const pageId of value) {
-    if (!isNonEmptyString(pageId)) {
+  for (let index = 0; index < length; index += 1) {
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    } catch {
       return undefined;
     }
 
-    pageIds.push(pageId);
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value") ||
+      !isNonEmptyString(descriptor.value)
+    ) {
+      return undefined;
+    }
+
+    pageIds.push(descriptor.value);
   }
 
   return pageIds;
+}
+
+function isArrayIndexKeyWithinLength(key: string, length: number): boolean {
+  const index = Number(key);
+
+  return (
+    key === String(index) &&
+    Number.isSafeInteger(index) &&
+    index >= 0 &&
+    index < length
+  );
 }
 
 function isDurablePageRouteRole(
