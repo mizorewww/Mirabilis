@@ -116,6 +116,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:29 CST - TASK-047 Faraday P2 security re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bernoulli (`security_reviewer`, agent `019ec72e-6505-7a12-ae67-96bcc20c934f`) was spawned for read-only focused security re-review of Faraday's P2 closure after Godel's red tests and Epicurus's implementation fix.
+- Parent state: waiting for Bernoulli final status before deciding whether TASK-047 can proceed to final release gate. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:28 CST - TASK-047 Faraday P2 implementation committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
