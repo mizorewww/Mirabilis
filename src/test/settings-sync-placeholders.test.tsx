@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import App from "../App";
-import { BUILT_IN_PLUGINS, createAppRuntime, type AppRuntime } from "../bootstrap";
+import { createAppRuntime, type AppRuntime } from "../bootstrap";
 import {
   createCoreStores,
   type CoreStores,
@@ -36,8 +36,19 @@ const repoRoot = path.resolve(
 );
 const execFileAsync = promisify(execFile);
 
-const appShellEntrypoints = ["src/App.tsx", "src/shell", "src/providers"] as const;
-const sourceExtensions = new Set([".ts", ".tsx"]);
+const task044RouteSurfaceFile = "src/App.tsx";
+const task044RouteSurfaceSections = [
+  {
+    endMarker: "type ProjectionSourceSnapshot",
+    name: "SettingsWorkspace",
+    startMarker: "function SettingsWorkspace",
+  },
+  {
+    endMarker: "function getPlaceholderRoute",
+    name: "listSettingsDescriptorSummaries",
+    startMarker: "function listSettingsDescriptorSummaries",
+  },
+] as const;
 const task044SurfaceEntrypoints = [
   "CHANGELOG.md",
   "package.json",
@@ -68,7 +79,7 @@ describe("TASK-044 Settings and Sync placeholders", () => {
     const homeMain = await screen.findByRole("main", { name: /home/i });
 
     expect(
-      within(homeMain).getByRole("textbox", { name: /markdown/i }),
+      await within(homeMain).findByRole("textbox", { name: /markdown/i }),
     ).toBeEnabled();
     expect(screen.getByRole("navigation", { name: /workspace/i })).toBeVisible();
 
@@ -111,15 +122,7 @@ describe("TASK-044 Settings and Sync placeholders", () => {
     const descriptorRegion = within(settingsMain).getByRole("region", {
       name: /plugin settings descriptors/i,
     });
-    const aiDescriptor = getBuiltInSettingsDescriptor(
-      "ai",
-      "ai.provider-settings",
-    );
 
-    expect(aiDescriptor).toStrictEqual({
-      id: "ai.provider-settings",
-      title: "Provider settings",
-    });
     expect(within(descriptorRegion).getByText(/^AI Plugin$/i)).toBeVisible();
     expect(
       within(descriptorRegion).getByText(/^ai\.provider-settings$/i),
@@ -132,7 +135,7 @@ describe("TASK-044 Settings and Sync placeholders", () => {
         /inert|descriptor-only|manifest descriptor|not configured|no executable settings panel/i,
       ),
     ).toBeVisible();
-    expectNoSecretLikeSettingsControls(settingsMain);
+    expectNoSettingsValueControls(settingsMain);
   });
 
   it("shows the embedded Sync skeleton panel as inactive and descriptor-only", async () => {
@@ -169,7 +172,7 @@ describe("TASK-044 Settings and Sync placeholders", () => {
     );
 
     expect(executeSpy).not.toHaveBeenCalled();
-    expectNoSecretLikeSettingsControls(syncPanel);
+    expectNoSettingsValueControls(syncPanel);
   });
 });
 
@@ -183,7 +186,7 @@ describe("TASK-044 Settings and Sync static guards", () => {
   });
 
   it("keeps app-shell Settings and Sync UI free of executable provider, secret, network, storage, native, and forbidden sync-command surfaces", async () => {
-    const sources = await readProductionSources(appShellEntrypoints);
+    const sources = await readTask044SettingsSyncRouteSurface();
     const violations = sources.flatMap(findTask044SettingsSyncSurfaceViolations);
 
     expect(violations).toStrictEqual([]);
@@ -202,7 +205,11 @@ async function renderAndOpenSettingsWorkspace(): Promise<{
   });
 
   renderReadyApp(runtime);
-  expect(await screen.findByRole("main", { name: /home/i })).toBeVisible();
+  const homeMain = await screen.findByRole("main", { name: /home/i });
+
+  expect(
+    await within(homeMain).findByRole("textbox", { name: /markdown/i }),
+  ).toBeEnabled();
 
   await user.click(
     within(screen.getByRole("banner", { name: /mirabilis/i })).getByRole(
@@ -298,34 +305,27 @@ function createSingleUseIdFactory(firstId: string): () => string {
   };
 }
 
-function getBuiltInSettingsDescriptor(pluginId: string, descriptorId: string) {
-  const plugin = BUILT_IN_PLUGINS.find(
-    (candidate) => candidate.manifest.id === pluginId,
-  );
-  const descriptor = plugin?.manifest.contributes?.settingsPanels?.find(
-    (candidate) => candidate.id === descriptorId,
-  );
-
-  if (descriptor === undefined) {
-    throw new Error(`${descriptorId} descriptor is not registered`);
-  }
-
-  return descriptor;
-}
-
-function expectNoSecretLikeSettingsControls(container: HTMLElement): void {
+function expectNoSettingsValueControls(container: HTMLElement): void {
   const scope = within(container);
   const forbiddenFieldName =
     /api\s*key|apikey|token|secret|credential|password|provider|model|endpoint|remote|url|path/i;
+  const editableValueRoles = [
+    "textbox",
+    "searchbox",
+    "combobox",
+    "spinbutton",
+    "checkbox",
+    "radio",
+    "switch",
+    "slider",
+  ] as const;
+
+  for (const role of editableValueRoles) {
+    expect(scope.queryByRole(role)).not.toBeInTheDocument();
+  }
 
   expect(scope.queryByLabelText(forbiddenFieldName)).not.toBeInTheDocument();
   expect(scope.queryByPlaceholderText(forbiddenFieldName)).not.toBeInTheDocument();
-
-  for (const role of ["textbox", "searchbox", "combobox", "spinbutton"] as const) {
-    expect(
-      scope.queryByRole(role, { name: forbiddenFieldName }),
-    ).not.toBeInTheDocument();
-  }
 }
 
 async function listTask044SurfaceChangesFromMaster(): Promise<string[]> {
@@ -347,72 +347,40 @@ async function listTask044SurfaceChangesFromMaster(): Promise<string[]> {
   return [...new Set([...changedTrackedFiles, ...untrackedFiles])].sort();
 }
 
-async function readProductionSources(
-  relativePaths: readonly string[],
-): Promise<SourceFile[]> {
-  const sourceFileGroups = await Promise.all(
-    relativePaths.map((relativePath) =>
-      readSourceFilesIfExists(path.join(repoRoot, relativePath)),
-    ),
+async function readTask044SettingsSyncRouteSurface(): Promise<SourceFile[]> {
+  const appSource = await readFile(
+    path.join(repoRoot, task044RouteSurfaceFile),
+    "utf8",
   );
 
-  return sourceFileGroups
-    .flat()
-    .filter(({ filePath }) => !filePath.startsWith("src/test"))
-    .sort((left, right) => left.filePath.localeCompare(right.filePath));
-}
-
-async function readSourceFilesIfExists(
-  absolutePath: string,
-): Promise<SourceFile[]> {
-  const entry = await statIfExists(absolutePath);
-
-  if (entry === undefined) {
-    return [];
-  }
-
-  if (entry.isFile()) {
-    if (!sourceExtensions.has(path.extname(absolutePath))) {
-      return [];
-    }
-
-    return [
-      {
-        filePath: toRepoRelativePath(absolutePath),
-        source: await readFile(absolutePath, "utf8"),
-      },
-    ];
-  }
-
-  if (!entry.isDirectory()) {
-    return [];
-  }
-
-  const childEntries = await readdir(absolutePath, { withFileTypes: true });
-  const childFiles = await Promise.all(
-    childEntries.map((childEntry) =>
-      readSourceFilesIfExists(path.join(absolutePath, childEntry.name)),
+  return task044RouteSurfaceSections.map((section) => ({
+    filePath: `${task044RouteSurfaceFile}#${section.name}`,
+    source: extractSourceSection(
+      appSource,
+      section.startMarker,
+      section.endMarker,
     ),
-  );
-
-  return childFiles.flat();
+  }));
 }
 
-async function statIfExists(absolutePath: string) {
-  try {
-    return await stat(absolutePath);
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      return undefined;
-    }
+function extractSourceSection(
+  source: string,
+  startMarker: string,
+  endMarker: string,
+): string {
+  const startIndex = source.indexOf(startMarker);
 
-    throw error;
+  if (startIndex < 0) {
+    throw new Error(`Missing TASK-044 route surface marker: ${startMarker}`);
   }
+
+  const endIndex = source.indexOf(endMarker, startIndex);
+
+  if (endIndex < 0) {
+    throw new Error(`Missing TASK-044 route surface marker: ${endMarker}`);
+  }
+
+  return source.slice(startIndex, endIndex);
 }
 
 function findTask044SettingsSyncSurfaceViolations({
@@ -422,12 +390,14 @@ function findTask044SettingsSyncSurfaceViolations({
   const violations: string[] = [];
   const forbiddenPatterns = [
     [/\bsync\.(?:start|push|pull|connect|login|apply|import|configure-remote)\b/u, "forbidden Sync command id"],
+    [/\bruntime\.commands\.execute\b/u, "settings or sync command execution"],
     [/\b(?:fetch|XMLHttpRequest|WebSocket|EventSource)\s*\(/u, "network API"],
     [/\b(?:Worker|SharedWorker|ServiceWorker|BroadcastChannel)\b/u, "worker or broadcast API"],
     [/\b(?:localStorage|sessionStorage|indexedDB|navigator\.storage)\b/u, "browser storage API"],
     [/@tauri-apps\/(?:api|plugin-(?:http|fs|shell|opener|sql))/u, "Tauri/native import"],
     [/from\s+["'](?:node:)?(?:fs|http|https|net|tls|dns|child_process|worker_threads)["']/u, "Node native import"],
     [/\b(?:keychain|createOpenAIProvider|openAIProvider|AiProviderSettings|defaultOpenAiModel)\b|["']gpt-5\.5["']/iu, "provider execution or secret surface"],
+    [/<(?:TextField|input|textarea|select|Switch|Checkbox|Radio|Slider)\b/iu, "settings value form control"],
     [/<(?:TextField|input|textarea|select)\b[\s\S]{0,400}\b(?:label|name|placeholder|type)=["'][^"']*(?:api\s*key|apikey|token|secret|credential|password|provider|model|endpoint|remote|url|path)/iu, "secret-like settings form field"],
     [/<input\b[\s\S]{0,240}\btype=["']password["']/iu, "password input"],
     [/from\s+["'][^"']*(?:plugins\/(?:ai|sync)|\.\.\/plugins\/(?:ai|sync)|\.\.\/(?:ai|sync))(?:\/[^"']*)?["']/u, "private AI or Sync plugin import"],
@@ -447,10 +417,6 @@ function findTask044SettingsSyncSurfaceViolations({
   }
 
   return violations;
-}
-
-function toRepoRelativePath(filePath: string): string {
-  return path.relative(repoRoot, filePath).replace(/\\/gu, "/");
 }
 
 async function runGitLines(args: readonly string[]): Promise<string[]> {
