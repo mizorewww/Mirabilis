@@ -60,6 +60,17 @@ type NativeDbCall =
       readonly queries: readonly DbQuery[];
     };
 
+type NativeDbState = {
+  pages: Map<string, MarkdownPage>;
+  metadata: MetadataRecord[];
+  events: AppEvent[];
+  filters: Map<string, FilterDefinition>;
+};
+
+type TransactionResponseContext = {
+  missingFilterGets: Set<string>;
+};
+
 type RecordingNativeBridge = NativeBridge & {
   readonly calls: NativeDbCall[];
   clearCalls(): void;
@@ -71,6 +82,7 @@ type RecordingNativeBridgeOptions = {
   metadata?: readonly MetadataRecord[];
   events?: readonly AppEvent[];
   filters?: readonly FilterDefinition[];
+  queryResponses?: ReadonlyMap<DbPersistenceOperation, unknown>;
   rejectOperations?: ReadonlySet<DbPersistenceOperation>;
 };
 
@@ -113,21 +125,56 @@ const leakPattern =
 
 describe("runtime SQLite persistence", () => {
   it("hydrates pages, metadata, events, and filters before plugin activation", async () => {
-    const pageOne = pageRecord("page-hydrated-1", "Hydrated inbox");
+    const pageOne = pageRecord("page-hydrated-1", "Hydrated inbox", {
+      body: documentWithLine("hydrated-inbox-line", "First hydrated line"),
+    });
     const pageTwo = pageRecord("page-hydrated-2", "Hydrated child", {
       parentPageId: pageOne.id,
+      body: documentWithLine("hydrated-child-line", "Archived child line"),
+      archivedAt: "2026-06-14T10:15:00.000Z",
     });
     const metadata = [
-      metadataRecord("metadata-1", pageOne.id, "tag", "tags", ["today"], "tag"),
-      metadataRecord("metadata-2", pageTwo.id, "task", "status", "todo", "task"),
+      metadataRecord(
+        "metadata-1",
+        pageOne.id,
+        "tag",
+        "tags",
+        ["today"],
+        "json",
+        "tag",
+      ),
+      metadataRecord(
+        "metadata-2",
+        pageTwo.id,
+        "task",
+        "estimate",
+        3,
+        "number",
+        "task",
+      ),
     ];
     const events = [
-      eventRecord("event-1", pageOne.id, "timer", "started", {
-        segmentId: "segment-1",
-      }),
+      eventRecord(
+        "event-1",
+        pageOne.id,
+        "timer",
+        "time_segment_created",
+        {
+          durationMinutes: 25,
+          segmentId: "segment-1",
+        },
+      ),
     ];
     const filters = [
-      filterRecord("filter-1", "Today", "task.filter", "page.list"),
+      filterRecord("filter-1", "Today", "task.filter", "page.list", {
+        group: { field: "metadata.task.status" },
+        query: {
+          where: [
+            { field: "metadata.task.estimate", op: "gt", value: 1 },
+          ],
+        },
+        sort: [{ field: "updatedAt", direction: "desc" }],
+      }),
     ];
     const timeline: string[] = [];
     const bridge = createTimelineBridge();
@@ -143,53 +190,38 @@ describe("runtime SQLite persistence", () => {
     })) as RuntimeWithStorage;
 
     const activationIndex = timeline.indexOf("plugin.activate");
-    const operationsBeforeActivation = timeline
-      .slice(0, activationIndex)
-      .filter((entry) => entry.startsWith("db."));
-
-    expect(activationIndex).toBeGreaterThanOrEqual(0);
-    expect(operationsBeforeActivation).toStrictEqual([
+    const requiredHydrationOperations = [
       `db.${DB_PERSISTENCE_OPERATIONS.pagesList}`,
       `db.${DB_PERSISTENCE_OPERATIONS.metadataListForPage}:${pageOne.id}`,
       `db.${DB_PERSISTENCE_OPERATIONS.metadataListForPage}:${pageTwo.id}`,
       `db.${DB_PERSISTENCE_OPERATIONS.eventsList}`,
       `db.${DB_PERSISTENCE_OPERATIONS.filtersList}`,
+    ];
+
+    expect(activationIndex).toBeGreaterThanOrEqual(0);
+    for (const operation of requiredHydrationOperations) {
+      const operationIndex = timeline.indexOf(operation);
+
+      expect(operationIndex).toBeGreaterThanOrEqual(0);
+      expect(operationIndex).toBeLessThan(activationIndex);
+    }
+    expect(runtime.pages.list()).toStrictEqual([pageOne]);
+    expect(runtime.pages.list({ includeArchived: true })).toStrictEqual([
+      pageOne,
+      pageTwo,
     ]);
-    expect(runtime.pages.list({ includeArchived: true })).toMatchObject([
-      { id: pageOne.id, title: pageOne.title },
-      { id: pageTwo.id, title: pageTwo.title },
-    ]);
-    expect(runtime.metadata.list()).toMatchObject([
-      {
-        id: "metadata-1",
-        pageId: pageOne.id,
-        namespace: "tag",
-        key: "tags",
-        sourcePluginId: "tag",
-      },
-      {
-        id: "metadata-2",
-        pageId: pageTwo.id,
-        namespace: "task",
-        key: "status",
-        sourcePluginId: "task",
-      },
-    ]);
-    expect(runtime.events.list()).toMatchObject([
-      {
-        id: "event-1",
-        pageId: pageOne.id,
-        namespace: "timer",
-        sourcePluginId: "timer",
-      },
-    ]);
-    expect(runtime.filters.list()).toMatchObject([
-      {
-        id: "filter-1",
-        name: "Today",
-        sourcePluginId: "task.filter",
-      },
-    ]);
+    expect(runtime.pages.get(pageOne.id)).toStrictEqual(pageOne);
+    expect(runtime.pages.get(pageTwo.id)).toStrictEqual(pageTwo);
+    expect(runtime.metadata.list()).toStrictEqual(metadata);
+    expect(runtime.metadata.get(pageOne.id, "tag", "tags")).toStrictEqual(
+      metadata[0],
+    );
+    expect(runtime.metadata.get(pageTwo.id, "task", "estimate")).toStrictEqual(
+      metadata[1],
+    );
+    expect(runtime.events.list()).toStrictEqual(events);
+    expect(runtime.filters.list()).toStrictEqual(filters);
+    expect(runtime.filters.get("filter-1")).toStrictEqual(filters[0]);
 
     function createTimelineBridge(): RecordingNativeBridge {
       const recordingBridge = createRecordingNativeBridge({
@@ -244,6 +276,181 @@ describe("runtime SQLite persistence", () => {
 
     expect((inMemoryRuntime as RuntimeWithStorage).storage?.persistence).toBe(
       "in-memory-core",
+    );
+  });
+
+  it("does not let direct runtime page writes create memory-only rows in a fresh SQLite-backed runtime", async () => {
+    const bridge = createRecordingNativeBridge();
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+    let createdPage: MarkdownPage | undefined;
+
+    bridge.clearCalls();
+
+    const createError = captureSyncError(() => {
+      createdPage = runtime.pages.create({
+        title: "Direct Home Page",
+        body: documentWithLine("direct-home-line", "Direct home draft"),
+      });
+    });
+
+    if (createError !== undefined) {
+      expect(runtime.pages.list({ includeArchived: true })).not.toContainEqual(
+        expect.objectContaining({ title: "Direct Home Page" }),
+      );
+      expect(bridge.calls).toStrictEqual([]);
+
+      return;
+    }
+
+    expect(createdPage).toBeDefined();
+
+    const createBatch = findNativeTransactionContaining(
+      bridge,
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    );
+
+    expect(createBatch?.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+    expect(payloadRecord(createBatch?.[0])).toMatchObject({
+      id: createdPage?.id,
+      title: "Direct Home Page",
+      body: documentWithLine("direct-home-line", "Direct home draft"),
+    });
+
+    bridge.clearCalls();
+
+    await expect(
+      runtime.transaction.run((tx) =>
+        tx.pages.update(expectDefined(createdPage).id, {
+          title: "Direct Home Page Saved",
+          body: documentWithLine("direct-home-line-2", "Direct home saved"),
+        }),
+      ),
+    ).resolves.toMatchObject({
+      id: createdPage?.id,
+      title: "Direct Home Page Saved",
+    });
+    expect(expectSingleNativeTransaction(bridge).map((query) => query.operation))
+      .toStrictEqual([DB_PERSISTENCE_OPERATIONS.pagesUpdate]);
+  });
+
+  it("does not let plugin direct store writes bypass SQLite transaction semantics", async () => {
+    const bridge = createRecordingNativeBridge();
+    const directWriter = createPlugin("direct-writer", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "direct-writer.write",
+          title: "Direct writer",
+          handler(_input, commandContext) {
+            const page = commandContext.pages.create({
+              title: "Plugin direct page",
+              body: documentWithLine("plugin-direct-line", "Plugin direct body"),
+            });
+
+            commandContext.metadata.set({
+              pageId: page.id,
+              namespace: "direct-writer",
+              key: "state",
+              value: "direct",
+              valueType: "string",
+            });
+            commandContext.events.append({
+              pageId: page.id,
+              namespace: "direct-writer",
+              type: "direct-write",
+              payload: { mode: "direct" },
+            });
+
+            const filter = commandContext.filters.save({
+              id: "direct-writer.filter.direct",
+              name: "Direct writer filter",
+              query: {
+                where: [
+                  {
+                    field: "metadata.direct-writer.state",
+                    op: "eq",
+                    value: "direct",
+                  },
+                ],
+              },
+              viewType: "page.list",
+            });
+
+            return {
+              filterId: filter.id,
+              pageId: page.id,
+            };
+          },
+        });
+      },
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [directWriter],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.clearCalls();
+
+    let commandResult: unknown;
+    const commandError = await captureError(async () => {
+      commandResult = await runtime.commands.execute("direct-writer.write", {});
+    });
+
+    if (commandError !== undefined) {
+      expect(runtime.pages.list({ includeArchived: true })).not.toContainEqual(
+        expect.objectContaining({ title: "Plugin direct page" }),
+      );
+      expect(runtime.metadata.list()).not.toContainEqual(
+        expect.objectContaining({ namespace: "direct-writer", key: "state" }),
+      );
+      expect(runtime.events.list()).not.toContainEqual(
+        expect.objectContaining({ namespace: "direct-writer" }),
+      );
+      expect(runtime.filters.list()).not.toContainEqual(
+        expect.objectContaining({ id: "direct-writer.filter.direct" }),
+      );
+
+      return;
+    }
+
+    expect(commandResult).toMatchObject({
+      filterId: "direct-writer.filter.direct",
+      pageId: expect.stringMatching(/^page_/u),
+    });
+
+    const writeBatch = findNativeTransactionContaining(
+      bridge,
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    );
+
+    expect(writeBatch?.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+      DB_PERSISTENCE_OPERATIONS.metadataSet,
+      DB_PERSISTENCE_OPERATIONS.eventsAppend,
+      DB_PERSISTENCE_OPERATIONS.filtersSave,
+    ]);
+    expect(writeBatch?.map((query) => payloadRecord(query))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: "Plugin direct page" }),
+        expect.objectContaining({
+          namespace: "direct-writer",
+          key: "state",
+          sourcePluginId: "direct-writer",
+        }),
+        expect.objectContaining({
+          namespace: "direct-writer",
+          type: "direct-write",
+          sourcePluginId: "direct-writer",
+        }),
+        expect.objectContaining({
+          id: "direct-writer.filter.direct",
+          sourcePluginId: "direct-writer",
+        }),
+      ]),
     );
   });
 
@@ -441,6 +648,162 @@ describe("runtime SQLite persistence", () => {
     );
   });
 
+  it("does not silently create a missing native filter when updating a live-only filter", async () => {
+    const bridge = createRecordingNativeBridge();
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+    let liveOnlyFilter: FilterDefinition | undefined;
+
+    bridge.clearCalls();
+
+    const directSaveError = captureSyncError(() => {
+      liveOnlyFilter = runtime.filters.save({
+        id: "test-plugin.filter.live-only",
+        name: "Live-only filter",
+        query: { where: [] },
+        viewType: "page.list",
+        sourcePluginId: "test-plugin",
+      });
+    });
+
+    if (directSaveError !== undefined) {
+      expect(runtime.filters.list()).not.toContainEqual(
+        expect.objectContaining({ id: "test-plugin.filter.live-only" }),
+      );
+
+      return;
+    }
+
+    expect(liveOnlyFilter).toBeDefined();
+
+    const updateError = await captureError(async () => {
+      await runtime.transaction.run((tx) => {
+        tx.filters.update(expectDefined(liveOnlyFilter).id, {
+          name: "Should not be created natively",
+        });
+      });
+    });
+    const transactionBatch = expectSingleNativeTransaction(bridge);
+
+    expect(updateError).toBeDefined();
+    expect(String(updateError)).not.toMatch(leakPattern);
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.filtersGet,
+      DB_PERSISTENCE_OPERATIONS.filtersSave,
+    ]);
+    expect(runtime.filters.get(expectDefined(liveOnlyFilter).id)).toMatchObject({
+      name: "Live-only filter",
+    });
+  });
+
+  it("persists page update, page archive, metadata delete, and filter delete through one native transaction", async () => {
+    const updateTarget = pageRecord("page-update-target", "Update target", {
+      body: documentWithLine("update-target-line", "Original body"),
+    });
+    const archiveTarget = pageRecord("page-archive-target", "Archive target");
+    const metadataToDelete = metadataRecord(
+      "metadata-delete-target",
+      updateTarget.id,
+      "test-plugin",
+      "obsolete",
+      "remove me",
+      "string",
+      "test-plugin",
+    );
+    const filterToDelete = filterRecord(
+      "test-plugin.filter.delete-target",
+      "Delete target",
+      "test-plugin",
+      "page.list",
+    );
+    const bridge = createRecordingNativeBridge({
+      filters: [filterToDelete],
+      metadata: [metadataToDelete],
+      pages: [updateTarget, archiveTarget],
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+    const updatedBody = documentWithLine(
+      "updated-target-line",
+      "Updated durable body",
+    );
+
+    bridge.clearCalls();
+
+    const transactionResult = await runtime.transaction.run((tx) => {
+      const updated = tx.pages.update(updateTarget.id, {
+        title: "Updated durable title",
+        parentPageId: archiveTarget.id,
+        body: updatedBody,
+      });
+      const archived = tx.pages.archive(archiveTarget.id);
+      const deletedMetadata = tx.metadata.delete(
+        updateTarget.id,
+        "test-plugin",
+        "obsolete",
+      );
+      const deletedFilter = tx.filters.delete(filterToDelete.id);
+
+      return {
+        archivedAt: archived.archivedAt,
+        deletedFilterId: deletedFilter.id,
+        deletedMetadataId: deletedMetadata.id,
+        updatedTitle: updated.title,
+      };
+    });
+    const transactionBatch = expectSingleNativeTransaction(bridge);
+
+    expect(transactionResult).toMatchObject({
+      archivedAt: expect.any(String),
+      deletedFilterId: filterToDelete.id,
+      deletedMetadataId: metadataToDelete.id,
+      updatedTitle: "Updated durable title",
+    });
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+      DB_PERSISTENCE_OPERATIONS.pagesArchive,
+      DB_PERSISTENCE_OPERATIONS.metadataDelete,
+      DB_PERSISTENCE_OPERATIONS.filtersDelete,
+    ]);
+    expect(payloadRecord(transactionBatch[0])).toMatchObject({
+      id: updateTarget.id,
+      title: "Updated durable title",
+      parentPageId: archiveTarget.id,
+      body: updatedBody,
+    });
+    expect(payloadRecord(transactionBatch[1])).toStrictEqual({
+      id: archiveTarget.id,
+      archivedAt: transactionResult.archivedAt,
+    });
+    expect(payloadRecord(transactionBatch[2])).toStrictEqual({
+      pageId: updateTarget.id,
+      namespace: "test-plugin",
+      key: "obsolete",
+    });
+    expect(payloadRecord(transactionBatch[3])).toStrictEqual({
+      id: filterToDelete.id,
+    });
+    expect(runtime.pages.get(updateTarget.id)).toMatchObject({
+      body: updatedBody,
+      parentPageId: archiveTarget.id,
+      title: "Updated durable title",
+    });
+    expect(runtime.pages.get(archiveTarget.id).archivedAt).toBe(
+      transactionResult.archivedAt,
+    );
+    expect(
+      captureSyncError(() =>
+        runtime.metadata.get(updateTarget.id, "test-plugin", "obsolete"),
+      ),
+    ).toBeDefined();
+    expect(captureSyncError(() => runtime.filters.get(filterToDelete.id)))
+      .toBeDefined();
+  });
+
   it("keeps plugin transaction facades owner-scoped and durable without native handle leaks", async () => {
     const bridge = createRecordingNativeBridge();
     const alphaObservation: {
@@ -613,6 +976,23 @@ describe("runtime SQLite persistence", () => {
     await expectPublicNativeBridgeError(rawFailure);
   });
 
+  it("fails closed with a redacted startup error when native hydration returns null records", async () => {
+    const bridge = createRecordingNativeBridge({
+      queryResponses: new Map([[DB_PERSISTENCE_OPERATIONS.pagesList, null]]),
+    });
+
+    const startupError = await captureError(async () => {
+      await createAppRuntime({
+        builtInPlugins: [],
+        createNativeBridge: () => bridge,
+      });
+    });
+
+    expect(startupError).toBeDefined();
+    expect(String(startupError)).toMatch(/Native command failed/u);
+    expect(String(startupError)).not.toMatch(leakPattern);
+  });
+
   it("keeps frontend and Tauri persistence boundaries narrow", async () => {
     const sourceFiles = await listProductionSourceFiles(srcDirectory);
     const packageJson = parseJsonRecord(await readRepoFile("package.json"));
@@ -667,12 +1047,16 @@ describe("runtime SQLite persistence", () => {
 function createRecordingNativeBridge(
   options: RecordingNativeBridgeOptions = {},
 ): RecordingNativeBridge {
-  const pages = new Map((options.pages ?? []).map((page) => [page.id, page]));
-  const metadata = options.metadata ?? [];
-  const events = options.events ?? [];
-  const filters = new Map(
-    (options.filters ?? []).map((filter) => [filter.id, filter]),
-  );
+  let state: NativeDbState = {
+    pages: new Map(
+      (options.pages ?? []).map((page) => [page.id, cloneData(page)]),
+    ),
+    metadata: (options.metadata ?? []).map(cloneData),
+    events: (options.events ?? []).map(cloneData),
+    filters: new Map(
+      (options.filters ?? []).map((filter) => [filter.id, cloneData(filter)]),
+    ),
+  };
   const calls: NativeDbCall[] = [];
   let nextTransactionRejection: unknown;
 
@@ -688,7 +1072,7 @@ function createRecordingNativeBridge(
       async execute<Response>(query: DbQuery): Promise<Response> {
         calls.push({ kind: "execute", query: cloneData(query) });
 
-        return responseForQuery(query) as Response;
+        return responseForQuery(query, state) as Response;
       },
       async transaction<Response>(
         queries: DbQuery[],
@@ -702,7 +1086,17 @@ function createRecordingNativeBridge(
           throw rejection;
         }
 
-        return queries.map(responseForQuery) as NativeBridgeTransactionResult<Response>;
+        const draft = cloneNativeDbState(state);
+        const context: TransactionResponseContext = {
+          missingFilterGets: new Set(),
+        };
+        const responses = queries.map((query) =>
+          responseForQuery(query, draft, context),
+        );
+
+        state = draft;
+
+        return responses as NativeBridgeTransactionResult<Response>;
       },
     },
     shortcuts: {
@@ -720,61 +1114,313 @@ function createRecordingNativeBridge(
 
   return bridge;
 
-  function responseForQuery(query: DbQuery): unknown {
+  function responseForQuery(
+    query: DbQuery,
+    targetState: NativeDbState,
+    context?: TransactionResponseContext,
+  ): unknown {
     if (options.rejectOperations?.has(query.operation)) {
       throw new Error(
         "SELECT * FROM core_pages at /home/aac6fef/private.sqlite token=secret-token",
       );
     }
 
+    if (options.queryResponses?.has(query.operation)) {
+      return options.queryResponses.get(query.operation);
+    }
+
     switch (query.operation) {
       case DB_PERSISTENCE_OPERATIONS.pagesList:
-        return [...pages.values()].map(cloneData);
+        return [...targetState.pages.values()].map(cloneData);
       case DB_PERSISTENCE_OPERATIONS.pagesGet:
-        return pages.get(readPayloadId(query)) ?? null;
+        return cloneData(targetState.pages.get(readPayloadId(query)) ?? null);
+      case DB_PERSISTENCE_OPERATIONS.pagesCreate:
+        targetState.pages.set(readPayloadId(query), pageFromPayload(query));
+        return null;
+      case DB_PERSISTENCE_OPERATIONS.pagesUpdate:
+        updateNativePage(targetState, query);
+        return null;
+      case DB_PERSISTENCE_OPERATIONS.pagesArchive:
+        archiveNativePage(targetState, query);
+        return null;
       case DB_PERSISTENCE_OPERATIONS.metadataListForPage:
-        return metadata
+        return targetState.metadata
           .filter((record) => record.pageId === readPayloadPageId(query))
           .map(cloneData);
       case DB_PERSISTENCE_OPERATIONS.metadataGet: {
         const payload = payloadRecord(query);
 
-        return (
-          metadata.find(
+        return cloneData(
+          targetState.metadata.find(
             (record) =>
               record.pageId === payload.pageId &&
               record.namespace === payload.namespace &&
               record.key === payload.key,
-          ) ?? null
+          ) ?? null,
         );
       }
+      case DB_PERSISTENCE_OPERATIONS.metadataSet:
+        setNativeMetadata(targetState, query);
+        return null;
+      case DB_PERSISTENCE_OPERATIONS.metadataDelete:
+        deleteNativeMetadata(targetState, query);
+        return null;
       case DB_PERSISTENCE_OPERATIONS.eventsList:
-        return events.map(cloneData);
+        return targetState.events.map(cloneData);
+      case DB_PERSISTENCE_OPERATIONS.eventsAppend:
+        targetState.events.push(eventFromPayload(query));
+        return null;
       case DB_PERSISTENCE_OPERATIONS.filtersList:
-        return [...filters.values()].map(cloneData);
-      case DB_PERSISTENCE_OPERATIONS.filtersGet:
-        return filters.get(readPayloadId(query)) ?? null;
-      default:
+        return [...targetState.filters.values()].map(cloneData);
+      case DB_PERSISTENCE_OPERATIONS.filtersGet: {
+        const filterId = readPayloadId(query);
+        const filter = targetState.filters.get(filterId) ?? null;
+
+        if (filter === null) {
+          context?.missingFilterGets.add(filterId);
+        }
+
+        return cloneData(filter);
+      }
+      case DB_PERSISTENCE_OPERATIONS.filtersSave:
+        saveNativeFilter(targetState, query, context);
+        return null;
+      case DB_PERSISTENCE_OPERATIONS.filtersDelete:
+        deleteNativeFilter(targetState, query);
         return null;
     }
   }
 }
 
+function cloneNativeDbState(state: NativeDbState): NativeDbState {
+  return {
+    pages: new Map(
+      [...state.pages].map(([pageId, page]) => [pageId, cloneData(page)]),
+    ),
+    metadata: state.metadata.map(cloneData),
+    events: state.events.map(cloneData),
+    filters: new Map(
+      [...state.filters].map(([filterId, filter]) => [
+        filterId,
+        cloneData(filter),
+      ]),
+    ),
+  };
+}
+
+function pageFromPayload(query: DbQuery): MarkdownPage {
+  const payload = payloadRecord(query);
+
+  return {
+    id: readStringPayload(payload, "id"),
+    title: readStringPayload(payload, "title"),
+    body: payload.body as StructuredMarkdownDocument,
+    createdAt: readStringPayload(payload, "createdAt"),
+    updatedAt: readStringPayload(payload, "updatedAt"),
+    ...(typeof payload.parentPageId === "string"
+      ? { parentPageId: payload.parentPageId }
+      : {}),
+    ...(typeof payload.archivedAt === "string"
+      ? { archivedAt: payload.archivedAt }
+      : {}),
+  };
+}
+
+function updateNativePage(state: NativeDbState, query: DbQuery): void {
+  const payload = payloadRecord(query);
+  const pageId = readStringPayload(payload, "id");
+  const current = state.pages.get(pageId);
+
+  if (current === undefined) {
+    throw new Error("Native command failed");
+  }
+
+  const next: MarkdownPage = {
+    ...current,
+    title:
+      typeof payload.title === "string" ? payload.title : current.title,
+    body:
+      payload.body === undefined
+        ? current.body
+        : (payload.body as StructuredMarkdownDocument),
+    updatedAt:
+      typeof payload.updatedAt === "string"
+        ? payload.updatedAt
+        : current.updatedAt,
+  };
+
+  if (payload.parentPageId === null) {
+    delete next.parentPageId;
+  } else if (typeof payload.parentPageId === "string") {
+    next.parentPageId = payload.parentPageId;
+  }
+
+  state.pages.set(pageId, cloneData(next));
+}
+
+function archiveNativePage(state: NativeDbState, query: DbQuery): void {
+  const payload = payloadRecord(query);
+  const pageId = readStringPayload(payload, "id");
+  const current = state.pages.get(pageId);
+
+  if (current === undefined) {
+    throw new Error("Native command failed");
+  }
+
+  state.pages.set(pageId, {
+    ...current,
+    archivedAt: readStringPayload(payload, "archivedAt"),
+    updatedAt: readStringPayload(payload, "archivedAt"),
+  });
+}
+
+function setNativeMetadata(state: NativeDbState, query: DbQuery): void {
+  const record = metadataFromPayload(query);
+  const existingIndex = state.metadata.findIndex(
+    (candidate) =>
+      candidate.pageId === record.pageId &&
+      candidate.namespace === record.namespace &&
+      candidate.key === record.key,
+  );
+
+  if (existingIndex >= 0) {
+    state.metadata[existingIndex] = record;
+  } else {
+    state.metadata.push(record);
+  }
+}
+
+function deleteNativeMetadata(state: NativeDbState, query: DbQuery): void {
+  const payload = payloadRecord(query);
+  const pageId = readStringPayload(payload, "pageId");
+  const namespace = readStringPayload(payload, "namespace");
+  const key = readStringPayload(payload, "key");
+  const existingIndex = state.metadata.findIndex(
+    (record) =>
+      record.pageId === pageId &&
+      record.namespace === namespace &&
+      record.key === key,
+  );
+
+  if (existingIndex < 0) {
+    throw new Error("Native command failed");
+  }
+
+  state.metadata.splice(existingIndex, 1);
+}
+
+function eventFromPayload(query: DbQuery): AppEvent {
+  const payload = payloadRecord(query);
+  const event: AppEvent = {
+    id: readStringPayload(payload, "id"),
+    namespace: readStringPayload(payload, "namespace"),
+    type: readStringPayload(payload, "type"),
+    payload: payload.payload,
+    sourcePluginId: readStringPayload(payload, "sourcePluginId"),
+    createdAt: readStringPayload(payload, "createdAt"),
+  };
+
+  if (typeof payload.pageId === "string") {
+    event.pageId = payload.pageId;
+  }
+
+  return event;
+}
+
+function metadataFromPayload(query: DbQuery): MetadataRecord {
+  const payload = payloadRecord(query);
+
+  return {
+    id: readStringPayload(payload, "id"),
+    pageId: readStringPayload(payload, "pageId"),
+    namespace: readStringPayload(payload, "namespace"),
+    key: readStringPayload(payload, "key"),
+    value: payload.value,
+    valueType: readStringPayload(payload, "valueType") as MetadataRecord["valueType"],
+    sourcePluginId: readStringPayload(payload, "sourcePluginId"),
+    createdAt: readStringPayload(payload, "createdAt"),
+    updatedAt: readStringPayload(payload, "updatedAt"),
+  };
+}
+
+function saveNativeFilter(
+  state: NativeDbState,
+  query: DbQuery,
+  context?: TransactionResponseContext,
+): void {
+  const filter = filterFromPayload(query);
+
+  if (context?.missingFilterGets.has(filter.id) === true) {
+    throw new Error("Native command failed");
+  }
+
+  state.filters.set(filter.id, filter);
+}
+
+function deleteNativeFilter(state: NativeDbState, query: DbQuery): void {
+  const filterId = readPayloadId(query);
+
+  if (!state.filters.delete(filterId)) {
+    throw new Error("Native command failed");
+  }
+}
+
+function filterFromPayload(query: DbQuery): FilterDefinition {
+  const payload = payloadRecord(query);
+  const filter: FilterDefinition = {
+    id: readStringPayload(payload, "id"),
+    name: readStringPayload(payload, "name"),
+    query: payload.query as FilterDefinition["query"],
+    viewType: readStringPayload(payload, "viewType"),
+    createdAt: readStringPayload(payload, "createdAt"),
+    updatedAt: readStringPayload(payload, "updatedAt"),
+  };
+
+  if (Array.isArray(payload.sort)) {
+    filter.sort = payload.sort as FilterDefinition["sort"];
+  }
+
+  if (
+    typeof payload.group === "object" &&
+    payload.group !== null &&
+    !Array.isArray(payload.group)
+  ) {
+    filter.group = payload.group as FilterDefinition["group"];
+  }
+
+  if (typeof payload.sourcePluginId === "string") {
+    filter.sourcePluginId = payload.sourcePluginId;
+  }
+
+  return filter;
+}
+
 function pageRecord(
   id: string,
   title: string,
-  options: { parentPageId?: string } = {},
+  options: {
+    archivedAt?: string;
+    body?: StructuredMarkdownDocument;
+    parentPageId?: string;
+  } = {},
 ): MarkdownPage {
-  return {
+  const page: MarkdownPage = {
     id,
     title,
-    body: emptyDocument(),
+    body: options.body ?? emptyDocument(),
     createdAt: instant,
     updatedAt: instant,
-    ...(options.parentPageId === undefined
-      ? {}
-      : { parentPageId: options.parentPageId }),
   };
+
+  if (options.parentPageId !== undefined) {
+    page.parentPageId = options.parentPageId;
+  }
+
+  if (options.archivedAt !== undefined) {
+    page.archivedAt = options.archivedAt;
+  }
+
+  return page;
 }
 
 function metadataRecord(
@@ -783,6 +1429,7 @@ function metadataRecord(
   namespace: string,
   key: string,
   value: unknown,
+  valueType: MetadataRecord["valueType"],
   sourcePluginId: string,
 ): MetadataRecord {
   return {
@@ -791,7 +1438,7 @@ function metadataRecord(
     namespace,
     key,
     value,
-    valueType: Array.isArray(value) ? "json" : "string",
+    valueType,
     sourcePluginId,
     createdAt: instant,
     updatedAt: instant,
@@ -804,6 +1451,7 @@ function eventRecord(
   namespace: string,
   type: string,
   payload: unknown,
+  sourcePluginId = namespace,
 ): AppEvent {
   return {
     id,
@@ -811,7 +1459,7 @@ function eventRecord(
     namespace,
     type,
     payload,
-    sourcePluginId: namespace,
+    sourcePluginId,
     createdAt: instant,
   };
 }
@@ -821,11 +1469,12 @@ function filterRecord(
   name: string,
   sourcePluginId: string,
   viewType: string,
+  options: Partial<Pick<FilterDefinition, "group" | "query" | "sort">> = {},
 ): FilterDefinition {
-  return {
+  const filter: FilterDefinition = {
     id,
     name,
-    query: {
+    query: options.query ?? {
       where: [{ field: "metadata.tag.tags", op: "includes", value: "today" }],
     },
     viewType,
@@ -833,12 +1482,38 @@ function filterRecord(
     createdAt: instant,
     updatedAt: instant,
   };
+
+  if (options.sort !== undefined) {
+    filter.sort = options.sort;
+  }
+
+  if (options.group !== undefined) {
+    filter.group = options.group;
+  }
+
+  return filter;
 }
 
 function emptyDocument(): StructuredMarkdownDocument {
   return {
     type: "doc",
     content: [],
+  };
+}
+
+function documentWithLine(
+  blockId: string,
+  text: string,
+): StructuredMarkdownDocument {
+  return {
+    type: "doc",
+    content: [
+      {
+        blockId,
+        type: "markdown.line",
+        text,
+      },
+    ],
   };
 }
 
@@ -874,6 +1549,24 @@ function expectSingleNativeTransaction(
   return transactionCalls[0]?.queries ?? [];
 }
 
+function findNativeTransactionContaining(
+  bridge: RecordingNativeBridge,
+  operation: DbPersistenceOperation,
+): readonly DbQuery[] | undefined {
+  return bridge.calls
+    .filter((call): call is Extract<NativeDbCall, { kind: "transaction" }> =>
+      call.kind === "transaction",
+    )
+    .map((call) => call.queries)
+    .find((queries) => queries.some((query) => query.operation === operation));
+}
+
+function expectDefined<Value>(value: Value | undefined): Value {
+  expect(value).toBeDefined();
+
+  return value as Value;
+}
+
 function payloadRecord(query: DbQuery | undefined): JsonRecord {
   if (
     query === undefined ||
@@ -885,6 +1578,16 @@ function payloadRecord(query: DbQuery | undefined): JsonRecord {
   }
 
   return query.payload as JsonRecord;
+}
+
+function readStringPayload(payload: JsonRecord, key: string): string {
+  const value = payload[key];
+
+  if (typeof value !== "string") {
+    throw new Error(`Expected payload ${key}`);
+  }
+
+  return value;
 }
 
 function readPayloadId(query: DbQuery): string {
