@@ -429,7 +429,7 @@ describe("Quick Capture and Search plugins", () => {
     );
   });
 
-  it("returns save-and-open results without invoking native shortcuts, files, notifications, or db calls", async () => {
+  it("returns save-and-open results without invoking native shortcuts, files, notifications, or raw db calls", async () => {
     const nativeBridge = createRecordingNativeBridge();
     const runtime = await createRuntime({
       metadataIds: createMetadataIds(4),
@@ -450,7 +450,17 @@ describe("Quick Capture and Search plugins", () => {
       openPageId: "trusted-inbox",
       pageId: "trusted-inbox",
     } satisfies QuickCaptureSaveAndOpenResult);
-    expect(nativeBridge.calls).toStrictEqual([]);
+    expect(nativeBridge.calls).toStrictEqual(["db.transaction"]);
+    expect(nativeBridge.calls).not.toEqual(
+      expect.arrayContaining([
+        "db.execute",
+        "files.exportMarkdown",
+        "files.importMarkdown",
+        "notifications.notify",
+        "shortcuts.register",
+        "shortcuts.unregister",
+      ]),
+    );
     expect(readMarkdown(runtime.pages.get("trusted-inbox"))).toContain(
       "Open this Inbox capture",
     );

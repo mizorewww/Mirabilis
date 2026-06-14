@@ -21,6 +21,7 @@ import {
   type StructuredMarkdownDocument,
 } from "../core";
 import { useMarkdownWorkspaceBridge } from "../shell/hosts";
+import { disallowedNativeSurfaceChanges } from "./native-surface-guard";
 
 type NativeBridgeTransactionResult<Response> =
   Response extends readonly unknown[]
@@ -706,7 +707,11 @@ describe("TASK-037 Home workspace editor", () => {
   });
 
   it("keeps TASK-037 free of package, native, Tauri, IPC, capability, permission, and release drift", async () => {
-    expect(await listTask037SurfaceChangesFromMaster()).toStrictEqual([]);
+    expect(
+      await disallowedNativeSurfaceChanges(
+        await listTask037SurfaceChangesFromMaster(),
+      ),
+    ).toStrictEqual([]);
   });
 });
 

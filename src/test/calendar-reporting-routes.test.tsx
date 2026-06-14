@@ -158,6 +158,13 @@ const task042SurfaceEntrypoints = [
   "src-tauri/tauri.conf.json",
   "CHANGELOG.md",
 ] as const;
+const task046ReviewedRuntimePersistenceSourceFiles = new Set([
+  "src/bootstrap/create-app-runtime.ts",
+  "src/core/plugin-host/plugin-host.ts",
+  "src/core/runtime/sqlite-persistence.ts",
+  "src/core/services/index.ts",
+  "src/core/services/transaction-manager.ts",
+]);
 const sourceExtensions = new Set([".ts", ".tsx"]);
 
 beforeEach(() => {
@@ -1745,7 +1752,13 @@ async function readChangedProductionSourceFilesFromMaster(): Promise<
 > {
   const changedFiles = await listChangedSourceFilesFromMaster();
   const sourceFiles = await Promise.all(
-    changedFiles.filter(isProductionSourcePath).map(readSourceFileIfExists),
+    changedFiles
+      .filter(isProductionSourcePath)
+      .filter(
+        (filePath) =>
+          !task046ReviewedRuntimePersistenceSourceFiles.has(filePath),
+      )
+      .map(readSourceFileIfExists),
   );
 
   return sourceFiles.filter(

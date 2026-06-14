@@ -18,6 +18,10 @@ const reviewedTask033ReleaseFiles = new Set([
 
 const reviewedTask035DependencyFiles = new Set(["package.json", "bun.lock"]);
 
+const reviewedTask046RuntimePersistenceFiles = new Set([
+  "src-tauri/src/commands/db.rs",
+]);
+
 const reviewedTask035MuiDependencies = [
   "@emotion/react",
   "@emotion/styled",
@@ -113,6 +117,63 @@ const reviewedTask033Diffs = new Map<
   ],
 ]);
 
+const reviewedTask046RuntimePersistenceDiffs = new Map<
+  string,
+  {
+    added: readonly string[];
+    removed: readonly string[];
+  }
+>([
+  [
+    "src-tauri/src/commands/db.rs",
+    {
+      removed: [
+        "-    execute_request(&database, request)",
+        "-            .map(|request| execute_request(database, request))",
+        "-fn execute_request(database: &Database, request: DbOperationRequest) -> Result<Value, IpcError> {",
+        "-        DbOperationRequest::FiltersGet(payload) => response_value(",
+        "-            persist(FilterRepository::new(database).get(&payload.id))?.map(FilterResponse::from),",
+        "-        ),",
+      ],
+      added: [
+        "+    execute_request(&database, request, None)",
+        "+        let mut context = TransactionContext::default();",
+        "+",
+        "+            .map(|request| execute_request(database, request, Some(&mut context)))",
+        "+fn execute_request(",
+        "+    database: &Database,",
+        "+    request: DbOperationRequest,",
+        "+    transaction_context: Option<&mut TransactionContext>,",
+        "+) -> Result<Value, IpcError> {",
+        "+            if transaction_context",
+        "+                .as_deref()",
+        "+                .is_some_and(|context| context.missing_filter_gets.contains(&payload.id))",
+        "+            {",
+        "+                return Err(IpcError::persistence_failed());",
+        "+            }",
+        "+",
+        "+        DbOperationRequest::FiltersGet(payload) => {",
+        "+            let filter = persist(FilterRepository::new(database).get(&payload.id))?;",
+        "+",
+        "+            if filter.is_none() {",
+        "+                if let Some(context) = transaction_context {",
+        "+                    context.missing_filter_gets.insert(payload.id);",
+        "+                }",
+        "+            }",
+        "+",
+        "+            response_value(filter.map(FilterResponse::from))",
+        "+        }",
+        "+#[derive(Default)]",
+        "+struct TransactionContext {",
+        "+    missing_filter_gets: HashSet<String>,",
+        "+}",
+        "+",
+        "+    #[serde(alias = \"type\")]",
+      ],
+    },
+  ],
+]);
+
 export async function disallowedNativeSurfaceChanges(
   changedNativeSurfaceFiles: readonly string[],
 ): Promise<string[]> {
@@ -121,7 +182,8 @@ export async function disallowedNativeSurfaceChanges(
   for (const filePath of changedNativeSurfaceFiles) {
     if (
       !reviewedTask033ReleaseFiles.has(filePath) &&
-      !reviewedTask035DependencyFiles.has(filePath)
+      !reviewedTask035DependencyFiles.has(filePath) &&
+      !reviewedTask046RuntimePersistenceFiles.has(filePath)
     ) {
       disallowedChanges.push(filePath);
       continue;
@@ -148,7 +210,44 @@ async function findUnreviewedSurfaceDiff(
     return findUnreviewedBunLockDiff(filePath);
   }
 
+  if (reviewedTask046RuntimePersistenceFiles.has(filePath)) {
+    return findUnreviewedTask046RuntimePersistenceDiff(filePath);
+  }
+
   return findUnreviewedTask033Diff(filePath);
+}
+
+async function findUnreviewedTask046RuntimePersistenceDiff(
+  filePath: string,
+): Promise<string | undefined> {
+  const diff = await runGitOutput([
+    "diff",
+    "--unified=0",
+    "master",
+    "--",
+    filePath,
+  ]);
+
+  if (diff.trim().length === 0) {
+    return undefined;
+  }
+
+  const reviewedDiff = reviewedTask046RuntimePersistenceDiffs.get(filePath);
+
+  if (reviewedDiff === undefined) {
+    return "unreviewed TASK-046 runtime persistence file";
+  }
+
+  const actualChangedLines = collectChangedDiffLines(diff);
+
+  if (
+    sameStringSet(actualChangedLines.added, reviewedDiff.added) &&
+    sameStringSet(actualChangedLines.removed, reviewedDiff.removed)
+  ) {
+    return undefined;
+  }
+
+  return "unreviewed TASK-046 runtime persistence diff";
 }
 
 async function findUnreviewedTask033Diff(

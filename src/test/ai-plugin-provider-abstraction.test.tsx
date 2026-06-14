@@ -1086,6 +1086,7 @@ async function loadAiTestSupport(): Promise<AiTestSupportModule> {
 async function createRuntime(): Promise<AppRuntime> {
   return createAppRuntime({
     createNativeBridge: () => createNoopNativeBridge(),
+    createStorageFacade: () => ({ persistence: "in-memory-core" }),
   });
 }
 

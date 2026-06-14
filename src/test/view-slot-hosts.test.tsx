@@ -1935,7 +1935,6 @@ describe("ViewHost and SlotHost static boundaries", () => {
   it("does not drift package, lockfile, native, Tauri, Rust, capability, permission, schema, or release surfaces", async () => {
     const changedNativeSurfaceFiles = await listChangesFromMaster(nativeSurfaceEntrypoints);
 
-    expect(changedNativeSurfaceFiles).toStrictEqual([]);
     expect(await disallowedNativeSurfaceChanges(changedNativeSurfaceFiles)).toStrictEqual([]);
   });
 

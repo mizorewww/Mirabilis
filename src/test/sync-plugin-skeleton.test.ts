@@ -187,7 +187,9 @@ const syncProductionEntrypoints = [
 
 describe("Sync Plugin skeleton", () => {
   it("registers Sync as a built-in plugin with no runtime commands, views, settings panels, or stale ids", async () => {
-    const runtime = await createAppRuntime();
+    const runtime = await createAppRuntime({
+      createStorageFacade: () => ({ persistence: "in-memory-core" }),
+    });
     const builtInPluginIds = BUILT_IN_PLUGINS.map(
       (plugin) => plugin.manifest.id,
     );
