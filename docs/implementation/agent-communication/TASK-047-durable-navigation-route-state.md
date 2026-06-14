@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance running; parent is waiting for final statuses.
+- Status: pre-test guidance running; Laplace security guidance complete; parent is waiting for remaining final statuses.
 
 ## Scope
 
@@ -50,8 +50,9 @@
 - Gibbs (`planner`, agent `019ec6e2-918b-7862-9881-dfd2dbe4c5ec`) was spawned at 2026-06-15 00:06 CST for TASK-047 implementation slice and TDD plan.
 - Archimedes (`docs_researcher`, agent `019ec6e2-940a-7963-ab0c-c42d9276e0e6`) was spawned at 2026-06-15 00:06 CST for current MUI, React, Testing Library/user-event, and local TASK-038 navigation notes.
 - Laplace (`security_reviewer`, agent `019ec6e2-973f-7883-a54b-57688677304b`) was spawned at 2026-06-15 00:06 CST for route-state persistence/security red-test targets.
+- Laplace returned final status at 2026-06-15 00:09 CST with no files modified and no tests run. P0 guidance: tests must prove route-state serialization rejects raw page bodies, snippets, metadata/event/filter objects, full route DTOs, SQL/params/table names, filesystem paths, secrets/tokens/provider values, NativeBridge, stores, registries, command registry, plugin host, functions/accessors/symbols/prototypes/runtime handles; page restoration must validate existence, runtime ownership, and non-archived state before rendering; Home restoration must reuse a valid persisted Home ID without creating duplicates; filter restoration must re-run filter/source-plugin/view/metadata-owner checks; recent pages must be bounded and drop foreign/missing/archived IDs; errors must not leak titles, bodies, filter names/queries, plugin IDs where unsafe, raw errors, stacks, SQL, paths, tokens, or native/provider details. Parent decision: pass these as mandatory red-test and implementer constraints.
 - Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) was spawned at 2026-06-15 00:06 CST for stale MUI/React/testing API risk.
 
 ## Next Action
 
-- Wait for pre-test guidance final statuses before spawning `test_writer`. A wait timeout is not a failure or idle signal.
+- Wait for Gibbs, Archimedes, and Poincare final statuses before spawning `test_writer`. A wait timeout is not a failure or idle signal.
