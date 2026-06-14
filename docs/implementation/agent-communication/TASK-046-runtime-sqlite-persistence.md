@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation review fixes committed; full frontend failures require follow-up test/regression triage.
+- Status: full frontend test-fix/triage delegated to Mencius; parent is waiting for final status.
 
 ## Scope
 
@@ -90,7 +90,9 @@
 - Commit `0b75f18` (`Erdos(implementation-fix)(Wire SQLite-backed Runtime Persistence): close persistence bypass findings`) records the implementation fix.
 - Parent focused validation passed: TASK-046/app-bootstrap/runtime-provider suite passed with 26 tests; plugin-host/native-bridge suite passed with 65 tests; Rust `ipc_persistence` passed with 13 tests; typecheck, lint, Rust fmt check, Rust clippy, and diff-check passed.
 - Full frontend probe is still red: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failure categories: stale static native-drift guards, test helpers/no-op bridges that now provide invalid hydration responses, Quick Capture expecting no `db.transaction` despite durable plugin direct writes, and timer timeline behavior that needs targeted triage under the new plugin transaction path.
+- Erdos was closed after final status and validation were recorded.
+- Mencius (`test_writer`, agent `019ec5df-ad1c-7b60-b65b-6febd7322eaf`) was spawned at 2026-06-14 19:23 CST for full frontend test-fix/triage only. It must distinguish stale tests from real regressions, preserve TASK-046 review-fix coverage, and stop with a blocker if timer timeline behavior is a production regression.
 
 ## Next Action
 
-- Close Erdos after this status is recorded, then spawn a test-fix/triage agent for the full frontend failures. A wait timeout is not a failure or idle signal.
+- Wait for Mencius's final status. A wait timeout is not a failure or idle signal. If Mencius reports a real production regression, record it and delegate implementation.

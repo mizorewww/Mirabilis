@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:22 CST.
+Last updated: 2026-06-14 19:23 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:22 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 implementation review fixes committed; full frontend suite has expected follow-up failures to delegate.
+- Current phase: TASK-046 full frontend test-fix/triage delegated; parent is waiting for Mencius's final status.
 
 ## Current Outcome
 
@@ -38,6 +38,7 @@ Last updated: 2026-06-14 19:22 CST.
 - Erdos returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/plugin-host/plugin-host.ts`, and `src-tauri/src/commands/db.rs`. Commit `0b75f18` records implementation fixes for direct runtime page write-through, plugin direct store writes through Core transactions, archived-page hydration, native filter update miss rollback, and fail-closed null hydration responses.
 - Parent focused validation passed: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` (26 tests), `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - Full frontend probe is still red and blocks merge: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failures are mostly stale static no-native-drift guards now seeing `src-tauri/src/commands/db.rs`, old no-op NativeBridge tests that return invalid hydration responses, one Quick Capture direct write assertion now seeing `db.transaction`, and timer timeline tests that need review under the new plugin transaction path.
+- Erdos was closed after final status and validation were recorded. Mencius (`test_writer`, `019ec5df-ad1c-7b60-b65b-6febd7322eaf`) was spawned at 2026-06-14 19:23 CST for full frontend test-fix/triage only. It may edit tests/shared test helpers, must preserve TASK-046 coverage and static boundary intent, and must stop with a blocker if timer timeline failures are real production regressions.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -123,7 +124,7 @@ Last updated: 2026-06-14 19:22 CST.
 
 ## Next Parent Actions
 
-- Close Erdos after final status and validation are recorded.
-- Spawn a focused test-fix agent for the full frontend failures. The agent must distinguish stale test expectations from real regressions and must not weaken TASK-046 review-fix coverage.
+- Wait for Mencius's final status. A wait timeout is not a failure or idle signal.
+- If Mencius reports only test fixes and validation is green, commit them. If it reports a real production regression, record the blocker and delegate implementation.
 - Spawn `doc_writer` for Godel's docs P1/P2 after implementation behavior is stable enough to document.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.
