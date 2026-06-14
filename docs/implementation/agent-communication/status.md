@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 14:04 CST.
+Last updated: 2026-06-14 14:05 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 14:04 CST.
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: task started; parent is preparing pre-test guidance delegation.
+- Current phase: TASK-044 pre-test guidance agents are running; parent is waiting for completion/final statuses.
 
 ## Current Outcome
 
@@ -16,6 +16,7 @@ Last updated: 2026-06-14 14:04 CST.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
 - Agent/config validation passed for TASK-044 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-044 pre-test guidance running as of 2026-06-14 14:05 CST: Darwin (`planner`, `019ec4bb-f239-77c2-8ae2-4ad86405f398`), Kuhn (`docs_researcher`, `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`), Leibniz (`security_reviewer`, `019ec4bb-f804-7993-8bb5-87ec28b47c6a`), and Hegel (`deprecation_auditor`, `019ec4bb-fa7b-7df2-a9f1-8fde208b0cb1`).
 
 ## Initial TASK-044 Scope
 
@@ -52,5 +53,4 @@ Last updated: 2026-06-14 14:04 CST.
 
 ## Next Parent Actions
 
-- Mark TASK-044 `[~]` in `docs/implementation/progress.md` and commit the start state.
-- Spawn pre-test guidance agents before test writing: planner, docs_researcher, security_reviewer, and deprecation_auditor.
+- Wait for TASK-044 pre-test guidance completion/final statuses before delegating red tests.

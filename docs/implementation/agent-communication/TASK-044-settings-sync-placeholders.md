@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: task started; parent is preparing pre-test guidance delegation.
+- Status: pre-test guidance agents are running; parent is waiting for completion/final statuses.
 
 ## Scope
 
@@ -48,8 +48,11 @@
 
 ## Agent Notes
 
-- No TASK-044 child agents have returned final status yet.
+- Darwin (`planner`, agent `019ec4bb-f239-77c2-8ae2-4ad86405f398`) spawned at 2026-06-14 14:05 CST for task slicing, acceptance criteria, and red-test guidance.
+- Kuhn (`docs_researcher`, agent `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`) spawned at 2026-06-14 14:05 CST for local docs plus current MUI/React/Testing Library guidance.
+- Leibniz (`security_reviewer`, agent `019ec4bb-f804-7993-8bb5-87ec28b47c6a`) spawned at 2026-06-14 14:05 CST for secret/settings/sync boundary guidance.
+- Hegel (`deprecation_auditor`, agent `019ec4bb-fa7b-7df2-a9f1-8fde208b0cb1`) spawned at 2026-06-14 14:05 CST for MUI/React/testing deprecation guidance.
 
 ## Next Action
 
-- Spawn pre-test guidance agents, then wait for completion/final statuses before delegating red tests.
+- Wait for pre-test guidance agents to return completion/final statuses before delegating red tests.
