@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:23 CST - TASK-047 Faraday P2 red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `459aa52` (`Godel(test-fix)(Add Durable Navigation And Route State): add accessor hardening red tests`).
+- Godel (`test_writer`) added focused tests in `src/test/durable-navigation-route-state.test.tsx` for nested active-route accessors during parse and serialize.
+- Parent red validation matched Faraday's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 18 passing tests because nested `activeRoute` accessors were invoked and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for the accessor hardening fix.
+
 ### 2026-06-15 01:20 CST - TASK-047 Faraday P2 red tests delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
