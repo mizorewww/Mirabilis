@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:48 CST - TASK-047 review complete, fixes required
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bohr (`security_reviewer`) found no P0/P1 security issues and two P2 hardening items: exact-key clone active routes inside `createDurableRouteState`, and scrub or overwrite malformed app-shell route-state records after fail-closed restoration.
+- Sagan (`deprecation_auditor`) found no deprecated API/stale usage or package/native drift. It found P1 StrictMode risk from creating durable Home pages inside a `useState` initializer, and P1 rapid-navigation route persistence loss from overlapping transaction rejection without retry.
+- Combined merge blockers: Dewey P1 recent pages regression on trusted filter routes; Dewey/Sagan P1 rapid navigation persistence retry; Sagan P1 StrictMode-unsafe Home creation; Pauli P1 test-quality gaps for filter persistence from user action, persisted saved-filter/`SlotHost` restore, and stronger fail-closed coverage; Popper P1 docs sync for product and architecture.
+- Parent decision: TASK-047 is not merge-ready. Next action is review-fix red tests, implementation fixes, docs sync, then targeted re-review.
+
 ### 2026-06-15 00:45 CST - TASK-047 partial review findings recorded
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
