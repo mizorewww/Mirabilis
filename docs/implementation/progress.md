@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:10 CST - TASK-046 Pasteur P2 implementation green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- James (`implementer`) returned final status with production changes in `src/core/services/transaction-manager.ts`.
+- Commit: `db227ab` (`James(implementation-fix)(Wire SQLite-backed Runtime Persistence): merge plugin direct writes after commit`).
+- Fixed: after an async persisted Core transaction commit resolves, the transaction manager now merges live post-commit metadata, event, and filter state so plugin direct non-page writes made during the commit window remain visible in live memory. Transaction changes still win for the same metadata identity, event id, or filter id.
+- Parent validation passed: focused TASK-046/plugin-host/bootstrap/provider suite passed with 77 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; `bun run test:frontend` passed with 52 files and 829 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Next action: close James and run focused targeted re-review before `release_checker` and final `bun run check:full`.
+
 ### 2026-06-14 23:05 CST - TASK-046 Pasteur P2 implementation delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

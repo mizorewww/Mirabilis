@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Pasteur P2 implementation delegated; parent is waiting for James's final status.
+- Status: Pasteur P2 implementation green; parent is preparing focused targeted re-review.
 
 ## Scope
 
@@ -135,7 +135,10 @@
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - Hume was closed after final status and validation were recorded.
 - James (`implementer`, agent `019ec6aa-85d0-7170-a6e4-98ba9bc37b66`) was spawned at 2026-06-14 23:05 CST to fix the plugin direct metadata/event/filter live-memory interleaving regression. James owns production changes and must return final status before the parent validates or commits implementation.
+- James returned final status with production changes in `src/core/services/transaction-manager.ts`. Commit `db227ab` (`James(implementation-fix)(Wire SQLite-backed Runtime Persistence): merge plugin direct writes after commit`) records the fix.
+- James changed the transaction manager so, after an async persisted Core transaction commit resolves, live post-commit metadata, event, and filter state are merged with the transaction snapshots. Plugin direct metadata/event/filter writes made during the Core commit window remain visible after commit, while Core transaction changes still win for the same metadata identity, event id, or filter id.
+- Parent validation passed after James: focused TASK-046/plugin-host/bootstrap/provider suite passed with 77 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; full frontend passed with 52 files and 829 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 
 ## Next Action
 
-- Wait for James's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.
+- Close James and run focused targeted re-review for Pasteur's new P2 closure. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
