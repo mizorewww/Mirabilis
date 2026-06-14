@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 20:01 CST.
+Last updated: 2026-06-14 22:48 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 20:01 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 targeted follow-up implementation committed; focused re-review is next.
+- Current phase: TASK-046 focused re-review retry needed after agent usage-limit errors.
 
 ## Current Outcome
 
@@ -59,6 +59,8 @@ Last updated: 2026-06-14 20:01 CST.
 - Plato returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, and `src/core/services/transaction-manager.ts`. Commit `60bdf27` records the implementation follow-up.
 - Plato's fix preserves direct runtime page writes made during an in-flight persisted transaction commit by merging post-commit live page state, and replaces broad plugin command/lifecycle transaction wrapping with a SQLite direct-store runner that emits native transactions only when plugin direct store writes occur.
 - Parent validation passed after Plato: focused TASK-046/plugin-host/bootstrap/provider suite passed with 76 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; `bun run test:frontend` passed with 52 files and 828 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
+- Plato was closed after final status and validation were recorded. Focused re-review was attempted with Wegener (`test_quality_reviewer`, `019ec602-cf6e-7f71-ac2c-c0b0f65ae057`), Franklin (`reviewer`, `019ec602-d230-7b11-a390-766d26e9a06e`), and Archimedes (`docs_researcher`, `019ec602-d4ba-76f2-bc08-c8704ced104d`). All three returned final errored status due the Codex usage limit: "You've hit your usage limit ... try again at 10:27 PM." This is a concrete agent-unavailable condition, not a wait timeout.
+- Parent decision: do not treat these errored agents as successful review. Record and close them, then retry focused re-review now that local time is past the reported reset time.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -146,6 +148,6 @@ Last updated: 2026-06-14 20:01 CST.
 
 ## Next Parent Actions
 
-- Close Plato after final status and validation are recorded.
-- Spawn focused targeted re-review for Confucius's P1, Curie's two P2s, and Pauli's docs P2 closure.
-- Retry `release_checker` after targeted fixes and re-review clear P0/P1 findings. A wait timeout is not a failure or idle signal.
+- Close the errored focused re-review agents after this status is recorded.
+- Retry focused targeted re-review for Confucius's P1, Curie's two P2s, and Pauli's docs P2 closure.
+- Retry `release_checker` after targeted re-review clears P0/P1 findings. A wait timeout is not a failure or idle signal.
