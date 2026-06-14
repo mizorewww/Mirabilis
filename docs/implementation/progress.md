@@ -90,9 +90,38 @@ Status markers:
 - [x] TASK-044: Add Settings And Sync Placeholders
 - [x] TASK-045: Responsive State And Accessibility Polish
 
+## Milestone M10: Durable runtime and advanced plugin surfaces
+
+- [ ] TASK-046: Wire SQLite-backed Runtime Persistence
+- [ ] TASK-047: Add Durable Navigation And Route State
+- [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
+- [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
+- [ ] TASK-050: Mount Mobile Quick Capture Toolbar
+- [ ] TASK-051: Add Native Shortcut Boundary For Capture And Search
+- [ ] TASK-052: Add Persistent Search Index And SQLite FTS
+- [ ] TASK-053: Add Plugin Settings Runtime And Settings Panel Host
+- [ ] TASK-054: Add AI Provider Settings, Secret Storage, And Live Execution
+- [ ] TASK-055: Define Cross-Plugin Query And Feed Facade
+- [ ] TASK-056: Add Persistent Calendar, Reports, And Dashboard Feeds
+- [ ] TASK-057: Add Timer Totals And Saved Timer Filters
+- [ ] TASK-058: Add Calendar Month And Manual Segment Editing
+- [ ] TASK-059: Add Habit And Heatmap App-Shell Surfaces
+- [ ] TASK-060: Add ML Durable Prediction Feed And Model Refresh
+- [ ] TASK-061: Add AI Suggestion Acceptance Workflows
+- [ ] TASK-062: Add Sync Settings, Transport, And Conflict UI
+- [ ] TASK-063: Add Native Markdown Import/Export
+- [ ] TASK-064: Harden Release Surfaces
+
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 18:24 CST - Roadmap backlog continuation docs updated
+
+- Branch: `docs/task-046-roadmap-backlog`.
+- Scope: docs-only roadmap continuation after TASK-045 merge; no source, test, package, native, or production files are in scope.
+- Added M10 backlog entries for TASK-046 through TASK-064 from Einstein's read-only audit so autonomous development has new `[ ]` work.
+- TASK-046 `Wire SQLite-backed Runtime Persistence` is the next unblocked implementation task expected after this docs branch is merged.
 
 ### 2026-06-14 18:15 CST - TASK-045 merged to master
 
