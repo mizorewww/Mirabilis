@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 14:05 CST.
+Last updated: 2026-06-14 14:10 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 14:05 CST.
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-044 pre-test guidance agents are running; parent is waiting for completion/final statuses.
+- Current phase: TASK-044 pre-test guidance complete; parent is preparing red-test delegation.
 
 ## Current Outcome
 
@@ -17,6 +17,7 @@ Last updated: 2026-06-14 14:05 CST.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
 - Agent/config validation passed for TASK-044 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-044 pre-test guidance running as of 2026-06-14 14:05 CST: Darwin (`planner`, `019ec4bb-f239-77c2-8ae2-4ad86405f398`), Kuhn (`docs_researcher`, `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`), Leibniz (`security_reviewer`, `019ec4bb-f804-7993-8bb5-87ec28b47c6a`), and Hegel (`deprecation_auditor`, `019ec4bb-fa7b-7df2-a9f1-8fde208b0cb1`).
+- TASK-044 pre-test guidance completed at 2026-06-14 14:10 CST with no blockers. Darwin recommended a Settings route opened from the existing top-bar Settings control, with an embedded Sync skeleton section/panel rather than a top-level Sync Drawer route. Kuhn verified current MUI v9.1.1, React 19.2, Testing Library/user-event, and Vitest v4.1.7 guidance. Leibniz identified security red-test targets for no secrets/forms/network/native/persistence/raw runtime leaks. Hegel confirmed MUI/React/testing API guardrails and deprecated patterns to avoid.
 
 ## Initial TASK-044 Scope
 
@@ -44,6 +45,8 @@ Last updated: 2026-06-14 14:05 CST.
 - Expose only public runtime/plugin manifest facts and descriptor DTOs; do not pass raw runtime handles, stores, registries, NativeBridge/Tauri handles, provider settings, secrets, or plugin-private objects to placeholder UI.
 - Keep Sync status tied to the TASK-032 skeleton contract: plugin id `sync`, no runtime commands/views/settings panels/transport, syncable unit descriptors are informational only.
 - Keep AI provider settings descriptor informational/inert; do not create provider settings inputs or secret fields.
+- Use the existing top-bar Settings affordance to open a visible Settings workspace route; include Sync as a named skeleton section/panel inside Settings, not a separate top-level Drawer route for this task.
+- Red tests should primarily live in `src/test/settings-sync-placeholders.test.tsx`, with a narrow `src/test/mui-shell-frame.test.tsx` update if existing Settings placeholder expectations need to change.
 
 ## Validation Recorded
 
@@ -53,4 +56,5 @@ Last updated: 2026-06-14 14:05 CST.
 
 ## Next Parent Actions
 
-- Wait for TASK-044 pre-test guidance completion/final statuses before delegating red tests.
+- Spawn `test_writer` for TASK-044 failing Settings/Sync placeholder tests.
+- Wait for `test_writer` completion/final status before validating or committing red tests.

@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 14:10 CST - TASK-044 pre-test guidance complete
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Darwin (`planner`), Kuhn (`docs_researcher`), Leibniz (`security_reviewer`), and Hegel (`deprecation_auditor`) returned final statuses with no blockers.
+- Parent decision: use the existing top-bar Settings control to open a visible Settings workspace route, with Sync as an embedded skeleton section/panel rather than a top-level Sync Drawer route.
+- Parent decision: settings descriptors are public manifest descriptor DTOs only; `ai.provider-settings` is listed as inert and no provider/API key/model/endpoint inputs are added.
+- Docs verified externally by agents: current MUI v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path-import guidance, React 19.2, Testing Library role/query/user-event guidance, and Vitest v4.1.7. OpenAI docs were not checked because TASK-044 does not change live provider behavior.
+- Next action: delegate failing RTL/static tests to `test_writer`.
+
 ### 2026-06-14 14:05 CST - TASK-044 pre-test guidance delegated
 
 - Branch: `feat/task-044-settings-sync-placeholders`.
