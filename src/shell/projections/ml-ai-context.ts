@@ -146,7 +146,7 @@ const unsafeProjectionTextTerms = [
   "token",
 ] as const;
 const pathLikeTextPattern =
-  /(?:^|[\s:=])(?:\/(?:home|Users|tmp|var|etc|opt|private|mnt|Volumes)\/|[A-Za-z]:[\\/]|\.{1,2}[\\/])/u;
+  /(?:^|[\s:=])(?:~[\\/]|\/(?:dev\/shm|etc|home|mnt|opt|private|proc|root|run\/user(?:\/\d+)?|tmp|Users|var|Volumes|workspace|workspaces)(?:[\\/]|$)|[A-Za-z]:[\\/]|\.{1,2}[\\/])/u;
 const missingData = Symbol("missing-data");
 
 export function buildMlContextProjection(input: ProjectionInput) {
