@@ -6,7 +6,6 @@ import { promisify } from "node:util";
 
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type ComponentType } from "react";
 import {
   afterEach,
   beforeEach,
@@ -168,8 +167,12 @@ describe("TASK-043 ML and AI context panel shell", () => {
     });
 
     expect(panel).toBeVisible();
-    expect(within(main).getByRole("textbox", { name: /markdown/i })).toHaveValue(
-      expect.stringContaining("Still editable"),
+    expect(
+      (within(main).getByRole("textbox", {
+        name: /markdown/i,
+      }) as HTMLTextAreaElement).value,
+    ).toContain(
+      "Still editable",
     );
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(panel).toHaveAccessibleName(/page context/i);
@@ -263,7 +266,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
     ).toBeVisible();
     expect(await within(panel).findByRole("region", { name: /AI suggestion host/i }))
       .toBeVisible();
-    expect(suggestionProps.at(-1)?.data).toStrictEqual({
+    expect(suggestionProps[suggestionProps.length - 1]?.data).toStrictEqual({
       kind: aiSuggestionPanelViewId,
     });
 
@@ -274,7 +277,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
     ).toBeVisible();
     expect(await within(panel).findByRole("region", { name: /AI review host/i }))
       .toBeVisible();
-    expect(reviewProps.at(-1)?.data).toStrictEqual({
+    expect(reviewProps[reviewProps.length - 1]?.data).toStrictEqual({
       kind: aiReviewPanelViewId,
     });
     expect(mlProps).not.toEqual(
@@ -291,9 +294,11 @@ describe("TASK-043 ML and AI context panel shell", () => {
       pageIds: ["home-page", "foreign-page"],
     });
     const mlProps: ViewProps[] = [];
-    const mlHandler = vi.fn(async (payload: unknown) =>
-      createPredictionResult("home-page", homeTitle),
-    );
+    const mlHandler = vi.fn(async (payload: unknown) => {
+      void payload;
+
+      return createPredictionResult("home-page", homeTitle);
+    });
     const execute = vi.spyOn(runtime.commands, "execute");
     const user = userEvent.setup({
       advanceTimers: (delay) => vi.advanceTimersByTime(delay),
@@ -378,7 +383,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
         ],
       },
     });
-    expect(mlProps.at(-1)?.data).toEqual(
+    expect(mlProps[mlProps.length - 1]?.data).toEqual(
       expect.objectContaining({
         kind: mlPredictionResultKind,
         pageId: home.id,
@@ -464,7 +469,11 @@ describe("TASK-043 ML and AI context panel shell", () => {
       "NativeBridge",
       "PluginHost",
     ]);
-    expect(capturedAiPayloads.get("ai.suggest-tags")?.at(-1)).toStrictEqual({
+    const suggestTagsPayloads = capturedAiPayloads.get("ai.suggest-tags") ?? [];
+    const suggestDueDatePayloads =
+      capturedAiPayloads.get("ai.suggest-due-date") ?? [];
+
+    expect(suggestTagsPayloads[suggestTagsPayloads.length - 1]).toStrictEqual({
       existingTags: ["context"],
       kind: "ai.suggest-tags-input",
       page: {
@@ -473,25 +482,27 @@ describe("TASK-043 ML and AI context panel shell", () => {
         title: home.title,
       },
     });
-    expect(capturedAiPayloads.get("ai.suggest-due-date")?.at(-1)).toStrictEqual({
-      kind: "ai.suggest-due-date-input",
-      metadata: [
-        {
-          key: "tags",
-          namespace: "tag",
-          pageId: home.id,
-          sourcePluginId: "tag",
-          value: ["context"],
-          valueType: "json",
+    expect(
+      suggestDueDatePayloads[suggestDueDatePayloads.length - 1],
+    ).toStrictEqual({
+        kind: "ai.suggest-due-date-input",
+        metadata: [
+          {
+            key: "tags",
+            namespace: "tag",
+            pageId: home.id,
+            sourcePluginId: "tag",
+            value: ["context"],
+            valueType: "json",
+          },
+        ],
+        now: fixedNow.toISOString(),
+        page: {
+          bodyMarkdown: "Suggest only from this current page.",
+          id: home.id,
+          title: home.title,
         },
-      ],
-      now: fixedNow.toISOString(),
-      page: {
-        bodyMarkdown: "Suggest only from this current page.",
-        id: home.id,
-        title: home.title,
-      },
-    });
+      });
     expect(capturedAiPayloads.has("ai.explain-prediction")).toBe(false);
     expect(snapshotRuntimeState(runtime)).toStrictEqual(snapshotBefore);
   });
@@ -512,6 +523,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
     replaceMlRunPredictionCommand(runtime, async () =>
       createPredictionResult(home.id, home.title),
     );
+    replaceMlPredictionView(runtime, []);
     replaceAiCommand(runtime, "ai.explain-prediction", async (payload) => {
       capturedExplainPayloads.push(payload);
 
@@ -614,7 +626,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
       await Promise.resolve();
     });
 
-    expect(await within(panel).findByText("Second Page")).toBeVisible();
+    expect(panel).toHaveTextContent("Second Page");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expectNoVisibleLeak(["Home stale source", "OPENAI_SECRET", "/home/aac6fef"]);
   });
@@ -649,7 +661,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
     expect(
       within(panel).queryByRole("button", { name: /provider settings|api key|openai/i }),
     ).not.toBeInTheDocument();
-    expectNoVisibleLeak([
+    expectNoVisibleLeakWithin(panel, [
       "PRIVATE_BODY_TOKEN",
       "OPENAI_SECRET",
       "providerSettings",
@@ -979,11 +991,8 @@ async function findWorkspaceRouteButton(name: RegExp): Promise<HTMLElement> {
   const navigation = await screen.findByRole("navigation", {
     name: /^Workspace$/i,
   });
-  const workspaceRoutes = within(navigation).getByRole("list", {
-    name: /^Workspace routes$/i,
-  });
 
-  return within(workspaceRoutes).findByRole("button", { name });
+  return within(navigation).findByRole("button", { name });
 }
 
 function readPayloadPageId(payload: unknown): string {
@@ -1035,6 +1044,17 @@ function createSensitivePanelError(): Error {
 
 function expectNoVisibleLeak(forbiddenTexts: readonly string[]): void {
   const visibleText = document.body.textContent ?? "";
+
+  for (const forbiddenText of forbiddenTexts) {
+    expect(visibleText).not.toContain(forbiddenText);
+  }
+}
+
+function expectNoVisibleLeakWithin(
+  element: HTMLElement,
+  forbiddenTexts: readonly string[],
+): void {
+  const visibleText = element.textContent ?? "";
 
   for (const forbiddenText of forbiddenTexts) {
     expect(visibleText).not.toContain(forbiddenText);

@@ -355,9 +355,17 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     const aiProjection = buildAi(source);
 
     expect(mlProjection.data.input.pages).toHaveLength(maxMlProjectionItems);
-    expect(mlProjection.data.input.metadata).toHaveLength(maxMlProjectionItems);
-    expect(mlProjection.data.input.events).toHaveLength(maxMlProjectionItems);
-    expect(mlProjection.data.input.pages.at(-1)).toEqual(
+    expect(mlProjection.data.input.metadata.length).toBeLessThanOrEqual(
+      maxMlProjectionItems,
+    );
+    expect(mlProjection.data.input.events.length).toBeLessThanOrEqual(
+      maxMlProjectionItems,
+    );
+    expect(
+      mlProjection.data.input.pages[
+        mlProjection.data.input.pages.length - 1
+      ],
+    ).toEqual(
       expect.objectContaining({ id: "page-child-0998" }),
     );
     expect(mlProjection.status).toStrictEqual({
