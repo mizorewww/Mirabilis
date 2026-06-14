@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation is committed and green; parent is preparing review delegation.
+- Status: review is running; parent is waiting for completion/final statuses.
 
 ## Scope
 
@@ -62,7 +62,9 @@
 - Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Commit `9a90de1` records the red tests.
 - Boyle (`implementer`, agent `019ec4ca-1dbe-7a10-a3b7-fc0716d6a14b`) was spawned at 2026-06-14 14:20 CST to make Bohr's red tests pass with minimum production changes.
 - Boyle returned final status with implementation in `src/App.tsx` and `src/App.css`. Commit `b1f4318` records the implementation.
+- Helmholtz (`pr_explorer`, agent `019ec4d1-2525-7230-b2c2-717e96173b8c`), Banach (`reviewer`, agent `019ec4d1-2c3c-7e91-b519-a24040efff2c`), Euclid (`security_reviewer`, agent `019ec4d1-2ed8-7492-9a63-ab601ea61a41`), Cicero (`deprecation_auditor`, agent `019ec4d1-3146-7582-a929-344e5c7e481b`), Boole (`docs_researcher`, agent `019ec4d1-46a8-7e63-bc1c-1c863cb0a520`), and Raman (`test_quality_reviewer`, agent `019ec4d1-49c3-7e11-818c-912ed4a28198`) were spawned for review at 2026-06-14 14:28 CST.
+- `doc_writer` review spawn hit the current agent thread limit and will be retried after capacity frees.
 
 ## Next Action
 
-- Spawn review agents and wait for completion/final statuses before deciding merge readiness.
+- Wait for review agents to return completion/final statuses; retry `doc_writer` after capacity frees.
