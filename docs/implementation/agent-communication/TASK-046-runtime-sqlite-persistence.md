@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: async rollback P1 targeted re-review running; parent is waiting for final statuses.
+- Status: async rollback targeted re-review clean; parent is preparing release checker.
 
 ## Scope
 
@@ -174,7 +174,12 @@
 - Parent validation passed after Ohm: focused TASK-046/plugin-host/bootstrap/provider suite passed with 80 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; task checkbox/syntax suite passed with 34 tests; full frontend passed with 52 files and 832 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - Ohm was closed after final status and validation were recorded.
 - Targeted re-review started at 2026-06-14 23:48 CST: Nietzsche (`security_reviewer`, agent `019ec6d1-7a88-7983-a786-2327a2c42312`) for Mencius/Singer P1 security/native-boundary closure; Euclid (`reviewer`, agent `019ec6d1-7e7a-7f50-aae1-a267e6ab85e1`) for direct-write/interleaving rollback correctness closure; Hegel (`test_quality_reviewer`, agent `019ec6d1-81e6-7082-9e58-7b3f6628e1b4`) for Cicero test quality.
+- Targeted re-review completed at 2026-06-14 23:53 CST.
+- Hegel (`test_quality_reviewer`) found no P0/P1/P2 findings. Cicero's async rollback test meaningfully covers the awaited-handler window and complements Hume's success-path interleaving coverage plus Boole's native-pending rollback isolation coverage.
+- Euclid (`reviewer`) found no P0/P1/P2 correctness findings. The Hume/Boole/Cicero rollback/interleaving fixes hold together for direct page write-through, plugin direct metadata/event/filter writes, transaction overlay merge, rollback isolation, and ordered native batch behavior.
+- Nietzsche (`security_reviewer`) found no findings. Mencius/Singer's async rollback P1 is closed; no NativeBridge/raw DB/SQL/native-handle exposure, plugin owner-boundary broadening, allowlist bypass, or package/Tauri/Rust/capability/permission drift was found.
+- Parent decision: targeted re-review is clean. Proceed to `release_checker` before final `bun run check:full`.
 
 ## Next Action
 
-- Wait for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until re-review, release readiness, and final `check:full` pass.
+- Close completed targeted re-review agents, run `release_checker`, then run final `bun run check:full` if release readiness is clean. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until release readiness and final `check:full` pass.
