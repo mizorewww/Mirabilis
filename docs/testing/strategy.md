@@ -329,6 +329,31 @@ git diff --check
 
 Because TASK-046 changes app-runtime persistence wiring and the Tauri/Rust IPC behavior used by that wiring, the final branch gate is `bun run check:full`.
 
+## TASK-047 Durable Navigation Route State Guidance
+
+TASK-047 coverage lives primarily in `src/test/durable-navigation-route-state.test.tsx`, with supporting sidebar, Home editor, responsive, and app-shell boundary coverage. It proves app-shell route restoration through existing Core metadata persistence without adding package, native, Tauri, Rust, IPC, permission, schema, capability, filesystem, browser storage, or release drift.
+
+- Restart restoration coverage should exercise a fresh app render/runtime restart after page-route selection, proving the active page route, route label, editor body, active navigation state, and durable metadata value survive through the `app-shell.navigation` / `route-state` record.
+- Durable Home coverage should prove a persisted available Home page id is reused without creating duplicate Home pages, including React StrictMode-safe initialization behavior.
+- Saved-filter coverage should restore public filter routes through the same `ViewHost` and `SlotHost` path used by TASK-038, including active `aria-current="page"` navigation, saved filter roles such as `saved`, populated filter result DTOs, and trusted empty-filter slot rendering.
+- Recent-page coverage should assert persisted order, cap, dedupe, Home removal, missing-page drop, archived-page drop, and no hiding of trusted recent pages on filter routes.
+- Fail-closed coverage should include malformed route-state records, stale/missing pages, archived pages, missing filters, missing/unowned views, wrong filter source ownership, missing/unowned metadata-owner reservations, malformed recent arrays, accessors, symbols, non-plain prototypes, functions, and runtime-handle-shaped objects.
+- Parser/static guards should keep route-state persistence limited to exact plain JSON data: `version`, `homePageId`, active page/filter ids and roles, optional filter route token, and capped recent page ids. They should reject raw page bodies, snippets, metadata/event/filter objects, full route DTOs, SQL/table/params shapes, filesystem paths, secrets/tokens/provider values, NativeBridge, stores, registries, Command Registry, Plugin Host, functions, accessors, symbols, prototypes, and runtime handles.
+- Static drift guards should keep durable navigation out of Tauri Store, browser `localStorage`/`sessionStorage`, new NativeBridge operations, new Tauri IPC commands, generated permissions, capabilities, SQLite schema, package/lockfile, Cargo, Rust/native files, Search FTS, Sync transport, AI provider, and release surfaces.
+
+Focused TASK-047 validation:
+
+```bash
+bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot
+bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/app-shell-boundary.test.ts
+bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes native/package/IPC-facing surfaces such as Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, or new persistence wiring beyond the existing Core metadata APIs. TASK-047 itself is a TypeScript/React app-shell route-state task that stores through existing Core metadata and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, browser-storage, or release surface.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:
