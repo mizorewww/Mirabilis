@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:17 CST - TASK-046 rollback P1 red test delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Completed targeted re-review agents Aristotle, Plato, and Averroes were closed after their final statuses were recorded and committed.
+- Boole (`test_writer`, agent `019ec6b5-5d8f-7662-a4ba-5e064ab8bb52`) was spawned for test-only red regression coverage of Averroes's direct-store rollback isolation P1.
+- Parent state: waiting for Boole's completion/final status before red validation or test commit. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 23:16 CST - TASK-046 targeted re-review found rollback P1
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review completed with rollback P1; parent is preparing TDD follow-up.
+- Status: rollback P1 red regression delegated; parent is waiting for Boole's final status.
 
 ## Scope
 
@@ -145,7 +145,9 @@
 - Aristotle (`reviewer`) found no P0/P1 correctness findings and verified Pasteur's success-path P2 is closed. Aristotle found one P2: failed plugin direct-store native commits can restore whole pre-write snapshots and erase already committed Core transaction changes from live memory.
 - Averroes (`security_reviewer`) found no P0 findings and no NativeBridge/raw DB/SQL/native-handle exposure, owner-boundary broadening, allowlist bypass, or package/Tauri/capability/permission drift. Averroes escalated the rollback issue to P1 because a normal plugin direct write that later fails natively can erase unrelated committed live state.
 - Parent decision: fix Averroes's P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation for TASK-046's durable runtime persistence boundary.
+- Completed targeted re-review agents Aristotle, Plato, and Averroes were closed after final statuses were recorded and committed.
+- Boole (`test_writer`, agent `019ec6b5-5d8f-7662-a4ba-5e064ab8bb52`) was spawned at 2026-06-14 23:17 CST for test-only red regression coverage of Averroes's direct-store rollback isolation P1. Preferred write scope is `src/test/runtime-sqlite-persistence.test.ts`, with no production changes.
 
 ## Next Action
 
-- Close completed targeted re-review agents, delegate red regression coverage for Averroes's rollback isolation P1 to `test_writer`, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Wait for Boole's final status, then validate the expected red state and commit the test-only change. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
