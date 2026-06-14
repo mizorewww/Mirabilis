@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:11 CST - TASK-047 pre-test guidance complete
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Pre-test guidance final statuses received from Gibbs (`planner`), Archimedes (`docs_researcher`), Laplace (`security_reviewer`), and Poincare (`deprecation_auditor`). No files were modified by those read-only agents, and no pre-test blockers were found.
+- Parent decisions: accept the branch-sized slice of a shell-owned route-state module persisted through existing TASK-046 Core metadata via `runtime.transaction.run(...)`; avoid Tauri Store, browser storage, new NativeBridge operations, new packages, and new Tauri capabilities unless a later blocker is recorded; require tests for real user navigation/restart behavior plus serialization/static guards for IDs-only persistence, fail-closed restoration, `aria-current`, StrictMode-safe effects, and stale API drift.
+- Parent state: preparing to spawn `test_writer` for failing TASK-047 tests only.
+
 ### 2026-06-15 00:06 CST - TASK-047 pre-test guidance delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
