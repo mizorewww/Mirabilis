@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:41 CST - TASK-047 implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation commit: `87c43fe` (`Huygens(implementation)(Add Durable Navigation And Route State): implement durable route persistence`).
+- Huygens (`implementer`) changed `src/App.tsx`, added `src/shell/navigation/route-state.ts`, and made one scoped test-helper correction in `src/test/durable-navigation-route-state.test.tsx`.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (9 tests); `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/app-shell-boundary.test.ts` (39 tests); `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (33 tests); `bun run typecheck`; `bun run lint`; `git diff --check`; `git diff --cached --check`; exact `.only` / `.skip` scan; package/native/Tauri surface drift checks.
+- Parent state: preparing TASK-047 review agents.
+
 ### 2026-06-15 00:30 CST - TASK-047 implementation delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

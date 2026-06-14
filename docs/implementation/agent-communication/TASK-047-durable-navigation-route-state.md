@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: `implementer` running; parent is waiting for final status.
+- Status: implementation committed; parent is preparing review agents.
 
 ## Scope
 
@@ -58,7 +58,8 @@
 - Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned at 2026-06-15 00:13 CST for failing TASK-047 tests only. It owns test/test-helper changes, must not modify production/package/native/docs files, and must return final status before parent validates or commits tests.
 - Hilbert returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 00:28 CST matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Expected failures cover no durable route metadata after page selection, seeded saved-filter route not restored, persisted Home ID/title not reused, recent pages still session-derived rather than persisted/capped/deduped, and static guard missing `app-shell.navigation` / `route-state` production source. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan. Commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
 - Huygens (`implementer`, agent `019ec6f8-3c76-7620-92e2-1045b5a782f5`) was spawned at 2026-06-15 00:30 CST to make Hilbert's red tests pass with minimum production changes while preserving package/native/Tauri/docs surfaces unless it reports a blocker.
+- Huygens returned final status with changes in `src/App.tsx`, `src/shell/navigation/route-state.ts`, and `src/test/durable-navigation-route-state.test.tsx`. Parent validation at 2026-06-15 00:40 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (9 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/app-shell-boundary.test.ts` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (33 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` scan, and package/native/Tauri surface drift checks. Commit: `87c43fe` (`Huygens(implementation)(Add Durable Navigation And Route State): implement durable route persistence`).
 
 ## Next Action
 
-- Wait for Huygens final status before validating implementation. A wait timeout is not a failure or idle signal.
+- Spawn TASK-047 review agents.
