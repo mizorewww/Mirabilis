@@ -82,6 +82,8 @@ TASK-043 的 app-shell `Page context` panel 只在 trusted page routes 上运行
 
 TASK-044 的 app-shell Settings workspace route 只展示 public runtime/app facts、public plugin manifest settings descriptors，以及内嵌的 Sync skeleton status。它不执行 settings/sync command，不渲染 executable settings panel，不接受 provider/remote/secret input，不持久化 plugin settings，不配置 Sync transport/conflicts，也不增加 NativeBridge/Tauri IPC、filesystem、network/live provider、package/Cargo/Rust surface、persistence schema、keychain、permission 或 capability。
 
+TASK-045 的 app-shell responsive/accessibility polish 只调整现有 TypeScript/React/MUI shell state 和 accessibility semantics。Desktop 保持 workspace navigation 可见，并保持 `Page context` 为 named `complementary` panel。Narrow layout 初始关闭 temporary navigation，route selection 后关闭 navigation 并把 focus 返回 launcher；narrow `Page context` 使用 named modal MUI `Dialog`，支持 Escape close、focus containment、editor preservation 和 launcher focus return。Command Palette、Search 和 Quick Capture 继续使用 named MUI Dialog with initial focus/focus trap/focus return。这个流程不新增 NativeBridge/Tauri IPC、filesystem、network/live provider、package/Cargo/Rust surface、persistence schema、keychain、permission、capability 或 release surface。
+
 TASK-032 的 SyncPlugin 也只作为 TypeScript built-in plugin skeleton 加载。它的 manifest id 是 `sync`，`register()` 不注册 runtime commands、views、slots、settings panels、indexers 或 algorithms；当前 runtime 没有 `sync.start` / `sync.push` / `sync.pull` / transport command，也没有 executable sync settings UI。`src/plugins/sync/**` 只导出 syncable unit descriptors/serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings DTO snapshots, plus a rebuildable local plugin-index policy and conflict-policy helper. Plugin Settings snapshots reject top-level/nested secret/auth/credential/remote-endpoint-like keys, and the event conflict helper rejects stale, mismatched, non-plain, malformed, or getter-backed event DTOs before union/dedupe/conflict classification. No NativeBridge/Tauri IPC, filesystem, storage adapter, package/Cargo/Rust surface, schema, keychain, remote endpoint, network transport, or Tauri capability is added for Sync in TASK-032.
 
 任何 bootstrap 阶段失败都会 reject startup。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 或 `activateAll()` 失败时，`createAppRuntime()` 不返回 ready runtime；React `RuntimeProvider` 显示通用启动失败 UI，不渲染原始错误、堆栈、SQL、路径或 token。
@@ -676,7 +678,7 @@ TASK-043 current flow:
 ```text
 User is on a trusted page route
 → User clicks top-bar Context Panel
-→ App Shell opens a named complementary Page context panel next to the Markdown workspace
+→ On desktop, App Shell opens a named complementary Page context panel next to the Markdown workspace
 → Panel snapshots public runtime pages, metadata, and events
 → buildMlContextProjection derives current-page ml.remaining-time-prediction-input
 → ML projection includes current page, direct child page summaries, allowed Task/Tag metadata, and Timer segment/note events
@@ -701,6 +703,19 @@ AI projection arrays cap at 100 rows
 Current-page bodyMarkdown caps at 50,000 chars
 App Shell verifies active owned ai command descriptors before execution
 Command results render as advisory status text only
+```
+
+TASK-045 keeps the desktop `Page context` surface as `complementary`. On narrow layouts the same launcher opens a named modal MUI `Dialog` instead of a Drawer route:
+
+```text
+User is on a trusted page route in a narrow viewport
+→ User clicks top-bar Context Panel
+→ App Shell opens a named modal Page context Dialog
+→ Dialog contains the same bounded ML / AI tabs and close control
+→ MUI Dialog marks the surface modal and contains focus
+→ Escape or Close dismisses the Dialog
+→ App Shell returns focus to the Context Panel launcher
+→ Markdown editor remains mounted behind the Dialog
 ```
 
 The panel closes or refreshes on route changes and ignores stale async ML/AI results for earlier pages. Missing current pages, archived/malformed data, unavailable views or commands, malformed command output, and command failures show generic unavailable/error states. The panel does not expose full workspace bodies, unrelated page bodies, raw page records, full runtime handles, Core stores, registries, Plugin Host, NativeBridge/Tauri handles, provider settings, API keys, raw provider errors, stack traces, paths, SQL, or secrets.
@@ -779,6 +794,48 @@ background sync jobs
 conflict UI and user resolution workflow
 provider settings persistence or live provider execution
 native/Tauri/package/Rust/schema/IPC/capability changes
+```
+
+---
+
+### 18.19 User opens responsive shell surfaces
+
+TASK-045 current flow:
+
+```text
+Desktop viewport
+→ App Shell evaluates the MUI breakpoint through useMediaQuery
+→ Workspace navigation is rendered as a visible navigation landmark
+→ Workspace navigation launcher reports aria-expanded="true"
+→ Main Markdown workspace remains the primary editable region
+```
+
+```text
+Narrow viewport
+→ App Shell evaluates the MUI breakpoint through useMediaQuery
+→ Temporary workspace navigation starts closed
+→ User opens the Workspace navigation launcher
+→ Navigation renders as the Workspace navigation landmark
+→ User chooses a route such as Today
+→ App Shell selects the route, closes temporary navigation, and returns focus to the launcher
+→ Reopening navigation exposes the selected route with aria-current="page"
+```
+
+Command Palette, Search, Quick Capture, and narrow Page context all use named MUI Dialog surfaces. Each Dialog has initial focus in the first workflow control or close control, keeps focus contained while open, supports Escape or cancel/close behavior, and returns focus to the launcher. Startup failure text remains generic and redacted; it does not render raw runtime errors, stack traces, SQL, filesystem paths, provider names, tokens, credentials, NativeBridge handles, or Plugin Host details.
+
+Deferred after TASK-045:
+
+```text
+persistent navigation storage or backend routing
+native/global Quick Capture or Search shortcuts
+mobile Quick Capture toolbar / native mobile integration
+persistent Search index / search worker / SQLite FTS
+broad query/feed/dashboard surfaces
+executable provider/settings UI
+secret storage / OS keychain
+network/native sync transport
+conflict UI and user resolution workflow
+native/Tauri/package/Rust/schema/IPC/capability/release changes
 ```
 
 ---

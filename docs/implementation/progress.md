@@ -94,6 +94,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 17:58 CST - TASK-045 docs findings fixed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Docs-fix scope updated product, architecture, and testing docs for Heisenberg's TASK-045 P1/P2 findings: `docs/product/07-user-interface-design.md` now records delivered responsive/accessibility polish without stale "responsive polish deferred" wording; `docs/architecture/07-runtime-flows.md` documents desktop `Page context` as `complementary` and narrow `Page context` as a named modal MUI Dialog; `docs/testing/strategy.md` documents `src/test/responsive-accessibility-polish.test.tsx`, the focused validation command, deterministic `matchMedia` helper expectations, role/name/user-event coverage, and no native/package/Tauri drift.
+- TASK-045 remains `[~]` because sibling review-fix work, final gate, and merge are still pending. Persistent navigation storage/backend routing, native/global/mobile shortcuts, mobile Quick Capture toolbar, persistent Search/SQLite FTS, executable provider/settings UI, broad query/feed/dashboard surfaces, sync transport/conflict UI, and native/Tauri/Rust/package/IPC/capability/schema/release changes remain deferred.
+- Validation for this docs-fix pass: `git diff --check` passed; targeted stale-wording `rg` over product/testing/runtime docs found no `responsive polish`, `responsive/persistent`, `right panel collapses to a temporary Drawer`, `Drawer on narrow`, `ContextPanel.*Drawer`, or `still needs responsive` matches.
+- Note: `src/test/responsive-accessibility-polish.test.tsx` has concurrent review-fix test edits outside this docs-fix scope; this docs-fix agent did not edit test or production code.
+
 ### 2026-06-14 17:57 CST - TASK-045 review fixes delegated
 
 - Branch: `feat/task-045-responsive-accessibility-polish`.
