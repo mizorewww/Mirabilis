@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:48 CST - TASK-046 targeted follow-up fixes delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Targeted re-review agents were closed after their final statuses were recorded.
+- Hilbert (`test_writer`, agent `019ec5f6-3113-7b90-b4ee-e55aadf857d4`) spawned for Confucius's P1 direct-write test hardening and Curie's two P2 regression tests.
+- Nash (`doc_writer`, agent `019ec5f6-337b-74c2-9e99-25422dc728ae`) spawned for Pauli's stale `docs/architecture/04-slots-editor-task.md` P2.
+- Parent state: waiting for Hilbert and Nash final statuses. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 19:47 CST - TASK-046 targeted re-review findings recorded
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

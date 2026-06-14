@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:47 CST.
+Last updated: 2026-06-14 19:48 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:47 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 targeted re-review completed with one P1 test-quality finding and selected P2 follow-ups; parent will delegate fixes.
+- Current phase: TASK-046 targeted follow-up fixes delegated; parent is waiting for Hilbert and Nash.
 
 ## Current Outcome
 
@@ -52,6 +52,7 @@ Last updated: 2026-06-14 19:47 CST.
 - Confucius found one P1 test-quality issue: direct runtime and plugin direct-write tests still accept thrown-write behavior as a passing fallback. Those tests must require successful persistence through the reviewed `db.transaction` path.
 - Pauli found no P0/P1 docs blockers and confirmed Godel's requested docs scope is closed. Pauli found one broader docs P2: `docs/architecture/04-slots-editor-task.md` still describes current `storage.persistence` as `in-memory-core` with only the Markdown narrow page facade using NativeBridge.
 - Parent decision: TASK-046 is not ready for release checker or final gate until Confucius's P1 test-quality finding is fixed. Also fix Curie's two correctness P2s and Pauli's docs P2 instead of accepting them, because they are adjacent to the reviewed persistence path and cheap to validate before final merge.
+- Targeted re-review agents were closed after final statuses were recorded. Hilbert (`test_writer`, `019ec5f6-3113-7b90-b4ee-e55aadf857d4`) was spawned at 2026-06-14 19:48 CST for Confucius's P1 test hardening and Curie's two P2 regression tests. Nash (`doc_writer`, `019ec5f6-337b-74c2-9e99-25422dc728ae`) was spawned at 2026-06-14 19:48 CST for Pauli's docs P2.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -139,8 +140,7 @@ Last updated: 2026-06-14 19:47 CST.
 
 ## Next Parent Actions
 
-- Close targeted re-review agents after final statuses are recorded.
-- Spawn `test_writer` for Confucius's P1 and Curie's two P2 regression tests.
-- Spawn `doc_writer` for Pauli's docs P2.
-- After test fixes are committed and any new red signal is validated, spawn `implementer` for Curie's correctness P2 fixes.
+- Wait for Hilbert and Nash final statuses. A wait timeout is not a failure or idle signal.
+- After Hilbert returns, validate/commit test changes and spawn `implementer` if Curie's P2 tests produce a red signal.
+- After Nash returns, validate/commit docs fix.
 - Retry `release_checker` after targeted fixes and re-review clear P0/P1 findings. A wait timeout is not a failure or idle signal.

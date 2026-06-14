@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review completed with follow-up findings; fixes are next.
+- Status: targeted follow-up fixes delegated; parent is waiting for Hilbert and Nash.
 
 ## Scope
 
@@ -109,7 +109,10 @@
 - Pauli (`docs_researcher`) found no P0/P1 docs issues and confirmed Godel's requested scope is closed. Pauli found one broader docs P2 in `docs/architecture/04-slots-editor-task.md` about stale current `in-memory-core` wording.
 - Turing (`deprecation_auditor`) found no P0/P1/P2 API/deprecation issues and called the branch merge-ready from API/deprecation scope.
 - Parent decision: fix Confucius's P1, Curie's two P2s, and Pauli's docs P2 before release checker/final gate.
+- Targeted re-review agents were closed after their final statuses were recorded.
+- Hilbert (`test_writer`, agent `019ec5f6-3113-7b90-b4ee-e55aadf857d4`) was spawned at 2026-06-14 19:48 CST for Confucius's direct-write test hardening and Curie's two P2 regression tests.
+- Nash (`doc_writer`, agent `019ec5f6-337b-74c2-9e99-25422dc728ae`) was spawned at 2026-06-14 19:48 CST for Pauli's stale `docs/architecture/04-slots-editor-task.md` P2.
 
 ## Next Action
 
-- Close targeted re-review agents after this status is recorded. Spawn `test_writer` for Confucius/Curie coverage and `doc_writer` for Pauli's docs P2. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
+- Wait for Hilbert and Nash final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
