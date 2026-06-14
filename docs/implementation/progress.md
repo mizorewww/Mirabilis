@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:17 CST - TASK-047 docs re-review cleared
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) returned final status with no files modified and no remaining P0/P1/P2 docs findings for Popper's TASK-047 scope.
+- Curie confirmed product, architecture runtime-flow, testing strategy, progress, and task communication docs now describe durable app-shell route restoration through Core metadata, durable Home, saved-filter route restoration, recent-page persistence, fail-closed behavior, and excluded package/native/IPC/browser-storage/Search/Sync/AI/release surfaces. External docs consulted: none.
+- Parent state: waiting for Goodall, Socrates, Newton, and Faraday final statuses. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:15 CST - TASK-047 targeted re-review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
