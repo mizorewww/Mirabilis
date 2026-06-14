@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:20 CST - TASK-047 Faraday P2 red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned to write focused failing tests for Faraday's P2 nested route DTO accessor hardening only.
+- Godel owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
+- Parent state: waiting for Godel final status before validating or committing Faraday P2 red tests. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:19 CST - TASK-047 targeted re-review completed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 01:19 CST.
+Last updated: 2026-06-15 01:20 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 01:19 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 targeted re-review running; one P2 security hardening follow-up recorded.
+- Current phase: TASK-047 Faraday P2 hardening red tests delegated; parent is waiting for Godel final status.
 
 ## Current Outcome
 
@@ -49,6 +49,7 @@ Last updated: 2026-06-15 01:19 CST.
 - Faraday (`security_reviewer`) returned final status at 2026-06-15 01:17 CST with no files modified and no P0/P1 security findings, but one P2 hardening item: nested route DTO accessors can still execute during inbound parsing and outbound serialization in `src/shell/navigation/route-state.ts` before the nested active route object is validated/exact-key cloned. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift.
 - Goodall (`reviewer`) returned final status at 2026-06-15 01:18 CST with no files modified and no remaining P0/P1/P2 correctness findings. Goodall confirmed Dewey's recent-page and latest-wins route persistence P1s are closed, TASK-047 restore coverage remains intact, and TASK-038/TASK-045 adjacent checks stayed green.
 - Socrates (`deprecation_auditor`) returned final status at 2026-06-15 01:18 CST with no files modified and no remaining P0/P1/P2 deprecation/API findings. Socrates confirmed Sagan's StrictMode startup and latest-wins persistence P1s are closed, found no stale/deprecated MUI/React/Testing Library/user-event/Vitest/TypeScript/Tauri/persistence API use, and confirmed no package/native/Cargo/Tauri/capability/permission drift. Official docs consulted: React `useState`, StrictMode, effects; MUI `ListItemButton` and deprecated API migration; Testing Library user-event v14 intro/setup.
+- Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned at 2026-06-15 01:20 CST to write focused failing tests for Faraday's P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -237,4 +238,4 @@ Last updated: 2026-06-15 01:19 CST.
 
 ## Next Parent Actions
 
-- Delegate the recorded Faraday P2 hardening follow-up with red tests first, then implementation. No targeted re-review agent remains pending.
+- Wait for Godel final status before validating or committing Faraday P2 red tests. A wait timeout is not a failure or idle signal.

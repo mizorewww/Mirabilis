@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review running; one P2 security hardening follow-up recorded.
+- Status: Faraday P2 hardening red tests delegated; parent is waiting for Godel final status.
 
 ## Scope
 
@@ -79,7 +79,8 @@
 - Faraday returned final status at 2026-06-15 01:17 CST with no files modified and no P0/P1 security findings, but one P2 hardening item: nested route DTO accessors can still execute in `src/shell/navigation/route-state.ts` because inbound parsing reads `activeRoute.kind` before validating the nested route object, and outbound serialization reads active route fields directly before exact-key cloning. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift. Parent decision pending Goodall/Socrates final statuses, but this P2 should be handled through a delegated test-fix/implementation-fix follow-up unless a later reviewer supersedes it.
 - Goodall returned final status at 2026-06-15 01:18 CST with no files modified and no remaining P0/P1/P2 correctness findings. Goodall confirmed Dewey's prior P1s are closed: trusted filter routes no longer hide Recent pages, rapid route navigation now persists latest-wins state, TASK-047 restart/filter/Home/recent/fail-closed behavior remains covered, and TASK-038/TASK-045 adjacent behavior stayed green. Checks passed: two focused adjacent frontend suites (39 and 42 tests), `bun run typecheck`, `bun run lint`, and `git diff --check master...HEAD`.
 - Socrates returned final status at 2026-06-15 01:18 CST with no files modified and no remaining P0/P1/P2 deprecation/API findings. Socrates confirmed Sagan's prior P1s are closed: startup page creation moved out of React render/state initializer paths, route persistence now serializes pending writes and updates persisted signatures only after commit, and StrictMode one-Home plus latest-wins regressions are directly covered. Checks passed: focused TASK-047 suites (18, 39, and 42 tests), `bun run typecheck`, `bun run lint`, diff checks, and package/native/Tauri drift checks. Official docs consulted: React `useState`, StrictMode, and effects docs; MUI `ListItemButton` API and deprecated API migration docs; Testing Library user-event v14 intro/setup docs.
+- Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned at 2026-06-15 01:20 CST to write focused failing tests for Faraday's P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
 
 ## Next Action
 
-- Delegate the recorded Faraday P2 hardening follow-up with red tests first, then implementation. No targeted re-review agent remains pending.
+- Wait for Godel final status before validating or committing Faraday P2 red tests. A wait timeout is not a failure or idle signal.
