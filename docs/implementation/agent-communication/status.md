@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:23 CST.
+Last updated: 2026-06-14 19:30 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:23 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 full frontend test-fix/triage delegated; parent is waiting for Mencius's final status.
+- Current phase: TASK-046 full frontend test-fix committed; docs sync is next.
 
 ## Current Outcome
 
@@ -39,6 +39,9 @@ Last updated: 2026-06-14 19:23 CST.
 - Parent focused validation passed: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` (26 tests), `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
 - Full frontend probe is still red and blocks merge: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failures are mostly stale static no-native-drift guards now seeing `src-tauri/src/commands/db.rs`, old no-op NativeBridge tests that return invalid hydration responses, one Quick Capture direct write assertion now seeing `db.transaction`, and timer timeline tests that need review under the new plugin transaction path.
 - Erdos was closed after final status and validation were recorded. Mencius (`test_writer`, `019ec5df-ad1c-7b60-b65b-6febd7322eaf`) was spawned at 2026-06-14 19:23 CST for full frontend test-fix/triage only. It may edit tests/shared test helpers, must preserve TASK-046 coverage and static boundary intent, and must stop with a blocker if timer timeline failures are real production regressions.
+- Mencius returned final status with test-only changes in `src/test/native-surface-guard.ts`, AI/Sync/timer runtime tests, Markdown page persistence tests, Quick Capture tests, and static boundary tests. Commit `046b273` records the test fixes.
+- Mencius triaged timer timeline failures as stale test runtime setup, not a production regression. It updated static native-surface guards to accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff, made legacy AI/Sync/timer runtime tests explicitly use `in-memory-core` where SQLite persistence is not under test, cleared startup hydration calls before Markdown page facade assertions, and allowed Quick Capture's reviewed durable `db.transaction` path while still rejecting shortcut/file/notification/raw execute calls.
+- Parent validation passed after Mencius: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`, `bun run lint`, `git diff --check`, and an exact `.only` / `.skip` scan on edited tests passed.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -124,7 +127,6 @@ Last updated: 2026-06-14 19:23 CST.
 
 ## Next Parent Actions
 
-- Wait for Mencius's final status. A wait timeout is not a failure or idle signal.
-- If Mencius reports only test fixes and validation is green, commit them. If it reports a real production regression, record the blocker and delegate implementation.
-- Spawn `doc_writer` for Godel's docs P1/P2 after implementation behavior is stable enough to document.
+- Close Mencius after final status and validation are recorded.
+- Spawn `doc_writer` for Godel's docs P1/P2 now that implementation behavior and frontend tests are stable.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.

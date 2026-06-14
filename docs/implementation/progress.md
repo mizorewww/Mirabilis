@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:30 CST - TASK-046 full frontend test-fix green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Mencius (`test_writer`) returned final status with test-only changes and no real-regression blockers. Timer timeline failures were stale test runtime setup, not production regression.
+- Commit: `046b273` (`Mencius(test-fix)(Wire SQLite-backed Runtime Persistence): align frontend guards with durable runtime`).
+- Fixed: static native-surface guards now accept only the exact reviewed TASK-046 `src-tauri/src/commands/db.rs` diff; legacy AI/Sync/timer tests use `in-memory-core` where SQLite persistence is not under test; Markdown page facade tests clear startup hydration calls; Quick Capture tests accept reviewed durable `db.transaction` while still rejecting shortcut/file/notification/raw execute calls.
+- Parent validation passed: `bun run test:frontend` passed with 52 files and 826 tests; `bun run typecheck`; `bun run lint`; `git diff --check`; exact `.only` / `.skip` scan on edited tests.
+- Next action: close Mencius and delegate docs sync for Godel's docs P1/P2.
+
 ### 2026-06-14 19:23 CST - TASK-046 full frontend test-fix delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
