@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation is delegated to Boyle; parent is waiting for completion/final status.
+- Status: implementation is committed and green; parent is preparing review delegation.
 
 ## Scope
 
@@ -61,7 +61,8 @@
 - Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing RTL/static tests for TASK-044.
 - Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Commit `9a90de1` records the red tests.
 - Boyle (`implementer`, agent `019ec4ca-1dbe-7a10-a3b7-fc0716d6a14b`) was spawned at 2026-06-14 14:20 CST to make Bohr's red tests pass with minimum production changes.
+- Boyle returned final status with implementation in `src/App.tsx` and `src/App.css`. Commit `b1f4318` records the implementation.
 
 ## Next Action
 
-- Wait for Boyle completion/final status before validation or implementation commit.
+- Spawn review agents and wait for completion/final statuses before deciding merge readiness.
