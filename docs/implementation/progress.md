@@ -94,6 +94,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 13:36 CST - TASK-043 second review-fix implementation delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Mill (`implementer`, agent `019ec4a1-1cac-7902-a57f-b09a136c090e`) spawned to make Bernoulli's second review-fix regression tests pass with minimum production changes.
+- Parent state: waiting for Mill completion/final status before validating and committing second production fixes.
+
 ### 2026-06-14 13:34 CST - TASK-043 second review-fix tests committed
 
 - Branch: `feat/task-043-ml-ai-context-panels`.
