@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance complete; parent is preparing red-test delegation.
+- Status: red tests are delegated to Bohr; parent is waiting for completion/final status.
 
 ## Scope
 
@@ -58,7 +58,8 @@
 - Darwin returned final status with no blocker and recommended a Settings route with embedded Sync skeleton panel. Suggested red tests cover Settings route/runtime facts, public settings descriptor listing, Sync skeleton status, and boundary/no-drift guards.
 - Kuhn returned final status with no blocker. It verified MUI v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path-import docs, React 19.2 act/upgrade guidance, Testing Library role/query/user-event guidance, and Vitest v4.1.7 docs. OpenAI docs were not checked because TASK-044 must not change live provider behavior.
 - Hegel returned final status with no blocker. It reinforced MUI path imports, no stale MUI APIs, non-urgent placeholder `Alert role="status"`, React 19 testing patterns, awaited user-event interactions, and no focused/skipped tests.
+- Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing RTL/static tests for TASK-044.
 
 ## Next Action
 
-- Spawn `test_writer` for TASK-044 failing Settings/Sync placeholder tests, then wait for completion/final status.
+- Wait for Bohr completion/final status before validation, commit, or implementation delegation.

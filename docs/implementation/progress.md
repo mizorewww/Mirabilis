@@ -94,6 +94,12 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 14:11 CST - TASK-044 red tests delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) spawned to add failing Settings/Sync placeholder RTL/static tests.
+- Parent state: waiting for Bohr completion/final status before validating, committing, or delegating implementation.
+
 ### 2026-06-14 14:10 CST - TASK-044 pre-test guidance complete
 
 - Branch: `feat/task-044-settings-sync-placeholders`.
