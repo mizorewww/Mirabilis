@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:21 CST - TASK-046 rollback P1 red tests committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Boole (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `58f020a` (`Boole(test-fix)(Wire SQLite-backed Runtime Persistence): cover rollback isolation regressions`).
+- Parent red validation matched Averroes's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 2 failures and 77 passing tests. Failures are the new regressions only: failed direct page write-through rollback and failed plugin direct metadata/event/filter rollback both erase a committed Core transaction page from live memory.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Boole and delegate an `implementer` production fix. Parent remains orchestration-only.
+
 ### 2026-06-14 23:17 CST - TASK-046 rollback P1 red test delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: rollback P1 red regression delegated; parent is waiting for Boole's final status.
+- Status: rollback P1 red tests committed; parent is preparing implementation delegation.
 
 ## Scope
 
@@ -147,7 +147,10 @@
 - Parent decision: fix Averroes's P1 before `release_checker` or final gate. Do not accept this as deferred scope because it violates rollback isolation for TASK-046's durable runtime persistence boundary.
 - Completed targeted re-review agents Aristotle, Plato, and Averroes were closed after final statuses were recorded and committed.
 - Boole (`test_writer`, agent `019ec6b5-5d8f-7662-a4ba-5e064ab8bb52`) was spawned at 2026-06-14 23:17 CST for test-only red regression coverage of Averroes's direct-store rollback isolation P1. Preferred write scope is `src/test/runtime-sqlite-persistence.test.ts`, with no production changes.
+- Boole returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `58f020a` (`Boole(test-fix)(Wire SQLite-backed Runtime Persistence): cover rollback isolation regressions`) records the red tests.
+- Parent red validation matched Averroes's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 2 failures and 77 passing tests. The failures are the new rollback isolation regressions only: failed direct page write-through rollback and failed plugin direct metadata/event/filter rollback both erase a committed Core transaction page from live memory.
+- Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 
 ## Next Action
 
-- Wait for Boole's final status, then validate the expected red state and commit the test-only change. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Close Boole, delegate an `implementer` to fix Averroes's rollback isolation P1, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.

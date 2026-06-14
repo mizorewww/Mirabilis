@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:17 CST.
+Last updated: 2026-06-14 23:21 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:17 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 rollback P1 red regression delegated; parent is waiting for Boole's final status.
+- Current phase: TASK-046 rollback P1 red tests committed; parent is preparing implementation delegation.
 
 ## Current Outcome
 
@@ -80,6 +80,9 @@ Last updated: 2026-06-14 23:17 CST.
 - Parent decision: fix Averroes's P1 before `release_checker` or final gate. Do not accept it as a deferral because it violates rollback isolation in the TASK-046 durable runtime boundary.
 - Completed targeted re-review agents Aristotle, Plato, and Averroes were closed after final statuses were recorded and committed.
 - Boole (`test_writer`, agent `019ec6b5-5d8f-7662-a4ba-5e064ab8bb52`) was spawned at 2026-06-14 23:17 CST for test-only red regression coverage of Averroes's direct-store rollback isolation P1.
+- Boole returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `58f020a` records red regression coverage for direct page write-through rollback isolation and plugin direct metadata/event/filter rollback isolation.
+- Parent red validation matched Averroes's P1: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/plugin-host-lifecycle.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 2 failures and 77 passing tests. Both new failures reach `runtime.pages.get(transactionResult.pageId)` after failed direct rollback and get `PAGE_NOT_FOUND`, proving stale whole-store rollback erased the committed Core page.
+- Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -167,5 +170,6 @@ Last updated: 2026-06-14 23:17 CST.
 
 ## Next Parent Actions
 
-- Wait for Boole's final status. A wait timeout is not a failure or idle signal.
+- Close Boole after this record is committed.
+- Delegate an `implementer` to fix Averroes's rollback isolation P1. A wait timeout is not a failure or idle signal.
 - Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.
