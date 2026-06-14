@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 01:43 CST.
+Last updated: 2026-06-15 01:45 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 01:43 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 Harvey re-review found one remaining P2; parent is preparing inbound recent-page normalization red tests.
+- Current phase: TASK-047 inbound recent-page normalization red tests delegated; parent is waiting for Peirce final status.
 
 ## Current Outcome
 
@@ -61,6 +61,7 @@ Last updated: 2026-06-15 01:43 CST.
 - Turing returned final status with production changes in `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:40 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (22 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (43 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (46 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks. Commit: `6da71d4` (`Turing(review-fix)(Add Durable Navigation And Route State): harden recent-page accessors`).
 - Harvey (`security_reviewer`, agent `019ec739-0806-7c03-9717-b6c75cbd02cd`) was spawned at 2026-06-15 01:41 CST for read-only focused security re-review of Bernoulli's recent-page accessor P2 closure after Erdos/Turing.
 - Harvey returned final status at 2026-06-15 01:43 CST with no files modified. It confirmed Bernoulli's accessor-array issue is closed for no index getter invocation and no getter-returned path/token persistence, and confirmed prior `activeRoute` accessor hardening remains closed. It found no P0/P1 findings, but reported one remaining P2 boundary item: inbound `recentPageIds` parsing is accessor-safe but not bounded/deduped at the parser boundary, so `readDurableRouteState` can return duplicate, Home, and over-cap IDs unchanged. Harvey ran the focused TASK-047 suite (22 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/Search/Sync/AI/release drift scans, `.only` / `.skip` / direct `userEvent.*` scans, and focused parser/serializer boundary probes.
+- Peirce (`test_writer`, agent `019ec73c-8fad-75b0-b16b-ed6f003dbcee`) was spawned at 2026-06-15 01:45 CST to write focused failing tests for Harvey's inbound `recentPageIds` parser-normalization P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -249,4 +250,4 @@ Last updated: 2026-06-15 01:43 CST.
 
 ## Next Parent Actions
 
-- Close Harvey after this status is committed, then delegate focused red tests for inbound `recentPageIds` parser normalization.
+- Wait for Peirce final status before validating or committing inbound recent-page parser-normalization red tests. A wait timeout is not a failure or idle signal.

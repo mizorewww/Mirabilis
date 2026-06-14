@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:45 CST - TASK-047 inbound recent-page normalization red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Peirce (`test_writer`, agent `019ec73c-8fad-75b0-b16b-ed6f003dbcee`) was spawned to write focused failing tests for Harvey's inbound `recentPageIds` parser-normalization P2 only.
+- Peirce owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
+- Parent state: waiting for Peirce final status before validating or committing inbound recent-page parser-normalization red tests. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:43 CST - TASK-047 inbound recent-page normalization P2 recorded
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
