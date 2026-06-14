@@ -116,6 +116,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:04 CST - TASK-046 Pasteur P2 red test committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hume (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `b61e357` (`Hume(test-fix)(Wire SQLite-backed Runtime Persistence): cover plugin write interleaving`).
+- Parent red validation matched Pasteur's new P2: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 76 passing tests. Failure is the new regression only: after an in-flight Core transaction commit resolves, plugin-written metadata disappears from live memory even though the test proves metadata, event, and filter writes were persisted and visible before commit release.
+- Supporting checks: `git diff --check` passed; focused `.only` / `.skip` scan returned no matches.
+- Next action: close Hume and delegate an `implementer` production fix. Parent remains orchestration-only.
+
 ### 2026-06-14 23:01 CST - TASK-046 Pasteur P2 red test delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

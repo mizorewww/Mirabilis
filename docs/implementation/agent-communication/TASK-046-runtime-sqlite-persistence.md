@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Pasteur P2 red regression delegated; parent is waiting for Hume's final status.
+- Status: Pasteur P2 red regression committed; parent is preparing implementation delegation.
 
 ## Scope
 
@@ -130,7 +130,10 @@
 - Parent decision: fix Pasteur's new P2 before release checker and final `bun run check:full`. This remains in TASK-046's persistence-consistency boundary and should be handled through the normal TDD loop: red regression coverage first, implementation second, then targeted re-review.
 - Beauvoir, Pasteur, and Lorentz were closed after their final statuses were recorded and committed.
 - Hume (`test_writer`, agent `019ec6a6-8837-7333-8304-e9f7620cad1b`) was spawned at 2026-06-14 23:01 CST for test-only red regression coverage of Pasteur's plugin direct non-page write/live-memory interleaving P2. Preferred write scope is `src/test/runtime-sqlite-persistence.test.ts`, with no production changes.
+- Hume returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `b61e357` (`Hume(test-fix)(Wire SQLite-backed Runtime Persistence): cover plugin write interleaving`) records the new regression test.
+- Parent red validation matched Pasteur's P2: focused TASK-046/plugin-host/bootstrap/provider suite failed with 1 failure and 76 passing tests. The failure is the new regression only: after the in-flight Core transaction commit resolves, `runtime.metadata.list()` loses the plugin-written `concurrent-writer` record despite the test proving metadata, event, and filter writes persisted and were visible before commit release.
+- Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
 
 ## Next Action
 
-- Wait for Hume's final status, then validate the expected red state and commit the test-only change. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.
+- Close Hume, delegate an `implementer` to fix the red regression, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until the P2 fix, re-review, release readiness, and final `check:full` pass.
