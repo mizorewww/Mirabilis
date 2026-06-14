@@ -217,7 +217,7 @@ describe("TASK-035 MUI shell frame", () => {
     expect(captureButton).toHaveFocus();
   });
 
-  it("treats Search as a dialog launcher while Settings remains an explicit visible placeholder", async () => {
+  it("treats Search as a dialog launcher while Settings opens a workspace route", async () => {
     const user = userEvent.setup();
 
     renderReadyApp("0.1.0-deferred-tools");
@@ -252,12 +252,24 @@ describe("TASK-035 MUI shell frame", () => {
 
     await user.click(settingsButton);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /^Settings surface placeholder$/i,
-    );
+    const settingsMain = await screen.findByRole("main", { name: /settings/i });
+
+    expect(
+      within(settingsMain).getByRole("heading", {
+        name: /^Settings Workspace$/i,
+      }),
+    ).toBeVisible();
+    expect(
+      within(settingsMain).queryByText(/^Settings surface placeholder$/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("dialog", { name: /^Settings$/i }),
     ).not.toBeInTheDocument();
+    expect(
+      within(settingsMain).getByRole("region", {
+        name: /settings|plugin settings|app runtime/i,
+      }),
+    ).toBeVisible();
   });
 
   it("changes the visible shell route through real user navigation", async () => {

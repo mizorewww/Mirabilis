@@ -128,6 +128,34 @@
   padding: 12px 14px;
 }
 
+.app-shell__settings-workspace {
+  max-width: 880px;
+}
+
+.app-shell__settings-panel {
+  border: 1px solid #d7ded5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.app-shell__settings-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.app-shell__settings-facts dd {
+  margin: 2px 0 0;
+}
+
+.app-shell__settings-descriptor,
+.app-shell__settings-status-row {
+  border-top: 1px solid #e4e9e1;
+  padding: 10px 0;
+}
+
 .app-shell__tool-status {
   max-width: 880px;
   border-top: 1px solid #d7ded5;

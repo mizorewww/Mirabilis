@@ -135,6 +135,9 @@ type ActiveRoute =
       routeId: PlaceholderRouteId;
     }
   | {
+      kind: "settings";
+    }
+  | {
       data: SearchRouteData;
       kind: "search";
       resultUnavailable?: boolean;
@@ -219,6 +222,14 @@ type RecentPageSummary = {
 
 type FilterPageSummary = {
   routeToken: string;
+  title: string;
+};
+
+type SettingsDescriptorSummary = {
+  descriptorId: string;
+  description?: string;
+  pluginId: string;
+  pluginName: string;
   title: string;
 };
 
@@ -638,6 +649,13 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       routeId,
     });
   };
+  const selectSettingsRoute = () => {
+    unsetCurrentPage(currentPageState);
+    setContextPanelOpen(false);
+    setActiveRoute({
+      kind: "settings",
+    });
+  };
   const openSearchResult = useCallback(
     (pageId: string) => {
       if (getRoutePage(runtimeSource, pageId) === undefined) {
@@ -877,7 +895,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
 
                     if (tool.id === "settings") {
                       setQuickCaptureOpenError(false);
-                      setDeferredShellTool(tool.id);
+                      setDeferredShellTool(undefined);
+                      selectSettingsRoute();
                     }
                   }}
                   startIcon={<ToolIcon fontSize="small" />}
@@ -1158,6 +1177,10 @@ function WorkspaceRouteContent({
     );
   }
 
+  if (activeRoute.kind === "settings") {
+    return <SettingsWorkspace runtime={runtime} />;
+  }
+
   const route = getPlaceholderRoute(activeRoute.routeId);
 
   if (activeRoute.routeId === "reports") {
@@ -1176,6 +1199,143 @@ function WorkspaceRouteContent({
           <Typography variant="body2">{placeholder}</Typography>
         </Box>
       ))}
+    </Stack>
+  );
+}
+
+function SettingsWorkspace({ runtime }: { runtime: AppRuntime }) {
+  const settingsDescriptors = listSettingsDescriptorSummaries(runtime);
+
+  return (
+    <Stack className="app-shell__settings-workspace" spacing={2}>
+      <Box
+        aria-labelledby="settings-runtime-facts-title"
+        className="app-shell__settings-panel"
+        component="section"
+      >
+        <Typography
+          component="h3"
+          id="settings-runtime-facts-title"
+          variant="subtitle1"
+        >
+          Runtime facts
+        </Typography>
+        <Box className="app-shell__settings-facts" component="dl">
+          <Box>
+            <Typography color="text.secondary" component="dt" variant="caption">
+              App
+            </Typography>
+            <Typography component="dd" variant="body2">
+              Mirabilis
+            </Typography>
+          </Box>
+          <Box>
+            <Typography color="text.secondary" component="dt" variant="caption">
+              Version
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {runtime.app.version}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography color="text.secondary" component="dt" variant="caption">
+              Plugin API
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {runtime.app.pluginApiVersion ?? "not advertised"}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box
+        aria-labelledby="settings-plugin-descriptors-title"
+        className="app-shell__settings-panel"
+        component="section"
+      >
+        <Stack spacing={1}>
+          <Typography
+            component="h3"
+            id="settings-plugin-descriptors-title"
+            variant="subtitle1"
+          >
+            Plugin settings descriptors
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            Public plugin records are copied from the plugin host for display
+            only.
+          </Typography>
+          {settingsDescriptors.length > 0 ? (
+            <List aria-label="Public settings descriptors" dense>
+              {settingsDescriptors.map((descriptor) => (
+                <Box
+                  className="app-shell__settings-descriptor"
+                  component="li"
+                  key={`${descriptor.pluginId}:${descriptor.descriptorId}`}
+                >
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">
+                      {descriptor.pluginName}
+                    </Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      {descriptor.descriptorId}
+                    </Typography>
+                    <Typography variant="body2">{descriptor.title}</Typography>
+                    {descriptor.description !== undefined ? (
+                      <Typography color="text.secondary" variant="body2">
+                        {descriptor.description}
+                      </Typography>
+                    ) : null}
+                    <Typography color="text.secondary" variant="caption">
+                      Inert manifest descriptor; descriptor-only and no
+                      executable settings panel.
+                    </Typography>
+                  </Stack>
+                </Box>
+              ))}
+            </List>
+          ) : (
+            <Box role="status">No plugin settings descriptors are registered.</Box>
+          )}
+        </Stack>
+      </Box>
+
+      <Box
+        aria-labelledby="settings-sync-title"
+        className="app-shell__settings-panel"
+        component="section"
+      >
+        <Stack spacing={1}>
+          <Typography component="h3" id="settings-sync-title" variant="subtitle1">
+            Sync
+          </Typography>
+          <Box role="status">
+            Sync is an inactive skeleton panel. It exposes public status only
+            and has no executable settings panel.
+          </Box>
+          <List aria-label="Sync skeleton status" dense>
+            {[
+              "Plugin id sync",
+              "no runtime commands",
+              "no views",
+              "no settings panels",
+              "no transport",
+              "no remote endpoint",
+              "no background jobs",
+              "no conflict UI",
+              "no settings persistence enabled",
+            ].map((status) => (
+              <Box
+                className="app-shell__settings-status-row"
+                component="li"
+                key={status}
+              >
+                <Typography variant="body2">{status}</Typography>
+              </Box>
+            ))}
+          </List>
+        </Stack>
+      </Box>
     </Stack>
   );
 }
@@ -2765,7 +2925,43 @@ function getActiveRouteDetails(
     );
   }
 
+  if (activeRoute.kind === "settings") {
+    return {
+      eyebrow: "Settings",
+      label: "Settings",
+      summary: "App runtime facts and inert plugin settings descriptors",
+    };
+  }
+
   return getPlaceholderRoute(activeRoute.routeId);
+}
+
+function listSettingsDescriptorSummaries(
+  runtime: AppRuntime,
+): SettingsDescriptorSummary[] {
+  const plugins = runtime.pluginHost.listPlugins?.() ?? [];
+
+  return plugins
+    .flatMap((plugin) =>
+      (plugin.manifest.contributes?.settingsPanels ?? []).map((descriptor) => ({
+        descriptorId: descriptor.id,
+        ...(descriptor.description !== undefined
+          ? { description: descriptor.description }
+          : {}),
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        title: descriptor.title,
+      })),
+    )
+    .sort((left, right) => {
+      const pluginCompare = left.pluginName.localeCompare(right.pluginName);
+
+      if (pluginCompare !== 0) {
+        return pluginCompare;
+      }
+
+      return left.descriptorId.localeCompare(right.descriptorId);
+    });
 }
 
 function getPlaceholderRoute(

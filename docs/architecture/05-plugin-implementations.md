@@ -920,15 +920,15 @@ The strict JSON schemas intentionally stay within the supported subset covered b
 
 Raw Responses normalization accepts successful completed payloads with `error: null` and `incomplete_details: null`. It parses JSON from top-level `output_text` or from `output` message content entries with `type: "output_text"`. Refusal content, incomplete responses, error responses, invalid response shapes, invalid JSON, null output, accessor-backed data, transport failures, and unavailable transport fail closed with redacted AI-owned errors.
 
-TASK-031 does not add the OpenAI SDK, `fetch`, `XMLHttpRequest`, WebSocket, workers, localStorage/sessionStorage/IndexedDB, Node HTTP/filesystem modules, NativeBridge/Tauri imports, Tauri HTTP permissions/capabilities, Rust commands, package changes, Cargo changes, schema changes, keychain access, or live network calls. Tests inject mocked providers and mocked OpenAI transports.
+TASK-031 does not add the OpenAI SDK, `fetch`, `XMLHttpRequest`, WebSocket, workers, localStorage/sessionStorage/IndexedDB, Node HTTP/filesystem modules, NativeBridge/Tauri imports, Tauri HTTP permissions/capabilities, Rust commands, package changes, Cargo changes, schema changes, executable provider settings UI, keychain access, or live network calls. Tests inject mocked providers and mocked OpenAI transports.
 
 ### 14.3 Settings, Views, and Deferred Scope
 
-`ai.provider-settings` is an inert manifest `settingsPanels` descriptor. The actual settings used by TASK-031 are AI-plugin-owned injectable runtime/test state with `{ providerId: "openai", model, apiKey }`, defaulting to unconfigured. Production public AI exports do not expose settings secrets or provider override hooks; test support is gated by test mode and wraps injected providers without changing request operation/provider identity.
+`ai.provider-settings` is an inert manifest `settingsPanels` descriptor. The actual settings used by TASK-031 are AI-plugin-owned injectable runtime/test state with `{ providerId: "openai", model, apiKey }`, defaulting to unconfigured. Production public AI exports do not expose settings secrets or provider override hooks; test support is gated by test mode and wraps injected providers without changing request operation/provider identity. TASK-044 can list this descriptor in the shell-owned Settings workspace, but it remains descriptor-only and does not create a provider form, persistence path, secret field, or live provider execution path.
 
 `ai.suggestion-panel` and `ai.review-panel` are minimal accessible views. They render loading/unavailable `role="status"` text inside named regions and ignore unsafe data/error props, so malformed provider output or caller data remains inert.
 
-TASK-043 adds the current app-shell AI integration layer without changing AI Plugin ownership or provider execution. The shell-owned `Page context` panel renders `ai.suggestion-panel` and `ai.review-panel` through exact `ViewHost` ids and explicit `{ kind }` DTOs. It builds bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page ML prediction exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned descriptors, treats output as advisory text/status only, rejects stale async results after page switches, and does not mutate pages, metadata, events, filters, plugin settings, sibling plugin data, provider configuration, secrets, or durable AI metadata/events. TASK-043 adds no provider settings UI, keychain/secret storage, live provider execution, network/native transport, package, Tauri/Rust, schema, IPC, capability, or permission surface.
+TASK-043 adds the current app-shell AI integration layer without changing AI Plugin ownership or provider execution. The shell-owned `Page context` panel renders `ai.suggestion-panel` and `ai.review-panel` through exact `ViewHost` ids and explicit `{ kind }` DTOs. It builds bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page ML prediction exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned descriptors, treats output as advisory text/status only, rejects stale async results after page switches, and does not mutate pages, metadata, events, filters, plugin settings, sibling plugin data, provider configuration, secrets, or durable AI metadata/events. TASK-043 adds no executable provider settings UI, keychain/secret storage, live provider execution, network/native transport, package, Tauri/Rust, schema, IPC, capability, or permission surface.
 
 用户在任务页点击 AI 拆解时，当前 slice can only return advisory Markdown-like text:
 
@@ -947,7 +947,7 @@ Task Plugin 后续通过 explicit user/caller acceptance workflow 负责解释 `
 Deferred after TASK-031:
 
 ```text
-persistent plugin settings and settings UI
+persistent plugin settings and executable provider settings UI
 OS keychain / secret storage
 native HTTP transport / OpenAI SDK / live provider execution
 durable AI metadata and event writes
@@ -990,7 +990,7 @@ Transport:
 none
 ```
 
-`SyncPlugin.register()` does not register runtime commands, views, slots, settings panels, indexers, algorithms, or mobile toolbar items. Stale or future ids such as `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, `sync.configure-remote`, `sync.page`, `sync.pages`, `sync.plugin_settings`, and `sync.indexer` are not aliases.
+`SyncPlugin.register()` does not register runtime commands, views, slots, settings panels, indexers, algorithms, or mobile toolbar items. Stale or future ids such as `sync.start`, `sync.push`, `sync.pull`, `sync.connect`, `sync.login`, `sync.apply`, `sync.import`, `sync.configure-remote`, `sync.page`, `sync.pages`, `sync.plugin_settings`, and `sync.indexer` are not aliases. TASK-044 only displays public Sync skeleton status inside the shell-owned Settings workspace; it does not add a Sync-owned route, view, settings panel, transport, account setup, or conflict workflow.
 
 ### 15.2 Syncable Units
 
@@ -1014,7 +1014,7 @@ serializeFilterSyncUnit(filter)
 serializePluginSettingsSyncUnit(settings)
 ```
 
-The Plugin Settings unit is only a DTO snapshot shape. TASK-032 does not add settings persistence, a settings UI, a Core settings facade, OS keychain/secret storage, or a remote configuration store. The snapshot distinguishes `{ state: "unset" }` from `{ state: "json", value: null }`, and top-level or nested secret/auth/credential/remote-endpoint-like keys are rejected rather than treated as durable sync data. Future settings sync should use explicit per-plugin allowlists and keep secrets/remote credentials in a separate keychain-backed path.
+The Plugin Settings unit is only a DTO snapshot shape. TASK-032 does not add settings persistence, executable sync settings UI, a Core settings facade, OS keychain/secret storage, or a remote configuration store. The snapshot distinguishes `{ state: "unset" }` from `{ state: "json", value: null }`, and top-level or nested secret/auth/credential/remote-endpoint-like keys are rejected rather than treated as durable sync data. Future settings sync should use explicit per-plugin allowlists and keep secrets/remote credentials in a separate keychain-backed path.
 
 Serializer output clones JSON-compatible data and rejects non-JSON runtime or executable shapes such as functions, symbols, bigint, non-finite numbers, cycles, non-plain objects, sparse/custom arrays, accessors, non-enumerable fields, oversized data, and over-deep data. The clone is a payload boundary for future durable exchange, not a live store handle.
 

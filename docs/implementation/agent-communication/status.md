@@ -1,128 +1,78 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 14:01 CST.
+Last updated: 2026-06-14 17:28 CST.
 
 ## Current Task
 
-- Task: TASK-043 - Add ML And AI Context Panels.
-- Branch: `feat/task-043-ml-ai-context-panels`.
+- Task: TASK-044 - Add Settings And Sync Placeholders.
+- Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-043 final local gate passed on branch; parent is committing completion status before merge.
+- Current phase: TASK-044 final gate passed on the feature branch; parent is ready to merge into `master`.
 
 ## Current Outcome
 
-- TASK-041 is complete on `master`; merge-result validation passed in commit `8ded6b6`.
-- TASK-042 branch was created from `master`.
-- Agent/config validation passed: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
-- Parent selected TASK-042 as the first unblocked `[ ]` task in `docs/implementation/progress.md`.
-- Lovelace (`planner`), Locke (`docs_researcher`), Plato (`security_reviewer`), and Fermat (`deprecation_auditor`) completed read-only pre-test guidance with no hard blockers.
-- Parent decisions: exclude missing/archived pages from Calendar/Reports projections; cap Calendar route segments at `1000` with deterministic partial-data behavior; default Reports to `stats.sum-time-by-page`; treat task estimate data as optional unless public task-owned estimate metadata exists; require a narrow Calendar command bridge rather than a generic raw `commands.execute` facade.
-- Franklin (`test_writer`) added failing projection and route tests in commit `2491bad`.
-- Parent red validation passed as expected: `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/calendar-plugin-baseline.test.tsx src/test/stats-chart-plugins.test.tsx` failed with the intended missing projection module, absent Calendar route, and placeholder Reports route; adjacent suites passed with 84 tests. `git diff --check` passed.
-- Popper (`implementer`) implemented the Calendar/Reports route slice in commit `6eb7365` and committed test compatibility fixes in `937af88`.
-- Parent implementation validation passed: focused TASK-042 and adjacent suites passed with 6 files / 102 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- Review outcome: no P0 findings. Merge is blocked by P1 correctness/test/docs findings. Maxwell found Reports can generate Chart-incompatible 200+ category DTOs and silently complete truncated habit/note inputs; McClintock found missing Reports bounds regression coverage; Aquinas found product/architecture docs still mark TASK-042 route behavior as deferred. Additional P2/P3 items cover mounted-route stale snapshots, wrong-owner route coverage, stale async reject coverage, fake-timer cleanup, and local very-large-input availability risk.
-- Carver (`test_writer`) added review regression coverage in commit `e0eee79`; Bacon (`implementer`) fixed the production regressions in commit `aa2413e`.
-- Parent review-fix validation passed: focused TASK-042/adjacent suites passed with 6 files / 112 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- Bohr (`doc_writer`) failed during docs sync with a stream disconnect and left a partial edit in `docs/product/07-user-interface-design.md`; parent is replacing Bohr rather than taking over doc writing.
-- McClintock (`doc_writer`) was spawned as the replacement docs sync agent at 2026-06-01 21:02 CST. Parent will not integrate or commit docs sync until McClintock returns completion/final status.
-- McClintock returned final status and completed docs sync in commit `9bfd714` (`McClintock(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): sync calendar reporting docs`). Parent verified docs-only changed paths, `git diff --check`, and targeted stale-route `rg` checks before commit.
-- Post-doc review running as of 2026-06-01 21:15 CST: Copernicus (`pr_explorer`, `019e8353-55ac-7ce1-8366-eaa2cb1ce0ed`), Chandrasekhar (`reviewer`, `019e8353-5995-7953-8923-b3d044ad7f01`), Laplace (`security_reviewer`, `019e8353-5ceb-7680-9580-77f7d0caa32a`), Godel (`deprecation_auditor`, `019e8353-6056-7533-a625-124422024c5e`), and Turing (`docs_researcher`, `019e8353-6420-7c90-8700-5ab9ec0a949e`). `test_quality_reviewer` spawn hit the current agent thread limit and will be retried after capacity frees.
-- Post-doc review final outcome: merge is blocked. Copernicus and Chandrasekhar found P1 Reports Chart incompatibility for non-page/tag aggregations: `habit-completion-rate` and `unnoted-sessions-count` can still produce 201+ categories that `chart.bar` rejects. Turing found P1 stale placeholder test/docs drift: `src/test/home-workspace-editor.test.tsx` still expects Reports placeholder behavior and `docs/testing/strategy.md` still describes non-Home routes as placeholders. Turing also noted a P2 stale `docs/development/01-data-roadmap-and-mvp.md` Stats/Chart app-shell route wording. Laplace found no security P0/P1 and retained the large local dataset pre-cap availability risk as P2. Godel found no deprecation/API P0/P1/P2 and verified React 19, MUI v9, Testing Library, Vitest, and Vite official docs.
-- Wegener (`test_writer`) was spawned at 2026-06-01 21:22 CST to add failing review regression tests for non-page/tag Reports Chart caps and to correct stale Home workspace Reports placeholder expectations. Parent will wait for final status before integrating tests.
-- Wegener returned final status. Parent re-ran `bun run test:frontend -- src/test/calendar-reporting-projections.test.ts src/test/calendar-reporting-routes.test.tsx src/test/home-workspace-editor.test.tsx`; expected red result remained 2 projection cap failures while route and Home workspace tests passed. Test commit `446be08` records the red review regressions.
-- Euclid (`implementer`) was spawned at 2026-06-01 21:26 CST to make the new non-page/tag Reports Chart cap tests pass with minimal production changes.
-- Euclid returned final status and completed production fix in commit `cfed230` (`Euclid(review-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cap non-page report categories`). Parent validation passed: changed-tests suite 3 files / 45 tests, broader TASK-042 suite 7 files / 126 tests, `bun run typecheck`, `bun run lint`, and `git diff --check`.
-- Raman (`doc_writer`) was spawned at 2026-06-01 21:32 CST to fix narrow stale wording in `docs/testing/strategy.md` and `docs/development/01-data-roadmap-and-mvp.md`.
-- Raman returned final status and completed docs wording fix in commit `95ab7a9` (`Raman(docs)(Add Calendar And Reporting Routes With Explicit Data Projections): fix route status wording`).
-- Franklin (`test_quality_reviewer`) was spawned at 2026-06-01 21:34 CST after previous thread-limit retry to review TASK-042 test quality after all review fixes.
-- Franklin returned final status with no P0/P1 findings. It found one P2: Calendar route tests cover a valid `calendar.open-time-segment` and rejection of unrelated `timer.stop`, but do not cover same-command stale/non-projected `{ segmentId, pageId }` rejection at the route bridge.
-- Pasteur (`test_writer`) was spawned at 2026-06-01 21:38 CST to add narrow route-level coverage for same-command stale/non-projected Calendar bridge rejection.
-- Pasteur returned final status and added the P2 regression test in commit `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`). Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests and `git diff --check` passed.
-- Final branch validation passed: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; `bun run check:quick` passed with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
-- TASK-042 merged to `master` in merge commit `19711d0`. Master `bun run check:quick` passed after merge with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
-- TASK-043 branch was created from validated `master`.
-- Agent/config validation passed for TASK-043 startup: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
-- TASK-043 pre-test guidance running: Einstein (`planner`, `019e8370-810b-7512-9862-87eee2292ead`), Banach (`docs_researcher`, `019e8370-84d8-7210-b78a-5af43ddddb82`), Avicenna (`security_reviewer`, `019e8370-882d-7140-854e-0bf527f9cc34`), and Aristotle (`deprecation_auditor`, `019e8370-8c9d-7cc2-b999-f7941a0c6db3`).
-- TASK-043 pre-test guidance complete with no hard blockers. Parent decisions: use an optional right-side context panel gated to current page routes; render ML and AI through exact `ViewHost` ids and defer broad `page.sidebar.panel` SlotHost mounting; allow only current-page advisory AI commands `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` when a valid ML prediction exists; keep ML projections capped at 1,000 rows and AI projections capped at 100 rows; keep current-page text bounded and current-page only; no live provider/network/secrets/native/package/schema changes.
-- Anscombe (`test_writer`) was spawned at 2026-06-01 21:57 CST to add failing projection, panel, and static-boundary tests for TASK-043.
-- Anscombe returned final status and added TASK-043 failing tests only in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`.
-- Parent red validation matched the expected failure: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` failed because `../shell/projections/ml-ai-context` is missing and the app shell has no user-visible context panel yet; the four adjacent suites passed with 75 tests. `git diff --check` passed.
-- TASK-043 red tests were committed as `dff783e` (`Anscombe(test)(Add ML And AI Context Panels): add context panel acceptance tests`).
-- Huygens (`implementer`, agent `019ec46c-9844-7c22-a701-6ca383afa318`) was spawned at 2026-06-14 12:38 CST to make the committed TASK-043 tests pass with minimum production code. Parent will not integrate or commit implementation work until Huygens returns completion/final status.
-- Huygens returned final status with production code and narrow test-maintenance fixes. Parent accepted the test edits as clear maintenance fixes for ES2020/typecheck/matcher/helper-scope/panel-only leak assertions, not coverage weakening.
-- Huygens changes were committed as `83164bf` (`Huygens(test-fix)(Add ML And AI Context Panels): repair context panel test expectations`) and `148084d` (`Huygens(implementation)(Add ML And AI Context Panels): implement context panel projections`).
-- Parent implementation validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` passed with 6 files / 88 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- TASK-043 review running as of 2026-06-14 12:54 CST: Ptolemy (`pr_explorer`, `019ec47a-e32d-7c71-a9c3-837265fed88a`), Beauvoir (`reviewer`, `019ec47a-e637-7b01-b93c-2f6f4def74b3`), Lovelace (`deprecation_auditor`, `019ec47a-e8cd-7431-aaa2-f3960d45806d`), Galileo (`security_reviewer`, `019ec47a-eb36-7f22-95bc-dfb01a0817ee`), Socrates (`docs_researcher`, `019ec47a-edd8-77f0-9628-57805d1e8dd0`), and Maxwell (`test_quality_reviewer`, `019ec47a-f17a-73f1-9767-a290e5f0fe22`). `doc_writer` spawn hit the current agent thread limit and will be retried after capacity frees.
-- Ptolemy (`pr_explorer`) returned final status with no blocker and flagged review hotspots: missing context-panel CSS, ML scan-cap semantics, AI output redaction/bounding, intentional `ml.prediction-panel`-only mounting, and unrun full local gate.
-- Lorentz (`doc_writer`, `019ec47d-95a4-7e22-8abf-7805c70f865e`) was spawned after Ptolemy was closed and capacity freed.
-- Lovelace (`deprecation_auditor`) returned final status with no P0/P1 and one P2: inactive `Tab` elements point `aria-controls` at unmounted tabpanel ids.
-- Maxwell (`test_quality_reviewer`) returned final status with no P0/P1 and P2 coverage gaps: AI advisory command execution/payload assertions are incomplete, AI stale async page-switch coverage is missing, and ML metadata/event overflow assertions were weakened.
-- Socrates (`docs_researcher`) returned final status with no P0/P1. It confirmed MUI/React/Testing docs alignment and repeated P2 findings for unmounted controlled tabpanels and missing context-panel CSS/layout coverage. OpenAI docs were not checked because live provider/request execution remains deferred.
-- Galileo (`security_reviewer`) returned final status with no P0/P1. It found one P2: non-exact ML prediction DTOs can be forwarded into `ai.explain-prediction`, including provider/secret-shaped fields. It also found one P3: exported projection builders can throw on Proxy trap input instead of failing closed.
-- Beauvoir (`reviewer`) returned final status with one P1: resolved AI provider failure DTOs such as `ai.provider-unconfigured` are displayed as successful suggestions. It also found P2 issues for shallow ML prediction validation before `ai.explain-prediction` and pre-filter ML metadata/event caps that can drop later valid current-page rows.
-- Lorentz (`doc_writer`) returned final status and completed docs-only sync in commit `3088541` (`Lorentz(docs)(Add ML And AI Context Panels): sync context panel docs`).
-- Parent decision: TASK-043 is not merge-ready. Fix P1 before merge and address the known P2/P3 items in this branch because they are local to TASK-043 and user-visible/security/test-quality related.
-- Tesla (`test_writer`, agent `019ec485-25ce-7cd3-b759-b66a2f24fa57`) was spawned at 2026-06-14 13:05 CST to add failing review-fix regression tests for the P1, P2, and feasible P3 findings. Parent will not implement fixes until Tesla returns completion/final status and the red signal is validated.
-- Tesla returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the review findings: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 8 failures and 16 passing tests; `git diff --check` passed.
-- Tesla tests were committed as `7884458` (`Tesla(test-fix)(Add ML And AI Context Panels): cover review findings`).
-- Hypatia (`implementer`, agent `019ec48a-afa6-7d02-88ff-9188a19c9597`) was spawned at 2026-06-14 13:11 CST to make Tesla's review-fix tests pass with minimum production changes. Parent will not integrate or commit production fixes until Hypatia returns completion/final status.
-- Hypatia returned final status and addressed the review findings. Parent spotted and sent back one boundary issue in the first Hypatia patch: `boundIndexedRows` could skip valid rows at `sourceIndex === limit`; Hypatia corrected this before integration.
-- Hypatia review fixes were committed as `9a5c6e2` (`Hypatia(test-fix)(Add ML And AI Context Panels): tighten review regression tests`) and `5574bdd` (`Hypatia(review-fix)(Add ML And AI Context Panels): harden context panel boundaries`).
-- Parent review-fix validation passed: review-fix suite passed with 2 files / 24 tests; broader TASK-043 suite passed with 6 files / 96 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- Targeted re-review running as of 2026-06-14 13:26 CST: Bacon (`reviewer`, `019ec497-e610-7ec2-ab79-1150556bacb0`), Fermat (`security_reviewer`, `019ec497-e9a2-7782-878a-0f49dec7e306`), Planck (`test_quality_reviewer`, `019ec497-ff73-75c0-ad81-f4f84ce239f3`), and James (`deprecation_auditor`, `019ec498-0271-73b3-b420-e394853ea863`).
-- Planck (`test_quality_reviewer`) returned final status with no remaining P0/P1/P2 test-quality findings.
-- James (`deprecation_auditor`) returned final status with no remaining P0/P1/P2 accessibility/deprecation findings; previous Tabs P2 is fixed.
-- Bacon (`reviewer`) returned final status with no P0/P1 and one remaining P2: malformed success-shaped AI command DTOs can still render as successful advisory output because validation checks only `kind` plus one display field.
-- Fermat (`security_reviewer`) returned final status with one remaining P2 and two P3 findings: allowed metadata JSON values can carry secret/provider/path-shaped data into ML/AI payloads; top-level proxy input can still throw; and non-exact ML prediction arrays with extra own properties can be normalized and still enable `ai.explain-prediction`.
-- Parent decision: TASK-043 remains not merge-ready. Add failing tests for the remaining Bacon/Fermat findings, then implement fixes.
-- Bernoulli (`test_writer`, agent `019ec49c-7c56-7f70-af6b-c53d667e7bc0`) was spawned at 2026-06-14 13:30 CST for second review-fix regression tests covering Bacon/Fermat findings. Parent will wait for final status before validation or implementation.
-- Bernoulli returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the targeted findings: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 4 failures and 24 passing tests; `git diff --check` passed.
-- Bernoulli tests were committed as `31408ec` (`Bernoulli(test-fix)(Add ML And AI Context Panels): cover strict DTO review gaps`).
-- Mill (`implementer`, agent `019ec4a1-1cac-7902-a57f-b09a136c090e`) was spawned at 2026-06-14 13:36 CST to make Bernoulli's tests pass with minimum production changes. Parent will not integrate or commit production fixes until Mill returns completion/final status.
-- Mill returned final status and addressed the remaining strict DTO/security findings. Mill fixes were committed as `e1cec91` (`Mill(review-fix)(Add ML And AI Context Panels): enforce strict advisory DTO boundaries`).
-- Parent second review-fix validation passed: review-fix suite passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- Final targeted re-review running as of 2026-06-14 13:44 CST: Laplace (`reviewer`, `019ec4a9-10f8-72a0-b974-7dba9c120145`), Chandrasekhar (`security_reviewer`, `019ec4a9-136b-7152-b049-9a9c4fb0b266`), and Popper (`test_quality_reviewer`, `019ec4a9-1699-7fd2-8854-f214f09a7d5c`).
-- Final targeted re-review completed at 2026-06-14 13:49 CST. Laplace found no remaining correctness P0/P1/P2. Popper found one P2 test-quality gap: malformed success-shaped `ai.suggest-due-date` output is not covered by the strict DTO regression tests. Chandrasekhar found one P2 security gap: path-shaped allowed metadata values such as `/root/.ssh/id_rsa`, `/workspace/private.md`, `/dev/shm/file.log`, `/proc/self/environ`, `/run/user/1000/app.sock`, and `~/private.md` can still reach ML and AI payload metadata.
-- Parent decision: TASK-043 remains not merge-ready. Delegate a third review-fix `test_writer` to add failing tests for the Popper and Chandrasekhar P2 findings, then delegate implementation only after the red signal is validated.
-- Hooke (`test_writer`, `019ec4ae-0e16-7702-8a41-b9c2624f4d90`) was spawned at 2026-06-14 13:50 CST to add failing tests for malformed `ai.suggest-due-date` success DTO handling and path-shaped metadata filtering.
-- Hooke returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the security finding: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 1 metadata path leak failure and 27 passing tests; `git diff --check` passed. Tests were committed as `6c33617` (`Hooke(test-fix)(Add ML And AI Context Panels): cover final metadata and due date gaps`).
-- Kierkegaard (`implementer`, `019ec4b1-0478-7b51-90f6-5ebe72a62676`) was spawned at 2026-06-14 13:53 CST to make Hooke's metadata path red test pass with minimum production changes.
-- Kierkegaard returned final status with a production-only metadata sanitizer fix in `src/shell/projections/ml-ai-context.ts`. Commit: `94df1bf` (`Kierkegaard(review-fix)(Add ML And AI Context Panels): filter path-shaped metadata values`).
-- Parent validation passed: Hooke review-fix suite passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
-- Final narrow re-review running as of 2026-06-14 13:56 CST: Copernicus (`reviewer`, `019ec4b4-510f-7fa0-86ba-71cf9cf33712`), Halley (`security_reviewer`, `019ec4b4-5382-7231-a3e8-d690322a37d8`), and Harvey (`test_quality_reviewer`, `019ec4b4-562f-7d01-97fb-b6d5f03bda76`).
-- Final narrow re-review completed at 2026-06-14 14:00 CST. Copernicus found no correctness P0/P1/P2 and called TASK-043 correctness merge-ready. Halley found no security P0/P1/P2, confirmed Chandrasekhar's remaining P2 is closed, and called TASK-043 security merge-ready. Harvey found no test-quality P0/P1/P2 and confirmed Popper's due-date DTO coverage gap and Chandrasekhar's path metadata leak are meaningfully covered.
-- TASK-043 final branch gate passed at 2026-06-14 14:01 CST: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
+- TASK-043 was merged to `master` in merge commit `6e394fa`.
+- Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
+- TASK-044 branch was created from validated `master` commit `6e394fa`.
+- Agent/config validation passed for TASK-044 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-044 pre-test guidance running as of 2026-06-14 14:05 CST: Darwin (`planner`, `019ec4bb-f239-77c2-8ae2-4ad86405f398`), Kuhn (`docs_researcher`, `019ec4bb-f4d6-71f0-ae3b-2629997d44bb`), Leibniz (`security_reviewer`, `019ec4bb-f804-7993-8bb5-87ec28b47c6a`), and Hegel (`deprecation_auditor`, `019ec4bb-fa7b-7df2-a9f1-8fde208b0cb1`).
+- TASK-044 pre-test guidance completed at 2026-06-14 14:10 CST with no blockers. Darwin recommended a Settings route opened from the existing top-bar Settings control, with an embedded Sync skeleton section/panel rather than a top-level Sync Drawer route. Kuhn verified official docs-site guidance for MUI docs site v9.1.1, React docs site 19.2, Testing Library/user-event guidance, and Vitest docs site v4.1.7. Those docs-site versions are not local installed dependency versions; local installed versions verified with `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0` are `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`. Leibniz identified security red-test targets for no secrets/forms/network/native/persistence/raw runtime leaks. Hegel confirmed MUI/React/testing API guardrails and deprecated patterns to avoid.
+- Bohr (`test_writer`, `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing TASK-044 Settings/Sync placeholder tests.
+- Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Parent red validation matched the expected missing Settings route: focused TASK-044 suite failed with 4 Settings route failures and 38 passing tests; `git diff --check` and focused lint passed. Tests were committed as `9a90de1` (`Bohr(test)(Add Settings And Sync Placeholders): add placeholder route acceptance tests`).
+- Boyle (`implementer`, `019ec4ca-1dbe-7a10-a3b7-fc0716d6a14b`) was spawned at 2026-06-14 14:20 CST to make Bohr's red tests pass with minimum production changes.
+- Boyle returned final status with implementation in `src/App.tsx` and `src/App.css`. Commit: `b1f4318` (`Boyle(implementation)(Add Settings And Sync Placeholders): implement inert settings route`).
+- Parent implementation validation passed: focused TASK-044 suite passed with 4 files / 42 tests; broader shell/route suite passed with 7 files / 108 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- TASK-044 review running as of 2026-06-14 14:28 CST: Helmholtz (`pr_explorer`, `019ec4d1-2525-7230-b2c2-717e96173b8c`), Banach (`reviewer`, `019ec4d1-2c3c-7e91-b519-a24040efff2c`), Euclid (`security_reviewer`, `019ec4d1-2ed8-7492-9a63-ab601ea61a41`), Cicero (`deprecation_auditor`, `019ec4d1-3146-7582-a929-344e5c7e481b`), Boole (`docs_researcher`, `019ec4d1-46a8-7e63-bc1c-1c863cb0a520`), and Raman (`test_quality_reviewer`, `019ec4d1-49c3-7e11-818c-912ed4a28198`). `doc_writer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Review outcome so far: Banach found no correctness P0/P1/P2 and called the implementation merge-ready from correctness scope. Euclid found no security P0/P1/P2 and called the branch security merge-ready. Cicero found one P1: `src/test/settings-sync-placeholders.test.tsx` uses synchronous `getByRole` for the async Home Markdown textbox, causing a focused test failure. Raman found no P0/P1 but three P2 test-quality cleanup items: make Settings/Sync assert no editable controls at all, remove the implementation-coupled `BUILT_IN_PLUGINS` descriptor equality, and narrow the broad app-shell regex static guard. Helmholtz and Boole both flagged stale docs; Volta (`doc_writer`) fixed docs in commit `50347b8`.
+- Goodall (`test_writer`, `019ec4dc-ebd4-77f2-a349-e3f60ba568c1`) was spawned at 2026-06-14 14:41 CST to address Cicero's P1 focused-test failure and Raman's P2 test-quality cleanup.
+- Goodall returned final status with test-only fixes in `src/test/settings-sync-placeholders.test.tsx`. Commit: `4a37998` (`Goodall(test-fix)(Add Settings And Sync Placeholders): harden settings route tests`).
+- Parent review-fix validation passed: TASK-044 focused tests passed with 2 files / 16 tests and 4 files / 42 tests; broader shell/route suite passed with 8 files / 129 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- TASK-044 targeted re-review running as of 2026-06-14 14:48 CST: Newton (`test_quality_reviewer`, `019ec4e2-1243-7db3-a169-cd4cd60b5495`) is checking Raman P2 closure and test-strength preservation; Arendt (`deprecation_auditor`, `019ec4e2-1600-7a03-b50c-3694dc59c5d6`) is checking Cicero P1 closure and stale MUI/React/testing API risk; Poincare (`docs_researcher`, `019ec4e2-18e0-7bf2-943b-98077424bc72`) is checking Volta docs sync, deferred scope clarity, and misleading version-note risk.
+- Targeted re-review completed at 2026-06-14 14:51 CST. Newton found no remaining test-quality findings and called the branch merge-ready from targeted test-quality scope. Arendt found no P0/P1/P2 deprecation/API issues and called Cicero's P1 closed. Poincare found one remaining docs P2: task communication and progress notes call MUI `v9.1.1` and Vitest `v4.1.7` "current" without clarifying those are official docs site versions checked, while local installed versions are `@mui/material@9.0.1` and `vitest@4.1.6`.
+- Parent decision: accept Poincare's P2 and delegate a doc-only wording fix before final gate. Newton, Arendt, and Poincare are complete and safe to close because their final statuses have been recorded.
+- Newton, Arendt, and Poincare were closed after final statuses were recorded. Sartre (`doc_writer`, `019ec4e4-a173-7062-a59d-d5594a6d41ca`) was spawned at 2026-06-14 14:52 CST to clarify official-docs-version wording versus local installed dependency versions in task communication and progress docs.
+- Sartre completed the doc-only wording fix. The TASK-044 communication and progress notes now distinguish official docs-site versions checked from local installed dependency versions and record the local package versions. Poincare's docs P2 is closed.
+- Sartre's doc-fix was committed as `27a1a68` (`Sartre(docs-fix)(Add Settings And Sync Placeholders): clarify docs version notes`) and auto-pushed to `origin/feat/task-044-settings-sync-placeholders`.
+- Final feature-branch gate passed at 2026-06-14 17:28 CST with `bun run check:quick`: typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- TASK-044 is marked complete in `docs/implementation/progress.md`. No P0/P1/P2 blockers remain.
 
-## Initial TASK-043 Scope
+## Initial TASK-044 Scope
 
-- Optional right context panel can show current-page ML and AI panels without covering the Markdown workspace.
-- ML panel builds exact bounded current-page projections, executes `ml.run-prediction` through Command Registry, and renders `ml.page-sidebar.prediction-panel` / `ml.prediction-panel` through registered hosts.
-- AI panel renders advisory `ai.suggestion-panel` and `ai.review-panel` with explicit caller-provided DTOs and exact bounded projections.
-- AI output remains advisory; shell integration must not mutate pages, metadata, events, filters, sibling plugin data, settings, or secrets.
-- Live provider execution, provider settings UI, secret/keychain storage, durable AI suggestion acceptance, network/native execution, package, Tauri, Rust, capability, permission, and schema changes remain deferred.
-- ML/AI panels fail closed for malformed, unavailable, or rejected data and do not expose full workspace data, raw runtime handles, provider settings, raw errors, or secrets.
+- Add Settings and Sync placeholder route/panel surfaces to the current MUI app shell.
+- Settings must list app/runtime information and existing plugin settings descriptors, including inert `ai.provider-settings` and Sync skeleton status.
+- Sync must clearly present skeleton status: no runtime sync commands, transport, remote endpoint, conflict UI, background jobs, or settings persistence are enabled.
+- Placeholder controls must be accessible and visible without claiming unsupported behavior.
+- Settings/Sync surfaces must not accept, store, render, or log API keys, tokens, credentials, remote endpoints, filesystem paths, provider secrets, or other secret-like values.
+- Any settings action that exists must go through registered commands; this task should avoid adding mutation actions unless explicitly supported by current public descriptors.
+- No Tauri/native/Rust/package/lockfile/capability/permission/IPC/schema/keychain/network/release changes are in scope.
 
-## Constraints
+## Relevant Local Docs
 
-- Parent remains orchestration-only.
-- Write failing projection-builder and RTL/user-event route tests before production code.
-- No broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, package, lockfile, Tauri, Rust, IPC, capability, permission, schema, native, or release changes.
-- Calendar, Stats, and Chart behavior remains plugin-owned; App Shell may only build reviewed bounded DTO projections and route them through registered views/commands.
+- `docs/implementation/task-index.md#TASK-044`
+- `docs/product/07-user-interface-design.md`
+- `docs/product/03-plugin-platform.md`
+- `docs/product/05-built-in-plugins.md#23-sync-plugin`
+- `docs/architecture/05-plugin-implementations.md#15-sync-plugin`
+- `docs/architecture/07-runtime-flows.md#1817-sync-skeleton-contract`
+- `docs/testing/strategy.md#task-032-sync-plugin-skeleton-guidance`
+
+## Parent Decisions
+
+- Treat TASK-044 as an inert app-shell route task, not a settings persistence, provider configuration, keychain, or sync-transport task.
+- Expose only public runtime/plugin manifest facts and descriptor DTOs; do not pass raw runtime handles, stores, registries, NativeBridge/Tauri handles, provider settings, secrets, or plugin-private objects to placeholder UI.
+- Keep Sync status tied to the TASK-032 skeleton contract: plugin id `sync`, no runtime commands/views/settings panels/transport, syncable unit descriptors are informational only.
+- Keep AI provider settings descriptor informational/inert; do not create provider settings inputs or secret fields.
+- Use the existing top-bar Settings affordance to open a visible Settings workspace route; include Sync as a named skeleton section/panel inside Settings, not a separate top-level Drawer route for this task.
+- Red tests should primarily live in `src/test/settings-sync-placeholders.test.tsx`, with a narrow `src/test/mui-shell-frame.test.tsx` update if existing Settings placeholder expectations need to change.
 
 ## Validation Recorded
 
-- TASK-041 merge-result `bun run check:quick` passed on `master` before TASK-042 branch creation.
-- TASK-042 startup `git status --short --branch` was clean before task-state edits.
-- 11 project agent TOML files parsed successfully before TASK-042 start.
-- `codex --strict-config doctor --summary --ascii` reported configuration/auth/MCP/network/websocket OK and only the known terminal `TERM=dumb` failure plus unrestricted-sandbox notes.
-
-## Deferred Scope
-
-- Settings/Sync placeholders, responsive/persistent navigation polish, live AI providers, provider settings UI, secrets/keychain, durable AI acceptance, network/native execution, package/Tauri/Rust/capability/schema changes, and release surfaces remain later tasks.
+- 2026-06-14 14:04 CST: branch created from validated `master`.
+- 2026-06-14 14:04 CST: 11 project agent TOML files parsed successfully.
+- 2026-06-14 14:04 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
 ## Next Parent Actions
 
-- Commit TASK-043 completion status.
-- Merge `feat/task-043-ml-ai-context-panels` into `master`, validate `master`, push, and continue to TASK-044.
+- Commit the TASK-044 completion status update.
+- Merge `feat/task-044-settings-sync-placeholders` into `master`, validate `master`, push, then continue to TASK-045.

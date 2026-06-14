@@ -87,12 +87,126 @@ Status markers:
 - [x] TASK-041: Add Search Overlay And Results Route
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [x] TASK-043: Add ML And AI Context Panels
-- [ ] TASK-044: Add Settings And Sync Placeholders
+- [x] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 17:28 CST - TASK-044 completed on feature branch
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Completion commit sequence includes red tests (`9a90de1`), implementation (`b1f4318`), docs sync (`50347b8`), review-fix tests (`4a37998`), doc-version wording fix (`27a1a68`), and orchestration/progress commits.
+- Final local gate passed with `bun run check:quick`: typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Targeted re-review closed Cicero's P1, Raman's P2 test-quality items, and Poincare's docs P2. No P0/P1/P2 blockers remain for TASK-044.
+- Scope preserved: Settings is an inert workspace route with app/runtime facts, public settings descriptors, inert `ai.provider-settings`, and embedded Sync skeleton status. TASK-044 adds no settings persistence, provider configuration form, keychain, network/native sync, background jobs, conflict UI, package/native/Tauri/Rust/IPC/capability/schema/release changes, or Sync transport.
+- Next action: merge `feat/task-044-settings-sync-placeholders` into `master`, validate `master`, push, then continue to TASK-045.
+
+### 2026-06-14 14:52 CST - TASK-044 doc-fix completed
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Closed completed targeted re-review agents Newton, Arendt, and Poincare after recording their final statuses.
+- Sartre (`doc_writer`, agent `019ec4e4-a173-7062-a59d-d5594a6d41ca`) spawned to clarify official-docs-version wording versus local installed dependency versions in task communication and progress docs.
+- Sartre completed the doc-only wording fix. TASK-044 notes now distinguish official docs-site versions checked from local installed dependency versions and record local versions verified by `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0`: `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`.
+- Poincare's docs P2 is closed; parent can review, commit, and proceed with the final gate if no blockers remain.
+
+### 2026-06-14 14:51 CST - TASK-044 targeted re-review completed
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Newton (`test_quality_reviewer`) found no remaining targeted test-quality findings and called the branch merge-ready from that scope.
+- Arendt (`deprecation_auditor`) found no P0/P1/P2 stale API findings and confirmed Cicero's P1 focused-test failure is closed.
+- Poincare (`docs_researcher`) found one remaining docs P2: task communication and progress notes should clarify that MUI `v9.1.1` and Vitest `v4.1.7` were official docs site versions checked, not local installed dependency versions. Local installed versions are `@mui/material@9.0.1` and `vitest@4.1.6`.
+- Parent decision: accept Poincare's P2 and delegate a doc-only wording fix before final gate.
+
+### 2026-06-14 14:48 CST - TASK-044 targeted re-review delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Targeted re-review agents running: Newton (`test_quality_reviewer`, agent `019ec4e2-1243-7db3-a169-cd4cd60b5495`) for Raman P2 closure and test-strength preservation; Arendt (`deprecation_auditor`, agent `019ec4e2-1600-7a03-b50c-3694dc59c5d6`) for Cicero P1 closure and stale MUI/React/testing API risk; Poincare (`docs_researcher`, agent `019ec4e2-18e0-7bf2-943b-98077424bc72`) for Volta docs sync, deferred scope clarity, and misleading version-note risk.
+- Parent state: waiting for targeted re-review completion/final statuses before final gate or merge decisions. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 14:45 CST - TASK-044 review-fix tests green
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Goodall (`test_writer`) returned final status with test-only fixes for Cicero's P1 and Raman's P2 test-quality findings.
+- Commit: `4a37998` (`Goodall(test-fix)(Add Settings And Sync Placeholders): harden settings route tests`).
+- Parent validation passed: TASK-044 focused tests passed with 2 files / 16 tests and 4 files / 42 tests; broader shell/route suite passed with 8 files / 129 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: targeted re-review before final gate.
+
+### 2026-06-14 14:41 CST - TASK-044 review-fix tests delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Goodall (`test_writer`, agent `019ec4dc-ebd4-77f2-a349-e3f60ba568c1`) spawned to fix Cicero's P1 focused-test failure and Raman's P2 test-quality cleanup.
+- Parent state: waiting for Goodall completion/final status before validating or committing test fixes.
+
+### 2026-06-14 14:40 CST - TASK-044 review outcome requires test cleanup
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Banach (`reviewer`) found no correctness P0/P1/P2. Euclid (`security_reviewer`) found no security P0/P1/P2.
+- Cicero (`deprecation_auditor`) found one P1: a focused TASK-044 test synchronously queries the async Home Markdown textbox and fails before Settings opens.
+- Raman (`test_quality_reviewer`) found no P0/P1 but recommended P2 cleanup for stronger no-editable-control coverage, less implementation-coupled AI descriptor assertions, and narrower static guard scope.
+- Helmholtz (`pr_explorer`) and Boole (`docs_researcher`) flagged stale docs; Volta (`doc_writer`) completed docs sync in commit `50347b8`.
+- Parent decision: delegate test cleanup before merge readiness.
+
+### 2026-06-14 14:28 CST - TASK-044 review delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Review agents running: Helmholtz (`pr_explorer`), Banach (`reviewer`), Euclid (`security_reviewer`), Cicero (`deprecation_auditor`), Boole (`docs_researcher`), and Raman (`test_quality_reviewer`).
+- `doc_writer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Parent state: waiting for review completion/final statuses before deciding merge readiness or review fixes.
+
+### 2026-06-14 14:27 CST - TASK-044 implementation green
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Boyle (`implementer`) returned final status with implementation in `src/App.tsx` and `src/App.css`.
+- Commit: `b1f4318` (`Boyle(implementation)(Add Settings And Sync Placeholders): implement inert settings route`).
+- Parent validation passed: focused TASK-044 suite passed with 4 files / 42 tests; broader shell/route suite passed with 7 files / 108 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: review delegation before merge readiness.
+
+### 2026-06-14 14:20 CST - TASK-044 implementation delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Boyle (`implementer`, agent `019ec4ca-1dbe-7a10-a3b7-fc0716d6a14b`) spawned to make Bohr's committed red tests pass with minimum production changes.
+- Parent state: waiting for Boyle completion/final status before validating or committing implementation.
+
+### 2026-06-14 14:19 CST - TASK-044 red tests committed
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Bohr (`test_writer`) returned final status with test-only Settings/Sync placeholder coverage.
+- Red validation: `bun run test:frontend -- src/test/settings-sync-placeholders.test.tsx src/test/mui-shell-frame.test.tsx src/test/app-shell-boundary.test.ts src/test/sync-plugin-skeleton.test.ts` failed as expected with 4 Settings route failures and 38 passing tests.
+- `git diff --check` passed; focused lint passed.
+- Commit: `9a90de1` (`Bohr(test)(Add Settings And Sync Placeholders): add placeholder route acceptance tests`).
+- Next action: delegate implementation to `implementer`.
+
+### 2026-06-14 14:11 CST - TASK-044 red tests delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) spawned to add failing Settings/Sync placeholder RTL/static tests.
+- Parent state: waiting for Bohr completion/final status before validating, committing, or delegating implementation.
+
+### 2026-06-14 14:10 CST - TASK-044 pre-test guidance complete
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Darwin (`planner`), Kuhn (`docs_researcher`), Leibniz (`security_reviewer`), and Hegel (`deprecation_auditor`) returned final statuses with no blockers.
+- Parent decision: use the existing top-bar Settings control to open a visible Settings workspace route, with Sync as an embedded skeleton section/panel rather than a top-level Sync Drawer route.
+- Parent decision: settings descriptors are public manifest descriptor DTOs only; `ai.provider-settings` is listed as inert and no provider/API key/model/endpoint inputs are added.
+- Docs verified externally by agents: official docs-site guidance for MUI docs site v9.1.1 List/Alert/Button/Switch/Tooltip/Drawer/path imports, React docs site 19.2, Testing Library role/query/user-event guidance, and Vitest docs site v4.1.7. These are docs site versions checked, not local installed dependency versions. Local installed versions verified with `bun pm ls @mui/material react @testing-library/user-event vitest --depth 0`: `@mui/material@9.0.1`, `react@19.2.6`, `@testing-library/user-event@14.6.1`, and `vitest@4.1.6`. OpenAI docs were not checked because TASK-044 does not change live provider behavior.
+- Next action: delegate failing RTL/static tests to `test_writer`.
+
+### 2026-06-14 14:05 CST - TASK-044 pre-test guidance delegated
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Pre-test guidance agents running: Darwin (`planner`), Kuhn (`docs_researcher`), Leibniz (`security_reviewer`), and Hegel (`deprecation_auditor`).
+- Parent state: waiting for completion/final statuses before delegating red tests.
+
+### 2026-06-14 14:04 CST - TASK-044 started
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Base: validated `master` merge commit `6e394fa`.
+- TASK-043 was merged to `master` and post-merge `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Agent/config validation passed for TASK-044 startup: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Scope decision: Settings/Sync placeholders stay inert and informational; no secrets, provider settings inputs, keychain, network/native sync, background jobs, conflict UI, package/native/Tauri/Rust/IPC/capability/schema/release changes.
+- Next action: pre-test guidance agents before TDD tests.
 
 ### 2026-06-14 14:01 CST - TASK-043 complete on branch
 
