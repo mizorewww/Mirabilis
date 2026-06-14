@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: `test_writer` running; parent is waiting for final status.
+- Status: red tests committed; parent is preparing `implementer` delegation.
 
 ## Scope
 
@@ -56,7 +56,8 @@
 - Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) was spawned at 2026-06-15 00:06 CST for stale MUI/React/testing API risk.
 - Poincare returned final status at 2026-06-15 00:11 CST with no files modified and no blockers. Parent accepted the audit constraints: keep `ListItemButton` plus explicit `aria-current="page"`; avoid removed MUI v9 props and legacy List/ListItemText APIs; avoid removed React 19 APIs and `react-dom/test-utils`; make persistence effects StrictMode-safe; use `const user = userEvent.setup()` with awaited interactions; reset shared Vitest mocks explicitly; add static guards for MUI/React/test API drift, package/Cargo/Tauri/capability drift, direct user-event calls, and route persistence allowlist.
 - Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned at 2026-06-15 00:13 CST for failing TASK-047 tests only. It owns test/test-helper changes, must not modify production/package/native/docs files, and must return final status before parent validates or commits tests.
+- Hilbert returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 00:28 CST matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Expected failures cover no durable route metadata after page selection, seeded saved-filter route not restored, persisted Home ID/title not reused, recent pages still session-derived rather than persisted/capped/deduped, and static guard missing `app-shell.navigation` / `route-state` production source. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan. Commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
 
 ## Next Action
 
-- Wait for Hilbert final status before validating red tests. A wait timeout is not a failure or idle signal.
+- Spawn `implementer` to make Hilbert's red tests pass with minimum production changes.

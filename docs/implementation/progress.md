@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 00:29 CST - TASK-047 red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
+- Hilbert (`test_writer`) added `src/test/durable-navigation-route-state.test.tsx` only. Coverage includes page/filter route restart restoration, durable Home reuse, recent-page order/cap/dedupe/drop behavior, malformed/stale/wrong-owner/missing/archived fail-closed restoration, non-leakage/static route DTO guards, storage/native/API drift guards, and narrow drawer behavior.
+- Parent red validation matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan.
+- Parent state: preparing to spawn `implementer` for minimum production changes.
+
 ### 2026-06-15 00:13 CST - TASK-047 red tests delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
