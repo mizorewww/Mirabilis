@@ -63,8 +63,13 @@ export function createDurableRouteState({
   homePageId: string;
   recentPageIds: readonly string[];
 }): DurableRouteState {
+  const clonedActiveRoute =
+    activeRoute === undefined
+      ? undefined
+      : cloneDurableActiveRoute(activeRoute);
+
   return {
-    ...(activeRoute === undefined ? {} : { activeRoute }),
+    ...(clonedActiveRoute === undefined ? {} : { activeRoute: clonedActiveRoute }),
     homePageId,
     recentPageIds: normalizeRecentPageIds(recentPageIds, homePageId),
     version: durableRouteStateVersion,
@@ -197,6 +202,37 @@ function readDurableActiveRoute(
   }
 
   return undefined;
+}
+
+function cloneDurableActiveRoute(
+  activeRoute: DurableActiveRoute,
+): DurableActiveRoute | undefined {
+  if (activeRoute.kind === "page") {
+    return isNonEmptyString(activeRoute.pageId) &&
+      isDurablePageRouteRole(activeRoute.role)
+      ? {
+          kind: "page",
+          pageId: activeRoute.pageId,
+          role: activeRoute.role,
+        }
+      : undefined;
+  }
+
+  if (
+    !isNonEmptyString(activeRoute.filterId) ||
+    !isDurableFilterRouteRole(activeRoute.role)
+  ) {
+    return undefined;
+  }
+
+  return {
+    filterId: activeRoute.filterId,
+    kind: "filter",
+    role: activeRoute.role,
+    ...(isNonEmptyString(activeRoute.routeToken)
+      ? { routeToken: activeRoute.routeToken }
+      : {}),
+  };
 }
 
 function readExactRecord(
