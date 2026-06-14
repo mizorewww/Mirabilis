@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: red tests are committed; parent is preparing implementation delegation.
+- Status: implementation is delegated to Boyle; parent is waiting for completion/final status.
 
 ## Scope
 
@@ -60,7 +60,8 @@
 - Hegel returned final status with no blocker. It reinforced MUI path imports, no stale MUI APIs, non-urgent placeholder `Alert role="status"`, React 19 testing patterns, awaited user-event interactions, and no focused/skipped tests.
 - Bohr (`test_writer`, agent `019ec4c1-997e-7761-8c3b-e206cf710e98`) was spawned at 2026-06-14 14:11 CST to add failing RTL/static tests for TASK-044.
 - Bohr returned final status with test-only changes in `src/test/settings-sync-placeholders.test.tsx` and `src/test/mui-shell-frame.test.tsx`. Commit `9a90de1` records the red tests.
+- Boyle (`implementer`, agent `019ec4ca-1dbe-7a10-a3b7-fc0716d6a14b`) was spawned at 2026-06-14 14:20 CST to make Bohr's red tests pass with minimum production changes.
 
 ## Next Action
 
-- Spawn `implementer` to make Bohr's red tests pass, then wait for completion/final status.
+- Wait for Boyle completion/final status before validation or implementation commit.
