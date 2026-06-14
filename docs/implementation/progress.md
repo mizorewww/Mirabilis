@@ -94,6 +94,15 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 14:40 CST - TASK-044 review outcome requires test cleanup
+
+- Branch: `feat/task-044-settings-sync-placeholders`.
+- Banach (`reviewer`) found no correctness P0/P1/P2. Euclid (`security_reviewer`) found no security P0/P1/P2.
+- Cicero (`deprecation_auditor`) found one P1: a focused TASK-044 test synchronously queries the async Home Markdown textbox and fails before Settings opens.
+- Raman (`test_quality_reviewer`) found no P0/P1 but recommended P2 cleanup for stronger no-editable-control coverage, less implementation-coupled AI descriptor assertions, and narrower static guard scope.
+- Helmholtz (`pr_explorer`) and Boole (`docs_researcher`) flagged stale docs; Volta (`doc_writer`) completed docs sync in commit `50347b8`.
+- Parent decision: delegate test cleanup before merge readiness.
+
 ### 2026-06-14 14:28 CST - TASK-044 review delegated
 
 - Branch: `feat/task-044-settings-sync-placeholders`.
