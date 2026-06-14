@@ -40,6 +40,13 @@ const routeStateKeys = new Set([
   "recentPageIds",
   "version",
 ]);
+const activeRouteKeys = new Set([
+  "filterId",
+  "kind",
+  "pageId",
+  "role",
+  "routeToken",
+]);
 const pageRouteKeys = new Set(["kind", "pageId", "role"]);
 const filterRouteKeys = new Set(["filterId", "kind", "role", "routeToken"]);
 const durablePageRouteRoles = new Set<string>([
@@ -153,14 +160,16 @@ export function toMetadataJsonValue(
 function readDurableActiveRoute(
   value: unknown,
 ): DurableActiveRoute | undefined {
-  if (!isRecord(value)) {
+  const record = readExactRecord(value, activeRouteKeys);
+
+  if (record === undefined) {
     return undefined;
   }
 
-  const kind = readDataString(value, "kind");
+  const kind = readDataString(record, "kind");
 
   if (kind === "page") {
-    const route = readExactRecord(value, pageRouteKeys);
+    const route = readExactRecord(record, pageRouteKeys);
 
     if (route === undefined) {
       return undefined;
@@ -179,7 +188,7 @@ function readDurableActiveRoute(
   }
 
   if (kind === "filter") {
-    const route = readExactRecord(value, filterRouteKeys);
+    const route = readExactRecord(record, filterRouteKeys);
 
     if (route === undefined) {
       return undefined;
@@ -207,32 +216,112 @@ function readDurableActiveRoute(
 function cloneDurableActiveRoute(
   activeRoute: DurableActiveRoute,
 ): DurableActiveRoute | undefined {
-  if (activeRoute.kind === "page") {
-    return isNonEmptyString(activeRoute.pageId) &&
-      isDurablePageRouteRole(activeRoute.role)
+  const record = readDataRecord(activeRoute);
+
+  if (record === undefined || hasUnsafeExtraActiveRouteValues(record)) {
+    return undefined;
+  }
+
+  const kind = readDataString(record, "kind");
+
+  if (kind === "page") {
+    const pageId = readDataString(record, "pageId");
+    const role = readDataString(record, "role");
+
+    return pageId !== undefined && isDurablePageRouteRole(role)
       ? {
           kind: "page",
-          pageId: activeRoute.pageId,
-          role: activeRoute.role,
+          pageId,
+          role,
         }
       : undefined;
   }
 
+  if (kind !== "filter") {
+    return undefined;
+  }
+
+  const filterId = readDataString(record, "filterId");
+  const role = readDataString(record, "role");
+  const routeToken = readDataString(record, "routeToken");
+
   if (
-    !isNonEmptyString(activeRoute.filterId) ||
-    !isDurableFilterRouteRole(activeRoute.role)
+    filterId === undefined ||
+    !isDurableFilterRouteRole(role)
   ) {
     return undefined;
   }
 
   return {
-    filterId: activeRoute.filterId,
+    filterId,
     kind: "filter",
-    role: activeRoute.role,
-    ...(isNonEmptyString(activeRoute.routeToken)
-      ? { routeToken: activeRoute.routeToken }
-      : {}),
+    role,
+    ...(routeToken === undefined ? {} : { routeToken }),
   };
+}
+
+function readDataRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+
+  try {
+    prototype = Object.getPrototypeOf(value);
+    ownKeys = Reflect.ownKeys(value);
+  } catch {
+    return undefined;
+  }
+
+  if (prototype !== Object.prototype) {
+    return undefined;
+  }
+
+  const record = Object.create(null) as Record<string, unknown>;
+
+  for (const key of ownKeys) {
+    if (typeof key !== "string") {
+      return undefined;
+    }
+
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, key);
+    } catch {
+      return undefined;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return undefined;
+    }
+
+    record[key] = descriptor.value;
+  }
+
+  return record;
+}
+
+function hasUnsafeExtraActiveRouteValues(
+  record: Record<string, unknown>,
+): boolean {
+  return Object.entries(record).some(([key, value]) => {
+    if (activeRouteKeys.has(key)) {
+      return false;
+    }
+
+    return (
+      typeof value === "function" ||
+      typeof value === "symbol" ||
+      (typeof value === "object" && value !== null)
+    );
+  });
 }
 
 function readExactRecord(
