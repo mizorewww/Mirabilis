@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 18:57 CST - TASK-046 review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Review agents running: Aristotle (`pr_explorer`, agent `019ec5c7-94a3-7b32-abe0-0f00cb10833b`), Dalton (`reviewer`, agent `019ec5c7-9756-7370-9e35-b32756017499`), Nietzsche (`security_reviewer`, agent `019ec5c7-99e1-7ca1-b24e-793018402cfb`), Hume (`deprecation_auditor`, agent `019ec5c7-9d14-7832-84b0-eaa8ecd364b8`), Godel (`docs_researcher`, agent `019ec5c7-a017-7f61-a405-6a538111e3d3`), and Dirac (`test_quality_reviewer`, agent `019ec5c7-a377-7560-a463-c3445ac899ff`).
+- `release_checker` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Parent state: waiting for review completion/final statuses before deciding merge readiness or review fixes. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 18:56 CST - TASK-046 implementation green
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
