@@ -407,6 +407,103 @@ describe("runtime SQLite persistence", () => {
     });
   });
 
+  it("does not let a failed direct page write-through rollback erase an unrelated committed Core transaction", async () => {
+    const bridge = createRecordingNativeBridge();
+    const releaseTransactionCommit = createDeferred<void>();
+    const transactionCommitStarted = createDeferred<readonly DbQuery[]>();
+    const directPagePersistStarted = createDeferred<readonly DbQuery[]>();
+    const rejectDirectPageWrite = createDeferred<void>();
+    const originalTransaction = bridge.db.transaction.bind(bridge.db);
+    let delayedTransactionCommit = false;
+    let delayedDirectPageWrite = false;
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.db.transaction = async <Response,>(
+      queries: DbQuery[],
+    ): Promise<NativeBridgeTransactionResult<Response>> => {
+      if (
+        !delayedTransactionCommit &&
+        queries.some((query) =>
+          queryCreatesPageWithTitle(query, "Committed core transaction page"),
+        )
+      ) {
+        delayedTransactionCommit = true;
+        transactionCommitStarted.resolve(queries);
+        await releaseTransactionCommit.promise;
+
+        return originalTransaction<Response>(queries);
+      }
+
+      if (
+        !delayedDirectPageWrite &&
+        queries.some((query) =>
+          queryCreatesPageWithTitle(query, "Rejected direct page"),
+        )
+      ) {
+        delayedDirectPageWrite = true;
+        directPagePersistStarted.resolve(queries);
+        await rejectDirectPageWrite.promise;
+        throw new Error(
+          "SQLITE_BUSY SELECT * FROM core_pages at /home/aac6fef/private.sqlite token=secret-token",
+        );
+      }
+
+      return originalTransaction<Response>(queries);
+    };
+
+    bridge.clearCalls();
+
+    const transactionCommit = runtime.transaction.run((tx) => {
+      const page = tx.pages.create({
+        title: "Committed core transaction page",
+        body: documentWithLine("committed-core-line", "Committed core body"),
+      });
+
+      return { pageId: page.id };
+    });
+    const transactionBatch = await transactionCommitStarted.promise;
+
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+
+    const directPage = runtime.pages.create({
+      title: "Rejected direct page",
+      body: documentWithLine("rejected-direct-line", "Rejected direct body"),
+    });
+    const directBatch = await directPagePersistStarted.promise;
+
+    expect(directBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+    expect(runtime.pages.get(directPage.id)).toMatchObject({
+      title: "Rejected direct page",
+    });
+
+    releaseTransactionCommit.resolve(undefined);
+
+    const transactionResult = await transactionCommit;
+
+    expect(runtime.pages.get(transactionResult.pageId)).toMatchObject({
+      title: "Committed core transaction page",
+    });
+
+    rejectDirectPageWrite.resolve(undefined);
+
+    await expect(runtime.transaction.run(() => undefined)).rejects.toThrow(
+      "Native command failed",
+    );
+    expect(runtime.pages.list({ includeArchived: true })).not.toContainEqual(
+      expect.objectContaining({ id: directPage.id }),
+    );
+    expect(runtime.pages.get(transactionResult.pageId)).toMatchObject({
+      title: "Committed core transaction page",
+    });
+  });
+
   it("keeps plugin direct metadata, event, and filter writes in live memory after an in-flight persisted transaction commits", async () => {
     const targetPage = pageRecord(
       "page-plugin-direct-target",
@@ -582,6 +679,203 @@ describe("runtime SQLite persistence", () => {
       id: "concurrent-writer.filter.live",
       sourcePluginId: "concurrent-writer",
       viewType: "page.list",
+    });
+  });
+
+  it("rolls back failed plugin direct metadata, event, and filter writes without erasing an unrelated committed Core transaction", async () => {
+    const targetPage = pageRecord(
+      "page-plugin-rollback-target",
+      "Plugin rollback target",
+    );
+    const bridge = createRecordingNativeBridge({
+      pages: [targetPage],
+    });
+    const releaseTransactionCommit = createDeferred<void>();
+    const transactionCommitStarted = createDeferred<readonly DbQuery[]>();
+    const directWritePersistStarted = createDeferred<readonly DbQuery[]>();
+    const rejectDirectWrite = createDeferred<void>();
+    const originalTransaction = bridge.db.transaction.bind(bridge.db);
+    let delayedTransactionCommit = false;
+    let delayedDirectWrite = false;
+    const rollbackWriter = createPlugin("rollback-writer", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "rollback-writer.write-facts",
+          title: "Write rollback facts",
+          handler(_input, commandContext) {
+            commandContext.metadata.set({
+              pageId: targetPage.id,
+              namespace: "rollback-writer",
+              key: "state",
+              value: "should-rollback",
+              valueType: "string",
+            });
+            commandContext.events.append({
+              pageId: targetPage.id,
+              namespace: "rollback-writer",
+              type: "fact-written",
+              payload: { state: "should-rollback" },
+            });
+
+            const filter = commandContext.filters.save({
+              id: "rollback-writer.filter.failed",
+              name: "Rollback writer failed filter",
+              query: {
+                where: [
+                  {
+                    field: "metadata.rollback-writer.state",
+                    op: "eq",
+                    value: "should-rollback",
+                  },
+                ],
+              },
+              viewType: "page.list",
+            });
+
+            return {
+              filterId: filter.id,
+            };
+          },
+        });
+      },
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [rollbackWriter],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.db.transaction = async <Response,>(
+      queries: DbQuery[],
+    ): Promise<NativeBridgeTransactionResult<Response>> => {
+      if (
+        !delayedTransactionCommit &&
+        queries.some((query) =>
+          queryCreatesPageWithTitle(
+            query,
+            "Committed core transaction during plugin rollback",
+          ),
+        )
+      ) {
+        delayedTransactionCommit = true;
+        transactionCommitStarted.resolve(queries);
+        await releaseTransactionCommit.promise;
+
+        return originalTransaction<Response>(queries);
+      }
+
+      const operations = queries.map((query) => query.operation);
+
+      if (
+        !delayedDirectWrite &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.metadataSet) &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.eventsAppend) &&
+        operations.includes(DB_PERSISTENCE_OPERATIONS.filtersSave)
+      ) {
+        delayedDirectWrite = true;
+        directWritePersistStarted.resolve(queries);
+        await rejectDirectWrite.promise;
+        throw new Error(
+          "SQLITE_BUSY SELECT * FROM core_pages at /home/aac6fef/private.sqlite token=secret-token",
+        );
+      }
+
+      return originalTransaction<Response>(queries);
+    };
+
+    bridge.clearCalls();
+
+    const transactionCommit = runtime.transaction.run((tx) => {
+      const page = tx.pages.create({
+        title: "Committed core transaction during plugin rollback",
+        body: documentWithLine(
+          "committed-plugin-rollback-line",
+          "Committed while plugin rollback is pending",
+        ),
+      });
+
+      return { pageId: page.id };
+    });
+    const transactionBatch = await transactionCommitStarted.promise;
+
+    expect(transactionBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesCreate,
+    ]);
+
+    const directWrite = runtime.commands.execute(
+      "rollback-writer.write-facts",
+      {},
+    );
+    const directBatch = await directWritePersistStarted.promise;
+
+    expect(directBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.metadataSet,
+      DB_PERSISTENCE_OPERATIONS.eventsAppend,
+      DB_PERSISTENCE_OPERATIONS.filtersSave,
+    ]);
+    expect(runtime.metadata.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "rollback-writer",
+          key: "state",
+          value: "should-rollback",
+          sourcePluginId: "rollback-writer",
+        }),
+      ]),
+    );
+    expect(runtime.events.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "rollback-writer",
+          type: "fact-written",
+          payload: { state: "should-rollback" },
+          sourcePluginId: "rollback-writer",
+        }),
+      ]),
+    );
+    expect(runtime.filters.get("rollback-writer.filter.failed")).toMatchObject({
+      id: "rollback-writer.filter.failed",
+      sourcePluginId: "rollback-writer",
+      viewType: "page.list",
+    });
+
+    releaseTransactionCommit.resolve(undefined);
+
+    const transactionResult = await transactionCommit;
+
+    expect(runtime.pages.get(transactionResult.pageId)).toMatchObject({
+      title: "Committed core transaction during plugin rollback",
+    });
+
+    rejectDirectWrite.resolve(undefined);
+
+    await expect(directWrite).rejects.toThrow(
+      "COMMAND_HANDLER_FAILED: rollback-writer.write-facts",
+    );
+    expect(runtime.metadata.list()).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "rollback-writer",
+          key: "state",
+        }),
+      ]),
+    );
+    expect(runtime.events.list()).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageId: targetPage.id,
+          namespace: "rollback-writer",
+          type: "fact-written",
+        }),
+      ]),
+    );
+    expect(runtime.filters.list()).not.toContainEqual(
+      expect.objectContaining({ id: "rollback-writer.filter.failed" }),
+    );
+    expect(runtime.pages.get(transactionResult.pageId)).toMatchObject({
+      title: "Committed core transaction during plugin rollback",
     });
   });
 
