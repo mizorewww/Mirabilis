@@ -1,0 +1,295 @@
+import type { MetadataJsonValue } from "../../core";
+
+export const appShellRouteStateNamespace = "app-shell.navigation";
+export const appShellRouteStateKey = "route-state";
+export const appShellRouteStateOwner = "app-shell";
+export const durableRouteStateVersion = 1;
+export const maxDurableRecentPageIds = 8;
+
+export type DurablePageRouteRole = "command-open" | "home" | "recent";
+
+export type DurableFilterRouteRole =
+  | "all-tasks"
+  | "inbox"
+  | "saved"
+  | "today";
+
+export type DurableActiveRoute =
+  | {
+      kind: "page";
+      pageId: string;
+      role: DurablePageRouteRole;
+    }
+  | {
+      filterId: string;
+      kind: "filter";
+      role: DurableFilterRouteRole;
+      routeToken?: string;
+    };
+
+export type DurableRouteState = {
+  activeRoute?: DurableActiveRoute;
+  homePageId: string;
+  recentPageIds: string[];
+  version: typeof durableRouteStateVersion;
+};
+
+const routeStateKeys = new Set([
+  "activeRoute",
+  "homePageId",
+  "recentPageIds",
+  "version",
+]);
+const pageRouteKeys = new Set(["kind", "pageId", "role"]);
+const filterRouteKeys = new Set(["filterId", "kind", "role", "routeToken"]);
+const durablePageRouteRoles = new Set<string>([
+  "command-open",
+  "home",
+  "recent",
+]);
+const durableFilterRouteRoles = new Set<string>([
+  "all-tasks",
+  "inbox",
+  "saved",
+  "today",
+]);
+
+export function createDurableRouteState({
+  activeRoute,
+  homePageId,
+  recentPageIds,
+}: {
+  activeRoute?: DurableActiveRoute;
+  homePageId: string;
+  recentPageIds: readonly string[];
+}): DurableRouteState {
+  return {
+    ...(activeRoute === undefined ? {} : { activeRoute }),
+    homePageId,
+    recentPageIds: normalizeRecentPageIds(recentPageIds, homePageId),
+    version: durableRouteStateVersion,
+  };
+}
+
+export function readDurableRouteState(
+  value: unknown,
+): DurableRouteState | undefined {
+  const record = readExactRecord(value, routeStateKeys);
+
+  if (
+    record === undefined ||
+    record.version !== durableRouteStateVersion ||
+    !isNonEmptyString(record.homePageId) ||
+    !Array.isArray(record.recentPageIds)
+  ) {
+    return undefined;
+  }
+
+  const activeRoute =
+    record.activeRoute === undefined
+      ? undefined
+      : readDurableActiveRoute(record.activeRoute);
+
+  if (record.activeRoute !== undefined && activeRoute === undefined) {
+    return undefined;
+  }
+
+  const recentPageIds = readRecentPageIdStrings(record.recentPageIds);
+
+  if (recentPageIds === undefined) {
+    return undefined;
+  }
+
+  return {
+    ...(activeRoute === undefined ? {} : { activeRoute }),
+    homePageId: record.homePageId,
+    recentPageIds,
+    version: durableRouteStateVersion,
+  };
+}
+
+export function normalizeRecentPageIds(
+  pageIds: readonly unknown[],
+  homePageId: string,
+): string[] {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const pageId of pageIds) {
+    if (
+      !isNonEmptyString(pageId) ||
+      pageId === homePageId ||
+      seen.has(pageId)
+    ) {
+      continue;
+    }
+
+    seen.add(pageId);
+    normalized.push(pageId);
+
+    if (normalized.length >= maxDurableRecentPageIds) {
+      break;
+    }
+  }
+
+  return normalized;
+}
+
+export function stableRouteStateSignature(state: DurableRouteState): string {
+  return JSON.stringify(state);
+}
+
+export function toMetadataJsonValue(
+  state: DurableRouteState,
+): MetadataJsonValue {
+  return state as MetadataJsonValue;
+}
+
+function readDurableActiveRoute(
+  value: unknown,
+): DurableActiveRoute | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const kind = readDataString(value, "kind");
+
+  if (kind === "page") {
+    const route = readExactRecord(value, pageRouteKeys);
+
+    if (route === undefined) {
+      return undefined;
+    }
+
+    const pageId = readDataString(route, "pageId");
+    const role = readDataString(route, "role");
+
+    return pageId !== undefined && isDurablePageRouteRole(role)
+      ? {
+          kind: "page",
+          pageId,
+          role,
+        }
+      : undefined;
+  }
+
+  if (kind === "filter") {
+    const route = readExactRecord(value, filterRouteKeys);
+
+    if (route === undefined) {
+      return undefined;
+    }
+
+    const filterId = readDataString(route, "filterId");
+    const role = readDataString(route, "role");
+    const routeToken = readDataString(route, "routeToken");
+
+    if (filterId === undefined || !isDurableFilterRouteRole(role)) {
+      return undefined;
+    }
+
+    return {
+      filterId,
+      kind: "filter",
+      role,
+      ...(routeToken === undefined ? {} : { routeToken }),
+    };
+  }
+
+  return undefined;
+}
+
+function readExactRecord(
+  value: unknown,
+  allowedKeys: ReadonlySet<string>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+
+  try {
+    prototype = Object.getPrototypeOf(value);
+    ownKeys = Reflect.ownKeys(value);
+  } catch {
+    return undefined;
+  }
+
+  if (
+    prototype !== Object.prototype ||
+    ownKeys.some((key) => typeof key !== "string" || !allowedKeys.has(key))
+  ) {
+    return undefined;
+  }
+
+  for (const key of ownKeys) {
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, key);
+    } catch {
+      return undefined;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return undefined;
+    }
+  }
+
+  return value;
+}
+
+function readDataString(
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const value = record[key];
+
+  return isNonEmptyString(value) ? value : undefined;
+}
+
+function readRecentPageIdStrings(value: unknown[]): string[] | undefined {
+  const prototype = Object.getPrototypeOf(value);
+
+  if (prototype !== Array.prototype) {
+    return undefined;
+  }
+
+  const pageIds: string[] = [];
+
+  for (const pageId of value) {
+    if (!isNonEmptyString(pageId)) {
+      return undefined;
+    }
+
+    pageIds.push(pageId);
+  }
+
+  return pageIds;
+}
+
+function isDurablePageRouteRole(
+  value: string | undefined,
+): value is DurablePageRouteRole {
+  return value !== undefined && durablePageRouteRoles.has(value);
+}
+
+function isDurableFilterRouteRole(
+  value: string | undefined,
+): value is DurableFilterRouteRole {
+  return value !== undefined && durableFilterRouteRoles.has(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}

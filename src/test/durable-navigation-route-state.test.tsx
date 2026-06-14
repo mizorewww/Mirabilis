@@ -1001,10 +1001,69 @@ function expectLatestFilterViewPropsArePageSummaries(
       isRecord(page) && typeof page.title === "string" ? page.title : undefined,
     ),
   ).toStrictEqual(expectedTitles);
-  expect(collectUnsafeRouteStatePaths(latestProps, "props")).toStrictEqual([]);
+  expect(collectUnsafeFilterViewPropPaths(latestProps)).toStrictEqual([]);
   expect(collectUnsafeRouteStateStringValues(latestProps, "props")).toStrictEqual(
     [],
   );
+}
+
+function collectUnsafeFilterViewPropPaths(
+  value: unknown,
+  pathPrefix = "props",
+): string[] {
+  if (typeof value === "function" || typeof value === "symbol") {
+    return [pathPrefix];
+  }
+
+  if (!isRecord(value) && !Array.isArray(value)) {
+    return [];
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  const prototypeViolation =
+    Array.isArray(value) ||
+    prototype === Object.prototype ||
+    prototype === null
+      ? []
+      : [`${pathPrefix} has non-plain prototype`];
+
+  const descriptorViolations = Reflect.ownKeys(value).flatMap((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    const keyPath = `${pathPrefix}.${String(key)}`;
+
+    if (typeof key === "symbol") {
+      return [keyPath];
+    }
+
+    if (descriptor === undefined) {
+      return [];
+    }
+
+    return descriptor.get !== undefined || descriptor.set !== undefined
+      ? [keyPath]
+      : [];
+  });
+
+  return [
+    ...prototypeViolation,
+    ...descriptorViolations,
+    ...Object.entries(value).flatMap(([key, nestedValue]) => {
+      const pathName = `${pathPrefix}.${key}`;
+      const keyViolation =
+        Array.isArray(value) || isAllowedFilterViewPropKey(key)
+          ? []
+          : [pathName];
+
+      return [
+        ...keyViolation,
+        ...collectUnsafeFilterViewPropPaths(nestedValue, pathName),
+      ];
+    }),
+  ];
+}
+
+function isAllowedFilterViewPropKey(key: string): boolean {
+  return new Set(["data", "kind", "pages", "routeToken", "title"]).has(key);
 }
 
 async function findRecentPageButton(name: RegExp): Promise<HTMLElement> {

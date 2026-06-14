@@ -89,6 +89,18 @@ import {
   buildMlContextProjection,
   readExactMlPredictionForPage,
 } from "./shell/projections/ml-ai-context";
+import {
+  appShellRouteStateKey,
+  appShellRouteStateNamespace,
+  appShellRouteStateOwner,
+  createDurableRouteState,
+  normalizeRecentPageIds,
+  readDurableRouteState,
+  stableRouteStateSignature,
+  toMetadataJsonValue,
+  type DurableActiveRoute,
+  type DurableRouteState,
+} from "./shell/navigation/route-state";
 import "./App.css";
 
 type AppProps = {
@@ -204,6 +216,12 @@ type MarkdownWorkspaceDocument = {
 type CurrentPageState = {
   pageId: string;
   generation: number;
+};
+
+type InitialNavigationState = {
+  activeRoute: ActiveRoute;
+  homePageId: string;
+  recentPageIds: string[];
 };
 
 type CommandOpenedPageAuthorization = {
@@ -581,19 +599,35 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const runtime = useRuntime();
   const theme = useTheme();
   const isNarrowLayout = useMediaQuery(theme.breakpoints.down("md"));
-  const homePageId = useSessionHomePageId(runtimeSource);
+  const [initialNavigationState] = useState<InitialNavigationState>(() =>
+    createInitialNavigationState(runtimeSource),
+  );
+  const homePageId = initialNavigationState.homePageId;
   const [currentPageState] = useState<CurrentPageState>(() => ({
-    pageId: homePageId,
+    pageId:
+      initialNavigationState.activeRoute.kind === "page"
+        ? initialNavigationState.activeRoute.pageId
+        : "",
     generation: 0,
   }));
-  const [activeRoute, setActiveRoute] = useState<ActiveRoute>(() => ({
-    kind: "page",
-    pageId: homePageId,
-    role: "home",
-  }));
+  const [activeRoute, setActiveRoute] = useState<ActiveRoute>(
+    () => initialNavigationState.activeRoute,
+  );
+  const [recentPageIds, setRecentPageIds] = useState<string[]>(
+    () => initialNavigationState.recentPageIds,
+  );
   const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(() => !isNarrowLayout);
   const navigationToggleRef = useRef<HTMLButtonElement | null>(null);
+  const persistedRouteSignatureRef = useRef(
+    stableRouteStateSignature(
+      createDurableStateForActiveRoute({
+        activeRoute: initialNavigationState.activeRoute,
+        homePageId,
+        recentPageIds: initialNavigationState.recentPageIds,
+      }),
+    ),
+  );
   const [contextPanelOpen, setContextPanelOpen] = useState(false);
   const contextPanelToggleRef = useRef<HTMLButtonElement | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -618,7 +652,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
       ? getRoutePage(runtimeSource, activeRoute.pageId)
       : undefined;
   const recentPages = activeRouteCanShowRecentPages(runtimeSource, activeRoute)
-    ? listRecentPages(runtimeSource, homePageId)
+    ? filterRecentPagesForActiveRoute(
+        listRecentPages(runtimeSource, homePageId, recentPageIds),
+        runtimeSource,
+        activeRoute,
+      )
     : [];
   const savedFilterRoutes = listSavedFilterRoutes(runtimeSource);
   const workspaceTitleId = "workspace-title";
@@ -640,6 +678,27 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNavigationOpen(!isNarrowLayout);
   }, [isNarrowLayout]);
+
+  useEffect(() => {
+    const state = createDurableStateForActiveRoute({
+      activeRoute,
+      homePageId,
+      recentPageIds,
+    });
+    const signature = stableRouteStateSignature(state);
+
+    if (persistedRouteSignatureRef.current === signature) {
+      return;
+    }
+
+    persistedRouteSignatureRef.current = signature;
+
+    void persistDurableRouteState(runtimeSource, state).catch(() => {
+      if (persistedRouteSignatureRef.current === signature) {
+        persistedRouteSignatureRef.current = "";
+      }
+    });
+  }, [activeRoute, homePageId, recentPageIds, runtimeSource]);
 
   useEffect(() => {
     if (
@@ -674,12 +733,23 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   ]);
 
   const selectPageRoute = (pageId: string, role: PageRouteRole) => {
+    if (getRoutePage(runtimeSource, pageId) === undefined) {
+      return;
+    }
+
     setCurrentPage(currentPageState, pageId);
     setActiveRoute({
       kind: "page",
       pageId,
       role,
     });
+    setRecentPageIds((pageIds) =>
+      normalizeCurrentRecentPageIds(
+        [pageId, ...pageIds],
+        runtimeSource,
+        homePageId,
+      ),
+    );
   };
   const selectFilterRoute = (filterId: string, role: FilterRouteRole) => {
     unsetCurrentPage(currentPageState);
@@ -732,8 +802,15 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         pageId,
         role: "recent",
       });
+      setRecentPageIds((pageIds) =>
+        normalizeCurrentRecentPageIds(
+          [pageId, ...pageIds],
+          runtimeSource,
+          homePageId,
+        ),
+      );
     },
-    [currentPageState, runtimeSource],
+    [currentPageState, homePageId, runtimeSource],
   );
   const executeCommandPaletteCommand = useCallback(
     async (command: CommandPaletteCommand) => {
@@ -868,8 +945,15 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         pageId,
         role: "command-open",
       });
+      setRecentPageIds((pageIds) =>
+        normalizeCurrentRecentPageIds(
+          [pageId, ...pageIds],
+          runtimeSource,
+          homePageId,
+        ),
+      );
     },
-    [currentPageState, runtimeSource],
+    [currentPageState, homePageId, runtimeSource],
   );
   const bridge = useMemo(
     () =>
@@ -877,15 +961,26 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         currentPageState,
         runtime: runtimeSource,
         openPage(pageId) {
+          if (getRoutePage(runtimeSource, pageId) === undefined) {
+            return;
+          }
+
           setCurrentPage(currentPageState, pageId);
           setActiveRoute({
             kind: "page",
             pageId,
             role: "command-open",
           });
+          setRecentPageIds((pageIds) =>
+            normalizeCurrentRecentPageIds(
+              [pageId, ...pageIds],
+              runtimeSource,
+              homePageId,
+            ),
+          );
         },
       }),
-    [currentPageState, runtimeSource],
+    [currentPageState, homePageId, runtimeSource],
   );
 
   return (
@@ -2922,13 +3017,86 @@ function RouteUnavailable() {
   );
 }
 
-function useSessionHomePageId(runtime: AppRuntime): string {
-  const [homePageId] = useState(() => selectOrCreateSessionHomePage(runtime).id);
+function createInitialNavigationState(
+  runtime: AppRuntime,
+): InitialNavigationState {
+  const storedRouteState = readStoredDurableRouteState(runtime);
+  const homePage = selectOrCreateDurableHomePage(runtime, storedRouteState);
+  const persistedRecentPageIds = storedRouteState.state?.recentPageIds;
+  const recentPageIds =
+    persistedRecentPageIds === undefined
+      ? listInitialRecentPageIds(runtime, homePage.id)
+      : normalizeCurrentRecentPageIds(
+          persistedRecentPageIds,
+          runtime,
+          homePage.id,
+        );
+  const activeRoute = restoreDurableActiveRoute(
+    runtime,
+    storedRouteState.state?.activeRoute,
+    homePage.id,
+  );
 
-  return homePageId;
+  return {
+    activeRoute,
+    homePageId: homePage.id,
+    recentPageIds,
+  };
 }
 
-function selectOrCreateSessionHomePage(runtime: AppRuntime): MarkdownPage {
+type StoredDurableRouteState = {
+  recordPageId?: string;
+  state?: DurableRouteState;
+};
+
+function readStoredDurableRouteState(
+  runtime: AppRuntime,
+): StoredDurableRouteState {
+  const records = runtime.metadata
+    .list({
+      key: appShellRouteStateKey,
+      namespace: appShellRouteStateNamespace,
+    })
+    .filter(
+      (record) =>
+        record.sourcePluginId === appShellRouteStateOwner &&
+        record.valueType === "json",
+    )
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+
+  for (const record of records) {
+    const state = readDurableRouteState(record.value);
+
+    if (state !== undefined) {
+      return {
+        recordPageId: record.pageId,
+        state,
+      };
+    }
+  }
+
+  return records[0] === undefined
+    ? {}
+    : {
+        recordPageId: records[0].pageId,
+      };
+}
+
+function selectOrCreateDurableHomePage(
+  runtime: AppRuntime,
+  storedRouteState: StoredDurableRouteState,
+): MarkdownPage {
+  const storedHomePageId =
+    storedRouteState.state?.homePageId ?? storedRouteState.recordPageId;
+
+  if (storedHomePageId !== undefined) {
+    const storedHome = getRoutePage(runtime, storedHomePageId);
+
+    if (storedHome !== undefined) {
+      return storedHome;
+    }
+  }
+
   const [existingHomePage] = runtime.pages
     .list()
     .filter((page) => page.title === sessionHomeTitle);
@@ -2940,6 +3108,151 @@ function selectOrCreateSessionHomePage(runtime: AppRuntime): MarkdownPage {
   return runtime.pages.create({
     title: sessionHomeTitle,
     body: createEmptyMarkdownDocument(),
+  });
+}
+
+function restoreDurableActiveRoute(
+  runtime: AppRuntime,
+  activeRoute: DurableActiveRoute | undefined,
+  homePageId: string,
+): ActiveRoute {
+  const homeRoute: ActiveRoute = {
+    kind: "page",
+    pageId: homePageId,
+    role: "home",
+  };
+
+  if (activeRoute === undefined) {
+    return homeRoute;
+  }
+
+  if (activeRoute.kind === "page") {
+    const page = getRoutePage(runtime, activeRoute.pageId);
+
+    if (page === undefined) {
+      return homeRoute;
+    }
+
+    if (activeRoute.pageId === homePageId) {
+      return homeRoute;
+    }
+
+    if (activeRoute.role === "home") {
+      return homeRoute;
+    }
+
+    return {
+      kind: "page",
+      pageId: activeRoute.pageId,
+      role: activeRoute.role,
+    };
+  }
+
+  return durableFilterRouteIsAvailable(runtime, activeRoute.filterId)
+    ? {
+        filterId: activeRoute.filterId,
+        kind: "filter",
+        role: activeRoute.role,
+      }
+    : homeRoute;
+}
+
+function durableFilterRouteIsAvailable(
+  runtime: AppRuntime,
+  filterId: string,
+): boolean {
+  const filter = getRouteFilter(runtime, filterId);
+  const plugins = listPluginRecords(runtime);
+
+  return (
+    filter !== undefined &&
+    plugins !== undefined &&
+    filterSourceIsAvailable(runtime, filter) &&
+    filterViewIsAvailable(runtime, filter) &&
+    filterQueryOwnersAreAvailable(filter, plugins)
+  );
+}
+
+function listInitialRecentPageIds(
+  runtime: AppRuntime,
+  homePageId: string,
+): string[] {
+  return normalizeCurrentRecentPageIds(
+    runtime.pages.list({ includeArchived: true }).map((page) => page.id),
+    runtime,
+    homePageId,
+  );
+}
+
+function normalizeCurrentRecentPageIds(
+  pageIds: readonly unknown[],
+  runtime: AppRuntime,
+  homePageId: string,
+): string[] {
+  const availablePageIds = pageIds.filter(
+    (pageId): pageId is string =>
+      typeof pageId === "string" && getRoutePage(runtime, pageId) !== undefined,
+  );
+
+  return normalizeRecentPageIds(availablePageIds, homePageId);
+}
+
+function createDurableStateForActiveRoute({
+  activeRoute,
+  homePageId,
+  recentPageIds,
+}: {
+  activeRoute: ActiveRoute;
+  homePageId: string;
+  recentPageIds: readonly string[];
+}): DurableRouteState {
+  return createDurableRouteState({
+    activeRoute: toDurableActiveRoute(activeRoute, homePageId),
+    homePageId,
+    recentPageIds,
+  });
+}
+
+function toDurableActiveRoute(
+  activeRoute: ActiveRoute,
+  homePageId: string,
+): DurableActiveRoute {
+  if (activeRoute.kind === "page") {
+    return {
+      kind: "page",
+      pageId: activeRoute.pageId,
+      role: activeRoute.pageId === homePageId ? "home" : activeRoute.role,
+    };
+  }
+
+  if (activeRoute.kind === "filter") {
+    return {
+      filterId: activeRoute.filterId,
+      kind: "filter",
+      role: activeRoute.role,
+    };
+  }
+
+  return {
+    kind: "page",
+    pageId: homePageId,
+    role: "home",
+  };
+}
+
+async function persistDurableRouteState(
+  runtime: AppRuntime,
+  state: DurableRouteState,
+): Promise<void> {
+  await runtime.transaction.run((transaction) => {
+    transaction.metadata.set({
+      key: appShellRouteStateKey,
+      namespace: appShellRouteStateNamespace,
+      pageId: state.homePageId,
+      sourcePluginId: appShellRouteStateOwner,
+      value: toMetadataJsonValue(state),
+      valueType: "json",
+    });
   });
 }
 
@@ -3099,11 +3412,33 @@ function getDeferredShellToolStatus(toolId: DeferredShellToolId): string {
 function listRecentPages(
   runtime: AppRuntime,
   homePageId: string,
+  recentPageIds: readonly string[],
 ): RecentPageSummary[] {
-  return runtime.pages
-    .list()
+  return recentPageIds
+    .map((pageId) => getRoutePage(runtime, pageId))
+    .filter((page): page is MarkdownPage => page !== undefined)
     .filter((page) => page.id !== homePageId)
     .map(toRecentPageSummary);
+}
+
+function filterRecentPagesForActiveRoute(
+  recentPages: RecentPageSummary[],
+  runtime: AppRuntime,
+  activeRoute: ActiveRoute,
+): RecentPageSummary[] {
+  if (activeRoute.kind !== "filter") {
+    return recentPages;
+  }
+
+  const filter = getRouteFilter(runtime, activeRoute.filterId);
+  const filterPageIds =
+    filter === undefined ? undefined : executeRouteFilterPageIds(runtime, filter);
+
+  if (filterPageIds === undefined || filterPageIds.size === 0) {
+    return recentPages;
+  }
+
+  return recentPages.filter((page) => !filterPageIds.has(page.id));
 }
 
 function activeRouteCanShowRecentPages(
@@ -3162,7 +3497,9 @@ function getRoutePage(
   pageId: string,
 ): MarkdownPage | undefined {
   try {
-    return runtime.pages.get(pageId);
+    const page = runtime.pages.get(pageId);
+
+    return page.archivedAt === undefined ? page : undefined;
   } catch {
     return undefined;
   }
@@ -3416,6 +3753,24 @@ function executeRouteFilter(
   runtime: AppRuntime,
   filter: FilterDefinition,
 ): FilterPageSummary[] | undefined {
+  return executeRouteFilterPages(runtime, filter)?.map(toFilterPageSummary);
+}
+
+function executeRouteFilterPageIds(
+  runtime: AppRuntime,
+  filter: FilterDefinition,
+): Set<string> | undefined {
+  const pages = executeRouteFilterPages(runtime, filter);
+
+  return pages === undefined
+    ? undefined
+    : new Set(pages.map((page) => page.id));
+}
+
+function executeRouteFilterPages(
+  runtime: AppRuntime,
+  filter: FilterDefinition,
+): MarkdownPage[] | undefined {
   try {
     const plugins = listPluginRecords(runtime);
 
@@ -3431,7 +3786,7 @@ function executeRouteFilter(
       metadataOwnerReservations: collectMetadataOwnerReservations(plugins),
       pages: runtime.pages.list({ includeArchived: true }),
       query: filter.query,
-    }).map(toFilterPageSummary);
+    });
   } catch {
     return undefined;
   }
