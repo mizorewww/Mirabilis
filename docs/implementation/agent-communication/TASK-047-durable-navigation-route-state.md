@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Faraday P2 hardening implementation delegated; parent is waiting for Epicurus final status.
+- Status: Faraday P2 hardening implementation committed; parent is preparing focused security re-review.
 
 ## Scope
 
@@ -82,7 +82,8 @@
 - Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned at 2026-06-15 01:20 CST to write focused failing tests for Faraday's P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
 - Godel returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:22 CST matched Faraday's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 18 passing tests because nested `activeRoute` accessors were invoked during parse/serialize and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans. Commit: `459aa52` (`Godel(test-fix)(Add Durable Navigation And Route State): add accessor hardening red tests`).
 - Epicurus (`implementer`, agent `019ec729-f3e5-7843-9af2-0553852296ca`) was spawned at 2026-06-15 01:24 CST to make Godel's Faraday P2 red tests pass with minimum production hardening. It owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Epicurus returned final status with production changes in `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:28 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (20 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (41 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (44 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks. Commit: `2b7f4b7` (`Epicurus(review-fix)(Add Durable Navigation And Route State): harden active-route accessors`).
 
 ## Next Action
 
-- Wait for Epicurus final status before validating or committing the Faraday P2 implementation fix. A wait timeout is not a failure or idle signal.
+- Close Epicurus after this status is committed, then spawn a focused security re-review for Faraday's P2 closure.

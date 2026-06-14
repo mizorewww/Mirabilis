@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:28 CST - TASK-047 Faraday P2 implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `2b7f4b7` (`Epicurus(review-fix)(Add Durable Navigation And Route State): harden active-route accessors`).
+- Epicurus (`implementer`) changed `src/shell/navigation/route-state.ts` to validate nested active-route data descriptors before reading route kind and to clone outbound active routes from descriptor values so accessor-backed routes are omitted without invoking getters.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (20 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (41 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (44 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Faraday's P2 closure.
+
 ### 2026-06-15 01:24 CST - TASK-047 Faraday P2 implementation delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
