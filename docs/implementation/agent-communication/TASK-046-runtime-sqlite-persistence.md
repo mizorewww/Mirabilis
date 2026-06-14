@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation review fixes delegated to Erdos; parent is waiting for final status.
+- Status: implementation review fixes committed; full frontend failures require follow-up test/regression triage.
 
 ## Scope
 
@@ -86,7 +86,11 @@
 - Parent red validation confirmed the intended state: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Failures cover missing direct runtime page create native transaction, missing plugin direct write native transaction batch, and null native hydration responses starting successfully instead of failing closed. `git diff --check` passed and an exact `.only` / `.skip` scan found no matches.
 - Kant was closed after final status and red validation were recorded.
 - Erdos (`implementer`, agent `019ec5d4-a5e0-7543-98cc-dac74be917c0`) was spawned at 2026-06-14 19:11 CST for production review fixes. Scope: make Kant's red tests pass, fix direct runtime/App and plugin direct write persistence bypass, fail closed on invalid hydration responses, and handle adjacent P2s in the same code paths without broadening NativeBridge or plugin-native access.
+- Erdos returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/plugin-host/plugin-host.ts`, and `src-tauri/src/commands/db.rs`.
+- Commit `0b75f18` (`Erdos(implementation-fix)(Wire SQLite-backed Runtime Persistence): close persistence bypass findings`) records the implementation fix.
+- Parent focused validation passed: TASK-046/app-bootstrap/runtime-provider suite passed with 26 tests; plugin-host/native-bridge suite passed with 65 tests; Rust `ipc_persistence` passed with 13 tests; typecheck, lint, Rust fmt check, Rust clippy, and diff-check passed.
+- Full frontend probe is still red: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failure categories: stale static native-drift guards, test helpers/no-op bridges that now provide invalid hydration responses, Quick Capture expecting no `db.transaction` despite durable plugin direct writes, and timer timeline behavior that needs targeted triage under the new plugin transaction path.
 
 ## Next Action
 
-- Wait for Erdos's final status. A wait timeout is not a failure or idle signal. After Erdos returns, run focused green validation and commit implementation fixes if they pass.
+- Close Erdos after this status is recorded, then spawn a test-fix/triage agent for the full frontend failures. A wait timeout is not a failure or idle signal.

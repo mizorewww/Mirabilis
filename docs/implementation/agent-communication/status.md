@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 19:11 CST.
+Last updated: 2026-06-14 19:22 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 19:11 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 implementation review fixes delegated; parent is waiting for Erdos's final status.
+- Current phase: TASK-046 implementation review fixes committed; full frontend suite has expected follow-up failures to delegate.
 
 ## Current Outcome
 
@@ -35,6 +35,9 @@ Last updated: 2026-06-14 19:11 CST.
 - Kant returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `50cfe52` records review-fix coverage for direct runtime and plugin store persistence bypass, full hydration fields including archived pages, transaction write-through for `pages.update`, `pages.archive`, `metadata.delete`, and `filters.delete`, missing native filter update semantics, and fail-closed null hydration responses.
 - Parent red validation confirmed the intended review-fix failures: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 3 failures and 23 passing tests. Expected failures cover missing direct runtime `core.pages.create` native transaction, missing plugin direct write native transaction batch, and null native hydration response not failing closed. `git diff --check` passed and an exact `.only` / `.skip` scan found no matches.
 - Kant was closed after final status and red validation were recorded. Erdos (`implementer`, `019ec5d4-a5e0-7543-98cc-dac74be917c0`) was spawned at 2026-06-14 19:11 CST for production fixes to make Kant's red tests pass and address the Dalton/Nietzsche/Dirac P1s plus adjacent P2s in the same code paths.
+- Erdos returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/plugin-host/plugin-host.ts`, and `src-tauri/src/commands/db.rs`. Commit `0b75f18` records implementation fixes for direct runtime page write-through, plugin direct store writes through Core transactions, archived-page hydration, native filter update miss rollback, and fail-closed null hydration responses.
+- Parent focused validation passed: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` (26 tests), `bun run test:frontend -- src/test/plugin-host-lifecycle.test.ts src/test/native-bridge.test.ts` (65 tests), `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test ipc_persistence` (13 tests), `bun run typecheck`, `bun run lint`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `git diff --check`.
+- Full frontend probe is still red and blocks merge: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failures are mostly stale static no-native-drift guards now seeing `src-tauri/src/commands/db.rs`, old no-op NativeBridge tests that return invalid hydration responses, one Quick Capture direct write assertion now seeing `db.transaction`, and timer timeline tests that need review under the new plugin transaction path.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -120,7 +123,7 @@ Last updated: 2026-06-14 19:11 CST.
 
 ## Next Parent Actions
 
-- Wait for Erdos's final status. A wait timeout is not a failure or idle signal.
-- After Erdos returns, run focused green validation and commit implementation fixes if they pass.
+- Close Erdos after final status and validation are recorded.
+- Spawn a focused test-fix agent for the full frontend failures. The agent must distinguish stale test expectations from real regressions and must not weaken TASK-046 review-fix coverage.
 - Spawn `doc_writer` for Godel's docs P1/P2 after implementation behavior is stable enough to document.
 - Retry `release_checker` after capacity frees and the branch is closer to merge readiness. A wait timeout is not a failure or idle signal.

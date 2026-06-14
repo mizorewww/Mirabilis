@@ -116,6 +116,16 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:22 CST - TASK-046 implementation review fixes green
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Erdos (`implementer`) returned final status with production changes in `src/bootstrap/create-app-runtime.ts`, `src/core/runtime/sqlite-persistence.ts`, `src/core/services/index.ts`, `src/core/plugin-host/plugin-host.ts`, and `src-tauri/src/commands/db.rs`.
+- Commit: `0b75f18` (`Erdos(implementation-fix)(Wire SQLite-backed Runtime Persistence): close persistence bypass findings`).
+- Fixed: direct runtime page writes now persist through allowlisted native page transactions; plugin lifecycle/command direct store writes run inside the Core transaction path; archived pages hydrate; filter update miss in a native transaction rolls back instead of silently upserting; null hydration responses fail closed with redacted errors.
+- Parent focused validation passed: TASK-046/app-bootstrap/runtime-provider suite passed with 26 tests; plugin-host/native-bridge suite passed with 65 tests; Rust `ipc_persistence` passed with 13 tests; `bun run typecheck`; `bun run lint`; Rust fmt check; Rust clippy; `git diff --check`.
+- Full frontend probe remains red: `bun run test:frontend` failed with 27 failed files, 47 failed tests, and 779 passing tests. Failure categories include stale static native-drift guards, old test no-op NativeBridge assumptions, Quick Capture direct write expectations, and timer timeline behavior needing targeted triage.
+- Next action: close Erdos, then delegate a focused test-fix/triage agent. Parent remains orchestration-only.
+
 ### 2026-06-14 19:11 CST - TASK-046 implementation review fixes delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
