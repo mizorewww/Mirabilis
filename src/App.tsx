@@ -27,6 +27,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
+import Dialog from "@mui/material/Dialog";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -40,7 +41,8 @@ import Tabs from "@mui/material/Tabs";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { ThemeProvider, createTheme, useTheme } from "@mui/material/styles";
 
 import { createAppRuntime } from "./bootstrap";
 import type { AppRuntime } from "./bootstrap";
@@ -577,6 +579,8 @@ function getAppInitializationPromise(
 
 function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   const runtime = useRuntime();
+  const theme = useTheme();
+  const isNarrowLayout = useMediaQuery(theme.breakpoints.down("md"));
   const homePageId = useSessionHomePageId(runtimeSource);
   const [currentPageState] = useState<CurrentPageState>(() => ({
     pageId: homePageId,
@@ -588,7 +592,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     role: "home",
   }));
   const [slotRevision, setSlotRevision] = useState(0);
-  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [navigationOpen, setNavigationOpen] = useState(() => !isNarrowLayout);
+  const navigationToggleRef = useRef<HTMLButtonElement | null>(null);
   const [contextPanelOpen, setContextPanelOpen] = useState(false);
   const contextPanelToggleRef = useRef<HTMLButtonElement | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -617,6 +622,57 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     : [];
   const savedFilterRoutes = listSavedFilterRoutes(runtimeSource);
   const workspaceTitleId = "workspace-title";
+  const closeTemporaryNavigation = useCallback(() => {
+    if (!isNarrowLayout) {
+      return;
+    }
+
+    setNavigationOpen(false);
+    navigationToggleRef.current?.focus();
+  }, [isNarrowLayout]);
+  const closeContextPanel = useCallback(() => {
+    setContextPanelOpen(false);
+    contextPanelToggleRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    // Keep the shell's default navigation state aligned when the viewport class changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNavigationOpen(!isNarrowLayout);
+  }, [isNarrowLayout]);
+
+  useEffect(() => {
+    if (
+      !contextPanelOpen ||
+      isNarrowLayout ||
+      commandPaletteOpen ||
+      searchDialogOpen ||
+      quickCaptureDialogOpen
+    ) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeContextPanel();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    closeContextPanel,
+    commandPaletteOpen,
+    contextPanelOpen,
+    isNarrowLayout,
+    quickCaptureDialogOpen,
+    searchDialogOpen,
+  ]);
+
   const selectPageRoute = (pageId: string, role: PageRouteRole) => {
     setCurrentPage(currentPageState, pageId);
     setActiveRoute({
@@ -849,6 +905,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
               color="inherit"
               edge="start"
               onClick={() => setNavigationOpen((open) => !open)}
+              ref={navigationToggleRef}
             >
               <MenuIcon fontSize="small" />
             </IconButton>
@@ -927,7 +984,11 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           hidden={!navigationOpen}
           id="workspace-navigation"
         >
-          <Drawer open variant="permanent">
+          <Drawer
+            onClose={closeTemporaryNavigation}
+            open={navigationOpen}
+            variant={isNarrowLayout ? "temporary" : "permanent"}
+          >
             <Toolbar />
             <Box className="app-shell__nav-content">
               <Box aria-label="Workspace" component="nav">
@@ -957,6 +1018,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                           } else {
                             selectPlaceholderRoute(route.routeId);
                           }
+
+                          closeTemporaryNavigation();
                         }}
                         selected={isSelected}
                       >
@@ -996,7 +1059,10 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                             }
                             aria-current={isSelected ? "page" : undefined}
                             key={page.id}
-                            onClick={() => selectPageRoute(page.id, "recent")}
+                            onClick={() => {
+                              selectPageRoute(page.id, "recent");
+                              closeTemporaryNavigation();
+                            }}
                             selected={isSelected}
                           >
                             <ListItemIcon>
@@ -1033,9 +1099,10 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                           aria-label={route.label}
                           aria-current={isSelected ? "page" : undefined}
                           key={route.filterId}
-                          onClick={() =>
-                            selectFilterRoute(route.filterId, "saved")
-                          }
+                          onClick={() => {
+                            selectFilterRoute(route.filterId, "saved");
+                            closeTemporaryNavigation();
+                          }}
                           selected={isSelected}
                         >
                           <ListItemIcon>
@@ -1093,15 +1160,31 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
           />
         </Box>
         {contextPanelPage !== undefined && contextPanelOpen ? (
-          <PageContextPanel
-            key={`${contextPanelPage.id}:${currentPageState.generation}`}
-            onClose={() => {
-              setContextPanelOpen(false);
-              contextPanelToggleRef.current?.focus();
-            }}
-            page={contextPanelPage}
-            runtime={runtimeSource}
-          />
+          isNarrowLayout ? (
+            <Dialog
+              aria-labelledby="page-context-title"
+              className="app-shell__context-dialog"
+              fullScreen
+              onClose={closeContextPanel}
+              open={contextPanelOpen}
+            >
+              <PageContextPanel
+                key={`${contextPanelPage.id}:${currentPageState.generation}:dialog`}
+                onClose={closeContextPanel}
+                page={contextPanelPage}
+                runtime={runtimeSource}
+                surface="dialog"
+              />
+            </Dialog>
+          ) : (
+            <PageContextPanel
+              key={`${contextPanelPage.id}:${currentPageState.generation}:complementary`}
+              onClose={closeContextPanel}
+              page={contextPanelPage}
+              runtime={runtimeSource}
+              surface="complementary"
+            />
+          )
         ) : null}
       </Box>
 
@@ -1420,11 +1503,14 @@ function PageContextPanel({
   onClose,
   page,
   runtime,
+  surface,
 }: {
   onClose(): void;
   page: MarkdownPage;
   runtime: AppRuntime;
+  surface: "complementary" | "dialog";
 }) {
+  const isComplementarySurface = surface === "complementary";
   const [activeTab, setActiveTab] = useState<ContextPanelTabId>("ml");
   const [mlState, setMlState] = useState<MlContextState>({ status: "idle" });
   const [aiStates, setAiStates] = useState<AiCommandStates>({});
@@ -1589,11 +1675,11 @@ function PageContextPanel({
 
   return (
     <Box
-      aria-label="Page context"
+      aria-label={isComplementarySurface ? "Page context" : undefined}
       className="app-shell__context-panel"
-      component="aside"
+      component={isComplementarySurface ? "aside" : "section"}
       id="page-context-panel"
-      role="complementary"
+      role={isComplementarySurface ? "complementary" : undefined}
     >
       <Stack className="app-shell__context-panel-header" spacing={1}>
         <Stack
@@ -1603,7 +1689,7 @@ function PageContextPanel({
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography component="h2" variant="subtitle1">
-              Page context
+              <span id="page-context-title">Page context</span>
             </Typography>
             <Typography color="text.secondary" variant="caption">
               {page.title}
