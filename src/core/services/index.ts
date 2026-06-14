@@ -37,10 +37,18 @@ export type CoreRegistries = {
   slots: SlotRegistry;
 };
 
+export const coreDirectTransactionRunnerKey: unique symbol = Symbol(
+  "mirabilis.internal.coreDirectTransactionRunner",
+);
+
 export type CoreServices = CoreStores &
   CoreRegistries & {
     transaction: TransactionManager;
   };
+
+type CoreServicesWithDirectTransactionRunner = CoreServices & {
+  [coreDirectTransactionRunnerKey]?: TransactionManager;
+};
 
 type CreateCoreStoresOptions = {
   pages?: CreateInMemoryPageStoreOptions;
@@ -54,6 +62,7 @@ type CreateCoreServicesOptions = {
   registries: CoreRegistries;
   transaction?: TransactionManager;
   transactionPersistence?: TransactionPersistence;
+  directTransactionRunner?: TransactionManager;
 };
 
 export function createCoreStores(
@@ -80,8 +89,9 @@ export function createCoreServices({
   registries,
   transaction,
   transactionPersistence,
+  directTransactionRunner,
 }: CreateCoreServicesOptions): CoreServices {
-  return {
+  const services: CoreServices = {
     pages: stores.pages,
     metadata: stores.metadata,
     events: stores.events,
@@ -95,6 +105,25 @@ export function createCoreServices({
         persistence: transactionPersistence,
       }),
   };
+
+  if (directTransactionRunner !== undefined) {
+    Object.defineProperty(services, coreDirectTransactionRunnerKey, {
+      configurable: false,
+      enumerable: false,
+      value: directTransactionRunner,
+      writable: false,
+    });
+  }
+
+  return services;
+}
+
+export function getCoreDirectTransactionRunner(
+  services: CoreServices,
+): TransactionManager | undefined {
+  return (services as CoreServicesWithDirectTransactionRunner)[
+    coreDirectTransactionRunnerKey
+  ];
 }
 
 export type {

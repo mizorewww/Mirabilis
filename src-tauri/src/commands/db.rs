@@ -155,7 +155,7 @@ pub fn db_transaction(
 pub fn dispatch_db_execute(state: &DbCommandState, query: Value) -> Result<Value, IpcError> {
     let request = parse_request(query)?;
     let database = state.database()?;
-    execute_request(&database, request)
+    execute_request(&database, request, None)
 }
 
 pub fn dispatch_db_transaction(
@@ -169,9 +169,11 @@ pub fn dispatch_db_transaction(
     let database = state.database()?;
 
     database.transaction(|database| {
+        let mut context = TransactionContext::default();
+
         requests
             .into_iter()
-            .map(|request| execute_request(database, request))
+            .map(|request| execute_request(database, request, Some(&mut context)))
             .collect::<Result<Vec<_>, _>>()
             .map(Value::Array)
     })
@@ -183,7 +185,11 @@ fn parse_request(query: Value) -> Result<DbOperationRequest, IpcError> {
     DbOperationRequest::from_query(query)
 }
 
-fn execute_request(database: &Database, request: DbOperationRequest) -> Result<Value, IpcError> {
+fn execute_request(
+    database: &Database,
+    request: DbOperationRequest,
+    transaction_context: Option<&mut TransactionContext>,
+) -> Result<Value, IpcError> {
     match request {
         DbOperationRequest::PagesCreate(payload) => {
             persist(PageRepository::new(database).create(NewPage {
@@ -291,6 +297,13 @@ fn execute_request(database: &Database, request: DbOperationRequest) -> Result<V
             .collect::<Vec<_>>(),
         ),
         DbOperationRequest::FiltersSave(payload) => {
+            if transaction_context
+                .as_deref()
+                .is_some_and(|context| context.missing_filter_gets.contains(&payload.id))
+            {
+                return Err(IpcError::persistence_failed());
+            }
+
             persist(FilterRepository::new(database).upsert(UpsertFilter {
                 id: payload.id,
                 name: payload.name,
@@ -304,9 +317,17 @@ fn execute_request(database: &Database, request: DbOperationRequest) -> Result<V
             }))?;
             Ok(Value::Null)
         }
-        DbOperationRequest::FiltersGet(payload) => response_value(
-            persist(FilterRepository::new(database).get(&payload.id))?.map(FilterResponse::from),
-        ),
+        DbOperationRequest::FiltersGet(payload) => {
+            let filter = persist(FilterRepository::new(database).get(&payload.id))?;
+
+            if filter.is_none() {
+                if let Some(context) = transaction_context {
+                    context.missing_filter_gets.insert(payload.id);
+                }
+            }
+
+            response_value(filter.map(FilterResponse::from))
+        }
         DbOperationRequest::FiltersList(payload) => response_value(
             persist(FilterRepository::new(database).list(FilterListOptions {
                 source_plugin_id: payload.source_plugin_id,
@@ -323,6 +344,11 @@ fn execute_request(database: &Database, request: DbOperationRequest) -> Result<V
             Ok(Value::Null)
         }
     }
+}
+
+#[derive(Default)]
+struct TransactionContext {
+    missing_filter_gets: HashSet<String>,
 }
 
 fn response_value(value: impl Serialize) -> Result<Value, IpcError> {

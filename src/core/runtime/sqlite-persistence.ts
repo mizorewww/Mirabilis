@@ -55,6 +55,16 @@ type NativeFilterRecord = Omit<
 
 type MetadataIndex = Map<string, Map<string, Map<string, MetadataRecord>>>;
 
+export type NativeDirectWriteCoordinator = {
+  persist(queries: readonly DbQuery[], rollback: () => void): void;
+  flush(): Promise<void>;
+};
+
+export type NativePageWriteThrough = {
+  pages: PageStore;
+  flush(): Promise<void>;
+};
+
 class RuntimePersistenceError extends Error {
   readonly code = "PERSISTENCE_FAILED";
 
@@ -72,6 +82,9 @@ export async function hydrateCoreStoresFromNativeBridge(
     const pages = normalizeArrayResponse<NativePageRecord>(
       await nativeBridge.db.execute({
         operation: DB_PERSISTENCE_OPERATIONS.pagesList,
+        payload: {
+          includeArchived: true,
+        },
       }),
     ).map(normalizePageRecord);
     const metadata: MetadataRecord[] = [];
@@ -111,20 +124,95 @@ export async function hydrateCoreStoresFromNativeBridge(
 
 export function createNativeTransactionPersistence(
   nativeBridge: Pick<NativeBridge, "db">,
+  options: {
+    beforeCommit?: () => Promise<void>;
+  } = {},
 ): TransactionPersistence {
   return {
     createScope(transaction) {
       return createNativeTransactionPersistenceScope(
         nativeBridge,
         transaction,
+        options,
       );
     },
+  };
+}
+
+export function createNativeDirectWriteCoordinator(
+  nativeBridge: Pick<NativeBridge, "db">,
+): NativeDirectWriteCoordinator {
+  const pendingWrites = new Set<Promise<void>>();
+  let failedWrite: RuntimePersistenceError | undefined;
+
+  return {
+    persist(queries, rollback) {
+      if (queries.length === 0) {
+        return;
+      }
+
+      if (failedWrite !== undefined) {
+        rollback();
+        return;
+      }
+
+      let write: Promise<unknown>;
+
+      try {
+        write = nativeBridge.db.transaction([...queries]);
+      } catch (error) {
+        rollback();
+        failedWrite = normalizeNativePersistenceError(error);
+        return;
+      }
+
+      const trackedWrite = write.then(
+        () => undefined,
+        (error: unknown) => {
+          rollback();
+          failedWrite = normalizeNativePersistenceError(error);
+        },
+      );
+
+      pendingWrites.add(trackedWrite);
+      void trackedWrite.finally(() => {
+        pendingWrites.delete(trackedWrite);
+      });
+    },
+    async flush() {
+      while (pendingWrites.size > 0) {
+        await Promise.all([...pendingWrites]);
+      }
+
+      if (failedWrite !== undefined) {
+        throw failedWrite;
+      }
+    },
+  };
+}
+
+export function createNativePageWriteThrough(
+  pages: PageStore,
+  nativeBridge: Pick<NativeBridge, "db">,
+): NativePageWriteThrough {
+  const coordinator = createNativeDirectWriteCoordinator(nativeBridge);
+  const participant = requireHydratableParticipant(
+    getInMemoryPageStoreTransactionParticipant(pages),
+    "page",
+  );
+
+  return {
+    pages: createPersistentDirectPageStore(pages, participant, coordinator),
+    flush: () => coordinator.flush(),
   };
 }
 
 function createNativeTransactionPersistenceScope(
   nativeBridge: Pick<NativeBridge, "db">,
   transaction: CoreTransaction,
+  options: {
+    beforeCommit?: () => Promise<void>;
+  },
 ): TransactionPersistenceScope {
   const queries: DbQuery[] = [];
 
@@ -136,6 +224,8 @@ function createNativeTransactionPersistenceScope(
       filters: createPersistentFilterStore(transaction.filters, queries),
     },
     async commit() {
+      await options.beforeCommit?.();
+
       if (queries.length === 0) {
         return;
       }
@@ -146,6 +236,76 @@ function createNativeTransactionPersistenceScope(
         throw normalizeNativePersistenceError(error);
       }
     },
+  };
+}
+
+function createPersistentDirectPageStore(
+  pages: PageStore,
+  participant: NonNullable<
+    ReturnType<typeof getInMemoryPageStoreTransactionParticipant>
+  >,
+  coordinator: NativeDirectWriteCoordinator,
+): PageStore {
+  return {
+    create(input) {
+      const rollbackSnapshot = participant.snapshot();
+      const page = pages.create(input);
+
+      coordinator.persist(
+        [
+          {
+            operation: DB_PERSISTENCE_OPERATIONS.pagesCreate,
+            payload: pageCreatePayload(page),
+          },
+        ],
+        () => {
+          participant.replaceState(rollbackSnapshot);
+        },
+      );
+
+      return page;
+    },
+    get: (pageId) => pages.get(pageId),
+    update(pageId, input) {
+      const rollbackSnapshot = participant.snapshot();
+      const page = pages.update(pageId, input);
+
+      coordinator.persist(
+        [
+          {
+            operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+            payload: pageUpdatePayload(page),
+          },
+        ],
+        () => {
+          participant.replaceState(rollbackSnapshot);
+        },
+      );
+
+      return page;
+    },
+    archive(pageId) {
+      const rollbackSnapshot = participant.snapshot();
+      const page = pages.archive(pageId);
+
+      coordinator.persist(
+        [
+          {
+            operation: DB_PERSISTENCE_OPERATIONS.pagesArchive,
+            payload: {
+              id: page.id,
+              archivedAt: page.archivedAt ?? page.updatedAt,
+            },
+          },
+        ],
+        () => {
+          participant.replaceState(rollbackSnapshot);
+        },
+      );
+
+      return page;
+    },
+    list: (options) => pages.list(options),
   };
 }
 
@@ -424,7 +584,11 @@ function createMetadataIndex(
 function normalizeArrayResponse<Record>(
   response: readonly Record[] | null | undefined,
 ): Record[] {
-  if (response === undefined || response === null) {
+  if (response === null) {
+    throw new RuntimePersistenceError();
+  }
+
+  if (response === undefined) {
     return [];
   }
 

@@ -16,6 +16,7 @@ import {
   type PluginHostRecord,
 } from "../core";
 import {
+  createNativePageWriteThrough,
   createNativeTransactionPersistence,
   hydrateCoreStoresFromNativeBridge,
 } from "../core/runtime/sqlite-persistence";
@@ -159,14 +160,36 @@ function createDefaultServices({
   registries: unknown;
   storage: unknown;
 }): CoreServices {
-  const transactionPersistence = usesSqlitePersistence(storage)
-    ? createNativeTransactionPersistence(nativeBridge as NativeBridge)
+  const sqlitePersistenceActive = usesSqlitePersistence(storage);
+  const pageWriteThrough = sqlitePersistenceActive
+    ? createNativePageWriteThrough(
+        (stores as CoreStores).pages,
+        nativeBridge as NativeBridge,
+      )
     : undefined;
-
-  return createCoreServices({
+  const transactionPersistence = sqlitePersistenceActive
+    ? createNativeTransactionPersistence(nativeBridge as NativeBridge, {
+        beforeCommit: pageWriteThrough?.flush,
+      })
+    : undefined;
+  const rawServices = createCoreServices({
     stores: stores as CoreStores,
     registries: registries as CoreRegistries,
     transactionPersistence,
+  });
+
+  if (pageWriteThrough === undefined) {
+    return rawServices;
+  }
+
+  return createCoreServices({
+    stores: {
+      ...(stores as CoreStores),
+      pages: pageWriteThrough.pages,
+    },
+    registries: registries as CoreRegistries,
+    transaction: rawServices.transaction,
+    directTransactionRunner: rawServices.transaction,
   });
 }
 
