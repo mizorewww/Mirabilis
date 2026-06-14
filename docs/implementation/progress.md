@@ -94,6 +94,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 18:05 CST - TASK-045 top-bar fix delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Carson (`implementer`, agent `019ec597-c3ec-77a3-973d-fdfb966f7b50`) spawned to make the review-fix top-bar compact/icon-only red test pass.
+- Expected scope: production changes only, likely `src/App.tsx` / `src/App.css`, preserving accessible role/name labels and MUI tooltips while removing visible text labels below the `md` breakpoint.
+- Parent state: waiting for Carson completion/final status before validation or implementation-fix commit.
+
 ### 2026-06-14 18:04 CST - TASK-045 review-fix tests and docs committed
 
 - Branch: `feat/task-045-responsive-accessibility-polish`.
