@@ -85,6 +85,7 @@ import {
 import {
   buildAiContextProjection,
   buildMlContextProjection,
+  readExactMlPredictionForPage,
 } from "./shell/projections/ml-ai-context";
 import "./App.css";
 
@@ -247,7 +248,6 @@ const chartBarViewType = "chart.bar";
 const defaultReportsAggregationId = "stats.sum-time-by-page";
 const mlPluginId = "ml";
 const mlRunPredictionCommandId = "ml.run-prediction";
-const mlPredictionAlgorithmId = "ml.predict-remaining-time";
 const mlPredictionResultKind = "ml.remaining-time-prediction";
 const mlPredictionPanelViewId = "ml.prediction-panel";
 const aiPluginId = "ai";
@@ -1380,6 +1380,14 @@ function PageContextPanel({
           return;
         }
 
+        if (!isAiCommandOutputForCommand(commandId, output)) {
+          setAiStates((states) => ({
+            ...states,
+            [commandId]: { status: "error" },
+          }));
+          return;
+        }
+
         setAiStates((states) => ({
           ...states,
           [commandId]: {
@@ -1460,13 +1468,14 @@ function PageContextPanel({
         </Tabs>
       </Stack>
 
-      {activeTab === "ml" ? (
-        <Box
-          aria-labelledby="page-context-ml-tab"
-          className="app-shell__context-tab-panel"
-          id="page-context-ml-panel"
-          role="tabpanel"
-        >
+      <Box
+        aria-labelledby="page-context-ml-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "ml"}
+        id="page-context-ml-panel"
+        role="tabpanel"
+      >
+        {activeTab === "ml" ? (
           <Stack spacing={1.5}>
             <Button
               disabled={!mlCanRun || mlState.status === "loading"}
@@ -1490,16 +1499,17 @@ function PageContextPanel({
               />
             ) : null}
           </Stack>
-        </Box>
-      ) : null}
+        ) : null}
+      </Box>
 
-      {activeTab === "suggestions" ? (
-        <Box
-          aria-labelledby="page-context-suggestions-tab"
-          className="app-shell__context-tab-panel"
-          id="page-context-suggestions-panel"
-          role="tabpanel"
-        >
+      <Box
+        aria-labelledby="page-context-suggestions-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "suggestions"}
+        id="page-context-suggestions-panel"
+        role="tabpanel"
+      >
+        {activeTab === "suggestions" ? (
           <Stack spacing={1.5}>
             <ViewHost
               acceptedData={{
@@ -1517,16 +1527,17 @@ function PageContextPanel({
               runtime={runtime}
             />
           </Stack>
-        </Box>
-      ) : null}
+        ) : null}
+      </Box>
 
-      {activeTab === "review" ? (
-        <Box
-          aria-labelledby="page-context-review-tab"
-          className="app-shell__context-tab-panel"
-          id="page-context-review-panel"
-          role="tabpanel"
-        >
+      <Box
+        aria-labelledby="page-context-review-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "review"}
+        id="page-context-review-panel"
+        role="tabpanel"
+      >
+        {activeTab === "review" ? (
           <ViewHost
             acceptedData={{
               kind: aiReviewPanelViewId,
@@ -1536,8 +1547,8 @@ function PageContextPanel({
             viewId={aiReviewPanelViewId}
             viewType={aiReviewPanelViewId}
           />
-        </Box>
-      ) : null}
+        ) : null}
+      </Box>
     </Box>
   );
 }
@@ -1629,6 +1640,9 @@ function AiSuggestionControls({
         ]
       : []),
   ];
+  const hasLoadingCommand = suggestionCommands.some(
+    ({ commandId }) => commandStates[commandId]?.status === "loading",
+  );
 
   if (aiProjection === undefined || aiProjection.status.kind === "unavailable") {
     return (
@@ -1670,6 +1684,7 @@ function AiSuggestionControls({
         <AiCommandResult
           commandId={commandId}
           key={commandId}
+          suppressAlert={hasLoadingCommand}
           state={commandStates[commandId]}
         />
       ))}
@@ -1679,9 +1694,11 @@ function AiSuggestionControls({
 
 function AiCommandResult({
   commandId,
+  suppressAlert,
   state,
 }: {
   commandId: AiAllowedCommandId;
+  suppressAlert: boolean;
   state: AiCommandState | undefined;
 }) {
   if (state === undefined) {
@@ -1697,6 +1714,14 @@ function AiCommandResult({
   }
 
   if (state.status === "error") {
+    if (suppressAlert) {
+      return (
+        <Box aria-label={`${commandId} unavailable`} role="status">
+          AI suggestion unavailable. Could not generate.
+        </Box>
+      );
+    }
+
     return (
       <Alert severity="error">
         AI suggestion unavailable. Could not generate.
@@ -1755,20 +1780,43 @@ function formatAiCommandOutput(
   return "AI suggestion ready.";
 }
 
+function isAiCommandOutputForCommand(
+  commandId: AiAllowedCommandId,
+  output: unknown,
+): boolean {
+  if (!isRecord(output)) {
+    return false;
+  }
+
+  if (commandId === aiSuggestTagsCommandId) {
+    return output.kind === "ai.suggested-tags" && Array.isArray(output.tags);
+  }
+
+  if (commandId === aiSuggestDueDateCommandId) {
+    return (
+      output.kind === "ai.suggested-due-date" &&
+      typeof output.dueDate === "string"
+    );
+  }
+
+  if (commandId === aiGenerateSubtasksCommandId) {
+    return (
+      output.kind === "ai.subtask-suggestions" &&
+      typeof output.markdown === "string"
+    );
+  }
+
+  return (
+    output.kind === "ai.prediction-explanation" &&
+    typeof output.explanation === "string"
+  );
+}
+
 function readMlPredictionForPage(
   input: unknown,
   pageId: string,
 ): unknown | undefined {
-  if (
-    !isRecord(input) ||
-    input.kind !== mlPredictionResultKind ||
-    input.algorithmId !== mlPredictionAlgorithmId ||
-    input.pageId !== pageId
-  ) {
-    return undefined;
-  }
-
-  return input;
+  return readExactMlPredictionForPage(input, pageId);
 }
 
 function CalendarWorkspace({ runtime }: { runtime: AppRuntime }) {

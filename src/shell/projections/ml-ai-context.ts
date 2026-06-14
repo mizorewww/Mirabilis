@@ -67,6 +67,7 @@ type BoundedRows<Row> = {
 const mlPredictionAlgorithmId = "ml.predict-remaining-time";
 const mlPredictionInputKind = "ml.remaining-time-prediction-input";
 const mlPredictionResultKind = "ml.remaining-time-prediction";
+const mlBaselineModelId = "ml.remaining-time-baseline.v1";
 const mlProjectionLimit = 1_000;
 const aiProjectionLimit = 100;
 const aiCurrentPageTextLimit = 50_000;
@@ -94,6 +95,30 @@ const timerSegmentPayloadKeys = new Set([
   "startAt",
 ]);
 const timerNotePayloadKeys = new Set(["notePageId", "notedAt", "segmentId"]);
+const mlPredictionKeys = new Set([
+  "algorithmId",
+  "confidence",
+  "features",
+  "generatedAt",
+  "kind",
+  "limitations",
+  "maxSeconds",
+  "minSeconds",
+  "modelId",
+  "pageId",
+  "pageTitle",
+  "reasons",
+]);
+const mlPredictionFeatureKeys = new Set([
+  "baselineTotalSeconds",
+  "childTasksCompleted",
+  "childTasksTotal",
+  "similarAverageSeconds",
+  "similarCompletedTasks",
+  "tagIds",
+  "timerNoteCount",
+  "trackedSeconds",
+]);
 const missingData = Symbol("missing-data");
 
 export function buildMlContextProjection(input: ProjectionInput) {
@@ -122,11 +147,11 @@ export function buildMlContextProjection(input: ProjectionInput) {
   const pagesBound = boundRows(context.pages, mlProjectionLimit);
   const projectedPageIds = new Set(pagesBound.rows.map((page) => page.id));
   const metadataBound = boundRows(
-    collectMetadata(input.metadata, projectedPageIds, mlProjectionLimit),
+    collectMetadata(input.metadata, projectedPageIds),
     mlProjectionLimit,
   );
   const eventsBound = boundRows(
-    collectTimerEvents(input.events, projectedPageIds, mlProjectionLimit),
+    collectTimerEvents(input.events, projectedPageIds),
     mlProjectionLimit,
   );
 
@@ -304,7 +329,7 @@ function toPageSummary(page: PageSummary & { raw: Record<string, unknown> }): Pa
 function readPageSummary(
   input: unknown,
 ): (PageSummary & { raw: Record<string, unknown> }) | null {
-  if (!isPlainRecord(input) || Object.getOwnPropertySymbols(input).length > 0) {
+  if (!isPlainRecord(input) || hasOwnSymbols(input)) {
     return null;
   }
 
@@ -342,7 +367,7 @@ function readPageBodyMarkdown(input: unknown): string | undefined {
   const lines: string[] = [];
 
   for (const block of blocks) {
-    if (!isPlainRecord(block) || Object.getOwnPropertySymbols(block).length > 0) {
+    if (!isPlainRecord(block) || hasOwnSymbols(block)) {
       return undefined;
     }
 
@@ -371,13 +396,9 @@ function toMlPageProjection(page: PageSummary): Record<string, unknown> {
 function collectMetadata(
   input: readonly MetadataRecord[],
   pageIds: ReadonlySet<string>,
-  sourceLimit?: number,
 ): MetadataProjection[] {
   const rows: MetadataProjection[] = [];
-  const records =
-    sourceLimit === undefined
-      ? copyArrayLike(input)
-      : copyArrayLike(input).slice(0, sourceLimit);
+  const records = copyArrayLike(input);
 
   for (const recordInput of records) {
     const row = readMetadataProjection(recordInput, pageIds);
@@ -394,7 +415,7 @@ function readMetadataProjection(
   input: unknown,
   pageIds: ReadonlySet<string>,
 ): MetadataProjection | null {
-  if (!isPlainRecord(input) || Object.getOwnPropertySymbols(input).length > 0) {
+  if (!isPlainRecord(input) || hasOwnSymbols(input)) {
     return null;
   }
 
@@ -439,13 +460,9 @@ function readMetadataProjection(
 function collectTimerEvents(
   input: readonly AppEvent[],
   pageIds: ReadonlySet<string>,
-  sourceLimit?: number,
 ): TimerEventProjection[] {
   const rows: TimerEventProjection[] = [];
-  const events =
-    sourceLimit === undefined
-      ? copyArrayLike(input)
-      : copyArrayLike(input).slice(0, sourceLimit);
+  const events = copyArrayLike(input);
 
   for (const eventInput of events) {
     const row = readTimerEventProjection(eventInput, pageIds);
@@ -462,7 +479,7 @@ function readTimerEventProjection(
   input: unknown,
   pageIds: ReadonlySet<string>,
 ): TimerEventProjection | null {
-  if (!isPlainRecord(input) || Object.getOwnPropertySymbols(input).length > 0) {
+  if (!isPlainRecord(input) || hasOwnSymbols(input)) {
     return null;
   }
 
@@ -592,13 +609,72 @@ function readCurrentPagePrediction(
   input: unknown,
   currentPageId: string,
 ): unknown | undefined {
+  return readExactMlPredictionForPage(input, currentPageId);
+}
+
+export function readExactMlPredictionForPage(
+  input: unknown,
+  currentPageId: string,
+): unknown | undefined {
   const snapshot = snapshotJsonValue(input);
 
   if (
     snapshot === missingData ||
     !isPlainRecord(snapshot) ||
-    readDataString(snapshot, "kind") !== mlPredictionResultKind ||
-    readDataString(snapshot, "pageId") !== currentPageId
+    hasOwnSymbols(snapshot)
+  ) {
+    return undefined;
+  }
+
+  const record = readExactRecord(snapshot, mlPredictionKeys);
+
+  if (record === null) {
+    return undefined;
+  }
+
+  const features = readExactRecord(
+    readDataProperty(record, "features"),
+    mlPredictionFeatureKeys,
+  );
+  const limitations = readStringArray(readDataProperty(record, "limitations"));
+  const reasons = readStringArray(readDataProperty(record, "reasons"));
+
+  if (
+    readDataString(record, "kind") !== mlPredictionResultKind ||
+    readDataString(record, "algorithmId") !== mlPredictionAlgorithmId ||
+    readDataString(record, "modelId") !== mlBaselineModelId ||
+    readDataString(record, "pageId") !== currentPageId ||
+    readDataString(record, "pageTitle") === null ||
+    readDataString(record, "generatedAt") === null ||
+    readDataNumber(record, "confidence") === null ||
+    readDataNumber(record, "minSeconds") === null ||
+    readDataNumber(record, "maxSeconds") === null ||
+    features === null ||
+    limitations === undefined ||
+    reasons === undefined
+  ) {
+    return undefined;
+  }
+
+  const similarAverageSeconds = readDataProperty(
+    features,
+    "similarAverageSeconds",
+  );
+  const tagIds = readStringArray(readDataProperty(features, "tagIds"));
+
+  if (
+    readDataNumber(features, "baselineTotalSeconds") === null ||
+    readDataNumber(features, "childTasksCompleted") === null ||
+    readDataNumber(features, "childTasksTotal") === null ||
+    !(
+      similarAverageSeconds === null ||
+      (typeof similarAverageSeconds === "number" &&
+        Number.isFinite(similarAverageSeconds))
+    ) ||
+    readDataNumber(features, "similarCompletedTasks") === null ||
+    tagIds === undefined ||
+    readDataNumber(features, "timerNoteCount") === null ||
+    readDataNumber(features, "trackedSeconds") === null
   ) {
     return undefined;
   }
@@ -655,14 +731,15 @@ function createBoundedStatus(
 }
 
 function copyArrayLike(input: unknown): unknown[] {
-  if (!Array.isArray(input) || Object.getPrototypeOf(input) !== Array.prototype) {
+  if (!Array.isArray(input) || safeGetPrototypeOf(input) !== Array.prototype) {
     return [];
   }
 
-  const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length");
+  const lengthDescriptor = safeGetOwnPropertyDescriptor(input, "length");
 
   if (
     lengthDescriptor === undefined ||
+    lengthDescriptor === missingData ||
     !Object.prototype.hasOwnProperty.call(lengthDescriptor, "value") ||
     !Number.isSafeInteger(lengthDescriptor.value) ||
     lengthDescriptor.value < 0
@@ -673,10 +750,11 @@ function copyArrayLike(input: unknown): unknown[] {
   const values: unknown[] = [];
 
   for (let index = 0; index < lengthDescriptor.value; index += 1) {
-    const descriptor = Object.getOwnPropertyDescriptor(input, String(index));
+    const descriptor = safeGetOwnPropertyDescriptor(input, String(index));
 
     if (
       descriptor === undefined ||
+      descriptor === missingData ||
       !descriptor.enumerable ||
       !Object.prototype.hasOwnProperty.call(descriptor, "value")
     ) {
@@ -693,13 +771,14 @@ function readExactRecord(
   input: unknown,
   keys: ReadonlySet<string>,
 ): Record<string, unknown> | null {
-  if (!isPlainRecord(input) || Object.getOwnPropertySymbols(input).length > 0) {
+  if (!isPlainRecord(input) || hasOwnSymbols(input)) {
     return null;
   }
 
-  const ownKeys = Reflect.ownKeys(input);
+  const ownKeys = safeOwnKeys(input);
 
   if (
+    ownKeys === undefined ||
     ownKeys.length !== keys.size ||
     ownKeys.some((key) => typeof key !== "string" || !keys.has(key))
   ) {
@@ -707,10 +786,11 @@ function readExactRecord(
   }
 
   for (const key of keys) {
-    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+    const descriptor = safeGetOwnPropertyDescriptor(input, key);
 
     if (
       descriptor === undefined ||
+      descriptor === missingData ||
       !descriptor.enumerable ||
       !Object.prototype.hasOwnProperty.call(descriptor, "value")
     ) {
@@ -725,10 +805,11 @@ function readDataProperty(
   input: Record<string, unknown>,
   key: string,
 ): unknown {
-  const descriptor = Object.getOwnPropertyDescriptor(input, key);
+  const descriptor = safeGetOwnPropertyDescriptor(input, key);
 
   if (
     descriptor === undefined ||
+    descriptor === missingData ||
     !descriptor.enumerable ||
     !Object.prototype.hasOwnProperty.call(descriptor, "value")
   ) {
@@ -751,13 +832,14 @@ function readOptionalDataString(
   input: Record<string, unknown>,
   key: string,
 ): string | null | undefined {
-  const descriptor = Object.getOwnPropertyDescriptor(input, key);
+  const descriptor = safeGetOwnPropertyDescriptor(input, key);
 
   if (descriptor === undefined) {
     return undefined;
   }
 
   if (
+    descriptor === missingData ||
     !descriptor.enumerable ||
     !Object.prototype.hasOwnProperty.call(descriptor, "value")
   ) {
@@ -787,20 +869,38 @@ function snapshotJsonValue(input: unknown): unknown {
   }
 
   if (Array.isArray(input)) {
-    return copyArrayLike(input).map(snapshotJsonValue);
+    const values: unknown[] = [];
+
+    for (const value of copyArrayLike(input)) {
+      const snapshot = snapshotJsonValue(value);
+
+      if (snapshot === missingData) {
+        return missingData;
+      }
+
+      values.push(snapshot);
+    }
+
+    return values;
   }
 
-  if (!isPlainRecord(input) || Object.getOwnPropertySymbols(input).length > 0) {
+  if (!isPlainRecord(input) || hasOwnSymbols(input)) {
     return missingData;
   }
 
   const output: Record<string, unknown> = {};
+  const names = safeOwnPropertyNames(input);
 
-  for (const key of Object.getOwnPropertyNames(input)) {
-    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+  if (names === undefined) {
+    return missingData;
+  }
+
+  for (const key of names) {
+    const descriptor = safeGetOwnPropertyDescriptor(input, key);
 
     if (
       descriptor === undefined ||
+      descriptor === missingData ||
       !descriptor.enumerable ||
       !Object.prototype.hasOwnProperty.call(descriptor, "value")
     ) {
@@ -824,6 +924,61 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
     typeof value === "object" &&
     value !== null &&
     !Array.isArray(value) &&
-    Object.getPrototypeOf(value) === Object.prototype
+    safeGetPrototypeOf(value) === Object.prototype
   );
+}
+
+function readStringArray(input: unknown): string[] | undefined {
+  if (!Array.isArray(input) || safeGetPrototypeOf(input) !== Array.prototype) {
+    return undefined;
+  }
+
+  const values = copyArrayLike(input);
+
+  return values.every((value): value is string => typeof value === "string")
+    ? values
+    : undefined;
+}
+
+function hasOwnSymbols(input: object): boolean {
+  try {
+    return Object.getOwnPropertySymbols(input).length > 0;
+  } catch {
+    return true;
+  }
+}
+
+function safeGetPrototypeOf(input: object): object | null | typeof missingData {
+  try {
+    return Object.getPrototypeOf(input);
+  } catch {
+    return missingData;
+  }
+}
+
+function safeGetOwnPropertyDescriptor(
+  input: object,
+  key: PropertyKey,
+): PropertyDescriptor | undefined | typeof missingData {
+  try {
+    return Object.getOwnPropertyDescriptor(input, key);
+  } catch {
+    return missingData;
+  }
+}
+
+function safeOwnKeys(input: object): readonly PropertyKey[] | undefined {
+  try {
+    return Reflect.ownKeys(input);
+  } catch {
+    return undefined;
+  }
+}
+
+function safeOwnPropertyNames(input: object): string[] | undefined {
+  try {
+    return Object.getOwnPropertyNames(input);
+  } catch {
+    return undefined;
+  }
 }
