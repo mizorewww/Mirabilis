@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:43 CST - TASK-047 inbound recent-page normalization P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Harvey (`security_reviewer`, agent `019ec739-0806-7c03-9717-b6c75cbd02cd`) returned final status with no files modified. Bernoulli's accessor-array issue is closed for no index getter invocation and no getter-returned path/token persistence, and prior `activeRoute` accessor hardening remains closed.
+- Harvey found no P0/P1 findings, but reported one remaining P2 boundary item: inbound `recentPageIds` parsing is accessor-safe but not bounded/deduped at the parser boundary, so `readDurableRouteState` can return duplicate, Home, and over-cap IDs unchanged.
+- Checks run by Harvey: focused TASK-047 suite (22 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/Search/Sync/AI/release drift scans, `.only` / `.skip` / direct `userEvent.*` scans, and focused parser/serializer boundary probes.
+- Parent state: prepare focused red tests for inbound `recentPageIds` parser normalization.
+
 ### 2026-06-15 01:41 CST - TASK-047 recent-page accessor security re-review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
