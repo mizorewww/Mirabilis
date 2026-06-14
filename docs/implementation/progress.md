@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:48 CST - TASK-046 async rollback P1 targeted re-review delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Ohm was closed after final status and validation were recorded.
+- Targeted re-review running: Nietzsche (`security_reviewer`, agent `019ec6d1-7a88-7983-a786-2327a2c42312`) for Mencius/Singer P1 security/native-boundary closure; Euclid (`reviewer`, agent `019ec6d1-7e7a-7f50-aae1-a267e6ab85e1`) for direct-write/interleaving rollback correctness closure; Hegel (`test_quality_reviewer`, agent `019ec6d1-81e6-7082-9e58-7b3f6628e1b4`) for Cicero test quality.
+- Parent state: waiting for targeted re-review final statuses before `release_checker`. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 23:46 CST - TASK-046 async rollback P1 implementation green
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
