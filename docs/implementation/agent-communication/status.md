@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 23:21 CST.
+Last updated: 2026-06-14 23:22 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 23:21 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 rollback P1 red tests committed; parent is preparing implementation delegation.
+- Current phase: TASK-046 rollback P1 implementation delegated; parent is waiting for Rawls's final status.
 
 ## Current Outcome
 
@@ -83,6 +83,7 @@ Last updated: 2026-06-14 23:21 CST.
 - Boole returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `58f020a` records red regression coverage for direct page write-through rollback isolation and plugin direct metadata/event/filter rollback isolation.
 - Parent red validation matched Averroes's P1: `bun run test:frontend -- src/test/runtime-sqlite-persistence.test.ts src/test/plugin-host-lifecycle.test.ts src/test/app-bootstrap-runtime.test.ts src/test/runtime-provider.test.tsx` failed with 2 failures and 77 passing tests. Both new failures reach `runtime.pages.get(transactionResult.pageId)` after failed direct rollback and get `PAGE_NOT_FOUND`, proving stale whole-store rollback erased the committed Core page.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
+- Boole was closed after final status and validation were recorded. Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned at 2026-06-14 23:22 CST to fix the direct-store rollback isolation P1.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -170,6 +171,5 @@ Last updated: 2026-06-14 23:21 CST.
 
 ## Next Parent Actions
 
-- Close Boole after this record is committed.
-- Delegate an `implementer` to fix Averroes's rollback isolation P1. A wait timeout is not a failure or idle signal.
+- Wait for Rawls's final status. A wait timeout is not a failure or idle signal.
 - Retry `release_checker` only after the P1 fix and targeted re-review clear P0/P1 findings.

@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 23:22 CST - TASK-046 rollback P1 implementation delegated
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Boole was closed after final status and red validation were recorded.
+- Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned to fix the direct-store rollback isolation P1 covered by Boole's red tests.
+- Parent state: waiting for Rawls's completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 23:21 CST - TASK-046 rollback P1 red tests committed
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

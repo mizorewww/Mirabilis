@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: rollback P1 red tests committed; parent is preparing implementation delegation.
+- Status: rollback P1 implementation delegated; parent is waiting for Rawls's final status.
 
 ## Scope
 
@@ -150,7 +150,9 @@
 - Boole returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`. Commit `58f020a` (`Boole(test-fix)(Wire SQLite-backed Runtime Persistence): cover rollback isolation regressions`) records the red tests.
 - Parent red validation matched Averroes's P1: focused TASK-046/plugin-host/bootstrap/provider suite failed with 2 failures and 77 passing tests. The failures are the new rollback isolation regressions only: failed direct page write-through rollback and failed plugin direct metadata/event/filter rollback both erase a committed Core transaction page from live memory.
 - Supporting checks passed: `git diff --check`; focused `.only` / `.skip` scan returned no matches.
+- Boole was closed after final status and validation were recorded.
+- Rawls (`implementer`, agent `019ec6b9-b891-7940-9910-e936e065a32b`) was spawned at 2026-06-14 23:22 CST to fix the direct-store rollback isolation P1. Rawls owns production changes and must return final status before the parent validates or commits implementation.
 
 ## Next Action
 
-- Close Boole, delegate an `implementer` to fix Averroes's rollback isolation P1, and wait for final status. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
+- Wait for Rawls's final status, then validate focused suites before implementation commit. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until P1 fix, re-review, release readiness, and final `check:full` pass.
