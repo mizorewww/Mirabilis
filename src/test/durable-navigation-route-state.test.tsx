@@ -1175,6 +1175,62 @@ describe("TASK-047 route-state serializer boundary", () => {
     expectRouteStateIsIdsOnly(state);
   });
 
+  it("rejects accessor-backed recent page arrays while parsing without invoking index getters", () => {
+    const getterInvocations: string[] = [];
+    const recentPageIds = createAccessorBackedRecentPageIds({
+      getterInvocations,
+      pageId: "/home/aac6fef/private.sqlite?token=sk-test-secret",
+      sparse: true,
+    });
+    const parsed = parseRouteStateDto({
+      activeRoute: {
+        kind: "page",
+        pageId: "home-page",
+        role: "home",
+      },
+      homePageId: "home-page",
+      recentPageIds,
+      version: durableRouteStateVersion,
+    });
+
+    expect({ getterInvocations, parsed }).toStrictEqual({
+      getterInvocations: [],
+      parsed: undefined,
+    });
+  });
+
+  it("omits accessor-backed recent page arrays while serializing without persisting unsafe getter values", () => {
+    const getterInvocations: string[] = [];
+    const state = createRouteStateDto({
+      activeRoute: {
+        kind: "page",
+        pageId: "safe-page",
+        role: "recent",
+      },
+      homePageId: "home-page",
+      recentPageIds: createAccessorBackedRecentPageIds({
+        getterInvocations,
+        pageId: "/home/aac6fef/private.sqlite?token=sk-test-secret",
+        sparse: true,
+      }),
+    });
+
+    expect({ getterInvocations, state }).toStrictEqual({
+      getterInvocations: [],
+      state: {
+        activeRoute: {
+          kind: "page",
+          pageId: "safe-page",
+          role: "recent",
+        },
+        homePageId: "home-page",
+        recentPageIds: [],
+        version: durableRouteStateVersion,
+      },
+    });
+    expectRouteStateIsIdsOnly(state);
+  });
+
   it("rejects malformed route-state records instead of normalizing unsafe keys", () => {
     expect(
       parseRouteStateDto({
@@ -1966,6 +2022,33 @@ function createAccessorBackedPageRoute({
   });
 
   return activeRoute;
+}
+
+function createAccessorBackedRecentPageIds({
+  getterInvocations,
+  pageId,
+  sparse = false,
+}: {
+  getterInvocations: string[];
+  pageId: string;
+  sparse?: boolean;
+}): string[] {
+  const recentPageIds = new Array<string>(sparse ? 3 : 1);
+
+  Object.defineProperty(recentPageIds, "0", {
+    enumerable: true,
+    get() {
+      getterInvocations.push("recentPageIds[0]");
+
+      return pageId;
+    },
+  });
+
+  if (sparse) {
+    recentPageIds[2] = "safe-later-page";
+  }
+
+  return recentPageIds;
 }
 
 function createSymbolKeyedRouteState(homePageId: string): unknown {
