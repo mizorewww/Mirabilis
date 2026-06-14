@@ -96,6 +96,7 @@ import {
   createDurableRouteState,
   normalizeRecentPageIds,
   readDurableRouteState,
+  readDurableRouteStateRecentPageIdCandidates,
   stableRouteStateSignature,
   toMetadataJsonValue,
   type DurableActiveRoute,
@@ -3094,6 +3095,8 @@ function createInitialNavigationState(
     homePage.id,
   );
   const persistedRecentPageIds = storedRouteState.state?.recentPageIds;
+  const persistedRecentPageIdCandidates =
+    storedRouteState.recentPageIdCandidates ?? persistedRecentPageIds;
   const recentPageIds =
     routeRestoreRequiresSafeHomeState(
       storedRouteState,
@@ -3101,10 +3104,10 @@ function createInitialNavigationState(
       homePage.id,
     )
       ? []
-      : persistedRecentPageIds === undefined
+      : persistedRecentPageIdCandidates === undefined
       ? listInitialRecentPageIds(runtime, homePage.id)
       : normalizeCurrentRecentPageIds(
-          persistedRecentPageIds,
+          persistedRecentPageIdCandidates,
           runtime,
           homePage.id,
         );
@@ -3117,6 +3120,7 @@ function createInitialNavigationState(
 }
 
 type StoredDurableRouteState = {
+  recentPageIdCandidates?: string[];
   recordPageId?: string;
   state?: DurableRouteState;
 };
@@ -3141,6 +3145,9 @@ function readStoredDurableRouteState(
 
     if (state !== undefined) {
       return {
+        recentPageIdCandidates:
+          readDurableRouteStateRecentPageIdCandidates(record.value) ??
+          state.recentPageIds,
         recordPageId: record.pageId,
         state,
       };

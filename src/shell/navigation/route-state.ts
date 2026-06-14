@@ -6,6 +6,8 @@ export const appShellRouteStateOwner = "app-shell";
 export const durableRouteStateVersion = 1;
 export const maxDurableRecentPageIds = 8;
 
+const maxDurableRecentPageIdCandidates = maxDurableRecentPageIds * 4;
+
 export type DurablePageRouteRole = "command-open" | "home" | "recent";
 
 export type DurableFilterRouteRole =
@@ -86,14 +88,9 @@ export function createDurableRouteState({
 export function readDurableRouteState(
   value: unknown,
 ): DurableRouteState | undefined {
-  const record = readExactRecord(value, routeStateKeys);
+  const record = readDurableRouteStateRecord(value);
 
-  if (
-    record === undefined ||
-    record.version !== durableRouteStateVersion ||
-    !isNonEmptyString(record.homePageId) ||
-    !Array.isArray(record.recentPageIds)
-  ) {
+  if (record === undefined) {
     return undefined;
   }
 
@@ -106,11 +103,16 @@ export function readDurableRouteState(
     return undefined;
   }
 
-  const recentPageIds = readRecentPageIdStrings(record.recentPageIds);
+  const parsedRecentPageIds = readRecentPageIdStrings(record.recentPageIds);
 
-  if (recentPageIds === undefined) {
+  if (parsedRecentPageIds === undefined) {
     return undefined;
   }
+
+  const recentPageIds = normalizeRecentPageIds(
+    parsedRecentPageIds,
+    record.homePageId,
+  );
 
   return {
     ...(activeRoute === undefined ? {} : { activeRoute }),
@@ -118,6 +120,26 @@ export function readDurableRouteState(
     recentPageIds,
     version: durableRouteStateVersion,
   };
+}
+
+export function readDurableRouteStateRecentPageIdCandidates(
+  value: unknown,
+): string[] | undefined {
+  const record = readDurableRouteStateRecord(value);
+
+  if (record === undefined) {
+    return undefined;
+  }
+
+  const parsedRecentPageIds = readRecentPageIdStrings(record.recentPageIds);
+
+  return parsedRecentPageIds === undefined
+    ? undefined
+    : normalizeSafeRecentPageIds(
+        parsedRecentPageIds,
+        record.homePageId,
+        maxDurableRecentPageIdCandidates,
+      );
 }
 
 export function normalizeRecentPageIds(
@@ -130,6 +152,49 @@ export function normalizeRecentPageIds(
     return [];
   }
 
+  return normalizeSafeRecentPageIds(
+    safePageIds,
+    homePageId,
+    maxDurableRecentPageIds,
+  );
+}
+
+type DurableRouteStateRecord = {
+  activeRoute?: unknown;
+  homePageId: string;
+  recentPageIds: unknown[];
+  version: typeof durableRouteStateVersion;
+};
+
+function readDurableRouteStateRecord(
+  value: unknown,
+): DurableRouteStateRecord | undefined {
+  const record = readExactRecord(value, routeStateKeys);
+
+  if (
+    record === undefined ||
+    record.version !== durableRouteStateVersion ||
+    !isNonEmptyString(record.homePageId) ||
+    !Array.isArray(record.recentPageIds)
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...(record.activeRoute === undefined
+      ? {}
+      : { activeRoute: record.activeRoute }),
+    homePageId: record.homePageId,
+    recentPageIds: record.recentPageIds,
+    version: durableRouteStateVersion,
+  };
+}
+
+function normalizeSafeRecentPageIds(
+  safePageIds: readonly string[],
+  homePageId: string,
+  maxPageIds: number,
+): string[] {
   const seen = new Set<string>();
   const normalized: string[] = [];
 
@@ -141,7 +206,7 @@ export function normalizeRecentPageIds(
     seen.add(pageId);
     normalized.push(pageId);
 
-    if (normalized.length >= maxDurableRecentPageIds) {
+    if (normalized.length >= maxPageIds) {
       break;
     }
   }
