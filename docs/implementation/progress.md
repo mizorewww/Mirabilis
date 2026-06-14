@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 22:50 CST - TASK-046 focused re-review retried
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Errored focused re-review agents were no longer present when close was attempted.
+- Focused re-review retry running: Beauvoir (`test_quality_reviewer`, agent `019ec69c-6228-7a52-b012-30a6daa90246`) for Confucius P1 closure; Pasteur (`reviewer`, agent `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`) for Curie P2 closure; Lorentz (`docs_researcher`, agent `019ec69c-676c-70d3-a672-9f351af6833d`) for Pauli P2 closure.
+- Parent state: waiting for retried focused re-review final statuses. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-14 22:48 CST - TASK-046 focused re-review retry required
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.

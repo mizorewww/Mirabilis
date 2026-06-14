@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 22:48 CST.
+Last updated: 2026-06-14 22:50 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-14 22:48 CST.
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-046 focused re-review retry needed after agent usage-limit errors.
+- Current phase: TASK-046 focused re-review retry running; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -61,6 +61,7 @@ Last updated: 2026-06-14 22:48 CST.
 - Parent validation passed after Plato: focused TASK-046/plugin-host/bootstrap/provider suite passed with 76 tests; native-bridge/Quick Capture/Markdown page persistence suite passed with 40 tests; core transaction manager suite passed with 17 tests; `bun run test:frontend` passed with 52 files and 828 tests; `bun run typecheck`; `bun run lint`; `git diff --check`.
 - Plato was closed after final status and validation were recorded. Focused re-review was attempted with Wegener (`test_quality_reviewer`, `019ec602-cf6e-7f71-ac2c-c0b0f65ae057`), Franklin (`reviewer`, `019ec602-d230-7b11-a390-766d26e9a06e`), and Archimedes (`docs_researcher`, `019ec602-d4ba-76f2-bc08-c8704ced104d`). All three returned final errored status due the Codex usage limit: "You've hit your usage limit ... try again at 10:27 PM." This is a concrete agent-unavailable condition, not a wait timeout.
 - Parent decision: do not treat these errored agents as successful review. Record and close them, then retry focused re-review now that local time is past the reported reset time.
+- Errored focused re-review agents were no longer present when close was attempted. Focused re-review retry started at 2026-06-14 22:50 CST: Beauvoir (`test_quality_reviewer`, `019ec69c-6228-7a52-b012-30a6daa90246`) for Confucius P1 closure; Pasteur (`reviewer`, `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`) for Curie P2 closure; Lorentz (`docs_researcher`, `019ec69c-676c-70d3-a672-9f351af6833d`) for Pauli P2 closure.
 - TASK-043 was merged to `master` in merge commit `6e394fa`.
 - Post-merge `master` validation passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 - TASK-044 branch was created from validated `master` commit `6e394fa`.
@@ -148,6 +149,5 @@ Last updated: 2026-06-14 22:48 CST.
 
 ## Next Parent Actions
 
-- Close the errored focused re-review agents after this status is recorded.
-- Retry focused targeted re-review for Confucius's P1, Curie's two P2s, and Pauli's docs P2 closure.
+- Wait for retried focused re-review final statuses. A wait timeout is not a failure or idle signal.
 - Retry `release_checker` after targeted re-review clears P0/P1 findings. A wait timeout is not a failure or idle signal.

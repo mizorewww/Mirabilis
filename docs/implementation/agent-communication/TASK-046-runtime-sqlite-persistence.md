@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: focused re-review retry needed after agent usage-limit errors.
+- Status: focused re-review retry running; parent is waiting for final statuses.
 
 ## Scope
 
@@ -121,7 +121,9 @@
 - Plato was closed after final status and validation were recorded.
 - Focused re-review was attempted with Wegener (`test_quality_reviewer`, agent `019ec602-cf6e-7f71-ac2c-c0b0f65ae057`), Franklin (`reviewer`, agent `019ec602-d230-7b11-a390-766d26e9a06e`), and Archimedes (`docs_researcher`, agent `019ec602-d4ba-76f2-bc08-c8704ced104d`). All three returned final errored status due the Codex usage limit and told the parent to try again at 10:27 PM.
 - Parent decision: these agents are unavailable/failed, not successful reviews. Record and close them, then retry focused re-review now that local time is past the reported reset time.
+- Errored focused re-review agents were no longer present when close was attempted.
+- Focused re-review retry started at 2026-06-14 22:50 CST: Beauvoir (`test_quality_reviewer`, agent `019ec69c-6228-7a52-b012-30a6daa90246`), Pasteur (`reviewer`, agent `019ec69c-64a0-7ae0-94d3-8fd5539ec52b`), and Lorentz (`docs_researcher`, agent `019ec69c-676c-70d3-a672-9f351af6833d`).
 
 ## Next Action
 
-- Close the errored focused re-review agents after this status is recorded, then retry focused targeted re-review. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
+- Wait for retried focused re-review final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
