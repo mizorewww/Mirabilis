@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-06-01 21:44 CST.
+Last updated: 2026-06-14 14:01 CST.
 
 ## Current Task
 
-- Task: TASK-042 - Add Calendar And Reporting Routes With Explicit Data Projections.
-- Branch: `feat/task-042-calendar-reporting-routes`.
+- Task: TASK-043 - Add ML And AI Context Panels.
+- Branch: `feat/task-043-ml-ai-context-panels`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-042 merged to `master`; master validation passed; next task selection pending.
+- Current phase: TASK-043 final local gate passed on branch; parent is committing completion status before merge.
 
 ## Current Outcome
 
@@ -42,14 +42,67 @@ Last updated: 2026-06-01 21:44 CST.
 - Pasteur returned final status and added the P2 regression test in commit `cfbb6f3` (`Pasteur(test-fix)(Add Calendar And Reporting Routes With Explicit Data Projections): cover stale calendar bridge payloads`). Parent validation: `bun run test:frontend -- src/test/calendar-reporting-routes.test.tsx` passed with 1 file / 19 tests and `git diff --check` passed.
 - Final branch validation passed: focused TASK-042 suite passed with 7 files / 127 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed; `bun run check:quick` passed with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
 - TASK-042 merged to `master` in merge commit `19711d0`. Master `bun run check:quick` passed after merge with 47 frontend test files / 768 tests plus Rust fmt, clippy, and Rust tests.
+- TASK-043 branch was created from validated `master`.
+- Agent/config validation passed for TASK-043 startup: 11 project agent TOML files parsed; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-043 pre-test guidance running: Einstein (`planner`, `019e8370-810b-7512-9862-87eee2292ead`), Banach (`docs_researcher`, `019e8370-84d8-7210-b78a-5af43ddddb82`), Avicenna (`security_reviewer`, `019e8370-882d-7140-854e-0bf527f9cc34`), and Aristotle (`deprecation_auditor`, `019e8370-8c9d-7cc2-b999-f7941a0c6db3`).
+- TASK-043 pre-test guidance complete with no hard blockers. Parent decisions: use an optional right-side context panel gated to current page routes; render ML and AI through exact `ViewHost` ids and defer broad `page.sidebar.panel` SlotHost mounting; allow only current-page advisory AI commands `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` when a valid ML prediction exists; keep ML projections capped at 1,000 rows and AI projections capped at 100 rows; keep current-page text bounded and current-page only; no live provider/network/secrets/native/package/schema changes.
+- Anscombe (`test_writer`) was spawned at 2026-06-01 21:57 CST to add failing projection, panel, and static-boundary tests for TASK-043.
+- Anscombe returned final status and added TASK-043 failing tests only in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`.
+- Parent red validation matched the expected failure: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` failed because `../shell/projections/ml-ai-context` is missing and the app shell has no user-visible context panel yet; the four adjacent suites passed with 75 tests. `git diff --check` passed.
+- TASK-043 red tests were committed as `dff783e` (`Anscombe(test)(Add ML And AI Context Panels): add context panel acceptance tests`).
+- Huygens (`implementer`, agent `019ec46c-9844-7c22-a701-6ca383afa318`) was spawned at 2026-06-14 12:38 CST to make the committed TASK-043 tests pass with minimum production code. Parent will not integrate or commit implementation work until Huygens returns completion/final status.
+- Huygens returned final status with production code and narrow test-maintenance fixes. Parent accepted the test edits as clear maintenance fixes for ES2020/typecheck/matcher/helper-scope/panel-only leak assertions, not coverage weakening.
+- Huygens changes were committed as `83164bf` (`Huygens(test-fix)(Add ML And AI Context Panels): repair context panel test expectations`) and `148084d` (`Huygens(implementation)(Add ML And AI Context Panels): implement context panel projections`).
+- Parent implementation validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` passed with 6 files / 88 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- TASK-043 review running as of 2026-06-14 12:54 CST: Ptolemy (`pr_explorer`, `019ec47a-e32d-7c71-a9c3-837265fed88a`), Beauvoir (`reviewer`, `019ec47a-e637-7b01-b93c-2f6f4def74b3`), Lovelace (`deprecation_auditor`, `019ec47a-e8cd-7431-aaa2-f3960d45806d`), Galileo (`security_reviewer`, `019ec47a-eb36-7f22-95bc-dfb01a0817ee`), Socrates (`docs_researcher`, `019ec47a-edd8-77f0-9628-57805d1e8dd0`), and Maxwell (`test_quality_reviewer`, `019ec47a-f17a-73f1-9767-a290e5f0fe22`). `doc_writer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Ptolemy (`pr_explorer`) returned final status with no blocker and flagged review hotspots: missing context-panel CSS, ML scan-cap semantics, AI output redaction/bounding, intentional `ml.prediction-panel`-only mounting, and unrun full local gate.
+- Lorentz (`doc_writer`, `019ec47d-95a4-7e22-8abf-7805c70f865e`) was spawned after Ptolemy was closed and capacity freed.
+- Lovelace (`deprecation_auditor`) returned final status with no P0/P1 and one P2: inactive `Tab` elements point `aria-controls` at unmounted tabpanel ids.
+- Maxwell (`test_quality_reviewer`) returned final status with no P0/P1 and P2 coverage gaps: AI advisory command execution/payload assertions are incomplete, AI stale async page-switch coverage is missing, and ML metadata/event overflow assertions were weakened.
+- Socrates (`docs_researcher`) returned final status with no P0/P1. It confirmed MUI/React/Testing docs alignment and repeated P2 findings for unmounted controlled tabpanels and missing context-panel CSS/layout coverage. OpenAI docs were not checked because live provider/request execution remains deferred.
+- Galileo (`security_reviewer`) returned final status with no P0/P1. It found one P2: non-exact ML prediction DTOs can be forwarded into `ai.explain-prediction`, including provider/secret-shaped fields. It also found one P3: exported projection builders can throw on Proxy trap input instead of failing closed.
+- Beauvoir (`reviewer`) returned final status with one P1: resolved AI provider failure DTOs such as `ai.provider-unconfigured` are displayed as successful suggestions. It also found P2 issues for shallow ML prediction validation before `ai.explain-prediction` and pre-filter ML metadata/event caps that can drop later valid current-page rows.
+- Lorentz (`doc_writer`) returned final status and completed docs-only sync in commit `3088541` (`Lorentz(docs)(Add ML And AI Context Panels): sync context panel docs`).
+- Parent decision: TASK-043 is not merge-ready. Fix P1 before merge and address the known P2/P3 items in this branch because they are local to TASK-043 and user-visible/security/test-quality related.
+- Tesla (`test_writer`, agent `019ec485-25ce-7cd3-b759-b66a2f24fa57`) was spawned at 2026-06-14 13:05 CST to add failing review-fix regression tests for the P1, P2, and feasible P3 findings. Parent will not implement fixes until Tesla returns completion/final status and the red signal is validated.
+- Tesla returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the review findings: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 8 failures and 16 passing tests; `git diff --check` passed.
+- Tesla tests were committed as `7884458` (`Tesla(test-fix)(Add ML And AI Context Panels): cover review findings`).
+- Hypatia (`implementer`, agent `019ec48a-afa6-7d02-88ff-9188a19c9597`) was spawned at 2026-06-14 13:11 CST to make Tesla's review-fix tests pass with minimum production changes. Parent will not integrate or commit production fixes until Hypatia returns completion/final status.
+- Hypatia returned final status and addressed the review findings. Parent spotted and sent back one boundary issue in the first Hypatia patch: `boundIndexedRows` could skip valid rows at `sourceIndex === limit`; Hypatia corrected this before integration.
+- Hypatia review fixes were committed as `9a5c6e2` (`Hypatia(test-fix)(Add ML And AI Context Panels): tighten review regression tests`) and `5574bdd` (`Hypatia(review-fix)(Add ML And AI Context Panels): harden context panel boundaries`).
+- Parent review-fix validation passed: review-fix suite passed with 2 files / 24 tests; broader TASK-043 suite passed with 6 files / 96 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Targeted re-review running as of 2026-06-14 13:26 CST: Bacon (`reviewer`, `019ec497-e610-7ec2-ab79-1150556bacb0`), Fermat (`security_reviewer`, `019ec497-e9a2-7782-878a-0f49dec7e306`), Planck (`test_quality_reviewer`, `019ec497-ff73-75c0-ad81-f4f84ce239f3`), and James (`deprecation_auditor`, `019ec498-0271-73b3-b420-e394853ea863`).
+- Planck (`test_quality_reviewer`) returned final status with no remaining P0/P1/P2 test-quality findings.
+- James (`deprecation_auditor`) returned final status with no remaining P0/P1/P2 accessibility/deprecation findings; previous Tabs P2 is fixed.
+- Bacon (`reviewer`) returned final status with no P0/P1 and one remaining P2: malformed success-shaped AI command DTOs can still render as successful advisory output because validation checks only `kind` plus one display field.
+- Fermat (`security_reviewer`) returned final status with one remaining P2 and two P3 findings: allowed metadata JSON values can carry secret/provider/path-shaped data into ML/AI payloads; top-level proxy input can still throw; and non-exact ML prediction arrays with extra own properties can be normalized and still enable `ai.explain-prediction`.
+- Parent decision: TASK-043 remains not merge-ready. Add failing tests for the remaining Bacon/Fermat findings, then implement fixes.
+- Bernoulli (`test_writer`, agent `019ec49c-7c56-7f70-af6b-c53d667e7bc0`) was spawned at 2026-06-14 13:30 CST for second review-fix regression tests covering Bacon/Fermat findings. Parent will wait for final status before validation or implementation.
+- Bernoulli returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the targeted findings: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 4 failures and 24 passing tests; `git diff --check` passed.
+- Bernoulli tests were committed as `31408ec` (`Bernoulli(test-fix)(Add ML And AI Context Panels): cover strict DTO review gaps`).
+- Mill (`implementer`, agent `019ec4a1-1cac-7902-a57f-b09a136c090e`) was spawned at 2026-06-14 13:36 CST to make Bernoulli's tests pass with minimum production changes. Parent will not integrate or commit production fixes until Mill returns completion/final status.
+- Mill returned final status and addressed the remaining strict DTO/security findings. Mill fixes were committed as `e1cec91` (`Mill(review-fix)(Add ML And AI Context Panels): enforce strict advisory DTO boundaries`).
+- Parent second review-fix validation passed: review-fix suite passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Final targeted re-review running as of 2026-06-14 13:44 CST: Laplace (`reviewer`, `019ec4a9-10f8-72a0-b974-7dba9c120145`), Chandrasekhar (`security_reviewer`, `019ec4a9-136b-7152-b049-9a9c4fb0b266`), and Popper (`test_quality_reviewer`, `019ec4a9-1699-7fd2-8854-f214f09a7d5c`).
+- Final targeted re-review completed at 2026-06-14 13:49 CST. Laplace found no remaining correctness P0/P1/P2. Popper found one P2 test-quality gap: malformed success-shaped `ai.suggest-due-date` output is not covered by the strict DTO regression tests. Chandrasekhar found one P2 security gap: path-shaped allowed metadata values such as `/root/.ssh/id_rsa`, `/workspace/private.md`, `/dev/shm/file.log`, `/proc/self/environ`, `/run/user/1000/app.sock`, and `~/private.md` can still reach ML and AI payload metadata.
+- Parent decision: TASK-043 remains not merge-ready. Delegate a third review-fix `test_writer` to add failing tests for the Popper and Chandrasekhar P2 findings, then delegate implementation only after the red signal is validated.
+- Hooke (`test_writer`, `019ec4ae-0e16-7702-8a41-b9c2624f4d90`) was spawned at 2026-06-14 13:50 CST to add failing tests for malformed `ai.suggest-due-date` success DTO handling and path-shaped metadata filtering.
+- Hooke returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`. Parent red validation matched the security finding: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 1 metadata path leak failure and 27 passing tests; `git diff --check` passed. Tests were committed as `6c33617` (`Hooke(test-fix)(Add ML And AI Context Panels): cover final metadata and due date gaps`).
+- Kierkegaard (`implementer`, `019ec4b1-0478-7b51-90f6-5ebe72a62676`) was spawned at 2026-06-14 13:53 CST to make Hooke's metadata path red test pass with minimum production changes.
+- Kierkegaard returned final status with a production-only metadata sanitizer fix in `src/shell/projections/ml-ai-context.ts`. Commit: `94df1bf` (`Kierkegaard(review-fix)(Add ML And AI Context Panels): filter path-shaped metadata values`).
+- Parent validation passed: Hooke review-fix suite passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Final narrow re-review running as of 2026-06-14 13:56 CST: Copernicus (`reviewer`, `019ec4b4-510f-7fa0-86ba-71cf9cf33712`), Halley (`security_reviewer`, `019ec4b4-5382-7231-a3e8-d690322a37d8`), and Harvey (`test_quality_reviewer`, `019ec4b4-562f-7d01-97fb-b6d5f03bda76`).
+- Final narrow re-review completed at 2026-06-14 14:00 CST. Copernicus found no correctness P0/P1/P2 and called TASK-043 correctness merge-ready. Halley found no security P0/P1/P2, confirmed Chandrasekhar's remaining P2 is closed, and called TASK-043 security merge-ready. Harvey found no test-quality P0/P1/P2 and confirmed Popper's due-date DTO coverage gap and Chandrasekhar's path metadata leak are meaningfully covered.
+- TASK-043 final branch gate passed at 2026-06-14 14:01 CST: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
 
-## Initial TASK-042 Scope
+## Initial TASK-043 Scope
 
-- Sidebar/plugin routes expose Calendar and Reports surfaces only through registered plugin views/commands.
-- Calendar routes build explicit bounded `calendar.time-segments` projections from public current-runtime pages/events/metadata and mount `calendar.day` / `calendar.week` through `ViewHost`.
-- Reporting routes build explicit bounded Stats input projections, execute `stats.run-aggregation` through Command Registry, and render Chart views through `ViewHost` when chart DTOs are available.
-- Empty, partial-data, loading, and unavailable states are visible and non-leaky.
-- Projection builders are app-shell owned integration code and do not import plugin private stores, sibling plugin internals, raw Core stores from plugin-rendered UI, or native/SQLite APIs.
+- Optional right context panel can show current-page ML and AI panels without covering the Markdown workspace.
+- ML panel builds exact bounded current-page projections, executes `ml.run-prediction` through Command Registry, and renders `ml.page-sidebar.prediction-panel` / `ml.prediction-panel` through registered hosts.
+- AI panel renders advisory `ai.suggestion-panel` and `ai.review-panel` with explicit caller-provided DTOs and exact bounded projections.
+- AI output remains advisory; shell integration must not mutate pages, metadata, events, filters, sibling plugin data, settings, or secrets.
+- Live provider execution, provider settings UI, secret/keychain storage, durable AI suggestion acceptance, network/native execution, package, Tauri, Rust, capability, permission, and schema changes remain deferred.
+- ML/AI panels fail closed for malformed, unavailable, or rejected data and do not expose full workspace data, raw runtime handles, provider settings, raw errors, or secrets.
 
 ## Constraints
 
@@ -67,8 +120,9 @@ Last updated: 2026-06-01 21:44 CST.
 
 ## Deferred Scope
 
-- Broad cross-plugin query/feed facade, persistent indexes, Calendar drag/drop/manual segment editing, Stats dashboards beyond registered DTO views, charting dependency expansion, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, native persistence, package/Tauri/Rust changes, and release surfaces remain later tasks.
+- Settings/Sync placeholders, responsive/persistent navigation polish, live AI providers, provider settings UI, secrets/keychain, durable AI acceptance, network/native execution, package/Tauri/Rust/capability/schema changes, and release surfaces remain later tasks.
 
 ## Next Parent Actions
 
-- Push `master`, then continue with TASK-043 - Add ML And AI Context Panels.
+- Commit TASK-043 completion status.
+- Merge `feat/task-043-ml-ai-context-panels` into `master`, validate `master`, push, and continue to TASK-044.

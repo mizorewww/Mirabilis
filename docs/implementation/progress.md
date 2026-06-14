@@ -86,13 +86,219 @@ Status markers:
 - [x] TASK-040: Add Command Palette And Quick Capture Dialog
 - [x] TASK-041: Add Search Overlay And Results Route
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
-- [ ] TASK-043: Add ML And AI Context Panels
+- [x] TASK-043: Add ML And AI Context Panels
 - [ ] TASK-044: Add Settings And Sync Placeholders
 - [ ] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 14:01 CST - TASK-043 complete on branch
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Final branch gate passed: `bun run check:quick` passed with typecheck, lint, 49 frontend test files / 796 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Final review gate passed: Copernicus, Halley, and Harvey found no remaining P0/P1/P2 in correctness, security, or test-quality scopes.
+- Key commits: `dff783e` red tests, `148084d` implementation, `3088541` docs sync, `7884458`/`5574bdd` review fixes, `31408ec`/`e1cec91` strict DTO fixes, `6c33617`/`94df1bf` final metadata fixes.
+- Remaining risks: live AI provider execution, provider settings UI, secret/keychain storage, durable AI suggestion acceptance, network/native behavior, and broader responsive/persistent navigation polish remain deferred to later tasks.
+- Next action: commit completion status, merge branch into `master`, validate `master`, push, and continue to TASK-044.
+
+### 2026-06-14 14:00 CST - TASK-043 final narrow re-review passed
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Copernicus (`reviewer`) returned final status with no correctness P0/P1/P2 and called TASK-043 correctness merge-ready.
+- Halley (`security_reviewer`) returned final status with no security P0/P1/P2, confirmed Chandrasekhar's remaining P2 is closed, and found no new native/network/secret/config drift.
+- Harvey (`test_quality_reviewer`) returned final status with no test-quality P0/P1/P2 and confirmed Popper's due-date DTO coverage gap plus Chandrasekhar's path metadata leak are covered.
+- Next action: final local gate with `bun run check:quick`.
+
+### 2026-06-14 13:56 CST - TASK-043 final narrow re-review delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Final narrow re-review agents running: Copernicus (`reviewer`), Halley (`security_reviewer`), and Harvey (`test_quality_reviewer`).
+- Parent state: waiting for final narrow re-review completion/final statuses before final local gate and merge readiness.
+
+### 2026-06-14 13:55 CST - TASK-043 third review fixes green
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Kierkegaard (`implementer`) returned final status with a production-only metadata sanitizer fix.
+- Commit: `94df1bf` (`Kierkegaard(review-fix)(Add ML And AI Context Panels): filter path-shaped metadata values`).
+- Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: final narrow re-review for the closed Popper/Chandrasekhar P2 findings before final local gate and merge readiness.
+
+### 2026-06-14 13:53 CST - TASK-043 third review-fix implementation delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Hooke (`test_writer`) returned final status with third review-fix red tests. Commit: `6c33617` (`Hooke(test-fix)(Add ML And AI Context Panels): cover final metadata and due date gaps`).
+- Parent red validation passed as expected: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed with 1 metadata path leak failure and 27 passing tests; `git diff --check` passed.
+- Kierkegaard (`implementer`, agent `019ec4b1-0478-7b51-90f6-5ebe72a62676`) spawned to make Hooke's metadata path red test pass with minimum production changes.
+- Parent state: waiting for Kierkegaard completion/final status before validating or committing third production fixes.
+
+### 2026-06-14 13:50 CST - TASK-043 third review-fix tests delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Hooke (`test_writer`, agent `019ec4ae-0e16-7702-8a41-b9c2624f4d90`) spawned to add failing tests for malformed `ai.suggest-due-date` success DTO handling and path-shaped metadata filtering.
+- Parent state: waiting for Hooke completion/final status before validating, committing, or delegating implementation fixes.
+
+### 2026-06-14 13:49 CST - TASK-043 final targeted re-review found remaining P2
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Laplace (`reviewer`) returned final status with no remaining correctness P0/P1/P2 findings.
+- Popper (`test_quality_reviewer`) returned final status with one P2: malformed success-shaped `ai.suggest-due-date` output is not covered by strict DTO regression tests.
+- Chandrasekhar (`security_reviewer`) returned final status with one P2: path-shaped allowed metadata values can still reach ML/AI payload metadata.
+- Parent decision: TASK-043 remains not merge-ready; delegate a third review-fix `test_writer` for failing tests before any implementation fix.
+
+### 2026-06-14 13:44 CST - TASK-043 final targeted re-review delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Final targeted re-review agents running: Laplace (`reviewer`), Chandrasekhar (`security_reviewer`), and Popper (`test_quality_reviewer`).
+- Parent state: waiting for final targeted re-review completion/final statuses before final gate and merge readiness.
+
+### 2026-06-14 13:43 CST - TASK-043 second review fixes green
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Mill (`implementer`) returned final status with production fixes for strict AI output DTO validation, metadata value filtering, top-level proxy fail-closed behavior, and strict ML prediction array validation.
+- Commit: `e1cec91` (`Mill(review-fix)(Add ML And AI Context Panels): enforce strict advisory DTO boundaries`).
+- Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 28 tests; broader TASK-043 suite passed with 6 files / 100 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: final targeted re-review before final gate and merge readiness.
+
+### 2026-06-14 13:36 CST - TASK-043 second review-fix implementation delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Mill (`implementer`, agent `019ec4a1-1cac-7902-a57f-b09a136c090e`) spawned to make Bernoulli's second review-fix regression tests pass with minimum production changes.
+- Parent state: waiting for Mill completion/final status before validating and committing second production fixes.
+
+### 2026-06-14 13:34 CST - TASK-043 second review-fix tests committed
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Bernoulli (`test_writer`) returned final status with test-only coverage for malformed AI success DTO validation, secret/provider/path-shaped metadata values, top-level proxy source fail-closed behavior, and non-exact ML prediction arrays.
+- Red validation: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed as expected with 4 failures and 24 passing tests, matching the targeted findings.
+- Commit: `31408ec` (`Bernoulli(test-fix)(Add ML And AI Context Panels): cover strict DTO review gaps`).
+- `git diff --check` passed.
+- Next action: delegate second review-fix implementation to `implementer`.
+
+### 2026-06-14 13:30 CST - TASK-043 second review-fix tests delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Bernoulli (`test_writer`, agent `019ec49c-7c56-7f70-af6b-c53d667e7bc0`) spawned to add failing regression tests for Bacon's malformed AI success DTO P2 and Fermat's metadata secret/provider/path leakage, top-level proxy, and non-exact prediction array findings.
+- Parent state: waiting for Bernoulli completion/final status before validating and committing second review-fix tests.
+
+### 2026-06-14 13:29 CST - TASK-043 targeted re-review found remaining P2/P3
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Planck (`test_quality_reviewer`) and James (`deprecation_auditor`) returned final status with no remaining P0/P1/P2 in their scopes.
+- Bacon (`reviewer`) found one remaining P2: malformed success-shaped AI command DTOs can still render as successful advisory output.
+- Fermat (`security_reviewer`) found one P2 and two P3 findings: allowed metadata JSON values can carry secret/provider/path-shaped data into ML/AI payloads; top-level proxy input can still throw; non-exact ML prediction arrays with extra own properties can be normalized and still enable `ai.explain-prediction`.
+- Parent decision: TASK-043 remains not merge-ready; delegate second review-fix regression tests.
+
+### 2026-06-14 13:26 CST - TASK-043 targeted re-review delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Targeted re-review agents running: Bacon (`reviewer`), Fermat (`security_reviewer`), Planck (`test_quality_reviewer`), and James (`deprecation_auditor`).
+- Parent state: waiting for targeted re-review completion/final statuses before deciding merge readiness.
+
+### 2026-06-14 13:24 CST - TASK-043 review fixes green
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Hypatia (`implementer`) returned final status and corrected a parent-spotted cap-boundary issue before integration.
+- Commits: `9a5c6e2` (`Hypatia(test-fix)(Add ML And AI Context Panels): tighten review regression tests`) and `5574bdd` (`Hypatia(review-fix)(Add ML And AI Context Panels): harden context panel boundaries`).
+- Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` passed with 2 files / 24 tests; broader TASK-043 suite passed with 6 files / 96 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: targeted re-review before deciding merge readiness.
+
+### 2026-06-14 13:11 CST - TASK-043 review-fix implementation delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Hypatia (`implementer`, agent `019ec48a-afa6-7d02-88ff-9188a19c9597`) spawned to make Tesla's review-fix regression tests pass with minimum production changes.
+- Parent state: waiting for Hypatia completion/final status before validating and committing review fixes.
+
+### 2026-06-14 13:10 CST - TASK-043 review-fix tests committed
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Tesla (`test_writer`) returned final status with test-only review-fix coverage in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`.
+- Red validation: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx` failed as expected with 8 failures and 16 passing tests, matching the review findings.
+- Commit: `7884458` (`Tesla(test-fix)(Add ML And AI Context Panels): cover review findings`).
+- `git diff --check` passed.
+- Next action: delegate review-fix implementation to `implementer`.
+
+### 2026-06-14 13:05 CST - TASK-043 review-fix tests delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Tesla (`test_writer`, agent `019ec485-25ce-7cd3-b759-b66a2f24fa57`) spawned to add failing regression tests for the P1 AI provider-failure DTO behavior plus local P2/P3 review findings.
+- Parent state: waiting for Tesla completion/final status before validating and committing review-fix tests.
+
+### 2026-06-14 13:04 CST - TASK-043 review outcome blocks merge
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Lorentz (`doc_writer`) completed docs-only sync in commit `3088541`.
+- Review outcome: no P0 findings. Merge is blocked by one P1 from Beauvoir: resolved AI provider failure DTOs are rendered as successful suggestions. Known P2/P3 findings also cover shallow ML prediction validation before `ai.explain-prediction`, pre-filter ML metadata/event caps, tabpanel accessibility, AI advisory command coverage, AI stale async coverage, weakened overflow assertions, context-panel CSS/layout coverage, and Proxy trap fail-closed behavior.
+- Parent decision: fix the P1 and local P2/P3 findings in this branch before final gate and merge.
+- Next action: delegate review-fix regression tests to `test_writer`.
+
+### 2026-06-14 12:57 CST - TASK-043 review findings partially returned
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Completed review agents with no P0/P1 so far: Ptolemy (`pr_explorer`), Lovelace (`deprecation_auditor`), Maxwell (`test_quality_reviewer`), Socrates (`docs_researcher`), and Galileo (`security_reviewer`).
+- Known P2/P3 review items: inactive tabs reference unmounted tabpanels; AI advisory command execution/payload and stale async coverage needs strengthening; ML metadata/event overflow assertions need strengthening; context-panel CSS/layout coverage is missing; non-exact ML prediction DTOs can flow into `ai.explain-prediction`; projection builders can throw on Proxy trap input (P3).
+- Lorentz (`doc_writer`) spawned after capacity freed.
+- Parent state: waiting for Beauvoir (`reviewer`) and Lorentz (`doc_writer`) final statuses before deciding review-fix delegation.
+
+### 2026-06-14 12:54 CST - TASK-043 review delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Review agents running: Ptolemy (`pr_explorer`), Beauvoir (`reviewer`), Lovelace (`deprecation_auditor`), Galileo (`security_reviewer`), Socrates (`docs_researcher`), and Maxwell (`test_quality_reviewer`).
+- `doc_writer` spawn hit the current agent thread limit and will be retried after capacity frees.
+- Parent state: waiting for completion/final statuses before deciding fixes or merge readiness.
+
+### 2026-06-14 12:52 CST - TASK-043 implementation green
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Huygens (`implementer`) returned final status with the ML/AI projection builders and current-page right context panel implementation.
+- Commits: `83164bf` (`Huygens(test-fix)(Add ML And AI Context Panels): repair context panel test expectations`) and `148084d` (`Huygens(implementation)(Add ML And AI Context Panels): implement context panel projections`).
+- Parent accepted the test edits as narrow maintenance fixes for ES2020/typecheck/matcher/helper-scope/panel-only leak assertions, not coverage weakening.
+- Parent validation passed: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` passed with 6 files / 88 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: delegate review agents and wait for final statuses before deciding fixes or merge readiness.
+
+### 2026-06-14 12:38 CST - TASK-043 implementation delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Huygens (`implementer`, agent `019ec46c-9844-7c22-a701-6ca383afa318`) spawned to make the committed TASK-043 red tests pass with minimum production code.
+- Parent state: waiting for Huygens completion/final status before integrating, validating, or committing implementation work.
+
+### 2026-06-14 12:37 CST - TASK-043 red tests committed
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Anscombe (`test_writer`) returned final status with test-only changes in `src/test/ml-ai-context-projections.test.ts` and `src/test/ml-ai-context-panels.test.tsx`.
+- Red validation: `bun run test:frontend -- src/test/ml-ai-context-projections.test.ts src/test/ml-ai-context-panels.test.tsx src/test/app-shell-boundary.test.ts src/test/view-slot-hosts.test.tsx src/test/ml-plugin-baseline-predictions.test.tsx src/test/ai-plugin-provider-abstraction.test.tsx` failed for the expected missing `../shell/projections/ml-ai-context` module and absent context-panel UI; adjacent suites passed with 75 tests.
+- Commit: `dff783e` (`Anscombe(test)(Add ML And AI Context Panels): add context panel acceptance tests`).
+- `git diff --check` passed.
+- Next action: delegate minimum production implementation to `implementer` and wait for completion/final status before integrating.
+
+### 2026-06-01 21:57 CST - TASK-043 red tests delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Anscombe (`test_writer`) spawned for failing projection, panel, and static-boundary tests.
+- Parent state: waiting for Anscombe final status before validating and committing red tests.
+
+### 2026-06-01 21:55 CST - TASK-043 pre-test guidance complete
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Agents completed with no hard blockers: Einstein (`planner`), Banach (`docs_researcher`), Avicenna (`security_reviewer`), and Aristotle (`deprecation_auditor`).
+- Official docs verified by agents: MUI v9 Drawer/Tabs/Box/Stack/migration/useMediaQuery, React 19/19.2 StrictMode/createRoot/test-utils guidance, Testing Library queries/async/user-event/fake timers, Vitest fake timers, and Vite 7 migration. OpenAI docs were not checked because TASK-043 does not change live provider/request behavior.
+- Parent decisions: right-side current-page context panel; exact `ViewHost` ids for ML/AI; broad `page.sidebar.panel` SlotHost mounting deferred; current-page advisory AI allowlist is `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` only after a valid ML prediction; ML projection cap 1,000; AI projection cap 100; no live provider, secrets, native, package, or schema changes.
+- Next action: delegate failing projection, panel, and static-boundary tests to `test_writer`.
+
+### 2026-06-01 21:47 CST - TASK-043 pre-test guidance delegated
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Agents: Einstein (`planner`), Banach (`docs_researcher`), Avicenna (`security_reviewer`), and Aristotle (`deprecation_auditor`) spawned for read-only pre-test guidance.
+- Parent state: waiting for completion/final statuses before delegating TDD tests.
+
+### 2026-06-01 21:46 CST - TASK-043 started
+
+- Branch: `feat/task-043-ml-ai-context-panels`.
+- Started from clean `master` after TASK-042 merge and master validation.
+- Scope: add optional right context panel surfaces for current-page ML and AI context without covering the Markdown workspace; build exact bounded current-page projections; run `ml.run-prediction` through Command Registry; render ML/AI panel views through registered hosts; keep AI advisory and non-mutating; defer live provider execution, secrets, settings UI, native/network/schema/package changes, and durable suggestion acceptance.
+- Agent/config validation: 11 project agent TOML files parsed. `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Next action: delegate planner, docs/API, security, and deprecation guidance before TDD tests.
 
 ### 2026-06-01 21:44 CST - TASK-042 merged to master
 

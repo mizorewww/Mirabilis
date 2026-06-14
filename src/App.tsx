@@ -35,6 +35,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Portal from "@mui/material/Portal";
 import Stack from "@mui/material/Stack";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -80,6 +82,11 @@ import {
   type CalendarTimeSegmentProjectionRow,
   type ReportsAggregationId,
 } from "./shell/projections/time-review";
+import {
+  buildAiContextProjection,
+  buildMlContextProjection,
+  readExactMlPredictionForPage,
+} from "./shell/projections/ml-ai-context";
 import "./App.css";
 
 type AppProps = {
@@ -239,6 +246,34 @@ const statsRunAggregationCommandId = "stats.run-aggregation";
 const chartPluginId = "chart";
 const chartBarViewType = "chart.bar";
 const defaultReportsAggregationId = "stats.sum-time-by-page";
+const mlPluginId = "ml";
+const mlRunPredictionCommandId = "ml.run-prediction";
+const mlPredictionResultKind = "ml.remaining-time-prediction";
+const mlPredictionPanelViewId = "ml.prediction-panel";
+const aiPluginId = "ai";
+const aiSuggestionPanelViewId = "ai.suggestion-panel";
+const aiReviewPanelViewId = "ai.review-panel";
+const aiSuggestTagsCommandId = "ai.suggest-tags";
+const aiSuggestDueDateCommandId = "ai.suggest-due-date";
+const aiGenerateSubtasksCommandId = "ai.generate-subtasks";
+const aiExplainPredictionCommandId = "ai.explain-prediction";
+const aiSuggestedTagsOutputKeys = new Set(["confidence", "kind", "tags"]);
+const aiSuggestedDueDateOutputKeys = new Set([
+  "confidence",
+  "dueDate",
+  "kind",
+  "reason",
+]);
+const aiSubtaskSuggestionsOutputKeys = new Set([
+  "kind",
+  "markdown",
+  "subtasks",
+]);
+const aiPredictionExplanationOutputKeys = new Set([
+  "explanation",
+  "kind",
+  "limitations",
+]);
 const pageTimelineSlot = "page.timeline";
 const globalFloatingSlot = "global.floating";
 const timerPluginId = "timer";
@@ -543,6 +578,8 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   }));
   const [slotRevision, setSlotRevision] = useState(0);
   const [navigationOpen, setNavigationOpen] = useState(true);
+  const [contextPanelOpen, setContextPanelOpen] = useState(false);
+  const contextPanelToggleRef = useRef<HTMLButtonElement | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [deferredShellTool, setDeferredShellTool] =
     useState<DeferredShellToolId>();
@@ -560,6 +597,10 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
     activeRoute,
     homePageId,
   );
+  const contextPanelPage =
+    activeRoute.kind === "page"
+      ? getRoutePage(runtimeSource, activeRoute.pageId)
+      : undefined;
   const recentPages = activeRouteCanShowRecentPages(runtimeSource, activeRoute)
     ? listRecentPages(runtimeSource, homePageId)
     : [];
@@ -575,6 +616,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   };
   const selectFilterRoute = (filterId: string, role: FilterRouteRole) => {
     unsetCurrentPage(currentPageState);
+    setContextPanelOpen(false);
     setActiveRoute({
       filterId,
       kind: "filter",
@@ -583,12 +625,14 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
   };
   const selectCalendarRoute = () => {
     unsetCurrentPage(currentPageState);
+    setContextPanelOpen(false);
     setActiveRoute({
       kind: "calendar",
     });
   };
   const selectPlaceholderRoute = (routeId: PlaceholderRouteId) => {
     unsetCurrentPage(currentPageState);
+    setContextPanelOpen(false);
     setActiveRoute({
       kind: "placeholder",
       routeId,
@@ -669,6 +713,7 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
         }
 
         unsetCurrentPage(currentPageState);
+        setContextPanelOpen(false);
         setActiveRoute({
           data,
           kind: "search",
@@ -842,6 +887,17 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
                 </Button>
               );
             })}
+            {contextPanelPage !== undefined ? (
+              <Button
+                aria-controls="page-context-panel"
+                aria-expanded={contextPanelOpen}
+                onClick={() => setContextPanelOpen((open) => !open)}
+                ref={contextPanelToggleRef}
+                variant="text"
+              >
+                Context Panel
+              </Button>
+            ) : null}
           </Stack>
         </Toolbar>
       </AppBar>
@@ -1017,6 +1073,17 @@ function MirabilisShell({ runtimeSource }: { runtimeSource: AppRuntime }) {
             slotRevision={slotRevision}
           />
         </Box>
+        {contextPanelPage !== undefined && contextPanelOpen ? (
+          <PageContextPanel
+            key={`${contextPanelPage.id}:${currentPageState.generation}`}
+            onClose={() => {
+              setContextPanelOpen(false);
+              contextPanelToggleRef.current?.focus();
+            }}
+            page={contextPanelPage}
+            runtime={runtimeSource}
+          />
+        ) : null}
       </Box>
 
       <CommandPaletteDialog
@@ -1131,6 +1198,34 @@ type ReportsViewState =
       status: "error";
     };
 
+type ContextPanelTabId = "ml" | "review" | "suggestions";
+
+type MlContextState =
+  | {
+      status: "idle" | "loading" | "error";
+    }
+  | {
+      prediction: unknown;
+      status: "ready";
+    };
+
+type AiAllowedCommandId =
+  | "ai.explain-prediction"
+  | "ai.generate-subtasks"
+  | "ai.suggest-due-date"
+  | "ai.suggest-tags";
+
+type AiCommandState =
+  | {
+      status: "loading" | "error";
+    }
+  | {
+      output: unknown;
+      status: "ready";
+    };
+
+type AiCommandStates = Partial<Record<AiAllowedCommandId, AiCommandState>>;
+
 const reportsAggregationOptions: ReadonlyArray<{
   id: ReportsAggregationId;
   label: string;
@@ -1160,6 +1255,707 @@ const reportsAggregationOptions: ReadonlyArray<{
     label: "Unnoted sessions count",
   },
 ];
+
+function PageContextPanel({
+  onClose,
+  page,
+  runtime,
+}: {
+  onClose(): void;
+  page: MarkdownPage;
+  runtime: AppRuntime;
+}) {
+  const [activeTab, setActiveTab] = useState<ContextPanelTabId>("ml");
+  const [mlState, setMlState] = useState<MlContextState>({ status: "idle" });
+  const [aiStates, setAiStates] = useState<AiCommandStates>({});
+  const [generatedAt] = useState(() => {
+    const currentSecondMs = Math.floor(Date.now() / 1_000) * 1_000;
+
+    return new Date(currentSecondMs).toISOString();
+  });
+  const mountedRef = useRef(true);
+  const mlRunRef = useRef(0);
+  const aiRunRefs = useRef<Partial<Record<AiAllowedCommandId, number>>>({});
+  const snapshot = readProjectionSnapshot(runtime);
+  const mlProjection =
+    snapshot === undefined
+      ? undefined
+      : buildMlContextProjection({
+          ...snapshot,
+          currentPageId: page.id,
+          generatedAt,
+        });
+  const aiProjection =
+    snapshot === undefined
+      ? undefined
+      : buildAiContextProjection({
+          ...snapshot,
+          currentPageId: page.id,
+          generatedAt,
+          ...(mlState.status === "ready" ? { prediction: mlState.prediction } : {}),
+        });
+  const mlPrediction =
+    mlState.status === "ready"
+      ? mlState.prediction
+      : {
+          kind: mlPredictionResultKind,
+        };
+  const mlViewAvailable =
+    getActiveOwnedView(
+      runtime,
+      mlPredictionPanelViewId,
+      mlPluginId,
+      mlPredictionPanelViewId,
+    ) !== undefined;
+  const mlCanRun =
+    mlProjection !== undefined &&
+    mlProjection.status.kind !== "unavailable" &&
+    mlViewAvailable &&
+    getActiveOwnedCommandDescriptor(
+      runtime,
+      mlRunPredictionCommandId,
+      mlPluginId,
+    ) !== undefined;
+
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+    },
+    [],
+  );
+
+  const runMlPrediction = useCallback(async () => {
+    if (mlProjection === undefined || mlProjection.status.kind === "unavailable") {
+      setMlState({ status: "error" });
+      return;
+    }
+
+    const runId = mlRunRef.current + 1;
+
+    mlRunRef.current = runId;
+    setMlState({ status: "loading" });
+
+    try {
+      const output = await executeActiveOwnedCommand(
+        runtime,
+        mlRunPredictionCommandId,
+        mlPluginId,
+        mlProjection.data,
+      );
+      const prediction = readMlPredictionForPage(output, page.id);
+
+      if (!mountedRef.current || mlRunRef.current !== runId) {
+        return;
+      }
+
+      if (prediction === undefined) {
+        setMlState({ status: "error" });
+        return;
+      }
+
+      setMlState({
+        prediction,
+        status: "ready",
+      });
+    } catch {
+      if (mountedRef.current && mlRunRef.current === runId) {
+        setMlState({ status: "error" });
+      }
+    }
+  }, [mlProjection, page.id, runtime]);
+
+  const runAiCommand = useCallback(
+    async (commandId: AiAllowedCommandId, payload: unknown) => {
+      if (!isRecord(payload)) {
+        setAiStates((states) => ({
+          ...states,
+          [commandId]: { status: "error" },
+        }));
+        return;
+      }
+
+      const runId = (aiRunRefs.current[commandId] ?? 0) + 1;
+
+      aiRunRefs.current[commandId] = runId;
+      setAiStates((states) => ({
+        ...states,
+        [commandId]: { status: "loading" },
+      }));
+
+      try {
+        const output = await executeActiveOwnedCommand(
+          runtime,
+          commandId,
+          aiPluginId,
+          payload,
+        );
+
+        if (
+          !mountedRef.current ||
+          aiRunRefs.current[commandId] !== runId
+        ) {
+          return;
+        }
+
+        if (!isAiCommandOutputForCommand(commandId, output)) {
+          setAiStates((states) => ({
+            ...states,
+            [commandId]: { status: "error" },
+          }));
+          return;
+        }
+
+        setAiStates((states) => ({
+          ...states,
+          [commandId]: {
+            output,
+            status: "ready",
+          },
+        }));
+      } catch {
+        if (
+          mountedRef.current &&
+          aiRunRefs.current[commandId] === runId
+        ) {
+          setAiStates((states) => ({
+            ...states,
+            [commandId]: { status: "error" },
+          }));
+        }
+      }
+    },
+    [runtime],
+  );
+
+  return (
+    <Box
+      aria-label="Page context"
+      className="app-shell__context-panel"
+      component="aside"
+      id="page-context-panel"
+      role="complementary"
+    >
+      <Stack className="app-shell__context-panel-header" spacing={1}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "flex-start" }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography component="h2" variant="subtitle1">
+              Page context
+            </Typography>
+            <Typography color="text.secondary" variant="caption">
+              {page.title}
+            </Typography>
+          </Box>
+          <Button
+            aria-label="Close context panel"
+            onClick={onClose}
+            sx={{ marginLeft: "auto" }}
+            variant="text"
+          >
+            Close
+          </Button>
+        </Stack>
+
+        <Tabs
+          aria-label="Page context panels"
+          onChange={(_event, value: ContextPanelTabId) => setActiveTab(value)}
+          value={activeTab}
+        >
+          <Tab
+            aria-controls="page-context-ml-panel"
+            id="page-context-ml-tab"
+            label="ML"
+            value="ml"
+          />
+          <Tab
+            aria-controls="page-context-suggestions-panel"
+            id="page-context-suggestions-tab"
+            label="Suggestions"
+            value="suggestions"
+          />
+          <Tab
+            aria-controls="page-context-review-panel"
+            id="page-context-review-tab"
+            label="Review"
+            value="review"
+          />
+        </Tabs>
+      </Stack>
+
+      <Box
+        aria-labelledby="page-context-ml-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "ml"}
+        id="page-context-ml-panel"
+        role="tabpanel"
+      >
+        {activeTab === "ml" ? (
+          <Stack spacing={1.5}>
+            <Button
+              disabled={!mlCanRun || mlState.status === "loading"}
+              onClick={() => void runMlPrediction()}
+              variant="contained"
+            >
+              Run prediction
+            </Button>
+            <MlContextStatus
+              projectionStatus={mlProjection?.status}
+              surfaceAvailable={mlCanRun}
+              state={mlState}
+            />
+            {mlState.status === "ready" ? (
+              <ViewHost
+                acceptedData={mlPrediction}
+                isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+                registry={runtime.registries.views}
+                viewId={mlPredictionPanelViewId}
+                viewType={mlPredictionPanelViewId}
+              />
+            ) : null}
+          </Stack>
+        ) : null}
+      </Box>
+
+      <Box
+        aria-labelledby="page-context-suggestions-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "suggestions"}
+        id="page-context-suggestions-panel"
+        role="tabpanel"
+      >
+        {activeTab === "suggestions" ? (
+          <Stack spacing={1.5}>
+            <ViewHost
+              acceptedData={{
+                kind: aiSuggestionPanelViewId,
+              }}
+              isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+              registry={runtime.registries.views}
+              viewId={aiSuggestionPanelViewId}
+              viewType={aiSuggestionPanelViewId}
+            />
+            <AiSuggestionControls
+              aiProjection={aiProjection}
+              commandStates={aiStates}
+              onRunCommand={runAiCommand}
+              runtime={runtime}
+            />
+          </Stack>
+        ) : null}
+      </Box>
+
+      <Box
+        aria-labelledby="page-context-review-tab"
+        className="app-shell__context-tab-panel"
+        hidden={activeTab !== "review"}
+        id="page-context-review-panel"
+        role="tabpanel"
+      >
+        {activeTab === "review" ? (
+          <ViewHost
+            acceptedData={{
+              kind: aiReviewPanelViewId,
+            }}
+            isPluginAvailable={(pluginId) => isPluginActive(runtime, pluginId)}
+            registry={runtime.registries.views}
+            viewId={aiReviewPanelViewId}
+            viewType={aiReviewPanelViewId}
+          />
+        ) : null}
+      </Box>
+    </Box>
+  );
+}
+
+function MlContextStatus({
+  projectionStatus,
+  surfaceAvailable,
+  state,
+}: {
+  projectionStatus: ReturnType<typeof buildMlContextProjection>["status"] | undefined;
+  surfaceAvailable: boolean;
+  state: MlContextState;
+}) {
+  if (
+    projectionStatus === undefined ||
+    projectionStatus.kind === "unavailable" ||
+    !surfaceAvailable
+  ) {
+    return (
+      <Alert severity="error">
+        ML context unavailable. This panel could not load.
+      </Alert>
+    );
+  }
+
+  if (state.status === "loading") {
+    return (
+      <Box aria-label="ML prediction loading" role="status">
+        Running prediction.
+      </Box>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <Alert severity="error">
+        ML prediction unavailable. This panel could not load.
+      </Alert>
+    );
+  }
+
+  if (projectionStatus.kind === "partial") {
+    return (
+      <Box aria-label="ML context data" role="status">
+        Partial ML context. Some rows were omitted.
+      </Box>
+    );
+  }
+
+  return null;
+}
+
+function AiSuggestionControls({
+  aiProjection,
+  commandStates,
+  onRunCommand,
+  runtime,
+}: {
+  aiProjection: ReturnType<typeof buildAiContextProjection> | undefined;
+  commandStates: AiCommandStates;
+  onRunCommand(commandId: AiAllowedCommandId, payload: unknown): void;
+  runtime: AppRuntime;
+}) {
+  const commands = isRecord(aiProjection?.data.advisoryCommands)
+    ? aiProjection.data.advisoryCommands
+    : {};
+  const suggestionCommands: ReadonlyArray<{
+    commandId: AiAllowedCommandId;
+    label: string;
+  }> = [
+    {
+      commandId: aiSuggestTagsCommandId,
+      label: "Suggest tags",
+    },
+    {
+      commandId: aiSuggestDueDateCommandId,
+      label: "Suggest due date",
+    },
+    {
+      commandId: aiGenerateSubtasksCommandId,
+      label: "Generate subtasks",
+    },
+    ...(isRecord(commands[aiExplainPredictionCommandId])
+      ? [
+          {
+            commandId: aiExplainPredictionCommandId,
+            label: "Explain prediction",
+          } as const,
+        ]
+      : []),
+  ];
+  const hasLoadingCommand = suggestionCommands.some(
+    ({ commandId }) => commandStates[commandId]?.status === "loading",
+  );
+
+  if (aiProjection === undefined || aiProjection.status.kind === "unavailable") {
+    return (
+      <Alert severity="error">
+        AI suggestion unavailable. This panel could not load.
+      </Alert>
+    );
+  }
+
+  return (
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }} useFlexGap>
+        {suggestionCommands.map(({ commandId, label }) => {
+          const payload = commands[commandId];
+          const isAvailable =
+            isRecord(payload) &&
+            getActiveOwnedCommandDescriptor(runtime, commandId, aiPluginId) !==
+              undefined;
+          const state = commandStates[commandId];
+
+          return (
+            <Button
+              disabled={!isAvailable || state?.status === "loading"}
+              key={commandId}
+              onClick={() => onRunCommand(commandId, payload)}
+              variant="outlined"
+            >
+              {label}
+            </Button>
+          );
+        })}
+      </Stack>
+      {aiProjection.status.kind === "partial" ? (
+        <Box aria-label="AI context data" role="status">
+          Partial AI context. Some rows were omitted.
+        </Box>
+      ) : null}
+      {suggestionCommands.map(({ commandId }) => (
+        <AiCommandResult
+          commandId={commandId}
+          key={commandId}
+          suppressAlert={hasLoadingCommand}
+          state={commandStates[commandId]}
+        />
+      ))}
+    </Stack>
+  );
+}
+
+function AiCommandResult({
+  commandId,
+  suppressAlert,
+  state,
+}: {
+  commandId: AiAllowedCommandId;
+  suppressAlert: boolean;
+  state: AiCommandState | undefined;
+}) {
+  if (state === undefined) {
+    return null;
+  }
+
+  if (state.status === "loading") {
+    return (
+      <Box aria-label={`${commandId} loading`} role="status">
+        Generating suggestion.
+      </Box>
+    );
+  }
+
+  if (state.status === "error") {
+    if (suppressAlert) {
+      return (
+        <Box aria-label={`${commandId} unavailable`} role="status">
+          AI suggestion unavailable. Could not generate.
+        </Box>
+      );
+    }
+
+    return (
+      <Alert severity="error">
+        AI suggestion unavailable. Could not generate.
+      </Alert>
+    );
+  }
+
+  if (state.status === "ready") {
+    return (
+      <Box aria-label={`${commandId} result`} role="status">
+        {formatAiCommandOutput(commandId, state.output)}
+      </Box>
+    );
+  }
+
+  return null;
+}
+
+function formatAiCommandOutput(
+  commandId: AiAllowedCommandId,
+  output: unknown,
+): string {
+  if (!isRecord(output)) {
+    return "AI suggestion ready.";
+  }
+
+  if (commandId === aiSuggestTagsCommandId && Array.isArray(output.tags)) {
+    const tags = output.tags.filter((tag): tag is string => typeof tag === "string");
+
+    return tags.length > 0
+      ? `Suggested tags: ${tags.join(", ")}`
+      : "Suggested tags ready.";
+  }
+
+  if (
+    commandId === aiSuggestDueDateCommandId &&
+    typeof output.dueDate === "string"
+  ) {
+    return `Suggested due date: ${output.dueDate}`;
+  }
+
+  if (
+    commandId === aiGenerateSubtasksCommandId &&
+    typeof output.markdown === "string"
+  ) {
+    return `Generated subtasks: ${output.markdown}`;
+  }
+
+  if (
+    commandId === aiExplainPredictionCommandId &&
+    typeof output.explanation === "string"
+  ) {
+    return output.explanation;
+  }
+
+  return "AI suggestion ready.";
+}
+
+function isAiCommandOutputForCommand(
+  commandId: AiAllowedCommandId,
+  output: unknown,
+): boolean {
+  if (commandId === aiSuggestTagsCommandId) {
+    const record = readExactDataRecord(output, aiSuggestedTagsOutputKeys);
+
+    return (
+      record !== undefined &&
+      record.kind === "ai.suggested-tags" &&
+      isConfidence(record.confidence) &&
+      isStringArray(record.tags)
+    );
+  }
+
+  if (commandId === aiSuggestDueDateCommandId) {
+    const record = readExactDataRecord(output, aiSuggestedDueDateOutputKeys);
+
+    return (
+      record !== undefined &&
+      record.kind === "ai.suggested-due-date" &&
+      isConfidence(record.confidence) &&
+      typeof record.dueDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/u.test(record.dueDate) &&
+      typeof record.reason === "string"
+    );
+  }
+
+  if (commandId === aiGenerateSubtasksCommandId) {
+    const record = readExactDataRecord(output, aiSubtaskSuggestionsOutputKeys);
+
+    return (
+      record !== undefined &&
+      record.kind === "ai.subtask-suggestions" &&
+      typeof record.markdown === "string" &&
+      isStringArray(record.subtasks)
+    );
+  }
+
+  const record = readExactDataRecord(output, aiPredictionExplanationOutputKeys);
+
+  return (
+    record !== undefined &&
+    record.kind === "ai.prediction-explanation" &&
+    typeof record.explanation === "string" &&
+    isStringArray(record.limitations)
+  );
+}
+
+function readExactDataRecord(
+  input: unknown,
+  keys: ReadonlySet<string>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(input)) {
+    return undefined;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+
+  try {
+    prototype = Object.getPrototypeOf(input);
+    ownKeys = Reflect.ownKeys(input);
+  } catch {
+    return undefined;
+  }
+
+  if (
+    prototype !== Object.prototype ||
+    ownKeys.length !== keys.size ||
+    ownKeys.some((key) => typeof key !== "string" || !keys.has(key))
+  ) {
+    return undefined;
+  }
+
+  for (const key of keys) {
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(input, key);
+    } catch {
+      return undefined;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value")
+    ) {
+      return undefined;
+    }
+  }
+
+  return input;
+}
+
+function isConfidence(value: unknown): boolean {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  let prototype: object | null;
+  let ownKeys: readonly PropertyKey[];
+  let length: number;
+
+  try {
+    prototype = Object.getPrototypeOf(value);
+    ownKeys = Reflect.ownKeys(value);
+    length = value.length;
+  } catch {
+    return false;
+  }
+
+  if (prototype !== Array.prototype || !Number.isSafeInteger(length)) {
+    return false;
+  }
+
+  const allowedKeys = new Set<PropertyKey>(["length"]);
+
+  for (let index = 0; index < length; index += 1) {
+    const key = String(index);
+    let descriptor: PropertyDescriptor | undefined;
+
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, key);
+    } catch {
+      return false;
+    }
+
+    if (
+      descriptor === undefined ||
+      !descriptor.enumerable ||
+      !Object.prototype.hasOwnProperty.call(descriptor, "value") ||
+      typeof descriptor.value !== "string"
+    ) {
+      return false;
+    }
+
+    allowedKeys.add(key);
+  }
+
+  return ownKeys.every((key) => allowedKeys.has(key));
+}
+
+function readMlPredictionForPage(
+  input: unknown,
+  pageId: string,
+): unknown | undefined {
+  return readExactMlPredictionForPage(input, pageId);
+}
 
 function CalendarWorkspace({ runtime }: { runtime: AppRuntime }) {
   const [mode, setMode] = useState<CalendarRouteMode>("day");
@@ -2684,11 +3480,11 @@ function createMarkdownWorkspaceBridge({
       },
     },
     openPage(pageId) {
-      const authorization = commandOpenedPageIds.get(pageId);
+      const permit = commandOpenedPageIds.get(pageId);
 
       if (
-        authorization !== undefined &&
-        isCurrentPageGeneration(currentPageState, authorization)
+        permit !== undefined &&
+        isCurrentPageGeneration(currentPageState, permit)
       ) {
         commandOpenedPageIds.delete(pageId);
         openPage(pageId);
@@ -2700,7 +3496,7 @@ function createMarkdownWorkspaceBridge({
 function allowCommandOpenedPageId(
   commandOpenedPageIds: Map<string, CommandOpenedPageAuthorization>,
   output: unknown,
-  authorization: CommandOpenedPageAuthorization,
+  permit: CommandOpenedPageAuthorization,
 ): void {
   if (!isRecord(output) || typeof output.pageId !== "string") {
     return;
@@ -2709,17 +3505,17 @@ function allowCommandOpenedPageId(
   const pageId = output.pageId.trim();
 
   if (pageId.length > 0) {
-    commandOpenedPageIds.set(pageId, authorization);
+    commandOpenedPageIds.set(pageId, permit);
   }
 }
 
 function isCurrentPageGeneration(
   currentPageState: CurrentPageState,
-  authorization: CommandOpenedPageAuthorization,
+  permit: CommandOpenedPageAuthorization,
 ): boolean {
   return (
-    currentPageState.pageId === authorization.sourcePageId &&
-    currentPageState.generation === authorization.generation
+    currentPageState.pageId === permit.sourcePageId &&
+    currentPageState.generation === permit.generation
   );
 }
 

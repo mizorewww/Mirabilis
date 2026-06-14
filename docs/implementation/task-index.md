@@ -1027,7 +1027,7 @@ Delivered/deferred note for the TASK-036 branch:
 - Delivered later by TASK-038: sidebar page route and saved-filter route mounting for Home, recent pages, Inbox, Today, All Tasks, and public saved filters, using explicit route DTOs through `ViewHost` / `SlotHost`.
 - Delivered later by TASK-039: actual page-route metadata/timeline placement and `Portal`-backed global floating timer placement.
 - Delivered later by TASK-042: Calendar/Reports route projections and a Calendar-only route command bridge.
-- Deferred: lazy/Suspense host behavior, dialogs beyond delivered M9 workflows, ML/AI/Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain later work.
+- Deferred: lazy/Suspense host behavior, dialogs beyond delivered M9 workflows, Settings/Sync route projections, responsive polish, and broader command/page facade adapters remain later work. TASK-043 later delivered the page-only ML / AI context panel from explicit current-page projections.
 - Security/native scope: TASK-036 adds no package, lockfile, IPC, Tauri/native, Rust, capability, permission, schema, release, persistence, or broader security surface change.
 
 Test plan:
@@ -1079,7 +1079,7 @@ Delivered/deferred note for the TASK-037 branch:
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
 - Delivered later by TASK-042 before release closeout: Calendar/Reports Drawer routes from explicit transient projections.
-- Deferred: ML/AI panels, Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
+- Deferred: Settings/Sync placeholders, responsive/accessibility polish, lazy/Suspense host behavior, durable Home identity, broader route data projections, persistence/native/filesystem changes, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope. TASK-043 later delivered the page-only ML / AI context panel from explicit current-page projections.
 
 Test plan:
 
@@ -1133,7 +1133,7 @@ Delivered/deferred note for the TASK-038 branch:
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
 - Delivered later by TASK-042 before release closeout: Calendar and Reports route projections through registered views/commands.
-- Deferred: ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, durable route storage, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope.
+- Deferred: Settings/Sync placeholders, responsive/persistent navigation polish, save-time indexing, Event/plugin-index `within` execution, arbitrary plugin view routes without explicit DTO designs, durable route storage, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, and release surfaces remain later scope. TASK-043 later delivered the page-only ML / AI context panel from explicit current-page projections.
 
 Test plan:
 
@@ -1206,7 +1206,7 @@ Delivered/deferred note for the TASK-039 branch:
 - Delivered later by TASK-040: app-shell Command Palette and Quick Capture dialogs.
 - Delivered later by TASK-041 before release closeout: app-shell Search dialog and bounded results route.
 - Delivered later by TASK-042 before release closeout: Calendar/Reports route projections through registered Calendar, Stats, and Chart surfaces.
-- Deferred: `page.header.actions`, `page.sidebar.panel`, `page.body.after`, ML/AI panels, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, persistent Calendar/Stats feeds beyond TASK-042, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks.
+- Deferred: `page.header.actions`, broad `page.sidebar.panel`, `page.body.after`, Settings/Sync placeholders, responsive/persistent navigation polish, Timer totals, Recently Worked, Unnoted Sessions, manual segment editing, persistent Calendar/Stats feeds beyond TASK-042, persistent Search index/worker/SQLite FTS/native or global shortcuts/ranking, native persistence, package/Tauri/Rust changes, and `check:full` release surfaces remain later tasks. TASK-043 later delivered the page-only ML / AI context panel without broad `page.sidebar.panel` mounting.
 
 ### TASK-040: Add Command Palette And Quick Capture Dialog
 
@@ -1358,6 +1358,7 @@ Source docs:
 - `docs/architecture/07-runtime-flows.md`
 - `docs/testing/strategy.md#task-030-ml-plugin-baseline-prediction-guidance`
 - `docs/testing/strategy.md#task-031-ai-plugin-provider-abstraction-guidance`
+- `docs/testing/strategy.md#task-043-ml-and-ai-context-panels-guidance`
 
 Acceptance criteria:
 
@@ -1374,6 +1375,14 @@ Test plan:
 - RTL context-panel tests using `userEvent.setup()` for open/close, tab/panel switching, ML prediction click/execution/rendering, AI advisory panel rendering, command error states, page-switch refresh, and keyboard focus behavior.
 - Projection validation tests for ML/AI input builders.
 - Existing ML and AI plugin tests plus static no-network/no-secret/no-native/no-private-import guards.
+
+Delivered/deferred note for the TASK-043 branch:
+
+- Delivered by branch: a page-route-only optional right `Page context` panel with ML, Suggestions, and Review tabs; the Markdown workspace remains mounted while the panel is open and focus returns to the launcher on close.
+- Delivered by branch: shell-owned `buildMlContextProjection` and `buildAiContextProjection` builders derive exact current-page DTOs from public runtime pages/metadata/events, exclude missing/archived/malformed/wrong-owner/secret-shaped inputs, cap ML projection arrays at 1,000 rows, cap AI projection arrays at 100 rows, cap AI current-page body text at 50,000 chars, and expose partial/unavailable status.
+- Delivered by branch: ML execution uses only the active `ml`-owned `ml.run-prediction` command and renders a valid current-page result through exact `ViewHost` id/type `ml.prediction-panel`; broad `page.sidebar.panel` / `ml.page-sidebar.prediction-panel` mounting remains deferred.
+- Delivered by branch: AI renders exact `ViewHost` ids `ai.suggestion-panel` and `ai.review-panel`, exposes only advisory current-page commands `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page ML prediction, rejects stale async results after page switches, and does not mutate pages, metadata, events, filters, sibling plugin data, settings, secrets, provider configuration, or durable AI metadata/events.
+- Deferred: live provider execution, provider settings UI, persistent plugin settings, secret/keychain storage, durable AI suggestion acceptance/apply workflows, durable ML/AI writes, broad sidebar/slot mounting, network/native execution, package/lockfile, Tauri, Rust, IPC, capability, permission, schema, and release surfaces.
 
 Dependencies:
 
