@@ -364,6 +364,22 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     ).toEqual(
       expect.objectContaining({ id: "page-child-0998" }),
     );
+    expect(
+      mlProjection.data.input.metadata[
+        mlProjection.data.input.metadata.length - 1
+      ],
+    ).toEqual(
+      expect.objectContaining({ value: ["tag-1000"] }),
+    );
+    expect(
+      mlProjection.data.input.events[
+        mlProjection.data.input.events.length - 1
+      ],
+    ).toEqual(
+      expect.objectContaining({
+        payload: expect.objectContaining({ segmentId: "segment-cap-1000" }),
+      }),
+    );
     expect(mlProjection.status).toStrictEqual({
       kind: "partial",
       limit: maxMlProjectionItems,
@@ -384,8 +400,8 @@ describe("TASK-043 ML and AI current-page projection builders", () => {
     });
     expectSerializedProjectionToExclude([mlProjection, aiProjection], [
       "page-child-0999",
-      "segment-cap-1000",
-      "tag-1000",
+      "segment-cap-1002",
+      "tag-1002",
     ]);
   });
 

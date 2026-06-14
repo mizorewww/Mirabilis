@@ -315,9 +315,13 @@ describe("TASK-043 ML and AI context panel shell", () => {
 
     for (const controlledPanelId of controlledPanelIds) {
       expect(controlledPanelId).toEqual(expect.any(String));
-      expect(document.getElementById(controlledPanelId ?? "")).toBeInstanceOf(
-        HTMLElement,
-      );
+      const controlledPanel = within(panel)
+        .getAllByRole("tabpanel", { hidden: true })
+        .find(
+          (tabPanel) => tabPanel.getAttribute("id") === controlledPanelId,
+        );
+
+      expect(controlledPanel).toBeInstanceOf(HTMLElement);
     }
   });
 
