@@ -879,6 +879,239 @@ describe("runtime SQLite persistence", () => {
     });
   });
 
+  it("isolates failed async plugin direct rollback from unrelated Core updates and deletes", async () => {
+    const targetPage = pageRecord(
+      "page-async-direct-rollback-target",
+      "Async direct rollback target",
+      {
+        body: documentWithLine(
+          "async-rollback-target-line",
+          "Original target body",
+        ),
+      },
+    );
+    const obsoleteMetadata = metadataRecord(
+      "metadata-async-delete-target",
+      targetPage.id,
+      "task",
+      "obsolete",
+      "remove me",
+      "string",
+      "task",
+    );
+    const obsoleteFilter = filterRecord(
+      "task.filter.async-delete-target",
+      "Async delete target",
+      "task",
+      "page.list",
+    );
+    const bridge = createRecordingNativeBridge({
+      filters: [obsoleteFilter],
+      metadata: [obsoleteMetadata],
+      pages: [targetPage],
+    });
+    const pluginWritesAwaiting = createDeferred<void>();
+    const releasePluginHandler = createDeferred<void>();
+    const directWriteCommitStarted = createDeferred<readonly DbQuery[]>();
+    const originalTransaction = bridge.db.transaction.bind(bridge.db);
+    let rejectedAsyncDirectWrite = false;
+    const asyncRollbackWriter = createPlugin("async-rollback-writer", {
+      register(ctx) {
+        ctx.commands.register({
+          id: "async-rollback-writer.write-and-wait",
+          title: "Write async rollback facts",
+          async handler(_input, commandContext) {
+            commandContext.metadata.set({
+              pageId: targetPage.id,
+              namespace: "async-rollback-writer",
+              key: "state",
+              value: "should-rollback",
+              valueType: "string",
+            });
+            commandContext.events.append({
+              pageId: targetPage.id,
+              namespace: "async-rollback-writer",
+              type: "fact-written",
+              payload: { state: "should-rollback" },
+            });
+
+            const filter = commandContext.filters.save({
+              id: "async-rollback-writer.filter.failed",
+              name: "Async rollback writer failed filter",
+              query: {
+                where: [
+                  {
+                    field: "metadata.async-rollback-writer.state",
+                    op: "eq",
+                    value: "should-rollback",
+                  },
+                ],
+              },
+              viewType: "page.list",
+            });
+
+            pluginWritesAwaiting.resolve(undefined);
+            await releasePluginHandler.promise;
+
+            return {
+              filterId: filter.id,
+            };
+          },
+        });
+      },
+    });
+    const runtime = (await createAppRuntime({
+      builtInPlugins: [asyncRollbackWriter],
+      createNativeBridge: () => bridge,
+    })) as RuntimeWithStorage;
+
+    bridge.db.transaction = async <Response,>(
+      queries: DbQuery[],
+    ): Promise<NativeBridgeTransactionResult<Response>> => {
+      if (
+        !rejectedAsyncDirectWrite &&
+        queries.some(
+          (query) =>
+            query.operation === DB_PERSISTENCE_OPERATIONS.metadataSet &&
+            payloadRecord(query).namespace === "async-rollback-writer",
+        )
+      ) {
+        rejectedAsyncDirectWrite = true;
+        directWriteCommitStarted.resolve(queries);
+        throw new Error(
+          "SQLITE_BUSY SELECT * FROM core_pages at /home/aac6fef/private.sqlite token=secret-token",
+        );
+      }
+
+      return originalTransaction<Response>(queries);
+    };
+
+    bridge.clearCalls();
+
+    const directWrite = runtime.commands.execute(
+      "async-rollback-writer.write-and-wait",
+      {},
+    );
+
+    await pluginWritesAwaiting.promise;
+    expect(readAsyncRollbackIsolationState()).toStrictEqual({
+      directEventPresent: true,
+      directFilterPresent: true,
+      directMetadataPresent: true,
+      obsoleteFilterPresent: true,
+      obsoleteMetadataPresent: true,
+      pageTitle: "Async direct rollback target",
+      unrelatedEventPresent: false,
+    });
+
+    await runtime.transaction.run((tx) => {
+      tx.pages.update(targetPage.id, {
+        title: "Async rollback unrelated page update",
+        body: documentWithLine(
+          "async-rollback-updated-line",
+          "Unrelated committed update",
+        ),
+      });
+      tx.metadata.delete(targetPage.id, "task", "obsolete");
+      tx.events.append({
+        pageId: targetPage.id,
+        namespace: "task",
+        type: "unrelated-transaction-committed",
+        payload: { state: "committed-during-await" },
+        sourcePluginId: "task",
+      });
+      tx.filters.delete(obsoleteFilter.id);
+    });
+
+    const coreBatch = expectSingleNativeTransaction(bridge);
+
+    expect(coreBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+      DB_PERSISTENCE_OPERATIONS.metadataDelete,
+      DB_PERSISTENCE_OPERATIONS.eventsAppend,
+      DB_PERSISTENCE_OPERATIONS.filtersDelete,
+    ]);
+    expect(readAsyncRollbackIsolationState()).toStrictEqual({
+      directEventPresent: true,
+      directFilterPresent: true,
+      directMetadataPresent: true,
+      obsoleteFilterPresent: false,
+      obsoleteMetadataPresent: false,
+      pageTitle: "Async rollback unrelated page update",
+      unrelatedEventPresent: true,
+    });
+
+    const commandFailure = expect(directWrite).rejects.toThrow(
+      "COMMAND_HANDLER_FAILED: async-rollback-writer.write-and-wait",
+    );
+
+    releasePluginHandler.resolve(undefined);
+
+    const directBatch = await directWriteCommitStarted.promise;
+
+    expect(directBatch.map((query) => query.operation)).toStrictEqual([
+      DB_PERSISTENCE_OPERATIONS.metadataSet,
+      DB_PERSISTENCE_OPERATIONS.eventsAppend,
+      DB_PERSISTENCE_OPERATIONS.filtersSave,
+    ]);
+    await commandFailure;
+    expect(readAsyncRollbackIsolationState()).toStrictEqual({
+      directEventPresent: false,
+      directFilterPresent: false,
+      directMetadataPresent: false,
+      obsoleteFilterPresent: false,
+      obsoleteMetadataPresent: false,
+      pageTitle: "Async rollback unrelated page update",
+      unrelatedEventPresent: true,
+    });
+
+    function readAsyncRollbackIsolationState(): {
+      directEventPresent: boolean;
+      directFilterPresent: boolean;
+      directMetadataPresent: boolean;
+      obsoleteFilterPresent: boolean;
+      obsoleteMetadataPresent: boolean;
+      pageTitle: string;
+      unrelatedEventPresent: boolean;
+    } {
+      const metadata = runtime.metadata.list();
+      const events = runtime.events.list();
+      const filters = runtime.filters.list();
+
+      return {
+        directEventPresent: events.some(
+          (event) =>
+            event.namespace === "async-rollback-writer" &&
+            event.type === "fact-written",
+        ),
+        directFilterPresent: filters.some(
+          (filter) => filter.id === "async-rollback-writer.filter.failed",
+        ),
+        directMetadataPresent: metadata.some(
+          (record) =>
+            record.pageId === targetPage.id &&
+            record.namespace === "async-rollback-writer" &&
+            record.key === "state",
+        ),
+        obsoleteFilterPresent: filters.some(
+          (filter) => filter.id === obsoleteFilter.id,
+        ),
+        obsoleteMetadataPresent: metadata.some(
+          (record) =>
+            record.pageId === targetPage.id &&
+            record.namespace === "task" &&
+            record.key === "obsolete",
+        ),
+        pageTitle: runtime.pages.get(targetPage.id).title,
+        unrelatedEventPresent: events.some(
+          (event) =>
+            event.namespace === "task" &&
+            event.type === "unrelated-transaction-committed",
+        ),
+      };
+    }
+  });
+
   it("does not let plugin direct store writes bypass SQLite transaction semantics", async () => {
     const bridge = createRecordingNativeBridge();
     const directWriter = createPlugin("direct-writer", {
