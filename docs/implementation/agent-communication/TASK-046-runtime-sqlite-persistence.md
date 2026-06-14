@@ -6,7 +6,7 @@
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted follow-up fixes delegated; parent is waiting for Hilbert and Nash.
+- Status: targeted follow-up tests/docs committed; implementation follow-up is next.
 
 ## Scope
 
@@ -112,7 +112,9 @@
 - Targeted re-review agents were closed after their final statuses were recorded.
 - Hilbert (`test_writer`, agent `019ec5f6-3113-7b90-b4ee-e55aadf857d4`) was spawned at 2026-06-14 19:48 CST for Confucius's direct-write test hardening and Curie's two P2 regression tests.
 - Nash (`doc_writer`, agent `019ec5f6-337b-74c2-9e99-25422dc728ae`) was spawned at 2026-06-14 19:48 CST for Pauli's stale `docs/architecture/04-slots-editor-task.md` P2.
+- Hilbert returned final status with test-only changes. Commit `41882da` (`Hilbert(test-fix)(Wire SQLite-backed Runtime Persistence): cover concurrency follow-up regressions`) records the test fix and red coverage. Parent red validation failed as expected with 2 failures: direct page created during an in-flight transaction is missing from live memory, and unrelated read-only plugin command rejects with `A Core transaction is already running`.
+- Nash returned final status with docs-only changes. Commit `a7dbb0a` (`Nash(docs-fix)(Wire SQLite-backed Runtime Persistence): clarify editor facade persistence history`) records Pauli's docs P2 closure.
 
 ## Next Action
 
-- Wait for Hilbert and Nash final statuses. A wait timeout is not a failure or idle signal. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.
+- Close Hilbert and Nash after this status is recorded, then spawn `implementer` for Curie's two P2 production fixes. Do not mark TASK-046 complete until targeted fixes, re-review, release readiness, and final `check:full` pass.

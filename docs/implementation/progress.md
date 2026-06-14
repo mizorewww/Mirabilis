@@ -116,6 +116,17 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-14 19:52 CST - TASK-046 targeted follow-up tests and docs committed
+
+- Branch: `feat/task-046-runtime-sqlite-persistence`.
+- Hilbert (`test_writer`) returned final status with test-only changes in `src/test/runtime-sqlite-persistence.test.ts`.
+- Commit: `41882da` (`Hilbert(test-fix)(Wire SQLite-backed Runtime Persistence): cover concurrency follow-up regressions`).
+- Parent red validation matched Curie's P2s: focused TASK-046/plugin-host/app-bootstrap/runtime-provider suite failed with 2 failures and 74 passing tests. Failures cover direct page write lost during an in-flight persisted transaction commit and unrelated read-only plugin command rejected by broad transaction lock.
+- Nash (`doc_writer`) returned final status with docs-only changes in `docs/architecture/04-slots-editor-task.md`.
+- Commit: `a7dbb0a` (`Nash(docs-fix)(Wire SQLite-backed Runtime Persistence): clarify editor facade persistence history`).
+- Closed: Pauli's docs P2 stale current-state `in-memory-core` wording.
+- Next action: close Hilbert/Nash and delegate implementation fixes for Curie's two P2s.
+
 ### 2026-06-14 19:48 CST - TASK-046 targeted follow-up fixes delegated
 
 - Branch: `feat/task-046-runtime-sqlite-persistence`.
