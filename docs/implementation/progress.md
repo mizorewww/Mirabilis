@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:17 CST - TASK-047 test-quality cleared, security P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) returned final status with no files modified and no remaining P0/P1/P2 test-quality findings. Focused validation passed: TASK-047 suites with 18, 39, and 42 tests; `bun run typecheck`; `bun run lint`; `git diff --check`; exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) returned final status with no files modified and no P0/P1 security findings. It reported one P2 hardening item: nested route DTO accessors can still execute before validation during inbound parsing and outbound serialization in `src/shell/navigation/route-state.ts`. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift.
+- Parent state: waiting for Goodall and Socrates final statuses, then delegate the Faraday P2 hardening follow-up if no higher-severity blocker supersedes it. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:17 CST - TASK-047 docs re-review cleared
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

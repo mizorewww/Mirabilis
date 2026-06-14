@@ -8,7 +8,7 @@ Last updated: 2026-06-15 01:17 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 targeted re-review running; parent is waiting for final statuses.
+- Current phase: TASK-047 targeted re-review running; one P2 security hardening follow-up recorded.
 
 ## Current Outcome
 
@@ -45,6 +45,8 @@ Last updated: 2026-06-15 01:17 CST.
 - Anscombe was closed after its final status and validation were committed in `2bb68b3`.
 - TASK-047 targeted re-review started at 2026-06-15 01:15 CST: Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) for Dewey P1 correctness closure; Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) for Sagan P1 StrictMode/API closure; Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) for Pauli P1/P2 test-quality closure; Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) for Bohr P2 and boundary closure; Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) for Popper docs closure.
 - Curie (`docs_researcher`) returned final status at 2026-06-15 01:17 CST with no files modified and no remaining P0/P1/P2 docs findings. Curie confirmed product, architecture, testing, progress, and task communication docs now match TASK-047 durable navigation delivery and scope boundaries; no external docs were needed.
+- Newton (`test_quality_reviewer`) returned final status at 2026-06-15 01:17 CST with no files modified and no remaining P0/P1/P2 test-quality findings. Newton confirmed Pauli's prior gaps are covered and ran focused TASK-047 suites (18, 39, and 42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Faraday (`security_reviewer`) returned final status at 2026-06-15 01:17 CST with no files modified and no P0/P1 security findings, but one P2 hardening item: nested route DTO accessors can still execute during inbound parsing and outbound serialization in `src/shell/navigation/route-state.ts` before the nested active route object is validated/exact-key cloned. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -233,4 +235,4 @@ Last updated: 2026-06-15 01:17 CST.
 
 ## Next Parent Actions
 
-- Wait for targeted TASK-047 re-review final statuses from Goodall, Socrates, Newton, and Faraday before deciding whether the branch is release-gate ready. A wait timeout is not a failure or idle signal.
+- Wait for targeted TASK-047 re-review final statuses from Goodall and Socrates, then delegate the recorded Faraday P2 hardening follow-up if no higher-severity blocker supersedes it. A wait timeout is not a failure or idle signal.

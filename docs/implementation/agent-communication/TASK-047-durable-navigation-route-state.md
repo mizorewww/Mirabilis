@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: targeted re-review running; parent is waiting for final statuses.
+- Status: targeted re-review running; one P2 security hardening follow-up recorded.
 
 ## Scope
 
@@ -75,7 +75,9 @@
 - Anscombe was closed after its final status and validation were committed.
 - Targeted re-review started at 2026-06-15 01:15 CST: Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) for Dewey P1 correctness closure; Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) for Sagan P1 StrictMode/API closure; Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) for Pauli P1/P2 test-quality closure; Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) for Bohr P2 and boundary closure; Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) for Popper docs closure.
 - Curie returned final status at 2026-06-15 01:17 CST with no files modified and no remaining P0/P1/P2 docs findings. Curie checked `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, `docs/testing/strategy.md`, `docs/implementation/progress.md`, `docs/implementation/agent-communication/status.md`, and this task communication file; it confirmed TASK-047 docs now describe durable app-shell route restoration through Core metadata, durable Home, saved-filter restore validation, recent-page persistence, fail-closed behavior, and excluded package/native/IPC/browser-storage/Search/Sync/AI/release surfaces. External docs consulted: none.
+- Newton returned final status at 2026-06-15 01:17 CST with no files modified and no remaining P0/P1/P2 test-quality findings. Newton confirmed Pauli's prior gaps are covered: user-driven filter persistence, saved `role: "saved"` empty-slot restore through `ViewHost`/`SlotHost`, fail-closed malformed/missing/unowned/runtime-handle paths, parser/serializer exact-key behavior, rapid latest-wins persistence, StrictMode Home reuse, and no `.only` / `.skip` / direct `userEvent.*` leaks. Newton ran focused TASK-047 suites (18, 39, and 42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact test-leak scans.
+- Faraday returned final status at 2026-06-15 01:17 CST with no files modified and no P0/P1 security findings, but one P2 hardening item: nested route DTO accessors can still execute in `src/shell/navigation/route-state.ts` because inbound parsing reads `activeRoute.kind` before validating the nested route object, and outbound serialization reads active route fields directly before exact-key cloning. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift. Parent decision pending Goodall/Socrates final statuses, but this P2 should be handled through a delegated test-fix/implementation-fix follow-up unless a later reviewer supersedes it.
 
 ## Next Action
 
-- Wait for targeted re-review final statuses from Goodall, Socrates, Newton, and Faraday before deciding whether TASK-047 is release-gate ready. A wait timeout is not a failure or idle signal.
+- Wait for targeted re-review final statuses from Goodall and Socrates, then delegate the recorded Faraday P2 hardening follow-up if no higher-severity blocker supersedes it. A wait timeout is not a failure or idle signal.
