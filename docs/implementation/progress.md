@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:32 CST - TASK-047 recent-page accessor red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Erdos (`test_writer`, agent `019ec731-6527-7cf0-8b2e-b045ba08dbc5`) was spawned to write focused failing tests for Bernoulli's `recentPageIds` accessor-array P2 only.
+- Erdos owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
+- Parent state: waiting for Erdos final status before validating or committing recent-page accessor red tests. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:31 CST - TASK-047 recent-page accessor P2 recorded
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

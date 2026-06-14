@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-15 01:31 CST.
+Last updated: 2026-06-15 01:32 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-15 01:31 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 Bernoulli re-review found one remaining P2; parent is preparing recent-page accessor red tests.
+- Current phase: TASK-047 recent-page accessor red tests delegated; parent is waiting for Erdos final status.
 
 ## Current Outcome
 
@@ -55,6 +55,7 @@ Last updated: 2026-06-15 01:31 CST.
 - Epicurus returned final status with production changes in `src/shell/navigation/route-state.ts`. Parent validation at 2026-06-15 01:28 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (20 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (41 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (44 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks. Commit: `2b7f4b7` (`Epicurus(review-fix)(Add Durable Navigation And Route State): harden active-route accessors`).
 - Bernoulli (`security_reviewer`, agent `019ec72e-6505-7a12-ae67-96bcc20c934f`) was spawned at 2026-06-15 01:29 CST for read-only focused security re-review of Faraday's P2 closure after Godel/Epicurus.
 - Bernoulli returned final status at 2026-06-15 01:31 CST with no files modified. It confirmed Faraday's nested `activeRoute` accessor finding is closed and found no P0/P1 findings, but reported one remaining P2 boundary item: `recentPageIds` still accepts accessor-backed arrays during inbound parse and outbound serialization, can invoke an index getter, and can return or persist getter-returned path/token-shaped strings. Bernoulli ran the focused TASK-047 suite (20 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift scans, and a focused `bun -e` boundary probe.
+- Erdos (`test_writer`, agent `019ec731-6527-7cf0-8b2e-b045ba08dbc5`) was spawned at 2026-06-15 01:32 CST to write focused failing tests for Bernoulli's `recentPageIds` accessor-array P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -243,4 +244,4 @@ Last updated: 2026-06-15 01:31 CST.
 
 ## Next Parent Actions
 
-- Close Bernoulli after this status is committed, then delegate focused red tests for the `recentPageIds` accessor-array P2.
+- Wait for Erdos final status before validating or committing recent-page accessor red tests. A wait timeout is not a failure or idle signal.
