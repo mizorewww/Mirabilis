@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: Faraday P2 hardening red tests committed; parent is preparing implementation delegation.
+- Status: Faraday P2 hardening implementation delegated; parent is waiting for Epicurus final status.
 
 ## Scope
 
@@ -81,7 +81,8 @@
 - Socrates returned final status at 2026-06-15 01:18 CST with no files modified and no remaining P0/P1/P2 deprecation/API findings. Socrates confirmed Sagan's prior P1s are closed: startup page creation moved out of React render/state initializer paths, route persistence now serializes pending writes and updates persisted signatures only after commit, and StrictMode one-Home plus latest-wins regressions are directly covered. Checks passed: focused TASK-047 suites (18, 39, and 42 tests), `bun run typecheck`, `bun run lint`, diff checks, and package/native/Tauri drift checks. Official docs consulted: React `useState`, StrictMode, and effects docs; MUI `ListItemButton` API and deprecated API migration docs; Testing Library user-event v14 intro/setup docs.
 - Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned at 2026-06-15 01:20 CST to write focused failing tests for Faraday's P2 only. It owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
 - Godel returned final status with test-only changes in `src/test/durable-navigation-route-state.test.tsx`. Parent red validation at 2026-06-15 01:22 CST matched Faraday's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 18 passing tests because nested `activeRoute` accessors were invoked during parse/serialize and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans. Commit: `459aa52` (`Godel(test-fix)(Add Durable Navigation And Route State): add accessor hardening red tests`).
+- Epicurus (`implementer`, agent `019ec729-f3e5-7843-9af2-0553852296ca`) was spawned at 2026-06-15 01:24 CST to make Godel's Faraday P2 red tests pass with minimum production hardening. It owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
 
 ## Next Action
 
-- Close Godel after this status is committed, then spawn an implementer for Faraday's P2 hardening fix.
+- Wait for Epicurus final status before validating or committing the Faraday P2 implementation fix. A wait timeout is not a failure or idle signal.

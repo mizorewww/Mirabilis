@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-15 01:24 CST - TASK-047 Faraday P2 implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Epicurus (`implementer`, agent `019ec729-f3e5-7843-9af2-0553852296ca`) was spawned to make Godel's Faraday P2 red tests pass with minimum production hardening.
+- Epicurus owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Epicurus final status before validating or committing the Faraday P2 implementation fix. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-15 01:23 CST - TASK-047 Faraday P2 red tests committed
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
