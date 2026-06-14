@@ -16,6 +16,7 @@ import {
   type PluginHostRecord,
 } from "../core";
 import {
+  createNativeDirectStoreRunner,
   createNativePageWriteThrough,
   createNativeTransactionPersistence,
   hydrateCoreStoresFromNativeBridge,
@@ -182,6 +183,14 @@ function createDefaultServices({
     return rawServices;
   }
 
+  const directStoreRunner = createNativeDirectStoreRunner(
+    stores as CoreStores,
+    nativeBridge as NativeBridge,
+    {
+      beforeCommit: pageWriteThrough.flush,
+    },
+  );
+
   return createCoreServices({
     stores: {
       ...(stores as CoreStores),
@@ -189,7 +198,7 @@ function createDefaultServices({
     },
     registries: registries as CoreRegistries,
     transaction: rawServices.transaction,
-    directTransactionRunner: rawServices.transaction,
+    directTransactionRunner: directStoreRunner,
   });
 }
 

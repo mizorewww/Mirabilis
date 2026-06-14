@@ -20,6 +20,7 @@ import {
 import type { CommandService, SlotRegistry, ViewRegistry } from "../types";
 import {
   createTransactionManager,
+  type CoreDirectStoreRunner,
   type TransactionPersistence,
   type TransactionManager,
 } from "./transaction-manager";
@@ -47,7 +48,7 @@ export type CoreServices = CoreStores &
   };
 
 type CoreServicesWithDirectTransactionRunner = CoreServices & {
-  [coreDirectTransactionRunnerKey]?: TransactionManager;
+  [coreDirectTransactionRunnerKey]?: CoreDirectStoreRunner;
 };
 
 type CreateCoreStoresOptions = {
@@ -62,7 +63,7 @@ type CreateCoreServicesOptions = {
   registries: CoreRegistries;
   transaction?: TransactionManager;
   transactionPersistence?: TransactionPersistence;
-  directTransactionRunner?: TransactionManager;
+  directTransactionRunner?: CoreDirectStoreRunner;
 };
 
 export function createCoreStores(
@@ -120,7 +121,7 @@ export function createCoreServices({
 
 export function getCoreDirectTransactionRunner(
   services: CoreServices,
-): TransactionManager | undefined {
+): CoreDirectStoreRunner | undefined {
   return (services as CoreServicesWithDirectTransactionRunner)[
     coreDirectTransactionRunnerKey
   ];
@@ -128,6 +129,7 @@ export function getCoreDirectTransactionRunner(
 
 export type {
   CoreTransaction,
+  CoreDirectStoreRunner,
   TransactionHandler,
   TransactionManager,
   TransactionPersistence,

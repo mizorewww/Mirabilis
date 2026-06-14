@@ -38,6 +38,12 @@ export type TransactionManager = {
   ): Promise<Awaited<Result>>;
 };
 
+export type CoreDirectStoreRunner = {
+  run<Result>(
+    handler: TransactionHandler<Result>,
+  ): Promise<Awaited<Result>>;
+};
+
 export type TransactionPersistenceScope = {
   transaction: CoreTransaction;
   commit(): Promise<void>;
@@ -127,7 +133,18 @@ export function createTransactionManager(
 
         await persistenceScope?.commit();
 
-        pageParticipant.replaceState(nextPageState);
+        const committedLivePageState = pageParticipant.snapshot();
+        const finalPageState =
+          persistenceScope !== undefined &&
+          !snapshotsEqual(committedLivePageState, livePageState)
+            ? mergePageTransactionState(
+                initialPageState,
+                nextPageState,
+                committedLivePageState,
+              )
+            : nextPageState;
+
+        pageParticipant.replaceState(finalPageState);
         metadataParticipant.replaceState(nextMetadataState);
         eventParticipant.replaceState(nextEventState);
         filterParticipant.replaceState(nextFilterState);
@@ -199,6 +216,40 @@ function assertLiveSnapshotUnchanged(
       `Core transaction conflict: live ${storeName} store changed before commit`,
     );
   }
+}
+
+function mergePageTransactionState<
+  Snapshot extends {
+    pages: Map<string, unknown>;
+  },
+>(
+  initialState: Snapshot,
+  nextState: Snapshot,
+  liveState: Snapshot,
+): Snapshot {
+  const pages = new Map(liveState.pages);
+
+  for (const [pageId, nextPage] of nextState.pages) {
+    const initialPage = initialState.pages.get(pageId);
+
+    if (!snapshotsEqual(nextPage, initialPage)) {
+      pages.set(pageId, nextPage);
+    }
+  }
+
+  for (const [pageId, initialPage] of initialState.pages) {
+    if (
+      !nextState.pages.has(pageId) &&
+      snapshotsEqual(liveState.pages.get(pageId), initialPage)
+    ) {
+      pages.delete(pageId);
+    }
+  }
+
+  return {
+    ...liveState,
+    pages,
+  };
 }
 
 function snapshotsEqual(left: unknown, right: unknown): boolean {

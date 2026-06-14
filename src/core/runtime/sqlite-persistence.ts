@@ -29,6 +29,7 @@ import {
 import type {
   CoreStores,
   CoreTransaction,
+  CoreDirectStoreRunner,
   TransactionPersistence,
   TransactionPersistenceScope,
 } from "../services";
@@ -63,6 +64,29 @@ export type NativeDirectWriteCoordinator = {
 export type NativePageWriteThrough = {
   pages: PageStore;
   flush(): Promise<void>;
+};
+
+type DirectStoreRollbackSnapshot = {
+  pages: ReturnType<
+    NonNullable<
+      ReturnType<typeof getInMemoryPageStoreTransactionParticipant>
+    >["snapshot"]
+  >;
+  metadata: ReturnType<
+    NonNullable<
+      ReturnType<typeof getInMemoryMetadataStoreTransactionParticipant>
+    >["snapshot"]
+  >;
+  events: ReturnType<
+    NonNullable<
+      ReturnType<typeof getInMemoryEventStoreTransactionParticipant>
+    >["snapshot"]
+  >;
+  filters: ReturnType<
+    NonNullable<
+      ReturnType<typeof getInMemoryFilterStoreTransactionParticipant>
+    >["snapshot"]
+  >;
 };
 
 class RuntimePersistenceError extends Error {
@@ -207,6 +231,33 @@ export function createNativePageWriteThrough(
   };
 }
 
+export function createNativeDirectStoreRunner(
+  stores: CoreStores,
+  nativeBridge: Pick<NativeBridge, "db">,
+  options: {
+    beforeCommit?: () => Promise<void>;
+  } = {},
+): CoreDirectStoreRunner {
+  return {
+    async run<Result>(
+      handler: (transaction: CoreTransaction) => Result | Promise<Result>,
+    ): Promise<Awaited<Result>> {
+      const session = createNativeDirectStoreSession(stores);
+
+      try {
+        const result = await handler(session.transaction);
+
+        await session.commit(nativeBridge, options);
+
+        return result;
+      } catch (error) {
+        session.rollback();
+        throw error;
+      }
+    },
+  };
+}
+
 function createNativeTransactionPersistenceScope(
   nativeBridge: Pick<NativeBridge, "db">,
   transaction: CoreTransaction,
@@ -306,6 +357,259 @@ function createPersistentDirectPageStore(
       return page;
     },
     list: (options) => pages.list(options),
+  };
+}
+
+function createNativeDirectStoreSession(stores: CoreStores): {
+  transaction: CoreTransaction;
+  commit(
+    nativeBridge: Pick<NativeBridge, "db">,
+    options: { beforeCommit?: () => Promise<void> },
+  ): Promise<void>;
+  rollback(): void;
+} {
+  const pageParticipant = requireHydratableParticipant(
+    getInMemoryPageStoreTransactionParticipant(stores.pages),
+    "page",
+  );
+  const metadataParticipant = requireHydratableParticipant(
+    getInMemoryMetadataStoreTransactionParticipant(stores.metadata),
+    "metadata",
+  );
+  const eventParticipant = requireHydratableParticipant(
+    getInMemoryEventStoreTransactionParticipant(stores.events),
+    "event",
+  );
+  const filterParticipant = requireHydratableParticipant(
+    getInMemoryFilterStoreTransactionParticipant(stores.filters),
+    "filter",
+  );
+  const queries: DbQuery[] = [];
+  let rollbackSnapshot: DirectStoreRollbackSnapshot | undefined;
+  let committed = false;
+
+  function prepareWrite(): void {
+    if (rollbackSnapshot !== undefined) {
+      return;
+    }
+
+    rollbackSnapshot = {
+      pages: pageParticipant.snapshot(),
+      metadata: metadataParticipant.snapshot(),
+      events: eventParticipant.snapshot(),
+      filters: filterParticipant.snapshot(),
+    };
+  }
+
+  function rollback(): void {
+    if (committed || rollbackSnapshot === undefined) {
+      return;
+    }
+
+    pageParticipant.replaceState(rollbackSnapshot.pages);
+    metadataParticipant.replaceState(rollbackSnapshot.metadata);
+    eventParticipant.replaceState(rollbackSnapshot.events);
+    filterParticipant.replaceState(rollbackSnapshot.filters);
+  }
+
+  return {
+    transaction: {
+      pages: createTrackedDirectPageStore(
+        stores.pages,
+        queries,
+        prepareWrite,
+      ),
+      metadata: createTrackedDirectMetadataStore(
+        stores.metadata,
+        queries,
+        prepareWrite,
+      ),
+      events: createTrackedDirectEventStore(
+        stores.events,
+        queries,
+        prepareWrite,
+      ),
+      filters: createTrackedDirectFilterStore(
+        stores.filters,
+        queries,
+        prepareWrite,
+      ),
+    },
+    async commit(nativeBridge, options) {
+      if (queries.length === 0) {
+        committed = true;
+        return;
+      }
+
+      try {
+        await options.beforeCommit?.();
+        await nativeBridge.db.transaction(queries);
+        committed = true;
+      } catch (error) {
+        rollback();
+        throw normalizeNativePersistenceError(error);
+      }
+    },
+    rollback,
+  };
+}
+
+function createTrackedDirectPageStore(
+  pages: PageStore,
+  queries: DbQuery[],
+  prepareWrite: () => void,
+): PageStore {
+  return {
+    create(input) {
+      prepareWrite();
+      const page = pages.create(input);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.pagesCreate,
+        payload: pageCreatePayload(page),
+      });
+
+      return page;
+    },
+    get: (pageId) => pages.get(pageId),
+    update(pageId, input) {
+      prepareWrite();
+      const page = pages.update(pageId, input);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.pagesUpdate,
+        payload: pageUpdatePayload(page),
+      });
+
+      return page;
+    },
+    archive(pageId) {
+      prepareWrite();
+      const page = pages.archive(pageId);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.pagesArchive,
+        payload: {
+          id: page.id,
+          archivedAt: page.archivedAt ?? page.updatedAt,
+        },
+      });
+
+      return page;
+    },
+    list: (options) => pages.list(options),
+  };
+}
+
+function createTrackedDirectMetadataStore(
+  metadata: MetadataStore,
+  queries: DbQuery[],
+  prepareWrite: () => void,
+): MetadataStore {
+  return {
+    set(input) {
+      prepareWrite();
+      const record = metadata.set(input);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.metadataSet,
+        payload: record as unknown as DbValue,
+      });
+
+      return record;
+    },
+    get: (pageId, namespace, key) => metadata.get(pageId, namespace, key),
+    list: (options) => metadata.list(options),
+    delete(pageId, namespace, key) {
+      prepareWrite();
+      const record = metadata.delete(pageId, namespace, key);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.metadataDelete,
+        payload: {
+          pageId,
+          namespace,
+          key,
+        },
+      });
+
+      return record;
+    },
+  };
+}
+
+function createTrackedDirectEventStore(
+  events: EventStore,
+  queries: DbQuery[],
+  prepareWrite: () => void,
+): EventStore {
+  return {
+    append(input) {
+      prepareWrite();
+      const event = events.append(input);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.eventsAppend,
+        payload: event as unknown as DbValue,
+      });
+
+      return event;
+    },
+    list: (options) => events.list(options),
+  };
+}
+
+function createTrackedDirectFilterStore(
+  filters: FilterStore,
+  queries: DbQuery[],
+  prepareWrite: () => void,
+): FilterStore {
+  return {
+    save(input) {
+      prepareWrite();
+      const filter = filters.save(input);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.filtersSave,
+        payload: filter as unknown as DbValue,
+      });
+
+      return filter;
+    },
+    get: (filterId) => filters.get(filterId),
+    update(filterId, input) {
+      prepareWrite();
+      const filter = filters.update(filterId, input);
+
+      queries.push(
+        {
+          operation: DB_PERSISTENCE_OPERATIONS.filtersGet,
+          payload: {
+            id: filter.id,
+          },
+        },
+        {
+          operation: DB_PERSISTENCE_OPERATIONS.filtersSave,
+          payload: filter as unknown as DbValue,
+        },
+      );
+
+      return filter;
+    },
+    list: (options) => filters.list(options),
+    delete(filterId) {
+      prepareWrite();
+      const filter = filters.delete(filterId);
+
+      queries.push({
+        operation: DB_PERSISTENCE_OPERATIONS.filtersDelete,
+        payload: {
+          id: filter.id,
+        },
+      });
+
+      return filter;
+    },
   };
 }
 
