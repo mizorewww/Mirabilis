@@ -6,7 +6,7 @@
 - Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: implementation is committed and green; parent is preparing review delegation.
+- Status: review is running; parent is waiting for review completion/final statuses.
 
 ## Scope
 
@@ -64,6 +64,8 @@
 - Anscombe (`implementer`, agent `019ec586-5852-7992-bb47-21d0c23adda9`) was spawned at 2026-06-14 17:46 CST to make Pasteur's red tests pass with minimum production changes.
 - Anscombe returned final status with production changes in `src/App.tsx` and `src/App.css`. Commit `9e5bf41` records the implementation.
 - Parent implementation validation passed: TASK-045 focused responsive/accessibility suite passed with 10 tests; adjacent shell/context suite passed with 28 tests; command/search/capture suite passed with 54 tests; sidebar navigation suite passed with 21 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Noether (`pr_explorer`, agent `019ec58c-201f-7472-8942-936187ec34cb`), Ramanujan (`reviewer`, agent `019ec58c-22f4-7851-af8b-54064da82f07`), Ampere (`security_reviewer`, agent `019ec58c-254b-78c2-ac9d-a2d0770cc9b2`), Gauss (`deprecation_auditor`, agent `019ec58c-27c1-7651-92ac-ece39784dcfe`), Heisenberg (`docs_researcher`, agent `019ec58c-2ab2-71c0-a658-5c67a6055105`), and Lagrange (`test_quality_reviewer`, agent `019ec58c-2d55-7381-9b6e-f79930ece239`) were spawned for review at 2026-06-14 17:52 CST.
+- `doc_writer` will be spawned after capacity frees.
 
 ## Red-Test Guidance Accepted By Parent
 
@@ -79,4 +81,5 @@
 
 ## Next Action
 
-- Close Anscombe after recording final status, then spawn review agents for TASK-045.
+- Wait for active review agent completion/final statuses. A wait timeout is not a failure or idle signal.
+- Spawn `doc_writer` after capacity frees.
