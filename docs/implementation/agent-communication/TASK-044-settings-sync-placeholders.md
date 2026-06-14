@@ -6,7 +6,7 @@
 - Branch: `feat/task-044-settings-sync-placeholders`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: review-fix tests are delegated to Goodall; parent is waiting for completion/final status.
+- Status: review-fix tests are committed and green; parent is preparing targeted re-review.
 
 ## Scope
 
@@ -72,7 +72,8 @@
 - Banach (`reviewer`) returned final status with no P0/P1/P2 correctness findings and merge-ready correctness status.
 - Volta (`doc_writer`) returned final status and updated product, architecture, and testing docs. Commit `50347b8` records the docs sync.
 - Goodall (`test_writer`, agent `019ec4dc-ebd4-77f2-a349-e3f60ba568c1`) was spawned at 2026-06-14 14:41 CST to address the P1 focused-test failure and Raman's P2 test-quality cleanup.
+- Goodall returned final status with test-only fixes in `src/test/settings-sync-placeholders.test.tsx`. Commit `4a37998` records the review-fix tests.
 
 ## Next Action
 
-- Wait for Goodall completion/final status before validation or commit.
+- Spawn targeted re-review for the closed P1/P2 findings and docs sync, then wait for completion/final statuses.
