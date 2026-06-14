@@ -228,3 +228,22 @@
     padding: 16px;
   }
 }
+
+@media (max-width: 899.95px) {
+  .app-shell__navigation {
+    width: 0;
+    flex: 0 0 0;
+  }
+
+  .app-shell__context-dialog .MuiDialog-paper {
+    margin: 0;
+  }
+
+  .app-shell__context-dialog .app-shell__context-panel {
+    width: 100%;
+    max-width: none;
+    min-height: 100%;
+    flex: 1 1 auto;
+    border-left: 0;
+  }
+}

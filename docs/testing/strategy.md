@@ -280,6 +280,29 @@ git diff --check
 
 Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, keychain/secret storage, remote endpoint configuration, sync transport/background jobs, conflict UI, or schema-backed settings/sync persistence. TASK-044 is a TypeScript/React/MUI app-shell route/status task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, executable provider settings UI, secret-storage, sync transport, conflict UI, persistent settings, or release surface.
 
+## TASK-045 Responsive State And Accessibility Polish Guidance
+
+TASK-045 coverage lives in `src/test/responsive-accessibility-polish.test.tsx`. It proves the existing TypeScript/React/MUI app shell adapts between desktop and narrow viewport states without adding package, native, Tauri, Rust, IPC, schema, capability, permission, or release drift.
+
+- Desktop coverage should assert role/name-visible `banner`, `navigation`, `main`, editable Markdown textbox, active navigation state, top-bar tools, and `Page context` as a named `complementary` panel that closes on button or Escape with launcher focus return.
+- Tablet and narrow-desktop coverage should assert top-bar actions collapse to compact icon controls with accessible names and tooltips before text labels can truncate.
+- Narrow coverage should assert the `matchMedia`-driven state starts with temporary workspace navigation closed, keeps the Markdown editor visible as the primary screen, closes navigation after route selection, returns focus to the navigation launcher, and preserves `aria-current="page"` when navigation is reopened.
+- Narrow `Page context` coverage should assert a named modal MUI `Dialog`, `aria-modal`, Escape close, focus containment, launcher focus return, and editor preservation behind the dialog. The narrow context surface is a Dialog, not a Drawer route.
+- Command Palette, Search, and Quick Capture coverage should use React Testing Library role/name queries plus `userEvent.setup()` and awaited user actions for opening, initial focus, tab/focus containment, Escape or cancel close, and launcher focus return. Do not use `fireEvent` or direct static `userEvent.click/type/keyboard/tab` calls without a setup instance.
+- The viewport helper should install deterministic `window.innerWidth` and `window.matchMedia` before rendering, support `min-width` and `max-width` queries used by MUI breakpoints, support `addEventListener` / `removeEventListener` and legacy `addListener` / `removeListener`, and restore the previous viewport/matchMedia after each test. jsdom does not provide `matchMedia`, so responsive tests must own the helper rather than relying on ambient browser behavior.
+- Startup failure and static guard coverage should keep visible state text generic and reject raw runtime errors, SQL, filesystem paths, provider details, tokens, secrets, NativeBridge details, package/lockfile/Cargo/Tauri/capability/permission/IPC/schema/release drift, stale MUI/React/test APIs, MUI X additions, broad `page.sidebar.panel` mounting, mobile Quick Capture toolbar mounting, executable Sync transport, executable settings persistence, network/provider execution, and browser storage persistence.
+
+Focused TASK-045 validation:
+
+```bash
+bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx
+bun run typecheck
+bun run lint
+git diff --check
+```
+
+Run `bun run check:full` only if a later edit adds or changes Tauri IPC, permissions/capabilities, filesystem/native behavior, package/Cargo dependencies, packaging, release behavior, app-runtime persistence wiring, persistent plugin settings, native HTTP/live provider execution, keychain/secret storage, sync transport/background jobs, conflict UI, or schema-backed settings/sync persistence. TASK-045 is a UI-only TypeScript/React/MUI app-shell polish task and adds no package, native, IPC, Rust, permission, capability, schema, filesystem, live network, executable provider settings UI, secret-storage, sync transport, conflict UI, persistent settings, or release surface.
+
 ## Focused Test Guidance
 
 For each task in `docs/implementation/task-index.md`:

@@ -1,14 +1,14 @@
 # Agent Communication Status
 
-Last updated: 2026-06-14 17:28 CST.
+Last updated: 2026-06-14 18:14 CST.
 
 ## Current Task
 
-- Task: TASK-044 - Add Settings And Sync Placeholders.
-- Branch: `feat/task-044-settings-sync-placeholders`.
+- Task: TASK-045 - Responsive State And Accessibility Polish.
+- Branch: `feat/task-045-responsive-accessibility-polish`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-044 final gate passed on the feature branch; parent is ready to merge into `master`.
+- Current phase: TASK-045 final feature-branch gate passed; parent is preparing the completion commit and merge to `master`.
 
 ## Current Outcome
 
@@ -35,44 +35,66 @@ Last updated: 2026-06-14 17:28 CST.
 - Sartre completed the doc-only wording fix. The TASK-044 communication and progress notes now distinguish official docs-site versions checked from local installed dependency versions and record the local package versions. Poincare's docs P2 is closed.
 - Sartre's doc-fix was committed as `27a1a68` (`Sartre(docs-fix)(Add Settings And Sync Placeholders): clarify docs version notes`) and auto-pushed to `origin/feat/task-044-settings-sync-placeholders`.
 - Final feature-branch gate passed at 2026-06-14 17:28 CST with `bun run check:quick`: typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
-- TASK-044 is marked complete in `docs/implementation/progress.md`. No P0/P1/P2 blockers remain.
+- TASK-044 was merged into `master` in merge commit `1de3ec0` and pushed to `origin/master`.
+- Post-merge `master` validation passed for TASK-044: `bun run check:quick` passed with typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- TASK-045 branch was created from validated `master` commit `1de3ec0`.
+- Agent/config validation passed for TASK-045 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- TASK-045 scope: responsive state and accessibility polish across desktop and narrow layouts, sidebar/drawer behavior, top controls, contextual panel, floating surfaces, dialogs, route content, loading/empty/error states, and role/name/focus semantics. It must stay TypeScript/React/MUI-only with no native/Tauri/Rust/package/capability/permission/IPC/schema/release changes.
+- TASK-045 pre-test guidance running as of 2026-06-14 17:32 CST: Jason (`planner`, `019ec579-6734-7ef3-aa0e-a9e68cb38091`), Locke (`docs_researcher`, `019ec579-69f1-7d52-84a5-67e83c3bfa20`), Herschel (`security_reviewer`, `019ec579-6c46-7633-a2ef-47b1a73d4b9c`), and Aquinas (`deprecation_auditor`, `019ec579-6ebd-7853-b5a4-f7ef6069b349`).
+- TASK-045 pre-test guidance completed at 2026-06-14 17:36 CST with no P0/P1 blockers. Jason recommended a shell-level slice in `src/App.tsx` / `src/App.css` plus focused `src/test/responsive-accessibility-polish.test.tsx` red tests. Locke verified official WAI-ARIA APG modal dialog/disclosure guidance, MUI v9 Drawer/Dialog/breakpoint/useMediaQuery guidance, Testing Library/user-event v14 guidance, and React 19 testing guidance; it found no local-doc mismatch and noted local `@mui/material@9.0.1` aligns with current MUI docs site guidance. Herschel recommended security red tests for no native/package drift, non-leaky state text, plugin boundary props, command boundaries, deferred scope, dialog semantics, narrow drawer behavior, stale async safety, inert Settings/Sync behavior, and state consistency. Aquinas confirmed local versions, stale API guardrails, and the need for a deterministic `matchMedia` test helper because jsdom lacks it.
+- Pasteur (`test_writer`, `019ec57e-7005-7db1-b8da-c3d9c677d602`) was spawned at 2026-06-14 17:37 CST to add failing TASK-045 responsive/accessibility RTL/static tests. Pasteur owns test changes only.
+- Pasteur returned final status with test-only changes in `src/test/responsive-accessibility-polish.test.tsx`. Commit `75b07f8` records the red tests.
+- Parent red validation matched expected missing TASK-045 behavior: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` failed with 10 tests total, 6 passing, and 4 failing. The failures cover narrow navigation initially expanded, narrow route selection not closing/restoring focus, desktop context panel not Escape-closeable, and narrow context panel not rendering as a named modal temporary dialog. `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Anscombe (`implementer`, `019ec586-5852-7992-bb47-21d0c23adda9`) was spawned at 2026-06-14 17:46 CST to make Pasteur's red tests pass with minimum production changes.
+- Anscombe returned final status with production changes in `src/App.tsx` and `src/App.css`. Commit `9e5bf41` records the implementation.
+- Parent implementation validation passed: TASK-045 focused responsive/accessibility suite passed with 10 tests; adjacent shell/context suite passed with 28 tests; command/search/capture suite passed with 54 tests; sidebar navigation suite passed with 21 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- TASK-045 review running as of 2026-06-14 17:52 CST: Noether (`pr_explorer`, `019ec58c-201f-7472-8942-936187ec34cb`), Ramanujan (`reviewer`, `019ec58c-22f4-7851-af8b-54064da82f07`), Ampere (`security_reviewer`, `019ec58c-254b-78c2-ac9d-a2d0770cc9b2`), Gauss (`deprecation_auditor`, `019ec58c-27c1-7651-92ac-ece39784dcfe`), Heisenberg (`docs_researcher`, `019ec58c-2ab2-71c0-a658-5c67a6055105`), and Lagrange (`test_quality_reviewer`, `019ec58c-2d55-7381-9b6e-f79930ece239`). `doc_writer` will be spawned after capacity frees.
+- TASK-045 review completed at 2026-06-14 17:56 CST. Noether mapped the diff and found no blocker. Ampere found no P0/P1/P2 security findings. Gauss found no P0/P1/P2 deprecation/API findings. Ramanujan found one P2 acceptance gap: top-bar actions still render as text buttons across the 761-899px band instead of collapsing to icon buttons with tooltips before truncation. Heisenberg found one docs P1 and docs P2s: product/progress/testing/architecture docs need TASK-045 delivery sync, testing guidance, runtime-flow update, and ContextPanel Dialog wording. Lagrange found no P0/P1 test-quality findings and recommended P2 coverage for narrow dialog/top-bar smoke and narrow route composition.
+- Parent decision: delegate docs sync to `doc_writer`, delegate review-fix tests to `test_writer`, and delegate implementation only after the review-fix tests complete.
+- Schrodinger (`doc_writer`, `019ec590-b06d-7ae1-8d7c-06ee9f0a5f86`) was spawned at 2026-06-14 17:57 CST to fix Heisenberg's docs P1/P2. Meitner (`test_writer`, `019ec590-b365-7f42-8490-a0d205d8ae39`) was spawned at 2026-06-14 17:57 CST to add review-fix red tests for Ramanujan's top-bar responsive P2 and Lagrange's narrow coverage P2.
+- Schrodinger returned final status with docs-only changes and closed Heisenberg's docs P1/P2. Commit `ea29320` records the docs sync.
+- Meitner returned final status with test-only changes in `src/test/responsive-accessibility-polish.test.tsx`. Commit `9eed9fc` records the review-fix tests.
+- Parent validation confirmed the intended red state: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` fails with 12 tests total, 11 passing, and 1 failing for tablet-width top-bar actions still rendering visible text instead of compact/icon-only accessible controls with tooltips. `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Carson (`implementer`, `019ec597-c3ec-77a3-973d-fdfb966f7b50`) was spawned at 2026-06-14 18:05 CST to make the review-fix top-bar compact/icon-only red test pass.
+- Carson returned final status with production changes in `src/App.tsx`. Commit `547d45f` records the implementation fix.
+- Parent validation passed for Carson's fix: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` passed with 12 tests; `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/search-overlay-results-route.test.tsx` passed with 65 tests; `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- TASK-045 targeted re-review running as of 2026-06-14 18:10 CST: Epicurus (`reviewer`, `019ec59c-d7cf-7232-bbc6-24cd4baaa18e`) for Ramanujan's top-bar P2 closure and correctness regressions; Rawls (`test_quality_reviewer`, `019ec59c-dab0-78d0-8027-8ef68a2cd759`) for Lagrange's P2 coverage closure; Ohm (`docs_researcher`, `019ec59c-dcfc-7a13-942d-4c8af71912e4`) for Heisenberg's docs P1/P2 closure; Parfit (`deprecation_auditor`, `019ec59c-e00e-7802-93bd-dcdcbee28b79`) for fresh MUI Tooltip/IconButton and React/testing API risk; Avicenna (`security_reviewer`, `019ec59c-e293-7c70-bab6-f91996ada782`) for UI-only security/privacy and drift risk.
+- TASK-045 targeted re-review completed at 2026-06-14 18:13 CST with no P0/P1/P2 findings. Epicurus confirmed Ramanujan's top-bar P2 is closed and ran focused/adjacent tests, typecheck, lint, and diff-check. Rawls confirmed Lagrange's P2 test-quality coverage is closed and ran the focused suite, diff-check, and `.only` / `.skip` scans. Ohm confirmed Heisenberg's docs P1/P2 are closed. Avicenna found no security/privacy or native/package/Tauri/Rust/capability/permission/IPC/schema drift. Parfit found no deprecation/API issues, confirmed local package versions, and verified current official MUI, Testing Library/user-event, and React docs.
+- Final TASK-045 feature-branch gate passed at 2026-06-14 18:14 CST with `bun run check:quick`: typecheck, lint, 51 frontend test files / 813 tests, Rust fmt check, Rust clippy, and Rust tests.
 
-## Initial TASK-044 Scope
+## Initial TASK-045 Scope
 
-- Add Settings and Sync placeholder route/panel surfaces to the current MUI app shell.
-- Settings must list app/runtime information and existing plugin settings descriptors, including inert `ai.provider-settings` and Sync skeleton status.
-- Sync must clearly present skeleton status: no runtime sync commands, transport, remote endpoint, conflict UI, background jobs, or settings persistence are enabled.
-- Placeholder controls must be accessible and visible without claiming unsupported behavior.
-- Settings/Sync surfaces must not accept, store, render, or log API keys, tokens, credentials, remote endpoints, filesystem paths, provider secrets, or other secret-like values.
-- Any settings action that exists must go through registered commands; this task should avoid adding mutation actions unless explicitly supported by current public descriptors.
-- No Tauri/native/Rust/package/lockfile/capability/permission/IPC/schema/keychain/network/release changes are in scope.
+- Desktop and narrow layouts keep the Markdown workspace usable while sidebar, top controls, contextual panel, floating surfaces, dialogs, and route content adapt without incoherent overlap.
+- Sidebar collapse/drawer behavior, command palette, search overlay, Quick Capture dialog, editor, metadata/timer/timeline slots, Calendar/Reports routes, ML/AI panels, and Settings/Sync placeholders are keyboard reachable with predictable focus return.
+- Loading, empty, unavailable, and error states are consistent across workbench, routes, `ViewHost`, `SlotHost`, overlays, and contextual panels.
+- State text must not leak raw errors, paths, SQL, tokens, provider details, secrets, or full runtime handles.
+- App-shell landmarks, headings, labels, status regions, dialog semantics, focus management, and route navigation are accessible from the user's perspective.
+- Visual polish remains dense and work-focused; no marketing landing page, hero UI, decorative sections, or card-heavy replacement for the workspace.
+- No native/Tauri/Rust/package/capability/permission/IPC/schema/release changes are in scope.
 
 ## Relevant Local Docs
 
-- `docs/implementation/task-index.md#TASK-044`
+- `docs/implementation/task-index.md#TASK-045`
 - `docs/product/07-user-interface-design.md`
-- `docs/product/03-plugin-platform.md`
-- `docs/product/05-built-in-plugins.md#23-sync-plugin`
-- `docs/architecture/05-plugin-implementations.md#15-sync-plugin`
-- `docs/architecture/07-runtime-flows.md#1817-sync-skeleton-contract`
-- `docs/testing/strategy.md#task-032-sync-plugin-skeleton-guidance`
+- `docs/product/04-editor-and-workflows.md`
+- `docs/product/06-view-slots.md`
+- `docs/architecture/07-runtime-flows.md`
+- `docs/testing/strategy.md`
 
 ## Parent Decisions
 
-- Treat TASK-044 as an inert app-shell route task, not a settings persistence, provider configuration, keychain, or sync-transport task.
-- Expose only public runtime/plugin manifest facts and descriptor DTOs; do not pass raw runtime handles, stores, registries, NativeBridge/Tauri handles, provider settings, secrets, or plugin-private objects to placeholder UI.
-- Keep Sync status tied to the TASK-032 skeleton contract: plugin id `sync`, no runtime commands/views/settings panels/transport, syncable unit descriptors are informational only.
-- Keep AI provider settings descriptor informational/inert; do not create provider settings inputs or secret fields.
-- Use the existing top-bar Settings affordance to open a visible Settings workspace route; include Sync as a named skeleton section/panel inside Settings, not a separate top-level Drawer route for this task.
-- Red tests should primarily live in `src/test/settings-sync-placeholders.test.tsx`, with a narrow `src/test/mui-shell-frame.test.tsx` update if existing Settings placeholder expectations need to change.
+- Treat TASK-045 as an app-shell polish and accessibility task, not a new plugin behavior task.
+- Preserve existing route/data security boundaries from TASK-035 through TASK-044.
+- Use RTL/user-event tests from the user's perspective: role/name landmarks, keyboard flows, visible state, focus return, and narrow-layout controls.
+- Keep the Markdown workspace primary at all widths; avoid marketing/hero/card-heavy replacement surfaces.
+- Prefer MUI breakpoint/responsive props and existing shell patterns over new dependencies or custom platform surfaces.
 
 ## Validation Recorded
 
-- 2026-06-14 14:04 CST: branch created from validated `master`.
-- 2026-06-14 14:04 CST: 11 project agent TOML files parsed successfully.
-- 2026-06-14 14:04 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- 2026-06-14 17:30 CST: branch created from validated `master` commit `1de3ec0`.
+- 2026-06-14 17:30 CST: 11 project agent TOML files parsed successfully.
+- 2026-06-14 17:30 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 
 ## Next Parent Actions
 
-- Commit the TASK-044 completion status update.
-- Merge `feat/task-044-settings-sync-placeholders` into `master`, validate `master`, push, then continue to TASK-045.
+- Commit TASK-045 completion ledger, merge `feat/task-045-responsive-accessibility-polish` into `master`, validate `master`, and push.

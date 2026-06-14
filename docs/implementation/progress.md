@@ -88,11 +88,144 @@ Status markers:
 - [x] TASK-042: Add Calendar And Reporting Routes With Explicit Data Projections
 - [x] TASK-043: Add ML And AI Context Panels
 - [x] TASK-044: Add Settings And Sync Placeholders
-- [ ] TASK-045: Responsive State And Accessibility Polish
+- [x] TASK-045: Responsive State And Accessibility Polish
 
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-14 18:14 CST - TASK-045 final feature-branch gate passed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- TASK-045 is complete on the feature branch after targeted re-review found no P0/P1/P2 blockers.
+- Final local gate passed with `bun run check:quick`: typecheck, lint, 51 frontend test files / 813 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Completion scope: responsive shell state and accessibility polish for narrow navigation, page context panel desktop/narrow behavior, compact top-bar controls, route/overlay focus flows, state-text safety, and documentation/testing strategy sync.
+- Remaining deferred scope is unchanged: persistent navigation storage/backend routing, native/global/mobile shortcuts, mobile Quick Capture toolbar, persistent Search/SQLite FTS, executable provider/settings UI, broad query/feed/dashboard surfaces, sync transport/conflict UI, and native/Tauri/Rust/package/IPC/capability/schema/release changes.
+- Next action: commit completion ledger, merge `feat/task-045-responsive-accessibility-polish` into `master`, validate `master`, push, then continue to the next unblocked task if one exists.
+
+### 2026-06-14 18:13 CST - TASK-045 targeted re-review completed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Targeted re-review completed with no P0/P1/P2 findings. Epicurus (`reviewer`) confirmed Ramanujan's top-bar P2 is closed. Rawls (`test_quality_reviewer`) confirmed Lagrange's P2 coverage recommendations are closed. Ohm (`docs_researcher`) confirmed Heisenberg's docs P1/P2 are closed. Avicenna (`security_reviewer`) found no security/privacy or native/package/Tauri/Rust/capability/permission/IPC/schema drift. Parfit (`deprecation_auditor`) found no deprecated/stale MUI, React, or testing API usage.
+- Review evidence included focused TASK-045 suite, adjacent shell/overlay suites, typecheck, lint, diff-check, `.only` / `.skip` scans, local package version checks, and targeted local docs/code review. Parfit also verified current official MUI, Testing Library/user-event, and React docs.
+- Next action: close completed targeted re-review agents, run final `bun run check:quick`, then mark TASK-045 complete and merge if the gate passes.
+
+### 2026-06-14 18:10 CST - TASK-045 targeted re-review delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Targeted re-review agents running: Epicurus (`reviewer`, agent `019ec59c-d7cf-7232-bbc6-24cd4baaa18e`) for Ramanujan's top-bar P2 closure; Rawls (`test_quality_reviewer`, agent `019ec59c-dab0-78d0-8027-8ef68a2cd759`) for Lagrange's narrow coverage P2 closure; Ohm (`docs_researcher`, agent `019ec59c-dcfc-7a13-942d-4c8af71912e4`) for Heisenberg's docs P1/P2 closure; Parfit (`deprecation_auditor`, agent `019ec59c-e00e-7802-93bd-dcdcbee28b79`) for fresh MUI Tooltip/IconButton and React/testing API risk; Avicenna (`security_reviewer`, agent `019ec59c-e293-7c70-bab6-f91996ada782`) for UI-only security/privacy and drift risk.
+- Parent state: waiting for targeted re-review completion/final statuses before final gate or additional review-fix delegation. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 18:09 CST - TASK-045 top-bar fix committed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Carson (`implementer`) returned final status with production changes in `src/App.tsx`. Commit: `547d45f` (`Carson(review-fix)(Responsive State And Accessibility Polish): compact narrow top-bar actions`).
+- Delivered fix: below the `md` breakpoint, top-bar actions render as MUI `Tooltip` + `IconButton` controls with accessible labels and no visible text; desktop keeps the existing text/icon `Button` controls.
+- Parent validation passed: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` (12 tests), `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/command-palette-quick-capture-dialog.test.tsx src/test/search-overlay-results-route.test.tsx` (65 tests), `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: targeted re-review for Ramanujan's top-bar P2, Lagrange's narrow coverage P2s, Heisenberg's docs P1/P2 closure, and fresh MUI Tooltip/IconButton API/security checks.
+
+### 2026-06-14 18:05 CST - TASK-045 top-bar fix delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Carson (`implementer`, agent `019ec597-c3ec-77a3-973d-fdfb966f7b50`) spawned to make the review-fix top-bar compact/icon-only red test pass.
+- Expected scope: production changes only, likely `src/App.tsx` / `src/App.css`, preserving accessible role/name labels and MUI tooltips while removing visible text labels below the `md` breakpoint.
+- Parent state: waiting for Carson completion/final status before validation or implementation-fix commit.
+
+### 2026-06-14 18:04 CST - TASK-045 review-fix tests and docs committed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Schrodinger (`doc_writer`) completed docs-only fixes for Heisenberg's P1/P2. Commit: `ea29320` (`Schrodinger(docs-fix)(Responsive State And Accessibility Polish): sync responsive docs`).
+- Meitner (`test_writer`) completed review-fix tests in `src/test/responsive-accessibility-polish.test.tsx`. Commit: `9eed9fc` (`Meitner(test-fix)(Responsive State And Accessibility Polish): add responsive top-bar tests`).
+- Parent validation for test-fix red state: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` fails as expected with 12 tests total, 11 passing, and 1 failing. Expected failure: at tablet width 820px, the Command top-bar action still has visible text instead of compact/icon-only accessible control with tooltip.
+- Supporting checks passed: `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: delegate implementation fix for Ramanujan's responsive top-bar P2.
+
+### 2026-06-14 17:58 CST - TASK-045 docs findings fixed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Docs-fix scope updated product, architecture, and testing docs for Heisenberg's TASK-045 P1/P2 findings: `docs/product/07-user-interface-design.md` now records delivered responsive/accessibility polish without stale "responsive polish deferred" wording; `docs/architecture/07-runtime-flows.md` documents desktop `Page context` as `complementary` and narrow `Page context` as a named modal MUI Dialog; `docs/testing/strategy.md` documents `src/test/responsive-accessibility-polish.test.tsx`, the focused validation command, deterministic `matchMedia` helper expectations, role/name/user-event coverage, and no native/package/Tauri drift.
+- TASK-045 remains `[~]` because sibling review-fix work, final gate, and merge are still pending. Persistent navigation storage/backend routing, native/global/mobile shortcuts, mobile Quick Capture toolbar, persistent Search/SQLite FTS, executable provider/settings UI, broad query/feed/dashboard surfaces, sync transport/conflict UI, and native/Tauri/Rust/package/IPC/capability/schema/release changes remain deferred.
+- Validation for this docs-fix pass: `git diff --check` passed; targeted stale-wording `rg` over product/testing/runtime docs found no `responsive polish`, `responsive/persistent`, `right panel collapses to a temporary Drawer`, `Drawer on narrow`, `ContextPanel.*Drawer`, or `still needs responsive` matches.
+- Note: `src/test/responsive-accessibility-polish.test.tsx` has concurrent review-fix test edits outside this docs-fix scope; this docs-fix agent did not edit test or production code.
+
+### 2026-06-14 17:57 CST - TASK-045 review fixes delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Schrodinger (`doc_writer`, agent `019ec590-b06d-7ae1-8d7c-06ee9f0a5f86`) spawned to fix Heisenberg's docs P1/P2. It must leave TASK-045 `[~]` until parent final completion because review fixes, final gate, and merge are still pending.
+- Meitner (`test_writer`, agent `019ec590-b365-7f42-8490-a0d205d8ae39`) spawned to add review-fix red tests for Ramanujan's top-bar responsive P2 and Lagrange's narrow dialog/route coverage P2.
+- Parent state: waiting for Schrodinger and Meitner completion/final statuses. Implementation fixes must wait for Meitner's final test result.
+
+### 2026-06-14 17:56 CST - TASK-045 review outcome requires fixes
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Noether (`pr_explorer`) mapped the diff and found no blocker. Ampere (`security_reviewer`) found no P0/P1/P2 security findings. Gauss (`deprecation_auditor`) found no P0/P1/P2 API/deprecation findings.
+- Ramanujan (`reviewer`) found no P0/P1, but one merge-blocking P2 for TASK-045 acceptance: top-bar actions still render as text buttons across the 761-899px band while the narrow shell breakpoint starts at `md` / 899.95px. TASK-045 source docs require top app-bar actions to collapse to icon buttons with tooltips before text truncates.
+- Heisenberg (`docs_researcher`) found a docs P1: docs are not merge-ready until TASK-045 delivery is recorded in product/progress docs and stale "responsive polish deferred" wording is updated while keeping persistent navigation/native/mobile/backend items deferred. It also found P2 docs sync needs in testing strategy, runtime flows, and ContextPanel docs.
+- Lagrange (`test_quality_reviewer`) found no P0/P1, but recommended P2 coverage for narrow-width top/dialog smoke and narrow route surface composition. Existing red-to-green evidence remains strong.
+- Parent decision: delegate docs sync to `doc_writer`, delegate review-fix tests to `test_writer`, then delegate implementation only after test fixes complete. Parent will not implement fixes directly.
+
+### 2026-06-14 17:52 CST - TASK-045 review delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Review agents running: Noether (`pr_explorer`, agent `019ec58c-201f-7472-8942-936187ec34cb`), Ramanujan (`reviewer`, agent `019ec58c-22f4-7851-af8b-54064da82f07`), Ampere (`security_reviewer`, agent `019ec58c-254b-78c2-ac9d-a2d0770cc9b2`), Gauss (`deprecation_auditor`, agent `019ec58c-27c1-7651-92ac-ece39784dcfe`), Heisenberg (`docs_researcher`, agent `019ec58c-2ab2-71c0-a658-5c67a6055105`), and Lagrange (`test_quality_reviewer`, agent `019ec58c-2d55-7381-9b6e-f79930ece239`).
+- `doc_writer` will be spawned after capacity frees.
+- Parent state: waiting for review completion/final statuses before deciding merge readiness or review fixes. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 17:51 CST - TASK-045 implementation green
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Anscombe (`implementer`) returned final status with production changes in `src/App.tsx` and `src/App.css`.
+- Commit: `9e5bf41` (`Anscombe(implementation)(Responsive State And Accessibility Polish): implement responsive shell panels`).
+- Delivered so far: narrow layouts start with workspace navigation closed; narrow navigation uses a temporary MUI Drawer and closes on route selection/backdrop/Escape with focus return; desktop page context remains a named `complementary` panel and closes on Escape; narrow page context renders as a named modal dialog while preserving the editor behind it.
+- Parent validation passed: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` (10 tests), `bun run test:frontend -- src/test/mui-shell-frame.test.tsx src/test/ml-ai-context-panels.test.tsx` (28 tests), `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx src/test/search-overlay-results-route.test.tsx` (54 tests), `bun run test:frontend -- src/test/sidebar-page-filter-navigation.test.tsx` (21 tests), `bun run typecheck`, `bun run lint`, and `git diff --check` passed.
+- Next action: run review agents for correctness, security, deprecated APIs, docs, and test quality.
+
+### 2026-06-14 17:46 CST - TASK-045 implementation delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Anscombe (`implementer`, agent `019ec586-5852-7992-bb47-21d0c23adda9`) spawned to make Pasteur's red tests pass with minimum production changes.
+- Expected implementation scope: existing app shell responsive/accessibility behavior, likely `src/App.tsx` and `src/App.css`; no test edits unless Anscombe reports a test blocker/final failure.
+- Parent state: waiting for Anscombe completion/final status before validation or implementation commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 17:45 CST - TASK-045 red tests committed
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Pasteur (`test_writer`) returned final status with test-only changes in `src/test/responsive-accessibility-polish.test.tsx`.
+- Commit: `75b07f8` (`Pasteur(test)(Responsive State And Accessibility Polish): add responsive accessibility tests`).
+- Red validation: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx` failed as expected with 10 tests total, 6 passing, and 4 failing. Expected failures: narrow layout starts with workspace navigation expanded; narrow route selection leaves navigation expanded and focus is not restored to the toggle; desktop page context panel does not close on Escape; narrow page context panel renders as `complementary` instead of a named modal temporary dialog.
+- Supporting checks passed before commit: `bun run typecheck`, `bun run lint`, and `git diff --check`.
+- Next action: delegate implementation to `implementer`; parent must wait for completion/final status before validating or committing implementation.
+
+### 2026-06-14 17:37 CST - TASK-045 red tests delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Pasteur (`test_writer`, agent `019ec57e-7005-7db1-b8da-c3d9c677d602`) spawned to add failing TASK-045 responsive/accessibility RTL/static tests.
+- Expected scope: test-only changes, likely `src/test/responsive-accessibility-polish.test.tsx` plus any narrow test helper needed without package drift.
+- Parent state: waiting for Pasteur completion/final status before red validation or commit. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 17:36 CST - TASK-045 pre-test guidance complete
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Jason (`planner`) recommended the smallest slice: shell-level responsive/accessibility polish in `src/App.tsx` and `src/App.css`, with focused tests in `src/test/responsive-accessibility-polish.test.tsx`.
+- Locke (`docs_researcher`) found no local-doc mismatch and verified official WAI-ARIA APG modal dialog/disclosure guidance, MUI v9 Drawer/Dialog/breakpoint/useMediaQuery guidance, Testing Library/user-event v14 guidance, and React 19 testing guidance. Local install is `@mui/material@9.0.1`; current MUI docs show v9.1.1, and relevant APIs align.
+- Herschel (`security_reviewer`) found no current security merge blocker. It recommended P0/P1 red tests for native/package drift, non-leaky state text, plugin boundary props, command boundaries, deferred scope, dialog semantics, narrow temporary drawer behavior, stale async safety, inert Settings/Sync behavior, and state consistency.
+- Aquinas (`deprecation_auditor`) found no P0/P1 blocker. It confirmed local versions and warned to avoid stale MUI/React/test APIs, MUI focus-trap disabling props, and committed focused/skipped tests. It noted `matchMedia` needs a deterministic test helper because jsdom lacks it.
+- Parent decision: delegate red tests to `test_writer`; tests should stay user-perspective RTL/user-event coverage with static guards and no production implementation.
+
+### 2026-06-14 17:32 CST - TASK-045 pre-test guidance delegated
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Pre-test agents running: Jason (`planner`, agent `019ec579-6734-7ef3-aa0e-a9e68cb38091`) for task slicing and red-test guidance; Locke (`docs_researcher`, agent `019ec579-69f1-7d52-84a5-67e83c3bfa20`) for local docs plus current official WAI-ARIA, MUI responsive Drawer/Dialog/breakpoint, RTL/user-event, and React testing guidance; Herschel (`security_reviewer`, agent `019ec579-6c46-7633-a2ef-47b1a73d4b9c`) for UI-only security/privacy boundary guidance; Aquinas (`deprecation_auditor`, agent `019ec579-6ebd-7853-b5a4-f7ef6069b349`) for stale MUI/React/testing API guidance.
+- Parent state: waiting for child-agent completion/final statuses before red-test delegation. A wait timeout is not a failure or idle signal.
+
+### 2026-06-14 17:30 CST - TASK-045 started
+
+- Branch: `feat/task-045-responsive-accessibility-polish`.
+- Base: `master` commit `1de3ec0` after TASK-044 merge and push.
+- TASK-044 merge validation passed on `master`: `bun run check:quick` passed with typecheck, lint, 50 frontend test files / 801 tests, Rust fmt check, Rust clippy, and Rust tests.
+- Agent/config validation for TASK-045 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with the known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
+- Scope decision: TASK-045 is a TypeScript/React/MUI UI-only responsiveness and accessibility polish task. No native/Tauri/Rust/package/capability/permission/IPC/schema/release changes are in scope.
+- Next action: delegate pre-test planning, docs research, security boundary guidance, and deprecation/API guidance, then wait for child-agent completion/final statuses before test writing.
 
 ### 2026-06-14 17:28 CST - TASK-044 completed on feature branch
 
