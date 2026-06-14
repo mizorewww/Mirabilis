@@ -975,6 +975,8 @@ limitations
 
 TASK-030 不会把 caller-provided projection evidence 生成的 prediction 写入 durable ML metadata/events。`ml.predictedRemainingTime`、`ml.predictionConfidence` 和 `ml.prediction-generated` 是 ML-owned descriptors；实际 durable prediction writes deferred until a trusted query/feed/projection source exists.
 
+TASK-043 adds the current app-shell ML consumer. On trusted page routes, the optional right `Page context` panel snapshots public runtime pages, metadata, and events, builds an exact current-page `ml.remaining-time-prediction-input`, caps projected ML pages/metadata/events at 1,000 rows, and executes only the active `ml`-owned `ml.run-prediction` command. The shell projection includes the current page, direct child page summaries, Task estimate/status metadata, Tag tag metadata, and Timer segment/note events that belong to the current page projection. It excludes archived/missing/malformed pages, wrong-owner metadata/events, full workspace bodies, secrets, provider settings, raw runtime handles, and sibling plugin private stores. A successful result renders through exact `ViewHost` id/type `ml.prediction-panel`. The registered `ml.page-sidebar.prediction-panel` slot remains available as a plugin contribution, but TASK-043 does not broadly mount `page.sidebar.panel`.
+
 ### 21.3 Baseline 算法语义
 
 当前 baseline 是 non-trained heuristic：
@@ -1020,7 +1022,7 @@ estimate bias
 similar task clustering
 rank today tasks
 ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
-app-shell mounting / polish
+additional app-shell/sidebar polish beyond the TASK-043 page context panel
 native/package/Rust/schema/Tauri capability changes
 ```
 
@@ -1123,6 +1125,8 @@ AI commands do not mutate Markdown Pages, metadata, events, filters, sibling plu
 
 `ai.suggestion-panel` and `ai.review-panel` are accessible fail-closed views. They render loading or unavailable status text through React text sinks and intentionally ignore unsafe caller data, provider output, or errors.
 
+TASK-043 adds the current app-shell AI consumer inside the optional page-only `Page context` panel. The Suggestions tab renders `ai.suggestion-panel` through exact `ViewHost` id/type `ai.suggestion-panel`; the Review tab renders `ai.review-panel` through exact `ViewHost` id/type `ai.review-panel`. The shell builds explicit bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page `ml.remaining-time-prediction` exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned command descriptors, reports redacted unavailable/error states, ignores stale async results after page switches, and does not write pages, metadata, events, filters, sibling plugin data, settings, secrets, provider configuration, or durable AI metadata/events. Live provider execution, provider settings UI, persistent plugin settings, secret/keychain storage, network/native execution, package changes, and suggestion acceptance/apply workflows remain deferred.
+
 ### 22.5 快速收集箱 AI
 
 用户输入：
@@ -1156,7 +1160,7 @@ provider execution outside injected/mocked tests
 durable ai.summary / ai.suggestedTags / ai.suggestedEstimate writes
 ai.suggestion-generated / ai.summary-generated writes from trusted acceptance flows
 automatic page/filter/task/tag mutation from AI suggestions
-app-shell mounting and acceptance UX
+acceptance UX and broader app-shell/sidebar workflows beyond the TASK-043 advisory context panel
 raw Responses missing-status stricter parsing
 exact preservation of public result words matching persist*
 generate-filter parity with the broader Core filter executor, including neq / exists semantics

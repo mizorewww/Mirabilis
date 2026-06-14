@@ -384,6 +384,8 @@ deterministic remaining-time baseline DTO
 
 `ml.run-prediction` consumes exact bounded caller-provided pages/metadata/events projections only. It does not read sibling plugin private stores/facades, does not import Task/Timer/Tag/Habit/Stats internals, and does not persist ML metadata/events from those projections. Durable prediction writes require a future trusted query/feed/projection source.
 
+TASK-043 当前把 ML 接入 app-shell page context panel：trusted page routes 可以打开右侧 `Page context` panel，shell 从 public runtime pages/metadata/events 快照构造 current-page `ml.remaining-time-prediction-input`，ML projection arrays cap at 1,000 rows，执行 active owned `ml.run-prediction`，并通过 exact `ViewHost` id/type `ml.prediction-panel` 渲染结果。Broad `page.sidebar.panel` mounting、durable ML metadata/events 和 persistent/trusted ML feed integration 仍是后续范围。
+
 仍是后续范围：
 
 ```text
@@ -396,7 +398,7 @@ persistent predictions / model refresh
 相似任务聚类
 task ranking
 ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
-app-shell mounting / polish
+additional app-shell/sidebar polish beyond the TASK-043 page context panel
 native/package/Rust/schema/Tauri capability changes
 ```
 
@@ -415,6 +417,8 @@ mocked/injected provider and transport tests, no live OpenAI calls
 inert ai.provider-settings descriptor
 fail-closed ai.suggestion-panel and ai.review-panel views
 ```
+
+TASK-043 当前把 AI 接入 app-shell page context panel：Suggestions / Review tabs 通过 exact `ViewHost` ids 渲染 `ai.suggestion-panel` 和 `ai.review-panel`，shell 只为 `ai.suggest-tags`、`ai.suggest-due-date`、`ai.generate-subtasks` 和 valid ML prediction 后的 `ai.explain-prediction` 生成 bounded current-page advisory payloads。AI projection arrays cap at 100 rows，current-page body text cap at 50,000 chars。Shell 只执行 active owned AI command descriptors，结果保持 advisory，不写 pages、metadata、events、filters、settings、secrets、provider configuration 或 durable AI metadata/events。
 
 Persistent plugin settings, settings UI, secret storage/keychain, native HTTP/live provider execution, AI acceptance workflows, durable AI metadata/events, and package/native/Tauri/Rust/schema/capability changes remain deferred.
 
@@ -597,6 +601,6 @@ AI：AI Plugin
 搜索：Search Plugin
 ```
 
-TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。TASK-031 当前 AI baseline 也已接入 built-in plugin runtime：`ai` 注册 canonical kebab-case commands、AI metadata/event descriptors、`ai.provider-settings` descriptor 和 fail-closed views，通过 plugin-owned `openai` provider boundary 返回 advisory DTO。TASK-032 当前 Sync baseline 以内置 `sync` plugin id 接入，但只定义 syncable unit DTO descriptors/serializers、rebuildable local plugin-index policy 和 conflict policy；没有 runtime commands/views/settings panels、transport、settings UI、secret storage、network/native sync 或 schema/capability changes。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理、persistent Search indexing / background indexer / SQLite FTS、AI settings UI/secret storage/live provider execution 和 Sync network/native transport 都是后续范围。
+TASK-029 当前 Quick Capture / Search baseline 已接入 built-in plugin runtime：Quick Capture 使用 `quick-capture` id、`quick-capture.*` commands、`quick-capture.unprocessed` metadata 和 `quick-capture.filter.inbox` filter，把 Markdown 保存到 trusted plugin-marked Inbox；Search 使用 `search.query` 和 `search.results`，按需扫描未 archived 页面 title/body。TASK-031 当前 AI baseline 也已接入 built-in plugin runtime：`ai` 注册 canonical kebab-case commands、AI metadata/event descriptors、`ai.provider-settings` descriptor 和 fail-closed views，通过 plugin-owned `openai` provider boundary 返回 advisory DTO。TASK-043 当前把 ML / AI 接入 page-only right context panel：ML 通过 current-page bounded projection 执行 `ml.run-prediction`，AI 只执行 advisory current-page allowlist，二者都通过 exact `ViewHost` ids 渲染，不启用 live provider、settings UI、secret storage、network/native execution 或 durable AI/ML writes。TASK-032 当前 Sync baseline 以内置 `sync` plugin id 接入，但只定义 syncable unit DTO descriptors/serializers、rebuildable local plugin-index policy 和 conflict policy；没有 runtime commands/views/settings panels、transport、settings UI、secret storage、network/native sync 或 schema/capability changes。Quick Capture native/global shortcut、移动 toolbar 语法按钮、自动 Task/Tag 清理、persistent Search indexing / background indexer / SQLite FTS、AI settings UI/secret storage/live provider execution、durable AI/ML acceptance/write workflows 和 Sync network/native transport 都是后续范围。
 
 产品开发的中心任务是把 **Plugin Host、Registry、Command、View、Metadata、Event、Filter** 做扎实。只要这套底层抽象稳定，任务、习惯、时间记录、热力图、统计、机器学习和 AI 都可以作为插件不断接入，而不会污染 Core。

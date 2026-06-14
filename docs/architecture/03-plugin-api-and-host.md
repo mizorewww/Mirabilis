@@ -193,6 +193,8 @@ TASK-037 的 Home workspace editor follows the same provider boundary. App Shell
 
 TASK-037 `openPage(pageId)` is a one-shot shell authorization, not a general navigation facade. A page ID can be opened only when it was returned by trusted `task.open-task-page` command execution for the current source page and the current page generation still matches. Delayed hosted opens after leaving Home, foreign self-authorization, and non-current page load/save attempts fail closed without exposing raw page bodies or runtime handles.
 
+TASK-043 applies the same boundary to the page-only ML / AI context panel. The trusted App Shell may snapshot public runtime pages, metadata, and events to build controlled current-page projection DTOs, but the hosted views receive only accepted data for exact `ViewHost` ids (`ml.prediction-panel`, `ai.suggestion-panel`, `ai.review-panel`). ML command execution is limited to an active `ml`-owned `ml.run-prediction` descriptor. AI command execution is limited to active `ai`-owned advisory descriptors for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and gated `ai.explain-prediction`. The context panel does not pass full runtime handles, Core stores/registries, Plugin Host, NativeBridge/Tauri handles, provider settings, secrets, raw errors, or full workspace data into plugin-rendered descendants.
+
 后续如果插件贡献 view、slot 或其他 plugin-rendered React subtree，这些 subtree 不能通过 `useRuntime()` 获取 full runtime。它们只能接收 `PluginContext`、plugin-scoped facades，或 App Shell 明确传入的 controlled props。
 
 ---

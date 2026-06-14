@@ -798,6 +798,8 @@ ctx.slots.register({
 
 `PredictionPanel` validates runtime DTOs before rendering and fails closed to an inert unavailable state for wrong-kind, malformed, forged, or unbounded data. It renders through React text sinks and avoids Markdown/HTML/code execution sinks.
 
+TASK-043 adds the current app-shell integration layer without changing ML Plugin ownership. The shell-owned `Page context` panel is available only on trusted page routes. It reads public runtime page/metadata/event snapshots, derives an exact current-page ML projection with the current page plus direct child page summaries, Task estimate/status metadata, Tag tag metadata, and Timer segment/note evidence, caps ML projection arrays at 1,000 rows, and executes only the active `ml`-owned `ml.run-prediction` command. A valid result is rendered through exact `ViewHost` id/type `ml.prediction-panel`. TASK-043 does not import private ML modules, mount broad `page.sidebar.panel`, persist ML metadata/events, add model storage/training/workers, or add package/native/Tauri/Rust/schema/capability surface.
+
 Deferred after TASK-030:
 
 ```text
@@ -806,7 +808,7 @@ trusted cross-plugin query/feed facade
 persistent prediction metadata/events and model refresh
 recommendation / best work time / estimate bias / clustering / ranking
 ML-native explanation beyond TASK-031 ai.explain-prediction advisory command
-app-shell/sidebar mounting polish
+additional app-shell/sidebar polish beyond the TASK-043 page context panel
 network/filesystem/workers/model storage/training/background jobs
 native/package/Rust/schema/Tauri capability changes
 ```
@@ -926,6 +928,8 @@ TASK-031 does not add the OpenAI SDK, `fetch`, `XMLHttpRequest`, WebSocket, work
 
 `ai.suggestion-panel` and `ai.review-panel` are minimal accessible views. They render loading/unavailable `role="status"` text inside named regions and ignore unsafe data/error props, so malformed provider output or caller data remains inert.
 
+TASK-043 adds the current app-shell AI integration layer without changing AI Plugin ownership or provider execution. The shell-owned `Page context` panel renders `ai.suggestion-panel` and `ai.review-panel` through exact `ViewHost` ids and explicit `{ kind }` DTOs. It builds bounded current-page advisory payloads only for `ai.suggest-tags`, `ai.suggest-due-date`, `ai.generate-subtasks`, and `ai.explain-prediction` after a valid current-page ML prediction exists. AI projection arrays cap at 100 rows and current-page body text caps at 50,000 chars. The shell executes only active `ai`-owned descriptors, treats output as advisory text/status only, rejects stale async results after page switches, and does not mutate pages, metadata, events, filters, plugin settings, sibling plugin data, provider configuration, secrets, or durable AI metadata/events. TASK-043 adds no provider settings UI, keychain/secret storage, live provider execution, network/native transport, package, Tauri/Rust, schema, IPC, capability, or permission surface.
+
 用户在任务页点击 AI 拆解时，当前 slice can only return advisory Markdown-like text:
 
 ```text
@@ -949,7 +953,7 @@ native HTTP transport / OpenAI SDK / live provider execution
 durable AI metadata and event writes
 acceptance UX that applies suggestions to pages, metadata, events, or filters
 AI tools / hosted tools / streaming / Agents SDK orchestration
-app-shell route/sidebar mounting polish
+broader app-shell route/sidebar workflows beyond the TASK-043 advisory context panel
 raw Responses missing-status stricter parsing
 exact preservation of public result words matching persist*
 generate-filter parity with broader Core filter operators such as neq / exists
