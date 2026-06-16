@@ -6,7 +6,7 @@
 - Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: started; parent is preparing pre-test guidance agents.
+- Status: pre-test guidance delegated; parent is waiting for child-agent final statuses.
 
 ## Scope
 
@@ -50,8 +50,11 @@
 
 ## Agent Notes
 
-- No child agents have returned TASK-048 final statuses yet.
+- Gibbs (`planner`, agent `019ed1e9-1c93-7fd0-af0d-e8678799a583`) was spawned at 2026-06-17 03:28 CST for TASK-048 branch-sized implementation slice and TDD plan.
+- Averroes (`docs_researcher`, agent `019ed1e9-2103-73b0-ba41-6fbb21a3acb0`) was spawned at 2026-06-17 03:28 CST for local/current docs guidance covering editor save, React/MUI, Testing Library/user-event, Vitest, Command Registry, and Plugin Host patterns.
+- Curie (`security_reviewer`, agent `019ed1e9-2540-7f42-bb1b-d70697f41f44`) was spawned at 2026-06-17 03:28 CST for save-time semantic refresh security and boundary red-test targets.
+- Sagan (`deprecation_auditor`, agent `019ed1e9-296a-7590-9dd3-c681376938a1`) was spawned at 2026-06-17 03:28 CST for stale API and version-specific testing/implementation risks.
 
 ## Next Action
 
-- Spawn planner, docs_researcher, security_reviewer, and deprecation_auditor for TASK-048 pre-test guidance. Wait for final statuses before delegating red tests.
+- Wait for Gibbs, Averroes, Curie, and Sagan final statuses before delegating red tests. A wait timeout is not a failure or idle signal.

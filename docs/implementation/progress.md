@@ -124,7 +124,8 @@ Add newest entries at the top.
 - Local docs read by parent before delegation: TASK-048 task index section, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md` task/tag/habit sections, `docs/architecture/02-core-kernel.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
 - Scope: editor save should invoke plugin-owned refresh/resolve commands for task, tag, and habit semantics where plugins explicitly declare that save-time behavior; save failures must be visible, bounded, and non-leaky while preserving the saved Markdown page.
 - Out of scope: Core/editor business parsing for task/tag/habit/timer/calendar/heatmap/stats/chart/ML/AI/sync, background indexers, workers, automatic global scanners, new native/Tauri/IPC/package/Rust surfaces, and sibling plugin private-data mutation.
-- Parent state: preparing planner/docs/security/deprecation pre-test guidance agents. Parent remains orchestration-only.
+- Pre-test guidance agents spawned: Gibbs (`planner`, agent `019ed1e9-1c93-7fd0-af0d-e8678799a583`), Averroes (`docs_researcher`, agent `019ed1e9-2103-73b0-ba41-6fbb21a3acb0`), Curie (`security_reviewer`, agent `019ed1e9-2540-7f42-bb1b-d70697f41f44`), and Sagan (`deprecation_auditor`, agent `019ed1e9-296a-7590-9dd3-c681376938a1`).
+- Parent state: waiting for pre-test guidance final statuses before delegating red tests. A wait timeout is not a failure or idle signal.
 
 ### 2026-06-17 03:26 CST - TASK-047 merged and post-merge quick gate passed
 

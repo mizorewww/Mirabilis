@@ -8,7 +8,7 @@ Last updated: 2026-06-17 03:28 CST.
 - Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-048 started; parent is preparing pre-test guidance agents.
+- Current phase: TASK-048 pre-test guidance delegated; parent is waiting for final statuses.
 
 ## Current Outcome
 
@@ -17,6 +17,7 @@ Last updated: 2026-06-17 03:28 CST.
 - Agent/config validation for TASK-048 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket/reachability OK, with known `TERM=dumb` terminal failure and unrestricted-sandbox notes.
 - TASK-048 scope: wire editor save to explicitly invoke plugin-owned task/tag/habit refresh or resolve commands where those plugins declare save-time behavior, while preserving Core/editor plugin-agnostic boundaries and saved Markdown durability.
 - TASK-048 must not add background indexers, workers, automatic global scanners, ML/AI/sync behavior, package/native/Tauri/IPC/Rust/capability changes, broad query/feed facades, or sibling plugin private-data mutation.
+- TASK-048 pre-test guidance started at 2026-06-17 03:28 CST: Gibbs (`planner`, agent `019ed1e9-1c93-7fd0-af0d-e8678799a583`) for implementation slice and TDD plan; Averroes (`docs_researcher`, agent `019ed1e9-2103-73b0-ba41-6fbb21a3acb0`) for local/current docs guidance; Curie (`security_reviewer`, agent `019ed1e9-2540-7f42-bb1b-d70697f41f44`) for boundary red-test targets; Sagan (`deprecation_auditor`, agent `019ed1e9-296a-7590-9dd3-c681376938a1`) for stale API risk.
 - TASK-046 is complete and merged to `master`; post-merge `bun run check:full` passed at 2026-06-15 00:04 CST.
 - TASK-047 was selected as the next unblocked task after TASK-046 and branch `feat/task-047-durable-navigation-route-state` was created from pushed `master`.
 - Agent/config validation for TASK-047 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
@@ -268,4 +269,4 @@ Last updated: 2026-06-17 03:28 CST.
 
 ## Next Parent Actions
 
-- Spawn planner, docs_researcher, security_reviewer, and deprecation_auditor for TASK-048 pre-test guidance. Wait for final statuses before delegating red tests.
+- Wait for Gibbs, Averroes, Curie, and Sagan final statuses before delegating red tests. A wait timeout is not a failure or idle signal.
