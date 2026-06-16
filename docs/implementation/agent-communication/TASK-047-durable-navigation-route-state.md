@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: adjacent final-gate test fixes committed; parent is preparing final `check:quick`.
+- Status: complete on the feature branch; final `check:quick` passed and parent is preparing merge to `master`.
 
 ## Scope
 
@@ -44,6 +44,7 @@
 - 2026-06-15 00:05 CST: branch created from pushed `master`.
 - 2026-06-15 00:05 CST: 11 project agent TOML files parsed successfully.
 - 2026-06-15 00:05 CST: `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
+- 2026-06-17 03:24 CST: final parent gate passed with `bun run check:quick`: `bun run typecheck`, `bun run lint`, 53 frontend test files / 855 tests, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `cargo test --manifest-path src-tauri/Cargo.toml --all-features`.
 
 ## Agent Notes
 
@@ -101,7 +102,9 @@
 - Mencius returned final status at 2026-06-17 03:11 CST with no files modified and a P1 release blocker: `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes. `src/test/command-palette-quick-capture-dialog.test.tsx` has two failures because deterministic metadata ids are exhausted by TASK-047 route-state metadata before Quick Capture save assertions, and `src/test/ml-ai-context-panels.test.tsx` has one failure because the old snapshot expects no metadata changes after navigation. Mencius confirmed TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and the final gate should remain `bun run check:quick` after the adjacent test fixes.
 - Faraday (`test_writer`, agent `019ed1db-a4fa-7700-a0da-979a37bb9fa1`) was spawned at 2026-06-17 03:15 CST to fix Mencius's adjacent frontend test P1 without production changes. It owns `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` only unless it reports a blocker.
 - Faraday returned final status with test-only changes in `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx`. Parent validation at 2026-06-17 03:21 CST passed: `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx --reporter=dot` (24 tests), `bun run test:frontend -- src/test/ml-ai-context-panels.test.tsx --reporter=dot` (17 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` scans. Commit: `e0e0959` (`Faraday(test-fix)(Add Durable Navigation And Route State): fix final gate tests`).
+- Faraday was closed after its final status and validation record were committed in `b59f370`.
+- Final parent gate passed at 2026-06-17 03:24 CST with `bun run check:quick`. Parent decision: TASK-047 is complete on the feature branch and ready to merge to `master`; `check:full` is not required because final release-readiness review confirmed no package/native/Tauri/IPC/capability/permission/schema/filesystem/release-surface diff exists.
 
 ## Next Action
 
-- Close Faraday after this status is committed, then run final `bun run check:quick`.
+- Commit this completion record, merge `feat/task-047-durable-navigation-route-state` into `master`, push `master`, then run post-merge `bun run check:quick`.

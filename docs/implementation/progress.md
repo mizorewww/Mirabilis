@@ -93,7 +93,7 @@ Status markers:
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
 - [x] TASK-046: Wire SQLite-backed Runtime Persistence
-- [~] TASK-047: Add Durable Navigation And Route State
+- [x] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
 - [ ] TASK-050: Mount Mobile Quick Capture Toolbar
@@ -115,6 +115,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-17 03:24 CST - TASK-047 completed on feature branch
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Status: complete on the feature branch and ready to merge to `master`.
+- Key commits: `a78d416` red tests, `87c43fe` implementation, `f18ed64` docs sync, `780aec5` review-fix red tests, `07bc304` review-fix implementation, `459aa52` / `2b7f4b7` active-route accessor hardening, `8360851` / `6da71d4` recent-page accessor hardening, `78c821b` / `986cbd1` inbound recent-page normalization, `e0e0959` adjacent final-gate test fixes, and `b59f370` final gate test-fix record.
+- Final parent gate passed: `bun run check:quick` (`bun run typecheck`, `bun run lint`, 53 frontend test files / 855 tests, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `cargo test --manifest-path src-tauri/Cargo.toml --all-features`).
+- Review state: all recorded P0/P1/P2 correctness, security, deprecation, docs, test-quality, and release-readiness findings are closed; no remaining blockers are known.
+- Remaining risk: final validation did not require `bun run check:full` because TASK-047 had no package/native/Tauri/IPC/capability/permission/schema/filesystem/release-surface diff after the adjacent frontend test fix.
+- Next action: commit this completion record, merge the branch to `master`, push, then run post-merge `bun run check:quick`.
 
 ### 2026-06-17 03:21 CST - TASK-047 adjacent final-gate test fixes committed
 

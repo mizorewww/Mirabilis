@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-17 03:21 CST.
+Last updated: 2026-06-17 03:24 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-17 03:21 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 adjacent final-gate test fixes committed; parent is preparing final `check:quick`.
+- Current phase: TASK-047 complete on the feature branch; parent is preparing merge to `master`.
 
 ## Current Outcome
 
@@ -71,6 +71,8 @@ Last updated: 2026-06-17 03:21 CST.
 - Mencius returned final status at 2026-06-17 03:11 CST with no files modified and a P1 release blocker: `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes. `src/test/command-palette-quick-capture-dialog.test.tsx` has two failures because deterministic metadata ids are exhausted by TASK-047 route-state metadata before Quick Capture save assertions, and `src/test/ml-ai-context-panels.test.tsx` has one failure because the old snapshot expects no metadata changes after navigation. Mencius confirmed TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and the final gate should remain `bun run check:quick` after the adjacent test fixes.
 - Faraday (`test_writer`, agent `019ed1db-a4fa-7700-a0da-979a37bb9fa1`) was spawned at 2026-06-17 03:15 CST to fix Mencius's adjacent frontend test P1 without production changes. It owns `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` only unless it reports a blocker.
 - Faraday returned final status with test-only changes in `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx`. Parent validation at 2026-06-17 03:21 CST passed: `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx --reporter=dot` (24 tests), `bun run test:frontend -- src/test/ml-ai-context-panels.test.tsx --reporter=dot` (17 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` scans. Commit: `e0e0959` (`Faraday(test-fix)(Add Durable Navigation And Route State): fix final gate tests`).
+- Faraday was closed after its final status and validation record were committed in `b59f370`.
+- Final TASK-047 feature-branch gate passed at 2026-06-17 03:24 CST with `bun run check:quick`: `bun run typecheck`, `bun run lint`, 53 frontend test files / 855 tests, Rust fmt check, Rust clippy, and Rust tests. Parent decision: TASK-047 is complete on the feature branch and ready to merge; no remaining P0/P1/P2 blockers are known.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -259,4 +261,4 @@ Last updated: 2026-06-17 03:21 CST.
 
 ## Next Parent Actions
 
-- Close Faraday after this status is committed, then run final `bun run check:quick`.
+- Commit this completion record, merge `feat/task-047-durable-navigation-route-state` into `master`, push `master`, then run post-merge `bun run check:quick`.
