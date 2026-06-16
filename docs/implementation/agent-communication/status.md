@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-17 03:28 CST.
+Last updated: 2026-06-17 03:32 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-17 03:28 CST.
 - Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-048 pre-test guidance delegated; parent is waiting for final statuses.
+- Current phase: TASK-048 pre-test guidance complete; parent is preparing red-test delegation.
 
 ## Current Outcome
 
@@ -18,6 +18,10 @@ Last updated: 2026-06-17 03:28 CST.
 - TASK-048 scope: wire editor save to explicitly invoke plugin-owned task/tag/habit refresh or resolve commands where those plugins declare save-time behavior, while preserving Core/editor plugin-agnostic boundaries and saved Markdown durability.
 - TASK-048 must not add background indexers, workers, automatic global scanners, ML/AI/sync behavior, package/native/Tauri/IPC/Rust/capability changes, broad query/feed facades, or sibling plugin private-data mutation.
 - TASK-048 pre-test guidance started at 2026-06-17 03:28 CST: Gibbs (`planner`, agent `019ed1e9-1c93-7fd0-af0d-e8678799a583`) for implementation slice and TDD plan; Averroes (`docs_researcher`, agent `019ed1e9-2103-73b0-ba41-6fbb21a3acb0`) for local/current docs guidance; Curie (`security_reviewer`, agent `019ed1e9-2540-7f42-bb1b-d70697f41f44`) for boundary red-test targets; Sagan (`deprecation_auditor`, agent `019ed1e9-296a-7590-9dd3-c681376938a1`) for stale API risk.
+- Gibbs (`planner`) returned final status at 2026-06-17 03:32 CST with no files modified. Parent accepted the branch slice: save-time semantic refresh for the currently saved Markdown page only, after durable save, using exact owned commands for unchecked task blocks, tag refresh, and habit refresh. Planner recommended a small helper such as `src/shell/semantic-refresh.ts`, UI warning state in `MarkdownPageEditor`, bridge result typing if needed, and red tests for save-before-refresh ordering, active owner checks, failure preserving saved Markdown, stale async ignoring, and static boundary drift. Planner explicitly deferred generic manifest API, page-level task refresh command, checked-task resolution, habit checkbox bridge, background/global scanners, workers, indexers, timer/calendar/stats/ML/AI/sync/feed/query work, and native/package/Tauri/Rust/IPC/capability changes.
+- Averroes (`docs_researcher`) returned final status at 2026-06-17 03:32 CST with no files modified. Parent accepted the guidance for downstream agents: TASK-048 should save Markdown first, then execute owner-checked plugin semantic commands; tests should use awaited `userEvent.setup()` interactions and async UI assertions; refresh errors must be bounded and non-leaky; docs need a TASK-048 testing section and stale "no save-time scan/refresh" wording updates after implementation. External docs verified by Averroes: React `act`, Testing Library user-event v14, Testing Library async APIs, Vitest async/mock APIs, and MUI Alert/version docs.
+- Curie (`security_reviewer`) returned final status at 2026-06-17 03:32 CST with no files modified and no P0/P1 security finding in the current docs/orchestration-only branch diff. Parent accepted Curie's required red-test targets for downstream agents: save-before-refresh ordering, no refresh after save failure, no saved Markdown corruption on refresh failure, saved block IDs for task resolver payloads, exact descriptor owner checks, exact plain payload keys, no hostile descriptor/result leakage, plugin facade mutation boundaries, generic bounded visible errors, no background/global/index/feed/native/browser-storage surfaces, and no package/native/Tauri/IPC/Rust/capability/schema/DB drift.
+- Sagan (`deprecation_auditor`) returned final status at 2026-06-17 03:32 CST with no files modified and no changed TASK-048 code paths to flag. Parent accepted constraints for downstream agents: awaited `userEvent.setup()` interactions, async `findBy` / `waitFor` assertions, awaited React `act` for manual deferred promise resolution, no `react-dom/test-utils`, StrictMode coverage that Save does not double-run refresh, event-bound save-time refresh rather than effect-bound refresh, generation/page guard preservation, active plugin declaration plus command owner checks, no broad runtime command exposure, MUI v9-safe imports/props, and no package/Tauri/IPC/Rust/capability/filesystem/worker/feed/Search/ML/background scanner surfaces. Official docs verified by Sagan: React 19 upgrade/test-utils/StrictMode/act, Testing Library user-event v14/async/options, MUI deprecated APIs/v9 migration, Vitest timers, and Vite 7 Node support.
 - TASK-046 is complete and merged to `master`; post-merge `bun run check:full` passed at 2026-06-15 00:04 CST.
 - TASK-047 was selected as the next unblocked task after TASK-046 and branch `feat/task-047-durable-navigation-route-state` was created from pushed `master`.
 - Agent/config validation for TASK-047 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
@@ -269,4 +273,4 @@ Last updated: 2026-06-17 03:28 CST.
 
 ## Next Parent Actions
 
-- Wait for Gibbs, Averroes, Curie, and Sagan final statuses before delegating red tests. A wait timeout is not a failure or idle signal.
+- Commit this guidance record, close Gibbs, Averroes, Curie, and Sagan, then delegate TASK-048 red tests to `test_writer`.
