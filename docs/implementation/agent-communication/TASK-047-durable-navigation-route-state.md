@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: final focused security re-review cleared; parent is preparing final release gate.
+- Status: final release-readiness review running; parent is waiting for Mencius final status.
 
 ## Scope
 
@@ -97,7 +97,8 @@
 - Lagrange returned final status with production changes in `src/shell/navigation/route-state.ts` and a narrow restore-candidate wiring change in `src/App.tsx`. Parent validation at 2026-06-15 01:54 CST passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (44 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (47 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks. Commit: `986cbd1` (`Lagrange(review-fix)(Add Durable Navigation And Route State): normalize inbound recent pages`).
 - Lovelace (`security_reviewer`, agent `019ec745-fc62-78a0-9cb7-fd3dcc24b668`) was spawned at 2026-06-15 01:55 CST for read-only focused security re-review of Harvey's inbound recent-page normalization P2 closure after Peirce/Lagrange.
 - Lovelace returned final status at 2026-06-17 03:05 CST with no files modified and no remaining P0/P1/P2 security or boundary findings. Lovelace confirmed Harvey's inbound `recentPageIds` P2 is closed, prior activeRoute and recentPageIds accessor hardening remains closed, startup restore applies runtime availability filtering from bounded candidates, persistence remains app-shell Core metadata only, and no package/native/Tauri/capability/permission/schema/Search/Sync/AI/release drift exists. Checks run: focused TASK-047 suite (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri/capability/permission/schema/Search/Sync/AI/release drift scans, route persistence storage scans, and direct parser probes.
+- Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) was spawned at 2026-06-17 03:07 CST for read-only final release-readiness review before parent final gate and merge.
 
 ## Next Action
 
-- Close Lovelace after this status is committed, then run the final TASK-047 release gate.
+- Wait for Mencius final status before running parent final gate. A wait timeout is not a failure or idle signal.
