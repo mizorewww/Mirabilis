@@ -6,7 +6,7 @@
 - Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: pre-test guidance complete; parent is preparing to delegate red tests.
+- Status: red tests delegated; parent is waiting for Mill final status.
 
 ## Scope
 
@@ -59,7 +59,8 @@
 - Curie returned final status at 2026-06-17 03:32 CST with no files modified. Curie found no P0/P1 security finding in the current docs/orchestration-only branch diff, and gave required TASK-048 red-test targets for implementation: save succeeds before refresh and refresh is skipped on save failure; refresh failure cannot roll back, overwrite, archive, or corrupt saved Markdown; task resolver payloads must use saved structured body block IDs rather than stale pre-save IDs; inactive, missing, wrong-owner, or matching-prefix foreign commands must fail closed before execution; payloads must be exact plain data only; hostile descriptors/results with accessors, symbols, non-enumerables, non-plain prototypes, functions, SQL/path/token/secret/native-handle-shaped fields, or runtime/native handles must be rejected or ignored without leakage; plugin-owned mutations must stay behind Plugin Host facades; visible errors must be generic and bounded; no background indexer, worker, timer loop, global scanner, all-pages scan, Search/ML/Sync feed, fetch, browser storage, native bridge path, package/native/Tauri/IPC/Rust/capability/schema drift, or DB operation drift is allowed.
 - Sagan returned final status at 2026-06-17 03:32 CST with no files modified and no changed TASK-048 code paths to flag because the branch diff is still docs/orchestration only. Constraints for downstream agents: use `const user = userEvent.setup()` with awaited interactions; use `findBy` / `waitFor` for async UI without sleeping or side effects inside callbacks; use awaited React `act` for manual deferred promise resolution and never import from `react-dom/test-utils`; add StrictMode coverage proving one Save click does not double-run semantic refresh; keep save-time refresh in the Save click async flow after `pageFacade.save(...)`, not in effects; preserve generation/page guards; use active plugin declarations plus `runtime.commands.get(commandId).pluginId` owner checks; avoid broad runtime command exposure; keep MUI v9-safe imports/props; and avoid package/Tauri/IPC/Rust/capability/filesystem/worker/feed/Search/ML/background scanner surfaces. Official docs verified: React 19 upgrade/test-utils/StrictMode/act, Testing Library user-event v14/async/user-event options, MUI deprecated APIs and v9 migration, Vitest timers, and Vite 7 Node support.
 - Gibbs, Averroes, Curie, and Sagan were closed after their final statuses were recorded in `7fcaf4e` plus this follow-up guidance record.
+- Mill (`test_writer`, agent `019ed1ef-04d8-7930-8568-27bcd87ea46b`) was spawned at 2026-06-17 03:33 CST for TASK-048 red tests only. It owns test/test-helper changes only, preferably a new focused `src/test/save-time-semantic-refresh-pipeline.test.tsx`, and must not modify production, docs, package/native/Tauri/Rust/config files, or implementation helpers.
 
 ## Next Action
 
-- Commit this follow-up guidance record, then delegate TASK-048 red tests to `test_writer`.
+- Wait for Mill final status before validating or committing red tests. A wait timeout is not a failure or idle signal.

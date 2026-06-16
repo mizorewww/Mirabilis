@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-17 03:32 CST.
+Last updated: 2026-06-17 03:33 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-17 03:32 CST.
 - Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-048 pre-test guidance complete; parent is preparing red-test delegation.
+- Current phase: TASK-048 red tests delegated; parent is waiting for Mill final status.
 
 ## Current Outcome
 
@@ -23,6 +23,7 @@ Last updated: 2026-06-17 03:32 CST.
 - Curie (`security_reviewer`) returned final status at 2026-06-17 03:32 CST with no files modified and no P0/P1 security finding in the current docs/orchestration-only branch diff. Parent accepted Curie's required red-test targets for downstream agents: save-before-refresh ordering, no refresh after save failure, no saved Markdown corruption on refresh failure, saved block IDs for task resolver payloads, exact descriptor owner checks, exact plain payload keys, no hostile descriptor/result leakage, plugin facade mutation boundaries, generic bounded visible errors, no background/global/index/feed/native/browser-storage surfaces, and no package/native/Tauri/IPC/Rust/capability/schema/DB drift.
 - Sagan (`deprecation_auditor`) returned final status at 2026-06-17 03:32 CST with no files modified and no changed TASK-048 code paths to flag. Parent accepted constraints for downstream agents: awaited `userEvent.setup()` interactions, async `findBy` / `waitFor` assertions, awaited React `act` for manual deferred promise resolution, no `react-dom/test-utils`, StrictMode coverage that Save does not double-run refresh, event-bound save-time refresh rather than effect-bound refresh, generation/page guard preservation, active plugin declaration plus command owner checks, no broad runtime command exposure, MUI v9-safe imports/props, and no package/Tauri/IPC/Rust/capability/filesystem/worker/feed/Search/ML/background scanner surfaces. Official docs verified by Sagan: React 19 upgrade/test-utils/StrictMode/act, Testing Library user-event v14/async/options, MUI deprecated APIs/v9 migration, Vitest timers, and Vite 7 Node support.
 - Gibbs, Averroes, Curie, and Sagan were closed after their final statuses were recorded in `7fcaf4e` plus this follow-up guidance record.
+- Mill (`test_writer`, agent `019ed1ef-04d8-7930-8568-27bcd87ea46b`) was spawned at 2026-06-17 03:33 CST for TASK-048 red tests only. It owns test/test-helper changes only, preferably a new focused `src/test/save-time-semantic-refresh-pipeline.test.tsx`, and must not modify production, docs, package/native/Tauri/Rust/config files, or implementation helpers.
 - TASK-046 is complete and merged to `master`; post-merge `bun run check:full` passed at 2026-06-15 00:04 CST.
 - TASK-047 was selected as the next unblocked task after TASK-046 and branch `feat/task-047-durable-navigation-route-state` was created from pushed `master`.
 - Agent/config validation for TASK-047 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
@@ -274,4 +275,4 @@ Last updated: 2026-06-17 03:32 CST.
 
 ## Next Parent Actions
 
-- Commit this follow-up guidance record, then delegate TASK-048 red tests to `test_writer`.
+- Wait for Mill final status before validating or committing red tests. A wait timeout is not a failure or idle signal.
