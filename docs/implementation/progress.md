@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-17 03:21 CST - TASK-047 adjacent final-gate test fixes committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `e0e0959` (`Faraday(test-fix)(Add Durable Navigation And Route State): fix final gate tests`).
+- Faraday (`test_writer`) updated `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` to account for legitimate TASK-047 app-shell route metadata while preserving adjacent test intent.
+- Parent validation passed: `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx --reporter=dot` (24 tests), `bun run test:frontend -- src/test/ml-ai-context-panels.test.tsx --reporter=dot` (17 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` scans.
+- Parent state: preparing final `bun run check:quick`.
+
 ### 2026-06-17 03:15 CST - TASK-047 adjacent final-gate test fixes delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
