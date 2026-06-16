@@ -116,6 +116,17 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-17 03:26 CST - TASK-047 merged and post-merge quick gate passed
+
+- Branch merged: `feat/task-047-durable-navigation-route-state`.
+- Merge commit on `master`: `91480dd` (`Merge TASK-047 durable navigation route state`).
+- `master` was pushed to `origin/master`.
+- Initial post-merge `bun run check:quick` caught one transient frontend timing failure in `src/test/responsive-accessibility-polish.test.tsx` while the Markdown editor was still loading.
+- Focused rerun passed: `bun run test:frontend -- src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (12 tests).
+- Post-merge validation on `master` passed on rerun: `bun run check:quick` (`bun run typecheck`, `bun run lint`, 53 frontend test files / 855 tests, Rust fmt check, Rust clippy, and Rust tests).
+- Worktree remained clean after validation.
+- Next unblocked task in autonomous mode: TASK-048 - Add Save-Time Semantic Refresh Pipeline.
+
 ### 2026-06-17 03:24 CST - TASK-047 completed on feature branch
 
 - Branch: `feat/task-047-durable-navigation-route-state`.

@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: complete on the feature branch; final `check:quick` passed and parent is preparing merge to `master`.
+- Status: merged to `master`; post-merge `check:quick` passed.
 
 ## Scope
 
@@ -104,7 +104,9 @@
 - Faraday returned final status with test-only changes in `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx`. Parent validation at 2026-06-17 03:21 CST passed: `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx --reporter=dot` (24 tests), `bun run test:frontend -- src/test/ml-ai-context-panels.test.tsx --reporter=dot` (17 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` scans. Commit: `e0e0959` (`Faraday(test-fix)(Add Durable Navigation And Route State): fix final gate tests`).
 - Faraday was closed after its final status and validation record were committed in `b59f370`.
 - Final parent gate passed at 2026-06-17 03:24 CST with `bun run check:quick`. Parent decision: TASK-047 is complete on the feature branch and ready to merge to `master`; `check:full` is not required because final release-readiness review confirmed no package/native/Tauri/IPC/capability/permission/schema/filesystem/release-surface diff exists.
+- TASK-047 was merged to `master` in merge commit `91480dd` (`Merge TASK-047 durable navigation route state`) and pushed to `origin/master`.
+- Initial post-merge `bun run check:quick` caught one transient frontend timing failure in `src/test/responsive-accessibility-polish.test.tsx` while the Markdown editor was still loading. Parent reran the focused file and it passed (12 tests), then reran full `bun run check:quick` and it passed with 53 frontend test files / 855 tests, Rust fmt check, Rust clippy, and Rust tests.
 
 ## Next Action
 
-- Commit this completion record, merge `feat/task-047-durable-navigation-route-state` into `master`, push `master`, then run post-merge `bun run check:quick`.
+- TASK-047 is complete. Continue autonomous roadmap by selecting and starting TASK-048.
