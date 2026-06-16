@@ -88,7 +88,9 @@ The runtime still uses synchronous in-memory Core store implementations for read
 - Pending direct page writes are flushed before a later persisted Core transaction commits, so transaction-managed metadata/event/filter/page writes do not race a missing SQLite page row.
 - Plugin lifecycle and command contexts run plugin-facing direct `ctx.pages`, `ctx.metadata`, `ctx.events`, and `ctx.filters` mutations inside the Core transaction path via `directTransactionRunner`; nested `ctx.transaction.run(...)` reuses the current transaction context.
 
-This TASK-046 slice is durable only for Core pages, metadata, events, and filters through the reviewed NativeBridge DB operations. Plugin-private runtime state such as Timer active state, injected AI/provider test state, route state, settings panels, sync transport state, search indexes, and future plugin-owned indexes remain in memory or deferred unless represented as Core pages/metadata/events/filters by existing plugin code or delivered by later tasks.
+This TASK-046 slice is durable only for Core pages, metadata, events, and filters through the reviewed NativeBridge DB operations. Plugin-private runtime state such as Timer active state, injected AI/provider test state, settings panels, sync transport state, search indexes, and future plugin-owned indexes remain in memory or deferred unless represented as Core pages/metadata/events/filters by existing plugin code or delivered by later tasks.
+
+TASK-047 is the app-shell route-state exception on top of that Core metadata boundary. The shell stores a JSON metadata record on the durable Home page with namespace `app-shell.navigation`, key `route-state`, and source owner `app-shell`; the record contains only a version, `homePageId`, active page/filter route ids and roles, an optional filter route token, and capped recent page ids. It does not add Tauri Store, browser storage, new IPC, permissions, schema, package/Cargo, Rust, or native routing surface.
 
 `BUILT_IN_PLUGINS` 在 TASK-032 后包含内置 `MarkdownEditorPlugin`、`MetadataUiPlugin`、`TaskPlugin`、`TagPlugin`、`TimerPlugin`、`CalendarPlugin`、`HabitPlugin`、`HeatmapPlugin`、`StatsPlugin`、`ChartPlugin`、`QuickCapturePlugin`、`SearchPlugin`、`MlPlugin`、`AiPlugin` 和 `SyncPlugin`。`loadBuiltInPlugins(BUILT_IN_PLUGINS)` 接收的是 App 启动时显式传入的插件对象，不表示文件系统发现、动态 import 或 native 插件加载。
 
@@ -117,6 +119,8 @@ TASK-043 的 app-shell `Page context` panel 只在 trusted page routes 上运行
 TASK-044 的 app-shell Settings workspace route 只展示 public runtime/app facts、public plugin manifest settings descriptors，以及内嵌的 Sync skeleton status。它不执行 settings/sync command，不渲染 executable settings panel，不接受 provider/remote/secret input，不持久化 plugin settings，不配置 Sync transport/conflicts，也不增加 NativeBridge/Tauri IPC、filesystem、network/live provider、package/Cargo/Rust surface、persistence schema、keychain、permission 或 capability。
 
 TASK-045 的 app-shell responsive/accessibility polish 只调整现有 TypeScript/React/MUI shell state 和 accessibility semantics。Desktop 保持 workspace navigation 可见，并保持 `Page context` 为 named `complementary` panel。Narrow layout 初始关闭 temporary navigation，route selection 后关闭 navigation 并把 focus 返回 launcher；narrow `Page context` 使用 named modal MUI `Dialog`，支持 Escape close、focus containment、editor preservation 和 launcher focus return。Command Palette、Search 和 Quick Capture 继续使用 named MUI Dialog with initial focus/focus trap/focus return。这个流程不新增 NativeBridge/Tauri IPC、filesystem、network/live provider、package/Cargo/Rust surface、persistence schema、keychain、permission、capability 或 release surface。
+
+TASK-047 的 app-shell durable navigation state 在 TASK-046 已有 Core metadata persistence 上运行。App Shell 将 active page route、active saved-filter route、durable Home identity 和 capped recent page ids 保存为 `app-shell.navigation` / `route-state` JSON metadata，`sourcePluginId` 为 `app-shell`，记录挂在 durable Home page 上。恢复时只读取 version、`homePageId`、active page/filter id/role、optional filter route token 和 capped recent page ids；page route 必须仍然存在且未 archived，filter route 必须重新通过 filter source plugin、target view、plugin ownership data 和 metadata-owner reservations 校验。Malformed/stale/missing/archived/wrong-owner records fail closed to safe Home or generic unavailable state. 这个流程不新增 Tauri Store、browser storage、NativeBridge/Tauri IPC、filesystem、network、package/Cargo/Rust surface、schema、permission、capability、generated permission TOML 或 native/backend routing surface。
 
 TASK-032 的 SyncPlugin 也只作为 TypeScript built-in plugin skeleton 加载。它的 manifest id 是 `sync`，`register()` 不注册 runtime commands、views、slots、settings panels、indexers 或 algorithms；当前 runtime 没有 `sync.start` / `sync.push` / `sync.pull` / transport command，也没有 executable sync settings UI。`src/plugins/sync/**` 只导出 syncable unit descriptors/serializers for Markdown Page, Metadata, Event, Filter, and Plugin Settings DTO snapshots, plus a rebuildable local plugin-index policy and conflict-policy helper. Plugin Settings snapshots reject top-level/nested secret/auth/credential/remote-endpoint-like keys, and the event conflict helper rejects stale, mismatched, non-plain, malformed, or getter-backed event DTOs before union/dedupe/conflict classification. No NativeBridge/Tauri IPC, filesystem, storage adapter, package/Cargo/Rust surface, schema, keychain, remote endpoint, network transport, or Tauri capability is added for Sync in TASK-032.
 
@@ -268,9 +272,19 @@ ml.run-prediction accepts kind ml.remaining-time-prediction-input with exact bou
 MlPlugin returns kind ml.remaining-time-prediction deterministic baseline DTO only and does not persist ML metadata/events from caller-provided projections
 PredictionPanel validates DTOs and fails closed/inertly for malformed or wrong-kind data
 
+TASK-047 当前:
+App Shell stores durable route state as JSON Core metadata on the durable Home page
+metadata namespace is app-shell.navigation, key is route-state, source owner is app-shell
+Persisted fields are limited to version, homePageId, active page/filter ids and roles, optional filter route token, and capped recent page ids
+Startup reuses the durable Home page id when the page is available and non-archived
+Page restoration revalidates non-archived pages before opening the editor route
+Filter restoration revalidates filter source ownership, target view ownership, plugin ownership data, and metadata-owner reservations before mounting ViewHost or SlotHost state
+Malformed, stale, missing, archived, or wrong-owner route-state records fail closed to safe Home or generic unavailable state
+There is no Tauri Store, browser storage, new IPC, permission, schema, package/Cargo, Rust, native, backend routing, Search FTS, or global route database surface
+
 后续：
 编辑器保存后自动扫描 task blocks
-TASK-038 已交付 current app-shell Drawer saved-filter routes for public filters; broader global/persistent saved-filter navigation remains future scope
+TASK-038 已交付 current app-shell Drawer saved-filter routes for public filters; TASK-047 persists the active public saved-filter route identity through app-shell Core metadata, while broader global route databases and arbitrary plugin route DTOs remain future scope
 Full metadata renderer/editor registry
 Task checkbox auto-bridge for Habit completion
 Timer metadata totals, Heatmap app-shell route/feed, persistent Calendar/Reports dashboards or saved filters beyond TASK-042, Stats persistent-index routes, trusted/persistent ML feed integration, Recently Worked saved filters, Unnoted Sessions saved filters, manual segment editing, calendar drag/drop, page.header.actions/sidebar/body-after slot placement, and native/schema surfaces
@@ -362,7 +376,42 @@ User clicks Inbox, Today, All Tasks, or a public saved filter in the MUI Drawer
 → task.filter-empty-state renders generic empty-state copy from filterName
 ```
 
-The route-unavailable state is shown before empty/result rendering whenever the filter, plugin ownership data, metadata owner reservations, or registered view cannot be trusted. Filter routes do not pass raw page IDs, page bodies, metadata records, event records, filter query JSON, runtime handles, NativeBridge, Tauri/native handles, filesystem/path handles, or plugin-private objects to plugin-rendered views. Automatic save-time scanning/indexing, Event/plugin-index `within` execution, JS filters, date picker, `@date` parser, persistent/global saved-filter navigation, and arbitrary plugin view routes without explicit DTO designs remain deferred.
+The route-unavailable state is shown before empty/result rendering whenever the filter, plugin ownership data, metadata owner reservations, or registered view cannot be trusted. Filter routes do not pass raw page IDs, page bodies, metadata records, event records, filter query JSON, runtime handles, NativeBridge, Tauri/native handles, filesystem/path handles, or plugin-private objects to plugin-rendered views. TASK-047 persists only the active public filter route identity for restart restoration. Automatic save-time scanning/indexing, Event/plugin-index `within` execution, JS filters, date picker, `@date` parser, broad global route databases, and arbitrary plugin view routes without explicit DTO designs remain deferred.
+
+### 18.5.1 Durable navigation route restoration
+
+TASK-047 当前流程:
+
+```text
+App Shell route changes after runtime hydration
+→ Shell normalizes the active route to a durable page/filter route identity
+→ Shell normalizes recent page ids, dedupes them, removes Home, and caps the list
+→ runtime.transaction.run writes Core metadata:
+   pageId: durable Home page id
+   namespace: app-shell.navigation
+   key: route-state
+   sourcePluginId: app-shell
+   valueType: json
+   value: { version, homePageId, activeRoute?, recentPageIds }
+```
+
+The persisted `activeRoute` is an exact data record only:
+
+```text
+page route  → { kind: "page", pageId, role: "home" | "recent" | "command-open" }
+filter route → { kind: "filter", filterId, role: "inbox" | "today" | "all-tasks" | "saved", routeToken? }
+```
+
+Restore reads the newest app-shell-owned JSON metadata record with namespace `app-shell.navigation` and key `route-state`. The parser accepts only plain data records with exact allowed keys, no accessors, no symbols, no prototype pollution, and no raw route DTO bodies. The shell then revalidates:
+
+- `homePageId` points at an available, non-archived page, otherwise the shell reuses or creates safe Home.
+- page routes point at available, non-archived pages and do not spoof Home role for a non-Home page.
+- filter routes still have trusted filter source plugin ownership, registered target view ownership, active plugin ownership data, and required metadata-owner reservations.
+- recent page ids point at available, non-archived pages after dedupe/cap/drop normalization.
+
+Malformed, stale, missing, archived, wrong-owner, or unsafe route-state records fail closed before rendering route content. The user sees safe Home or a generic unavailable state; no raw page body, metadata/event/filter object, filter query JSON, SQL, path, token, secret, raw error, runtime handle, NativeBridge, Tauri/native handle, store, registry, Plugin Host, or plugin-private object is rendered or persisted.
+
+TASK-047 uses existing Core metadata persistence only. It does not introduce Tauri Store, browser `localStorage`/`sessionStorage`, new NativeBridge operations, new Tauri IPC commands, generated permissions, capabilities, SQLite schema, package/Cargo changes, Rust/native code, backend/native routing, Search FTS, or a global route database.
 
 ### 18.6 用户点击 Start
 
@@ -860,7 +909,7 @@ Command Palette, Search, Quick Capture, and narrow Page context all use named MU
 Deferred after TASK-045:
 
 ```text
-persistent navigation storage or backend routing
+backend/native routing or broad global route databases
 native/global Quick Capture or Search shortcuts
 mobile Quick Capture toolbar / native mobile integration
 persistent Search index / search worker / SQLite FTS

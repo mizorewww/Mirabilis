@@ -93,7 +93,7 @@ Status markers:
 ## Milestone M10: Durable runtime and advanced plugin surfaces
 
 - [x] TASK-046: Wire SQLite-backed Runtime Persistence
-- [ ] TASK-047: Add Durable Navigation And Route State
+- [x] TASK-047: Add Durable Navigation And Route State
 - [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
 - [ ] TASK-050: Mount Mobile Quick Capture Toolbar
@@ -115,6 +115,317 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-17 03:24 CST - TASK-047 completed on feature branch
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Status: complete on the feature branch and ready to merge to `master`.
+- Key commits: `a78d416` red tests, `87c43fe` implementation, `f18ed64` docs sync, `780aec5` review-fix red tests, `07bc304` review-fix implementation, `459aa52` / `2b7f4b7` active-route accessor hardening, `8360851` / `6da71d4` recent-page accessor hardening, `78c821b` / `986cbd1` inbound recent-page normalization, `e0e0959` adjacent final-gate test fixes, and `b59f370` final gate test-fix record.
+- Final parent gate passed: `bun run check:quick` (`bun run typecheck`, `bun run lint`, 53 frontend test files / 855 tests, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`, and `cargo test --manifest-path src-tauri/Cargo.toml --all-features`).
+- Review state: all recorded P0/P1/P2 correctness, security, deprecation, docs, test-quality, and release-readiness findings are closed; no remaining blockers are known.
+- Remaining risk: final validation did not require `bun run check:full` because TASK-047 had no package/native/Tauri/IPC/capability/permission/schema/filesystem/release-surface diff after the adjacent frontend test fix.
+- Next action: commit this completion record, merge the branch to `master`, push, then run post-merge `bun run check:quick`.
+
+### 2026-06-17 03:21 CST - TASK-047 adjacent final-gate test fixes committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `e0e0959` (`Faraday(test-fix)(Add Durable Navigation And Route State): fix final gate tests`).
+- Faraday (`test_writer`) updated `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` to account for legitimate TASK-047 app-shell route metadata while preserving adjacent test intent.
+- Parent validation passed: `bun run test:frontend -- src/test/command-palette-quick-capture-dialog.test.tsx --reporter=dot` (24 tests), `bun run test:frontend -- src/test/ml-ai-context-panels.test.tsx --reporter=dot` (17 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` scans.
+- Parent state: preparing final `bun run check:quick`.
+
+### 2026-06-17 03:15 CST - TASK-047 adjacent final-gate test fixes delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Faraday (`test_writer`, agent `019ed1db-a4fa-7700-a0da-979a37bb9fa1`) was spawned to fix Mencius's adjacent frontend test P1 without production changes.
+- Faraday owns `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` only unless it reports a blocker.
+- Parent state: waiting for Faraday final status before validating or committing adjacent final-gate test fixes. A wait timeout is not a failure or idle signal.
+
+### 2026-06-17 03:11 CST - TASK-047 final gate blocked by adjacent tests
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) returned final status with no files modified and a P1 release blocker.
+- `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes: `src/test/command-palette-quick-capture-dialog.test.tsx` has two deterministic metadata-id exhaustion failures, and `src/test/ml-ai-context-panels.test.tsx` has one stale metadata snapshot failure.
+- Mencius confirmed the TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and final gate should remain `bun run check:quick` after adjacent test fixes.
+- Parent state: delegate adjacent frontend test fixes for this P1, then rerun final `bun run check:quick`.
+
+### 2026-06-17 03:07 CST - TASK-047 final release-readiness review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) was spawned for read-only final release-readiness review before parent final gate and merge.
+- Parent state: waiting for Mencius final status before running parent final gate. A wait timeout is not a failure or idle signal.
+
+### 2026-06-17 03:05 CST - TASK-047 final security re-review cleared
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Lovelace (`security_reviewer`, agent `019ec745-fc62-78a0-9cb7-fd3dcc24b668`) returned final status with no files modified and no remaining P0/P1/P2 security or boundary findings.
+- Lovelace confirmed Harvey's inbound `recentPageIds` P2 is closed, prior activeRoute and recentPageIds accessor hardening remains closed, startup restore applies runtime availability filtering from bounded candidates, persistence remains app-shell Core metadata only, and no package/native/Tauri/capability/permission/schema/Search/Sync/AI/release drift exists.
+- Checks run by Lovelace: focused TASK-047 suite (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri/capability/permission/schema/Search/Sync/AI/release drift scans, route persistence storage scans, and direct parser probes.
+- Parent state: preparing final TASK-047 release gate.
+
+### 2026-06-15 01:55 CST - TASK-047 inbound recent-page normalization re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Lovelace (`security_reviewer`, agent `019ec745-fc62-78a0-9cb7-fd3dcc24b668`) was spawned for read-only focused security re-review of Harvey's inbound recent-page normalization P2 closure after Peirce's red test and Lagrange's implementation fix.
+- Parent state: waiting for Lovelace final status before deciding whether TASK-047 can proceed to final release gate. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:54 CST - TASK-047 inbound recent-page normalization implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `986cbd1` (`Lagrange(review-fix)(Add Durable Navigation And Route State): normalize inbound recent pages`).
+- Lagrange (`implementer`) changed `src/shell/navigation/route-state.ts` so parser output drops Home, dedupes, and caps inbound recent IDs while preserving accessor-safe validation, plus a narrow restore-candidate wiring change in `src/App.tsx` so runtime validation can still recover valid pages after missing/archived candidates.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (23 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (44 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (47 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Harvey's inbound recent-page normalization P2 closure.
+
+### 2026-06-15 01:48 CST - TASK-047 inbound recent-page normalization implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Lagrange (`implementer`, agent `019ec740-20e8-7461-9ff0-2d7da0a075c6`) was spawned to make Peirce's inbound recent-page normalization red test pass with minimum production hardening.
+- Lagrange owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Lagrange final status before validating or committing the inbound recent-page parser-normalization implementation fix. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:47 CST - TASK-047 inbound recent-page normalization red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `78c821b` (`Peirce(test-fix)(Add Durable Navigation And Route State): add inbound recent-page normalization tests`).
+- Peirce (`test_writer`) added one focused test in `src/test/durable-navigation-route-state.test.tsx` proving inbound parser boundary should drop Home, dedupe, and cap `recentPageIds`.
+- Parent red validation matched Harvey's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 1 failure and 22 passing tests because inbound parser returned Home, duplicate, and over-cap recent IDs unchanged. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for inbound `recentPageIds` parser normalization.
+
+### 2026-06-15 01:45 CST - TASK-047 inbound recent-page normalization red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Peirce (`test_writer`, agent `019ec73c-8fad-75b0-b16b-ed6f003dbcee`) was spawned to write focused failing tests for Harvey's inbound `recentPageIds` parser-normalization P2 only.
+- Peirce owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
+- Parent state: waiting for Peirce final status before validating or committing inbound recent-page parser-normalization red tests. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:43 CST - TASK-047 inbound recent-page normalization P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Harvey (`security_reviewer`, agent `019ec739-0806-7c03-9717-b6c75cbd02cd`) returned final status with no files modified. Bernoulli's accessor-array issue is closed for no index getter invocation and no getter-returned path/token persistence, and prior `activeRoute` accessor hardening remains closed.
+- Harvey found no P0/P1 findings, but reported one remaining P2 boundary item: inbound `recentPageIds` parsing is accessor-safe but not bounded/deduped at the parser boundary, so `readDurableRouteState` can return duplicate, Home, and over-cap IDs unchanged.
+- Checks run by Harvey: focused TASK-047 suite (22 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/Search/Sync/AI/release drift scans, `.only` / `.skip` / direct `userEvent.*` scans, and focused parser/serializer boundary probes.
+- Parent state: prepare focused red tests for inbound `recentPageIds` parser normalization.
+
+### 2026-06-15 01:41 CST - TASK-047 recent-page accessor security re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Harvey (`security_reviewer`, agent `019ec739-0806-7c03-9717-b6c75cbd02cd`) was spawned for read-only focused security re-review of Bernoulli's recent-page accessor P2 closure after Erdos's red tests and Turing's implementation fix.
+- Parent state: waiting for Harvey final status before deciding whether TASK-047 can proceed to final release gate. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:40 CST - TASK-047 recent-page accessor implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `6da71d4` (`Turing(review-fix)(Add Durable Navigation And Route State): harden recent-page accessors`).
+- Turing (`implementer`) changed `src/shell/navigation/route-state.ts` to harden `recentPageIds` parsing/normalization so accessor-backed arrays do not invoke getters or persist getter-returned path/token-shaped values.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (22 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (43 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (46 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Bernoulli's recent-page accessor P2 closure.
+
+### 2026-06-15 01:36 CST - TASK-047 recent-page accessor implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Turing (`implementer`, agent `019ec734-7143-77c2-87d6-b0b064fbb430`) was spawned to make Erdos's recent-page accessor red tests pass with minimum production hardening.
+- Turing owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Turing final status before validating or committing the recent-page accessor implementation fix. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:35 CST - TASK-047 recent-page accessor red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `8360851` (`Erdos(test-fix)(Add Durable Navigation And Route State): add recent-page accessor red tests`).
+- Erdos (`test_writer`) added focused tests in `src/test/durable-navigation-route-state.test.tsx` for accessor-backed `recentPageIds` arrays during parse and serialize.
+- Parent red validation matched Bernoulli's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 20 passing tests because `recentPageIds[0]` getter was invoked and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for the recent-page accessor hardening fix.
+
+### 2026-06-15 01:32 CST - TASK-047 recent-page accessor red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Erdos (`test_writer`, agent `019ec731-6527-7cf0-8b2e-b045ba08dbc5`) was spawned to write focused failing tests for Bernoulli's `recentPageIds` accessor-array P2 only.
+- Erdos owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, docs, package, native/Tauri/Rust, config, or unrelated tests.
+- Parent state: waiting for Erdos final status before validating or committing recent-page accessor red tests. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:31 CST - TASK-047 recent-page accessor P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bernoulli (`security_reviewer`, agent `019ec72e-6505-7a12-ae67-96bcc20c934f`) returned final status with no files modified. Faraday's nested `activeRoute` accessor finding is closed, and no P0/P1 findings remain.
+- Bernoulli reported one remaining P2 boundary item: `recentPageIds` still accepts accessor-backed arrays during inbound parse and outbound serialization, can invoke an index getter, and can return or persist getter-returned path/token-shaped strings.
+- Checks run by Bernoulli: focused TASK-047 suite (20 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift scans, and a focused `bun -e` boundary probe.
+- Parent state: prepare focused red tests for the `recentPageIds` accessor-array P2.
+
+### 2026-06-15 01:29 CST - TASK-047 Faraday P2 security re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bernoulli (`security_reviewer`, agent `019ec72e-6505-7a12-ae67-96bcc20c934f`) was spawned for read-only focused security re-review of Faraday's P2 closure after Godel's red tests and Epicurus's implementation fix.
+- Parent state: waiting for Bernoulli final status before deciding whether TASK-047 can proceed to final release gate. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:28 CST - TASK-047 Faraday P2 implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation fix commit: `2b7f4b7` (`Epicurus(review-fix)(Add Durable Navigation And Route State): harden active-route accessors`).
+- Epicurus (`implementer`) changed `src/shell/navigation/route-state.ts` to validate nested active-route data descriptors before reading route kind and to clone outbound active routes from descriptor values so accessor-backed routes are omitted without invoking getters.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (20 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (41 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx --reporter=dot` (44 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, exact `.only` / `.skip` / direct `userEvent.*` scans, and package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift checks.
+- Parent state: preparing focused security re-review for Faraday's P2 closure.
+
+### 2026-06-15 01:24 CST - TASK-047 Faraday P2 implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Epicurus (`implementer`, agent `019ec729-f3e5-7843-9af2-0553852296ca`) was spawned to make Godel's Faraday P2 red tests pass with minimum production hardening.
+- Epicurus owns `src/shell/navigation/route-state.ts` only unless it reports a blocker.
+- Parent state: waiting for Epicurus final status before validating or committing the Faraday P2 implementation fix. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:23 CST - TASK-047 Faraday P2 red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `459aa52` (`Godel(test-fix)(Add Durable Navigation And Route State): add accessor hardening red tests`).
+- Godel (`test_writer`) added focused tests in `src/test/durable-navigation-route-state.test.tsx` for nested active-route accessors during parse and serialize.
+- Parent red validation matched Faraday's P2: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 2 failures and 18 passing tests because nested `activeRoute` accessors were invoked and unsafe getter-returned values were persisted. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, and exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Parent state: preparing to spawn `implementer` for the accessor hardening fix.
+
+### 2026-06-15 01:20 CST - TASK-047 Faraday P2 red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Godel (`test_writer`, agent `019ec726-5efc-7e72-8355-7170b4929fbc`) was spawned to write focused failing tests for Faraday's P2 nested route DTO accessor hardening only.
+- Godel owns `src/test/durable-navigation-route-state.test.tsx` only and must not modify production, package, native/Tauri/Rust, docs, or config files.
+- Parent state: waiting for Godel final status before validating or committing Faraday P2 red tests. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:19 CST - TASK-047 targeted re-review completed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) returned final status with no files modified and no remaining P0/P1/P2 correctness findings. Dewey's prior recent-page and latest-wins persistence P1s are closed; adjacent TASK-038/TASK-045 checks stayed green.
+- Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) returned final status with no files modified and no remaining P0/P1/P2 deprecation/API findings. Sagan's StrictMode startup and latest-wins persistence P1s are closed; no package/native/Cargo/Tauri/capability/permission drift was found. Official docs consulted: React `useState`, StrictMode, effects; MUI `ListItemButton` and deprecated API migration; Testing Library user-event v14 intro/setup.
+- Combined targeted re-review state: correctness, deprecation/API, test-quality, docs, and original security P0/P1 scopes are clear. One Faraday P2 security hardening item remains for nested route DTO accessor validation in `src/shell/navigation/route-state.ts`.
+- Parent state: delegate Faraday P2 red tests first, then implementation.
+
+### 2026-06-15 01:17 CST - TASK-047 test-quality cleared, security P2 recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) returned final status with no files modified and no remaining P0/P1/P2 test-quality findings. Focused validation passed: TASK-047 suites with 18, 39, and 42 tests; `bun run typecheck`; `bun run lint`; `git diff --check`; exact `.only` / `.skip` / direct `userEvent.*` scans.
+- Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) returned final status with no files modified and no P0/P1 security findings. It reported one P2 hardening item: nested route DTO accessors can still execute before validation during inbound parsing and outbound serialization in `src/shell/navigation/route-state.ts`. Faraday confirmed no package/native/Tauri/IPC/capability/permission/schema/Search/Sync/AI/release drift.
+- Parent state: waiting for Goodall and Socrates final statuses, then delegate the Faraday P2 hardening follow-up if no higher-severity blocker supersedes it. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:17 CST - TASK-047 docs re-review cleared
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) returned final status with no files modified and no remaining P0/P1/P2 docs findings for Popper's TASK-047 scope.
+- Curie confirmed product, architecture runtime-flow, testing strategy, progress, and task communication docs now describe durable app-shell route restoration through Core metadata, durable Home, saved-filter route restoration, recent-page persistence, fail-closed behavior, and excluded package/native/IPC/browser-storage/Search/Sync/AI/release surfaces. External docs consulted: none.
+- Parent state: waiting for Goodall, Socrates, Newton, and Faraday final statuses. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:15 CST - TASK-047 targeted re-review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Anscombe was closed after its final status and parent validation were committed in `2bb68b3`.
+- Targeted re-review agents running: Goodall (`reviewer`, agent `019ec721-2bcd-7952-b888-a4f3753a0382`) for Dewey P1 correctness closure; Socrates (`deprecation_auditor`, agent `019ec721-2ef6-7a50-ac03-65d65603a6dd`) for Sagan P1 StrictMode/API closure; Newton (`test_quality_reviewer`, agent `019ec721-319c-7c51-91a1-08f7ce979a9f`) for Pauli P1/P2 test-quality closure; Faraday (`security_reviewer`, agent `019ec721-33f8-7502-a09c-725f18ee833c`) for Bohr P2 and boundary closure; Curie (`docs_researcher`, agent `019ec721-3687-75b0-85bc-437a80dcd485`) for Popper docs closure.
+- Parent state: waiting for targeted re-review final statuses before deciding whether TASK-047 is release-gate ready. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:13 CST - TASK-047 review-fix implementation recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Review-fix implementation commit: `07bc304` (`Anscombe(review-fix)(Add Durable Navigation And Route State): fix durable route review blockers`).
+- Anscombe (`implementer`) changed `src/App.tsx` and `src/shell/navigation/route-state.ts` to keep recent pages visible on filter routes, move durable navigation startup out of render/state initializer paths, serialize latest-wins route persistence, scrub fail-closed route metadata to safe Home, and exact-key clone active route DTOs before metadata serialization.
+- Parent validation passed at 2026-06-15 01:11 CST: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (18 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx --reporter=dot` (39 tests), `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (42 tests), `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, exact `.only` / `.skip` / direct `userEvent.*` scan, and package/native/docs/Search/Sync/AI/release drift checks.
+- Parent state: preparing targeted re-review for Dewey/Sagan/Pauli/Bohr/Popper findings. Anscombe will be closed only after this status is committed.
+
+### 2026-06-15 01:02 CST - TASK-047 review-fix implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Anscombe (`implementer`, agent `019ec715-dd5f-78b0-b384-9fbdaed15751`) was spawned to make Avicenna's review-fix red tests pass and address Dewey/Sagan/Pauli P1 findings plus adjacent Bohr P2 hardening without package/native/Tauri/docs drift.
+- Parent state: waiting for Anscombe final status before validating review-fix implementation. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 01:01 CST - TASK-047 review-fix red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test-fix commit: `780aec5` (`Avicenna(test-fix)(Add Durable Navigation And Route State): add review regression tests`).
+- Avicenna (`test_writer`) added review-fix coverage in `src/test/durable-navigation-route-state.test.tsx` only.
+- Parent red validation matched expected review blockers: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 6 failures and 12 passing tests. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` / direct `userEvent.*` scan.
+- Parent state: preparing to spawn `implementer` for review fixes.
+
+### 2026-06-15 00:55 CST - TASK-047 docs sync committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Docs commit: `f18ed64` (`Carver(docs)(Add Durable Navigation And Route State): sync durable navigation docs`).
+- Carver (`doc_writer`) updated `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, and `docs/testing/strategy.md` for Popper's docs P1/P2 findings.
+- Parent validation passed: `git diff --check`, `git diff --cached --check`, and stale phrase scan for product/architecture deferred-navigation wording. Popper's docs P1/P2 are pending targeted docs re-review after review fixes.
+- Parent state: waiting for Avicenna (`test_writer`) final status. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:50 CST - TASK-047 review-fix tests and docs delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Avicenna (`test_writer`, agent `019ec70a-96ec-7721-96b8-17ea4439e4fd`) was spawned for review-fix red tests covering Dewey/Sagan/Pauli P1 findings and adjacent Bohr P2 hardening. It owns test/test-helper files only.
+- Carver (`doc_writer`, agent `019ec70a-994d-7ef2-b256-25566f423687`) was spawned for Popper's product/architecture/testing docs P1/P2 only and must not mark TASK-047 complete.
+- Parent state: waiting for Avicenna and Carver final statuses. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:48 CST - TASK-047 review complete, fixes required
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Bohr (`security_reviewer`) found no P0/P1 security issues and two P2 hardening items: exact-key clone active routes inside `createDurableRouteState`, and scrub or overwrite malformed app-shell route-state records after fail-closed restoration.
+- Sagan (`deprecation_auditor`) found no deprecated API/stale usage or package/native drift. It found P1 StrictMode risk from creating durable Home pages inside a `useState` initializer, and P1 rapid-navigation route persistence loss from overlapping transaction rejection without retry.
+- Combined merge blockers: Dewey P1 recent pages regression on trusted filter routes; Dewey/Sagan P1 rapid navigation persistence retry; Sagan P1 StrictMode-unsafe Home creation; Pauli P1 test-quality gaps for filter persistence from user action, persisted saved-filter/`SlotHost` restore, and stronger fail-closed coverage; Popper P1 docs sync for product and architecture.
+- Parent decision: TASK-047 is not merge-ready. Next action is review-fix red tests, implementation fixes, docs sync, then targeted re-review.
+
+### 2026-06-15 00:45 CST - TASK-047 partial review findings recorded
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Carson (`pr_explorer`) mapped changed files and review focus; no files modified.
+- Popper (`docs_researcher`) found P1 stale product docs in `docs/product/07-user-interface-design.md`, P1 stale runtime-flow docs in `docs/architecture/07-runtime-flows.md`, and P2 missing TASK-047 testing strategy guidance; no files modified.
+- Pauli (`test_quality_reviewer`) found P1 test-quality gaps for filter persistence from a user action, persisted saved-filter/`SlotHost` restore, and fail-closed restoration coverage; also P2 missing direct parser/serializer unit coverage; no files modified.
+- Dewey (`reviewer`) found P1 correctness regressions: recent pages are filtered away on trusted filter routes, and rapid navigation can drop the latest persisted route when overlapping Core transactions reject without retry; no files modified.
+- Parent state: waiting for Bohr (`security_reviewer`) and Sagan (`deprecation_auditor`) final statuses before assigning review fixes. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:43 CST - TASK-047 review delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Review agents running: Carson (`pr_explorer`, agent `019ec703-bce7-7bb3-8cad-11a026b81944`), Dewey (`reviewer`, agent `019ec703-bf48-71d2-8de3-7d6f7675b849`), Bohr (`security_reviewer`, agent `019ec703-c21f-7892-8a7b-5686f72500e3`), Sagan (`deprecation_auditor`, agent `019ec703-c48e-7682-a1ff-e335076a97ff`), Popper (`docs_researcher`, agent `019ec703-c79e-78a1-95cc-a2b31877feff`), and Pauli (`test_quality_reviewer`, agent `019ec703-ca60-7343-9c61-30d53d77861d`).
+- `doc_writer` was deferred because the agent thread limit was reached; parent will spawn it after a slot is freed.
+- Parent state: waiting for review final statuses. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:41 CST - TASK-047 implementation committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Implementation commit: `87c43fe` (`Huygens(implementation)(Add Durable Navigation And Route State): implement durable route persistence`).
+- Huygens (`implementer`) changed `src/App.tsx`, added `src/shell/navigation/route-state.ts`, and made one scoped test-helper correction in `src/test/durable-navigation-route-state.test.tsx`.
+- Parent validation passed: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` (9 tests); `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/sidebar-page-filter-navigation.test.tsx src/test/app-shell-boundary.test.ts` (39 tests); `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx src/test/home-workspace-editor.test.tsx src/test/responsive-accessibility-polish.test.tsx` (33 tests); `bun run typecheck`; `bun run lint`; `git diff --check`; `git diff --cached --check`; exact `.only` / `.skip` scan; package/native/Tauri surface drift checks.
+- Parent state: preparing TASK-047 review agents.
+
+### 2026-06-15 00:30 CST - TASK-047 implementation delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Huygens (`implementer`, agent `019ec6f8-3c76-7620-92e2-1045b5a782f5`) was spawned to make Hilbert's red tests pass with minimum production changes while preserving package/native/Tauri/docs surfaces unless it reports a blocker.
+- Parent state: waiting for Huygens final status before validating implementation. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:29 CST - TASK-047 red tests committed
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Test commit: `a78d416` (`Hilbert(test)(Add Durable Navigation And Route State): add durable navigation red tests`).
+- Hilbert (`test_writer`) added `src/test/durable-navigation-route-state.test.tsx` only. Coverage includes page/filter route restart restoration, durable Home reuse, recent-page order/cap/dedupe/drop behavior, malformed/stale/wrong-owner/missing/archived fail-closed restoration, non-leakage/static route DTO guards, storage/native/API drift guards, and narrow drawer behavior.
+- Parent red validation matched the expected missing TASK-047 behavior: `bun run test:frontend -- src/test/durable-navigation-route-state.test.tsx --reporter=dot` failed with 5 failures and 4 passing tests. Supporting checks passed: `bun run typecheck`, `bun run lint`, `git diff --check`, `git diff --cached --check`, and exact `.only` / `.skip` scan.
+- Parent state: preparing to spawn `implementer` for minimum production changes.
+
+### 2026-06-15 00:13 CST - TASK-047 red tests delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Hilbert (`test_writer`, agent `019ec6e8-bd3b-7063-93c9-546cb7053179`) was spawned for failing TASK-047 tests only. It owns test/test-helper changes and must not modify production/package/native/docs files.
+- Parent state: waiting for Hilbert final status before validating the expected red state. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:11 CST - TASK-047 pre-test guidance complete
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Pre-test guidance final statuses received from Gibbs (`planner`), Archimedes (`docs_researcher`), Laplace (`security_reviewer`), and Poincare (`deprecation_auditor`). No files were modified by those read-only agents, and no pre-test blockers were found.
+- Parent decisions: accept the branch-sized slice of a shell-owned route-state module persisted through existing TASK-046 Core metadata via `runtime.transaction.run(...)`; avoid Tauri Store, browser storage, new NativeBridge operations, new packages, and new Tauri capabilities unless a later blocker is recorded; require tests for real user navigation/restart behavior plus serialization/static guards for IDs-only persistence, fail-closed restoration, `aria-current`, StrictMode-safe effects, and stale API drift.
+- Parent state: preparing to spawn `test_writer` for failing TASK-047 tests only.
+
+### 2026-06-15 00:06 CST - TASK-047 pre-test guidance delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Pre-test guidance running: Gibbs (`planner`, agent `019ec6e2-918b-7862-9881-dfd2dbe4c5ec`) for implementation slice and TDD plan; Archimedes (`docs_researcher`, agent `019ec6e2-940a-7963-ab0c-c42d9276e0e6`) for current MUI, React, Testing Library/user-event, and local TASK-038 navigation notes; Laplace (`security_reviewer`, agent `019ec6e2-973f-7883-a54b-57688677304b`) for route-state persistence/security red-test targets; Poincare (`deprecation_auditor`, agent `019ec6e2-99d6-77a2-a347-9258f91e8c56`) for stale MUI/React/testing API risk.
+- Parent state: waiting for pre-test guidance final statuses before spawning `test_writer`. A wait timeout is not a failure or idle signal.
+
+### 2026-06-15 00:05 CST - TASK-047 started
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Selected next unblocked task after TASK-046 merge: TASK-047 - Add Durable Navigation And Route State.
+- Agent/config validation: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
+- Local docs read by parent before delegation: TASK-047 task index section, `docs/product/07-user-interface-design.md`, `docs/architecture/07-runtime-flows.md`, TASK-038 delivered/deferred notes, and navigation/testing guidance in `docs/testing/strategy.md`.
+- Scope: persist and restore active page route, active filter route, durable Home identity, recent pages, and safe route fallback without storing raw page bodies, plugin-private data, SQL, paths, secrets, or runtime handles.
+- Parent state: preparing pre-test guidance agents. Parent remains orchestration-only.
 
 ### 2026-06-15 00:04 CST - TASK-046 merged and post-merge full gate passed
 
