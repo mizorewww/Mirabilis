@@ -129,7 +129,8 @@ Add newest entries at the top.
 - Averroes (`docs_researcher`) returned final status at 2026-06-17 03:32 CST with no files modified. Guidance accepted: save Markdown first, then run owner-checked plugin semantic refresh commands; use awaited `userEvent.setup()` and async UI assertions; keep refresh failures bounded/non-leaky; update stale docs and add TASK-048 testing guidance after implementation.
 - Curie (`security_reviewer`) returned final status at 2026-06-17 03:32 CST with no files modified and no P0/P1 security finding in the current docs/orchestration-only branch diff. Required red-test targets include save-before-refresh ordering, exact owner checks, exact plain payloads, saved Markdown preservation on refresh failure, bounded errors, plugin facade mutation boundaries, and no package/native/Tauri/IPC/Rust/capability/schema/DB drift.
 - Sagan (`deprecation_auditor`) returned final status at 2026-06-17 03:32 CST with no files modified and no changed TASK-048 code paths to flag. Constraints accepted: awaited user-event interactions, async assertions, awaited React `act` for manual deferred promise resolution, no `react-dom/test-utils`, StrictMode coverage for one Save click / one refresh pass, event-bound save-time refresh, generation/page guard preservation, MUI v9-safe imports, and no package/native/Tauri/Rust/IPC/capability/filesystem/feed/Search/ML/background scanner surfaces.
-- Parent state: preparing to close pre-test guidance agents and delegate red tests.
+- Gibbs, Averroes, Curie, and Sagan were closed after their final statuses were recorded in `7fcaf4e` plus this follow-up guidance record.
+- Parent state: preparing to delegate red tests.
 
 ### 2026-06-17 03:26 CST - TASK-047 merged and post-merge quick gate passed
 
