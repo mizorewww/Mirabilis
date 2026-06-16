@@ -1,6 +1,6 @@
 # Agent Communication Status
 
-Last updated: 2026-06-17 03:07 CST.
+Last updated: 2026-06-17 03:11 CST.
 
 ## Current Task
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-17 03:07 CST.
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 final release-readiness review running; parent is waiting for Mencius final status.
+- Current phase: TASK-047 final release gate blocked by adjacent frontend tests; parent is preparing delegated test fixes.
 
 ## Current Outcome
 
@@ -68,6 +68,7 @@ Last updated: 2026-06-17 03:07 CST.
 - Lovelace (`security_reviewer`, agent `019ec745-fc62-78a0-9cb7-fd3dcc24b668`) was spawned at 2026-06-15 01:55 CST for read-only focused security re-review of Harvey's inbound recent-page normalization P2 closure after Peirce/Lagrange.
 - Lovelace returned final status at 2026-06-17 03:05 CST with no files modified and no remaining P0/P1/P2 security or boundary findings. Lovelace confirmed Harvey's inbound `recentPageIds` P2 is closed, prior activeRoute and recentPageIds accessor hardening remains closed, startup restore applies runtime availability filtering from bounded candidates, persistence remains app-shell Core metadata only, and no package/native/Tauri/capability/permission/schema/Search/Sync/AI/release drift exists. Checks run: focused TASK-047 suite (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri/capability/permission/schema/Search/Sync/AI/release drift scans, route persistence storage scans, and direct parser probes.
 - Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) was spawned at 2026-06-17 03:07 CST for read-only final release-readiness review before parent final gate and merge.
+- Mencius returned final status at 2026-06-17 03:11 CST with no files modified and a P1 release blocker: `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes. `src/test/command-palette-quick-capture-dialog.test.tsx` has two failures because deterministic metadata ids are exhausted by TASK-047 route-state metadata before Quick Capture save assertions, and `src/test/ml-ai-context-panels.test.tsx` has one failure because the old snapshot expects no metadata changes after navigation. Mencius confirmed TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and the final gate should remain `bun run check:quick` after the adjacent test fixes.
 - TASK-046 branch was created from `master` commit `60c7e06` after the M10 roadmap backlog merge.
 - Agent/config validation passed for TASK-046 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket OK, with known unrestricted-sandbox notes and known `TERM=dumb` terminal failure.
 - TASK-046 scope: wire SQLite-backed runtime persistence for Core pages, metadata, events, and filters through existing NativeBridge DB operations; cover transaction-managed writes plus reviewed direct runtime page and plugin-facing Core store write paths; update `storage.persistence` only when runtime SQLite persistence is active; preserve plugin facade owner boundaries; keep startup/IPC/persistence errors redacted; preserve DB transaction rollback/result-order semantics.
@@ -256,4 +257,4 @@ Last updated: 2026-06-17 03:07 CST.
 
 ## Next Parent Actions
 
-- Wait for Mencius final status before running parent final gate. A wait timeout is not a failure or idle signal.
+- Delegate adjacent frontend test fixes for the Mencius P1 release blocker, then rerun the final `bun run check:quick` gate.

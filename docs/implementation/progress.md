@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-17 03:11 CST - TASK-047 final gate blocked by adjacent tests
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) returned final status with no files modified and a P1 release blocker.
+- `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes: `src/test/command-palette-quick-capture-dialog.test.tsx` has two deterministic metadata-id exhaustion failures, and `src/test/ml-ai-context-panels.test.tsx` has one stale metadata snapshot failure.
+- Mencius confirmed the TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and final gate should remain `bun run check:quick` after adjacent test fixes.
+- Parent state: delegate adjacent frontend test fixes for this P1, then rerun final `bun run check:quick`.
+
 ### 2026-06-17 03:07 CST - TASK-047 final release-readiness review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
