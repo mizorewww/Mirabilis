@@ -6,7 +6,7 @@
 - Branch: `feat/task-047-durable-navigation-route-state`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Status: final release gate blocked by adjacent frontend tests; parent is preparing delegated test fixes.
+- Status: adjacent final-gate test fixes delegated; parent is waiting for Faraday final status.
 
 ## Scope
 
@@ -99,7 +99,8 @@
 - Lovelace returned final status at 2026-06-17 03:05 CST with no files modified and no remaining P0/P1/P2 security or boundary findings. Lovelace confirmed Harvey's inbound `recentPageIds` P2 is closed, prior activeRoute and recentPageIds accessor hardening remains closed, startup restore applies runtime availability filtering from bounded candidates, persistence remains app-shell Core metadata only, and no package/native/Tauri/capability/permission/schema/Search/Sync/AI/release drift exists. Checks run: focused TASK-047 suite (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri/capability/permission/schema/Search/Sync/AI/release drift scans, route persistence storage scans, and direct parser probes.
 - Mencius (`release_checker`, agent `019ed1d4-bcbd-7bb3-b265-c1fa01eb50fa`) was spawned at 2026-06-17 03:07 CST for read-only final release-readiness review before parent final gate and merge.
 - Mencius returned final status at 2026-06-17 03:11 CST with no files modified and a P1 release blocker: `bun run check:quick` failed because adjacent frontend tests still assume no app-shell route metadata writes. `src/test/command-palette-quick-capture-dialog.test.tsx` has two failures because deterministic metadata ids are exhausted by TASK-047 route-state metadata before Quick Capture save assertions, and `src/test/ml-ai-context-panels.test.tsx` has one failure because the old snapshot expects no metadata changes after navigation. Mencius confirmed TASK-047 focused suite passed, `git diff --check master...HEAD` passed, no package/native/Tauri/IPC/capability/permission/schema/filesystem/release diff exists, and the final gate should remain `bun run check:quick` after the adjacent test fixes.
+- Faraday (`test_writer`, agent `019ed1db-a4fa-7700-a0da-979a37bb9fa1`) was spawned at 2026-06-17 03:15 CST to fix Mencius's adjacent frontend test P1 without production changes. It owns `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` only unless it reports a blocker.
 
 ## Next Action
 
-- Delegate adjacent frontend test fixes for the Mencius P1 release blocker, then rerun the final `bun run check:quick` gate.
+- Wait for Faraday final status before validating or committing adjacent final-gate test fixes. A wait timeout is not a failure or idle signal.

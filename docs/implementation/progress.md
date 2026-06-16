@@ -116,6 +116,13 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-17 03:15 CST - TASK-047 adjacent final-gate test fixes delegated
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Faraday (`test_writer`, agent `019ed1db-a4fa-7700-a0da-979a37bb9fa1`) was spawned to fix Mencius's adjacent frontend test P1 without production changes.
+- Faraday owns `src/test/command-palette-quick-capture-dialog.test.tsx` and `src/test/ml-ai-context-panels.test.tsx` only unless it reports a blocker.
+- Parent state: waiting for Faraday final status before validating or committing adjacent final-gate test fixes. A wait timeout is not a failure or idle signal.
+
 ### 2026-06-17 03:11 CST - TASK-047 final gate blocked by adjacent tests
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
