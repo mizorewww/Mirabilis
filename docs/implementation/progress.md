@@ -116,6 +116,14 @@ Status markers:
 
 Add newest entries at the top.
 
+### 2026-06-17 03:05 CST - TASK-047 final security re-review cleared
+
+- Branch: `feat/task-047-durable-navigation-route-state`.
+- Lovelace (`security_reviewer`, agent `019ec745-fc62-78a0-9cb7-fd3dcc24b668`) returned final status with no files modified and no remaining P0/P1/P2 security or boundary findings.
+- Lovelace confirmed Harvey's inbound `recentPageIds` P2 is closed, prior activeRoute and recentPageIds accessor hardening remains closed, startup restore applies runtime availability filtering from bounded candidates, persistence remains app-shell Core metadata only, and no package/native/Tauri/capability/permission/schema/Search/Sync/AI/release drift exists.
+- Checks run by Lovelace: focused TASK-047 suite (23 tests), `bun run typecheck`, `bun run lint`, `git diff --check master...HEAD`, native/package/Tauri/capability/permission/schema/Search/Sync/AI/release drift scans, route persistence storage scans, and direct parser probes.
+- Parent state: preparing final TASK-047 release gate.
+
 ### 2026-06-15 01:55 CST - TASK-047 inbound recent-page normalization re-review delegated
 
 - Branch: `feat/task-047-durable-navigation-route-state`.
