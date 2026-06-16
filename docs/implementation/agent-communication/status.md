@@ -1,17 +1,22 @@
 # Agent Communication Status
 
-Last updated: 2026-06-17 03:26 CST.
+Last updated: 2026-06-17 03:28 CST.
 
 ## Current Task
 
-- Task: TASK-047 - Add Durable Navigation And Route State.
-- Branch: `feat/task-047-durable-navigation-route-state`.
+- Task: TASK-048 - Add Save-Time Semantic Refresh Pipeline.
+- Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
 - Worktree: `/home/aac6fef/Developer/Mirabilis`.
 - Parent role: orchestration only.
-- Current phase: TASK-047 merged to `master` and post-merge validation passed; parent is selecting TASK-048.
+- Current phase: TASK-048 started; parent is preparing pre-test guidance agents.
 
 ## Current Outcome
 
+- TASK-047 is complete and merged to `master` in merge commit `91480dd`; post-merge `bun run check:quick` passed after a transient responsive test timing failure was disproved by focused and full reruns.
+- TASK-048 was selected as the next unblocked task and branch `feat/task-048-save-time-semantic-refresh-pipeline` was created from pushed `master`.
+- Agent/config validation for TASK-048 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket/reachability OK, with known `TERM=dumb` terminal failure and unrestricted-sandbox notes.
+- TASK-048 scope: wire editor save to explicitly invoke plugin-owned task/tag/habit refresh or resolve commands where those plugins declare save-time behavior, while preserving Core/editor plugin-agnostic boundaries and saved Markdown durability.
+- TASK-048 must not add background indexers, workers, automatic global scanners, ML/AI/sync behavior, package/native/Tauri/IPC/Rust/capability changes, broad query/feed facades, or sibling plugin private-data mutation.
 - TASK-046 is complete and merged to `master`; post-merge `bun run check:full` passed at 2026-06-15 00:04 CST.
 - TASK-047 was selected as the next unblocked task after TASK-046 and branch `feat/task-047-durable-navigation-route-state` was created from pushed `master`.
 - Agent/config validation for TASK-047 startup: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/network/websocket/reachability OK, with known `TERM=dumb` terminal failure, known unrestricted sandbox notes, and optional MCP env warnings.
@@ -263,4 +268,4 @@ Last updated: 2026-06-17 03:26 CST.
 
 ## Next Parent Actions
 
-- Select and start TASK-048 - Add Save-Time Semantic Refresh Pipeline.
+- Spawn planner, docs_researcher, security_reviewer, and deprecation_auditor for TASK-048 pre-test guidance. Wait for final statuses before delegating red tests.

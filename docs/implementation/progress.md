@@ -94,7 +94,7 @@ Status markers:
 
 - [x] TASK-046: Wire SQLite-backed Runtime Persistence
 - [x] TASK-047: Add Durable Navigation And Route State
-- [ ] TASK-048: Add Save-Time Semantic Refresh Pipeline
+- [~] TASK-048: Add Save-Time Semantic Refresh Pipeline
 - [ ] TASK-049: Add Metadata Field Editors And Date/Page Link UX
 - [ ] TASK-050: Mount Mobile Quick Capture Toolbar
 - [ ] TASK-051: Add Native Shortcut Boundary For Capture And Search
@@ -115,6 +115,16 @@ Status markers:
 ## Run Log
 
 Add newest entries at the top.
+
+### 2026-06-17 03:28 CST - TASK-048 started
+
+- Branch: `feat/task-048-save-time-semantic-refresh-pipeline`.
+- Selected next unblocked task after TASK-047 merge: TASK-048 - Add Save-Time Semantic Refresh Pipeline.
+- Agent/config validation: 11 project agent TOML files parsed successfully; `codex --strict-config doctor --summary --ascii` reported config/auth/MCP/network/websocket/reachability OK, with the known `TERM=dumb` terminal failure and unrestricted-sandbox notes.
+- Local docs read by parent before delegation: TASK-048 task index section, `docs/product/04-editor-and-workflows.md`, `docs/product/05-built-in-plugins.md` task/tag/habit sections, `docs/architecture/02-core-kernel.md`, `docs/architecture/03-plugin-api-and-host.md`, `docs/architecture/04-slots-editor-task.md`, `docs/development/02-implementation-roadmap-and-constraints.md`, and `docs/testing/strategy.md`.
+- Scope: editor save should invoke plugin-owned refresh/resolve commands for task, tag, and habit semantics where plugins explicitly declare that save-time behavior; save failures must be visible, bounded, and non-leaky while preserving the saved Markdown page.
+- Out of scope: Core/editor business parsing for task/tag/habit/timer/calendar/heatmap/stats/chart/ML/AI/sync, background indexers, workers, automatic global scanners, new native/Tauri/IPC/package/Rust surfaces, and sibling plugin private-data mutation.
+- Parent state: preparing planner/docs/security/deprecation pre-test guidance agents. Parent remains orchestration-only.
 
 ### 2026-06-17 03:26 CST - TASK-047 merged and post-merge quick gate passed
 
