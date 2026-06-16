@@ -90,6 +90,9 @@ const mlBaselineModelId = "ml.remaining-time-baseline.v1";
 const mlPredictionPanelViewId = "ml.prediction-panel";
 const aiSuggestionPanelViewId = "ai.suggestion-panel";
 const aiReviewPanelViewId = "ai.review-panel";
+const appShellRouteNamespace = "app-shell.navigation";
+const appShellRouteKey = "route-state";
+const appShellRouteOwner = "app-shell";
 const allowedAiCommandIds = [
   "ai.suggest-tags",
   "ai.suggest-due-date",
@@ -472,7 +475,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
         return createAiResult(commandId);
       });
     }
-    const snapshotBefore = snapshotRuntimeState(runtime);
+    const snapshotBefore = snapshotRuntimeStateWithoutAppShellRouteState(runtime);
 
     renderReadyApp(runtime);
 
@@ -571,7 +574,9 @@ describe("TASK-043 ML and AI context panel shell", () => {
       ),
     ).toBe(false);
     expect(capturedAiPayloads.has("ai.explain-prediction")).toBe(false);
-    expect(snapshotRuntimeState(runtime)).toStrictEqual(snapshotBefore);
+    expect(snapshotRuntimeStateWithoutAppShellRouteState(runtime)).toStrictEqual(
+      snapshotBefore,
+    );
   });
 
   it("renders real AI failure DTOs as unavailable instead of successful suggestions", async () => {
@@ -917,7 +922,7 @@ describe("TASK-043 ML and AI context panel shell", () => {
         ? staleDueDate.promise
         : createAiResult("ai.suggest-due-date");
     });
-    const snapshotBefore = snapshotRuntimeState(runtime);
+    const snapshotBefore = snapshotRuntimeStateWithoutAppShellRouteState(runtime);
 
     renderReadyApp(runtime);
 
@@ -953,7 +958,9 @@ describe("TASK-043 ML and AI context panel shell", () => {
     expect(currentPanel).toHaveTextContent(/Second Page/i);
     expect(screen.queryByText(/STALE_HOME_AI_TAG/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(snapshotRuntimeState(runtime)).toStrictEqual(snapshotBefore);
+    expect(snapshotRuntimeStateWithoutAppShellRouteState(runtime)).toStrictEqual(
+      snapshotBefore,
+    );
     expectNoVisibleLeak([
       "HOME_AI_STALE_SOURCE",
       "OPENAI_SECRET",
@@ -1375,6 +1382,27 @@ function snapshotRuntimeState(runtime: AppRuntime): RuntimeSnapshot {
       },
     })),
   };
+}
+
+function snapshotRuntimeStateWithoutAppShellRouteState(
+  runtime: AppRuntime,
+): RuntimeSnapshot {
+  const snapshot = snapshotRuntimeState(runtime);
+
+  return {
+    ...snapshot,
+    metadata: snapshot.metadata.filter(
+      (record) => !isAppShellRouteStateMetadata(record),
+    ),
+  };
+}
+
+function isAppShellRouteStateMetadata(record: MetadataRecord): boolean {
+  return (
+    record.namespace === appShellRouteNamespace &&
+    record.key === appShellRouteKey &&
+    record.sourcePluginId === appShellRouteOwner
+  );
 }
 
 function cloneJsonCompatible<Value>(value: Value): Value {

@@ -860,7 +860,7 @@ describe("TASK-040 Quick Capture dialog", () => {
 
   it("saves through quick-capture.save with exact Markdown payload and preserves trusted Inbox semantics", async () => {
     const runtime = await createRuntime({
-      metadataIds: ["metadata-1"],
+      metadataIds: ["route-state-metadata", "metadata-1"],
       pageIds: ["user-inbox", "home-page", "trusted-inbox"],
     });
     const user = userEvent.setup();
@@ -917,7 +917,7 @@ describe("TASK-040 Quick Capture dialog", () => {
 
   it("save and open navigates to the returned page id through the normal workspace route without rendering command-output bodies", async () => {
     const runtime = await createRuntime({
-      metadataIds: ["metadata-1"],
+      metadataIds: ["route-state-metadata", "metadata-1"],
       pageIds: ["home-page", "open-inbox"],
     });
     const user = userEvent.setup();
